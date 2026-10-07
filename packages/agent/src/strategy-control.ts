@@ -470,6 +470,7 @@ export class StrategyControl {
 		return freeze({
 			...plan,
 			...(plan.patches ? { patches: copy(plan.patches) } : {}),
+			...(plan.renderPatches ? { renderPatches: copy(plan.renderPatches) } : {}),
 			...(plan.replacements
 				? {
 						replacements: plan.replacements.map((range) =>

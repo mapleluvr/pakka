@@ -44,7 +44,9 @@ function protocol(messages: readonly MessageDTO[]): Map<string, [number, number]
 export function applyProjection(frame: ContextFrame, plan: ProjectionPlan): readonly MessageDTO[] {
 	if (!plan || !["disabled", "apply"].includes(plan.status)) throw new Error("Invalid projection status");
 	const allowed =
-		plan.status === "disabled" ? ["status", "basis"] : ["status", "basis", "patches", "replacements"];
+		plan.status === "disabled"
+			? ["status", "basis"]
+			: ["status", "basis", "patches", "renderPatches", "replacements"];
 	if (Object.keys(plan).some((key) => !allowed.includes(key)))
 		throw new Error("Unknown projection plan field");
 	const original = frame.projection.flatMap((entry) => entry.messages);
@@ -90,6 +92,43 @@ export function applyProjection(frame: ContextFrame, plan: ProjectionPlan): read
 		if (hash(protectedBlocks(before)) !== hash(protectedBlocks(after)))
 			throw new Error("Native call identity/arguments or non-text payload changed");
 		entry.messages[patch.messageIndex] = after;
+	}
+	for (const patch of plan.renderPatches ?? []) {
+		if (
+			Object.keys(patch).sort().join() !==
+				"cancelled,command,exitCode,fullOutputPath,kind,messageIndex,output,sourceEntryId,truncated" ||
+			patch.kind !== "bashExecution" ||
+			typeof patch.command !== "string" ||
+			typeof patch.output !== "string" ||
+			typeof patch.cancelled !== "boolean" ||
+			typeof patch.truncated !== "boolean" ||
+			(patch.fullOutputPath !== null && typeof patch.fullOutputPath !== "string") ||
+			(patch.exitCode !== null && !Number.isSafeInteger(patch.exitCode))
+		)
+			throw new Error("Invalid bash execution render fields");
+		const entry = byId.get(patch.sourceEntryId);
+		if (
+			!entry ||
+			entry.boundary ||
+			entry.excluded ||
+			!Number.isInteger(patch.messageIndex) ||
+			entry.messages[patch.messageIndex]?.role !== "bashExecution" ||
+			entry.messages[patch.messageIndex].excludeFromContext
+		)
+			throw new Error("Invalid/protected bash execution render target");
+		const key = patch.sourceEntryId + ":" + patch.messageIndex;
+		if (patched.has(key)) throw new Error("Duplicate message patch");
+		patched.add(key);
+		// Copy only allowlisted display fields onto a request-local DTO, never the stored entry.
+		entry.messages[patch.messageIndex] = {
+			...entry.messages[patch.messageIndex],
+			command: patch.command,
+			output: patch.output,
+			cancelled: patch.cancelled,
+			truncated: patch.truncated,
+			fullOutputPath: patch.fullOutputPath,
+			exitCode: patch.exitCode,
+		};
 	}
 	const visible = entries.filter((entry) => entry.messages.length && !entry.excluded);
 	const selected = new Set<string>();

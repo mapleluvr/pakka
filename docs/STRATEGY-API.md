@@ -102,6 +102,8 @@ try {
 
 For a reduction without inference, return `patches` instead of a replacement. A patch addresses `sourceEntryId` and `messageIndex` and supplies only `content`; every other message field remains host-owned. Preserve native `toolCall` blocks and non-text payloads exactly. Tool call IDs/names/arguments cannot change; stale `thoughtSignature` may be removed. `assistant` and `toolResult` content remains block-structured. System, host-summary and excluded entry patch targets are rejected.
 
+For an already-recorded, non-excluded bash execution, a discriminated `renderPatches` item may change only command/output/cancelled/truncated/fullOutputPath/exitCode as read by public Pi request conversion. These are display fields on a request-local clone: no command is executed and canonical execution records never change. Unknown fields/roles, excluded entries, checkpoints, duplicate patches and copied/stale bases are rejected before HTTP. See `strategy-rendering.test.ts` for wire and raw-record regressions.
+
 A range replacement names a contiguous ordered visible source range, never a system/host-summary checkpoint or one half of a native call/result pair. A nonempty string emits a summary; `summary: null` explicitly omits the complete range without any replacement message or placeholder. Empty or whitespace-only strings remain malformed. This lets a strategy reduce an existing request-local summary without resurrecting the underlying source. Include the job's opaque `jobScope` for every inference-derived replacement or omission so later source edits cannot activate an obsolete candidate. Checkpoints between a valid native call/result pair are retained. The host owns the generic summary wrapper; it does not parse strategy marker syntax.
 
 If a projector appends its own trigger records, re-read the frame before returning: `const current = binding.readFrame(); return {status: "apply", basis: current.basis, ...};`. The fresh basis is tied to the same live request. Returning the old basis is rejected, not silently rebased. A no-change projector returns `{status: "disabled", basis: frame.basis}` explicitly. Throwing, malformed plans, copied/stale bases, wrong owners, invalid protocol and unknown active storage fail closed before HTTP. A synchronous returned plan is snapshotted before later caller mutation.
@@ -273,6 +275,19 @@ export interface EntryMessagePatch {
 	/** Only content changes. Native tool call IDs/names/arguments and non-text payloads stay exact. */
 	readonly content: string | readonly JsonObject[];
 }
+export interface BashExecutionRenderPatch {
+	/** Request-only display of an already-recorded execution, never an execution request. */
+	readonly kind: "bashExecution";
+	readonly sourceEntryId: string;
+	readonly messageIndex: number;
+	/** Exactly the fields consumed by Pi's public bashExecutionToText conversion. */
+	readonly command: string;
+	readonly output: string;
+	readonly cancelled: boolean;
+	readonly truncated: boolean;
+	readonly fullOutputPath: string | null;
+	readonly exitCode: number | null;
+}
 export interface SummaryRangeReplacement {
 	readonly sourceEntryIds: readonly string[];
 	/** null omits the complete checked range without emitting a replacement message. */
@@ -286,6 +301,7 @@ export type ProjectionPlan =
 			readonly status: "apply";
 			readonly basis: FrameBasis;
 			readonly patches?: readonly EntryMessagePatch[];
+			readonly renderPatches?: readonly BashExecutionRenderPatch[];
 			readonly replacements?: readonly SummaryRangeReplacement[];
 	  };
 export type Projector = (

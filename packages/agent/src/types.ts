@@ -142,6 +142,19 @@ export interface EntryMessagePatch {
 	/** Only content changes. Native tool call IDs/names/arguments and non-text payloads stay exact. */
 	readonly content: string | readonly JsonObject[];
 }
+export interface BashExecutionRenderPatch {
+	/** Request-only display of an already-recorded execution, never an execution request. */
+	readonly kind: "bashExecution";
+	readonly sourceEntryId: string;
+	readonly messageIndex: number;
+	/** Exactly the fields consumed by Pi's public bashExecutionToText conversion. */
+	readonly command: string;
+	readonly output: string;
+	readonly cancelled: boolean;
+	readonly truncated: boolean;
+	readonly fullOutputPath: string | null;
+	readonly exitCode: number | null;
+}
 export interface SummaryRangeReplacement {
 	readonly sourceEntryIds: readonly string[];
 	/** null omits the complete checked range without emitting a replacement message. */
@@ -155,6 +168,7 @@ export type ProjectionPlan =
 			readonly status: "apply";
 			readonly basis: FrameBasis;
 			readonly patches?: readonly EntryMessagePatch[];
+			readonly renderPatches?: readonly BashExecutionRenderPatch[];
 			readonly replacements?: readonly SummaryRangeReplacement[];
 	  };
 export type Projector = (
