@@ -23,7 +23,19 @@ Context commits follow:
 
 A cut stores authorship in compaction details in the same entry. An edit writes a custom intent followed by a context_edit. Failure can leave partial memory/disk state: return unknown and mark the host failed. There is no rollback or atomic edit receipt.
 
-context_artifacts.write currently participates only in exclusive hook ownership; no artifact store is implemented. Activation/deactivation is a minimal registry, not a port of all configure/delete/policy lifecycle semantics.
+`context_artifacts.write` also controls a strategy/session JSON journal with expected-version batch receipts; it does not authorize request projection or model spending. `Client.bindStrategy` requires the activating principal and live strategy lease. See [STRATEGY-API.md](STRATEGY-API.md) for the exact public declarations and example. Activation/deactivation remains a minimal registry, not a port of all configure/delete/policy lifecycle semantics.
+
+## Strategy request boundary
+
+A binding reads one frozen provenance frame: raw entry identity/parentage, canonical effective entry-to-message projection, active branch IDs, protected system/host-summary boundaries, excluded messages, sanitized model/usage, lifecycle/navigation/lease identity and artifact version. Frame bases are opaque identities and require exact canonical/artifact equality; source jobs use narrower per-target/previous-context fingerprints and allow unrelated tail growth.
+
+Only the precise `real_context.write` owner installs a projector. Plans contain typed content-only patches and contiguous ordered summary replacements (`summary: null` explicitly omits the checked range without emitting a message). Pure DTO validation preserves checkpoints, exclusions, native call identities/arguments and complete call/result associations. Inference-derived replacements carry their job scope for application-time source checks. The adapter composes public `Agent.prepareRequest` and `onPayload` callback slots with Pi's installed chain. It checks canonical alignment, revalidates authority after awaits and before provider dispatch, and explicitly reinstalls idempotently after reload. No SDK methods/private members are replaced; ordinary context-hook exceptions are not an authorization boundary.
+
+Artifact namespaces have strict version/hash-chain transactions, fsync and exact physical batch readback, plus separate ownership markers. Unknown/partial/changed storage latches host failure per original session, including audit faults that arrive during reload. Explicit newSession recovery is not re-failed by the previous session's late fault. This is a single-writer protocol, not a guarantee against every crash or multi-process race.
+
+`model.infer` is a separate grant. Bootstrap alone configures endpoints/auth/model allowlists and finite job/strategy-session budgets. Every attempt reserves a durable slot before direct public Pi `ModelRuntime.completeSimple`; no `Client.submit`, main transcript or C2 ledger is involved. Actual request options and a per-request model cap enforce output limits, with no implicit transport/model retries. Source/context edits, navigation ABA, generation/lease changes and cancellation prevent future calls and quarantine late completions. Pending/no-usage attempts remain observable as unknown in audit; unpriced cost is null, not zero.
+
+Tools receive a host run-bound invocation capability. Async-local validation also stops a late old tool from omitting the argument to obtain new-session authority. Direct operator calls and tool invocations consume the same scoped services but do not share a refreshable tool token.
 
 ## Input admission and native scheduling
 
@@ -63,18 +75,18 @@ subscribe currently supplies receipt and lifecycle transition notices, not the c
 
 ## Persistence and scope limits
 
-JSONL is Pi storage. No new on-disk session schema is invented. Host ledger, grants and revisions are not reconstructed from disk on restart. There is no existing-session open/resume API yet.
+JSONL is Pi storage; the host does not replace its session-entry schema. Explicit trusted `reopenSessionFile` opens only a physically validated Pakka-owned file under this dataDir, with matching session/cwd provenance and parentage. A requested missing/corrupt/foreign reopen rejects instead of creating a new session. Raw IDs and strategy/session artifact data survive; old host ledger, grants, leases and operation tokens are not reconstructed. Reopen is not bulk legacy import or C2 crash recovery.
 
-Default resource discovery is disabled (extensions, skills, prompts, themes, context files); host settings disable native compaction and automatic retry. All model/tool configuration is explicit. This is not a claim that every internal retry/recovery writer, every model family, or every tool-error path has been audited.
+Default resource discovery is disabled (extensions, skills, prompts, themes, context files); host settings disable native compaction and automatic retry. All model/tool configuration is explicit. This slice exercises OpenAI-completions-compatible providers and disables auxiliary transport retry; it is not a claim that every model family or every internal recovery writer/tool-error path has been audited.
 
 The runtime package cohort is explicitly pinned inside the agent package because workspace-root overrides are not inherited by installed consumers. Smoke installation deliberately omits those overrides.
 
 ## Next integration boundaries
 
-- Existing-session open/resume with authoritative recovery and a durable admission journal.
+- Strategy algorithm/default-package integration and cross-package acceptance.
 - Full preprocessing compatibility without surrendering request identity or native scheduling.
-- Per-tool/result permission hooks and actual artifacts storage.
-- Boundary context proposals with safe continuation and a complete observable protocol.
+- Durable C2 admission recovery, multi-process storage and bulk legacy import.
+- Per-tool/result permission hooks and a complete observable protocol.
 - RPC authentication/serializable handles, CLI, then TUI driven only by these ports.
 
-These are unresolved product work, not features implied by the first slice.
+These are unresolved product work, not features implied by this host component.

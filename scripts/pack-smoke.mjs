@@ -48,13 +48,33 @@ writeFileSync(
 			private: true,
 			type: "module",
 			dependencies: { "@pakka/agent": "file:./pakka-agent-0.1.0.tgz" },
+			devDependencies: { typescript: "7.0.2", "@types/node": "26.6.4" },
 		},
 		null,
 		2,
 	),
 );
 copyFileSync(join(root, "scripts", "consumer-smoke.mjs"), join(consumer, "smoke.mjs"));
-run("install", [npmCli, "install", "--ignore-scripts", "--registry=https://registry.npmjs.org"], consumer);
+copyFileSync(join(root, "scripts", "consumer-types.ts"), join(consumer, "consumer-types.ts"));
+run(
+	"install",
+	[npmCli, "install", "--ignore-scripts", "--no-audit", "--no-fund", "--registry=https://registry.npmjs.org"],
+	consumer,
+);
+run(
+	"declarations",
+	[
+		join(consumer, "node_modules", "typescript", "bin", "tsc"),
+		"--noEmit",
+		"--strict",
+		"--module",
+		"NodeNext",
+		"--target",
+		"ES2022",
+		"consumer-types.ts",
+	],
+	consumer,
+);
 run("dependency-tree", [npmCli, "ls", "--all", "--json"], consumer);
 console.log(run("smoke", [join(consumer, "smoke.mjs")], consumer));
 writeFileSync(join(artifacts, "consumer-path.txt"), consumer + "\n");

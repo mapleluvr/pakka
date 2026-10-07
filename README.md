@@ -18,10 +18,10 @@ npm run smoke:package
 ```
 
 - 测试不读取真实凭据、不调用付费模型；使用独立临时 profile 与 127.0.0.1 provider。
-- `smoke:package` 会打包、在 Git 仓库之外建立消费者、**不携带根 overrides** 安装 tarball，再实际请求模型与提交 cut。需要访问 npm registry。
+- `smoke:package` 会打包、在 Git 仓库之外建立消费者、**不携带根 overrides** 安装 tarball，再编译公开声明，实际验证 cut、策略投影、scoped artifacts 与辅助推理的 wire 上限。需要访问 npm registry。
 - `artifacts/integration/manifest.jsonl` 索引每个测试的 HTTP payload、宿主快照与原始 JSONL 副本。生成物被 Git 忽略，每次运行重建当前 manifest、保留旧目录。
 - `artifacts/package-smoke/` 保存外部安装和执行日志。
-- [设计与约束](docs/ARCHITECTURE.md) · [验证记录](docs/VERIFICATION.md)
+- [设计与约束](docs/ARCHITECTURE.md) · [策略控制 API 与精确接口](docs/STRATEGY-API.md) · [验证记录](docs/VERIFICATION.md)
 
 ## 目录
 
@@ -29,7 +29,10 @@ npm run smoke:package
 packages/agent/
   src/types.ts           Kappa/Pakka DTO，不依赖 Pi 类型
   src/host.ts            身份、权限、admission、epoch、生命周期
-  src/pi-adapter.ts      唯一持有 Pi mutable handles 的内部适配器
+  src/pi-adapter.ts      唯一持有 Pi mutable handles 与模型凭据的内部适配器
+  src/strategy-control.ts 策略 lease、frame/job/invocation scope 与请求授权
+  src/strategy-projection.ts  纯 DTO patch/range 与 native protocol 验证
+  src/artifact-journal.ts  受控命名空间、版本 batch 与物理 receipt
   src/index.ts           公开入口
   test/                  真实 Pi 的集成/回归测试
 scripts/
@@ -97,11 +100,19 @@ try {
 3. `effects: "not-assessed"` **不表示没有副作用**；失败时为 `"unknown"`。
 4. 稳定 client 身份和 per-operation capability 不同。reload/newSession 保留 client grants 和策略配置，但撤销旧操作快照；尚无 Kappa 插件热重载。
 5. epoch/branchId 是宿主操作与 admission scope，不是旧 Kappa treeRevision 或持久化树分支身份。
-6. 当前 createHost 总是新建 session。已有 JSONL 保留，但尚无 reopen/resume API。
+6. 默认新建 session；bootstrap 可显式指定 `reopenSessionFile` 重开同 dataDir 下的 Pakka-owned session。缺失、损坏或 foreign 文件会拒绝，旧 token/lease/C2 admission 不会恢复。
+
+## 策略控制
+
+`Client.bindStrategy(id)` 返回冻结的策略 binding：一次性 provenance frame、lease-bound projector、scoped artifact journal，以及显式 `model.infer` grant 下的辅助 source job。它不包含 Pi session/registry、endpoint 或 credentials。详见 [精确接口与最小示例](docs/STRATEGY-API.md)。
+
+活动 projector 返回 entry-message patches 或 summary-range replacements；宿主保留 system/loadout checkpoints、excluded messages 和 native call/result IDs/names/arguments，在公开 Pi prepareRequest/onPayload 回调中核验后才发送 HTTP。普通 tail growth 不撤销 source job，源/前文 edit、导航 ABA、reload/newSession/lease 变化会撤权。journal 未知状态阻断调用，不能作为重新推理的理由。
+
+辅助推理不经 `Client.submit`，不写主 transcript/C2；bootstrap 配置有限模型 allowlist、每 job 与 strategy/session 的持久调用预算。每次输出上限接入真实请求参数，外部 smoke 实测 `max_tokens: 64/128`。本组件没有 Dynamite 算法或默认策略装配。
 
 ## 暂未实现
 
-完整 Pi input/skill/template/image/extension-command 兼容（slash 输入显式拒绝）；任意原生 Pi 插件；运行期 boundary context 提案；完整 AgentSubject/claim receipt 与 RPC；按次工具权限和 C2 tool-result 准入；上下文 artifacts 存储；持久化 admission ledger、崩溃恢复、多进程 writer、sandbox；TUI 和产品 CLI。
+完整 Pi input/skill/template/image/extension-command 兼容（slash 输入显式拒绝）；任意原生 Pi 插件；任意运行期 boundary context 提案；完整 AgentSubject/claim receipt 与 RPC；按次工具权限和 C2 tool-result 准入；持久化 admission ledger、完整崩溃恢复、多进程 writer、sandbox；全 provider 兼容、Dynamite 算法和默认装配；TUI 和产品 CLI。
 
 当前仅接入显式配置的工具；工具允许执行不等于其副作用可回滚。context_edit 的 author intent 与 mutation 仍是两次写入，不是原子事务。
 

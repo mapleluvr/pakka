@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
-import { PiAdapter, type Notice } from "./pi-adapter.ts";
+import { PiAdapter, type Notice, type AdapterControl } from "./pi-adapter.ts";
+import { StrategyControl, type StrategyLease } from "./strategy-control.ts";
 import type {
 	Capability,
 	Client,
@@ -27,28 +28,53 @@ function dto<T>(value: T): T {
 type RecordInput = { receipt: Receipt; text: string; mode: string };
 class Kernel {
 	#adapter!: PiAdapter;
-	#options: HostOptions;
+	#options: Pick<HostOptions, "prepareInput">;
+	#control: StrategyControl;
 	#phase: View["phase"] = "ready";
 	#epoch = 0;
 	#generation = 0;
 	#branchId = randomUUID();
 	#lastError: string | undefined;
+	#sessionFailures = new Map<string, string>();
 	#records = new Map<string, RecordInput>();
 	#keys = new Map<string, string>();
 	#principals = new Set<string>();
 	#listeners = new Set<(e: HostEvent) => void>();
 	#caps = new WeakMap<Capability, { principal: string; stamp: string }>();
-	#strategies = new Map<string, { principal: string; hooks: Hook[] }>();
+	#strategies = new Map<string, StrategyLease>();
 	#owners = new Map<Hook, string>();
 	#policy: Policy | undefined;
 	#transitioning: Promise<void> | undefined;
 	#closing: Promise<void> | undefined;
 	#promptReservation: string | undefined;
 	constructor(options: HostOptions) {
-		this.#options = { ...options };
+		this.#options = { prepareInput: options.prepareInput };
+		this.#control = new StrategyControl(options.dataDir, options.inference?.policies ?? [], {
+			ready: () => this.#ready(),
+			phase: () => this.#phase,
+			identity: () => ({
+				sessionId: this.#adapter.snapshot().sessionId,
+				generation: this.#generation,
+				navigationId: this.#branchId,
+			}),
+			lease: (id) => this.#strategies.get(id),
+			owner: (hook) => this.#owners.get(hook),
+			frame: () => this.#adapter.frame(),
+			fail: (reason, sessionId) => this.#fail(reason, sessionId),
+			models: () => this.#adapter.models(),
+			infer: (request, cap, signal, timeout, check) =>
+				this.#adapter.infer(request, cap, signal, timeout, check),
+		});
 	}
-	async initialize(): Promise<Host> {
-		this.#adapter = await PiAdapter.create(this.#options, (n) => this.#notice(n));
+	#adapterControl(): AdapterControl {
+		return {
+			project: (signal) => this.#control.project(signal),
+			runScope: () => this.#control.runScope(),
+			invoke: (run, callback) => this.#control.invoke(run, callback),
+		};
+	}
+	async initialize(options: HostOptions): Promise<Host> {
+		this.#adapter = await PiAdapter.create(options, (n) => this.#notice(n), this.#adapterControl());
 		return Object.freeze({
 			connect: (id: string, grants: readonly Grant[]) => this.#connect(id, grants),
 			view: () => this.#view(),
@@ -115,15 +141,22 @@ class Kernel {
 		record.receipt = { ...record.receipt, ...patch };
 		this.#emit({ type: "receipt", receipt: record.receipt });
 	}
+	#fail(reason: string, sessionId = this.#adapter.snapshot().sessionId): void {
+		if (!this.#sessionFailures.has(sessionId)) this.#sessionFailures.set(sessionId, reason);
+		if (sessionId !== this.#adapter.snapshot().sessionId || this.#phase === "disposed") return;
+		this.#lastError = this.#sessionFailures.get(sessionId);
+		if (this.#phase === "ready") {
+			this.#phase = "failed";
+			this.#control.invalidate("failed");
+		}
+	}
 	#notice(n: Notice): void {
 		this.#epoch++;
 		if (n.type === "consumed") this.#receipt(n.id, { state: "consumed" });
 		if (n.type === "committed") this.#receipt(n.id, { state: "committed", entryId: n.entryId });
 		if (n.type === "unknown") this.#receipt(n.id, { state: "unknown", reason: n.reason });
-		if (n.type === "failed") {
-			this.#lastError = n.reason;
-			if (this.#phase === "ready") this.#phase = "failed";
-		}
+		if (n.type === "failed") this.#fail(n.reason);
+		if (n.type === "changed") this.#control.sourceChanged();
 	}
 	#connect(principal: string, grants: readonly Grant[]): Client {
 		this.#ready();
@@ -147,7 +180,7 @@ class Kernel {
 					if (!allow.has(hook)) throw new Error("Missing hook grant");
 					if (this.#owners.has(hook)) throw new Error("Hook already owned: " + hook);
 				}
-				this.#strategies.set(spec.id, { principal, hooks });
+				this.#strategies.set(spec.id, { principal, hooks, leaseId: randomUUID() });
 				for (const hook of hooks) this.#owners.set(hook, spec.id);
 				this.#epoch++;
 			},
@@ -159,9 +192,11 @@ class Kernel {
 					this.#owners.delete(hook);
 					if (hook === "real_context.write") this.#policy = undefined;
 				}
+				this.#control.invalidate("deactivated", id);
 				this.#strategies.delete(id);
 				this.#epoch++;
 			},
+			bindStrategy: (id: string) => this.#control.bind(principal, allow, id),
 			setPolicy: (policy: Policy) => {
 				this.#ready();
 				const owner = this.#owners.get("real_context.write");
@@ -191,6 +226,7 @@ class Kernel {
 				if (this.#adapter.busy || this.#promptReservation) throw new Error("Session must be idle");
 				this.#adapter.branch(entryId);
 				this.#branchId = randomUUID();
+				this.#control.invalidate("navigation");
 				this.#epoch++;
 			},
 		});
@@ -230,14 +266,16 @@ class Kernel {
 			return denied("State changed during approval");
 		this.#epoch++;
 		try {
-			return dto({
-				status: "committed",
-				entryId: this.#adapter.commit(proposal, { principal, strategyId: owner, operationId: randomUUID() }),
+			const entryId = this.#adapter.commit(proposal, {
+				principal,
+				strategyId: owner,
+				operationId: randomUUID(),
 			});
+			this.#control.sourceChanged();
+			return dto({ status: "committed", entryId });
 		} catch (error) {
 			const reason = error instanceof Error ? error.message : String(error);
-			this.#phase = "failed";
-			this.#lastError = reason;
+			this.#fail(reason);
 			return dto({ status: "unknown", reason });
 		}
 	}
@@ -335,6 +373,7 @@ class Kernel {
 			return Promise.reject(new Error("Host failed; use explicit newSession recovery"));
 		this.#phase = "transitioning";
 		this.#generation++;
+		this.#control.invalidate(replace ? "newSession" : "reload");
 		this.#epoch++;
 		this.#promptReservation = undefined;
 		this.#clear();
@@ -344,11 +383,13 @@ class Kernel {
 				await this.#adapter.abortAndIdle();
 				if (replace) {
 					const previous = this.#adapter;
-					const next = await PiAdapter.create(this.#options, (n) => this.#notice(n));
+					const next = await previous.replacement((n) => this.#notice(n), this.#adapterControl());
 					this.#adapter = next;
 					this.#branchId = randomUUID();
 					await previous.dispose();
 				} else await this.#adapter.reload();
+				const failure = this.#sessionFailures.get(this.#adapter.snapshot().sessionId);
+				if (failure) throw new Error(failure);
 				this.#lastError = undefined;
 				if (this.#phase !== "disposed") this.#phase = "ready";
 			} catch (error) {
@@ -358,6 +399,7 @@ class Kernel {
 			} finally {
 				this.#epoch++;
 				this.#emit({ type: "state", phase: this.#phase });
+				this.#control.restored(replace ? "newSession" : "reload");
 			}
 		})();
 		const tracked = operation.finally(() => {
@@ -370,6 +412,7 @@ class Kernel {
 		if (this.#closing) return this.#closing;
 		this.#phase = "disposed";
 		this.#generation++;
+		this.#control.invalidate("disposed");
 		this.#epoch++;
 		this.#closing = (async () => {
 			try {
@@ -385,5 +428,5 @@ class Kernel {
 	}
 }
 export async function createHost(options: HostOptions): Promise<Host> {
-	return new Kernel(options).initialize();
+	return new Kernel(options).initialize(options);
 }

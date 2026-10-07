@@ -10,8 +10,13 @@ export function deferred() {
 	});
 	return { promise, resolve };
 }
-export type Payload = { messages: { role: string; content: unknown }[]; tools?: unknown[] };
-export type Answer = { text: string } | { tool: string; args?: Record<string, unknown> };
+export type Payload = {
+	model: string;
+	max_tokens?: number;
+	messages: { role: string; content: unknown; [key: string]: unknown }[];
+	tools?: unknown[];
+};
+export type Answer = { text: string } | { tool: string; args?: Record<string, unknown> } | { error: number };
 export async function fixture(
 	options: Partial<HostOptions> = {},
 	reply: (payload: Payload, n: number) => Answer | Promise<Answer> = () => ({ text: "LOCAL-ANSWER" }),
@@ -27,6 +32,11 @@ export async function fixture(
 			requests.push(payload);
 			const n = requests.length;
 			const answer = await reply(payload, n);
+			if ("error" in answer) {
+				response.writeHead(answer.error, { "content-type": "application/json" });
+				response.end(JSON.stringify({ error: { message: "LOCAL-FAILURE" } }));
+				return;
+			}
 			const base = { id: "local-" + n, object: "chat.completion.chunk", created: 1, model: "local-model" };
 			const delta =
 				"tool" in answer
@@ -72,7 +82,8 @@ export async function fixture(
 		dataDir,
 		requests,
 		errors,
-		async start() {
+		endpoint: "http://127.0.0.1:" + address.port + "/v1",
+		async start(extra: Partial<HostOptions> = {}) {
 			host = await createHost({
 				cwd,
 				dataDir,
@@ -81,6 +92,7 @@ export async function fixture(
 				apiKey: "local-only",
 				systemPrompt: "PAKKA-SYSTEM",
 				...options,
+				...extra,
 			});
 			return host;
 		},
@@ -93,10 +105,16 @@ export async function fixture(
 					await writeFile(join(directory, "requests.json"), JSON.stringify(requests, null, 2));
 					await writeFile(join(directory, "view.json"), JSON.stringify(host?.view() ?? null, null, 2));
 					await writeFile(join(directory, "server-errors.json"), JSON.stringify(errors.map(String), null, 2));
-					try {
-						await cp(join(dataDir, "sessions"), join(directory, "sessions"), { recursive: true });
-					} catch (e) {
-						if ((e as NodeJS.ErrnoException).code !== "ENOENT") throw e;
+					for (const [source, destination] of [
+						["sessions", "sessions"],
+						["artifacts", "strategy-artifacts"],
+						["journal-ownership", "journal-ownership"],
+					]) {
+						try {
+							await cp(join(dataDir, source), join(directory, destination), { recursive: true });
+						} catch (e) {
+							if ((e as NodeJS.ErrnoException).code !== "ENOENT") throw e;
+						}
 					}
 					await appendFile(
 						join(artifacts, "manifest.jsonl"),

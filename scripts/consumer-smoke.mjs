@@ -73,10 +73,33 @@ try {
 		endpoint: "http://127.0.0.1:" + server.address().port + "/v1",
 		model: "local",
 		apiKey: "local-only",
+		systemPrompt: "PACKED-SYSTEM",
+		inference: {
+			models: [
+				{
+					key: "summary",
+					model: "summary-local",
+					endpoint: "http://127.0.0.1:" + server.address().port + "/v1",
+					apiKey: "local-summary-only",
+					contextWindow: 8192,
+					maxTokens: 512,
+				},
+			],
+			policies: [
+				{
+					strategyId: "strategy",
+					modelKeys: ["summary"],
+					maxCalls: 2,
+					maxJobCalls: 2,
+					maxOutputTokens: 256,
+					timeoutMs: 5000,
+				},
+			],
+		},
 	});
 	const user = host.connect("user", ["input.submit"]),
-		owner = host.connect("owner", ["real_context.write"]);
-	owner.activateStrategy({ id: "strategy", hooks: ["real_context.write"] });
+		owner = host.connect("owner", ["real_context.write", "context_artifacts.write", "model.infer"]);
+	owner.activateStrategy({ id: "strategy", hooks: ["real_context.write", "context_artifacts.write"] });
 	const input = await user.submit({ key: "first", text: "ORIGINAL-PACKED" });
 	await host.waitForIdle();
 	assert.equal(user.receipt(input.id).state, "committed");
@@ -96,6 +119,60 @@ try {
 	assert.equal(requests.length, 2);
 	assert.match(JSON.stringify(requests[1]), /PACKED-SUMMARY/);
 	assert.doesNotMatch(JSON.stringify(requests[1]), /ORIGINAL-PACKED/);
+	const binding = owner.bindStrategy("strategy"),
+		frame = binding.readFrame();
+	const entryId = frame.projection.find((e) =>
+		JSON.stringify(e.messages).includes("PACKED-NEXT"),
+	).sourceEntryId;
+	const job = binding.createJob(frame.basis, {
+		planId: "packed-job",
+		targetEntryIds: [entryId],
+		contextEntryIds: [],
+		maxCalls: 2,
+	});
+	const before = await readFile(host.view().sessionFile, "utf8");
+	for (const cap of [64, 128]) {
+		assert.equal(
+			(await job.infer({ modelKey: "summary", prompt: "PACKED-AUXILIARY", maxOutputTokens: cap })).status,
+			"completed",
+		);
+		assert.equal(requests.at(-1).max_tokens, cap);
+	}
+	assert.equal(await readFile(host.view().sessionFile, "utf8"), before);
+	const receipt = binding.artifacts.append(job.scope, {
+		expectedVersion: 0,
+		records: [{ kind: "packed-record" }],
+	});
+	assert.equal(receipt.status, "committed");
+	const remove = binding.installProjector((frame) => ({
+		status: "apply",
+		basis: frame.basis,
+		patches: [
+			{ sourceEntryId: entryId, messageIndex: 0, content: [{ type: "text", text: "PACKED-PROJECTED" }] },
+		],
+	}));
+	await host.reload();
+	await user.submit({ key: "third", text: "PACKED-THIRD" });
+	await host.waitForIdle();
+	assert.equal(requests.length, 5);
+	assert.match(JSON.stringify(requests[4]), /PACKED-PROJECTED/);
+	assert.match(JSON.stringify(requests[4]), /PACKED-SYSTEM/);
+	assert.doesNotMatch(JSON.stringify(requests[4]), /PACKED-AUXILIARY|PACKED-NEXT/);
+	assert.equal(binding.audit().length, 2);
+	remove();
+	binding.installProjector((frame) => ({
+		status: "apply",
+		basis: frame.basis,
+		replacements: [{ sourceEntryIds: [entryId], summary: null }],
+	}));
+	await user.submit({ key: "fourth", text: "PACKED-FOURTH" });
+	await host.waitForIdle();
+	assert.equal(requests.length, 6);
+	assert.equal(host.view().phase, "ready");
+	assert.match(JSON.stringify(requests[5]), /PACKED-SYSTEM/);
+	assert.match(JSON.stringify(requests[5]), /PACKED-FOURTH/);
+	assert.doesNotMatch(JSON.stringify(requests[5]), /PACKED-NEXT|PACKED-PROJECTED|Host strategy summary/);
+	assert.match(await readFile(host.view().sessionFile, "utf8"), /PACKED-NEXT/);
 	console.log(
 		JSON.stringify({
 			status: "passed",
@@ -104,6 +181,10 @@ try {
 			versions,
 			httpRequests: requests.length,
 			privateSubpath: "rejected",
+			auxiliaryWireCaps: requests.filter((r) => r.model === "summary-local").map((r) => r.max_tokens),
+			projectorAfterReload: "verified",
+			rangeOmission: "verified",
+			artifactVersion: receipt.version,
 		}),
 	);
 } finally {

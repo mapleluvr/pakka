@@ -1,6 +1,7 @@
-import { readFileSync } from "node:fs";
+import { randomUUID } from "node:crypto";
+import { readFileSync, realpathSync, writeFileSync, existsSync } from "node:fs";
 import { mkdir } from "node:fs/promises";
-import { join } from "node:path";
+import { join, resolve, relative, isAbsolute } from "node:path";
 import {
 	createAgentSession,
 	DefaultResourceLoader,
@@ -10,8 +11,43 @@ import {
 	type AgentSession,
 	type ToolDefinition,
 } from "@earendil-works/pi-coding-agent";
-import type { AgentMessage } from "@earendil-works/pi-agent-core";
-import type { HostOptions, Proposal } from "./types.ts";
+import type { AgentMessage, PrepareRequest } from "@earendil-works/pi-agent-core";
+import { type Model, type Api, type Usage, type SimpleStreamOptions } from "@earendil-works/pi-ai";
+import { copy, hash } from "./artifact-journal.ts";
+import type {
+	HostOptions,
+	Proposal,
+	ContextFrame,
+	MessageDTO,
+	ModelDTO,
+	UsageDTO,
+	InferenceRequest,
+	InferenceResult,
+	ToolInvocationScope,
+} from "./types.ts";
+
+export type AdapterFrame = Pick<
+	ContextFrame,
+	"sessionId" | "cwd" | "leafId" | "entries" | "activeEntryIds" | "projection" | "model" | "usage"
+>;
+export interface AdapterControl {
+	project(signal?: AbortSignal): Promise<{ messages: readonly MessageDTO[]; check(): void }>;
+	runScope(): object;
+	invoke<T>(run: object, callback: (scope: ToolInvocationScope) => Promise<T>): Promise<T>;
+}
+function clean<T>(value: unknown): T {
+	return JSON.parse(JSON.stringify(value)) as T;
+}
+function usageDTO(usage: Usage): UsageDTO {
+	return {
+		input: usage.input,
+		output: usage.output,
+		cacheRead: usage.cacheRead,
+		cacheWrite: usage.cacheWrite,
+		totalTokens: usage.totalTokens,
+		cost: usage.cost.total || null,
+	};
+}
 
 export type Notice =
 	| { type: "changed" }
@@ -35,8 +71,56 @@ export class PiAdapter {
 	#owned = new Map<AgentMessage, string>();
 	#kinds = new Map<AgentMessage, "steer" | "followUp">();
 	#unsubscribe: () => void;
-	private constructor(session: AgentSession, notify: (notice: Notice) => void) {
+	#control: AdapterControl;
+	#options: HostOptions;
+	#runScope: object | undefined;
+	#prepare: PrepareRequest | undefined;
+	#payload: SimpleStreamOptions["onPayload"];
+	#permit: { check(): void } | undefined;
+	#inferenceModels = new Map<
+		string,
+		{ model: Model<Api>; apiKey: string; headers?: Record<string, string> }
+	>();
+	private constructor(
+		session: AgentSession,
+		notify: (notice: Notice) => void,
+		options: HostOptions,
+		control: AdapterControl,
+	) {
 		this.#session = session;
+		this.#options = {
+			...options,
+			inference: options.inference ? structuredClone(options.inference) : undefined,
+		};
+		this.#control = control;
+		for (const definition of options.inference?.models ?? []) {
+			const provider = "pakka-summary-" + hash(definition.key).slice(0, 16);
+			session.modelRuntime.registerProvider(provider, {
+				api: "openai-completions",
+				baseUrl: definition.endpoint,
+				apiKey: definition.apiKey,
+				models: [
+					{
+						id: definition.model,
+						name: definition.name ?? definition.model,
+						reasoning: definition.reasoning ?? false,
+						input: ["text"],
+						cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+						contextWindow: definition.contextWindow,
+						maxTokens: definition.maxTokens,
+						compat: { maxTokensField: "max_tokens", supportsMidConvoSystemMessages: true },
+					},
+				],
+			});
+			const model = session.modelRuntime.getModel(provider, definition.model);
+			if (!model) throw new Error("Inference model unavailable");
+			this.#inferenceModels.set(definition.key, {
+				model,
+				apiKey: definition.apiKey,
+				headers: definition.headers ? { ...definition.headers } : undefined,
+			});
+		}
+		this.#installGate();
 		this.#notify = notify;
 		// Pi's own listener is registered first. This listener runs after its append.
 		this.#unsubscribe = session.agent.subscribe((event) => {
@@ -54,7 +138,28 @@ export class PiAdapter {
 			}
 		});
 	}
-	static async create(options: HostOptions, notify: (notice: Notice) => void): Promise<PiAdapter> {
+	static async create(
+		options: HostOptions,
+		notify: (notice: Notice) => void,
+		control: AdapterControl,
+	): Promise<PiAdapter> {
+		const modelKeys = new Set<string>();
+		for (const model of options.inference?.models ?? []) {
+			if (
+				!model.key ||
+				modelKeys.has(model.key) ||
+				!model.model ||
+				!model.apiKey ||
+				[model.maxTokens, model.contextWindow].some((n) => !Number.isSafeInteger(n) || n <= 0)
+			)
+				throw new Error("Invalid/duplicate finite inference model definition");
+			const endpoint = new URL(model.endpoint);
+			if (!["http:", "https:"].includes(endpoint.protocol)) throw new Error("Unsupported inference endpoint");
+			modelKeys.add(model.key);
+		}
+		for (const policy of options.inference?.policies ?? [])
+			if (policy.modelKeys.some((key) => !modelKeys.has(key)))
+				throw new Error("Inference model policy is not allowlisted");
 		await mkdir(options.dataDir, { recursive: true });
 		const settingsManager = SettingsManager.inMemory(
 			{ compaction: { enabled: false }, retry: { enabled: false }, defaultProjectTrust: "never" },
@@ -96,6 +201,45 @@ export class PiAdapter {
 		});
 		const model = runtime.getModel("pakka", options.model);
 		if (!model) throw new Error("Configured model unavailable");
+		const sessions = join(options.dataDir, "sessions");
+		await mkdir(sessions, { recursive: true });
+		let manager: SessionManager;
+		if (options.reopenSessionFile !== undefined) {
+			const file = realpathSync(options.reopenSessionFile);
+			const inside = relative(realpathSync(sessions), file);
+			if (!inside || inside.startsWith("..") || isAbsolute(inside))
+				throw new Error("Reopen must be a Pakka-owned session");
+			const text = readFileSync(file, "utf8");
+			if (!text.endsWith("\n")) throw new Error("Corrupt reopen session");
+			const entries = text
+				.trimEnd()
+				.split("\n")
+				.map((line) => JSON.parse(line));
+			const header = entries.shift();
+			if (
+				header?.type !== "session" ||
+				typeof header.id !== "string" ||
+				resolve(header.cwd) !== resolve(options.cwd)
+			)
+				throw new Error("Invalid reopen header");
+			const marker = JSON.parse(readFileSync(file + ".pakka.json", "utf8"));
+			if (
+				marker.schema !== "pakka.session.v1" ||
+				marker.sessionId !== header.id ||
+				marker.cwd !== resolve(options.cwd)
+			)
+				throw new Error("Missing Pakka reopen provenance");
+			const ids = new Set<string>();
+			for (const entry of entries) {
+				if (!entry.id || ids.has(entry.id) || (entry.parentId !== null && !ids.has(entry.parentId)))
+					throw new Error("Corrupt reopen parentage");
+				ids.add(entry.id);
+			}
+			manager = SessionManager.open(file, sessions, options.cwd);
+			if (manager.getSessionId() !== header.id || manager.getEntries().length !== entries.length)
+				throw new Error("Reopen identity mismatch");
+		} else manager = SessionManager.create(options.cwd, sessions);
+		let adapter: PiAdapter | undefined;
 		const { session } = await createAgentSession({
 			cwd: options.cwd,
 			agentDir: options.dataDir,
@@ -104,26 +248,183 @@ export class PiAdapter {
 			thinkingLevel: "off",
 			resourceLoader,
 			settingsManager,
-			sessionManager: SessionManager.create(options.cwd, join(options.dataDir, "sessions")),
+			sessionManager: manager,
 			tools: (options.tools ?? []).map((t) => t.name),
 			customTools: (options.tools ?? []).map((t) => ({
 				name: t.name,
 				label: t.name,
 				description: t.description,
 				parameters: structuredClone(t.parameters) as ToolDefinition["parameters"],
-				execute: async (_id, args, signal) => ({
-					content: [
-						{
-							type: "text" as const,
-							text: await t.execute(structuredClone(args) as Record<string, unknown>, signal),
-						},
-					],
-					details: {},
-				}),
+				execute: async (_id, args, signal) => {
+					if (!adapter || !adapter.#runScope) throw new Error("Tool has no run invocation scope");
+					return control.invoke(adapter.#runScope, async (scope) => ({
+						content: [
+							{
+								type: "text" as const,
+								text: await t.execute(clean<Record<string, unknown>>(args), signal, scope),
+							},
+						],
+						details: {},
+					}));
+				},
 			})),
 		});
 		if (options.steeringMode) session.setSteeringMode(options.steeringMode);
-		return new PiAdapter(session, notify);
+		const markerPath = session.sessionFile! + ".pakka.json";
+		if (!existsSync(markerPath))
+			writeFileSync(
+				markerPath,
+				JSON.stringify({
+					schema: "pakka.session.v1",
+					sessionId: session.sessionId,
+					cwd: resolve(options.cwd),
+				}) + "\n",
+				{ flag: "wx" },
+			);
+		adapter = new PiAdapter(session, notify, options, control);
+		return adapter;
+	}
+	#installGate(): void {
+		const agent = this.#session.agent;
+		// Callback slots only. Keep Pi's canonical projection, hidden-loadout and auth chain intact.
+		if (agent.prepareRequest !== this.#prepare) {
+			const previous = agent.prepareRequest;
+			this.#prepare = async (request, signal) => {
+				this.#permit = undefined;
+				const installed = await previous?.(request, signal);
+				const context = installed?.context ?? request.context;
+				const canonical = this.#session.sessionManager.buildSessionProjection().messages;
+				if (hash(context.messages) !== hash(canonical)) throw new Error("Pi projection alignment changed");
+				const permitted = await this.#control.project(signal);
+				permitted.check();
+				this.#permit = permitted;
+				return { ...installed, context: { ...context, messages: clean<AgentMessage[]>(permitted.messages) } };
+			};
+			agent.prepareRequest = this.#prepare;
+		}
+		if (agent.onPayload !== this.#payload || !this.#payload) {
+			const previous = agent.onPayload;
+			this.#payload = async (payload, model) => {
+				if (!this.#permit) throw new Error("Provider request has no host authorization");
+				this.#permit.check();
+				const result = await previous?.(payload, model);
+				this.#permit.check();
+				return result;
+			};
+			agent.onPayload = this.#payload;
+		}
+	}
+	frame(): AdapterFrame {
+		const manager = this.#session.sessionManager;
+		const branch = manager.getBranch();
+		const projection = manager.buildSessionProjection();
+		const total: { -readonly [K in keyof UsageDTO]: UsageDTO[K] } = {
+			input: 0,
+			output: 0,
+			cacheRead: 0,
+			cacheWrite: 0,
+			totalTokens: 0,
+			cost: 0,
+		};
+		for (const entry of branch)
+			if (entry.type === "message" && entry.message.role === "assistant") {
+				const usage = usageDTO(entry.message.usage);
+				for (const key of ["input", "output", "cacheRead", "cacheWrite", "totalTokens"] as const)
+					total[key] += usage[key];
+				total.cost = total.cost === null || usage.cost === null ? null : total.cost + usage.cost;
+			}
+		const current = this.#session.model!;
+		return copy({
+			sessionId: this.#session.sessionId,
+			cwd: manager.getCwd(),
+			leafId: manager.getLeafId(),
+			entries: manager.getEntries().map((entry) => ({
+				id: entry.id,
+				parentId: entry.parentId,
+				type: entry.type,
+				raw: clean<ContextFrame["entries"][number]["raw"]>(entry),
+			})),
+			activeEntryIds: branch.map((e) => e.id),
+			projection: projection.entries.map(({ sourceEntry, messages }) => ({
+				sourceEntryId: sourceEntry.id,
+				messages: clean<MessageDTO[]>(messages),
+				boundary: messages.some((m) => m.role === "system")
+					? ("system" as const)
+					: ["compaction", "branch_summary"].includes(sourceEntry.type)
+						? ("host-summary" as const)
+						: null,
+				excluded: messages.some((m) => m.role === "bashExecution" && m.excludeFromContext === true),
+				fingerprint: hash([
+					sourceEntry,
+					messages,
+					branch.filter((e) => e.type === "context_edit" && e.targetId === sourceEntry.id),
+				]),
+			})),
+			model: {
+				key: "session",
+				model: current.id,
+				name: current.name,
+				reasoning: current.reasoning,
+				contextWindow: current.contextWindow,
+				maxOutputTokens: current.maxTokens,
+				available: true,
+			},
+			usage: total,
+		});
+	}
+	models(): readonly ModelDTO[] {
+		return copy(
+			[...this.#inferenceModels].map(([key, { model }]) => ({
+				key,
+				model: model.id,
+				name: model.name,
+				reasoning: model.reasoning,
+				contextWindow: model.contextWindow,
+				maxOutputTokens: model.maxTokens,
+				available: true,
+			})),
+		);
+	}
+	async infer(
+		request: InferenceRequest,
+		cap: number,
+		signal: AbortSignal,
+		timeoutMs: number,
+		check: () => void,
+	): Promise<Omit<InferenceResult, "attemptId">> {
+		const definition = this.#inferenceModels.get(request.modelKey);
+		if (!definition) throw new Error("Model is not allowlisted");
+		check();
+		const model = { ...definition.model, maxTokens: Math.min(cap, definition.model.maxTokens) };
+		const answer = await this.#session.modelRuntime.completeSimple(
+			model,
+			{
+				systemPrompt: request.systemPrompt ?? "",
+				messages: [{ role: "user", content: request.prompt, timestamp: Date.now() }],
+			},
+			{
+				apiKey: definition.apiKey,
+				headers: definition.headers,
+				maxTokens: model.maxTokens,
+				reasoning: request.thinkingLevel === "off" ? undefined : request.thinkingLevel,
+				signal,
+				timeoutMs,
+				maxRetries: 0,
+				sessionId: "pakka-aux-" + randomUUID(),
+				onPayload: async () => {
+					check();
+				},
+			},
+		);
+		const failed = ["error", "aborted"].includes(answer.stopReason);
+		const known = !failed || answer.usage.totalTokens > 0;
+		return copy({
+			status: failed ? "failed" : "completed",
+			modelKey: request.modelKey,
+			...(failed ? { reason: "Auxiliary provider failed" } : { text: messageText(answer) }),
+			usageStatus: known ? "known" : "unknown",
+			...(known ? { usage: usageDTO(answer.usage) } : {}),
+		});
 	}
 	get busy(): boolean {
 		return this.#run !== undefined || !this.#session.isIdle;
@@ -149,6 +450,7 @@ export class PiAdapter {
 	start(id: string, text: string, canStart: () => boolean): void {
 		if (this.busy) throw new Error("busy");
 		this.#primary = id;
+		this.#runScope = this.#control.runScope();
 		const promise = this.#session.prompt(text, {
 			expandPromptTemplates: false,
 			preflightResult: (state) => {
@@ -178,6 +480,8 @@ export class PiAdapter {
 					this.#primary = undefined;
 				}
 				this.#run = undefined;
+				this.#runScope = undefined;
+				this.#permit = undefined;
 			});
 	}
 	enqueue(id: string, text: string, kind: "steer" | "followUp"): void {
@@ -298,8 +602,12 @@ export class PiAdapter {
 		this.#session.sessionManager.branch(id);
 		this.#session.refreshContext();
 	}
+	replacement(notify: (notice: Notice) => void, control: AdapterControl): Promise<PiAdapter> {
+		return PiAdapter.create({ ...this.#options, reopenSessionFile: undefined }, notify, control);
+	}
 	async reload(): Promise<void> {
 		await this.#session.reload();
+		this.#installGate();
 	}
 	async abortAndIdle(): Promise<void> {
 		await this.#session.abort();
