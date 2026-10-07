@@ -1,0 +1,34 @@
+{
+	"name": "pakka-workspace",
+	"private": true,
+	"version": "0.1.0",
+	"type": "module",
+	"workspaces": [
+		"packages/*"
+	],
+	"engines": {
+		"node": ">=24.0.0"
+	},
+	"scripts": {
+		"build": "npm run build --workspaces",
+		"check": "tsc --noEmit -p tsconfig.test.json",
+		"test": "node scripts/test.mjs",
+		"smoke:package": "npm run build && node scripts/pack-smoke.mjs",
+		"format:check": "prettier --check packages scripts *.json"
+	},
+	"overrides": {
+		"@earendil-works/chord": "1.0.3",
+		"@earendil-works/pi-agent-core": "1.0.3",
+		"@earendil-works/pi-ai": "1.0.3",
+		"@earendil-works/pi-coding-agent": "1.0.3",
+		"@earendil-works/pi-tui": "1.0.3",
+		"@earendil-works/pi-mcp": "1.0.3",
+		"@earendil-works/pi-codemode": "1.0.3",
+		"@earendil-works/pi-telemetry": "1.0.3"
+	},
+	"devDependencies": {
+		"@types/node": "26.6.4",
+		"prettier": "3.6.2",
+		"typescript": "7.0.2"
+	}
+}

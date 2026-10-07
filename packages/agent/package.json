@@ -1,0 +1,28 @@
+{
+	"name": "@pakka/agent",
+	"version": "0.1.0",
+	"private": true,
+	"type": "module",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.js"
+		}
+	},
+	"files": [
+		"dist"
+	],
+	"scripts": {
+		"build": "tsc -p tsconfig.json"
+	},
+	"dependencies": {
+		"@earendil-works/pi-coding-agent": "1.0.3",
+		"@earendil-works/pi-ai": "1.0.3",
+		"@earendil-works/pi-agent-core": "1.0.3",
+		"@earendil-works/pi-tui": "1.0.3",
+		"@earendil-works/chord": "1.0.3",
+		"@earendil-works/pi-codemode": "1.0.3",
+		"@earendil-works/pi-mcp": "1.0.3",
+		"@earendil-works/pi-telemetry": "1.0.3"
+	}
+}
