@@ -25,7 +25,14 @@ const files = readdirSync(new URL("../packages/agent/test/", import.meta.url))
 	.map((f) => "packages/agent/test/" + f);
 const result = spawnSync(
 	process.execPath,
-	["--experimental-strip-types", "--test", "--test-concurrency=1", ...process.argv.slice(2), ...files],
+	[
+		"--experimental-strip-types",
+		"--expose-gc",
+		"--test",
+		"--test-concurrency=1",
+		...process.argv.slice(2),
+		...files,
+	],
 	{ cwd: root, env, stdio: "inherit" },
 );
 process.exitCode = result.status ?? 1;

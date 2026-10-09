@@ -122,15 +122,19 @@ export class StrategyControl {
 		this.#check(authority);
 		return authority;
 	}
+	#journalFailure(sessionId: string): (reason: string) => void {
+		return (reason) => this.#ports.fail(reason, sessionId);
+	}
 	#journal(authority: Authority, kind = "records"): ArtifactJournal {
-		const key = JSON.stringify([authority.sessionId, authority.strategyId, kind]);
+		const sessionId = authority.sessionId;
+		const key = JSON.stringify([sessionId, authority.strategyId, kind]);
 		let journal = this.#journals.get(key);
 		if (!journal) {
 			journal = new ArtifactJournal(
 				this.#root,
 				authority.sessionId,
 				authority.strategyId + ":" + kind,
-				(reason) => this.#ports.fail(reason, authority.sessionId),
+				this.#journalFailure(sessionId),
 			);
 			this.#journals.set(key, journal);
 		}
@@ -227,9 +231,13 @@ export class StrategyControl {
 				if (projection.get(id)?.fingerprint !== fingerprint)
 					throw new Error("Job source/previous-context changed");
 		} catch (error) {
-			job.controller.abort(String(error));
+			this.#cancelJob(job, String(error));
 			throw error;
 		}
+	}
+	#cancelJob(job: JobRecord, reason: string): void {
+		job.controller.abort(reason);
+		this.#jobs.delete(job);
 	}
 	#scope(scope: ArtifactScope, principal: string, strategyId: string, leaseId: string): Authority {
 		const job = this.#jobsByScope.get(scope);
@@ -381,7 +389,12 @@ export class StrategyControl {
 		});
 		const scope = Object.freeze({}),
 			job: JobRecord = {
-				...record,
+				sessionId: record.sessionId,
+				generation: record.generation,
+				navigationId: record.navigationId,
+				strategyId: record.strategyId,
+				leaseId: record.leaseId,
+				principal: record.principal,
 				id: randomUUID(),
 				scope,
 				planId: spec.planId,
@@ -397,13 +410,16 @@ export class StrategyControl {
 		this.#jobsByScope.set(scope, job);
 		this.#jobs.add(job);
 		this.#checkJob(job);
+		return this.#jobHandle(job);
+	}
+	#jobHandle(job: JobRecord): SourceJob {
 		return Object.freeze({
 			id: job.id,
-			scope,
+			scope: job.scope,
 			signal: job.controller.signal,
 			check: () => this.#checkJob(job),
 			infer: (request: InferenceRequest) => this.#infer(job, request),
-			cancel: (reason = "caller cancellation") => job.controller.abort(reason),
+			cancel: (reason = "caller cancellation") => this.#cancelJob(job, reason),
 		});
 	}
 	async #infer(job: JobRecord, original: InferenceRequest): Promise<InferenceResult> {
@@ -587,7 +603,7 @@ export class StrategyControl {
 	}
 	invalidate(reason: StrategyLifecycleEvent["reason"], onlyStrategy?: string): void {
 		for (const job of this.#jobs)
-			if (!onlyStrategy || job.strategyId === onlyStrategy) job.controller.abort(reason);
+			if (!onlyStrategy || job.strategyId === onlyStrategy) this.#cancelJob(job, reason);
 		for (const [id, lease] of this.#projectors)
 			if (reason === "deactivated" && (!onlyStrategy || id === onlyStrategy)) this.#projectors.delete(id);
 		this.#notifyLifecycle(reason, onlyStrategy);
