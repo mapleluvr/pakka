@@ -356,17 +356,6 @@ export class StrategyControl {
 		);
 		for (const reservation of reservations) {
 			const attemptId = typeof reservation.attemptId === "string" ? reservation.attemptId : "";
-			const completion = records.find(
-				(record) =>
-					isJsonObject(record) &&
-					record.kind === "completion" &&
-					isJsonObject(record.audit) &&
-					record.audit.attemptId === attemptId &&
-					record.audit.jobId === reservation.jobId,
-			) as JsonObject | undefined;
-			const audit = completion && isJsonObject(completion.audit) ? completion.audit : undefined;
-			if (!completion || !audit) throw new Error("Unresolved inference reservation; storage outcome unknown");
-			if (audit.status !== "completed") continue;
 			const liveJob = [...this.#jobs].some(
 				(job) =>
 					job.id === reservation.jobId &&
@@ -378,10 +367,21 @@ export class StrategyControl {
 					job.leaseId === authority.leaseId &&
 					job.principal === authority.principal,
 			);
-			// A live job may still be between its inference completion and the
-			// adoption batch. Reopen/reconstruction has no such capability and
-			// therefore remains fail-closed below.
+			// A live job may still be between reservation, inference completion and
+			// adoption. Reads from that same authorized job remain valid; reopen or
+			// reconstruction has no such capability and therefore fails closed.
 			if (liveJob) continue;
+			const completion = records.find(
+				(record) =>
+					isJsonObject(record) &&
+					record.kind === "completion" &&
+					isJsonObject(record.audit) &&
+					record.audit.attemptId === attemptId &&
+					record.audit.jobId === reservation.jobId,
+			) as JsonObject | undefined;
+			const audit = completion && isJsonObject(completion.audit) ? completion.audit : undefined;
+			if (!completion || !audit) throw new Error("Unresolved inference reservation; storage outcome unknown");
+			if (audit.status !== "completed") continue;
 			const adopted = records.some(
 				(record) =>
 					isJsonObject(record) &&

@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { chmod } from "node:fs/promises";
+import { setImmediate } from "node:timers/promises";
 import type { Host, StrategyBinding } from "../src/index.ts";
 import { binding, target, inferencePolicy } from "./strategy-fixture.ts";
 import { deferred, fixture, seed, text } from "./fixture.ts";
@@ -172,6 +173,37 @@ test("unadopted completed inference stays fail-closed across trusted reopen", as
 		}
 	} finally {
 		if (path) await chmod(path, 0o666);
+		await f.close();
+	}
+});
+
+test("live inference reservations remain usable until exact adoption", async () => {
+	const release = deferred();
+	const f = await fixture({}, async (payload) => {
+		if (payload.model === "summary-model") await release.promise;
+		return { text: "SUMMARY" };
+	});
+	try {
+		const host = await f.start(inferencePolicy(f.endpoint));
+		await seed(host);
+		const { b } = await writer(host),
+			frame = b.readFrame(),
+			job = b.createJob(frame.basis, {
+				planId: "live-reservation",
+				targetEntryIds: [target(frame)],
+				maxCalls: 1,
+				requireArtifactReceipt: true,
+			});
+		const pending = job.infer({ modelKey: "summary", prompt: "LIVE" });
+		for (let i = 0; i < 100 && f.requests.length < 2; i++) await setImmediate();
+		assert.equal(f.requests.length, 2, "the auxiliary request must have reserved before the read");
+		assert.doesNotThrow(() => b.readFrame(), "the active authorized job may still be in flight");
+		release.resolve();
+		assert.equal((await pending).status, "completed");
+		assert.doesNotThrow(() => b.readFrame(), "the active job may adopt after completion");
+		job.cancel("test release");
+		assert.throws(() => b.readFrame(), /adoption|reservation|storage/i);
+	} finally {
 		await f.close();
 	}
 });
