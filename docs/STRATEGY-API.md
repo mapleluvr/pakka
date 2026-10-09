@@ -63,6 +63,7 @@ try {
 		targetEntryIds: [target.sourceEntryId],
 		contextEntryIds: [],
 		maxCalls: 2,
+		requireArtifactReceipt: true,
 	});
 	const result = await job.infer({
 		modelKey: "summary",
@@ -74,6 +75,7 @@ try {
 	job.check();
 	const receipt = binding.artifacts.append(job.scope, {
 		expectedVersion: frame.artifacts.version,
+		attemptIds: [result.attemptId],
 		records: [
 			{
 				kind: "example-summary",
@@ -121,6 +123,8 @@ Root startup may set `reopenSessionFile` to a Pakka-owned file beneath the same 
 Artifact operations require a valid frame or job scope and the correct strategy/session namespace. Batch receipts distinguish version conflict, committed physical readback and unknown storage. Each JSONL transaction has a version and SHA-256 chain; files are fsynced and read back. A separate ownership marker detects missing files/directories across reopen. Partial, changed or unreadable storage latches host failure. A same-session audit fault arriving during reload remains latched when reload settles; faults are attributed to their original session, so explicit newSession recovery is not poisoned by an old-session completion. This is single-writer evidence, not a multi-process transaction or a complete crash-proof directory protocol.
 
 Each auxiliary attempt reserves a durable budget slot before dispatch. Limits are finite per job and per strategy/session, including failed or unknown attempts; reload, deactivation/re-activation and process reopen do not reset spent slots. Requests use public Pi `ModelRuntime.completeSimple`, actual `maxTokens` options and a capped per-request model, with provider transport retry disabled. Caller cap `0` means no extra caller cap, never unlimited spending. The effective cap is the minimum of model, host policy and any positive caller cap. All summary endpoints/auth/headers stay in `pi-adapter.ts`; strategies see only their allowlisted sanitized models. This slice supports OpenAI completions, not every Pi provider API.
+
+For inference-derived persisted candidates, create the job with `requireArtifactReceipt: true` and include the exact completed `attemptIds` in its scoped artifact append. Before any artifact intent or bytes are written, the host validates unique nonempty IDs, the job/plan/session/strategy/principal/lease reservation and its completion. Already adopted, nonexistent, foreign or unfinished attempts are rejected without effects. After physical artifact receipt, an adoption record binds the attempt to that exact transaction ID/version. Missing or uncertain receipts block same-session reconstruction; cancellation and unrelated progress writes do not settle a completed result. Reopen checks every adopted transaction against the physical artifact journal, including earlier versions followed by later ordinary appends. Failed/quarantined attempts retain their audit and bounded retry behavior. Dynamite opts compression jobs into this protocol; fresh jobs used only to authorize existing summaries do not reserve new inference. These receipts remain part of the bounded single-writer contract, not a general exactly-once model-call guarantee.
 
 Auxiliary messages/results never use `Client.submit`, never append to the main transcript, and create no main C2 receipt. Audit includes reserved attempts without a completion as quarantined/unknown; completed failed/quarantined calls remain observable when storage is readable. A failed call without usage is not zero billing. `usage.cost` is `null` for unpriced configured models. Unknown storage throws or returns an unknown artifact receipt; it is not an inference failure to retry. Do not retry/fallback after revocation, cancellation or unknown storage.
 
@@ -321,7 +325,11 @@ export interface StrategyArtifacts {
 	read(scope: ArtifactScope): ArtifactSnapshot;
 	append(
 		scope: ArtifactScope,
-		batch: { readonly expectedVersion: number; readonly records: readonly JsonValue[] },
+		batch: {
+			readonly expectedVersion: number;
+			readonly records: readonly JsonValue[];
+			readonly attemptIds?: readonly string[];
+		},
 	): ArtifactReceipt;
 }
 export interface SourceJobSpec {
@@ -329,6 +337,8 @@ export interface SourceJobSpec {
 	readonly targetEntryIds: readonly string[];
 	readonly contextEntryIds?: readonly string[];
 	readonly maxCalls: number;
+	/** Compression jobs require an exact post-write adoption receipt before their artifact intent is cleared. */
+	readonly requireArtifactReceipt?: boolean;
 }
 export interface InferenceRequest {
 	readonly modelKey: string;

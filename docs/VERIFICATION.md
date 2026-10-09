@@ -1,3 +1,31 @@
+# Verification — accepted headless strategy integration
+
+The integrated Pakka/Dynamite migration passed independent review on 2026-10-09: `ok_with_notes`, no remaining findings. Runtime heads reviewed were Pakka `f9578776a46c2c07ae783dd97ee75adcb3b5d3af` and Dynamite `bd45756f272cd2d4af3c0b9e55fc2587e8bf4678`. Later delivery commits update documentation and formatting configuration only.
+
+| Final validation | Result |
+| --- | --- |
+| Full Pakka source suite | 112/112; no skips/cancellations |
+| Full Dynamite source suite | 334/334; no skips/cancellations |
+| Isolated installed tarballs | Host 112/112, Dynamite integration 37/37 |
+| Independent installed adversarial checks | 19 asserted cases passed |
+| Clean Dynamite git-archive bootstrap | Explicit host tarball, npm ci, typecheck/build and 37/37 integration |
+| Public declarations and build identity | Strict NodeNext passed; 50 installed JS/declaration files matched current source builds |
+| Dependency inventory | All eight Pi runtime packages exactly 1.0.3 |
+| Pakka check/build and Dynamite typecheck/build | Passed |
+| Pakka format:check | Passed after explicitly configuring `endOfLine: auto`; no runtime/source formatting rewrite |
+
+Review covered pre-write zero-effect adoption checks, physical reconciliation of every settled adoption, no replay after an artifact rollback, and multiblock source/context edit/recompression whose next real request matches flush/status. Earlier incomplete-output, unknown-usage, cancelled-job retention and bootstrap-documentation fixes remain green. No Pi source patches, credentials or paid calls were used.
+
+The review's default-LF formatting command failed for 25 unchanged Windows CRLF files. `core.autocrlf=true` caused the checkout difference; the explicit `endOfLine: auto` configuration makes the ordinary command pass without changing runtime files. Earlier localhost connection and Windows initialization incidents were preserved; their underlying environmental cause remains unproven. No such infrastructure failure occurred in the final independent review.
+
+The complete verdict, source/installed logs and prior failure evidence are archived outside temporary consumers under `D:/Projects/kappa/kappa-experiments/pakka-dynamite-migration/DELIVERY/`. The strategy delivery scope and runnable instructions are in the sibling `pakka-dynamite/docs/MIGRATION-RESULTS.md`. Package-source tests and bootstrap scripts are committed; generated evidence remains local and private.
+
+Storage claims remain bounded to single-writer recovery. This delivery does not implement full C2 crash recovery, multi-process transactions, exactly-once billing, arbitrary provider/extension compatibility, TUI/CLI/RPC or bulk legacy import. The host still has no dependency on Dynamite.
+
+## Historical host-component verification
+
+The following records the earlier host-only lane and its 82-test gate, before cross-package integration and independent correction passes. Its counts and pending-review wording are historical rather than the current delivery status.
+
 # Verification - Host Strategy Control Component
 
 Environment: Windows, Node 24.15.0, npm 11.12.1, TypeScript 7.0.2; exact eight-package Pi runtime cohort 1.0.3. Baseline: `4c79c57a2b151f9e9d74177747d5586bd81a3dac`; lane: `migration/host-control` in the assigned isolated host worktree.
