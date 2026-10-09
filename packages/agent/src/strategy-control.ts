@@ -367,6 +367,21 @@ export class StrategyControl {
 			const audit = completion && isJsonObject(completion.audit) ? completion.audit : undefined;
 			if (!completion || !audit) throw new Error("Unresolved inference reservation; storage outcome unknown");
 			if (audit.status !== "completed") continue;
+			const liveJob = [...this.#jobs].some(
+				(job) =>
+					job.id === reservation.jobId &&
+					!job.controller.signal.aborted &&
+					job.sessionId === authority.sessionId &&
+					job.generation === authority.generation &&
+					job.navigationId === authority.navigationId &&
+					job.strategyId === authority.strategyId &&
+					job.leaseId === authority.leaseId &&
+					job.principal === authority.principal,
+			);
+			// A live job may still be between its inference completion and the
+			// adoption batch. Reopen/reconstruction has no such capability and
+			// therefore remains fail-closed below.
+			if (liveJob) continue;
 			const adopted = records.some(
 				(record) =>
 					isJsonObject(record) &&
