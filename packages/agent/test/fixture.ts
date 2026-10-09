@@ -16,7 +16,14 @@ export type Payload = {
 	messages: { role: string; content: unknown; [key: string]: unknown }[];
 	tools?: unknown[];
 };
-export type Answer = { text: string } | { tool: string; args?: Record<string, unknown> } | { error: number };
+export type Answer = (
+	| { text: string }
+	| { tool: string; args?: Record<string, unknown> }
+	| { error: number }
+) & {
+	finishReason?: string;
+	usage?: { prompt_tokens: number; completion_tokens: number; total_tokens: number } | null;
+};
 export async function fixture(
 	options: Partial<HostOptions> = {},
 	reply: (payload: Payload, n: number) => Answer | Promise<Answer> = () => ({ text: "LOCAL-ANSWER" }),
@@ -56,8 +63,16 @@ export async function fixture(
 				{ ...base, choices: [{ index: 0, delta, finish_reason: null }] },
 				{
 					...base,
-					choices: [{ index: 0, delta: {}, finish_reason: "tool" in answer ? "tool_calls" : "stop" }],
-					usage: { prompt_tokens: 10, completion_tokens: 2, total_tokens: 12 },
+					choices: [
+						{
+							index: 0,
+							delta: {},
+							finish_reason: answer.finishReason ?? ("tool" in answer ? "tool_calls" : "stop"),
+						},
+					],
+					...(answer.usage === null
+						? {}
+						: { usage: answer.usage ?? { prompt_tokens: 10, completion_tokens: 2, total_tokens: 12 } }),
 				},
 			];
 			response.writeHead(200, { "content-type": "text/event-stream" });

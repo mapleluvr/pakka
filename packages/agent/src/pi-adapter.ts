@@ -416,12 +416,22 @@ export class PiAdapter {
 				},
 			},
 		);
-		const failed = ["error", "aborted"].includes(answer.stopReason);
-		const known = !failed || answer.usage.totalTokens > 0;
+		const failed = answer.stopReason !== "stop";
+		// Pi initializes missing usage to zero and exposes no presence bit. Zero
+		// therefore cannot distinguish an absent report from genuinely free work.
+		const known = [
+			answer.usage.input,
+			answer.usage.output,
+			answer.usage.cacheRead,
+			answer.usage.cacheWrite,
+			answer.usage.totalTokens,
+		].some((n) => Number.isFinite(n) && n > 0);
 		return copy({
 			status: failed ? "failed" : "completed",
 			modelKey: request.modelKey,
-			...(failed ? { reason: "Auxiliary provider failed" } : { text: messageText(answer) }),
+			...(failed
+				? { reason: "Auxiliary output incomplete: " + answer.stopReason }
+				: { text: messageText(answer) }),
 			usageStatus: known ? "known" : "unknown",
 			...(known ? { usage: usageDTO(answer.usage) } : {}),
 		});
