@@ -382,7 +382,7 @@ export class StrategyControl {
 			const audit = completion && isJsonObject(completion.audit) ? completion.audit : undefined;
 			if (!completion || !audit) throw new Error("Unresolved inference reservation; storage outcome unknown");
 			if (audit.status !== "completed") continue;
-			const adopted = records.some(
+			const adopted = records.find(
 				(record) =>
 					isJsonObject(record) &&
 					record.kind === "adoption" &&
@@ -393,8 +393,51 @@ export class StrategyControl {
 					record.principal === authority.principal &&
 					typeof record.transactionId === "string" &&
 					typeof record.version === "number",
-			);
+			) as JsonObject | undefined;
 			if (!adopted) throw new Error("Completed inference has no durable artifact adoption receipt");
+			this.#journal(authority).assertTransaction(adopted.transactionId as string, adopted.version as number);
+		}
+	}
+	#validateAdoption(job: JobRecord, attemptIds: readonly string[]): void {
+		if (
+			!Array.isArray(attemptIds) ||
+			attemptIds.some((id) => typeof id !== "string" || !id) ||
+			new Set(attemptIds).size !== attemptIds.length
+		)
+			throw new Error("Invalid/duplicate artifact adoption attempt IDs");
+		const records = job.auditJournal.read().records;
+		for (const attemptId of attemptIds) {
+			const reservation = records.find(
+				(record) =>
+					isJsonObject(record) &&
+					record.kind === "reservation" &&
+					record.attemptId === attemptId &&
+					record.jobId === job.id &&
+					record.planId === job.planId &&
+					record.requireArtifactReceipt === true &&
+					record.sessionId === job.sessionId &&
+					record.strategyId === job.strategyId &&
+					record.principal === job.principal &&
+					record.leaseId === job.leaseId,
+			);
+			const completion = records.find(
+				(record) =>
+					isJsonObject(record) &&
+					record.kind === "completion" &&
+					isJsonObject(record.audit) &&
+					record.audit.attemptId === attemptId &&
+					record.audit.jobId === job.id &&
+					record.audit.planId === job.planId,
+			) as JsonObject | undefined;
+			const audit = completion && isJsonObject(completion.audit) ? completion.audit : undefined;
+			if (!reservation || !audit || !["completed", "failed", "quarantined"].includes(audit.status as string))
+				throw new Error("Artifact adoption attempt is not an exact completed job attempt");
+			if (
+				records.some(
+					(record) => isJsonObject(record) && record.kind === "adoption" && record.attemptId === attemptId,
+				)
+			)
+				throw new Error("Artifact inference attempt already adopted");
 		}
 	}
 	#settleArtifact(
@@ -487,11 +530,14 @@ export class StrategyControl {
 						throw new Error("Missing context_artifacts.write lease");
 					const authority = this.#scope(scope, principal, strategyId, leaseId),
 						job = this.#jobsByScope.get(scope),
-						attemptIds = [...new Set(batch.attemptIds ?? [])];
+						attemptIds = batch.attemptIds ?? [];
 					if (job?.requireArtifactReceipt && attemptIds.length === 0)
 						throw new Error("Artifact adoption requires exact attempt IDs");
 					if (!job?.requireArtifactReceipt && attemptIds.length > 0)
 						throw new Error("Attempt IDs require an opted-in source job");
+					// Association checks are caller preconditions, before either durable
+					// intent or artifact bytes. Post-write validation cannot undo an effect.
+					if (job?.requireArtifactReceipt) this.#validateAdoption(job, attemptIds);
 					const receipt = this.#journal(authority).append(batch.expectedVersion, batch.records, {
 						attemptIds,
 					});

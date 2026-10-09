@@ -54,6 +54,7 @@ export class ArtifactJournal {
 	#header: string;
 	#known: string | undefined;
 	#failed: string | undefined;
+	#transactions = new Map<number, string>();
 	#fail: (reason: string) => void;
 	constructor(root: string, sessionId: string, namespace: string, fail: (reason: string) => void) {
 		this.#path = join(root, "artifacts", hash(sessionId), hash(namespace) + ".jsonl");
@@ -159,6 +160,7 @@ export class ArtifactJournal {
 			let previous = hash(this.#header),
 				version = 0;
 			let lastTransactionId: string | undefined;
+			const transactions = new Map<number, string>();
 			for (const line of lines) {
 				const transaction = JSON.parse(line);
 				const { checksum, ...payload } = transaction;
@@ -177,10 +179,12 @@ export class ArtifactJournal {
 				version++;
 				previous = checksum;
 				lastTransactionId = payload.id;
+				transactions.set(version, payload.id);
 			}
 			if (intent && (lastTransactionId !== intent.transactionId || version !== intent.version))
 				throw new Error("Artifact transaction intent has no matching physical receipt");
 			this.#known = text;
+			this.#transactions = transactions;
 			return copy({ version, records });
 		} catch (error) {
 			return this.#fault(error);
@@ -188,6 +192,11 @@ export class ArtifactJournal {
 	}
 	read(): ArtifactSnapshot {
 		return this.#read(false);
+	}
+	assertTransaction(transactionId: string, version: number): void {
+		this.read();
+		if (!Number.isSafeInteger(version) || version <= 0 || this.#transactions.get(version) !== transactionId)
+			this.#fault(new Error("Artifact adoption has no matching physical transaction receipt"));
 	}
 	append(
 		expectedVersion: number,
