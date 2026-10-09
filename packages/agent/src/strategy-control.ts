@@ -1,6 +1,6 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 import { randomUUID } from "node:crypto";
-import { ArtifactJournal, copy, freeze, hash } from "./artifact-journal.ts";
+import { ArtifactJournal, copy, freeze, hash, type ArtifactIntent } from "./artifact-journal.ts";
 import { applyProjection } from "./strategy-projection.ts";
 import type { AdapterFrame } from "./pi-adapter.ts";
 import type {
@@ -13,6 +13,7 @@ import type {
 	InferencePolicy,
 	InferenceRequest,
 	InferenceResult,
+	JsonObject,
 	JsonValue,
 	ModelDTO,
 	Projector,
@@ -55,6 +56,10 @@ type BasisRecord = Authority & {
 	frame: ContextFrame;
 	invocation?: object;
 };
+function isJsonObject(value: unknown): value is JsonObject {
+	return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
 type JobRecord = Authority & {
 	id: string;
 	scope: object;
@@ -67,6 +72,7 @@ type JobRecord = Authority & {
 	policy: InferencePolicy;
 	journal: ArtifactJournal;
 	auditJournal: ArtifactJournal;
+	requireArtifactReceipt: boolean;
 };
 
 export class StrategyControl {
@@ -177,8 +183,9 @@ export class StrategyControl {
 		if (local) this.#checkInvocation(local);
 		if (invocation) this.#checkInvocation(invocation);
 		const authority = this.#authority(strategyId, principal, leaseId);
-		const data = this.#ports.frame(),
-			artifacts = this.#journal(authority).read();
+		const data = this.#ports.frame();
+		const artifacts = this.#reconcileArtifact(authority);
+		this.#ensureInferenceSettled(authority);
 		const basis = Object.freeze({});
 		const frame = freeze({
 			...data,
@@ -282,6 +289,151 @@ export class StrategyControl {
 			),
 		);
 	}
+	#reconcileArtifact(authority: Authority): ReturnType<ArtifactJournal["read"]> {
+		const journal = this.#journal(authority);
+		const intent = journal.pendingIntent();
+		if (intent) {
+			const snapshot = journal.readPending();
+			const records = this.#journal(authority, "inference").read().records;
+			this.#assertAdoption(authority, intent, records);
+			journal.settle(intent.transactionId, intent.version, intent.attemptIds);
+			if (snapshot.version !== intent.version)
+				throw new Error("Artifact transaction intent version mismatch");
+		}
+		return journal.read();
+	}
+	#assertAdoption(authority: Authority, intent: ArtifactIntent, records: readonly JsonValue[]): void {
+		if (intent.attemptIds.length === 0)
+			throw new Error("Artifact transaction intent has no inference attempt");
+		for (const attemptId of intent.attemptIds) {
+			const reservation = records.find(
+				(record) =>
+					isJsonObject(record) &&
+					record.kind === "reservation" &&
+					record.attemptId === attemptId &&
+					record.requireArtifactReceipt === true &&
+					record.sessionId === authority.sessionId &&
+					record.strategyId === authority.strategyId &&
+					record.principal === authority.principal,
+			) as JsonObject | undefined;
+			if (!reservation || typeof reservation.jobId !== "string")
+				throw new Error("Artifact transaction intent has no matching inference reservation");
+			const completion = records.find(
+				(record) =>
+					isJsonObject(record) &&
+					record.kind === "completion" &&
+					isJsonObject(record.audit) &&
+					record.audit.attemptId === attemptId &&
+					record.audit.jobId === reservation.jobId,
+			) as JsonObject | undefined;
+			const audit = completion && isJsonObject(completion.audit) ? completion.audit : undefined;
+			if (
+				!audit ||
+				(audit.status !== "completed" && audit.status !== "failed" && audit.status !== "quarantined")
+			)
+				throw new Error("Artifact transaction intent has no matching inference completion");
+			if (audit.status !== "completed") continue;
+			const adopted = records.some(
+				(record) =>
+					isJsonObject(record) &&
+					record.kind === "adoption" &&
+					record.attemptId === attemptId &&
+					record.jobId === reservation.jobId &&
+					record.sessionId === authority.sessionId &&
+					record.strategyId === authority.strategyId &&
+					record.principal === authority.principal &&
+					record.transactionId === intent.transactionId &&
+					record.version === intent.version,
+			);
+			if (!adopted) throw new Error("Completed inference has no matching artifact adoption receipt");
+		}
+	}
+	#ensureInferenceSettled(authority: Authority): void {
+		const records = this.#journal(authority, "inference").read().records;
+		const reservations = records.filter(
+			(record): record is JsonObject =>
+				isJsonObject(record) && record.kind === "reservation" && record.requireArtifactReceipt === true,
+		);
+		for (const reservation of reservations) {
+			const attemptId = typeof reservation.attemptId === "string" ? reservation.attemptId : "";
+			const completion = records.find(
+				(record) =>
+					isJsonObject(record) &&
+					record.kind === "completion" &&
+					isJsonObject(record.audit) &&
+					record.audit.attemptId === attemptId &&
+					record.audit.jobId === reservation.jobId,
+			) as JsonObject | undefined;
+			const audit = completion && isJsonObject(completion.audit) ? completion.audit : undefined;
+			if (!completion || !audit) throw new Error("Unresolved inference reservation; storage outcome unknown");
+			if (audit.status !== "completed") continue;
+			const adopted = records.some(
+				(record) =>
+					isJsonObject(record) &&
+					record.kind === "adoption" &&
+					record.attemptId === attemptId &&
+					record.jobId === reservation.jobId &&
+					record.sessionId === authority.sessionId &&
+					record.strategyId === authority.strategyId &&
+					record.principal === authority.principal &&
+					typeof record.transactionId === "string" &&
+					typeof record.version === "number",
+			);
+			if (!adopted) throw new Error("Completed inference has no durable artifact adoption receipt");
+		}
+	}
+	#settleArtifact(
+		job: JobRecord,
+		receipt: Extract<ReturnType<ArtifactJournal["append"]>, { status: "committed" }>,
+		attemptIds: readonly string[],
+	): void {
+		const records = job.auditJournal.read().records;
+		const adopted: JsonValue[] = [];
+		for (const attemptId of attemptIds) {
+			const reservation = records.find(
+				(record) =>
+					isJsonObject(record) &&
+					record.kind === "reservation" &&
+					record.attemptId === attemptId &&
+					record.jobId === job.id,
+			) as JsonObject | undefined;
+			const completion = records.find(
+				(record) =>
+					isJsonObject(record) &&
+					record.kind === "completion" &&
+					isJsonObject(record.audit) &&
+					record.audit.attemptId === attemptId,
+			) as JsonObject | undefined;
+			const audit = completion && isJsonObject(completion.audit) ? completion.audit : undefined;
+			if (
+				!reservation ||
+				!completion ||
+				!audit ||
+				(audit.status !== "completed" && audit.status !== "failed" && audit.status !== "quarantined")
+			)
+				throw new Error("Artifact adoption attempt is not an exact completed job attempt");
+			if (audit.status === "completed") {
+				adopted.push({
+					kind: "adoption",
+					attemptId,
+					jobId: job.id,
+					sessionId: job.sessionId,
+					strategyId: job.strategyId,
+					principal: job.principal,
+					leaseId: job.leaseId,
+					transactionId: receipt.transactionId,
+					version: receipt.version,
+				});
+			}
+		}
+		const current = job.auditJournal.read();
+		if (adopted.length > 0) {
+			const adoptionReceipt = job.auditJournal.append(current.version, adopted);
+			if (adoptionReceipt.status !== "committed")
+				throw new Error("Inference adoption receipt storage unknown");
+		}
+		job.journal.settle(receipt.transactionId, receipt.version, attemptIds);
+	}
 	bind(principal: string, grants: ReadonlySet<Grant>, strategyId: string): StrategyBinding {
 		const lease = this.#ports.lease(strategyId);
 		if (!lease || lease.principal !== principal) throw new Error("Not strategy owner or missing strategy");
@@ -309,14 +461,35 @@ export class StrategyControl {
 			artifacts: Object.freeze({
 				read: (scope: ArtifactScope) =>
 					this.#journal(this.#scope(scope, principal, strategyId, leaseId)).read(),
-				append: (scope: ArtifactScope, batch: { expectedVersion: number; records: readonly JsonValue[] }) => {
+				append: (
+					scope: ArtifactScope,
+					batch: { expectedVersion: number; records: readonly JsonValue[]; attemptIds?: readonly string[] },
+				) => {
 					if (
 						!lease.hooks.includes("context_artifacts.write") ||
 						this.#ports.owner("context_artifacts.write") !== strategyId
 					)
 						throw new Error("Missing context_artifacts.write lease");
-					const authority = this.#scope(scope, principal, strategyId, leaseId);
-					return this.#journal(authority).append(batch.expectedVersion, batch.records);
+					const authority = this.#scope(scope, principal, strategyId, leaseId),
+						job = this.#jobsByScope.get(scope),
+						attemptIds = [...new Set(batch.attemptIds ?? [])];
+					if (job?.requireArtifactReceipt && attemptIds.length === 0)
+						throw new Error("Artifact adoption requires exact attempt IDs");
+					if (!job?.requireArtifactReceipt && attemptIds.length > 0)
+						throw new Error("Attempt IDs require an opted-in source job");
+					const receipt = this.#journal(authority).append(batch.expectedVersion, batch.records, {
+						attemptIds,
+					});
+					if (receipt.status !== "committed" || !job || attemptIds.length === 0) return receipt;
+					try {
+						this.#settleArtifact(job, receipt, attemptIds);
+						return receipt;
+					} catch (error) {
+						return {
+							status: "unknown",
+							reason: "Artifact adoption receipt failed: " + String(error),
+						} as const;
+					}
 				},
 			}),
 			models: () => {
@@ -406,6 +579,7 @@ export class StrategyControl {
 				policy,
 				journal: this.#journal(record),
 				auditJournal: this.#journal(record, "inference"),
+				requireArtifactReceipt: spec.requireArtifactReceipt === true,
 			};
 		this.#jobsByScope.set(scope, job);
 		this.#jobs.add(job);
@@ -451,7 +625,19 @@ export class StrategyControl {
 			throw new Error("Inference call budget exhausted");
 		const attemptId = randomUUID();
 		const reservation = journal.append(before.version, [
-			{ kind: "reservation", jobId: job.id, planId: job.planId, attemptId, modelKey: request.modelKey, cap },
+			{
+				kind: "reservation",
+				jobId: job.id,
+				planId: job.planId,
+				attemptId,
+				modelKey: request.modelKey,
+				cap,
+				requireArtifactReceipt: job.requireArtifactReceipt,
+				sessionId: job.sessionId,
+				strategyId: job.strategyId,
+				principal: job.principal,
+				leaseId: job.leaseId,
+			},
 		]);
 		if (reservation.status !== "committed") throw new Error("Inference budget storage unknown/conflict");
 		job.calls++;

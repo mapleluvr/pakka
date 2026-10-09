@@ -188,7 +188,11 @@ export interface StrategyArtifacts {
 	read(scope: ArtifactScope): ArtifactSnapshot;
 	append(
 		scope: ArtifactScope,
-		batch: { readonly expectedVersion: number; readonly records: readonly JsonValue[] },
+		batch: {
+			readonly expectedVersion: number;
+			readonly records: readonly JsonValue[];
+			readonly attemptIds?: readonly string[];
+		},
 	): ArtifactReceipt;
 }
 export interface SourceJobSpec {
@@ -196,6 +200,8 @@ export interface SourceJobSpec {
 	readonly targetEntryIds: readonly string[];
 	readonly contextEntryIds?: readonly string[];
 	readonly maxCalls: number;
+	/** Compression jobs require an exact post-write adoption receipt before their artifact intent is cleared. */
+	readonly requireArtifactReceipt?: boolean;
 }
 export interface InferenceRequest {
 	readonly modelKey: string;

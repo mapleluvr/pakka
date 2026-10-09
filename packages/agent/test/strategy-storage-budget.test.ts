@@ -93,6 +93,89 @@ test("an artifact append write failure returns unknown, latches, and sends no mo
 	}
 });
 
+test("opted-in completed adoption survives trusted reopen without replay", async () => {
+	const f = await fixture();
+	try {
+		const first = await f.start(inferencePolicy(f.endpoint));
+		await seed(first);
+		const { b } = await writer(first),
+			frame = b.readFrame();
+		const job = b.createJob(frame.basis, {
+			planId: "adopted",
+			targetEntryIds: [target(frame)],
+			maxCalls: 1,
+			requireArtifactReceipt: true,
+		});
+		const result = await job.infer({ modelKey: "summary", prompt: "ADOPT" });
+		assert.equal(result.status, "completed");
+		const receipt = b.artifacts.append(job.scope, {
+			expectedVersion: frame.artifacts.version,
+			records: [{ kind: "adopted-candidate" }],
+			attemptIds: [result.attemptId],
+		});
+		assert.equal(receipt.status, "committed");
+		const file = first.view().sessionFile;
+		await first.dispose();
+		const second = await f.start({ ...inferencePolicy(f.endpoint), reopenSessionFile: file });
+		try {
+			const reopened = await writer(second);
+			assert.doesNotThrow(() => reopened.b.readFrame());
+			assert.equal(f.requests.length, 2);
+		} finally {
+			await second.dispose();
+		}
+	} finally {
+		await f.close();
+	}
+});
+
+test("unadopted completed inference stays fail-closed across trusted reopen", async () => {
+	const f = await fixture();
+	let path: string | undefined;
+	try {
+		const first = await f.start(inferencePolicy(f.endpoint));
+		await seed(first);
+		const { b } = await writer(first),
+			frame = b.readFrame();
+		const initial = b.artifacts.append(frame.basis, {
+			expectedVersion: frame.artifacts.version,
+			records: [{ kind: "initial" }],
+		});
+		assert.equal(initial.status, "committed");
+		path = initial.journalPath;
+		const current = b.readFrame();
+		const job = b.createJob(current.basis, {
+			planId: "unknown-adoption",
+			targetEntryIds: [target(current)],
+			maxCalls: 1,
+			requireArtifactReceipt: true,
+		});
+		const result = await job.infer({ modelKey: "summary", prompt: "UNKNOWN" });
+		assert.equal(result.status, "completed");
+		await chmod(path, 0o444);
+		const unknown = b.artifacts.append(job.scope, {
+			expectedVersion: initial.version,
+			records: [{ kind: "candidate" }],
+			attemptIds: [result.attemptId],
+		});
+		assert.equal(unknown.status, "unknown");
+		const file = first.view().sessionFile;
+		await first.dispose();
+		await chmod(path, 0o666);
+		const second = await f.start({ ...inferencePolicy(f.endpoint), reopenSessionFile: file });
+		try {
+			const reopened = await writer(second);
+			assert.throws(() => reopened.b.readFrame(), /adopt|intent|storage|unknown/i);
+			assert.equal(f.requests.length, 2);
+		} finally {
+			await second.dispose();
+		}
+	} finally {
+		if (path) await chmod(path, 0o666);
+		await f.close();
+	}
+});
+
 test("call budgets survive reload, owner replacement and trusted process reopen", async () => {
 	const f = await fixture();
 	const config = inferencePolicy(f.endpoint);

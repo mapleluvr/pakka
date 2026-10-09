@@ -1,5 +1,14 @@
 import { createHash, randomUUID } from "node:crypto";
-import { closeSync, existsSync, fsyncSync, mkdirSync, openSync, readFileSync, writeFileSync } from "node:fs";
+import {
+	closeSync,
+	existsSync,
+	fsyncSync,
+	mkdirSync,
+	openSync,
+	readFileSync,
+	unlinkSync,
+	writeFileSync,
+} from "node:fs";
 import { dirname, join } from "node:path";
 import type { ArtifactReceipt, ArtifactSnapshot, JsonValue } from "./types.ts";
 
@@ -30,10 +39,18 @@ export function json(value: unknown): asserts value is JsonValue {
 	throw new Error("Records must be finite JSON");
 }
 
+export type ArtifactIntent = {
+	transactionId: string;
+	expectedVersion: number;
+	version: number;
+	attemptIds: readonly string[];
+};
+
 /** One fsynced batch per line; strict hash chain and readback, not a permissive event parser. */
 export class ArtifactJournal {
 	#path: string;
 	#markerPath: string;
+	#intentPath: string;
 	#header: string;
 	#known: string | undefined;
 	#failed: string | undefined;
@@ -41,6 +58,7 @@ export class ArtifactJournal {
 	constructor(root: string, sessionId: string, namespace: string, fail: (reason: string) => void) {
 		this.#path = join(root, "artifacts", hash(sessionId), hash(namespace) + ".jsonl");
 		this.#markerPath = join(root, "journal-ownership", hash(sessionId), hash(namespace) + ".owned");
+		this.#intentPath = this.#path + ".intent";
 		this.#header = JSON.stringify({ schema: "pakka.journal.v1", sessionId, namespace });
 		this.#fail = fail;
 	}
@@ -48,6 +66,56 @@ export class ArtifactJournal {
 		this.#failed = "Artifact journal storage unknown: " + String(error);
 		this.#fail(this.#failed);
 		throw new Error(this.#failed);
+	}
+	#readIntent(): ArtifactIntent | undefined {
+		if (!existsSync(this.#intentPath)) return undefined;
+		const raw = JSON.parse(readFileSync(this.#intentPath, "utf8"));
+		if (
+			!raw ||
+			typeof raw !== "object" ||
+			raw.schema !== "pakka.journal.intent.v1" ||
+			typeof raw.transactionId !== "string" ||
+			!Number.isSafeInteger(raw.expectedVersion) ||
+			!Number.isSafeInteger(raw.version) ||
+			!Array.isArray(raw.attemptIds) ||
+			raw.attemptIds.some((id: unknown) => typeof id !== "string" || !id) ||
+			raw.version !== raw.expectedVersion + 1
+		)
+			throw new Error("Invalid artifact transaction intent");
+		return {
+			transactionId: raw.transactionId,
+			expectedVersion: raw.expectedVersion,
+			version: raw.version,
+			attemptIds: [...raw.attemptIds],
+		};
+	}
+	pendingIntent(): ArtifactIntent | undefined {
+		if (this.#failed) throw new Error(this.#failed);
+		try {
+			return copy(this.#readIntent());
+		} catch (error) {
+			return this.#fault(error);
+		}
+	}
+	#writeIntent(intent: ArtifactIntent): void {
+		const fd = openSync(this.#intentPath, "wx");
+		try {
+			writeFileSync(fd, JSON.stringify({ schema: "pakka.journal.intent.v1", ...intent }) + "\n", "utf8");
+			fsyncSync(fd);
+		} finally {
+			closeSync(fd);
+		}
+	}
+	#clearIntent(transactionId: string, version: number, attemptIds: readonly string[]): void {
+		const intent = this.#readIntent();
+		if (
+			intent &&
+			(intent.transactionId !== transactionId ||
+				intent.version !== version ||
+				JSON.stringify(intent.attemptIds) !== JSON.stringify(attemptIds))
+		)
+			throw new Error("Mismatched artifact transaction intent");
+		unlinkSync(this.#intentPath);
 	}
 	#write(text: string, flags: string): void {
 		const fd = openSync(this.#path, flags);
@@ -58,9 +126,14 @@ export class ArtifactJournal {
 			closeSync(fd);
 		}
 	}
-	read(): ArtifactSnapshot {
+	readPending(): ArtifactSnapshot {
+		return this.#read(true);
+	}
+	#read(allowIntent = false): ArtifactSnapshot {
 		if (this.#failed) throw new Error(this.#failed);
 		try {
+			const intent = this.#readIntent();
+			if (!allowIntent && intent) throw new Error("Unsettled artifact transaction intent");
 			const markerPath = this.#markerPath;
 			if (existsSync(this.#path) !== existsSync(markerPath)) throw new Error("Missing/partial owned journal");
 			if (!existsSync(this.#path) && this.#known === undefined) {
@@ -85,6 +158,7 @@ export class ArtifactJournal {
 			const records: JsonValue[] = [];
 			let previous = hash(this.#header),
 				version = 0;
+			let lastTransactionId: string | undefined;
 			for (const line of lines) {
 				const transaction = JSON.parse(line);
 				const { checksum, ...payload } = transaction;
@@ -102,14 +176,24 @@ export class ArtifactJournal {
 				records.push(...payload.records);
 				version++;
 				previous = checksum;
+				lastTransactionId = payload.id;
 			}
+			if (intent && (lastTransactionId !== intent.transactionId || version !== intent.version))
+				throw new Error("Artifact transaction intent has no matching physical receipt");
 			this.#known = text;
 			return copy({ version, records });
 		} catch (error) {
 			return this.#fault(error);
 		}
 	}
-	append(expectedVersion: number, records: readonly JsonValue[]): ArtifactReceipt {
+	read(): ArtifactSnapshot {
+		return this.#read(false);
+	}
+	append(
+		expectedVersion: number,
+		records: readonly JsonValue[],
+		options: { readonly attemptIds?: readonly string[] } = {},
+	): ArtifactReceipt {
 		if (
 			!Number.isSafeInteger(expectedVersion) ||
 			expectedVersion < 0 ||
@@ -118,6 +202,9 @@ export class ArtifactJournal {
 		)
 			throw new Error("Invalid artifact batch");
 		json(records);
+		const attemptIds = [...new Set(options.attemptIds ?? [])];
+		if (attemptIds.some((id) => typeof id !== "string" || !id))
+			throw new Error("Invalid artifact attempt association");
 		const snapshot = this.read();
 		if (snapshot.version !== expectedVersion) return copy({ status: "conflict", version: snapshot.version });
 		const transactionId = randomUUID();
@@ -131,10 +218,12 @@ export class ArtifactJournal {
 		};
 		const next = this.#known! + JSON.stringify({ ...payload, checksum: hash(payload) }) + "\n";
 		try {
+			this.#writeIntent({ transactionId, expectedVersion, version: expectedVersion + 1, attemptIds });
 			this.#write(next.slice(this.#known!.length), "a");
 			if (readFileSync(this.#path, "utf8") !== next) throw new Error("No exact physical batch receipt");
 			this.#known = next;
-			this.read();
+			this.#read(true);
+			if (attemptIds.length === 0) this.#clearIntent(transactionId, expectedVersion + 1, attemptIds);
 			return copy({
 				status: "committed",
 				version: expectedVersion + 1,
@@ -148,6 +237,14 @@ export class ArtifactJournal {
 				/* unknown is an explicit receipt */
 			}
 			return copy({ status: "unknown", reason: this.#failed! });
+		}
+	}
+	settle(transactionId: string, version: number, attemptIds: readonly string[]): void {
+		if (this.#failed) throw new Error(this.#failed);
+		try {
+			this.#clearIntent(transactionId, version, [...new Set(attemptIds)]);
+		} catch (error) {
+			this.#fault(error);
 		}
 	}
 }
