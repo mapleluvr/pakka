@@ -1,6 +1,62 @@
+# --- Dependencies ------------------------------------------------------------
 node_modules/
+
+# --- Build output ------------------------------------------------------------
+# tsc -p packages/agent/tsconfig.json writes packages/agent/dist.
+# `dist/` matches a directory of that name at any depth.
 dist/
+*.tsbuildinfo
+
+# --- Local verification evidence --------------------------------------------
+# Regenerated on every run by `npm test` (artifacts/integration) and
+# `npm run smoke:package` (artifacts/package-smoke). Never commit: these hold
+# absolute machine paths, raw provider request/response payloads, host
+# snapshots and session JSONL copies.
 artifacts/
-.pakka/
+
+# --- Packed packages ---------------------------------------------------------
+# npm pack output, e.g. pakka-agent-0.1.0.tgz from a manual pack.
 *.tgz
+
+# --- Pakka runtime state -----------------------------------------------------
+.pakka/
+
+# --- Pi local run state ------------------------------------------------------
+# Project Pi *configuration* stays committed: .pi/settings.json, .pi/mcp.json,
+# .pi/SYSTEM.md, .pi/APPEND_SYSTEM.md, .pi/extensions/, .pi/skills/,
+# .pi/prompts/, .pi/themes/, .pi/agents/, .pi/chains/.
+# Only transient run state is ignored here.
+# `.pi/sessions/` is defensive: Pi reads the project `sessionDir` setting, and a
+# relative path resolves against the working directory, so session transcripts
+# can end up inside the repository.
 .pi/subagents/
+.pi/sessions/
+
+# --- Local environment / secrets --------------------------------------------
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# --- Logs --------------------------------------------------------------------
+*.log
+npm-debug.log*
+
+# --- Coverage ----------------------------------------------------------------
+coverage/
+.nyc_output/
+
+# --- Editor / OS noise -------------------------------------------------------
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/
+*.swp
+*~
+
+# --- Scratch -----------------------------------------------------------------
+tmp/
+.tmp/
+*.tmp
