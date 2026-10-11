@@ -24,6 +24,13 @@ export type Answer = (
 	finishReason?: string;
 	usage?: { prompt_tokens: number; completion_tokens: number; total_tokens: number } | null;
 };
+export async function oracleFixture(
+	options: Partial<HostOptions> = {},
+	reply: (payload: Payload, n: number) => Answer | Promise<Answer> = () => ({ text: "LOCAL-ANSWER" }),
+) {
+	return fixture({ backend: "oracle", ...options }, reply);
+}
+
 export async function fixture(
 	options: Partial<HostOptions> = {},
 	reply: (payload: Payload, n: number) => Answer | Promise<Answer> = () => ({ text: "LOCAL-ANSWER" }),

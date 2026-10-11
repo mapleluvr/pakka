@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { access, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { SessionManager } from "@earendil-works/pi-coding-agent";
-import { fixture, seed, raw, text } from "./fixture.ts";
+import { oracleFixture as fixture, seed, raw, text } from "./fixture.ts";
 import type { ProjectionPlan } from "../src/index.ts";
 
 async function recordedBash(f: Awaited<ReturnType<typeof fixture>>) {

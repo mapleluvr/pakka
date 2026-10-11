@@ -4,7 +4,7 @@ import { chmod } from "node:fs/promises";
 import { setImmediate } from "node:timers/promises";
 import type { Host, StrategyBinding } from "../src/index.ts";
 import { binding, target, inferencePolicy } from "./strategy-fixture.ts";
-import { deferred, fixture, seed, text } from "./fixture.ts";
+import { deferred, oracleFixture as fixture, seed, text } from "./fixture.ts";
 
 async function writer(
 	host: Host,

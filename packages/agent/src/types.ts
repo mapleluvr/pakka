@@ -271,6 +271,7 @@ export interface InferencePolicy {
 	readonly timeoutMs: number;
 }
 export interface HostOptions {
+	backend?: "durable" | "oracle";
 	cwd: string;
 	dataDir: string;
 	endpoint: string;

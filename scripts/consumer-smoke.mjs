@@ -13,6 +13,7 @@ for (const name of [
 	"pi-tui",
 	"chord",
 	"pi-codemode",
+	"pi-durable",
 	"pi-mcp",
 	"pi-telemetry",
 ]) {
@@ -32,12 +33,22 @@ for (const name of [
 	assert.equal(versions[name], "1.0.3");
 }
 await assert.rejects(import("@pakka/agent/dist/pi-adapter.js"), { code: "ERR_PACKAGE_PATH_NOT_EXPORTED" });
+await assert.rejects(import("@pakka/agent/dist/durable-adapter.js"), {
+	code: "ERR_PACKAGE_PATH_NOT_EXPORTED",
+});
 const requests = [];
 const server = createServer((req, res) => {
 	void (async () => {
 		let body = "";
 		for await (const part of req) body += part;
-		requests.push(JSON.parse(body));
+		let parsed;
+		try {
+			parsed = JSON.parse(body);
+		} catch {
+			res.destroy();
+			return;
+		}
+		requests.push(parsed);
 		res.writeHead(200, { "content-type": "text/event-stream" });
 		const base = { id: "smoke", object: "chat.completion.chunk", created: 1, model: "local" };
 		res.write(

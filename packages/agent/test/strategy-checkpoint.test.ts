@@ -7,6 +7,7 @@ import { fixture, seed, text } from "./fixture.ts";
 test("protected system checkpoint between a valid call/result pair survives active projection", async () => {
 	const f = await fixture(
 		{
+			backend: "oracle",
 			tools: [
 				{
 					name: "native",

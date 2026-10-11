@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { SessionManager } from "@earendil-works/pi-coding-agent";
 import type { SummaryRangeReplacement } from "../src/index.ts";
 import { binding, inferencePolicy, target } from "./strategy-fixture.ts";
-import { fixture, raw, seed, text } from "./fixture.ts";
+import { oracleFixture as fixture, raw, seed, text } from "./fixture.ts";
 
 const omit = (sourceEntryIds: readonly string[]): SummaryRangeReplacement => ({
 	sourceEntryIds,

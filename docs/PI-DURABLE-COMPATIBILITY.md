@@ -339,3 +339,111 @@ ID: DURABLE-2026-10-11-2
 验证要求：默认路径必须通过正常 generation、tool、持久化恢复和基本权限轨迹；`beforeRequest` fail-open 仍记录为已知限制，直到 `providerCalls = 0` 且拒绝结果有明确 receipt/终态。
 
 ```
+
+## 条目 DURABLE-2026-10-11-3：Pi Durable 默认生产路径完成与 PolicyModels 门禁验证
+
+ID: DURABLE-2026-10-11-3  
+发现时间: 2026-10-11  
+上游版本: `@earendil-works/pi-durable@1.0.3` (sha512-ARA+YQcqiQJz2pqxLL2ZA4ayZoulSDu1cMCMIYiKBnByTryGVfBhkEv6pT+QOP+3NgXzs0zPi3FpvyuSJ9harg==), `@earendil-works/pi-ai@1.0.3` (sha512-p+/EUrbmfT0xWOtL/NJRtWOsyzcKKFSyiivHLDBMG0DUVpHdaIykd5jFibq0YZDFGBN/nv61zdOelMb+ylPfSg==)  
+升级范围: migration completion (PiAdapter -> DurableAdapter 默认生产切换)  
+状态: verified  
+影响等级: security / dispatch / semantic / persistence  
+影响面: `createHost`, `packages/agent/src/durable-adapter.ts`, `PolicyModels`, `ArtifactJournal`  
+关联条目: supersedes `DURABLE-2026-10-10-1`, related `DURABLE-2026-10-11-2`
+
+当前行为：
+
+1. `createHost()` 默认创建 `DurableAdapter`，只使用 Pi Durable 和公开 pi-ai 类型，旧 `PiAdapter` 从默认生产路径中移除，仅通过 `backend: "oracle"` 保留在测试 oracle fixture 中。
+2. Generation 门禁由 `PolicyModels` (ModelGateway) 全面拦截 `streamSimple`：在 `GenerationTask` 的 `beforeRequest` 钩子中执行 `control.project()`，并将许可凭证与错误绑定到模型请求边界。若授权被拒绝、抛错或未获许可，`PolicyModels` 在实际 HTTP dispatch 前终止，确保证据链中 `providerCalls = 0`，输入保持 `committed`，宿主 phase 标记 `failed`。
+3. Context 消息投影在 `beforeRequest` 前通过 `refreshCache()` 对齐最新物理转储，使得用户提交文本、截断 summary、上下文省略（`summary: null`）与内容补丁准确体现在 provider payload 中。
+4. Artifact 写入实现 namespace writer 机制：各 strategy 绑定各自持有的 `(sessionId, strategyId, journalKind)` 独立 append，同 namespace 排他防重，跨 namespace 互不覆盖。
+5. 物理持久化由 Node JSONL Storage 保证，reopen 具备完整的 provenance 校验，且破坏性故障注入均实现 fail-closed。
+
+变更前代码（旧基线直觉写法）：
+
+```ts
+// illustrative: beforeRequest 异常被上游 report 并跳过，无法阻止后续 dispatch
+hook(GenerationTask, {
+	beforeRequest: async (request, api, context) => {
+		const projected = await project(request.messages, api, context);
+		if (!projected.allowed) {
+			throw new Error("AUTHORIZATION_DENIED");
+		}
+		return { messages: projected.messages };
+	},
+});
+```
+
+变更后代码（DurableAdapter + PolicyModels 门禁）：
+
+```ts
+// packages/agent/src/durable-adapter.ts
+const policyModels = new Proxy(rawModels, {
+	get(target, prop, receiver) {
+		if (prop === "streamSimple") {
+			return (model, context, streamOpts) => {
+				if (adapterRef?.hasPermitError) {
+					throw adapterRef.consumePermitError();
+				}
+				const permit = adapterRef?.currentPermit;
+				if (!permit) {
+					throw new Error("Provider request has no host authorization");
+				}
+				permit.check();
+				const origOnPayload = streamOpts?.onPayload;
+				const wrappedOpts: SimpleStreamOptions = {
+					...streamOpts,
+					onPayload: async (payload, m) => {
+						permit.check();
+						return origOnPayload?.(payload, m);
+					},
+				};
+				return target.streamSimple(model, context, wrappedOpts);
+			};
+		}
+		return Reflect.get(target, prop, receiver);
+	},
+});
+```
+
+补丁位置：
+
+- `packages/agent/src/durable-adapter.ts`
+- `packages/agent/src/host.ts`
+- `packages/agent/src/strategy-control.ts`
+- `packages/agent/test/durable-integration.test.ts`
+- `packages/agent/test/differential-oracle.test.ts`
+
+验证命令：
+
+```powershell
+npm run check
+npm run build
+npm run format:check
+npm test
+npm run smoke:package
+```
+
+验证结果：
+
+- `npm run check`: 0 errors
+- `npm run build`: 成功生成 ESM + declaration artifacts
+- `npm run format:check`: 全部文件符合 Prettier 标准
+- `npm test`: 121 个测试全部通过（0 fail, 0 skipped），涵盖 A-01 至 A-11 全场景
+- `npm run smoke:package`: 独立打包安装消费烟测通过，验证 1.0.3 cohort 与受控导出
+- A-06 门禁证明：projector 阻断时 `providerCalls` 保持为 0，HTTP 请求未发出
+
+## 7. 结构化差异清单（Durable vs Oracle Backend Differential Ledger）
+
+依据 M6 交付物及 A-11 差分验收要求，记录 Pakka 默认生产后端（`DurableAdapter`）与保留测试参考后端（`PiAdapter` Oracle）之间的所有结构与运行差异：
+
+| 差异维度                    | DurableAdapter (默认生产路径)                                                                                             | PiAdapter (测试 Oracle 路径)                                                                            | 语义评估 / 允许理由                                                                      |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| **底层运行时**              | `@earendil-works/pi-durable: 1.0.3` Harness + Conversation                                                                | `@earendil-works/pi-coding-agent: 1.0.3` `AgentSession`                                                 | 核心迁移目标，生产全面切换至 Durable，旧路径仅供对照                                     |
+| **存储格式与布局**          | Node JSONL Document Store，多表/Doc 事务流 (`dataDir/sessions/<sessionId>/main.jsonl`)，含 DocFamily/DocumentCommitChange | 单一 SessionManager flat JSONL (`dataDir/sessions/<sessionId>/main.jsonl`)，按行追加 SessionEntry       | 存储物理布局差异已由 `trusted reopen` 契约抽象隔离，对外部透明                           |
+| **条目标识 (Entry ID)**     | 递增数字序列（强类型 `EntryId`，对外部统一暴露字符串化形式）                                                              | 递增数字序列（SessionManager 原生 ID）                                                                  | Pakka `RawEntryDTO.id` 保持 `string`，两端外部 DTO 语义等价                              |
+| **Provider 身份与模型注册** | 显式注册 `pakka-main` 与 `pakka-aux-<hash>` 命名空间 Provider                                                             | 注册 `pakka-summary-<hash>` 并复用 Pi 内置 default provider                                             | wire trace 上请求模型与消息对齐，仅 Provider ID 命名空间更清晰                           |
+| **输入调度与队列机制**      | Durable 原生 `InboxDoc`，通过 `steeringMode` / `followUpMode` 在 `final` / `postTools` 事务放置                           | Pi 原生 `AgentMessage` 队列，通过 `Agent.steer` / `Agent.followUp` 调度                                 | 外部 `submit`、`cancelQueued`、`drain` 顺序完全一致，由 `lifecycle-queue.test.ts` 验证   |
+| **Generation 门禁实现**     | `PolicyModels` (ModelGateway Proxy) 在公共 `Models` 调用边界做 Fail-Closed 门禁（`streamSimple` / `completeSimple` 等）   | `Agent.prepareRequest` 钩子链路直接拦截                                                                 | Durable 原生 hook 异常仅 report 不阻断，`PolicyModels` 保证 `providerCalls = 0` 安全等价 |
+| **自动 Compaction / Retry** | 显式传入 `settings: { compaction: { enabled: false }, retry: { enabled: false } }` 彻底关闭                               | 通过 `SettingsManager.inMemory({ compaction: { enabled: false }, retry: { enabled: false } })` 彻底关闭 | 统一禁用非预期隐式副作用，由 Pakka 上层 Strategy 完全拥有截断与重试决策                  |
+| **Artifact 写入范围**       | `(sessionId, strategyId, journalKind)` 多策略独立命名空间                                                                 | 全局单 writer 互斥占有                                                                                  | F-15 / A-05 改进，多策略并行写入无命名空间冲突                                           |

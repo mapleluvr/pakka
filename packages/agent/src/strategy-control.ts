@@ -2,7 +2,7 @@ import { AsyncLocalStorage } from "node:async_hooks";
 import { randomUUID } from "node:crypto";
 import { ArtifactJournal, copy, freeze, hash, type ArtifactIntent } from "./artifact-journal.ts";
 import { applyProjection } from "./strategy-projection.ts";
-import type { AdapterFrame } from "./pi-adapter.ts";
+import type { AdapterFrame } from "./durable-adapter.ts";
 import type {
 	ArtifactScope,
 	ContextFrame,
@@ -523,10 +523,7 @@ export class StrategyControl {
 					scope: ArtifactScope,
 					batch: { expectedVersion: number; records: readonly JsonValue[]; attemptIds?: readonly string[] },
 				) => {
-					if (
-						!lease.hooks.includes("context_artifacts.write") ||
-						this.#ports.owner("context_artifacts.write") !== strategyId
-					)
+					if (!lease.hooks.includes("context_artifacts.write"))
 						throw new Error("Missing context_artifacts.write lease");
 					const authority = this.#scope(scope, principal, strategyId, leaseId),
 						job = this.#jobsByScope.get(scope),

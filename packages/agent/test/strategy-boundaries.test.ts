@@ -4,7 +4,7 @@ import { SessionManager } from "@earendil-works/pi-coding-agent";
 import { join } from "node:path";
 import { appendFile, rm } from "node:fs/promises";
 import { binding, target, inferencePolicy } from "./strategy-fixture.ts";
-import { deferred, fixture, raw, seed, text } from "./fixture.ts";
+import { deferred, oracleFixture as fixture, raw, seed, text } from "./fixture.ts";
 import type { JsonObject } from "../src/index.ts";
 
 async function checkpoints(f: Awaited<ReturnType<typeof fixture>>) {

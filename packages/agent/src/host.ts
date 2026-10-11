@@ -1,5 +1,7 @@
 import { randomUUID } from "node:crypto";
-import { PiAdapter, type Notice, type AdapterControl } from "./pi-adapter.ts";
+import { DurableAdapter } from "./durable-adapter.ts";
+import { PiAdapter } from "./pi-adapter.ts";
+import type { Notice, AdapterControl } from "./durable-adapter.ts";
 import { StrategyControl, type StrategyLease } from "./strategy-control.ts";
 import type {
 	Capability,
@@ -27,7 +29,7 @@ function dto<T>(value: T): T {
 }
 type RecordInput = { receipt: Receipt; text: string; mode: string };
 class Kernel {
-	#adapter!: PiAdapter;
+	#adapter!: DurableAdapter | PiAdapter;
 	#options: Pick<HostOptions, "prepareInput">;
 	#control: StrategyControl;
 	#phase: View["phase"] = "ready";
@@ -74,7 +76,10 @@ class Kernel {
 		};
 	}
 	async initialize(options: HostOptions): Promise<Host> {
-		this.#adapter = await PiAdapter.create(options, (n) => this.#notice(n), this.#adapterControl());
+		this.#adapter =
+			options.backend === "oracle"
+				? await PiAdapter.create(options, (n) => this.#notice(n), this.#adapterControl())
+				: await DurableAdapter.create(options, (n) => this.#notice(n), this.#adapterControl());
 		return Object.freeze({
 			connect: (id: string, grants: readonly Grant[]) => this.#connect(id, grants),
 			view: () => this.#view(),
@@ -155,7 +160,7 @@ class Kernel {
 		if (n.type === "consumed") this.#receipt(n.id, { state: "consumed" });
 		if (n.type === "committed") this.#receipt(n.id, { state: "committed", entryId: n.entryId });
 		if (n.type === "unknown") this.#receipt(n.id, { state: "unknown", reason: n.reason });
-		if (n.type === "failed") this.#fail(n.reason);
+		if (n.type === "failed") this.#fail(n.reason, n.sessionId);
 		if (n.type === "changed") this.#control.sourceChanged();
 	}
 	#connect(principal: string, grants: readonly Grant[]): Client {
@@ -178,10 +183,13 @@ class Kernel {
 					throw new Error("Invalid or duplicate strategy");
 				for (const hook of hooks) {
 					if (!allow.has(hook)) throw new Error("Missing hook grant");
-					if (this.#owners.has(hook)) throw new Error("Hook already owned: " + hook);
+					if (hook === "real_context.write" && this.#owners.has(hook))
+						throw new Error("Hook already owned: " + hook);
 				}
 				this.#strategies.set(spec.id, { principal, hooks, leaseId: randomUUID() });
-				for (const hook of hooks) this.#owners.set(hook, spec.id);
+				for (const hook of hooks) {
+					if (hook === "real_context.write") this.#owners.set(hook, spec.id);
+				}
 				this.#epoch++;
 			},
 			deactivateStrategy: (id: string) => {
@@ -189,8 +197,10 @@ class Kernel {
 				const strategy = this.#strategies.get(id);
 				if (!strategy || strategy.principal !== principal) throw new Error("Not strategy owner");
 				for (const hook of strategy.hooks) {
-					this.#owners.delete(hook);
-					if (hook === "real_context.write") this.#policy = undefined;
+					if (hook === "real_context.write") {
+						this.#owners.delete(hook);
+						this.#policy = undefined;
+					}
 				}
 				this.#control.invalidate("deactivated", id);
 				this.#strategies.delete(id);
@@ -266,7 +276,7 @@ class Kernel {
 			return denied("State changed during approval");
 		this.#epoch++;
 		try {
-			const entryId = this.#adapter.commit(proposal, {
+			const entryId = await this.#adapter.commit(proposal, {
 				principal,
 				strategyId: owner,
 				operationId: randomUUID(),
