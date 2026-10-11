@@ -11,8 +11,10 @@
 	},
 	"scripts": {
 		"build": "npm run build --workspaces",
-		"check": "tsc --noEmit -p tsconfig.test.json",
+		"build:durable-patch": "node scripts/build-durable-patch.mjs",
+		"check": "node scripts/verify-durable-patch.mjs && tsc --noEmit -p tsconfig.test.json",
 		"test": "node scripts/test.mjs",
+		"pack:agent": "npm run build && node scripts/pack-agent.mjs",
 		"smoke:package": "npm run build && node scripts/pack-smoke.mjs",
 		"format:check": "prettier --check packages scripts *.json"
 	},
@@ -21,11 +23,13 @@
 		"@earendil-works/pi-agent-core": "1.0.3",
 		"@earendil-works/pi-ai": "1.0.3",
 		"@earendil-works/pi-coding-agent": "1.0.3",
-		"@earendil-works/pi-durable": "1.0.3",
 		"@earendil-works/pi-tui": "1.0.3",
 		"@earendil-works/pi-mcp": "1.0.3",
 		"@earendil-works/pi-codemode": "1.0.3",
 		"@earendil-works/pi-telemetry": "1.0.3"
+	},
+	"dependencies": {
+		"@earendil-works/pi-durable": "file:packages/agent/vendor/earendil-works-pi-durable-1.0.3-pakka.1.tgz"
 	},
 	"devDependencies": {
 		"@types/node": "26.6.4",

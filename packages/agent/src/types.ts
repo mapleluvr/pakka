@@ -20,6 +20,8 @@ export interface Receipt {
 	readonly state: ReceiptState;
 	readonly entryId?: string;
 	readonly reason?: string;
+	/** Generation outcome is independent of whether this input was persisted. */
+	readonly generation?: { readonly status: "blocked"; readonly reason: string };
 }
 export interface View {
 	readonly phase: "ready" | "transitioning" | "failed" | "disposed";
@@ -164,6 +166,7 @@ export interface SummaryRangeReplacement {
 }
 export type ProjectionPlan =
 	| { readonly status: "disabled"; readonly basis: FrameBasis }
+	| { readonly status: "blocked"; readonly basis: FrameBasis; readonly reason: string }
 	| {
 			readonly status: "apply";
 			readonly basis: FrameBasis;
@@ -271,7 +274,7 @@ export interface InferencePolicy {
 	readonly timeoutMs: number;
 }
 export interface HostOptions {
-	backend?: "durable" | "oracle";
+	backend?: "durable";
 	cwd: string;
 	dataDir: string;
 	endpoint: string;

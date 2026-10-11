@@ -17,6 +17,7 @@ import {
 	type Conversation,
 	type Submission,
 	type SubmissionId,
+	type Cursor,
 	type EntryRecord,
 	type EntryDraft,
 	type EntryId,
@@ -58,7 +59,9 @@ export type AdapterFrame = Pick<
 export interface RunScopeToken {}
 
 export interface AdapterControl {
-	project(signal?: AbortSignal): Promise<{ messages: readonly MessageDTO[]; check(): void }>;
+	project(
+		signal?: AbortSignal,
+	): Promise<{ messages: readonly MessageDTO[]; check(): void } | { block: string; check(): void }>;
 	runScope(): RunScopeToken;
 	invoke<T>(run: RunScopeToken, callback: (scope: ToolInvocationScope) => Promise<T>): Promise<T>;
 }
@@ -67,6 +70,7 @@ export type Notice =
 	| { type: "changed" }
 	| { type: "consumed"; id: string }
 	| { type: "committed"; id: string; entryId: string }
+	| { type: "blocked"; id: string; reason: string }
 	| { type: "unknown"; id: string; reason: string }
 	| { type: "failed"; reason: string; sessionId?: string };
 
@@ -123,6 +127,7 @@ export class DurableAdapter {
 	#submissions = new Map<SubmissionId, { id: string; kind: "prompt" | "steer" | "followUp" }>();
 	#submissionByPakkaId = new Map<string, SubmissionId>();
 	#consumedSubmissions = new Set<string>();
+	#blockedSubmissions = new Set<string>();
 	#committedSubmissions = new Set<string>();
 	#queued = new Map<
 		string,
@@ -133,8 +138,6 @@ export class DurableAdapter {
 	#allEntries: EntryRecord[] = [];
 	#contributions: (readonly Message[])[] = [];
 	#contextMessages: readonly Message[] = [];
-	#currentPermit: { messages: readonly MessageDTO[]; check(): void } | undefined;
-	#permitError: Error | undefined;
 	#forkPromise: Promise<void> | undefined;
 	#failedReason: string | undefined;
 	#failListeners: (() => void)[] = [];
@@ -287,53 +290,6 @@ export class DurableAdapter {
 
 		let adapterRef: DurableAdapter | undefined;
 
-		const policyModels = new Proxy(rawModels, {
-			get(target, prop, receiver) {
-				if (
-					prop === "streamSimple" ||
-					prop === "completeSimple" ||
-					prop === "stream" ||
-					prop === "complete"
-				) {
-					return (
-						model: Model<Api>,
-						context: Parameters<Models["streamSimple"]>[1],
-						streamOpts?: Parameters<Models["streamSimple"]>[2],
-					) => {
-						if (adapterRef?.hasPermitError) {
-							throw adapterRef.consumePermitError();
-						}
-						const permit = adapterRef?.currentPermit;
-						if (!permit) {
-							throw new Error("Provider request has no host authorization");
-						}
-						permit.check();
-						const origOnPayload = streamOpts?.onPayload;
-						const wrappedOpts: SimpleStreamOptions = {
-							...streamOpts,
-							onPayload: async (payload, m) => {
-								permit.check();
-								return origOnPayload?.(payload, m);
-							},
-						};
-						// SAFETY: Target model method is resolved from Models instance
-						const fn = Reflect.get(target, prop, receiver) as (
-							m: Model<Api>,
-							ctx: unknown,
-							opts: unknown,
-						) => unknown;
-						return fn.call(target, model, context, wrappedOpts);
-					};
-				}
-				if (prop === "fetchDeferred" || prop === "cancelDeferred") {
-					return () => {
-						throw new Error(`Deferred provider operation ${String(prop)} is unsupported`);
-					};
-				}
-				return Reflect.get(target, prop, receiver);
-			},
-		});
-
 		const registry = createRegistry();
 
 		const tools = (options.tools ?? []).map((t) =>
@@ -363,19 +319,17 @@ export class DurableAdapter {
 			hooks: [
 				hook(GenerationTask, {
 					beforeRequest: async (_req, _api, ctx) => {
-						adapterRef?.resetPermit();
 						try {
 							await adapterRef?.refreshCache();
 							const permitted = await control.project(ctx.abortSignal);
 							permitted.check();
-							adapterRef?.setPermit(permitted);
-							return {
-								messages: clean<Message[]>(permitted.messages),
-							};
+							if ("block" in permitted) return { block: permitted.block };
+							return { messages: clean<Message[]>(permitted.messages), check: permitted.check };
 						} catch (err) {
-							const errorObj = err instanceof Error ? err : new Error(String(err));
-							adapterRef?.setPermitError(errorObj);
-							throw err;
+							// Protocol errors still fail the Profile, but never fall through to dispatch.
+							const error = err instanceof Error ? err : new Error(String(err));
+							adapterRef?.markFailed(error);
+							return { block: error.message };
 						}
 					},
 					afterResponse: async (msg) => {
@@ -391,10 +345,11 @@ export class DurableAdapter {
 		const harness = await Harness.open(
 			storage,
 			{
-				models: policyModels,
+				models: rawModels,
 				registry,
 				settings: {
 					steeringMode: options.steeringMode ?? "one-at-a-time",
+					stream: { maxRetries: 0 },
 					compaction: { enabled: false },
 					retry: { enabled: false },
 				},
@@ -483,35 +438,6 @@ export class DurableAdapter {
 		this.#notify({ type: "failed", reason: err.message, sessionId: this.#sessionId });
 	}
 
-	get hasPermitError(): boolean {
-		return this.#permitError !== undefined;
-	}
-
-	consumePermitError(): Error {
-		const err = this.#permitError ?? new Error("Authorization denied");
-		this.#permitError = undefined;
-		return err;
-	}
-
-	get currentPermit() {
-		return this.#currentPermit;
-	}
-
-	setPermit(permit: { messages: readonly MessageDTO[]; check(): void }) {
-		this.#currentPermit = permit;
-		this.#permitError = undefined;
-	}
-
-	setPermitError(err: Error) {
-		this.#permitError = err;
-		this.#currentPermit = undefined;
-	}
-
-	resetPermit() {
-		this.#currentPermit = undefined;
-		this.#permitError = undefined;
-	}
-
 	get activeRunScope(): RunScopeToken | undefined {
 		return this.#runScope;
 	}
@@ -539,21 +465,27 @@ export class DurableAdapter {
 		} else if (event.type === "task_failed") {
 			this.markFailed(new Error(event.message));
 		} else if (event.type === "submission") {
-			const sub = event.record;
-			const meta = this.#submissions.get(sub.id);
-			if (meta) {
-				if (sub.status === "placed" || sub.status === "done") {
-					this.#queued.delete(meta.id);
-					if (!this.#consumedSubmissions.has(meta.id)) {
-						this.#consumedSubmissions.add(meta.id);
-						this.#notify({ type: "consumed", id: meta.id });
-					}
-					if (sub.entry !== undefined && !this.#committedSubmissions.has(meta.id)) {
-						this.#committedSubmissions.add(meta.id);
-						this.#notify({ type: "committed", id: meta.id, entryId: String(sub.entry) });
-					}
-				}
+			this.#observeSubmission(event.record);
+		}
+	}
+
+	#observeSubmission(sub: Awaited<ReturnType<Submission["status"]>>): void {
+		const meta = this.#submissions.get(sub.id);
+		if (!meta) return;
+		if (sub.entry !== undefined) {
+			this.#queued.delete(meta.id);
+			if (!this.#consumedSubmissions.has(meta.id)) {
+				this.#consumedSubmissions.add(meta.id);
+				this.#notify({ type: "consumed", id: meta.id });
 			}
+			if (!this.#committedSubmissions.has(meta.id)) {
+				this.#committedSubmissions.add(meta.id);
+				this.#notify({ type: "committed", id: meta.id, entryId: String(sub.entry) });
+			}
+		}
+		if (sub.status === "unanswered" && sub.reason === "blocked" && !this.#blockedSubmissions.has(meta.id)) {
+			this.#blockedSubmissions.add(meta.id);
+			this.#notify({ type: "blocked", id: meta.id, reason: String(sub.detail ?? "Generation blocked") });
 		}
 	}
 
@@ -564,8 +496,14 @@ export class DurableAdapter {
 			this.#activeEntries = [...ctx.entries];
 			this.#contributions = [...ctx.contributions];
 			this.#contextMessages = [...ctx.messages];
-			const page = await this.#conversation.entries({}, 1000, undefined, BACKGROUND_CONTEXT);
-			this.#allEntries = [...page.items].reverse();
+			let cursor: Cursor | undefined;
+			const entries: EntryRecord[] = [];
+			do {
+				const page = await this.#conversation.entries({}, 1000, cursor, BACKGROUND_CONTEXT);
+				entries.push(...page.items);
+				cursor = page.next;
+			} while (cursor !== undefined);
+			this.#allEntries = entries.reverse();
 		} catch (e) {
 			const reason = e instanceof Error ? e.message : String(e);
 			this.markFailed(new Error(reason));
@@ -628,9 +566,9 @@ export class DurableAdapter {
 			sessionId: this.#sessionId,
 			cwd: this.#options.cwd,
 			leafId: this.#activeEntries.length > 0 ? String(this.#activeEntries.at(-1)!.id) : null,
-			entries: this.#allEntries.map((entry) => ({
+			entries: this.#allEntries.map((entry, index) => ({
 				id: String(entry.id),
-				parentId: null,
+				parentId: index > 0 ? String(this.#allEntries[index - 1]!.id) : null,
 				type: entry.kind,
 				raw: clean<ContextFrame["entries"][number]["raw"]>(entry),
 			})),
@@ -760,20 +698,21 @@ export class DurableAdapter {
 				}
 			}
 
-			await Promise.race([
-				this.#harness.waitForIdle(BACKGROUND_CONTEXT),
-				new Promise<void>((resolve) => {
-					if (this.#failedReason) resolve();
-					else this.#failListeners.push(resolve);
-				}),
-			]);
+			let settled: Awaited<ReturnType<Submission["wait"]>>;
+			try {
+				settled = await sub.wait(BACKGROUND_CONTEXT);
+			} catch (error) {
+				this.markFailed(error instanceof Error ? error : new Error(String(error)));
+				return;
+			}
 
+			this.#observeSubmission(settled);
 			if (this.#failedReason) {
 				return;
 			}
 
-			const settled = await sub.status(BACKGROUND_CONTEXT);
 			if (settled.status === "unanswered") {
+				if (settled.reason === "blocked") return;
 				if (settled.reason === "model_error" || settled.reason === "no_model") {
 					const reasonStr =
 						typeof settled.detail === "string"
@@ -833,6 +772,7 @@ export class DurableAdapter {
 				}
 				this.#submissions.set(sub.id, { id, kind });
 				this.#submissionByPakkaId.set(id, sub.id);
+				this.#observeSubmission(await sub.status(BACKGROUND_CONTEXT));
 			} catch (e) {
 				this.markFailed(e instanceof Error ? e : new Error(String(e)));
 			}
@@ -1024,13 +964,21 @@ export class DurableAdapter {
 
 	async idle(): Promise<void> {
 		if (this.#failedReason) return;
-		await Promise.race([
-			Promise.all([this.#run, this.#forkPromise, this.#harness.waitForIdle(BACKGROUND_CONTEXT)]),
-			new Promise<void>((resolve) => {
-				if (this.#failedReason) resolve();
-				else this.#failListeners.push(resolve);
-			}),
-		]);
+		let resolveFailure!: () => void;
+		const failure = new Promise<void>((resolve) => {
+			resolveFailure = resolve;
+			if (this.#failedReason) resolve();
+			else this.#failListeners.push(resolve);
+		});
+		try {
+			await Promise.race([
+				Promise.all([this.#run, this.#forkPromise, this.#harness.waitForIdle(BACKGROUND_CONTEXT)]),
+				failure,
+			]);
+		} finally {
+			const index = this.#failListeners.indexOf(resolveFailure);
+			if (index >= 0) this.#failListeners.splice(index, 1);
+		}
 		await this.refreshCache();
 	}
 

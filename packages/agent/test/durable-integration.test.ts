@@ -181,3 +181,65 @@ test("A-03: Submission idempotency prevents second execution on identical payloa
 		await f.close();
 	}
 });
+
+test(
+	"concurrent initial submissions do not let waitForIdle return before dispatch",
+	{ timeout: 30000 },
+	async () => {
+		const fixtures = await Promise.all(Array.from({ length: 64 }, () => fixture()));
+		try {
+			const hosts = await Promise.all(fixtures.map((f) => f.start()));
+			await Promise.all(
+				hosts.map(async (host, index) => {
+					const user = host.connect("user", ["input.submit"]);
+					await user.submit({ key: "concurrent-" + index, text: "CONCURRENT-" + index });
+					await host.waitForIdle();
+					assert.equal(
+						fixtures[index].requests.length,
+						1,
+						JSON.stringify({ index, view: host.view(), errors: fixtures[index].errors.map(String) }),
+					);
+				}),
+			);
+		} finally {
+			await Promise.all(fixtures.map((f) => f.close()));
+		}
+	},
+);
+
+test("Durable entry frames preserve linear parentage", async () => {
+	const f = await fixture();
+	try {
+		const host = await f.start();
+		const user = host.connect("user", ["input.submit"]);
+		await user.submit({ key: "parentage", text: "PARENTAGE" });
+		await host.waitForIdle();
+
+		const owner = host.connect("owner", ["real_context.write"]);
+		owner.activateStrategy({ id: "parentage-strategy", hooks: ["real_context.write"] });
+		const entries = owner.bindStrategy("parentage-strategy").readFrame().entries;
+		assert.ok(entries.length >= 3);
+		assert.equal(entries[0].parentId, null);
+		for (let i = 1; i < entries.length; i++) assert.equal(entries[i].parentId, entries[i - 1].id);
+	} finally {
+		await f.close();
+	}
+});
+
+// This exercises 501 real generations plus growing JSONL readback; completion counts, not latency, are the contract.
+test("context views retain entries beyond Durable scan page size", { timeout: 180000 }, async () => {
+	const f = await fixture();
+	try {
+		const host = await f.start();
+		const user = host.connect("user", ["input.submit"]);
+		for (let i = 0; i < 501; i++) {
+			await user.submit({ key: "history-" + i, text: "HISTORY-" + i });
+			await host.waitForIdle();
+		}
+		const view = host.view();
+		assert.equal(view.entries.length, 1003);
+		assert.equal(view.context.length, 1003);
+	} finally {
+		await f.close();
+	}
+});

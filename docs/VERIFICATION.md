@@ -2,17 +2,17 @@
 
 The integrated Pakka/Dynamite migration passed independent review on 2026-10-09: `ok_with_notes`, no remaining findings. Runtime heads reviewed were Pakka `f9578776a46c2c07ae783dd97ee75adcb3b5d3af` and Dynamite `bd45756f272cd2d4af3c0b9e55fc2587e8bf4678`. Later delivery commits update documentation and formatting configuration only.
 
-| Final validation | Result |
-| --- | --- |
-| Full Pakka source suite | 112/112; no skips/cancellations |
-| Full Dynamite source suite | 334/334; no skips/cancellations |
-| Isolated installed tarballs | Host 112/112, Dynamite integration 37/37 |
-| Independent installed adversarial checks | 19 asserted cases passed |
-| Clean Dynamite git-archive bootstrap | Explicit host tarball, npm ci, typecheck/build and 37/37 integration |
-| Public declarations and build identity | Strict NodeNext passed; 50 installed JS/declaration files matched current source builds |
-| Dependency inventory | All eight Pi runtime packages exactly 1.0.3 |
-| Pakka check/build and Dynamite typecheck/build | Passed |
-| Pakka format:check | Passed after explicitly configuring `endOfLine: auto`; no runtime/source formatting rewrite |
+| Final validation                               | Result                                                                                      |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| Full Pakka source suite                        | 112/112; no skips/cancellations                                                             |
+| Full Dynamite source suite                     | 334/334; no skips/cancellations                                                             |
+| Isolated installed tarballs                    | Host 112/112, Dynamite integration 37/37                                                    |
+| Independent installed adversarial checks       | 19 asserted cases passed                                                                    |
+| Clean Dynamite git-archive bootstrap           | Explicit host tarball, npm ci, typecheck/build and 37/37 integration                        |
+| Public declarations and build identity         | Strict NodeNext passed; 50 installed JS/declaration files matched current source builds     |
+| Dependency inventory                           | All eight Pi runtime packages exactly 1.0.3                                                 |
+| Pakka check/build and Dynamite typecheck/build | Passed                                                                                      |
+| Pakka format:check                             | Passed after explicitly configuring `endOfLine: auto`; no runtime/source formatting rewrite |
 
 Review covered pre-write zero-effect adoption checks, physical reconciliation of every settled adoption, no replay after an artifact rollback, and multiblock source/context edit/recompression whose next real request matches flush/status. Earlier incomplete-output, unknown-usage, cancelled-job retention and bootstrap-documentation fixes remain green. No Pi source patches, credentials or paid calls were used.
 
@@ -34,14 +34,14 @@ This is a generic host component, not a completed Dynamite integration or full K
 
 ## Executed Gates
 
-| Command | Latest result | Evidence |
-| --- | --- | --- |
-| `npm run check` | Passed | `artifacts/host-control/recovery-check.log` |
-| `npm run build` | Passed | `artifacts/host-control/recovery-build.log` |
-| `npm test` | **82/82 passed**, no skipped/cancelled tests; original 22 preserved | `artifacts/host-control/recovery-tests-2.log` |
-| `npm run format:check -- --end-of-line auto` | Passed | `artifacts/host-control/recovery-format-2.log` |
-| `npm run smoke:package` | Passed: external tarball install, public declarations, six localhost requests | `artifacts/host-control/recovery-package.log`, `artifacts/package-smoke/` |
-| `git diff --check` | Passed | No whitespace errors |
+| Command                                      | Latest result                                                                 | Evidence                                                                  |
+| -------------------------------------------- | ----------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| `npm run check`                              | Passed                                                                        | `artifacts/host-control/recovery-check.log`                               |
+| `npm run build`                              | Passed                                                                        | `artifacts/host-control/recovery-build.log`                               |
+| `npm test`                                   | **82/82 passed**, no skipped/cancelled tests; original 22 preserved           | `artifacts/host-control/recovery-tests-2.log`                             |
+| `npm run format:check -- --end-of-line auto` | Passed                                                                        | `artifacts/host-control/recovery-format-2.log`                            |
+| `npm run smoke:package`                      | Passed: external tarball install, public declarations, six localhost requests | `artifacts/host-control/recovery-package.log`, `artifacts/package-smoke/` |
+| `git diff --check`                           | Passed                                                                        | No whitespace errors                                                      |
 
 The plain default-LF format command reports CRLF differences in untouched Windows baseline files. The explicit auto-end-of-line gate validates style without unrelated line-ending churn. Newly edited sources were formatted. The API declaration block in `docs/STRATEGY-API.md` was compared exactly against `src/types.ts` (`artifacts/host-control/api-match.log`).
 
@@ -57,20 +57,20 @@ The external consumer is outside the repository and installs `pakka-agent-0.1.0.
 
 ## Coverage
 
-| Area | Behavioral evidence |
-| --- | --- |
-| Original C2/permission/lifecycle boundary | All 22 baseline tests retained without rewriting their oracles: native steer/follow-up, drain/cancel, idempotency, physical receipt, tool side effect/storage failure, reentrancy, recovery |
-| Binding authority | Wrong principal, missing strategy, artifact-only projection, exact hook ownership, deactivated/copied/stale authority |
-| Atomic frame | Raw ID/parentage, effective context edits, system/loadout checkpoints, excluded bash and versioned scoped records |
-| Request gate | Projector throw, copied basis, missing entry, protected target and owner revocation send no next HTTP; reload installation is idempotent; own writes require explicit basis rebase |
-| Native protocol | Changes to call IDs/names/arguments, forged/dangling/reversed pairs and range splits rejected; valid text reduction preserves native declarations/IDs/arguments on wire; protected mid-pair checkpoint survives |
-| Explicit omission | Existing summary reduced to no replacement text without source resurrection; remaining tail/checkpoints survive; complete native pair can be omitted, split pair/checkpoint-crossing/stale job cannot |
-| Source jobs | Normal tail growth succeeds; target/previous-context edits, completed candidate edits, generation change, newSession, owner revocation, navigation ABA and disposal prevent publication/future attempts |
-| Inference | Separate explicit grant, sanitized allowlist, finite budgets, consumed 64/128 wire caps, explicit ordered fallback with fixed input, unknown usage/cost and pending reservations observable; no main transcript/C2 pollution |
-| Storage | Strict namespace/version receipts; partial/truncated/missing whole journal directory or file fail closed; real readonly append fault returns unknown and blocks model replay; spent budget survives reload/re-activation/process reopen |
-| Transition fault | Same-session late audit write uncertainty during reload stays latched; explicit newSession can recover while the previous session's audit remains faulty |
-| Tool invocation | Old explicit scope and async-local no-argument frame refresh both refused across lifecycle changes |
-| Trusted reopen | Physical Pakka-owned identity/entry/record preservation under new authority; absent/corrupt/foreign requested reopen never falls back to a new session; C2 claims are not reconstructed |
+| Area                                      | Behavioral evidence                                                                                                                                                                                                                     |
+| ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Original C2/permission/lifecycle boundary | All 22 baseline tests retained without rewriting their oracles: native steer/follow-up, drain/cancel, idempotency, physical receipt, tool side effect/storage failure, reentrancy, recovery                                             |
+| Binding authority                         | Wrong principal, missing strategy, artifact-only projection, exact hook ownership, deactivated/copied/stale authority                                                                                                                   |
+| Atomic frame                              | Raw ID/parentage, effective context edits, system/loadout checkpoints, excluded bash and versioned scoped records                                                                                                                       |
+| Request gate                              | Projector throw, copied basis, missing entry, protected target and owner revocation send no next HTTP; reload installation is idempotent; own writes require explicit basis rebase                                                      |
+| Native protocol                           | Changes to call IDs/names/arguments, forged/dangling/reversed pairs and range splits rejected; valid text reduction preserves native declarations/IDs/arguments on wire; protected mid-pair checkpoint survives                         |
+| Explicit omission                         | Existing summary reduced to no replacement text without source resurrection; remaining tail/checkpoints survive; complete native pair can be omitted, split pair/checkpoint-crossing/stale job cannot                                   |
+| Source jobs                               | Normal tail growth succeeds; target/previous-context edits, completed candidate edits, generation change, newSession, owner revocation, navigation ABA and disposal prevent publication/future attempts                                 |
+| Inference                                 | Separate explicit grant, sanitized allowlist, finite budgets, consumed 64/128 wire caps, explicit ordered fallback with fixed input, unknown usage/cost and pending reservations observable; no main transcript/C2 pollution            |
+| Storage                                   | Strict namespace/version receipts; partial/truncated/missing whole journal directory or file fail closed; real readonly append fault returns unknown and blocks model replay; spent budget survives reload/re-activation/process reopen |
+| Transition fault                          | Same-session late audit write uncertainty during reload stays latched; explicit newSession can recover while the previous session's audit remains faulty                                                                                |
+| Tool invocation                           | Old explicit scope and async-local no-argument frame refresh both refused across lifecycle changes                                                                                                                                      |
+| Trusted reopen                            | Physical Pakka-owned identity/entry/record preservation under new authority; absent/corrupt/foreign requested reopen never falls back to a new session; C2 claims are not reconstructed                                                 |
 
 ## Failing-First History
 
@@ -104,3 +104,41 @@ Main input `committed` means physical Pi entry readback, not fsync or a successf
 The adapter is tested against OpenAI-completions-compatible localhost providers and Pi 1.0.3. Other provider APIs, complete preprocessing/extension/TUI/RPC compatibility, a hostile Node sandbox, original Kappa suite equivalence and cross-package Dynamite integration are outside this component. Jobs have bounded calls and best-effort abort, not cost rollback; a failure without usage is unknown, never zero billing. Strategy implementations must retain job scopes on inference-derived applications and revalidate persisted plans under fresh authority after reload/reopen.
 
 Independent review is still required by the parent before integrated acceptance. No full-product completion claim is made.
+
+## Pi Durable contract corrections — 2026-10-11
+
+These results supplement the historical AgentSession verification above. The default production
+runtime now uses the version-pinned downstream `pi-durable@1.0.3-pakka.1`; it is not an upstream
+release or an independently reviewed full-product delivery. See
+[compatibility entry DURABLE-2026-10-11-5](PI-DURABLE-COMPATIBILITY.md) and
+[the source patch/build contract](../patches/pi-durable/1.0.3-pakka.1/README.md).
+
+| Gate                                                     | Result                                                                            |
+| -------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| Clean `npm ci --ignore-scripts` + check                  | Passed                                                                            |
+| Full Pakka source suite                                  | 127/127; no skips/cancellations                                                   |
+| Isolated patched Durable generation/recovery/inbox/tools | 105/105                                                                           |
+| Build and format check                                   | Passed                                                                            |
+| Outside-repository tarball consumer                      | 7 HTTP calls; blocked request adds zero calls                                     |
+| Consumer production dependencies                         | No `pi-coding-agent` or AgentSession oracle                                       |
+| Public backend/private subpaths                          | Oracle backend rejected; adapter subpaths rejected                                |
+| Request/source authority                                 | Request-scoped checks after hooks and at provider payload boundary                |
+| Durable storage                                          | Blocked task/submission persists through reopen; interrupted request reauthorizes |
+
+An intentional projector `{ status: "blocked", basis, reason }` leaves admitted input committed,
+adds `receipt.generation = { status: "blocked", reason }`, and leaves the Host ready. It appends no
+assistant error entry and does not replay on duplicate input or reopen. The post-tool test proves
+that a refusal of the next model request settles already-placed steering too and preserves prior
+tool effects. Malformed protocols and unknown storage continue to fail closed.
+
+The former adapter resides only at `packages/agent/test/pi-adapter.ts`, injected by test fixtures;
+production construction, imports, compiled output and installed dependencies use Durable only.
+Tarballs must be generated with `npm run pack:agent`; hoisted workspace packing is rejected.
+The staged pack uses the audited file dependency as input, then publishes an exact-version manifest
+and bundles the installed Durable release. The consumer runs with installation scripts disabled
+and no workspace overrides.
+
+The 501-input pagination test is a completion/correctness test with a 180-second budget; an isolated
+run took about 73 seconds. This is not evidence of equal latency to the original adapter. Automatic
+retry and compaction remain disabled; deferred model requests, arbitrary provider families,
+full C2 recovery and Dynamite integration are not newly claimed by these fixes.

@@ -726,7 +726,7 @@ export class StrategyControl {
 		return result;
 	}
 	#planSnapshot(plan: ProjectionPlan): ProjectionPlan {
-		if (plan.status === "disabled") return freeze({ ...plan });
+		if (plan.status === "disabled" || plan.status === "blocked") return freeze({ ...plan });
 		return freeze({
 			...plan,
 			...(plan.patches ? { patches: copy(plan.patches) } : {}),
@@ -747,7 +747,10 @@ export class StrategyControl {
 	}
 	async project(
 		signal?: AbortSignal,
-	): Promise<{ messages: readonly ContextFrame["projection"][number]["messages"][number][]; check(): void }> {
+	): Promise<
+		| { messages: readonly ContextFrame["projection"][number]["messages"][number][]; check(): void }
+		| { block: string; check(): void }
+	> {
 		this.#ports.ready();
 		const strategyId = this.#ports.owner("real_context.write"),
 			installed = strategyId ? this.#projectors.get(strategyId) : undefined;
@@ -809,6 +812,14 @@ export class StrategyControl {
 						}
 			};
 			check();
+			if (plan.status === "blocked") {
+				if (
+					typeof plan.reason !== "string" ||
+					Object.keys(plan).some((key) => !["status", "basis", "reason"].includes(key))
+				)
+					throw new Error("Invalid projection block plan");
+				return { block: plan.reason, check };
+			}
 			return { messages: applyProjection(basis.frame, plan), check };
 		} catch (error) {
 			this.#ports.fail("Projection control failure: " + String(error));

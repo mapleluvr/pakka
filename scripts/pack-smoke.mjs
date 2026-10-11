@@ -19,6 +19,7 @@ Object.assign(env, {
 	DO_NOT_TRACK: "1",
 	PI_OFFLINE: "1",
 	NO_COLOR: "1",
+	npm_execpath: npmCli,
 });
 function run(name, args, cwd) {
 	const r = spawnSync(process.execPath, args, {
@@ -35,11 +36,7 @@ function run(name, args, cwd) {
 	if (r.status !== 0) throw new Error(name + " failed: " + r.stdout + "\n" + r.stderr);
 	return r.stdout;
 }
-run(
-	"pack",
-	[npmCli, "pack", "--workspace", "@pakka/agent", "--pack-destination", consumer, "--ignore-scripts"],
-	root,
-);
+run("pack", [join(root, "scripts", "pack-agent.mjs"), consumer], root);
 writeFileSync(
 	join(consumer, "package.json"),
 	JSON.stringify(
@@ -75,6 +72,9 @@ run(
 	],
 	consumer,
 );
-run("dependency-tree", [npmCli, "ls", "--all", "--json"], consumer);
+writeFileSync(
+	join(consumer, "dependency-tree.json"),
+	run("dependency-tree", [npmCli, "ls", "--all", "--json"], consumer),
+);
 console.log(run("smoke", [join(consumer, "smoke.mjs")], consumer));
 writeFileSync(join(artifacts, "consumer-path.txt"), consumer + "\n");

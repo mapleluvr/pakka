@@ -13,7 +13,8 @@ import {
 } from "@earendil-works/pi-coding-agent";
 import type { AgentMessage, PrepareRequest } from "@earendil-works/pi-agent-core";
 import { type Model, type Api, type Usage, type SimpleStreamOptions } from "@earendil-works/pi-ai";
-import { copy, hash } from "./artifact-journal.ts";
+import { copy, hash } from "../src/artifact-journal.ts";
+import type { AdapterControl, AdapterFrame, Notice } from "../src/durable-adapter.ts";
 import type {
 	HostOptions,
 	Proposal,
@@ -24,17 +25,8 @@ import type {
 	InferenceRequest,
 	InferenceResult,
 	ToolInvocationScope,
-} from "./types.ts";
+} from "../src/types.ts";
 
-export type AdapterFrame = Pick<
-	ContextFrame,
-	"sessionId" | "cwd" | "leafId" | "entries" | "activeEntryIds" | "projection" | "model" | "usage"
->;
-export interface AdapterControl {
-	project(signal?: AbortSignal): Promise<{ messages: readonly MessageDTO[]; check(): void }>;
-	runScope(): object;
-	invoke<T>(run: object, callback: (scope: ToolInvocationScope) => Promise<T>): Promise<T>;
-}
 function clean<T>(value: unknown): T {
 	return JSON.parse(JSON.stringify(value)) as T;
 }
@@ -49,12 +41,6 @@ function usageDTO(usage: Usage): UsageDTO {
 	};
 }
 
-export type Notice =
-	| { type: "changed" }
-	| { type: "consumed"; id: string }
-	| { type: "committed"; id: string; entryId: string }
-	| { type: "unknown"; id: string; reason: string }
-	| { type: "failed"; reason: string };
 export function messageText(message: unknown): string {
 	const m = message as { content?: unknown; summary?: string };
 	if (m.summary) return m.summary;
@@ -297,6 +283,7 @@ export class PiAdapter {
 				if (hash(context.messages) !== hash(canonical)) throw new Error("Pi projection alignment changed");
 				const permitted = await this.#control.project(signal);
 				permitted.check();
+				if ("block" in permitted) throw new Error(permitted.block);
 				this.#permit = permitted;
 				return { ...installed, context: { ...context, messages: clean<AgentMessage[]>(permitted.messages) } };
 			};

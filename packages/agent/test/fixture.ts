@@ -3,6 +3,10 @@ import { mkdtemp, mkdir, readFile, writeFile, appendFile, cp } from "node:fs/pro
 import { tmpdir } from "node:os";
 import { join, basename } from "node:path";
 import { createHost, type Host, type HostOptions } from "../src/index.ts";
+import { createHostWithAdapter } from "../src/host.ts";
+import { PiAdapter } from "./pi-adapter.ts";
+
+type FixtureOptions = Omit<Partial<HostOptions>, "backend"> & { backend?: "durable" | "oracle" };
 export function deferred() {
 	let resolve!: () => void;
 	const promise = new Promise<void>((r) => {
@@ -25,14 +29,14 @@ export type Answer = (
 	usage?: { prompt_tokens: number; completion_tokens: number; total_tokens: number } | null;
 };
 export async function oracleFixture(
-	options: Partial<HostOptions> = {},
+	options: FixtureOptions = {},
 	reply: (payload: Payload, n: number) => Answer | Promise<Answer> = () => ({ text: "LOCAL-ANSWER" }),
 ) {
-	return fixture({ backend: "oracle", ...options }, reply);
+	return fixture({ ...options, backend: "oracle" }, reply);
 }
 
 export async function fixture(
-	options: Partial<HostOptions> = {},
+	options: FixtureOptions = {},
 	reply: (payload: Payload, n: number) => Answer | Promise<Answer> = () => ({ text: "LOCAL-ANSWER" }),
 ) {
 	const root = await mkdtemp(join(tmpdir(), "pakka-integration-"));
@@ -105,17 +109,23 @@ export async function fixture(
 		requests,
 		errors,
 		endpoint: "http://127.0.0.1:" + address.port + "/v1",
-		async start(extra: Partial<HostOptions> = {}) {
-			host = await createHost({
+		async start(extra: FixtureOptions = {}) {
+			const { backend, ...config } = { ...options, ...extra };
+			const hostOptions: HostOptions = {
 				cwd,
 				dataDir,
 				endpoint: "http://127.0.0.1:" + address.port + "/v1",
 				model: "local-model",
 				apiKey: "local-only",
 				systemPrompt: "PAKKA-SYSTEM",
-				...options,
-				...extra,
-			});
+				...config,
+			};
+			host =
+				backend === "oracle"
+					? await createHostWithAdapter(hostOptions, (opts, notify, control) =>
+							PiAdapter.create(opts, notify, control),
+						)
+					: await createHost(hostOptions);
 			return host;
 		},
 		async close() {

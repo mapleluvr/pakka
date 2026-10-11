@@ -1,0 +1,316 @@
+diff --git a/packages/durable/README.md b/packages/durable/README.md
+index 2a9ff50..13f0549 100644
+--- a/packages/durable/README.md
++++ b/packages/durable/README.md
+@@ -396,7 +396,7 @@ const Guard = defineExtension({
+ });
+ ```
+ 
+-- **Generation:** `beforeRequest` (replace the messages of one request), `afterResponse`, `onYield` (continue the run with another user message), and `afterTools` (runs once a round's tools are done).
++- **Generation:** `beforeRequest` replaces the messages of one request or returns `{ block: reason }` to stop the run before dispatch. The first block wins; later hooks cannot undo it. The run's placed inputs settle as `unanswered` with `reason: "blocked"` and the generation completes with `{ blocked: reason }`, without a synthetic assistant entry. A returned `{ messages, check }` revalidates a per-request guard after all hooks and at the provider's `onPayload` boundary; a guard rejection is also committed as blocked. Recovery re-runs hooks rather than persisting callbacks. Ordinary hook exceptions still report and skip; guards must explicitly return block or use check. `afterResponse`, `onYield` (continue the run with another user message), and `afterTools` (runs once a round's tools are done) retain their original semantics.
+ - **Tools:** `beforeTool` (block or rewrite arguments) and `afterTool` (replace the result).
+ 
+ To limit a hook to some conversations, select its extension only there, for example with `configure({ extensions: { add: [Guard] } })`.
+diff --git a/packages/durable/src/harness/generation.ts b/packages/durable/src/harness/generation.ts
+index 9bedcfb..c86f57f 100644
+--- a/packages/durable/src/harness/generation.ts
++++ b/packages/durable/src/harness/generation.ts
+@@ -89,7 +89,9 @@ export type GenerationCheckpoint =
+ 			pending: string[];
+ 	  };
+ 
+-export type GenerationResult = { entryId: EntryId };
++export type GenerationResult =
++	| { entryId: EntryId; blocked?: never }
++	| { blocked: string; entryId?: never };
+ 
+ type Runtime = TaskRuntime<GenerationInput, GenerationCheckpoint, GenerationResult, GenerationHooks>;
+ type Next = NextTaskState<GenerationCheckpoint, GenerationResult>;
+@@ -194,17 +196,57 @@ export const GenerationTask = defineTask<GenerationInput, GenerationCheckpoint,
+ 			if (model === undefined) return failNoModel(runtime, ref, context);
+ 			const view = await runtime.context(conversationId, context, cutoff);
+ 			let messages = view.messages;
++			let blocked: string | undefined;
++			const checks: (() => void)[] = [];
+ 			await runtime.hooks.each("beforeRequest", async (hook) => {
++				if (blocked !== undefined) return;
+ 				const replaced = await hook({ messages }, runtime, context);
+-				if (replaced !== undefined) messages = replaced.messages;
++				if (replaced === undefined) return;
++				if ("block" in replaced) {
++					blocked = replaced.block;
++					return;
++				}
++				messages = replaced.messages;
++				if (replaced.check !== undefined) checks.push(replaced.check);
+ 			});
++			const check = () => {
++				try {
++					for (const guard of checks) guard();
++				} catch (error) {
++					blocked = error instanceof Error ? error.message : String(error);
++					throw error;
++				}
++			};
++			if (blocked === undefined) {
++				try {
++					check();
++				} catch {
++					// Rejection is committed below, distinct from a task fault.
++				}
++			}
++			if (blocked !== undefined) return blockRequest(runtime, blocked, context);
+ 			const options: SimpleStreamOptions = {
+ 				...streamOptions,
+ 				signal: runtime.signal,
+ 				sessionId: await ensureProviderSessionId(runtime, context),
+ 				...(thinkingLevel === "off" ? {} : { reasoning: thinkingLevel }),
+ 			};
+-			const message = await streamResponse(runtime, model, messages, options, attempt, context);
++			if (checks.length > 0) {
++				const previous = options.onPayload;
++				options.onPayload = async (payload, requestedModel) => {
++					const replacement = await previous?.(payload, requestedModel);
++					check();
++					return replacement;
++				};
++			}
++			let message: AssistantMessage;
++			try {
++				message = await streamResponse(runtime, model, messages, options, attempt, context);
++			} catch (error) {
++				if (context.abortSignal?.aborted || blocked === undefined) throw error;
++				return blockRequest(runtime, blocked, context);
++			}
++			if (blocked !== undefined) return blockRequest(runtime, blocked, context);
+ 			const request = { attempt, compacted, model: ref, cutoff, messages: view.messages };
+ 			await classify(runtime, request, message, context);
+ 		},
+@@ -281,6 +323,15 @@ export const GenerationTask = defineTask<GenerationInput, GenerationCheckpoint,
+ 	},
+ });
+ 
++/** Commit a policy rejection without fabricating a provider response or faulting the task. */
++async function blockRequest(runtime: Runtime, reason: string, context: Context): Promise<void> {
++	await runtime.commit(async (tx): Promise<Next> => {
++		const live = await tx.doc(LiveDoc, runtime.conversationId);
++		endRun(tx, live, runtime.taskId, { status: "unanswered", reason: "blocked", detail: reason });
++		return { status: "terminal", outcome: { status: "completed", result: { blocked: reason } } };
++	}, context);
++}
++
+ /** The calls `callIds` of the assistant entry, in the given order. */
+ async function readCalls(
+ 	runtime: Runtime,
+diff --git a/packages/durable/src/harness/types.ts b/packages/durable/src/harness/types.ts
+index 941a3da..ee646bd 100644
+--- a/packages/durable/src/harness/types.ts
++++ b/packages/durable/src/harness/types.ts
+@@ -613,12 +613,20 @@ export type HookResult<T> = T | undefined | Promise<T | undefined>;
+ 
+ /** Hooks of the built-in generation task. */
+ export interface GenerationHooks {
+-	/** Before every request attempt, including recovery; the result is used for that request only. */
++	/**
++	 * Before every request attempt, including recovery. The first block wins and settles the run's inputs as
++	 * unanswered/blocked without a model call. A check is re-run after all hooks and before each provider payload.
++	 * Checks are per-attempt callbacks, never persisted; recovery resolves the hook again. Ordinary hook throws
++	 * retain the report-and-skip behavior, so an authorization rejection must return block or use check.
++	 */
+ 	beforeRequest(
+ 		request: { readonly messages: readonly Message[] },
+ 		api: HookApi,
+ 		context: Context,
+-	): HookResult<{ readonly messages: readonly Message[] }>;
++	): HookResult<
++		| { readonly messages: readonly Message[]; readonly check?: () => void }
++		| { readonly block: string }
++	>;
+ 	/** Every terminal provider message, before classification. */
+ 	afterResponse(message: AssistantMessage, api: HookApi, context: Context): void | Promise<void>;
+ 	/** A final answer; the first `continue` appends a user message and continues the run. */
+diff --git a/packages/durable/test/harness-generation-recovery.test.ts b/packages/durable/test/harness-generation-recovery.test.ts
+index 68aa54b..dc1eedf 100644
+--- a/packages/durable/test/harness-generation-recovery.test.ts
++++ b/packages/durable/test/harness-generation-recovery.test.ts
+@@ -2,7 +2,7 @@ import { mkdtemp, rm } from "node:fs/promises";
+ import { tmpdir } from "node:os";
+ import { join } from "node:path";
+ import { type AssistantMessage, createModels, fauxAssistantMessage, type Message } from "@earendil-works/pi-ai";
+-import { AssistantEntry, type Harness, LiveDoc, type TaskId } from "@earendil-works/pi-durable";
++import { AssistantEntry, defineExtension, GenerationTask, type Harness, hook, LiveDoc, type TaskId } from "@earendil-works/pi-durable";
+ import { afterEach, describe, expect, it } from "vitest";
+ import { openNodeSqliteStorage } from "../src/storage/sqlite/node.ts";
+ import { allEntries, type ChatSetup, chatSetup, openChat, textOf, unanswered, waitFor } from "./chat-support.ts";
+@@ -38,6 +38,50 @@ async function checkpoint(harness: Harness, id: TaskId) {
+ }
+ 
+ describe("generation recovery", () => {
++	it("keeps a blocked settlement and terminal generation across SQLite reopen", async () => {
++		const path = await sqlitePath();
++		const setup = chatSetup();
++		setup.registry.install(defineExtension({ name: "policy", hooks: [hook(GenerationTask, {
++			beforeRequest: () => ({ block: "persistent refusal" }),
++		})] }));
++		let opened = await open(path, setup);
++		const submission = await opened.root.submit({ type: "input", content: "hi" }, context);
++		expect(await submission.wait(context)).toMatchObject({ status: "unanswered", reason: "blocked", detail: "persistent refusal" });
++		await opened.harness.close(context);
++		opened = await open(path, setup);
++		opened.harness.resume();
++		expect(await (await opened.harness.submission(submission.id, context))!.wait(context)).toMatchObject({ reason: "blocked", detail: "persistent refusal" });
++		expect(setup.faux.state.callCount).toBe(0);
++		expect(await opened.harness.snapshot(LiveDoc, opened.root.id, context)).toEqual({});
++		await opened.harness.close(context);
++	});
++
++	it("re-runs authorization for an interrupted request rather than restoring its old guard", async () => {
++		const path = await sqlitePath();
++		const setup = chatSetup();
++		const reached = deferred();
++		let hooks = 0;
++		setup.registry.install(defineExtension({ name: "policy", hooks: [hook(GenerationTask, {
++			beforeRequest: async (_request, _api, ctx) => {
++				hooks++;
++				if (hooks === 1) {
++					reached.resolve();
++					await aborted(ctx.abortSignal!);
++				}
++				return { block: "revoked after restart" };
++			},
++		})] }));
++		let opened = await open(path, setup);
++		const submission = await opened.root.submit({ type: "input", content: "hi" }, context);
++		await reached.promise;
++		await opened.harness.close(context);
++		opened = await open(path, setup);
++		opened.harness.resume();
++		expect(await (await opened.harness.submission(submission.id, context))!.wait(context)).toMatchObject({ reason: "blocked", detail: "revoked after restart" });
++		expect(hooks).toBe(2);
++		expect(setup.faux.state.callCount).toBe(0);
++		await opened.harness.close(context);
++	});
+ 	it("reruns preparation interrupted before its commit", async () => {
+ 		const path = await sqlitePath();
+ 		const setup = chatSetup();
+diff --git a/packages/durable/test/harness-generation.test.ts b/packages/durable/test/harness-generation.test.ts
+index e792ebd..bef6d98 100644
+--- a/packages/durable/test/harness-generation.test.ts
++++ b/packages/durable/test/harness-generation.test.ts
+@@ -16,6 +16,7 @@ import {
+ 	GenerationTask,
+ 	Harness,
+ 	type HarnessSettings,
++	hook,
+ 	LiveDoc,
+ 	type LiveState,
+ 	MemoryStorage,
+@@ -116,6 +117,108 @@ describe("generation", () => {
+ 		await harness.close(context);
+ 	});
+ 
++	it("blocks beforeRequest without dispatching a provider request or faulting the host task", async () => {
++		const setup = chatSetup();
++		setup.faux.setResponses([fauxAssistantMessage("unused")]);
++		setup.registry.install(
++			defineExtension({
++				name: "block-generation",
++				hooks: [hook(GenerationTask, { beforeRequest: () => ({ block: "policy denied" }) })],
++			}),
++		);
++		const { harness, root } = await openChat(new MemoryStorage(), setup);
++		harness.resume();
++		const submission = await root.submit({ type: "input", content: "hi" }, context);
++		await expect(submission.wait(context)).resolves.toMatchObject({
++			status: "unanswered",
++			reason: "blocked",
++			detail: "policy denied",
++		});
++		expect(setup.faux.state.callCount).toBe(0);
++		expect(await live(harness, root)).toEqual({});
++		const task = (await harness.commit((tx) => tx.scanTasks({ conversationId: root.id }, 10), context)).items[0];
++		expect(task?.state).toEqual({
++			status: "terminal",
++			outcome: { status: "completed", result: { blocked: "policy denied" } },
++		});
++		await harness.close(context);
++	});
++
++	it("a first block including an empty reason wins over later hooks and leaves the conversation reusable", async () => {
++		const setup = chatSetup();
++		const storage = new MemoryStorage();
++		let lateHooks = 0;
++		setup.registry.install(defineExtension({
++			name: "first-block",
++			hooks: [hook(GenerationTask, { beforeRequest: () => ({ block: "" }) })],
++		}));
++		setup.registry.install(defineExtension({
++			name: "later-hook",
++			hooks: [hook(GenerationTask, { beforeRequest: (request) => {
++				lateHooks++;
++				return { messages: request.messages };
++			} })],
++		}));
++		const { harness, root } = await openChat(storage, setup);
++		const submission = await root.submit({ type: "input", content: "first" }, context);
++		expect(await submission.wait(context)).toMatchObject({ status: "unanswered", reason: "blocked", detail: "" });
++		expect(lateHooks).toBe(0);
++		expect(setup.faux.state.callCount).toBe(0);
++		expect(await submission.status(context)).toMatchObject({ reason: "blocked", detail: "" });
++		setup.registry.install(defineExtension({ name: "first-block" }));
++		setup.faux.setResponses([fauxAssistantMessage("allowed")]);
++		expect(await (await root.submit({ type: "input", content: "next" }, context)).wait(context)).toMatchObject({ status: "done" });
++		expect(setup.faux.state.callCount).toBe(1);
++		await harness.close(context);
++	});
++
++	it("rechecks guards after all hooks so a later revocation cannot dispatch", async () => {
++		const setup = chatSetup();
++		let allowed = true;
++		setup.registry.install(defineExtension({
++			name: "guard",
++			hooks: [hook(GenerationTask, { beforeRequest: (request) => ({
++				messages: request.messages,
++				check: () => { if (!allowed) throw new Error("revoked"); },
++			}) })],
++		}));
++		setup.registry.install(defineExtension({
++			name: "revocation",
++			hooks: [hook(GenerationTask, { beforeRequest: async () => { allowed = false; } })],
++		}));
++		const { harness, root } = await openChat(new MemoryStorage(), setup);
++		expect(await (await root.submit({ type: "input", content: "hi" }, context)).wait(context)).toMatchObject({ reason: "blocked", detail: "revoked" });
++		expect(setup.faux.state.callCount).toBe(0);
++		await harness.close(context);
++	});
++
++	it("a payload-time guard rejection settles as blocked instead of provider error", async () => {
++		const setup = chatSetup();
++		let allowed = true;
++		setup.registry.install(defineExtension({
++			name: "payload-guard",
++			hooks: [hook(GenerationTask, { beforeRequest: (request) => ({
++				messages: request.messages,
++				check: () => { if (!allowed) throw new Error("payload revoked"); },
++			}) })],
++		}));
++		const guarded = { ...setup, models: withStream(setup.models, (model, _request, options) => {
++			allowed = false;
++			return {
++				[Symbol.asyncIterator]: async function* () {},
++				result: async () => {
++					await options?.onPayload?.({}, model);
++					return fauxAssistantMessage("must not be reached");
++				},
++			} as ReturnType<Models["streamSimple"]>;
++		}) };
++		const { harness, root } = await openChat(new MemoryStorage(), guarded);
++		expect(await (await root.submit({ type: "input", content: "hi" }, context)).wait(context)).toMatchObject({ reason: "blocked", detail: "payload revoked" });
++		expect(setup.faux.state.callCount).toBe(0);
++		expect(setup.reports).toEqual([]);
++		await harness.close(context);
++	});
++
+ 	it("stores partials as deltas and a complete base once nothing is in flight", async () => {
+ 		const setup = chatSetup({ tokensPerSecond: 200, tokenSize: { min: 1, max: 1 } });
+ 		setup.faux.setResponses([fauxAssistantMessage("w".repeat(200))]);

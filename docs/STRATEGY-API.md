@@ -110,6 +110,8 @@ A range replacement names a contiguous ordered visible source range, never a sys
 
 If a projector appends its own trigger records, re-read the frame before returning: `const current = binding.readFrame(); return {status: "apply", basis: current.basis, ...};`. The fresh basis is tied to the same live request. Returning the old basis is rejected, not silently rebased. A no-change projector returns `{status: "disabled", basis: frame.basis}` explicitly. Throwing, malformed plans, copied/stale bases, wrong owners, invalid protocol and unknown active storage fail closed before HTTP. A synchronous returned plan is snapshotted before later caller mutation.
 
+An intentional policy refusal returns `{ status: "blocked", basis: frame.basis, reason: "policy denied" }` with no patch/replacement fields. The exact live basis is still required. The version-pinned downstream Durable build settles generation as blocked without an assistant error entry or task fault. After `waitForIdle()`, the input receipt remains `state: "committed"` and gains `generation: { status: "blocked", reason }`; provider calls stay zero and the Host remains ready. Returning block does not undo an admitted input or replay its key. Invalid protocol is still a host failure. This contract is provided by [the downstream source patch](../patches/pi-durable/1.0.3-pakka.1/README.md), not unmodified upstream 1.0.3.
+
 ## Tools And Lifecycle
 
 `HostOptions.tools[].execute(args, signal, invocation)` gets a run-bound scope. A strategy tool adapter must call `binding.readFrame(invocation)` and pass the resulting basis/scope to writes. Existing callbacks accepting only `args`/`signal` remain assignable. The host also preserves invocation authority through async-local context, so an old tool cannot omit the argument to get a new-session frame after an await. An invocation expires when the callback ends or lifecycle identity changes.
@@ -122,7 +124,7 @@ Root startup may set `reopenSessionFile` to a Pakka-owned file beneath the same 
 
 Artifact operations require a valid frame or job scope and the correct strategy/session namespace. Batch receipts distinguish version conflict, committed physical readback and unknown storage. Each JSONL transaction has a version and SHA-256 chain; files are fsynced and read back. A separate ownership marker detects missing files/directories across reopen. Partial, changed or unreadable storage latches host failure. A same-session audit fault arriving during reload remains latched when reload settles; faults are attributed to their original session, so explicit newSession recovery is not poisoned by an old-session completion. This is single-writer evidence, not a multi-process transaction or a complete crash-proof directory protocol.
 
-Each auxiliary attempt reserves a durable budget slot before dispatch. Limits are finite per job and per strategy/session, including failed or unknown attempts; reload, deactivation/re-activation and process reopen do not reset spent slots. Requests use public Pi `ModelRuntime.completeSimple`, actual `maxTokens` options and a capped per-request model, with provider transport retry disabled. Caller cap `0` means no extra caller cap, never unlimited spending. The effective cap is the minimum of model, host policy and any positive caller cap. All summary endpoints/auth/headers stay in `pi-adapter.ts`; strategies see only their allowlisted sanitized models. This slice supports OpenAI completions, not every Pi provider API.
+Each auxiliary attempt reserves a durable budget slot before dispatch. Limits are finite per job and per strategy/session, including failed or unknown attempts; reload, deactivation/re-activation and process reopen do not reset spent slots. Requests use public Pi `Models.completeSimple`, actual `maxTokens` options and a capped per-request model, with provider transport retry disabled. Caller cap `0` means no extra caller cap, never unlimited spending. The effective cap is the minimum of model, host policy and any positive caller cap. All summary endpoints/auth/headers stay in `durable-adapter.ts`; strategies see only their allowlisted sanitized models. This slice supports OpenAI completions, not every Pi provider API.
 
 For inference-derived persisted candidates, create the job with `requireArtifactReceipt: true` and include the exact completed `attemptIds` in its scoped artifact append. Before any artifact intent or bytes are written, the host validates unique nonempty IDs, the job/plan/session/strategy/principal/lease reservation and its completion. Already adopted, nonexistent, foreign or unfinished attempts are rejected without effects. After physical artifact receipt, an adoption record binds the attempt to that exact transaction ID/version. Missing or uncertain receipts block same-session reconstruction; cancellation and unrelated progress writes do not settle a completed result. Reopen checks every adopted transaction against the physical artifact journal, including earlier versions followed by later ordinary appends. Failed/quarantined attempts retain their audit and bounded retry behavior. Dynamite opts compression jobs into this protocol; fresh jobs used only to authorize existing summaries do not reserve new inference. These receipts remain part of the bounded single-writer contract, not a general exactly-once model-call guarantee.
 
@@ -157,6 +159,8 @@ export interface Receipt {
 	readonly state: ReceiptState;
 	readonly entryId?: string;
 	readonly reason?: string;
+	/** Generation outcome is independent of whether this input was persisted. */
+	readonly generation?: { readonly status: "blocked"; readonly reason: string };
 }
 export interface View {
 	readonly phase: "ready" | "transitioning" | "failed" | "disposed";
@@ -301,6 +305,7 @@ export interface SummaryRangeReplacement {
 }
 export type ProjectionPlan =
 	| { readonly status: "disabled"; readonly basis: FrameBasis }
+	| { readonly status: "blocked"; readonly basis: FrameBasis; readonly reason: string }
 	| {
 			readonly status: "apply";
 			readonly basis: FrameBasis;
@@ -408,6 +413,7 @@ export interface InferencePolicy {
 	readonly timeoutMs: number;
 }
 export interface HostOptions {
+	backend?: "durable";
 	cwd: string;
 	dataDir: string;
 	endpoint: string;

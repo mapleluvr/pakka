@@ -1,36 +1,38 @@
 import assert from "node:assert/strict";
 import { createServer } from "node:http";
 import { mkdir, readFile } from "node:fs/promises";
+import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createHost } from "@pakka/agent";
 const consumer = dirname(fileURLToPath(import.meta.url));
+await assert.rejects(createHost({ backend: "oracle" }), /Unsupported production backend/);
+const require = createRequire(import.meta.url);
+const runtimeRequire = createRequire(import.meta.resolve("@pakka/agent"));
 const versions = {};
-for (const name of [
-	"pi-coding-agent",
-	"pi-ai",
-	"pi-agent-core",
-	"pi-tui",
-	"chord",
-	"pi-codemode",
-	"pi-durable",
-	"pi-mcp",
-	"pi-telemetry",
-]) {
-	let dir = dirname(fileURLToPath(import.meta.resolve("@earendil-works/" + name)));
-	for (;;) {
+const dependencyTree = JSON.parse(await readFile(join(consumer, "dependency-tree.json"), "utf8"));
+function assertNoOracle(node) {
+	assert.equal(Object.hasOwn(node.dependencies ?? {}, "@earendil-works/pi-coding-agent"), false);
+	for (const child of Object.values(node.dependencies ?? {})) assertNoOracle(child);
+}
+assertNoOracle(dependencyTree);
+assert.throws(() => runtimeRequire.resolve("@earendil-works/pi-coding-agent"), { code: "MODULE_NOT_FOUND" });
+assert.throws(() => require.resolve("@earendil-works/pi-coding-agent"), { code: "MODULE_NOT_FOUND" });
+for (const name of ["pi-ai", "chord", "pi-durable", "pi-telemetry"]) {
+	for (const dir of runtimeRequire.resolve.paths("@earendil-works/" + name)) {
+		let data;
 		try {
-			const data = JSON.parse(await readFile(join(dir, "package.json"), "utf8"));
-			if (data.name === "@earendil-works/" + name) {
-				versions[name] = data.version;
-				break;
-			}
-		} catch {}
-		const next = dirname(dir);
-		if (next === dir) throw new Error("Package metadata not found");
-		dir = next;
+			data = JSON.parse(await readFile(join(dir, "@earendil-works", name, "package.json"), "utf8"));
+		} catch (error) {
+			if (error.code === "ENOENT") continue;
+			throw error;
+		}
+		assert.equal(data.name, "@earendil-works/" + name);
+		versions[name] = data.version;
+		break;
 	}
-	assert.equal(versions[name], "1.0.3");
+	assert.ok(versions[name], "Installed package metadata missing: " + name);
+	assert.equal(versions[name], name === "pi-durable" ? "1.0.3-pakka.1" : "1.0.3");
 }
 await assert.rejects(import("@pakka/agent/dist/pi-adapter.js"), { code: "ERR_PACKAGE_PATH_NOT_EXPORTED" });
 await assert.rejects(import("@pakka/agent/dist/durable-adapter.js"), {
@@ -171,7 +173,7 @@ try {
 	assert.doesNotMatch(JSON.stringify(requests[4]), /PACKED-AUXILIARY|PACKED-NEXT/);
 	assert.equal(binding.audit().length, 2);
 	remove();
-	binding.installProjector((frame) => ({
+	const removeOmission = binding.installProjector((frame) => ({
 		status: "apply",
 		basis: frame.basis,
 		replacements: [{ sourceEntryIds: [entryId], summary: null }],
@@ -184,6 +186,22 @@ try {
 	assert.match(JSON.stringify(requests[5]), /PACKED-FOURTH/);
 	assert.doesNotMatch(JSON.stringify(requests[5]), /PACKED-NEXT|PACKED-PROJECTED|Host strategy summary/);
 	assert.match(await readFile(host.view().sessionFile, "utf8"), /PACKED-NEXT/);
+	removeOmission();
+	const unblock = binding.installProjector((frame) => ({
+		status: "blocked",
+		basis: frame.basis,
+		reason: "PACKED-BLOCK",
+	}));
+	const blocked = await user.submit({ key: "blocked", text: "PACKED-BLOCKED" });
+	await host.waitForIdle();
+	assert.equal(requests.length, 6);
+	assert.equal(user.receipt(blocked.id).state, "committed");
+	assert.deepEqual(user.receipt(blocked.id).generation, { status: "blocked", reason: "PACKED-BLOCK" });
+	assert.equal(host.view().phase, "ready");
+	unblock();
+	await user.submit({ key: "after-block", text: "PACKED-AFTER-BLOCK" });
+	await host.waitForIdle();
+	assert.equal(requests.length, 7);
 	console.log(
 		JSON.stringify({
 			status: "passed",
@@ -195,6 +213,8 @@ try {
 			auxiliaryWireCaps: requests.filter((r) => r.model === "summary-local").map((r) => r.max_tokens),
 			projectorAfterReload: "verified",
 			rangeOmission: "verified",
+			generationBlock: "verified",
+			oracleDependency: "absent",
 			artifactVersion: receipt.version,
 		}),
 	);

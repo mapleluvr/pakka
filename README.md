@@ -1,6 +1,6 @@
 # Pakka — integrated Pi host
 
-基于 Pi **1.0.3 发布包**的 headless 整合宿主。当前 package 为 `@pakka/agent`，版本 `0.1.0`，暂不发布。
+基于 Pi **1.0.3 发布包**和可重建的 Pi Durable 下游补丁 **1.0.3-pakka.1** 的 headless 整合宿主。默认生产路径为 Durable；AgentSession 仅用于测试对照。当前 package 为 `@pakka/agent`，版本 `0.1.0`，暂不发布。
 
 它把会话封装、写权、生命周期和一部分 C2 放进同一个运行时，并用真实 Pi + 本地 HTTP provider + JSONL 做交叉测试。**不是完整 Kappa 迁移，也不是 TUI/CLI 成品。**
 
@@ -29,7 +29,8 @@ npm run smoke:package
 packages/agent/
   src/types.ts           Kappa/Pakka DTO，不依赖 Pi 类型
   src/host.ts            身份、权限、admission、epoch、生命周期
-  src/pi-adapter.ts      唯一持有 Pi mutable handles 与模型凭据的内部适配器
+  src/durable-adapter.ts  唯一持有生产 Pi mutable handles 与模型凭据的内部适配器
+  test/pi-adapter.ts      AgentSession 对照 oracle，不进入生产依赖或 dist
   src/strategy-control.ts 策略 lease、frame/job/invocation scope 与请求授权
   src/strategy-projection.ts  纯 DTO patch/range 与 native protocol 验证
   src/artifact-journal.ts  受控命名空间、版本 batch 与物理 receipt
@@ -79,7 +80,7 @@ try {
 }
 ```
 
-有活跃 run 时，使用 `mode: "steer"` 或 `"followUp"`。它们进入 **Pi core 原生队列**，不是等 run 结束后再调用一次 prompt。
+有活跃 run 时，使用 `mode: "steer"` 或 `"followUp"`。它们使用 **Durable 原生 submission placement**，保留不同的 drain 时机；不会在 run 结束后统一转成 prompt。
 
 `prepareInput` 是受信任宿主提供的文本处理器，可返回 `{action:"handled"}` 或 `{action:"text",text:...}`。同一处理器作用于 prompt、steer、followUp。它不获得 Pi 对象。不要把具有不可逆副作用的工作放进预处理器。
 
@@ -106,7 +107,7 @@ try {
 
 `Client.bindStrategy(id)` 返回冻结的策略 binding：一次性 provenance frame、lease-bound projector、scoped artifact journal，以及显式 `model.infer` grant 下的辅助 source job。它不包含 Pi session/registry、endpoint 或 credentials。详见 [精确接口与最小示例](docs/STRATEGY-API.md)。
 
-活动 projector 返回 entry-message patches 或 summary-range replacements；宿主保留 system/loadout checkpoints、excluded messages 和 native call/result IDs/names/arguments，在公开 Pi prepareRequest/onPayload 回调中核验后才发送 HTTP。普通 tail growth 不撤销 source job，源/前文 edit、导航 ABA、reload/newSession/lease 变化会撤权。journal 未知状态阻断调用，不能作为重新推理的理由。
+活动 projector 返回 entry-message patches 或 summary-range replacements；宿主保留 system/loadout checkpoints、excluded messages 和 native call/result IDs/names/arguments，在 Durable `beforeRequest` 与 provider `onPayload` 边界核验后才发送 HTTP。也可以明确返回 `{ status: "blocked", basis, reason }`：输入仍 committed，`receipt.generation` 标记 blocked，Host 保持 ready；非法协议或存储不确定仍失败关闭。普通 tail growth 不撤销 source job，源/前文 edit、导航 ABA、reload/newSession/lease 变化会撤权。journal 未知状态阻断调用，不能作为重新推理的理由。
 
 辅助推理不经 `Client.submit`，不写主 transcript/C2；bootstrap 配置有限模型 allowlist、每 job 与 strategy/session 的持久调用预算。每次输出上限接入真实请求参数，外部 smoke 实测 `max_tokens: 64/128`。本组件没有 Dynamite 算法或默认策略装配。
 
@@ -116,8 +117,10 @@ try {
 
 当前仅接入显式配置的工具；工具允许执行不等于其副作用可回滚。context_edit 的 author intent 与 mutation 仍是两次写入，不是原子事务。
 
-## 为什么声明了多于三个 Pi 依赖
+## 依赖版本与 Durable 补丁
 
-Pi 包之间的版本范围允许安装器选择更新版本。实际外部安装曾将 tui/chord/codemode/mcp/telemetry 解析成 **1.0.4**，即使三个主要包固定在 1.0.3。
+生产包只固定实际使用的 `pi-ai/chord/pi-telemetry@1.0.3`，并 bundle hash 校验的 `pi-durable@1.0.3-pakka.1`。`pi-coding-agent` 与 `pi-agent-core` 仅在 dev/test 中使用，外部安装不得解析到 oracle。
 
-根目录 overrides 不会传递给消费者，因此 agent 包显式固定本次验证的八个运行时包。这是兼容版本组，不意味着已实现 MCP/codemode 功能；它们并未作为扩展加载。升级需同时跑集成测试与外部安装验证。
+上游普通 `beforeRequest` 异常仍是 report-and-skip；下游补丁增加显式 block 和请求级 revalidation，版本、源码 patch、测试、构建命令与 hash 见 [补丁说明](patches/pi-durable/1.0.3-pakka.1/README.md)。它尚未合入上游。正常安装无需修改 node_modules 或执行 patch install hook。
+
+根目录 overrides 不会传递给消费者；每次升级都必须追加 [兼容性账本](docs/PI-DURABLE-COMPATIBILITY.md) 并跑集成测试与隔离 tarball 安装验证。

@@ -1,6 +1,5 @@
 import { randomUUID } from "node:crypto";
 import { DurableAdapter } from "./durable-adapter.ts";
-import { PiAdapter } from "./pi-adapter.ts";
 import type { Notice, AdapterControl } from "./durable-adapter.ts";
 import { StrategyControl, type StrategyLease } from "./strategy-control.ts";
 import type {
@@ -27,9 +26,44 @@ function frozen<T>(value: T): T {
 function dto<T>(value: T): T {
 	return frozen(structuredClone(value));
 }
+type RuntimeSnapshot = {
+	sessionId: string;
+	sessionFile: string;
+	leafId: string | null;
+	entries: readonly { id: string; type: string; role?: string; text?: string }[];
+	context: readonly { role: string; text: string }[];
+	autoCompaction: boolean;
+};
+type RuntimeAdapter = {
+	snapshot: () => RuntimeSnapshot;
+	frame: DurableAdapter["frame"];
+	models: DurableAdapter["models"];
+	infer: DurableAdapter["infer"];
+	readonly busy: boolean;
+	readonly canQueue: boolean;
+	start: DurableAdapter["start"];
+	enqueue: DurableAdapter["enqueue"];
+	clearQueued: DurableAdapter["clearQueued"];
+	validate: DurableAdapter["validate"];
+	commit: (
+		proposal: Proposal,
+		author: { principal: string; strategyId: string; operationId: string },
+	) => string | Promise<string>;
+	branch: DurableAdapter["branch"];
+	replacement: (notify: (notice: Notice) => void, control: AdapterControl) => Promise<RuntimeAdapter>;
+	reload: DurableAdapter["reload"];
+	abortAndIdle: DurableAdapter["abortAndIdle"];
+	idle: DurableAdapter["idle"];
+	dispose: DurableAdapter["dispose"];
+};
+export type AdapterFactory = (
+	options: HostOptions,
+	notify: (notice: Notice) => void,
+	control: AdapterControl,
+) => Promise<RuntimeAdapter>;
 type RecordInput = { receipt: Receipt; text: string; mode: string };
 class Kernel {
-	#adapter!: DurableAdapter | PiAdapter;
+	#adapter!: RuntimeAdapter;
 	#options: Pick<HostOptions, "prepareInput">;
 	#control: StrategyControl;
 	#phase: View["phase"] = "ready";
@@ -75,11 +109,8 @@ class Kernel {
 			invoke: (run, callback) => this.#control.invoke(run, callback),
 		};
 	}
-	async initialize(options: HostOptions): Promise<Host> {
-		this.#adapter =
-			options.backend === "oracle"
-				? await PiAdapter.create(options, (n) => this.#notice(n), this.#adapterControl())
-				: await DurableAdapter.create(options, (n) => this.#notice(n), this.#adapterControl());
+	async initialize(options: HostOptions, factory: AdapterFactory): Promise<Host> {
+		this.#adapter = await factory(options, (n) => this.#notice(n), this.#adapterControl());
 		return Object.freeze({
 			connect: (id: string, grants: readonly Grant[]) => this.#connect(id, grants),
 			view: () => this.#view(),
@@ -159,6 +190,7 @@ class Kernel {
 		this.#epoch++;
 		if (n.type === "consumed") this.#receipt(n.id, { state: "consumed" });
 		if (n.type === "committed") this.#receipt(n.id, { state: "committed", entryId: n.entryId });
+		if (n.type === "blocked") this.#receipt(n.id, { generation: { status: "blocked", reason: n.reason } });
 		if (n.type === "unknown") this.#receipt(n.id, { state: "unknown", reason: n.reason });
 		if (n.type === "failed") this.#fail(n.reason, n.sessionId);
 		if (n.type === "changed") this.#control.sourceChanged();
@@ -438,5 +470,13 @@ class Kernel {
 	}
 }
 export async function createHost(options: HostOptions): Promise<Host> {
-	return new Kernel(options).initialize(options);
+	if (options.backend !== undefined && options.backend !== "durable")
+		throw new Error("Unsupported production backend");
+	return createHostWithAdapter(options, (opts, notify, control) =>
+		DurableAdapter.create(opts, notify, control),
+	);
+}
+/** Internal construction seam; not exported by the package entry point. */
+export async function createHostWithAdapter(options: HostOptions, factory: AdapterFactory): Promise<Host> {
+	return new Kernel(options).initialize(options, factory);
 }

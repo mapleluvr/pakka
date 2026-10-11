@@ -31,11 +31,11 @@ A binding reads one frozen provenance frame: raw entry identity/parentage, canon
 
 Only the precise `real_context.write` owner installs a projector (acting as Context Arbiter). Plans contain typed content-only patches and contiguous ordered summary replacements (`summary: null` explicitly omits the checked range without emitting a message). Pure DTO validation preserves checkpoints, exclusions, native call identities/arguments and complete call/result associations. Inference-derived replacements carry their job scope for application-time source checks.
 
-The host enforces fail-closed generation security through `PolicyModels` (ModelGateway): before any model request can touch the network, the gateway verifies that the Context Arbiter has authorized the projection. Authorization failures or exceptions thrown by projectors block provider calls immediately (`providerCalls = 0`). The adapter composes public `beforeRequest` hooks and `streamSimple` options. It checks canonical alignment, revalidates authority after awaits and before provider dispatch, and explicitly reinstalls idempotently after reload.
+The host enforces generation rejection through the version-pinned downstream Pi Durable build `1.0.3-pakka.1` (see [patch contract](../patches/pi-durable/1.0.3-pakka.1/README.md)). `GenerationTask.beforeRequest` accepts an explicit `{ block: reason }` and request-scoped `{ messages, check }`; checks run after hooks and at the provider `onPayload` boundary. There is no Models Proxy or shared adapter permit. Intentional projector rejection yields a durable blocked generation with zero provider calls and leaves the host ready. Malformed plans, stale authority and unknown storage still fail the Profile before HTTP. Ordinary hook exceptions retain upstream report-and-skip behavior, so the adapter converts its own validation errors to a block result and latches protocol failure explicitly. The adapter reinstalls the projector idempotently after reload.
 
 Artifact namespaces have strict `(sessionId, strategyId, journalKind)` version/hash-chain transactions, fsync and exact physical batch readback, plus separate ownership markers. Different strategies can write independently to their own artifact namespaces without collision. Unknown/partial/changed storage latches host failure per original session, including audit faults that arrive during reload. Explicit newSession recovery is not re-failed by the previous session's late fault. This is a multi-namespace writer protocol, not a guarantee against every crash or multi-process race.
 
-`model.infer` is a separate grant. Bootstrap alone configures endpoints/auth/model allowlists and finite job/strategy-session budgets. Every attempt reserves a durable slot before direct public Pi `ModelRuntime.completeSimple`; no `Client.submit`, main transcript or C2 ledger is involved. Actual request options and a per-request model cap enforce output limits, with no implicit transport/model retries. Source/context edits, navigation ABA, generation/lease changes and cancellation prevent future calls and quarantine late completions. Pending/no-usage attempts remain observable as unknown in audit; unpriced cost is null, not zero.
+`model.infer` is a separate grant. Bootstrap alone configures endpoints/auth/model allowlists and finite job/strategy-session budgets. Every attempt reserves a durable slot before direct public Pi `Models.completeSimple`; no `Client.submit`, main transcript or C2 ledger is involved. Actual request options and a per-request model cap enforce output limits, with no implicit transport/model retries. Source/context edits, navigation ABA, generation/lease changes and cancellation prevent future calls and quarantine late completions. Pending/no-usage attempts remain observable as unknown in audit; unpriced cost is null, not zero.
 
 Tools receive a host run-bound invocation capability. Async-local validation also stops a late old tool from omitting the argument to obtain new-session authority. Direct operator calls and tool invocations consume the same scoped services but do not share a refreshable tool token.
 
@@ -53,15 +53,15 @@ reserved/queued/consumed -> unknown  (cannot establish commitment)
 
 Only released records can be retried in the same scope, with identical payload and incremented attempt. Existing non-released records return their previous receipt and cause no new execution. A committed input may still lead to a failed run later. A caller can inspect only its own receipt IDs.
 
-Preparation is the explicit host-controlled text pipeline. Prompt uses AgentSession.prompt after that pipeline with native template expansion disabled. Queued input uses the same pipeline and then host-created AgentMessage objects sent through public Agent.steer/followUp. Identity lives in a private object map, not in LLM-visible text.
+Preparation is the explicit host-controlled text pipeline shared by prompt, steering and follow-up. Production submits prepared text through Durable `Conversation.submit`; identity is mapped using Durable Submission IDs, never by text matching or LLM-visible markers. An active run's prompt is rejected; steering and follow-up retain their distinct native Durable placement timing. Prompt completion waits on the specific `Submission.wait()`, because Harness idle alone may return before a new task is scheduled. Cache reads consume every entries cursor page.
 
-There are no arbitrary Pi input handlers, skills, templates, images or extension commands in this slice. This is a tested composition of **host text preprocessing + native drain timing**, not full legacy preprocessing equivalence.
+There are no arbitrary Pi input handlers, skills, templates, images or extension commands in this slice. It is a tested composition of **host text preprocessing + Durable drain timing**, not full legacy preprocessing equivalence.
 
-For an initial prompt, the adapter binds the sole initial user object in the controlled session on message_start. For queued input it already owns the exact object. No text matching is used.
+A submission with an entry is reported committed independently of its generation settlement. An intentional block adds `receipt.generation = { status: "blocked", reason }`; it does not release or roll back the input, append a synthetic assistant failure, or implicitly retry its admission key. On reopen, the durable submission/task settlement prevents hidden replay; the process-local admission ledger itself is still not reconstructed.
 
-Pi's own core listener is registered first. Pakka's later core listener observes append outcomes. Early messages may remain in Pi's buffer until the first assistant: physical verification is retried on later events and at settlement. No message_end-to-disk equivalence is assumed. Direct file readback and listener order are pinned-version assumptions guarded by tests, not a new public Pi transaction contract.
+Cancellation selects only callers' proven queued submissions through the public Durable handle. A drained or placed input cannot be optimistically released. Storage/readback uncertainty remains unknown and latches host failure. Exact placement, cancellation and lifecycle observations are pinned-version contracts guarded by integration tests.
 
-Cancellation temporarily selects all queue entries, snapshots/clears steering then follow-up, restores non-selected callers' objects and the original queue modes, all synchronously and without user callbacks. Drained entries are not in that snapshot and cannot be released. This assumes the controlled adapter is the only queue writer.
+The AgentSession adapter exists only under `packages/agent/test/pi-adapter.ts`. Fixtures inject it through an internal source construction seam; the public `createHost` supports only Durable. Production declarations, `dist` output and installed dependencies contain no AgentSession oracle, and external package smoke checks both dependency resolution and HTTP behavior.
 
 ## Lifecycle and observation
 
@@ -71,9 +71,9 @@ Reload reuses the session; newSession constructs a fresh adapter then disposes t
 
 A failed host cannot be re-enabled by reload, because its in-memory tree may include an append whose disk write failed. Explicit newSession recovery creates a fresh scope. It does not repair or erase the old file/receipts.
 
-Observer DTOs are published in a microtask after synchronous state publication/handoff. This avoids reentrant control calls between a queued notice and actual insertion. Core awaits listener completion; the controlled input-consumed observer can still cancel other queued objects before the consumed input is appended. This ordering is regression-tested on Pi 1.0.3.
+Observer DTOs are published in a microtask after synchronous state publication/handoff. This avoids reentrant control calls between a queued notice and actual insertion. Tests cover cancellation from an input-consumed observer and prove released versus already-placed identities using Durable submission records.
 
-subscribe currently supplies receipt and lifecycle transition notices, not the complete Pi stream or AgentSubject protocol. waitForIdle awaits the active Pi run; callers must separately await any submit/preparation promise they initiated.
+subscribe currently supplies receipt and lifecycle transition notices, not the complete Pi stream or AgentSubject protocol. waitForIdle awaits the active submission/run and Durable task idleness; callers must separately await any submit/preparation promise they initiated.
 
 ## Persistence and scope limits
 
@@ -81,7 +81,7 @@ Durable storage uses Node JSONL storage (`openNodeJsonlStorage`) under `dataDir/
 
 Default resource discovery is disabled (extensions, skills, prompts, themes, context files); host settings disable native compaction and automatic retry. All model/tool configuration is explicit. This slice exercises OpenAI-completions-compatible providers and disables auxiliary transport retry; it is not a claim that every model family or every internal recovery writer/tool-error path has been audited.
 
-The runtime package cohort is explicitly pinned inside the agent package because workspace-root overrides are not inherited by installed consumers. Smoke installation deliberately omits those overrides.
+The production dependency cohort is pinned at the agent package boundary. Pi Durable is a vendored, hash-verified tarball bundled into `@pakka/agent`; `pi-ai`, `chord` and `pi-telemetry` are pinned to 1.0.3. `pi-coding-agent` and `pi-agent-core` are development-only oracle dependencies. Root overrides are not relied on by installed consumers; an isolated smoke install verifies the cohort and rejects oracle/private subpath access.
 
 ## Next integration boundaries
 

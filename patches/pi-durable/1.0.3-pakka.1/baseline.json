@@ -1,0 +1,7 @@
+{
+	"upstreamVersion": "1.0.3",
+	"upstreamCommit": "d78dc83d633229d12f8b79631384c4c2717c399f",
+	"patchedVersion": "1.0.3-pakka.1",
+	"repository": "https://github.com/earendil-works/pi.git",
+	"tag": "v1.0.3"
+}

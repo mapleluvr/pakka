@@ -447,3 +447,168 @@ npm run smoke:package
 | **Generation 门禁实现**     | `PolicyModels` (ModelGateway Proxy) 在公共 `Models` 调用边界做 Fail-Closed 门禁（`streamSimple` / `completeSimple` 等）   | `Agent.prepareRequest` 钩子链路直接拦截                                                                 | Durable 原生 hook 异常仅 report 不阻断，`PolicyModels` 保证 `providerCalls = 0` 安全等价 |
 | **自动 Compaction / Retry** | 显式传入 `settings: { compaction: { enabled: false }, retry: { enabled: false } }` 彻底关闭                               | 通过 `SettingsManager.inMemory({ compaction: { enabled: false }, retry: { enabled: false } })` 彻底关闭 | 统一禁用非预期隐式副作用，由 Pakka 上层 Strategy 完全拥有截断与重试决策                  |
 | **Artifact 写入范围**       | `(sessionId, strategyId, journalKind)` 多策略独立命名空间                                                                 | 全局单 writer 互斥占有                                                                                  | F-15 / A-05 改进，多策略并行写入无命名空间冲突                                           |
+
+## 条目 DURABLE-2026-10-11-4：修复分页历史与 submission 等待竞态
+
+- ID: DURABLE-2026-10-11-4
+- 发现时间: 2026-10-11
+- 上游版本: `@earendil-works/pi-durable@1.0.3`，`@earendil-works/pi-ai@1.0.3`
+- 状态: patched
+- 关联条目: supersedes the affected observations in `DURABLE-2026-10-11-3` without rewriting that entry
+- 影响面: `DurableAdapter.refreshCache`, prompt settlement, `ContextFrame.entries`, `waitForIdle`
+
+当前行为与失效证据：
+
+1. `Conversation.entries()` 是 newest-first 分页 API；adapter 只读取第一页 1000 条，导致上下文仍有 1003 条时 raw frame 只有 1000 条。
+2. `Conversation.submit()` 返回后，Durable scheduler 可能尚未把 generation task 放入 live 集合。此时直接调用 `Harness.waitForIdle()` 可以立即返回，造成调用者看到 `providerCalls = 0`，尽管提交已经在异步调度。
+3. Durable entry 本身没有 Pakka 的 `parentId` 字段；adapter 之前把每一条 parent 都写成 `null`，丢失了当前 fork 线性的 entry 关系。
+
+变更：
+
+```ts
+// 变更前：只读一页，且每个 parentId 都是 null
+const page = await conversation.entries({}, 1000, undefined, context);
+allEntries = [...page.items].reverse();
+parentId: null;
+
+// 变更后：消费 continuation cursor，并将当前线性历史映射为 parent chain
+let cursor: Cursor | undefined;
+const entries: EntryRecord[] = [];
+do {
+	const page = await conversation.entries({}, 1000, cursor, context);
+	entries.push(...page.items);
+	cursor = page.next;
+} while (cursor !== undefined);
+allEntries = entries.reverse();
+parentId: index > 0 ? String(allEntries[index - 1].id) : null;
+
+// 变更前：用可能提前返回的全局 idle 判定等待 prompt
+await harness.waitForIdle(context);
+
+// 变更后：等待该 submission 自身完成
+const settled = await submission.wait(context);
+```
+
+同时清理 `idle()` 成功后的失败 waiter，避免长生命周期 host 累积不可达 resolver。
+
+回归测试：
+
+- `concurrent initial submissions do not let waitForIdle return before dispatch`
+- `context views retain entries beyond Durable scan page size`
+- `Durable entry frames preserve linear parentage`
+
+验证结果：
+
+- 501 次输入后 `view.entries.length = 1003`，不再截断为 1000；
+- 64 个并发初始 submission 均观察到恰好 1 次 provider request；
+- 最终完整 `npm test` 为 `124 passed, 0 failed`；
+- `npm run check`、`npm run build`、`npm run format:check`、`npm run smoke:package` 均通过。
+
+未解决的契约边界仍然有效：`beforeRequest` 还是 PolicyModels 适配层而非 Durable 原生 `block` receipt；Pi oracle 仍在生产包 import graph 中。这两个问题不能因本条修复而标记为完成。
+
+## 条目 DURABLE-2026-10-11-5：原生 generation block 与生产 oracle 隔离
+
+- ID: DURABLE-2026-10-11-5
+- 发现时间: 2026-10-11
+- 上游基线: `@earendil-works/pi-durable@1.0.3`，commit `d78dc83d633229d12f8b79631384c4c2717c399f`
+- 下游版本: `1.0.3-pakka.1`
+- 状态: patched
+- 关联条目: supersedes the unresolved gate/oracle observations in `DURABLE-2026-10-11-3` and `DURABLE-2026-10-11-4` without rewriting those entries
+- 影响等级: security / dispatch / persistence / packaging
+- 影响面: `GenerationTask.beforeRequest`、Durable submission settlement、Pakka `DurableAdapter`、生产 package graph
+
+### 当前行为
+
+上游普通 `beforeRequest` hook 异常采用 report-and-skip：抛出授权错误不会可靠地阻止 provider dispatch。Pakka 旧实现以 `Models` facade 和 adapter 实例共享 permit 作为过渡门禁；它可以挡住已测试的主路径，但不是 Durable 原生拒绝终态，也有共享状态串用风险。
+
+旧 `PiAdapter` 是 `AgentSession` 对照实现，仍从生产 Host 静态 import，可通过公开 `backend: "oracle"` 选择，生产依赖带入旧 SDK。仅将 Durable 标为默认，未完成 oracle 隔离。
+
+### 具体变更
+
+1. 在精确上游 commit 上维护 downstream patch，扩展公开 hook result：
+
+   ```ts
+   // 变更前：异常只 report-and-skip
+   beforeRequest: () => Promise.reject(new Error("policy denied"));
+
+   // 变更后：显式拒绝，或返回单次请求的授权复核
+   beforeRequest: () => ({ block: "policy denied" });
+   beforeRequest: () => ({ messages, check: requestScopedGuard });
+   ```
+
+   第一个 block 获胜，空字符串也是合法 reason；`check` 在所有 hook 后和 provider `onPayload` 边界执行。拒绝在同一 Durable commit 中清理 live run、settle 已 placed 的 submissions，并完成 generation task。没有 synthetic assistant error。普通 hook 异常仍 report-and-skip。
+
+2. Pakka 删除 Models Proxy、共享 `currentPermit/permitError`，改用上述 request-scoped result。projector 可明确返回 `{ status: "blocked", basis, reason }`。输入 receipt 仍是 `committed`，另外带有 `generation: { status: "blocked", reason }`；Host 保持 ready。非法 plan、过期 authority 和未知 storage 仍失败关闭。
+
+3. 生产 `createHost` 只构造 Durable，并拒绝 oracle backend。旧 adapter 移到 `packages/agent/test/pi-adapter.ts`；fixture 经内部 source construction seam 注入，无可变全局注册表。package root、生产 dist 和外部 tarball 不导出/安装 oracle。
+
+4. `pi-durable@1.0.3-pakka.1` 以 hash-verified tarball bundle 进入 `@pakka/agent`。基线、source patch、build lock、artifact hash、重建与删除条件见 [patch README](../patches/pi-durable/1.0.3-pakka.1/README.md)。`npm run pack:agent` 在隔离目录安装 production dependencies，再将发布 manifest 设为精确 bundled version；不使用会漏掉 hoisted bundle 的原始 workspace pack。
+
+### 为什么需要
+
+把授权拒绝表示为持久化 generation 结果，可以停止当前请求并保留已接收的输入，避免把一次正常 policy refusal 变成全 Host fault。请求级复核在重试/恢复时重新构造，避免依赖内存中的共享 permit。隔离 oracle 则让外部安装真正只依赖 Durable 默认运行时，而不让测试对照代码进入产品。
+
+### 实际轨迹
+
+来自 `generation-block.test.ts` 的第一条本地 HTTP 测试。拒绝发生时模型上下文是以下 pi-ai 形状，未发送到 provider：
+
+```json
+{
+	"messages": [{ "role": "user", "content": "BLOCKED-INPUT" }]
+}
+```
+
+宿主持久化与回执另列，不混入模型消息：
+
+```json
+{
+	"durableSubmission": {
+		"status": "unanswered",
+		"reason": "blocked",
+		"detail": "policy denied"
+	},
+	"durableGenerationOutcome": {
+		"status": "completed",
+		"result": { "blocked": "policy denied" }
+	},
+	"pakkaReceipt": {
+		"state": "committed",
+		"generation": { "status": "blocked", "reason": "policy denied" }
+	},
+	"hostPhase": "ready",
+	"providerCalls": 0
+}
+```
+
+移除拒绝 projector 并提交 `ALLOWED-INPUT` 后，恰好一次 HTTP、Host 仍 ready。blocked key 的重复提交返回原 receipt，不重执行；关闭/重开也不隐式重发 blocked generation。工具后的拒绝保留之前工具副作用，已 drain 的 steering 与主输入均得到 blocked 生成结果。
+
+### 验收证据
+
+- Durable 隔离构建：4 个测试文件、`105 passed, 0 failed`；首次 block、空 reason 的 first-wins、hook 后 guard、payload-time guard、SQLite reopen 和 interrupted recovery 重算授权均通过。
+- Pakka 完整 suite：`127 passed, 0 failed`，无 skipped/cancelled；包含三条 block 集成测试、64 个并发 initial submission、501 输入全分页与线性 parentage。
+- `npm ci --ignore-scripts`、`npm run check`：通过；新脚本验证 tarball/source patch/build-lock 三个 hash。
+- 外部 tarball consumer：7 次实际 HTTP；正常 generation、reload projector、artifact journal、辅助 `max_tokens=64/128`、range omission、generation block 和拒绝后的下一次请求通过。
+- 外部安装无 `pi-coding-agent`，oracle backend 和 private subpath 均拒绝；生产 dist 无 oracle import。
+- 长历史契约仍是 `entries.length = 1003`、`context.length = 1003`。501-generation 场景的独立耗时探针约 73 秒，因此 timeout 为 180 秒。这是完成语义限时，不宣称性能等价。
+- 本地证据：`artifacts/integration/manifest.jsonl` 和其关联 HTTP/JSONL/Host 快照；`artifacts/package-smoke/` 的 pack/install/declarations/dependency-tree/smoke 日志；上游隔离目录路径在补丁构建输出中。
+
+### 失效与移除条件
+
+上游 hook result、generation checkpoint、submission settlement、retry/recovery、provider stream/payload、package commit/integrity 或 Pakka receipt 映射改变时，重新验证本条；不要将 patch 模糊应用到新版本。
+
+只有当上游正式版本提供等价的 block settlement、request/payload revalidation、reopen 行为，且同一组本地 HTTP、工具副作用、SQLite recovery 与外部 tarball 测试通过后，才移除 `1.0.3-pakka.1`。更新或删除补丁时追加新条目，不修改旧条目。本补丁尚未提交或合入上游。
+
+覆盖范围是 Pakka 当前显式 OpenAI-completions 路径；自动 retry/compaction 禁用，不暴露 deferred generation 或任意 Durable 插件。辅助 inference 保留独立 allowlist、预算与 pre-payload source guard。本条不声明完整 C2 crash recovery 或所有 provider 的权限安全。
+
+## 条目 DURABLE-2026-10-11-6：双契约修复最终验收
+
+- ID: DURABLE-2026-10-11-6
+- 状态: verified
+- 关联条目: verifies `DURABLE-2026-10-11-5`；早期历史条目保留原文
+- 基线: `pi-durable@1.0.3-pakka.1`，SHA-256 `535d90fd195a1e9c6c9dc1b22b7f0ca15aac41652bb7d644da616148947bcfa7`
+
+完成的门禁：干净 `npm ci --ignore-scripts`、`check`、完整 Pakka `127/127`、隔离补丁回归 `105/105`、`build`、`format:check` 和外部 `smoke:package`。最终新消费者位于 `artifacts/package-smoke/consumer-path.txt` 指向的目录，运行日志为同目录的 `smoke.log`。
+
+外部 smoke 实际记录 7 次 HTTP、辅助 caps `64/128`、拒绝 provider 增量为 0、receipt committed + generation blocked、Host ready，以及拒绝后的下一次请求成功。生产 oracle dependency 为 absent，public oracle backend 与 private subpath 均拒绝。
+
+`npm pack --workspace @pakka/agent --dry-run` 的 prepack guard 已实测拒绝，指向 `npm run pack:agent`；隔离 pack 接收 source tarball、验证 bundle 并转换为精确发布版本。正常消费者安装无需 postinstall patch。未来升级仍按条目 5 的失效/移除条件重新验证；本条不授权跳过兼容性测试。

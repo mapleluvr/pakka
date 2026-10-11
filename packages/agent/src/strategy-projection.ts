@@ -42,7 +42,8 @@ function protocol(messages: readonly MessageDTO[]): Map<string, [number, number]
 
 /** Pure DTO application. The adapter, not a strategy, converts this checked output to Pi messages. */
 export function applyProjection(frame: ContextFrame, plan: ProjectionPlan): readonly MessageDTO[] {
-	if (!plan || !["disabled", "apply"].includes(plan.status)) throw new Error("Invalid projection status");
+	if (!plan || plan.status === "blocked" || !["disabled", "apply"].includes(plan.status))
+		throw new Error("Invalid projection status");
 	const allowed =
 		plan.status === "disabled"
 			? ["status", "basis"]

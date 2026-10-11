@@ -13,8 +13,17 @@ import type {
 	SourceJobSpec,
 	StrategyBinding,
 	SummaryRangeReplacement,
+	HostOptions,
+	Receipt,
 	ToolInvocationScope,
 } from "@pakka/agent";
+
+export function productionContract(options: HostOptions, receipt: Receipt) {
+	// @ts-expect-error AgentSession is only a test oracle, not a public runtime selection.
+	options.backend = "oracle";
+	const blocked: ProjectionPlan = { status: "blocked", basis: {}, reason: "denied" };
+	return { blocked, generation: receipt.generation };
+}
 
 export function install(binding: StrategyBinding, invocation?: ToolInvocationScope) {
 	const frame: ContextFrame = binding.readFrame(invocation);

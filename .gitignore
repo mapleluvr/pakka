@@ -17,6 +17,8 @@ artifacts/
 # --- Packed packages ---------------------------------------------------------
 # npm pack output, e.g. pakka-agent-0.1.0.tgz from a manual pack.
 *.tgz
+# Audited downstream Durable dependency, paired with patches/pi-durable metadata.
+!packages/agent/vendor/earendil-works-pi-durable-1.0.3-pakka.1.tgz
 
 # --- Pakka runtime state -----------------------------------------------------
 .pakka/
