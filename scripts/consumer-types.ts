@@ -16,6 +16,9 @@ import type {
 	HostOptions,
 	Receipt,
 	ToolInvocationScope,
+	Runtime,
+	RuntimeOptions,
+	ConversationRef,
 } from "@pakka/agent";
 
 export function productionContract(options: HostOptions, receipt: Receipt) {
@@ -23,6 +26,12 @@ export function productionContract(options: HostOptions, receipt: Receipt) {
 	options.backend = "oracle";
 	const blocked: ProjectionPlan = { status: "blocked", basis: {}, reason: "denied" };
 	return { blocked, generation: receipt.generation };
+}
+
+export async function managed(runtime: Runtime, options: RuntimeOptions, ref: ConversationRef) {
+	const host = await runtime.conversation(ref);
+	const identity = host.view().conversationId;
+	return { limits: options.limits, budget: runtime.view().budget, identity };
 }
 
 export function install(binding: StrategyBinding, invocation?: ToolInvocationScope) {

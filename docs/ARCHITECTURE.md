@@ -1,6 +1,6 @@
-# Architecture / contract v0.1
+# Architecture / contract v0.2
 
-This document describes the implemented single-Conversation host contract. Target package boundaries and repository rules are in [MONOREPO-CONVENTIONS.md](MONOREPO-CONVENTIONS.md); staged MAS implementation and acceptance gates are in [MONOREPO-MIGRATION-PLAN.md](MONOREPO-MIGRATION-PLAN.md). Those plans do not imply implemented multi-Conversation, A2A, extension or RPC support. The package remains `@pakka/agent`.
+This document describes the legacy single-Conversation host and the explicit managed multi-Conversation runtime contract. Target package boundaries and repository rules are in [MONOREPO-CONVENTIONS.md](MONOREPO-CONVENTIONS.md); staged MAS implementation and acceptance gates are in [MONOREPO-MIGRATION-PLAN.md](MONOREPO-MIGRATION-PLAN.md). The managed bootstrap API is described in [RUNTIME-API.md](RUNTIME-API.md); A2A, cross-Session enrollment, agent-facing creation policy, DevPack and RPC remain later stages. The package remains `@pakka/agent`.
 
 ## Authority and ownership
 
@@ -35,7 +35,7 @@ Only the precise `real_context.write` owner installs a projector (acting as Cont
 
 The host enforces generation rejection through the version-pinned downstream Pi Durable build `1.0.3-pakka.1` (see [patch contract](../patches/pi-durable/1.0.3-pakka.1/README.md)). `GenerationTask.beforeRequest` accepts an explicit `{ block: reason }` and request-scoped `{ messages, check }`; checks run after hooks and at the provider `onPayload` boundary. There is no Models Proxy or shared adapter permit. Intentional projector rejection yields a durable blocked generation with zero provider calls and leaves the host ready. Malformed plans, stale authority and unknown storage still fail the Profile before HTTP. Ordinary hook exceptions retain upstream report-and-skip behavior, so the adapter converts its own validation errors to a block result and latches protocol failure explicitly. The adapter reinstalls the projector idempotently after reload.
 
-Artifact namespaces have strict `(sessionId, strategyId, journalKind)` version/hash-chain transactions, fsync and exact physical batch readback, plus separate ownership markers. Different strategies can write independently to their own artifact namespaces without collision. Unknown/partial/changed storage latches host failure per original session, including audit faults that arrive during reload. Explicit newSession recovery is not re-failed by the previous session's late fault. This is a multi-namespace writer protocol, not a guarantee against every crash or multi-process race.
+Legacy artifact namespaces use `(sessionId, strategyId, journalKind)`; managed v2 namespaces additionally bind native Conversation identity. Both retain strict version/hash-chain transactions, fsync and exact physical batch readback, plus separate ownership markers. Different strategies can write independently to their own artifact namespaces without collision. Unknown/partial/changed storage latches host failure per original session, including audit faults that arrive during reload. Explicit newSession recovery is not re-failed by the previous session's late fault. This is a multi-namespace writer protocol, not a guarantee against every crash or multi-process race.
 
 `model.infer` is a separate grant. Bootstrap alone configures endpoints/auth/model allowlists and finite job/strategy-session budgets. Every attempt reserves a durable slot before direct public Pi `Models.completeSimple`; no `Client.submit`, main transcript or C2 ledger is involved. Actual request options and a per-request model cap enforce output limits, with no implicit transport/model retries. Source/context edits, navigation ABA, generation/lease changes and cancellation prevent future calls and quarantine late completions. Pending/no-usage attempts remain observable as unknown in audit; unpriced cost is null, not zero.
 
@@ -49,7 +49,7 @@ Ledger key: principal + sessionId + host admission branchId + caller key. Payloa
 reserved -> handled
 reserved -> queued -> consumed -> committed
 reserved -> released       (scope changed before transfer)
-queued   -> released       (proved present in the core queue)
+queued   -> unknown -> released (exact durable withdrawal confirms no placement)
 reserved/queued/consumed -> unknown  (cannot establish commitment)
 ```
 
@@ -67,7 +67,7 @@ The AgentSession adapter exists only under `packages/agent/test/pi-adapter.ts`. 
 
 ## Lifecycle and observation
 
-Transition phase/generation changes synchronously before abort/reload awaits. Proved queued items are released; consumed/uncertain items are reconciled, not optimistically released. In-flight preparation may finish later, but its old generation cannot transfer into the new scope or hold the new primary admission slot.
+Transition phase/generation changes synchronously before abort/reload awaits. Queued withdrawal remains unknown until Durable confirms absence of an entry; confirmed withdrawals are released; consumed/uncertain items are reconciled, not optimistically released. In-flight preparation may finish later, but its old generation cannot transfer into the new scope or hold the new primary admission slot.
 
 Reload reuses the session; newSession constructs a fresh adapter then disposes the previous one. Caller identities, grants, strategy ownership and policy remain host configuration. This is not code/plugin hot reload. Concurrent lifecycle transitions are rejected.
 
@@ -90,7 +90,7 @@ The production dependency cohort is pinned at the agent package boundary. Pi Dur
 The adopted monorepo/MAS migration order is:
 
 - Fixed-artifact Durable × Dynamite compatibility remains failed and explicitly deferred by the user until after the core migration; [functional targets and resumption conditions](DEFERRED-DYNAMITE-COMPATIBILITY.md) are retained. It is not enabled or advertised as supported.
-- Conversation-scoped authority, projections, artifacts, budgets and failure handling in `@pakka/agent`.
+- M1 provides Conversation-scoped authority, projections, artifacts, aggregate Session budgets, one-writer claims and declared failure handling in `@pakka/agent@0.2.0`. Managed reopen does not adopt legacy journal data implicitly; explicit `migrateLegacy` maps only an exact closed unique ownerless root with an audited prefix/namespace receipt and retained spent budgets. Terminal generation sidecars are reclaimed, so historical primary spending is conservatively reserved per generation marker, not reconstructed as exact HTTP counts. A writer claim surviving a crash is never silently stolen in M1.
 - MAS membership, ownership policy and A2A through controlled runtime ports.
 - Recoverable multi-Session enrollment/delivery and workers with one writer per storage.
 - Optional MAS DevPack, then authenticated protocol/client and server/CLI entry points; GUI consumes those ports.

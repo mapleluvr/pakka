@@ -85,12 +85,21 @@ test(
 			await reachedGate(host, entered);
 			const qa = await a.submit({ key: "q", text: "SAME", mode: "steer" }),
 				qb = await b.submit({ key: "q", text: "SAME", mode: "steer" });
+			const released = deferred();
+			const stop = host.subscribe((event) => {
+				if (event.type === "receipt" && event.receipt.id === qa.id && event.receipt.state === "released")
+					released.resolve();
+			});
 			assert.deepEqual(
 				a.cancelQueued().map((r) => r.id),
 				[qa.id],
 			);
+			assert.equal(a.receipt(qa.id)?.state, "unknown");
 			assert.equal(b.receipt(qb.id)?.state, "queued");
 			assert.equal(a.receipt(qb.id), undefined);
+			await released.promise;
+			stop();
+			assert.equal(a.receipt(qa.id)?.state, "released");
 			const retry = await a.submit({ key: "q", text: "SAME", mode: "steer" });
 			assert.equal(retry.id, qa.id);
 			assert.equal(retry.attempt, 2);
@@ -201,9 +210,9 @@ test(
 			const q = await user.submit({ key: "queued", text: "OLD-QUEUED", mode: "followUp" }),
 				oldSession = host.view().sessionId;
 			const replacing = host.newSession();
-			assert.equal(user.receipt(q.id)?.state, "released");
 			release.resolve();
 			await replacing;
+			assert.equal(user.receipt(q.id)?.state, "released");
 			assert.notEqual(host.view().sessionId, oldSession);
 			await user.submit({ key: "fresh", text: "NEW-SESSION" });
 			await host.waitForIdle();

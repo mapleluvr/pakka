@@ -1,6 +1,6 @@
 # Pakka — integrated Pi host
 
-基于 Pi **1.0.3 发布包**和可重建的 Pi Durable 下游补丁 **1.0.3-pakka.1** 的 headless 整合宿主。默认生产路径为 Durable；AgentSession 仅用于测试对照。当前 package 为 `@pakka/agent`，版本 `0.1.0`，暂不发布。
+基于 Pi **1.0.3 发布包**和可重建的 Pi Durable 下游补丁 **1.0.3-pakka.1** 的 headless 整合宿主。默认生产路径为 Durable；AgentSession 仅用于测试对照。当前 package 为 `@pakka/agent`，版本 `0.2.0`，暂不发布。
 
 它把会话封装、写权、生命周期和一部分 C2 放进同一个运行时，并用真实 Pi + 本地 HTTP provider + JSONL 做交叉测试。**不是完整 Kappa 迁移，也不是 TUI/CLI 成品。**
 
@@ -22,14 +22,15 @@ npm run smoke:package
 - `npm run test:dynamite` 运行 [固定 Durable × Dynamite 配对门禁](integrations/dynamite/README.md)，需要 GitHub/npm 网络，模型仅使用本地 HTTP。历史固定配对失败，现按用户授权 **deferred**，不阻塞核心迁移；[问题与功能目标已留档](docs/DEFERRED-DYNAMITE-COMPATIBILITY.md)，完成迁移后再处理，不代表兼容通过。
 - `artifacts/integration/manifest.jsonl` 索引每个测试的 HTTP payload、宿主快照与原始 JSONL 副本。生成物被 Git 忽略，每次运行重建当前 manifest、保留旧目录。
 - `artifacts/package-smoke/` 保存外部安装和执行日志。
-- [设计与约束](docs/ARCHITECTURE.md) · [策略控制 API 与精确接口](docs/STRATEGY-API.md) · [验证记录](docs/VERIFICATION.md) · [仓库规范](docs/MONOREPO-CONVENTIONS.md) · [迁移计划](docs/MONOREPO-MIGRATION-PLAN.md)
+- [设计与约束](docs/ARCHITECTURE.md) · [多 Conversation runtime API](docs/RUNTIME-API.md) · [策略控制 API 与精确接口](docs/STRATEGY-API.md) · [验证记录](docs/VERIFICATION.md) · [仓库规范](docs/MONOREPO-CONVENTIONS.md) · [迁移计划](docs/MONOREPO-MIGRATION-PLAN.md)
 
 ## 目录
 
 ```text
 packages/agent/
   src/types.ts           Kappa/Pakka DTO，不依赖 Pi 类型
-  src/host.ts            身份、权限、admission、epoch、生命周期
+  src/host.ts            每个 Conversation 的身份、权限、admission、epoch、生命周期
+  src/runtime.ts         多 Conversation runtime bootstrap 与控制对象装配
   src/durable-adapter.ts  唯一持有生产 Pi mutable handles 与模型凭据的内部适配器
   test/pi-adapter.ts      AgentSession 对照 oracle，不进入生产依赖或 dist
   src/strategy-control.ts 策略 lease、frame/job/invocation scope 与请求授权
@@ -93,9 +94,9 @@ try {
 - **host vs client**：宿主决定身份与 grants；插件只拿绑定身份的 client。client 无法自行提升权限或伪造另一身份。
 - **权限**：策略 hook 排他占用。仅 real_context.write owner 或其明确批准的 policy 可以 cut/edit；异步批准后重新核对快照、owner 和 idle。
 - **快照**：`capture()` 返回 WeakMap 绑定的 opaque object。复制、跨 client 使用、旧 generation/epoch 使用均无效；不是 RPC 可序列化 token。
-- **队列**：`cancelQueued()` 只取消该 client 真正仍在 core 队列的对象。已 drain 的消息不会因相同文字被错误释放。
+- **队列**：`cancelQueued()` 返回撤回请求的 `unknown` 快照；只有精确 Durable withdrawal 确认无 entry 后才变为 `released`。已 placed 的消息保持 committed。
 - **切换**：reload/newSession 在任何 await 前撤权；并发切换拒绝，不隐式排队。新的会话不继承旧队列。
-- **失败**：存储/运行失败阻断新输入和 context 写入；reload 不能恢复 failed 宿主，必须显式 newSession。已 committed/unknown 的 key 不会自动重放。
+- **失败**：局部已归因的 provider/run 失败阻断对应 Conversation；未知 Session storage/commit/report 错误封闭所有成员。reload 不能恢复 failed 宿主；legacy Host 可显式 newSession，managed Host 不允许替换共享 Session。已 committed/unknown 的 key 不自动重放。
 - **封装**：对象仅在 adapter 的 `#` 私有字段中；package 只导出根入口。不是针对恶意同进程 Node 代码的沙箱。
 
 ## 不能误解的语义
@@ -117,7 +118,7 @@ try {
 
 ## 暂未实现
 
-多 Conversation/Session 的受控 MAS、A2A 和 MAS DevPack；完整 Pi input/skill/template/image/extension-command 兼容（slash 输入显式拒绝）；任意原生 Pi 插件；任意运行期 boundary context 提案；完整 AgentSubject/claim receipt 与 RPC；按次工具权限和 C2 tool-result 准入；持久化 admission ledger、完整崩溃恢复、多进程 writer、sandbox；全 provider 兼容、Dynamite 算法和默认装配；TUI 和产品 CLI。
+已实现受信任 bootstrap 的单 Session 多 Conversation runtime，接口和限制见 [RUNTIME-API.md](docs/RUNTIME-API.md)。多 Session 的受控 MAS、A2A 和 MAS DevPack仍未实现；完整 Pi input/skill/template/image/extension-command 兼容（slash 输入显式拒绝）；任意原生 Pi 插件；任意运行期 boundary context 提案；完整 AgentSubject/claim receipt 与 RPC；按次工具权限和 C2 tool-result 准入；持久化 admission ledger、完整崩溃恢复、多进程 writer、sandbox；全 provider 兼容、Dynamite 算法和默认装配；TUI 和产品 CLI。
 
 当前仅接入显式配置的工具；工具允许执行不等于其副作用可回滚。context_edit 的 author intent 与 mutation 仍是两次写入，不是原子事务。
 

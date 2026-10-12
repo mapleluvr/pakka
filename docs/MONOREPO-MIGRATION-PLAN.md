@@ -85,6 +85,8 @@ Dynamite 延期是用户对顺序的明确调整：它不再阻塞 M1–M6，但
 - 原生 steer/follow-up placement、故意 block、post-tool block、输入 committed 与生成终态的区别保持；禁止路径零未授权 HTTP/写入。
 - namespace 迁移、旧 Host API 与隔离安装通过；新的 public schema 和 exports 有版本记录。Dynamite 专项按延期记录保留，不能以其未通过阻塞本阶段，也不能宣称迁移后的 Dynamite 已受支持。
 
+M1 已完成：`@pakka/agent@0.2.0`，156/156 真实回归、隔离 tarball（legacy 7 HTTP / managed 3 HTTP）和两轮独立复审均通过。范围、构建身份与残余限制见 [MIGRATION-M1-ACCEPTANCE.md](MIGRATION-M1-ACCEPTANCE.md)。M2–M6 尚未完成。
+
 ## M2：建立同 Session 的 MAS 服务
 
 ### 工作

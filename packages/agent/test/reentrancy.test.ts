@@ -34,9 +34,11 @@ test("queued observer replacement cannot run before actual core handoff", { time
 		});
 		const queued = await user.submit({ key: "reentrant", text: "STALE", mode: "followUp" });
 		assert.ok(replacement);
-		assert.equal(user.receipt(queued.id)?.state, "released");
+		assert.equal(user.receipt(queued.id)?.state, "unknown");
 		release.resolve();
 		await replacement;
+		assert.equal(user.receipt(queued.id)?.state, "released");
+		assert.equal(f.requests.length, 1, "cancelled input never dispatched before replacement");
 	} finally {
 		release.resolve();
 		await replacement;

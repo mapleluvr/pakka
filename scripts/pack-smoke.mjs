@@ -1,10 +1,16 @@
 import { spawnSync } from "node:child_process";
-import { copyFileSync, mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
 const consumer = mkdtempSync(join(tmpdir(), "pakka-packed-consumer-"));
+let agentVersion;
+try {
+	agentVersion = JSON.parse(readFileSync(join(root, "packages", "agent", "package.json"), "utf8")).version;
+} catch (error) {
+	throw new Error("Invalid agent package metadata", { cause: error });
+}
 const artifacts = join(root, "artifacts", "package-smoke");
 mkdirSync(artifacts, { recursive: true });
 const npmCli = process.env.npm_execpath;
@@ -44,7 +50,7 @@ writeFileSync(
 			name: "pakka-external-smoke",
 			private: true,
 			type: "module",
-			dependencies: { "@pakka/agent": "file:./pakka-agent-0.1.0.tgz" },
+			dependencies: { "@pakka/agent": `file:./pakka-agent-${agentVersion}.tgz` },
 			devDependencies: { typescript: "7.0.2", "@types/node": "26.6.4" },
 		},
 		null,
@@ -53,6 +59,7 @@ writeFileSync(
 );
 copyFileSync(join(root, "scripts", "consumer-smoke.mjs"), join(consumer, "smoke.mjs"));
 copyFileSync(join(root, "scripts", "consumer-types.ts"), join(consumer, "consumer-types.ts"));
+copyFileSync(join(root, "scripts", "consumer-runtime.mjs"), join(consumer, "runtime.mjs"));
 run(
 	"install",
 	[npmCli, "install", "--ignore-scripts", "--no-audit", "--no-fund", "--registry=https://registry.npmjs.org"],
@@ -77,4 +84,5 @@ writeFileSync(
 	run("dependency-tree", [npmCli, "ls", "--all", "--json"], consumer),
 );
 console.log(run("smoke", [join(consumer, "smoke.mjs")], consumer));
+console.log(run("runtime", [join(consumer, "runtime.mjs")], consumer));
 writeFileSync(join(artifacts, "consumer-path.txt"), consumer + "\n");

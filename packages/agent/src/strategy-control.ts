@@ -2,7 +2,7 @@ import { AsyncLocalStorage } from "node:async_hooks";
 import { randomUUID } from "node:crypto";
 import { ArtifactJournal, copy, freeze, hash, type ArtifactIntent } from "./artifact-journal.ts";
 import { applyProjection } from "./strategy-projection.ts";
-import type { AdapterFrame } from "./durable-adapter.ts";
+import type { AdapterFrame, RunScopeToken } from "./durable-adapter.ts";
 import type {
 	ArtifactScope,
 	ContextFrame,
@@ -25,7 +25,13 @@ import type {
 	ToolInvocationScope,
 } from "./types.ts";
 
-type Identity = { sessionId: string; generation: number; navigationId: string };
+type Identity = {
+	sessionId: string;
+	durableSessionId?: string;
+	conversationId?: string;
+	generation: number;
+	navigationId: string;
+};
 export interface StrategyLease {
 	principal: string;
 	hooks: readonly Hook[];
@@ -39,6 +45,8 @@ interface Ports {
 	owner(hook: Hook): string | undefined;
 	frame(): AdapterFrame;
 	fail(reason: string, sessionId?: string): void;
+	storageUnknown(reason: string, sessionId: string): void;
+	journalNamespace?(strategyId: string, kind: string): string | undefined;
 	models(): readonly ModelDTO[];
 	infer(
 		request: InferenceRequest,
@@ -46,6 +54,7 @@ interface Ports {
 		signal: AbortSignal,
 		timeoutMs: number,
 		check: () => void,
+		strategy: { strategyId: string; maxCalls: number },
 	): Promise<Omit<InferenceResult, "attemptId">>;
 }
 type Authority = Identity & { strategyId: string; leaseId: string; principal: string };
@@ -90,7 +99,9 @@ export class StrategyControl {
 	#local = new AsyncLocalStorage<object>();
 	#request: { id: string; strategyId: string } | undefined;
 	#permitId: string | undefined;
-	constructor(root: string, policies: readonly InferencePolicy[], ports: Ports) {
+	#namespaceVersion: 1 | 2;
+	constructor(root: string, policies: readonly InferencePolicy[], ports: Ports, namespaceVersion: 1 | 2 = 1) {
+		this.#namespaceVersion = namespaceVersion;
 		this.#root = root;
 		this.#policies = copy(policies);
 		this.#ports = ports;
@@ -111,17 +122,21 @@ export class StrategyControl {
 		}
 	}
 	#sameIdentity(identity: Identity): boolean {
-		return hash(identity) === hash(this.#ports.identity());
+		const current = this.#ports.identity();
+		return (
+			identity.sessionId === current.sessionId &&
+			identity.durableSessionId === current.durableSessionId &&
+			identity.conversationId === current.conversationId &&
+			identity.generation === current.generation &&
+			identity.navigationId === current.navigationId
+		);
 	}
 	#check(a: Authority): void {
 		this.#ports.ready();
 		const lease = this.#ports.lease(a.strategyId);
 		if (!lease || lease.principal !== a.principal || lease.leaseId !== a.leaseId)
 			throw new Error("Strategy inactive or lease changed");
-		if (
-			!this.#sameIdentity({ sessionId: a.sessionId, generation: a.generation, navigationId: a.navigationId })
-		)
-			throw new Error("Stale lifecycle/navigation scope");
+		if (!this.#sameIdentity(a)) throw new Error("Stale lifecycle/navigation scope");
 	}
 	#authority(strategyId: string, principal: string, leaseId: string): Authority {
 		const authority = { ...this.#ports.identity(), strategyId, principal, leaseId };
@@ -129,43 +144,51 @@ export class StrategyControl {
 		return authority;
 	}
 	#journalFailure(sessionId: string): (reason: string) => void {
-		return (reason) => this.#ports.fail(reason, sessionId);
+		return (reason) => this.#ports.storageUnknown(reason, sessionId);
 	}
 	#journal(authority: Authority, kind = "records"): ArtifactJournal {
 		const sessionId = authority.sessionId;
-		const key = JSON.stringify([sessionId, authority.strategyId, kind]);
+		if (
+			this.#namespaceVersion === 2 &&
+			(authority.conversationId === undefined || authority.durableSessionId === undefined)
+		)
+			throw new Error("Missing managed Conversation journal identity");
+		const namespace =
+			this.#namespaceVersion === 2
+				? (this.#ports.journalNamespace?.(authority.strategyId, kind) ??
+					JSON.stringify([
+						"pakka.conversation-journal.v2",
+						authority.conversationId,
+						authority.strategyId,
+						kind,
+					]))
+				: authority.strategyId + ":" + kind;
+		const key = JSON.stringify([sessionId, namespace]);
 		let journal = this.#journals.get(key);
 		if (!journal) {
 			journal = new ArtifactJournal(
 				this.#root,
 				authority.sessionId,
-				authority.strategyId + ":" + kind,
+				namespace,
 				this.#journalFailure(sessionId),
 			);
 			this.#journals.set(key, journal);
 		}
 		return journal;
 	}
-	#checkInvocation(scope: object): void {
+	#checkInvocation(scope: ToolInvocationScope): void {
 		const invocation = this.#invocations.get(scope);
-		if (
-			!invocation?.active ||
-			!this.#sameIdentity({
-				sessionId: invocation.sessionId,
-				generation: invocation.generation,
-				navigationId: invocation.navigationId,
-			})
-		)
+		if (!invocation?.active || !this.#sameIdentity(invocation))
 			throw new Error("Invalid/stale tool invocation scope");
 		this.#ports.ready();
 	}
-	runScope(): object {
+	runScope(): RunScopeToken {
 		this.#ports.ready();
 		const token = Object.freeze({});
 		this.#runs.set(token, this.#ports.identity());
 		return token;
 	}
-	async invoke<T>(run: object, callback: (scope: ToolInvocationScope) => Promise<T>): Promise<T> {
+	async invoke<T>(run: RunScopeToken, callback: (scope: ToolInvocationScope) => Promise<T>): Promise<T> {
 		const identity = this.#runs.get(run);
 		if (!identity || !this.#sameIdentity(identity)) throw new Error("Stale tool run scope");
 		this.#ports.ready();
@@ -178,14 +201,25 @@ export class StrategyControl {
 			invocation.active = false;
 		}
 	}
-	#readFrame(strategyId: string, principal: string, leaseId: string, invocation?: object): ContextFrame {
+	#readFrame(
+		strategyId: string,
+		principal: string,
+		leaseId: string,
+		invocation?: ToolInvocationScope,
+	): ContextFrame {
 		const local = this.#local.getStore();
 		if (local) this.#checkInvocation(local);
 		if (invocation) this.#checkInvocation(invocation);
 		const authority = this.#authority(strategyId, principal, leaseId);
 		const data = this.#ports.frame();
-		const artifacts = this.#reconcileArtifact(authority);
-		this.#ensureInferenceSettled(authority);
+		let artifacts: ContextFrame["artifacts"];
+		try {
+			artifacts = this.#reconcileArtifact(authority);
+			this.#ensureInferenceSettled(authority);
+		} catch (error) {
+			this.#ports.storageUnknown("Artifact/adoption storage unknown: " + String(error), authority.sessionId);
+			throw error;
+		}
 		const basis = Object.freeze({});
 		const frame = freeze({
 			...data,
@@ -206,7 +240,7 @@ export class StrategyControl {
 		});
 		return frame;
 	}
-	#checkBasis(scope: object, principal: string, strategyId: string, leaseId: string): BasisRecord {
+	#checkBasis(scope: FrameBasis, principal: string, strategyId: string, leaseId: string): BasisRecord {
 		const record = this.#basis.get(scope);
 		if (
 			!record ||
@@ -258,6 +292,7 @@ export class StrategyControl {
 	}
 	#audit(authority: Authority): readonly InferenceAudit[] {
 		const records = this.#journal(authority, "inference").read().records;
+		// SAFETY: only host-generated reservations are written to the private inference namespace; read() verifies the physical hash chain.
 		const reservations = records.filter(
 			(r) =>
 				r && typeof r === "object" && !Array.isArray(r) && (r as { kind?: string }).kind === "reservation",
@@ -543,6 +578,10 @@ export class StrategyControl {
 						this.#settleArtifact(job, receipt, attemptIds);
 						return receipt;
 					} catch (error) {
+						this.#ports.storageUnknown(
+							"Artifact adoption receipt unknown: " + String(error),
+							authority.sessionId,
+						);
 						return {
 							status: "unknown",
 							reason: "Artifact adoption receipt failed: " + String(error),
@@ -621,6 +660,8 @@ export class StrategyControl {
 		const scope = Object.freeze({}),
 			job: JobRecord = {
 				sessionId: record.sessionId,
+				durableSessionId: record.durableSessionId,
+				conversationId: record.conversationId,
 				generation: record.generation,
 				navigationId: record.navigationId,
 				strategyId: record.strategyId,
@@ -702,7 +743,14 @@ export class StrategyControl {
 		const signal = AbortSignal.any([job.controller.signal, AbortSignal.timeout(job.policy.timeoutMs)]);
 		let output: Omit<InferenceResult, "attemptId">;
 		try {
-			output = await this.#ports.infer(request, cap, signal, job.policy.timeoutMs, () => this.#checkJob(job));
+			output = await this.#ports.infer(
+				request,
+				cap,
+				signal,
+				job.policy.timeoutMs,
+				() => this.#checkJob(job),
+				{ strategyId: job.strategyId, maxCalls: job.policy.maxCalls },
+			);
 		} catch {
 			output = {
 				status: "failed",
@@ -718,11 +766,17 @@ export class StrategyControl {
 		}
 		const result = copy({ ...output, attemptId }),
 			audit: InferenceAudit = { ...result, jobId: job.id, planId: job.planId, maxOutputTokens: cap };
-		const after = journal.read(),
-			receipt = journal.append(after.version, [
-				{ kind: "completion", audit: JSON.parse(JSON.stringify(audit)) as JsonValue },
-			]);
-		if (receipt.status !== "committed") throw new Error("Inference completion storage unknown; do not retry");
+		try {
+			const after = journal.read(),
+				receipt = journal.append(after.version, [
+					{ kind: "completion", audit: JSON.parse(JSON.stringify(audit)) as JsonValue },
+				]);
+			if (receipt.status !== "committed")
+				throw new Error("Inference completion storage unknown; do not retry");
+		} catch (error) {
+			this.#ports.storageUnknown("Inference completion storage unknown: " + String(error), job.sessionId);
+			throw error;
+		}
 		return result;
 	}
 	#planSnapshot(plan: ProjectionPlan): ProjectionPlan {
@@ -859,7 +913,7 @@ export class StrategyControl {
 	invalidate(reason: StrategyLifecycleEvent["reason"], onlyStrategy?: string): void {
 		for (const job of this.#jobs)
 			if (!onlyStrategy || job.strategyId === onlyStrategy) this.#cancelJob(job, reason);
-		for (const [id, lease] of this.#projectors)
+		for (const id of this.#projectors.keys())
 			if (reason === "deactivated" && (!onlyStrategy || id === onlyStrategy)) this.#projectors.delete(id);
 		this.#notifyLifecycle(reason, onlyStrategy);
 	}

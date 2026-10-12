@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { readFileSync, realpathSync, existsSync } from "node:fs";
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, writeFile, open, readFile, unlink } from "node:fs/promises";
 import { join, resolve, relative, isAbsolute, dirname } from "node:path";
 import { BACKGROUND_CONTEXT } from "@earendil-works/chord/context";
 import type { JsonValue as ChordJsonValue } from "@earendil-works/chord";
@@ -13,6 +13,14 @@ import {
 	hook,
 	GenerationTask,
 	CompactionEntry,
+	defineDoc,
+	configure,
+	ProviderDoc,
+	StorageRejected,
+	ROOT_CONVERSATION_ID,
+	type Tx,
+	type Registry,
+	type ConversationId,
 	watchEvents,
 	type Conversation,
 	type Submission,
@@ -35,10 +43,17 @@ import {
 	type Message,
 	type AssistantMessage,
 	type TSchema,
-	type SimpleStreamOptions,
 } from "@earendil-works/pi-ai";
 import * as oac from "@earendil-works/pi-ai/api/openai-completions";
 import { copy, hash } from "./artifact-journal.ts";
+import {
+	inspectLegacyJournals,
+	legacyPrimaryReservations,
+	migratedNamespace,
+	verifyMigration,
+	textHash,
+	type JournalMapping,
+} from "./journal-migration.ts";
 import type {
 	HostOptions,
 	Proposal,
@@ -49,11 +64,26 @@ import type {
 	InferenceRequest,
 	InferenceResult,
 	ToolInvocationScope,
+	ConversationRef,
+	ConversationSpec,
+	RuntimeOptions,
+	RuntimeView,
+	ConversationProfile,
 } from "./types.ts";
 
 export type AdapterFrame = Pick<
 	ContextFrame,
-	"sessionId" | "cwd" | "leafId" | "entries" | "activeEntryIds" | "projection" | "model" | "usage"
+	| "sessionId"
+	| "durableSessionId"
+	| "conversationId"
+	| "providerSessionId"
+	| "cwd"
+	| "leafId"
+	| "entries"
+	| "activeEntryIds"
+	| "projection"
+	| "model"
+	| "usage"
 >;
 
 export interface RunScopeToken {}
@@ -72,6 +102,7 @@ export type Notice =
 	| { type: "committed"; id: string; entryId: string }
 	| { type: "blocked"; id: string; reason: string }
 	| { type: "unknown"; id: string; reason: string }
+	| { type: "released"; id: string; reason: string }
 	| { type: "failed"; reason: string; sessionId?: string };
 
 function clean<T>(value: unknown): T {
@@ -111,6 +142,137 @@ interface ProvenanceData {
 	cwd: string;
 }
 
+type MigrationRecord = {
+	id: string;
+	schemaVersion: 1;
+	sessionId: string;
+	conversationId: string;
+	sourceLength: number;
+	sourceSha256: string;
+	primaryAttempts: number;
+	auxiliaryAttempts: number;
+	journals: JournalMapping[];
+};
+type RuntimeRecord = {
+	sessionId: string;
+	limits: { maxConversations: number; maxPrimaryAttempts: number; maxAuxiliaryAttempts: number };
+	conversationCount: number;
+	budget: { primaryAttempts: number; auxiliaryAttempts: number };
+	strategyAttempts: Record<string, number>;
+	journalMigration?: MigrationRecord;
+	profiles: Record<string, string>;
+	resources: Record<
+		string,
+		{ key: string; sessionId: string; conversationId: string; incarnation: string; profile: string }
+	>;
+};
+const RuntimeDoc = defineDoc<RuntimeRecord>({
+	kind: "pakka.runtime",
+	version: 2,
+	scope: "session",
+	migrate: (value, fromVersion) => {
+		if (fromVersion !== 1 || !value.budget || typeof value.budget !== "object" || Array.isArray(value.budget))
+			throw new Error("Unsupported runtime schema");
+		if (!value.strategyAttempts && value.budget.auxiliaryAttempts !== 0)
+			throw new Error("Legacy managed strategy spending unknown; migration refused");
+		return { ...value, strategyAttempts: value.strategyAttempts ?? {} } as RuntimeRecord;
+	},
+	initial: () => ({
+		sessionId: "",
+		limits: { maxConversations: 0, maxPrimaryAttempts: 0, maxAuxiliaryAttempts: 0 },
+		conversationCount: 0,
+		budget: { primaryAttempts: 0, auxiliaryAttempts: 0 },
+		strategyAttempts: {},
+		profiles: {},
+		resources: {},
+	}),
+});
+interface ManagedState {
+	profiles: Map<string, HostOptions>;
+	profileHashes: Record<string, string>;
+	state: Readonly<RuntimeRecord>;
+	closed: boolean;
+	failure?: string;
+	unsubscribe?: () => void;
+}
+/** Internal pure-command seam. Never exports a Harness, Session, registry or Tx. */
+export interface ManagedAdapterPort {
+	view(): RuntimeView;
+	profileOptions(id: string): HostOptions;
+	validateReference(ref: ConversationRef): void;
+	createConversation(spec: ConversationSpec): Promise<ConversationRef>;
+	attach(
+		ref: ConversationRef,
+		notify: (notice: Notice) => void,
+		control: AdapterControl,
+	): Promise<DurableAdapter>;
+	waitForIdle(): Promise<void>;
+	close(): Promise<void>;
+}
+function profileHash(options: HostOptions): string {
+	return hash({
+		endpoint: options.endpoint,
+		model: options.model,
+		cwd: resolve(options.cwd),
+		systemPrompt: options.systemPrompt ?? "",
+		tools: (options.tools ?? []).map(({ name, description, parameters }) => ({
+			name,
+			description,
+			parameters,
+		})),
+		inference: {
+			models: (options.inference?.models ?? []).map(({ apiKey: _key, headers: _headers, ...model }) => model),
+			policies: options.inference?.policies ?? [],
+		},
+	});
+}
+function profileOptions(options: HostOptions, profile?: ConversationProfile): HostOptions {
+	return Object.freeze({
+		...options,
+		systemPrompt: profile?.systemPrompt ?? options.systemPrompt,
+		tools: (profile?.tools ?? options.tools)?.map((tool) =>
+			Object.freeze({ ...tool, parameters: copy(tool.parameters) }),
+		),
+	});
+}
+async function claimWriter(storageDir: string): Promise<() => Promise<void>> {
+	const path = join(storageDir, "pakka-writer.json"),
+		nonce = randomUUID();
+	let descriptor;
+	try {
+		descriptor = await open(path, "wx");
+	} catch (error) {
+		if ((error as NodeJS.ErrnoException).code === "EEXIST")
+			throw new Error("Pakka storage writer is locked; no implicit stale-claim recovery");
+		throw error;
+	}
+	try {
+		await descriptor.writeFile(JSON.stringify({ schema: "pakka.writer.v1", pid: process.pid, nonce }) + "\n");
+		await descriptor.sync();
+	} finally {
+		await descriptor.close();
+	}
+	let released = false;
+	return async () => {
+		if (released) return;
+		let current: { nonce?: string } | undefined;
+		try {
+			current = JSON.parse(await readFile(path, "utf8")) as { nonce?: string };
+		} catch (error) {
+			throw new Error("Pakka writer claim is unknown; release refused", { cause: error });
+		}
+		if (current?.nonce !== nonce) throw new Error("Pakka writer claim changed; release refused");
+		await unlink(path);
+		released = true;
+	};
+}
+class MutationDenied extends Error {}
+function conversationId(value: string): ConversationId {
+	if (!/^(0|[1-9][0-9]*)$/.test(value) || !Number.isSafeInteger(Number(value)))
+		throw new Error("Invalid Conversation identity");
+	return Number(value) as ConversationId;
+}
+
 export class DurableAdapter {
 	#harness: Harness;
 	#conversation: Conversation;
@@ -134,6 +296,7 @@ export class DurableAdapter {
 		{ text: string; kind: "prompt" | "steer" | "followUp"; sub?: Submission; cancelled: boolean }
 	>();
 	#activeRuns = 0;
+	#pendingQueue = new Set<Promise<void>>();
 	#activeEntries: EntryRecord[] = [];
 	#allEntries: EntryRecord[] = [];
 	#contributions: (readonly Message[])[] = [];
@@ -142,6 +305,11 @@ export class DurableAdapter {
 	#failedReason: string | undefined;
 	#failListeners: (() => void)[] = [];
 	#disposed = false;
+	#providerSessionId: string | undefined;
+	#registry: Registry | undefined;
+	#routes = new Map<ConversationId, DurableAdapter>();
+	#managed: ManagedState | undefined;
+	#releaseWriter: (() => Promise<void>) | undefined;
 	#inferenceModels = new Map<
 		string,
 		{ model: Model<Api>; apiKey: string; headers?: Record<string, string> }
@@ -174,7 +342,25 @@ export class DurableAdapter {
 		options: HostOptions,
 		notify: (notice: Notice) => void,
 		control: AdapterControl,
+		managedOptions?: Pick<RuntimeOptions, "limits" | "profiles" | "migrateLegacy">,
 	): Promise<DurableAdapter> {
+		const profiles = new Map<string, HostOptions>([["default", profileOptions(options)]]);
+		if (managedOptions) {
+			if (managedOptions.migrateLegacy && !options.reopenSessionFile)
+				throw new Error("Legacy migration requires an explicit closed storage");
+			const limits = managedOptions.limits;
+			if (
+				!limits ||
+				Object.values(limits).length !== 3 ||
+				Object.values(limits).some((limit) => !Number.isSafeInteger(limit) || limit <= 0)
+			)
+				throw new Error("Invalid finite runtime limits");
+			for (const profile of managedOptions.profiles ?? []) {
+				if (!/^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(profile.id) || profiles.has(profile.id))
+					throw new Error("Invalid/duplicate runtime profile");
+				profiles.set(profile.id, profileOptions(options, profile));
+			}
+		}
 		const modelKeys = new Set<string>();
 		for (const model of options.inference?.models ?? []) {
 			if (
@@ -249,184 +435,547 @@ export class DurableAdapter {
 			sessionFile = join(storageDir, "main.jsonl");
 		}
 
-		const storage = await openNodeJsonlStorage(storageDir, BACKGROUND_CONTEXT, { fsync: true });
+		const releaseWriter = await claimWriter(storageDir);
+		let openedHarness: Harness | undefined;
+		let openedStorage: Awaited<ReturnType<typeof openNodeJsonlStorage>> | undefined;
+		try {
+			const storage = await openNodeJsonlStorage(storageDir, BACKGROUND_CONTEXT, { fsync: true });
+			openedStorage = storage;
 
-		const rawModels = createModels();
-		const mainProviderId = "pakka-provider-" + hash(options.endpoint).slice(0, 12);
-		const mainModelId = options.model;
-		const mainApiKey = options.apiKey;
+			const rawModels = createModels();
+			const mainProviderId = "pakka-provider-" + hash(options.endpoint).slice(0, 12);
+			const mainModelId = options.model;
+			const mainApiKey = options.apiKey;
 
-		rawModels.setProvider(
-			createProvider({
-				id: mainProviderId,
-				name: "pakka-main",
-				baseUrl: options.endpoint,
-				auth: {
-					apiKey: {
-						name: "Main API Key",
-						resolve: async () => ({
-							auth: { apiKey: mainApiKey, baseUrl: options.endpoint },
-						}),
-					},
-				},
-				api: { "openai-completions": oac },
-				models: [
-					{
-						id: mainModelId,
-						name: mainModelId,
-						provider: mainProviderId,
-						api: "openai-completions",
-						baseUrl: options.endpoint,
-						reasoning: false,
-						input: ["text"],
-						cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
-						contextWindow: 128000,
-						maxTokens: 4096,
-						compat: { maxTokensField: "max_tokens", supportsMidConvoSystemMessages: true },
-					},
-				],
-			}),
-		);
-
-		let adapterRef: DurableAdapter | undefined;
-
-		const registry = createRegistry();
-
-		const tools = (options.tools ?? []).map((t) =>
-			defineTool({
-				name: t.name,
-				description: t.description,
-				// SAFETY: Tool parameters in HostOptions are JSON-schema compatible with TSchema
-				parameters: t.parameters as unknown as TSchema,
-				execute: async (args, _api, ctx) => {
-					const runScope = adapterRef?.activeRunScope ?? control.runScope();
-					const resultString = await control.invoke(runScope, (scope) =>
-						t.execute(args as Record<string, unknown>, ctx.abortSignal, scope),
-					);
-					return { content: [{ type: "text", text: resultString }] };
-				},
-			}),
-		);
-
-		const sections = options.systemPrompt
-			? [section("system", () => options.systemPrompt, { tag: false })]
-			: [];
-
-		const ext = defineExtension({
-			name: "pakka-core-extension",
-			tools,
-			sections,
-			hooks: [
-				hook(GenerationTask, {
-					beforeRequest: async (_req, _api, ctx) => {
-						try {
-							await adapterRef?.refreshCache();
-							const permitted = await control.project(ctx.abortSignal);
-							permitted.check();
-							if ("block" in permitted) return { block: permitted.block };
-							return { messages: clean<Message[]>(permitted.messages), check: permitted.check };
-						} catch (err) {
-							// Protocol errors still fail the Profile, but never fall through to dispatch.
-							const error = err instanceof Error ? err : new Error(String(err));
-							adapterRef?.markFailed(error);
-							return { block: error.message };
-						}
-					},
-					afterResponse: async (msg) => {
-						if (msg.stopReason === "error") {
-							notify({ type: "failed", reason: msg.errorMessage ?? "Provider failed" });
-						}
-					},
-				}),
-			],
-		});
-		registry.install(ext);
-
-		const harness = await Harness.open(
-			storage,
-			{
-				models: rawModels,
-				registry,
-				settings: {
-					steeringMode: options.steeringMode ?? "one-at-a-time",
-					stream: { maxRetries: 0 },
-					compaction: { enabled: false },
-					retry: { enabled: false },
-				},
-				onReport: (err) => {
-					const errorObj = err instanceof Error ? err : new Error(String(err));
-					adapterRef?.markFailed(errorObj);
-				},
-			},
-			BACKGROUND_CONTEXT,
-		);
-
-		const conversation = await harness.root(BACKGROUND_CONTEXT, {
-			agent: {
-				model: { provider: mainProviderId, modelId: mainModelId },
-				extensions: [ext],
-				instructions: options.systemPrompt ?? undefined,
-				cwd: options.cwd,
-			},
-		});
-
-		const adapter = new DurableAdapter(
-			harness,
-			conversation,
-			sessionId,
-			sessionFile,
-			notify,
-			control,
-			options,
-			rawModels,
-		);
-		adapterRef = adapter;
-
-		for (const def of options.inference?.models ?? []) {
-			const auxProviderId = "pakka-aux-" + hash(def.key).slice(0, 12);
 			rawModels.setProvider(
 				createProvider({
-					id: auxProviderId,
-					name: def.name ?? def.model,
-					baseUrl: def.endpoint,
+					id: mainProviderId,
+					name: "pakka-main",
+					baseUrl: options.endpoint,
 					auth: {
 						apiKey: {
-							name: "Aux API Key",
+							name: "Main API Key",
 							resolve: async () => ({
-								auth: { apiKey: def.apiKey, baseUrl: def.endpoint, headers: def.headers },
+								auth: { apiKey: mainApiKey, baseUrl: options.endpoint },
 							}),
 						},
 					},
 					api: { "openai-completions": oac },
 					models: [
 						{
-							id: def.model,
-							name: def.name ?? def.model,
-							provider: auxProviderId,
+							id: mainModelId,
+							name: mainModelId,
+							provider: mainProviderId,
 							api: "openai-completions",
-							baseUrl: def.endpoint,
-							reasoning: def.reasoning ?? false,
+							baseUrl: options.endpoint,
+							reasoning: false,
 							input: ["text"],
 							cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
-							contextWindow: def.contextWindow,
-							maxTokens: def.maxTokens,
+							contextWindow: 128000,
+							maxTokens: 4096,
 							compat: { maxTokensField: "max_tokens", supportsMidConvoSystemMessages: true },
 						},
 					],
 				}),
 			);
-			const model = rawModels.getModel(auxProviderId, def.model);
-			if (!model) throw new Error("Inference model unavailable");
-			adapter.#inferenceModels.set(def.key, {
-				model,
-				apiKey: def.apiKey,
-				headers: def.headers ? { ...def.headers } : undefined,
-			});
-		}
 
-		await adapter.#initStream();
-		await adapter.refreshCache();
-		return adapter;
+			let adapterRef: DurableAdapter | undefined;
+
+			const registry = createRegistry();
+
+			const routes = new Map<ConversationId, DurableAdapter>();
+			const extensions = new Map<string, ReturnType<typeof defineExtension>>();
+			for (const [id, profile] of profiles) {
+				const extension = DurableAdapter.#extension(profile, routes, id);
+				registry.install(extension);
+				extensions.set(id, extension);
+			}
+			const ext = extensions.get("default")!;
+
+			const harness = await Harness.open(
+				storage,
+				{
+					models: rawModels,
+					registry,
+					settings: {
+						steeringMode: options.steeringMode ?? "one-at-a-time",
+						stream: { maxRetries: 0 },
+						compaction: { enabled: false },
+						retry: { enabled: false },
+					},
+					onReport: (err) => {
+						const errorObj = err instanceof Error ? err : new Error(String(err));
+						if (adapterRef) adapterRef.#failSession(errorObj);
+					},
+				},
+				BACKGROUND_CONTEXT,
+			);
+
+			openedHarness = harness;
+			const storedRuntime = await harness.snapshot(RuntimeDoc, BACKGROUND_CONTEXT);
+			if (!managedOptions && storedRuntime)
+				throw new Error("Managed storage requires createRuntime; legacy bypass refused");
+			if (managedOptions?.migrateLegacy) {
+				const expected = managedOptions.migrateLegacy;
+				if (expected.expectedSessionId !== sessionId) throw new Error("Legacy migration provenance mismatch");
+				if (storedRuntime) {
+					if (
+						!storedRuntime.journalMigration ||
+						storedRuntime.journalMigration.conversationId !== expected.expectedConversationId
+					)
+						throw new Error("Already managed storage is not the requested legacy migration");
+				} else {
+					const conversations = await storage.scanConversations({}, 2, undefined, BACKGROUND_CONTEXT);
+					const only = conversations.items[0];
+					if (
+						conversations.items.length !== 1 ||
+						conversations.next ||
+						!only ||
+						only.parent ||
+						only.owner ||
+						String(only.id) !== expected.expectedConversationId ||
+						only.id !== ROOT_CONVERSATION_ID
+					)
+						throw new Error("Legacy migration requires one provably unique root Conversation");
+					const pending = await harness.inspect(BACKGROUND_CONTEXT);
+					if (pending.tasks.length || pending.submissions.length)
+						throw new Error("Legacy migration requires settled tasks/submissions; outcome unknown");
+					const source = readFileSync(sessionFile, "utf8"),
+						journals = inspectLegacyJournals(
+							options.dataDir,
+							sessionId,
+							new Set(options.inference?.policies.map((policy) => policy.strategyId) ?? []),
+						);
+					const primaryAttempts = legacyPrimaryReservations(source, GenerationTask.definition.name);
+					if (
+						primaryAttempts > managedOptions.limits.maxPrimaryAttempts ||
+						journals.auxiliaryAttempts > managedOptions.limits.maxAuxiliaryAttempts
+					)
+						throw new Error("Legacy migration limits below already consumed spending");
+					const migration: MigrationRecord = {
+						id: randomUUID(),
+						schemaVersion: 1,
+						sessionId,
+						conversationId: String(only.id),
+						sourceLength: source.length,
+						sourceSha256: textHash(source),
+						primaryAttempts,
+						auxiliaryAttempts: journals.auxiliaryAttempts,
+						journals: journals.journals,
+					};
+					await harness.commit(async (tx) => {
+						const state = await tx.doc(RuntimeDoc);
+						state.sessionId = sessionId;
+						state.limits = { ...managedOptions.limits };
+						state.profiles = Object.fromEntries(
+							[...profiles].map(([id, profile]) => [id, profileHash(profile)]),
+						);
+						state.conversationCount = 1;
+						state.budget = { primaryAttempts, auxiliaryAttempts: journals.auxiliaryAttempts };
+						state.strategyAttempts = { ...journals.strategyAttempts };
+						state.journalMigration = migration;
+						state.resources.root = {
+							key: "root",
+							sessionId,
+							conversationId: String(only.id),
+							incarnation: randomUUID(),
+							profile: "default",
+						};
+						await configure(tx, only.id, {
+							model: { provider: mainProviderId, modelId: mainModelId },
+							extensions: [ext],
+							instructions: options.systemPrompt,
+							cwd: options.cwd,
+						});
+						await tx.appendEntry(only.id, {
+							kind: "pakka.journal-migration",
+							data: { migrationId: migration.id, sourceSha256: migration.sourceSha256 },
+						});
+					}, BACKGROUND_CONTEXT);
+				}
+			}
+			let conversation = await harness.root(BACKGROUND_CONTEXT, {
+				agent: {
+					model: { provider: mainProviderId, modelId: mainModelId },
+					extensions: [ext],
+					instructions: options.systemPrompt ?? undefined,
+					cwd: options.cwd,
+				},
+				...(managedOptions
+					? {
+							init: async (tx: Parameters<Parameters<Harness["commit"]>[0]>[0], created: ConversationId) => {
+								const state = await tx.doc(RuntimeDoc);
+								state.sessionId = sessionId;
+								state.limits = { ...managedOptions.limits };
+								state.profiles = Object.fromEntries(
+									[...profiles].map(([id, profile]) => [id, profileHash(profile)]),
+								);
+								state.conversationCount = 1;
+								state.resources.root = {
+									key: "root",
+									sessionId,
+									conversationId: String(created),
+									incarnation: randomUUID(),
+									profile: "default",
+								};
+							},
+						}
+					: {}),
+			});
+
+			const savedRuntime = managedOptions
+				? await harness.snapshot(RuntimeDoc, BACKGROUND_CONTEXT)
+				: undefined;
+			if (managedOptions) {
+				const expected = Object.fromEntries([...profiles].map(([id, profile]) => [id, profileHash(profile)]));
+				if (
+					!savedRuntime ||
+					savedRuntime.sessionId !== sessionId ||
+					hash(savedRuntime.limits) !== hash(managedOptions.limits) ||
+					hash(savedRuntime.profiles) !== hash(expected)
+				) {
+					await harness.close(BACKGROUND_CONTEXT);
+					throw new Error("Managed runtime profile/limits mismatch or explicit legacy migration required");
+				}
+				if (savedRuntime.journalMigration) {
+					const migration = savedRuntime.journalMigration;
+					if (
+						textHash(readFileSync(sessionFile, "utf8").slice(0, migration.sourceLength)) !==
+						migration.sourceSha256
+					)
+						throw new Error("Migrated source prefix changed; storage unknown");
+					verifyMigration(options.dataDir, sessionId, migration);
+				}
+				const activeRoot = savedRuntime.resources.root;
+				if (!activeRoot) {
+					await harness.close(BACKGROUND_CONTEXT);
+					throw new Error("Managed root resource is missing");
+				}
+				const active = await harness.conversation(
+					conversationId(activeRoot.conversationId),
+					BACKGROUND_CONTEXT,
+				);
+				if (!active) {
+					await harness.close(BACKGROUND_CONTEXT);
+					throw new Error("Managed root Conversation is missing");
+				}
+				conversation = active;
+			}
+
+			const adapter = new DurableAdapter(
+				harness,
+				conversation,
+				sessionId,
+				sessionFile,
+				notify,
+				control,
+				options,
+				rawModels,
+			);
+			adapterRef = adapter;
+			adapter.#releaseWriter = releaseWriter;
+			adapter.#routes = routes;
+			adapter.#registry = registry;
+			routes.set(conversation.id, adapter);
+			if (managedOptions) {
+				const hashes = Object.fromEntries([...profiles].map(([id, profile]) => [id, profileHash(profile)]));
+				adapter.#managed = { profiles, profileHashes: hashes, state: savedRuntime!, closed: false };
+				adapter.#managed.unsubscribe = harness.subscribeCommits((publication) => {
+					for (const change of publication.changes)
+						if (change.type === "document" && change.record.kind === "pakka.runtime" && change.value)
+							adapter.#managed!.state = change.value as RuntimeRecord;
+				});
+			}
+
+			for (const def of options.inference?.models ?? []) {
+				const auxProviderId = "pakka-aux-" + hash(def.key).slice(0, 12);
+				rawModels.setProvider(
+					createProvider({
+						id: auxProviderId,
+						name: def.name ?? def.model,
+						baseUrl: def.endpoint,
+						auth: {
+							apiKey: {
+								name: "Aux API Key",
+								resolve: async () => ({
+									auth: { apiKey: def.apiKey, baseUrl: def.endpoint, headers: def.headers },
+								}),
+							},
+						},
+						api: { "openai-completions": oac },
+						models: [
+							{
+								id: def.model,
+								name: def.name ?? def.model,
+								provider: auxProviderId,
+								api: "openai-completions",
+								baseUrl: def.endpoint,
+								reasoning: def.reasoning ?? false,
+								input: ["text"],
+								cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+								contextWindow: def.contextWindow,
+								maxTokens: def.maxTokens,
+								compat: { maxTokensField: "max_tokens", supportsMidConvoSystemMessages: true },
+							},
+						],
+					}),
+				);
+				const model = rawModels.getModel(auxProviderId, def.model);
+				if (!model) throw new Error("Inference model unavailable");
+				adapter.#inferenceModels.set(def.key, {
+					model,
+					apiKey: def.apiKey,
+					headers: def.headers ? { ...def.headers } : undefined,
+				});
+			}
+
+			await adapter.#initStream();
+			await adapter.refreshCache();
+			return adapter;
+		} catch (error) {
+			// A claim is released only after the known writer is closed; cleanup failure retains it.
+			if (openedHarness) await openedHarness.close(BACKGROUND_CONTEXT);
+			else if (openedStorage) await openedStorage.close(BACKGROUND_CONTEXT);
+			await releaseWriter();
+			throw error;
+		}
+	}
+
+	static #extension(options: HostOptions, routes: Map<ConversationId, DurableAdapter>, profile: string) {
+		const resolveAdapter = (id: ConversationId) => {
+			const adapter = routes.get(id);
+			if (!adapter || adapter.#disposed) throw new Error("Conversation authority is not bound");
+			return adapter;
+		};
+		return defineExtension({
+			name: profile === "default" ? "pakka-core-extension" : "pakka-profile-" + profile,
+			tools: (options.tools ?? []).map((tool) =>
+				defineTool({
+					name: tool.name,
+					description: tool.description,
+					// SAFETY: bootstrap tool parameters are JSON Schema; Durable validates arguments before execute.
+					parameters: tool.parameters as unknown as TSchema,
+					execute: async (args, api, context) => {
+						const adapter = resolveAdapter(api.conversationId);
+						const scope = adapter.activeRunScope ?? adapter.#control.runScope();
+						const result = await adapter.#control.invoke(scope, (invocation) =>
+							tool.execute(args as Record<string, unknown>, context.abortSignal, invocation),
+						);
+						return { content: [{ type: "text", text: result }] };
+					},
+				}),
+			),
+			sections: options.systemPrompt ? [section("system", () => options.systemPrompt, { tag: false })] : [],
+			hooks: [
+				hook(GenerationTask, {
+					beforeRequest: async (_request, api, context) => {
+						let adapter: DurableAdapter | undefined;
+						try {
+							adapter = resolveAdapter(api.conversationId);
+							await adapter.refreshCache();
+							const permitted = await adapter.#control.project(context.abortSignal);
+							permitted.check();
+							if ("block" in permitted) return { block: permitted.block };
+							if (!(await adapter.#reserveAttempt("primary")))
+								return { block: "Session primary attempt budget exhausted" };
+							permitted.check();
+							return { messages: clean<Message[]>(permitted.messages), check: permitted.check };
+						} catch (error) {
+							const failure = error instanceof Error ? error : new Error(String(error));
+							adapter?.markFailed(failure);
+							return { block: failure.message };
+						}
+					},
+					afterResponse: async (message, api) => {
+						if (message.stopReason === "error")
+							routes
+								.get(api.conversationId)
+								?.markFailed(new Error(message.errorMessage ?? "Provider failed"));
+					},
+				}),
+			],
+		});
+	}
+
+	static async createManaged(
+		options: RuntimeOptions,
+		notify: (notice: Notice) => void,
+		control: AdapterControl,
+	): Promise<{ readonly adapter: DurableAdapter; readonly port: ManagedAdapterPort }> {
+		const adapter = await DurableAdapter.create(options, notify, control, options);
+		return Object.freeze({ adapter, port: adapter.#managedPort() });
+	}
+	#managedReady(): ManagedState {
+		const managed = this.#managed;
+		if (!managed || managed.closed || managed.failure)
+			throw new Error("Runtime is " + (managed?.failure ?? "closed/unmanaged"));
+		return managed;
+	}
+	#validateReference(ref: ConversationRef): void {
+		const managed = this.#managedReady();
+		const current = managed.state.resources[ref.key];
+		if (!current || hash(current) !== hash(ref)) throw new Error("Stale or foreign Conversation reference");
+	}
+	#managedPort(): ManagedAdapterPort {
+		return Object.freeze({
+			view: () => {
+				const managed = this.#managed!;
+				return copy({
+					sessionId: this.#sessionId,
+					sessionFile: this.#sessionFile,
+					phase: managed.closed
+						? ("closed" as const)
+						: managed.failure
+							? ("failed" as const)
+							: ("ready" as const),
+					conversations: Object.values(managed.state.resources),
+					limits: managed.state.limits,
+					budget: managed.state.budget,
+					...(managed.state.journalMigration ? { journalMigration: managed.state.journalMigration } : {}),
+					...(managed.failure ? { lastError: managed.failure } : {}),
+				});
+			},
+			profileOptions: (id: string) => {
+				const profile = this.#managedReady().profiles.get(id);
+				if (!profile) throw new Error("Unapproved runtime profile");
+				return profile;
+			},
+			validateReference: (ref: ConversationRef) => this.#validateReference(ref),
+			createConversation: async (spec: ConversationSpec): Promise<ConversationRef> => {
+				const managed = this.#managedReady();
+				const profileId = spec.profile ?? "default",
+					profile = managed.profiles.get(profileId);
+				if (!profile) throw new Error("Unapproved runtime profile");
+				if (!/^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(spec.key)) throw new Error("Invalid Conversation key");
+				await this.#persist(async (tx) => {
+					const state = await tx.doc(RuntimeDoc);
+					if (Object.hasOwn(state.resources, spec.key)) {
+						if (state.resources[spec.key]!.profile !== profileId)
+							throw new MutationDenied("Conversation profile conflict");
+						return;
+					}
+					if (state.conversationCount >= state.limits.maxConversations)
+						throw new MutationDenied("Session Conversation limit exhausted");
+					const created = await tx.createConversation({ ownership: { kind: "ownerless" } });
+					const extension = this.#registry!.snapshot().extension(
+						profileId === "default" ? "pakka-core-extension" : "pakka-profile-" + profileId,
+					)!;
+					await configure(tx, created.id, {
+						model: {
+							provider: "pakka-provider-" + hash(profile.endpoint).slice(0, 12),
+							modelId: profile.model,
+						},
+						extensions: [extension],
+						instructions: profile.systemPrompt,
+						cwd: profile.cwd,
+					});
+					state.conversationCount++;
+					state.resources[spec.key] = {
+						key: spec.key,
+						sessionId: this.#sessionId,
+						conversationId: String(created.id),
+						incarnation: randomUUID(),
+						profile: profileId,
+					};
+				});
+				return copy(this.#managed!.state.resources[spec.key]!);
+			},
+			attach: async (ref: ConversationRef, notify: (notice: Notice) => void, control: AdapterControl) => {
+				this.#validateReference(ref);
+				const id = conversationId(ref.conversationId);
+				if (this.#routes.has(id)) throw new Error("Conversation already bound");
+				const conversation = await this.#harness.conversation(id, BACKGROUND_CONTEXT);
+				if (!conversation) throw new Error("Managed Conversation is missing");
+				const profile = this.#managed!.profiles.get(ref.profile)!;
+				const adapter = new DurableAdapter(
+					this.#harness,
+					conversation,
+					this.#sessionId,
+					this.#sessionFile,
+					notify,
+					control,
+					profile,
+					this.#rawModels,
+				);
+				adapter.#routes = this.#routes;
+				adapter.#registry = this.#registry;
+				adapter.#managed = this.#managed;
+				adapter.#inferenceModels = this.#inferenceModels;
+				this.#routes.set(id, adapter);
+				await adapter.#initStream();
+				await adapter.refreshCache();
+				return adapter;
+			},
+			waitForIdle: async () => {
+				this.#managedReady();
+				await this.#harness.waitForIdle(BACKGROUND_CONTEXT);
+				await Promise.all([...this.#routes.values()].map((adapter) => adapter.idle()));
+			},
+			close: async () => {
+				if (this.#managed!.closed) return;
+				this.#managed!.closed = true;
+				await this.#harness.close(BACKGROUND_CONTEXT);
+				this.#managed!.unsubscribe?.();
+				await this.#releaseWriter?.();
+			},
+		});
+	}
+	storageUnknown(reason: string): void {
+		this.#failSession(new Error(reason));
+	}
+	journalNamespace(strategyId: string, kind: string): string | undefined {
+		const receipt = this.#managed?.state.journalMigration;
+		if (!receipt) return undefined;
+		try {
+			verifyMigration(this.#options.dataDir, this.#sessionId, receipt);
+			return migratedNamespace(receipt, String(this.#conversation.id), strategyId, kind);
+		} catch (error) {
+			this.storageUnknown("Migration storage unknown: " + String(error));
+			throw error;
+		}
+	}
+	#failSession(error: Error): void {
+		if (this.#managed) this.#managed.failure ??= error.message;
+		for (const adapter of this.#routes.values()) adapter.markFailed(error);
+	}
+	async #persist<T>(change: (tx: Tx) => Promise<T>): Promise<T> {
+		try {
+			return await this.#harness.commit(change, BACKGROUND_CONTEXT);
+		} catch (error) {
+			if (!(error instanceof MutationDenied) && !(error instanceof StorageRejected))
+				this.#failSession(error instanceof Error ? error : new Error(String(error)));
+			throw error;
+		}
+	}
+	async #reserveAttempt(
+		kind: "primary" | "auxiliary",
+		strategy?: { strategyId: string; maxCalls: number },
+	): Promise<boolean> {
+		if (!this.#managed) return true;
+		this.#managedReady();
+		try {
+			return await this.#harness.commit(async (tx) => {
+				const state = await tx.doc(RuntimeDoc);
+				const field = kind === "primary" ? "primaryAttempts" : "auxiliaryAttempts";
+				const limit =
+					kind === "primary" ? state.limits.maxPrimaryAttempts : state.limits.maxAuxiliaryAttempts;
+				if (state.budget[field] >= limit) return false;
+				if (strategy) {
+					const key = hash(strategy.strategyId),
+						spent = state.strategyAttempts[key] ?? 0;
+					if (spent >= strategy.maxCalls) return false;
+					state.strategyAttempts[key] = spent + 1;
+				}
+				state.budget[field]++;
+				return true;
+			}, BACKGROUND_CONTEXT);
+		} catch (error) {
+			this.#failSession(error instanceof Error ? error : new Error(String(error)));
+			throw error;
+		}
+	}
+	get canReplace(): boolean {
+		return !this.#managed;
 	}
 
 	markFailed(err: Error): void {
@@ -472,6 +1021,17 @@ export class DurableAdapter {
 	#observeSubmission(sub: Awaited<ReturnType<Submission["status"]>>): void {
 		const meta = this.#submissions.get(sub.id);
 		if (!meta) return;
+		if (sub.status === "unanswered" && sub.entry === undefined && sub.reason === "aborted") {
+			this.#queued.delete(meta.id);
+			this.#submissions.delete(sub.id);
+			this.#submissionByPakkaId.delete(meta.id);
+			this.#notify({
+				type: "released",
+				id: meta.id,
+				reason: "Durable confirmed withdrawal before placement",
+			});
+			return;
+		}
 		if (sub.entry !== undefined) {
 			this.#queued.delete(meta.id);
 			if (!this.#consumedSubmissions.has(meta.id)) {
@@ -493,6 +1053,8 @@ export class DurableAdapter {
 		if (this.#failedReason) return;
 		try {
 			const ctx = await this.#conversation.context(BACKGROUND_CONTEXT);
+			const provider = await this.#harness.snapshot(ProviderDoc, this.#conversation.id, BACKGROUND_CONTEXT);
+			this.#providerSessionId = provider?.sessionId;
 			this.#activeEntries = [...ctx.entries];
 			this.#contributions = [...ctx.contributions];
 			this.#contextMessages = [...ctx.messages];
@@ -511,7 +1073,9 @@ export class DurableAdapter {
 	}
 
 	get busy(): boolean {
-		return this.#run !== undefined || this.#activeRuns > 0;
+		return (
+			this.#run !== undefined || this.#activeRuns > 0 || (!!this.#managed && this.#forkPromise !== undefined)
+		);
 	}
 
 	get canQueue(): boolean {
@@ -521,6 +1085,9 @@ export class DurableAdapter {
 	snapshot() {
 		return {
 			sessionId: this.#sessionId,
+			durableSessionId: this.#sessionId,
+			conversationId: String(this.#conversation.id),
+			providerSessionId: this.#providerSessionId,
 			sessionFile: this.#sessionFile,
 			leafId: this.#activeEntries.length > 0 ? String(this.#activeEntries.at(-1)!.id) : null,
 			entries: this.#allEntries.map((e) => ({
@@ -564,6 +1131,9 @@ export class DurableAdapter {
 
 		return copy({
 			sessionId: this.#sessionId,
+			durableSessionId: this.#sessionId,
+			conversationId: String(this.#conversation.id),
+			providerSessionId: this.#providerSessionId,
 			cwd: this.#options.cwd,
 			leafId: this.#activeEntries.length > 0 ? String(this.#activeEntries.at(-1)!.id) : null,
 			entries: this.#allEntries.map((entry, index) => ({
@@ -623,9 +1193,13 @@ export class DurableAdapter {
 		signal: AbortSignal,
 		timeoutMs: number,
 		check: () => void,
+		strategy: { strategyId: string; maxCalls: number },
 	): Promise<Omit<InferenceResult, "attemptId">> {
 		const definition = this.#inferenceModels.get(request.modelKey);
 		if (!definition) throw new Error("Model is not allowlisted");
+		check();
+		if (!(await this.#reserveAttempt("auxiliary", strategy)))
+			throw new Error("Session auxiliary attempt budget exhausted");
 		check();
 		const model = { ...definition.model, maxTokens: Math.min(cap, definition.model.maxTokens) };
 		const answer = await this.#rawModels.completeSimple(
@@ -744,6 +1318,7 @@ export class DurableAdapter {
 			.finally(() => {
 				if (this.#primary === id) {
 					this.#primary = undefined;
+					this.#runScope = undefined;
 				}
 				this.#run = undefined;
 			});
@@ -752,7 +1327,7 @@ export class DurableAdapter {
 	enqueue(id: string, text: string, kind: "steer" | "followUp"): void {
 		const entry = { text, kind, sub: undefined as Submission | undefined, cancelled: false };
 		this.#queued.set(id, entry);
-		void (async () => {
+		const operation = (async () => {
 			try {
 				if (this.#forkPromise) await this.#forkPromise;
 				const sub = await this.#conversation.submit(
@@ -764,35 +1339,39 @@ export class DurableAdapter {
 					BACKGROUND_CONTEXT,
 				);
 				entry.sub = sub;
-				if (entry.cancelled) {
-					void this.#harness
-						.abortSubmission(sub.id, BACKGROUND_CONTEXT, this.#conversation.id)
-						.catch(() => {});
-					return;
-				}
 				this.#submissions.set(sub.id, { id, kind });
 				this.#submissionByPakkaId.set(id, sub.id);
-				this.#observeSubmission(await sub.status(BACKGROUND_CONTEXT));
+				if (entry.cancelled) await this.#withdraw(id, sub);
+				else this.#observeSubmission(await sub.status(BACKGROUND_CONTEXT));
 			} catch (e) {
-				this.markFailed(e instanceof Error ? e : new Error(String(e)));
+				this.#failSession(e instanceof Error ? e : new Error(String(e)));
 			}
 		})();
+		this.#trackQueue(operation);
+	}
+
+	#trackQueue(operation: Promise<void>): void {
+		this.#pendingQueue.add(operation);
+		void operation.finally(() => this.#pendingQueue.delete(operation));
+	}
+	async #withdraw(id: string, sub: Submission): Promise<void> {
+		try {
+			await this.#harness.abortSubmission(sub.id, BACKGROUND_CONTEXT, this.#conversation.id);
+			// A placed input remains committed even when abort was requested.
+			this.#observeSubmission(await sub.status(BACKGROUND_CONTEXT));
+		} catch (error) {
+			this.#notify({ type: "unknown", id, reason: "Withdrawal persistence could not be confirmed" });
+			this.#failSession(error instanceof Error ? error : new Error(String(error)));
+		}
 	}
 
 	clearQueued(selected?: ReadonlySet<string>): string[] {
 		const cleared: string[] = [];
 		for (const [id, item] of [...this.#queued.entries()]) {
-			if (selected && !selected.has(id)) continue;
+			if (item.cancelled || (selected && !selected.has(id))) continue;
 			cleared.push(id);
 			item.cancelled = true;
-			this.#queued.delete(id);
-			if (item.sub) {
-				this.#submissions.delete(item.sub.id);
-				this.#submissionByPakkaId.delete(id);
-				void this.#harness
-					.abortSubmission(item.sub.id, BACKGROUND_CONTEXT, this.#conversation.id)
-					.catch(() => {});
-			}
+			if (item.sub) this.#trackQueue(this.#withdraw(id, item.sub));
 		}
 		return cleared;
 	}
@@ -876,23 +1455,23 @@ export class DurableAdapter {
 					pakka: authorData,
 				} as unknown as ChordJsonValue,
 			};
-			entryId = await this.#harness.commit(async (tx) => {
+			entryId = await this.#persist(async (tx) => {
 				const entry = await tx.appendEntry(this.#conversation.id, entryDraft);
 				return entry.id;
-			}, BACKGROUND_CONTEXT);
+			});
 		} else {
 			// Two appends: intent followed by context edit
-			await this.#harness.commit(async (tx) => {
+			await this.#persist(async (tx) => {
 				await tx.appendEntry(this.#conversation.id, {
 					kind: "pakka.context-intent",
 					// SAFETY: Intent payload conforms to Chord JsonValue
 					data: { ...authorData, proposal } as unknown as ChordJsonValue,
 				});
-			}, BACKGROUND_CONTEXT);
+			});
 
 			// SAFETY: Branded EntryId is assigned by numeric cast
 			const targetId = Number(proposal.targetId) as unknown as EntryId;
-			entryId = await this.#harness.commit(async (tx) => {
+			entryId = await this.#persist(async (tx) => {
 				const entry = await tx.appendEntry(this.#conversation.id, {
 					kind: "pi.context_edit",
 					edits: [
@@ -908,7 +1487,7 @@ export class DurableAdapter {
 					data: { ...authorData, proposal } as unknown as ChordJsonValue,
 				});
 				return entry.id;
-			}, BACKGROUND_CONTEXT);
+			});
 		}
 
 		await this.refreshCache();
@@ -921,6 +1500,11 @@ export class DurableAdapter {
 	branch(id: string): void {
 		const targetEntry = this.#allEntries.find((e) => String(e.id) === id);
 		if (!targetEntry) throw new Error("Unknown branch target");
+		if (this.#managed) {
+			const managed = this.#managedReady();
+			if (managed.state.conversationCount >= managed.state.limits.maxConversations)
+				throw new Error("Session Conversation limit exhausted");
+		}
 		const cutoffIndex = this.#allEntries.findIndex((e) => String(e.id) === id);
 		if (cutoffIndex >= 0) {
 			this.#activeEntries = this.#allEntries.slice(0, cutoffIndex + 1);
@@ -929,17 +1513,51 @@ export class DurableAdapter {
 		const branchTargetId = Number(id) as unknown as EntryId;
 		const prevFork = this.#forkPromise ?? Promise.resolve();
 		const forkOp = prevFork
-			.then(() =>
-				this.#conversation.fork(branchTargetId, { ownership: { kind: "ownerless" } }, BACKGROUND_CONTEXT),
-			)
+			.then(() => {
+				const source = String(this.#conversation.id);
+				const resource = this.#managed
+					? Object.values(this.#managedReady().state.resources).find((ref) => ref.conversationId === source)
+					: undefined;
+				if (this.#managed && !resource) throw new Error("Managed fork source is unregistered");
+				return this.#conversation.fork(
+					branchTargetId,
+					{
+						ownership: { kind: "ownerless" },
+						...(resource
+							? {
+									init: async (
+										tx: Parameters<Parameters<Harness["commit"]>[0]>[0],
+										created: ConversationId,
+									) => {
+										const state = await tx.doc(RuntimeDoc);
+										if (state.resources[resource.key]?.conversationId !== source)
+											throw new Error("Managed fork source changed");
+										if (state.conversationCount >= state.limits.maxConversations)
+											throw new MutationDenied("Session Conversation limit exhausted");
+										state.conversationCount++;
+										state.resources[resource.key] = {
+											...resource,
+											conversationId: String(created),
+											incarnation: randomUUID(),
+										};
+									},
+								}
+							: {}),
+					},
+					BACKGROUND_CONTEXT,
+				);
+			})
 			.then(async (forked) => {
 				if (this.#disposed) return;
+				this.#routes.delete(this.#conversation.id);
 				this.#conversation = forked;
+				this.#routes.set(forked.id, this);
 				await this.#initStream();
 				await this.refreshCache();
 			})
-			.catch((err) => {
-				this.markFailed(err instanceof Error ? err : new Error(String(err)));
+			.catch(async (err) => {
+				if (err instanceof MutationDenied || err instanceof StorageRejected) await this.refreshCache();
+				else this.#failSession(err instanceof Error ? err : new Error(String(err)));
 			})
 			.finally(() => {
 				if (this.#forkPromise === forkOp) {
@@ -972,7 +1590,12 @@ export class DurableAdapter {
 		});
 		try {
 			await Promise.race([
-				Promise.all([this.#run, this.#forkPromise, this.#harness.waitForIdle(BACKGROUND_CONTEXT)]),
+				Promise.all([
+					this.#run,
+					this.#forkPromise,
+					...this.#pendingQueue,
+					this.#conversation.waitForIdle(BACKGROUND_CONTEXT),
+				]),
 				failure,
 			]);
 		} finally {
@@ -983,12 +1606,17 @@ export class DurableAdapter {
 	}
 
 	async dispose(): Promise<void> {
+		await Promise.all([...this.#pendingQueue]);
 		this.#disposed = true;
 		if (this.#stream) {
 			await this.#stream.stop().catch(() => {});
 			this.#stream = undefined;
 		}
 		await this.#conversation.abort(BACKGROUND_CONTEXT).catch(() => {});
-		await this.#harness.close(BACKGROUND_CONTEXT).catch(() => {});
+		this.#routes.delete(this.#conversation.id);
+		if (!this.#managed) {
+			await this.#harness.close(BACKGROUND_CONTEXT);
+			await this.#releaseWriter?.();
+		}
 	}
 }

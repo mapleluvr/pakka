@@ -1,6 +1,6 @@
 # Strategy Control API
 
-This is the generic headless `@pakka/agent` boundary for a reviewed strategy. It does not implement Dynamite numbering, window selection, compression quality, fallback order or record schemas. Import only the package root. The only value export is `createHost`; all declarations below are type exports from `packages/agent/src/types.ts` through `src/index.ts`.
+This is the generic headless `@pakka/agent` boundary for a reviewed strategy. It does not implement Dynamite numbering, window selection, compression quality, fallback order or record schemas. Import only the package root. The value exports are `createHost` and the trusted `createRuntime` bootstrap; all declarations below are type exports from `packages/agent/src/types.ts` through `src/index.ts`.
 
 ## Authority And Frames
 
@@ -163,6 +163,11 @@ export interface Receipt {
 	readonly generation?: { readonly status: "blocked"; readonly reason: string };
 }
 export interface View {
+	/** Storage/provenance identity; sessionId keeps its legacy meaning. */
+	readonly durableSessionId?: string;
+	readonly conversationId?: string;
+	/** Native pi.provider identity, independent for each Conversation/fork. */
+	readonly providerSessionId?: string;
 	readonly phase: "ready" | "transitioning" | "failed" | "disposed";
 	readonly busy: boolean;
 	readonly sessionId: string;
@@ -197,6 +202,7 @@ export interface Client {
 	commit(at: Capability, proposal: Proposal): Promise<Decision>;
 	submit(input: { key: string; text: string; mode?: InputMode; at?: Capability }): Promise<Receipt>;
 	receipt(id: string): Receipt | undefined;
+	/** Requests withdrawal; returns unknown until Durable confirms no placement. Observe receipts for release. */
 	cancelQueued(): readonly Receipt[];
 	branch(at: Capability, entryId: string): void;
 }
@@ -261,6 +267,9 @@ export interface ArtifactSnapshot {
 	readonly records: readonly JsonValue[];
 }
 export interface ContextFrame {
+	readonly durableSessionId?: string;
+	readonly conversationId?: string;
+	readonly providerSessionId?: string;
 	readonly basis: FrameBasis;
 	readonly strategyId: string;
 	readonly leaseId: string;
@@ -406,11 +415,77 @@ export interface InferenceModelDefinition {
 export interface InferencePolicy {
 	readonly strategyId: string;
 	readonly modelKeys: readonly string[];
-	/** Durable lifetime limit per strategy+session, including failed/unknown sent calls. */
+	/** Durable lifetime limit per strategy+Session, including failed/unknown sent calls. Managed multi-Conversation runtimes enforce this through the Session aggregate; legacy Host has one Conversation. */
 	readonly maxCalls: number;
 	readonly maxJobCalls: number;
 	readonly maxOutputTokens: number;
 	readonly timeoutMs: number;
+}
+export interface RuntimeLimits {
+	readonly maxConversations: number;
+	/** Conservative, durable reservations; cancelled/unknown attempts are not refunded. */
+	readonly maxPrimaryAttempts: number;
+	readonly maxAuxiliaryAttempts: number;
+}
+export interface ConversationProfile {
+	readonly id: string;
+	readonly systemPrompt?: string;
+	readonly tools?: HostOptions["tools"];
+}
+export interface JournalMigration {
+	readonly id: string;
+	readonly schemaVersion: 1;
+	readonly sessionId: string;
+	readonly conversationId: string;
+	readonly sourceLength: number;
+	readonly sourceSha256: string;
+	readonly primaryAttempts: number;
+	readonly auxiliaryAttempts: number;
+	readonly journals: readonly {
+		readonly strategyId: string;
+		readonly kind: "records" | "inference";
+		readonly namespace: string;
+		readonly version: number;
+		readonly prefixLength: number;
+		readonly prefixSha256: string;
+	}[];
+}
+export interface RuntimeOptions extends HostOptions {
+	readonly limits: RuntimeLimits;
+	/** Additional bootstrap-approved profiles; default inherits HostOptions. */
+	readonly profiles?: readonly ConversationProfile[];
+	/** Opt-in mapping of a closed, provably single-Conversation legacy storage; never bulk import. */
+	readonly migrateLegacy?: { readonly expectedSessionId: string; readonly expectedConversationId: string };
+}
+export interface ConversationRef {
+	readonly key: string;
+	readonly sessionId: string;
+	readonly conversationId: string;
+	readonly incarnation: string;
+	readonly profile: string;
+}
+export interface ConversationSpec {
+	readonly key: string;
+	readonly profile?: string;
+}
+export interface RuntimeView {
+	readonly sessionId: string;
+	readonly sessionFile: string;
+	readonly phase: "ready" | "failed" | "closed";
+	readonly conversations: readonly ConversationRef[];
+	readonly limits: RuntimeLimits;
+	readonly budget: { readonly primaryAttempts: number; readonly auxiliaryAttempts: number };
+	readonly journalMigration?: JournalMigration;
+	readonly lastError?: string;
+}
+/** Trusted bootstrap/control plane, not an agent-facing permission grant. */
+export interface Runtime {
+	root(): Host;
+	view(): RuntimeView;
+	createConversation(spec: ConversationSpec): Promise<ConversationRef>;
+	conversation(ref: ConversationRef): Promise<Host>;
+	waitForIdle(): Promise<void>;
+	close(): Promise<void>;
 }
 export interface HostOptions {
 	backend?: "durable";

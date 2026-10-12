@@ -27,6 +27,9 @@ function dto<T>(value: T): T {
 	return frozen(structuredClone(value));
 }
 type RuntimeSnapshot = {
+	durableSessionId?: string;
+	conversationId?: string;
+	providerSessionId?: string;
 	sessionId: string;
 	sessionFile: string;
 	leafId: string | null;
@@ -35,10 +38,13 @@ type RuntimeSnapshot = {
 	autoCompaction: boolean;
 };
 type RuntimeAdapter = {
+	readonly canReplace?: boolean;
 	snapshot: () => RuntimeSnapshot;
 	frame: DurableAdapter["frame"];
 	models: DurableAdapter["models"];
 	infer: DurableAdapter["infer"];
+	storageUnknown?: DurableAdapter["storageUnknown"];
+	journalNamespace?: DurableAdapter["journalNamespace"];
 	readonly busy: boolean;
 	readonly canQueue: boolean;
 	start: DurableAdapter["start"];
@@ -83,24 +89,36 @@ class Kernel {
 	#transitioning: Promise<void> | undefined;
 	#closing: Promise<void> | undefined;
 	#promptReservation: string | undefined;
-	constructor(options: HostOptions) {
+	constructor(options: HostOptions, namespaceVersion: 1 | 2 = 1) {
 		this.#options = { prepareInput: options.prepareInput };
-		this.#control = new StrategyControl(options.dataDir, options.inference?.policies ?? [], {
-			ready: () => this.#ready(),
-			phase: () => this.#phase,
-			identity: () => ({
-				sessionId: this.#adapter.snapshot().sessionId,
-				generation: this.#generation,
-				navigationId: this.#branchId,
-			}),
-			lease: (id) => this.#strategies.get(id),
-			owner: (hook) => this.#owners.get(hook),
-			frame: () => this.#adapter.frame(),
-			fail: (reason, sessionId) => this.#fail(reason, sessionId),
-			models: () => this.#adapter.models(),
-			infer: (request, cap, signal, timeout, check) =>
-				this.#adapter.infer(request, cap, signal, timeout, check),
-		});
+		this.#control = new StrategyControl(
+			options.dataDir,
+			options.inference?.policies ?? [],
+			{
+				ready: () => this.#ready(),
+				phase: () => this.#phase,
+				identity: () => ({
+					sessionId: this.#adapter.snapshot().sessionId,
+					durableSessionId: this.#adapter.snapshot().durableSessionId,
+					conversationId: this.#adapter.snapshot().conversationId,
+					generation: this.#generation,
+					navigationId: this.#branchId,
+				}),
+				lease: (id) => this.#strategies.get(id),
+				owner: (hook) => this.#owners.get(hook),
+				frame: () => this.#adapter.frame(),
+				fail: (reason, sessionId) => this.#fail(reason, sessionId),
+				storageUnknown: (reason, sessionId) => {
+					if (sessionId === this.#adapter.snapshot().sessionId) this.#adapter.storageUnknown?.(reason);
+					this.#fail(reason, sessionId);
+				},
+				journalNamespace: (strategyId, kind) => this.#adapter.journalNamespace?.(strategyId, kind),
+				models: () => this.#adapter.models(),
+				infer: (request, cap, signal, timeout, check, strategy) =>
+					this.#adapter.infer(request, cap, signal, timeout, check, strategy),
+			},
+			namespaceVersion,
+		);
 	}
 	#adapterControl(): AdapterControl {
 		return {
@@ -125,7 +143,12 @@ class Kernel {
 				return this.#view();
 			},
 			reload: () => this.#transition(false),
-			newSession: () => this.#transition(true),
+			newSession: () =>
+				this.#adapter.canReplace === false
+					? Promise.reject(
+							new Error("Managed Conversation cannot replace its Session; use runtime/MAS control"),
+						)
+					: this.#transition(true),
 			dispose: () => this.#dispose(),
 		});
 	}
@@ -192,6 +215,7 @@ class Kernel {
 		if (n.type === "committed") this.#receipt(n.id, { state: "committed", entryId: n.entryId });
 		if (n.type === "blocked") this.#receipt(n.id, { generation: { status: "blocked", reason: n.reason } });
 		if (n.type === "unknown") this.#receipt(n.id, { state: "unknown", reason: n.reason });
+		if (n.type === "released") this.#receipt(n.id, { state: "released", reason: n.reason });
 		if (n.type === "failed") this.#fail(n.reason, n.sessionId);
 		if (n.type === "changed") this.#control.sourceChanged();
 	}
@@ -404,7 +428,7 @@ class Kernel {
 		const ids = this.#adapter.clearQueued(selected);
 		if (ids.length) this.#epoch++;
 		for (const id of ids)
-			this.#receipt(id, { state: "released", reason: "Removed from core queue before drain" });
+			this.#receipt(id, { state: "unknown", reason: "Withdrawal requested; durable confirmation pending" });
 		return dto(ids.map((id) => this.#records.get(id)!.receipt));
 	}
 	#transition(replace: boolean): Promise<void> {
@@ -477,6 +501,10 @@ export async function createHost(options: HostOptions): Promise<Host> {
 	);
 }
 /** Internal construction seam; not exported by the package entry point. */
-export async function createHostWithAdapter(options: HostOptions, factory: AdapterFactory): Promise<Host> {
-	return new Kernel(options).initialize(options, factory);
+export async function createHostWithAdapter(
+	options: HostOptions,
+	factory: AdapterFactory,
+	namespaceVersion: 1 | 2 = 1,
+): Promise<Host> {
+	return new Kernel(options, namespaceVersion).initialize(options, factory);
 }

@@ -184,3 +184,21 @@ A fresh-context, read-only adversarial review followed by one bounded follow-up 
 remaining local gate implementation blockers. Both reports and the parent disposition
 are retained beside the final run; this verdict does not waive the remaining M0 matrix
 or authorize MAS production capabilities.
+
+## Monorepo/MAS M1 — accepted Conversation runtime
+
+M1 is accepted on `feat/monorepo-mas-migration`, `@pakka/agent@0.2.0`: 156/156 real
+production-path tests, zero skipped/cancelled/todo, check/build/format and external tarball
+consumption passed. Legacy installed smoke used 7 local HTTP calls and managed runtime
+used 3; pure inspection/reopen dispatches zero new HTTP. The final 228-fixture manifest
+contains 831 requests and zero provider fixture errors. Two bounded read-only review
+rounds converged OK, with exact limitations and identity in
+[MIGRATION-M1-ACCEPTANCE.md](MIGRATION-M1-ACCEPTANCE.md).
+
+M1 retains authority isolation, conservative Session and strategy budgets, exact withdrawal
+confirmation, physical unknown failure domains and explicit restricted legacy journal mapping.
+It does not implement MAS membership/A2A, crash claim recovery, worker or remote protocol.
+The earlier M0 prerequisite wording is historical: the user subsequently authorized
+Dynamite compatibility to remain **deferred / unresolved** with its complete
+[DC-01–DC-12 goals](DEFERRED-DYNAMITE-COMPATIBILITY.md), allowing M1–M6 to proceed.
+M0 is not passed, and Dynamite is not loaded or claimed compatible.
