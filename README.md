@@ -21,7 +21,7 @@ npm run smoke:package
 - `smoke:package` 会打包、在 Git 仓库之外建立消费者、**不携带根 overrides** 安装 tarball，再编译公开声明，实际验证 cut、策略投影、scoped artifacts 与辅助推理的 wire 上限。需要访问 npm registry。
 - `artifacts/integration/manifest.jsonl` 索引每个测试的 HTTP payload、宿主快照与原始 JSONL 副本。生成物被 Git 忽略，每次运行重建当前 manifest、保留旧目录。
 - `artifacts/package-smoke/` 保存外部安装和执行日志。
-- [设计与约束](docs/ARCHITECTURE.md) · [策略控制 API 与精确接口](docs/STRATEGY-API.md) · [验证记录](docs/VERIFICATION.md)
+- [设计与约束](docs/ARCHITECTURE.md) · [策略控制 API 与精确接口](docs/STRATEGY-API.md) · [验证记录](docs/VERIFICATION.md) · [仓库规范](docs/MONOREPO-CONVENTIONS.md) · [迁移计划](docs/MONOREPO-MIGRATION-PLAN.md)
 
 ## 目录
 
@@ -41,7 +41,7 @@ scripts/
   pack-smoke.mjs          仓库外打包安装验证
 ```
 
-不创建空的 tui 包；以后 TUI 只能消费 client 命令与只读 DTO，不能持有原生 AgentSession。
+不创建空的 package 或 app。`@pakka/agent` 保留现名，承担 gate 职责；MAS 服务与可选 DevPack 放在 `packages/`，server/CLI/GUI 放在 `apps/`，Durable patch 继续留在 `patches/`，Dynamite 保持独立仓库。客户端只消费受控命令与 DTO。目标边界和分阶段验收见上方仓库规范与迁移计划；这些目录和 MAS 能力尚未实现。
 
 ## 宿主 API 示例
 
@@ -113,7 +113,7 @@ try {
 
 ## 暂未实现
 
-完整 Pi input/skill/template/image/extension-command 兼容（slash 输入显式拒绝）；任意原生 Pi 插件；任意运行期 boundary context 提案；完整 AgentSubject/claim receipt 与 RPC；按次工具权限和 C2 tool-result 准入；持久化 admission ledger、完整崩溃恢复、多进程 writer、sandbox；全 provider 兼容、Dynamite 算法和默认装配；TUI 和产品 CLI。
+多 Conversation/Session 的受控 MAS、A2A 和 MAS DevPack；完整 Pi input/skill/template/image/extension-command 兼容（slash 输入显式拒绝）；任意原生 Pi 插件；任意运行期 boundary context 提案；完整 AgentSubject/claim receipt 与 RPC；按次工具权限和 C2 tool-result 准入；持久化 admission ledger、完整崩溃恢复、多进程 writer、sandbox；全 provider 兼容、Dynamite 算法和默认装配；TUI 和产品 CLI。
 
 当前仅接入显式配置的工具；工具允许执行不等于其副作用可回滚。context_edit 的 author intent 与 mutation 仍是两次写入，不是原子事务。
 

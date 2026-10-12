@@ -1,5 +1,7 @@
 # Architecture / contract v0.1
 
+This document describes the implemented single-Conversation host contract. Target package boundaries and repository rules are in [MONOREPO-CONVENTIONS.md](MONOREPO-CONVENTIONS.md); staged MAS implementation and acceptance gates are in [MONOREPO-MIGRATION-PLAN.md](MONOREPO-MIGRATION-PLAN.md). Those plans do not imply implemented multi-Conversation, A2A, extension or RPC support. The package remains `@pakka/agent`.
+
 ## Authority and ownership
 
 `createHost(options)` creates a trusted control object. Only application bootstrap uses connect/reload/newSession/dispose. A plugin receives a frozen, principal-bound Client. Grants are copied into a closure; strategies are copied into kernel maps. No mutable Pi object, kernel, caller string override, or permission-map reference is returned.
@@ -85,10 +87,12 @@ The production dependency cohort is pinned at the agent package boundary. Pi Dur
 
 ## Next integration boundaries
 
-- Strategy algorithm/default-package integration and cross-package acceptance.
-- Full preprocessing compatibility without surrendering request identity or native scheduling.
-- Durable C2 admission recovery, multi-process storage and bulk legacy import.
-- Per-tool/result permission hooks and a complete observable protocol.
-- RPC authentication/serializable handles, CLI, then TUI driven only by these ports.
+The adopted monorepo/MAS migration order is:
 
-These are unresolved product work, not features implied by this host component.
+- Fixed-artifact Durable × Dynamite compatibility and installed-consumer acceptance.
+- Conversation-scoped authority, projections, artifacts, budgets and failure handling in `@pakka/agent`.
+- MAS membership, ownership policy and A2A through controlled runtime ports.
+- Recoverable multi-Session enrollment/delivery and workers with one writer per storage.
+- Optional MAS DevPack, then authenticated protocol/client and server/CLI entry points; GUI consumes those ports.
+
+Full preprocessing, bulk legacy import and additional per-tool/result contracts remain separately scoped product work. These are unresolved boundaries, not features implied by this host component; the monorepo migration does not authorize shared-storage multi-process writers.

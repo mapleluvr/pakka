@@ -6,3 +6,7 @@
 - Test first against real Pi with local deterministic HTTP providers. Never read user credentials or call paid models in tests.
 - Unknown persistence or tool side effects must fail closed; never release an admission merely because abort was requested or text appeared in clearQueue().
 - This is a headless integration slice, not full developed-Kappa compatibility. Keep limitations explicit.
+- Keep `@pakka/agent` as the package name while its gate responsibilities evolve; do not introduce a forwarding `@pakka/gate` package.
+- The target package/app boundaries, dependency direction, MAS/Durable ownership rules, and repository split criteria are in [`docs/MONOREPO-CONVENTIONS.md`](docs/MONOREPO-CONVENTIONS.md); the staged implementation plan is [`docs/MONOREPO-MIGRATION-PLAN.md`](docs/MONOREPO-MIGRATION-PLAN.md).
+- Create new workspace packages or apps only with a real consumer and executable acceptance path. Keep `pakka-dynamite` as the external `@pakka/dynamite` repository and verify fixed cross-repository artifacts under `integrations/`.
+- Treat package, repository, process, Session, and Conversation boundaries as separate decisions. A new Harness does not provide process isolation, and every Durable storage has one writer.
