@@ -21,6 +21,30 @@ import type {
 	ConversationRef,
 } from "@pakka/agent";
 import type { Mas, MasClient, MemberSpec, SendSpec, AgentRef } from "@pakka/mas";
+import type { RuntimeStore } from "@pakka/agent";
+import type { Broker, BrokerClient, BrokerAgentRef } from "@pakka/mas/broker";
+import type { WorkerManager } from "@pakka/server";
+
+export async function brokerContract(
+	broker: Broker,
+	client: BrokerClient,
+	store: RuntimeStore,
+	workers: WorkerManager,
+	ref: BrokerAgentRef,
+	input: SendSpec,
+) {
+	const state = await store.snapshot();
+	const persisted = await store.compareAndSet(state.version, state.data, () => {});
+	const receipt = await client.send(ref, input);
+	const worker = await workers.placement(ref.placement).open(ref.sessionId);
+	// @ts-expect-error no native Tx or Session escapes a bootstrap store.
+	store.session.commit();
+	// @ts-expect-error business input cannot choose another storage or process configuration.
+	await client.send(ref, { ...input, dataDir: "/untrusted" });
+	// @ts-expect-error there is no publicly selectable grant/action argument.
+	await client.send(ref, input, "reply");
+	return { persisted, worker: await worker.view(), view: await broker.view(), receipt };
+}
 
 export async function masContract(mas: Mas, client: MasClient, ref: AgentRef, input: SendSpec) {
 	const member: MemberSpec = { key: "reviewer", owner: "operator" };

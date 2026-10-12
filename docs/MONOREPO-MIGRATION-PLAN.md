@@ -106,7 +106,7 @@ M1 已完成：`@pakka/agent@0.2.0`，156/156 真实回归、隔离 tarball（le
 - duplicate/conflicting requests、busy queue、steer/follow-up、超时和已 placed 后 abort 的 receipts 不被错误释放或重试。
 - 同 Session 的 task-owned 子树与 background boundary 使用真实 Durable 任务验证。
 
-M2 已验收：`@pakka/agent@0.3.0` + `@pakka/mas@0.1.0`，176/176 全量真实回归、17/17 focused MAS/ownership 回归、隔离 tarball consumer 和两份独立复审通过，P2 均已处理。完整证据与限制见 [MIGRATION-M2-ACCEPTANCE.md](MIGRATION-M2-ACCEPTANCE.md)。M3–M6 尚未完成。
+M2 已验收：`@pakka/agent@0.3.0` + `@pakka/mas@0.1.0`，176/176 全量真实回归、17/17 focused MAS/ownership 回归、隔离 tarball consumer 和两份独立复审通过，P2 均已处理。完整证据与限制见 [MIGRATION-M2-ACCEPTANCE.md](MIGRATION-M2-ACCEPTANCE.md)。M3–M6 的状态见各自阶段。
 
 ## M3：多 Session、恢复投递与独立 worker
 
@@ -126,6 +126,8 @@ M2 已验收：`@pakka/agent@0.3.0` + `@pakka/mas@0.1.0`，176/176 全量真实�
 - 同进程两个 Session 的单 storage poison 不污染另一 storage；独立 worker 的进程退出不停止其他 worker。
 - worker 关闭后重开保持合法记录和投递身份，重新授予运行时权限；旧 token 不复活，旧 incarnation 消息不投递到替代 agent。记录 retention 到期后的旧 request 必须明确拒绝或重新协商，不能静默当作首次 admission。
 - 不能证明单 writer、预算、准入或物理状态时阻断操作；独立进程测试使用本地 provider 和受控退出，不使用真实模型。
+
+M3 已验收，带明确限制：`@pakka/agent@0.4.0` + `@pakka/mas@0.2.0` + private `@pakka/server@0.1.0`，196/196 全量、20/20 定向回归与真实独立 worker/tarball 消费通过；两轮指定 adversarial-review 为 OK with notes，残余项和复审质量更正见 [MIGRATION-M3-ACCEPTANCE.md](MIGRATION-M3-ACCEPTANCE.md)。M4–M6 尚未完成。
 
 ## M4：MAS DevPack 与可选 built-in extension
 

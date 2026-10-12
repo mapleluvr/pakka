@@ -612,3 +612,27 @@ const settled = await submission.wait(context);
 外部 smoke 实际记录 7 次 HTTP、辅助 caps `64/128`、拒绝 provider 增量为 0、receipt committed + generation blocked、Host ready，以及拒绝后的下一次请求成功。生产 oracle dependency 为 absent，public oracle backend 与 private subpath 均拒绝。
 
 `npm pack --workspace @pakka/agent --dry-run` 的 prepack guard 已实测拒绝，指向 `npm run pack:agent`；隔离 pack 接收 source tarball、验证 bundle 并转换为精确发布版本。正常消费者安装无需 postinstall patch。未来升级仍按条目 5 的失效/移除条件重新验证；本条不授权跳过兼容性测试。
+
+## 条目 DURABLE-M3-7：多 Session 与真实 worker 验收
+
+- ID: DURABLE-M3-7
+- 状态: verified with notes
+- 关联条目: extends DURABLE-2026-10-11-6；不改写历史记录
+- 基线: 同一 `pi-durable@1.0.3-pakka.1`，上游 `d78dc83d633229d12f8b79631384c4c2717c399f`；SHA-256 `535d90fd195a1e9c6c9dc1b22b7f0ca15aac41652bb7d644da616148947bcfa7`。
+- Pakka 变更: agent `0.3.0 → 0.4.0`，mas `0.1.0 → 0.2.0`，新增 private server `0.1.0`；patch/source/build inputs没有变化，未手改 installed dependency。
+- 影响面: 公开 defineDocFamily/Session.commit 上的有限 coordinator store；create-once storage 地址；跨 Session outbox/native admission reconciliation；不同 PID 的实际 worker。
+
+变更前（M2）：同 Session catalog/准入与 task/background ownership已验收，缺少 coordinator store、固定多 Session placement 和实际 worker manager。
+
+变更后（源码公开端口）：
+
+```ts
+// packages/agent/src/runtime.ts，生产 bootstrap delegation
+store: (options: RuntimeStoreOptions) => port.store(options),
+```
+
+底层事务和 Pi mutable handles仍只在 adapter；broker/app仅消费冻结 DTO和命令闭包。既有 request/payload gate、投影、Session/strategy预算和原生 steer/followUp保持。未知 writer不被超时/PID复用抢占，跨 Session不宣称事务或 exactly-once effects。
+
+验证命令：`npm ci --ignore-scripts`、`check`、`build`、`format:check`、`npm test`、`smoke:package`、strict OpenSpec；结果为全量 **196/196**、定向 **20/20**、真实独立 tarball/worker consumer HTTP **7/3/3/3**，重复 admission与重开零额外 HTTP。指定 adversarial-review两 bounded passes最终 OK with notes。完整固定产物身份、执行证据、P2处置及复审质量更正见 [MIGRATION-M3-ACCEPTANCE.md](MIGRATION-M3-ACCEPTANCE.md)。本轮没有重跑无变化的历史 patch 105/105，不将其冒充新结果。
+
+失效条件：Durable公共 doc/commit/admission/task/ownership API、generation block或恢复语义、版本/hash/build inputs变化，或新增不可信 receipt restore/外部 transport，应重新运行对应矩阵并追加记录。M4–M6、完整 crash-claim恢复、POSIX故障矩阵与 Dynamite兼容仍未由本条授权。

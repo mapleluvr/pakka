@@ -1,9 +1,13 @@
 {
 	"name": "@pakka/mas",
-	"version": "0.1.0",
+	"version": "0.2.0",
 	"private": true,
 	"type": "module",
 	"exports": {
+		"./broker": {
+			"types": "./dist/broker-entry.d.ts",
+			"import": "./dist/broker-entry.js"
+		},
 		".": {
 			"types": "./dist/index.d.ts",
 			"import": "./dist/index.js"
@@ -16,6 +20,6 @@
 		"build": "tsc -p tsconfig.json"
 	},
 	"peerDependencies": {
-		"@pakka/agent": "0.3.0"
+		"@pakka/agent": "0.4.0"
 	}
 }

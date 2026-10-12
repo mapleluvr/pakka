@@ -208,3 +208,9 @@ M0 is not passed, and Dynamite is not loaded or claimed compatible.
 M2 is accepted on `feat/monorepo-mas-migration`: `@pakka/agent@0.3.0` and `@pakka/mas@0.1.0`. The final production-path suite is 176/176, focused MAS/ownership is 17/17, the final authority regressions are 2/2, and the installed tarball consumer passes with legacy/runtime/MAS local HTTP counts of 7/3/3. Evidence, review disposition and limits are in [MIGRATION-M2-ACCEPTANCE.md](MIGRATION-M2-ACCEPTANCE.md).
 
 M2 covers same-Session atomic enrollment/activation, principal/source/owner policy, native prompt/steer/followUp delivery, durable duplicate/conflict receipts, task/temporary/background lifetimes, retirement and unknown persistence. It does not claim cross-Session transaction/transport, independent process workers, DevPack or remote protocol. Dynamite remains deferred and uninstalled.
+
+## Multi-Session broker and workers M3 — accepted with notes
+
+M3 is accepted on `feat/monorepo-mas-migration`: `@pakka/agent@0.4.0`, `@pakka/mas@0.2.0`, private `@pakka/server@0.1.0`. Clean install/check/build/format, 196/196 full tests, 20/20 focused tests, actual independent-process workers and outside-repository tarball consumers passed (legacy/runtime/MAS/broker local HTTP: 7/3/3/3). Reopen after lost admission reuses the same native identity and adds zero HTTP; forced exits retain unknown writer claims.
+
+Two bounded operator-selected adversarial-review passes converged OK with notes, not zero residual risk or a complete product claim. Exact hashes, surviving support limits, nested native receipt decoding note, review attribution/citation corrections and reproduction commands are in [MIGRATION-M3-ACCEPTANCE.md](MIGRATION-M3-ACCEPTANCE.md). DevPack, public protocol/server/client/CLI and Dynamite remain later gates.

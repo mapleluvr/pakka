@@ -9,6 +9,7 @@ import type {
 	Host,
 	Runtime,
 	RuntimeOptions,
+	RuntimeStoreOptions,
 } from "./types.ts";
 
 /** Composition only: all Pi/storage mutable objects remain in DurableAdapter. */
@@ -66,6 +67,7 @@ export async function createRuntime(options: RuntimeOptions): Promise<Runtime> {
 		root: () => root,
 		view: () => port.view(),
 		conversation: attach,
+		store: (options: RuntimeStoreOptions) => port.store(options),
 		createConversation: async (spec: ConversationSpec) => {
 			const ref = await port.createConversation(spec);
 			await attach(ref);

@@ -1,8 +1,8 @@
-# Conversation runtime API（`@pakka/agent@0.3.0`）
+# Conversation runtime API（`@pakka/agent@0.4.0`）
 
 M1 增加 `createRuntime(options)`：受信任 bootstrap 在一个 Durable Harness/storage 中管理多个 Conversation。M2 的同 Session MAS 服务通过该 runtime 的受控 catalog port 装配；MAS 的 client、membership 和 A2A 语义见 [MAS-API.md](MAS-API.md)。`createHost()` 继续提供单 Conversation 兼容入口，使用原有 strategy journal namespace。两者不是可互换的 storage 开启方式：legacy host 不得重开 managed runtime storage，managed runtime 也不隐式采用旧 host storage/journal。
 
-实现与验收状态以 [迁移计划](MONOREPO-MIGRATION-PLAN.md) 和 [验证记录](VERIFICATION.md) 为准。Runtime API 本身不授予 agent 创建/控制资源的权限；跨 Session A2A、worker、DevPack、RPC 和进程隔离仍未实现。
+实现与验收状态以 [迁移计划](MONOREPO-MIGRATION-PLAN.md) 和 [验证记录](VERIFICATION.md) 为准。Runtime API 本身不授予 agent 创建/控制资源的权限。M3 的跨 Session A2A、worker 与真实进程隔离通过上层 [BROKER-API.md](BROKER-API.md) 装配，已验收（[范围与残余项](MIGRATION-M3-ACCEPTANCE.md)）；DevPack 和对外 RPC 尚未实现。
 
 ## 创建与访问
 
@@ -71,4 +71,10 @@ M1 提供 `migrateLegacy: { expectedSessionId, expectedConversationId }` 的显�
 
 `createRuntime({ ...options, reopenSessionFile })` 验证 provenance、持久 runtime profile identity 与 limits，恢复所有现存成员的 authority 后才允许 progress。纯重开/inspection 不发送 HTTP。Session quotas 与 Conversation identity 保留，旧 capability、lease、tool scope、Host closure 不复活。M1 的 Host C2 ledger 仍是进程内状态；不要把这条兼容路径用作跨重启 A2A 去重。
 
-Dynamite 保持 [deferred](DEFERRED-DYNAMITE-COMPATIBILITY.md)。历史 pin 与 `@pakka/agent@0.3.0` 不等价；M1/M2 不修改外部 mapper/算法，也不默认装配它。
+## M3 coordinator store 与明确 storage 地址
+
+受信任 bootstrap 使用 `runtime.store({ namespace, maxBytes })` 获得冻结 JSON snapshot 与 CAS 命令。`snapshot()` 返回明确版本；`compareAndSet(expectedVersion, data, check)` 在 Session commit line 重验版本与授权 callback。非 JSON、非有限数、容量超限或已撤权均拒绝；未知物理提交封闭所属 Session。store 不是业务 agent 的通用写权，也不暴露 Tx 或 Durable document handles。
+
+`reservedSessionId` 是受信任 bootstrap 选择的 lowercase UUID storage/provenance 地址，不是 provider identity。它具有 create-once 语义；已存在目录不会被覆盖。重开必须明确指定同一 owned storage 的 `reopenSessionFile`，且 provenance、runtime 配置与 reservation 均匹配。worker manager 使用这条接口恢复固定 placement；未知初始化和遗留 writer claim 不允许分配替代目录或自动抢占。
+
+Dynamite 保持 [deferred](DEFERRED-DYNAMITE-COMPATIBILITY.md)。历史 pin 与 `@pakka/agent@0.4.0` 不等价；核心迁移不修改外部 mapper/算法，也不默认装配它。

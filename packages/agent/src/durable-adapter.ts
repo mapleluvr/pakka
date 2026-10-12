@@ -80,6 +80,8 @@ import type {
 	CatalogMember,
 	CatalogEnroll,
 	RuntimeCatalog,
+	RuntimeStore,
+	RuntimeStoreOptions,
 	DeliveryReceipt,
 	CatalogDeliverySpec,
 	JsonObject,
@@ -219,6 +221,7 @@ export interface ManagedAdapterPort {
 	validateReference(ref: ConversationRef): void;
 	createConversation(spec: ConversationSpec): Promise<ConversationRef>;
 	catalog(options: CatalogOptions): RuntimeCatalog;
+	store(options: RuntimeStoreOptions): RuntimeStore;
 	attach(
 		ref: ConversationRef,
 		notify: (notice: Notice) => void,
@@ -304,6 +307,16 @@ const CatalogDoc = defineDocFamily<CatalogRecord, JsonRepresentation<CatalogOpti
 	scope: "session",
 	family: true,
 	initial: (options) => ({ version: 0, options: { ...options }, members: {}, deliveries: {} }),
+});
+const CoordinatorDoc = defineDocFamily<
+	JsonRepresentation<{ version: number; options: RuntimeStoreOptions; data: JsonObject }>,
+	JsonRepresentation<RuntimeStoreOptions>
+>({
+	kind: "pakka.coordinator",
+	version: 1,
+	scope: "session",
+	family: true,
+	initial: (options) => ({ version: 0, options: { ...options }, data: {} }),
 });
 const BackgroundAnchor = defineTask<{}, { phase: "hold"; tick: number }, null>({
 	name: "pakka.background-anchor",
@@ -419,7 +432,7 @@ export class DurableAdapter {
 		options: HostOptions,
 		notify: (notice: Notice) => void,
 		control: AdapterControl,
-		managedOptions?: Pick<RuntimeOptions, "limits" | "profiles" | "migrateLegacy">,
+		managedOptions?: Pick<RuntimeOptions, "limits" | "profiles" | "migrateLegacy" | "reservedSessionId">,
 	): Promise<DurableAdapter> {
 		const profiles = new Map<string, HostOptions>([["default", profileOptions(options)]]);
 		if (managedOptions) {
@@ -463,6 +476,12 @@ export class DurableAdapter {
 				throw new Error("Inference model policy is not allowlisted");
 		}
 
+		const reserved = managedOptions?.reservedSessionId;
+		if (
+			reserved !== undefined &&
+			!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(reserved)
+		)
+			throw new Error("Invalid reserved Session identity");
 		const sessionsDir = join(options.dataDir, "sessions");
 		await mkdir(sessionsDir, { recursive: true });
 
@@ -502,11 +521,19 @@ export class DurableAdapter {
 			} else {
 				throw new Error("Reopen must match cwd and session provenance");
 			}
+			if (reserved && sessionId !== reserved)
+				throw new Error("Reserved Session identity does not match provenance");
 			sessionFile = file;
 		} else {
-			sessionId = randomUUID();
+			sessionId = reserved ?? randomUUID();
 			storageDir = join(sessionsDir, sessionId);
-			await mkdir(storageDir, { recursive: true });
+			try {
+				await mkdir(storageDir, { recursive: reserved === undefined });
+			} catch (error) {
+				if ((error as NodeJS.ErrnoException).code === "EEXIST")
+					throw new Error("Reserved storage exists; explicit reopen required");
+				throw error;
+			}
 			const prov: ProvenanceData = { sessionId, cwd: resolve(options.cwd) };
 			await writeFile(join(storageDir, "provenance.json"), JSON.stringify(prov), "utf8");
 			sessionFile = join(storageDir, "main.jsonl");
@@ -926,6 +953,7 @@ export class DurableAdapter {
 			},
 			validateReference: (ref: ConversationRef) => this.#validateReference(ref),
 			catalog: (options: CatalogOptions) => this.#catalog(options),
+			store: (options: RuntimeStoreOptions) => this.#store(options),
 			createConversation: async (spec: ConversationSpec): Promise<ConversationRef> => {
 				const managed = this.#managedReady();
 				const profileId = spec.profile ?? "default",
@@ -1002,6 +1030,73 @@ export class DurableAdapter {
 				await this.#harness.close(BACKGROUND_CONTEXT);
 				this.#managed!.unsubscribe?.();
 				await this.#releaseWriter?.();
+			},
+		});
+	}
+	#store(rawOptions: RuntimeStoreOptions): RuntimeStore {
+		this.#managedReady();
+		if (
+			!validKey(rawOptions.namespace) ||
+			!Number.isSafeInteger(rawOptions.maxBytes) ||
+			rawOptions.maxBytes < 1 ||
+			rawOptions.maxBytes > 16 * 1024 * 1024
+		)
+			throw new Error("Invalid finite coordinator capacity");
+		const options = copy({ namespace: rawOptions.namespace, maxBytes: rawOptions.maxBytes });
+		const optionsMatch = (state: { options: RuntimeStoreOptions }) => {
+			if (hash(state.options) !== hash(options)) throw new MutationDenied("Coordinator options conflict");
+		};
+		return Object.freeze({
+			snapshot: async () => {
+				this.#managedReady();
+				try {
+					const state = await this.#harness.snapshot(CoordinatorDoc, options.namespace, BACKGROUND_CONTEXT);
+					if (!state) return copy({ version: 0, data: {} });
+					optionsMatch(state);
+					return copy({ version: state.version, data: state.data });
+				} catch (error) {
+					if (!(error instanceof MutationDenied))
+						this.storageUnknown("Coordinator snapshot unknown: " + String(error));
+					throw error;
+				}
+			},
+			compareAndSet: async (expectedVersion: number, data: JsonObject, check: () => void) => {
+				this.#managedReady();
+				if (
+					!Number.isSafeInteger(expectedVersion) ||
+					expectedVersion < 0 ||
+					expectedVersion === Number.MAX_SAFE_INTEGER
+				)
+					throw new MutationDenied("Invalid coordinator CAS version");
+				if (!data || Array.isArray(data) || typeof data !== "object")
+					throw new MutationDenied("Coordinator data must be a JSON object");
+				json(data);
+				const serialized = JSON.stringify(data);
+				if (Buffer.byteLength(serialized, "utf8") > options.maxBytes)
+					throw new MutationDenied("Coordinator capacity exhausted");
+				const input = storedJson<JsonRepresentation<JsonObject>>(data);
+				const authority = () => {
+					this.#managedReady();
+					try {
+						check();
+					} catch (error) {
+						throw new MutationDenied("Coordinator authority denied: " + String(error));
+					}
+				};
+				authority();
+				const result = await this.#persist(async (tx) => {
+					const state = await tx.doc(CoordinatorDoc, options.namespace, options);
+					optionsMatch(state);
+					if (state.version !== expectedVersion) throw new MutationDenied("Coordinator CAS conflict");
+					authority();
+					state.data = input;
+					state.version++;
+					return storedJson<{ version: number; data: JsonObject }>({
+						version: state.version,
+						data: state.data,
+					});
+				});
+				return copy(result);
 			},
 		});
 	}

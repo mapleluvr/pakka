@@ -313,6 +313,8 @@ export interface JournalMigration {
 }
 export interface RuntimeOptions extends HostOptions {
 	readonly limits: RuntimeLimits;
+	/** Trusted UUID for create-once storage placement; an existing directory requires explicit reopen. */
+	readonly reservedSessionId?: string;
 	/** Additional bootstrap-approved profiles; default inherits HostOptions. */
 	readonly profiles?: readonly ConversationProfile[];
 	/** Opt-in mapping of a closed, provably single-Conversation legacy storage; never bulk import. */
@@ -402,12 +404,26 @@ export interface RuntimeCatalog {
 		ref: ConversationRef,
 	): Promise<{ readonly phase: "ready" | "failed" | "ended"; readonly reason?: string }>;
 }
+export interface RuntimeStoreOptions {
+	readonly namespace: string;
+	readonly maxBytes: number;
+}
+export interface RuntimeStoreSnapshot {
+	readonly version: number;
+	readonly data: JsonObject;
+}
+/** Bootstrap-only JSON coordinator state, not model authority or arbitrary native transactions. */
+export interface RuntimeStore {
+	snapshot(): Promise<RuntimeStoreSnapshot>;
+	compareAndSet(expectedVersion: number, data: JsonObject, check: () => void): Promise<RuntimeStoreSnapshot>;
+}
 /** Trusted bootstrap/control plane, not an agent-facing permission grant. */
 export interface Runtime {
 	root(): Host;
 	view(): RuntimeView;
 	createConversation(spec: ConversationSpec): Promise<ConversationRef>;
 	catalog(options: CatalogOptions): RuntimeCatalog;
+	store(options: RuntimeStoreOptions): RuntimeStore;
 	conversation(ref: ConversationRef): Promise<Host>;
 	waitForIdle(): Promise<void>;
 	close(): Promise<void>;

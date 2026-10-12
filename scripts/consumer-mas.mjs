@@ -77,7 +77,11 @@ try {
 	assert.equal(Object.isFrozen(active.members[0].ref), true);
 	mas.revoke("a");
 	await assert.rejects(sender.send(b.ref, { requestId: "revoked", text: "REVOKED" }), /revoked/);
-	const admin = mas.connect({ principal: "operator", source: null, grants: ["spawn", "retire", "send", "observe"] });
+	const admin = mas.connect({
+		principal: "operator",
+		source: null,
+		grants: ["spawn", "retire", "send", "observe"],
+	});
 	const child = await admin.spawn({ key: "child" });
 	const third = await admin.send(child.ref, { requestId: "third", text: "CHILD-WORK" });
 	await admin.wait(third.id);

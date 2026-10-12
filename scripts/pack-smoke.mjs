@@ -6,9 +6,14 @@ import { fileURLToPath } from "node:url";
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
 const consumer = mkdtempSync(join(tmpdir(), "pakka-packed-consumer-"));
 const versions = Object.fromEntries(
-	["agent", "mas"].map((name) => {
+	["agent", "mas", "server"].map((name) => {
 		try {
-			return [name, JSON.parse(readFileSync(join(root, "packages", name, "package.json"), "utf8")).version];
+			return [
+				name,
+				JSON.parse(
+					readFileSync(join(root, name === "server" ? "apps" : "packages", name, "package.json"), "utf8"),
+				).version,
+			];
 		} catch (error) {
 			throw new Error("Invalid " + name + " package metadata", { cause: error });
 		}
@@ -51,6 +56,11 @@ run(
 	[npmCli, "pack", "--ignore-scripts", "--pack-destination", consumer],
 	join(root, "packages", "mas"),
 );
+run(
+	"pack-server",
+	[npmCli, "pack", "--ignore-scripts", "--pack-destination", consumer],
+	join(root, "apps", "server"),
+);
 writeFileSync(
 	join(consumer, "package.json"),
 	JSON.stringify(
@@ -61,6 +71,7 @@ writeFileSync(
 			dependencies: {
 				"@pakka/agent": `file:./pakka-agent-${versions.agent}.tgz`,
 				"@pakka/mas": `file:./pakka-mas-${versions.mas}.tgz`,
+				"@pakka/server": `file:./pakka-server-${versions.server}.tgz`,
 			},
 			devDependencies: { typescript: "7.0.2", "@types/node": "26.6.4" },
 		},
@@ -72,6 +83,7 @@ copyFileSync(join(root, "scripts", "consumer-smoke.mjs"), join(consumer, "smoke.
 copyFileSync(join(root, "scripts", "consumer-types.ts"), join(consumer, "consumer-types.ts"));
 copyFileSync(join(root, "scripts", "consumer-runtime.mjs"), join(consumer, "runtime.mjs"));
 copyFileSync(join(root, "scripts", "consumer-mas.mjs"), join(consumer, "mas.mjs"));
+copyFileSync(join(root, "scripts", "consumer-broker.mjs"), join(consumer, "broker.mjs"));
 run(
 	"install",
 	[npmCli, "install", "--ignore-scripts", "--no-audit", "--no-fund", "--registry=https://registry.npmjs.org"],
@@ -98,4 +110,5 @@ writeFileSync(
 console.log(run("smoke", [join(consumer, "smoke.mjs")], consumer));
 console.log(run("runtime", [join(consumer, "runtime.mjs")], consumer));
 console.log(run("mas", [join(consumer, "mas.mjs")], consumer));
+console.log(run("broker", [join(consumer, "broker.mjs")], consumer));
 writeFileSync(join(artifacts, "consumer-path.txt"), consumer + "\n");
