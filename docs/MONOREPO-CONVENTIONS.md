@@ -137,6 +137,8 @@ Durable ownership 是生命周期关系，不是 ACL。应用 ownership 变更�
 
 ## 8. 外部组件与验收
 
+Dynamite 专项已由用户授权延期，先完成核心迁移再处理；[已确认问题与 DC-01–DC-12 功能目标](DEFERRED-DYNAMITE-COMPATIBILITY.md) 保留。延期不代表兼容通过、不解除其他门禁、不允许默认装配。
+
 `@pakka/dynamite` 继续位于 [mapleluvr/pakka-dynamite](https://github.com/mapleluvr/pakka-dynamite)。其 engine/ports 与 Pakka adapter 可以在同一包内分层；目前不再拆成多个 npm 包。默认算法不依赖 MAS；未来委派摘要作为可选 job backend，继续受宿主 inference/source 权限约束。
 
 `integrations/dynamite` 保存可执行消费者测试和版本配对规则。外部 checkout 放在被忽略的 `artifacts/` 或显式 sibling 路径；固定 git commit，禁止浮动 HEAD 作为放行输入，不提交机器绝对路径、共享 node_modules 链接或开发 tarball。现有已审计 Durable vendor tarball 是明确例外。

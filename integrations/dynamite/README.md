@@ -38,4 +38,4 @@ npm run test:dynamite
 
 具体外部 seam 是该 commit 的 `src/pakka-adapter.ts:31–51`：`toRuntimeFrame()` 将 Durable `pi.*` raw records 原样作为旧 `EntryLike`，并只从 `message/custom_message` 提取 raw messages。Durable frame 的 `pi.user`、`pi.assistant` 和 `model[]` 因而不能形成算法所需的 numbering/step/source inputs。编译和相同的 `0.1.0` peer version 不足以证明行为兼容。
 
-修复应在明确的、版本化的 producer DTO 或外部 adapter 映射契约中完成；本目录不伪造旧 raw records、不直接解析 Pi storage、不内嵌外部算法修补。修复外部组件并更新固定配对后，重新运行并补齐 M0 矩阵，才能放行 M1。
+修复应在明确的、版本化的 producer DTO 或外部 adapter 映射契约中完成；本目录不伪造旧 raw records、不直接解析 Pi storage、不内嵌外部算法修补。用户已明确授权此专项延期、不阻塞 M1–M6 核心迁移；[未处理问题、兼容性功能目标和恢复条件](../../docs/DEFERRED-DYNAMITE-COMPATIBILITY.md) 已单独留档。迁移期间不装配或宣称 Dynamite 兼容，保留本门禁的失败语义；核心迁移完成后再修复外部组件、更新固定配对并补齐 M0 矩阵。

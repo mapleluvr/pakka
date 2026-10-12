@@ -89,7 +89,7 @@ The production dependency cohort is pinned at the agent package boundary. Pi Dur
 
 The adopted monorepo/MAS migration order is:
 
-- Fixed-artifact Durable × Dynamite compatibility and installed-consumer acceptance.
+- Fixed-artifact Durable × Dynamite compatibility remains failed and explicitly deferred by the user until after the core migration; [functional targets and resumption conditions](DEFERRED-DYNAMITE-COMPATIBILITY.md) are retained. It is not enabled or advertised as supported.
 - Conversation-scoped authority, projections, artifacts, budgets and failure handling in `@pakka/agent`.
 - MAS membership, ownership policy and A2A through controlled runtime ports.
 - Recoverable multi-Session enrollment/delivery and workers with one writer per storage.

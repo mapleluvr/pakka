@@ -1,6 +1,6 @@
 # Pakka monorepo 与 MAS 迁移计划
 
-状态：已开始实施，分支为 `feat/monorepo-mas-migration`。M0 的固定源码/tarball 消费门禁已建立，当前 Durable × Dynamite 配对 **blocked**；M0 尚未通过，M1–M6 未启动，不创建空包、不更名 `@pakka/agent`、不发布。
+状态：实施中，分支为 `feat/monorepo-mas-migration`。M0 的固定源码/tarball 消费门禁已建立，已确认配对失败；用户明确授权将 Dynamite 专项标记为 **deferred / 未处理**，先完成 M1–M6 核心迁移，再处理兼容性。功能目标、原始失败身份与恢复条件见 [DEFERRED-DYNAMITE-COMPATIBILITY.md](DEFERRED-DYNAMITE-COMPATIBILITY.md)。这不是 M0 passed，也不解除其他权限/持久化/恢复门禁。不创建空包、不更名 `@pakka/agent`、不发布。
 
 约束见 [MONOREPO-CONVENTIONS.md](MONOREPO-CONVENTIONS.md)；现有宿主行为见 [ARCHITECTURE.md](ARCHITECTURE.md)。[PI-DURABLE-MIGRATION-PLAN.md](PI-DURABLE-MIGRATION-PLAN.md) 记录此前后端切换，[MIGRATING-DYNAMITE.md](MIGRATING-DYNAMITE.md) 是早期算法迁移调查；它们不能替代本计划对当前版本的再验收。
 
@@ -25,8 +25,9 @@
 ## 2. 顺序与阶段边界
 
 ```text
-M0 当前 Durable × Dynamite 契约与安装验收
- ↓
+M0 当前 Durable × Dynamite 契约与安装验收：deferred，保留失败证据与 DC-01–DC-12
+
+核心迁移：
 M1 @pakka/agent 多 Conversation scope 与故障边界
  ↓
 M2 @pakka/mas 同 Session 的资源、所有权与 A2A
@@ -37,10 +38,12 @@ M4 @pakka/mas-devpack 可选 extension
  ↓
 M5 server 协议、client 与操作员 CLI
  ↓
-M6 集成产品验收；按需要接入 GUI 和评估独立 repo
+M6 集成产品验收（不装配 Dynamite）；按需要接入 GUI 和评估独立 repo
+ ↓
+恢复 Dynamite 专项：版本化映射、完整兼容矩阵、真实产物与产品配对
 ```
 
-后续阶段可以在端口固定后开发内部纯逻辑，但依赖阶段未通过时，不把后续能力启用为生产默认。每阶段提交可复核的契约变化、实现、行为回归和证据索引；在实现新的权限/存储/恢复边界时完成独立只读对抗复审，再放行依赖该边界的阶段。
+Dynamite 延期是用户对顺序的明确调整：它不再阻塞 M1–M6，但迁移期间不能默认装配或宣称其兼容。后续阶段可以在端口固定后开发内部纯逻辑；除这个专项外，依赖阶段未通过时，不把后续能力启用为生产默认。每阶段提交可复核的契约变化、实现、行为回归和证据索引；在实现新的权限/存储/恢复边界时完成独立只读对抗复审，再放行依赖该边界的阶段。
 
 不在一次“目录整理”中同时更名、修改算法、重写持久化和加入 UI。应用与 package 只随可执行功能创建，workspace/build/check 配置也在同一阶段加入。
 
@@ -61,7 +64,7 @@ M6 集成产品验收；按需要接入 GUI 和评估独立 repo
 - 当前宿主原有 C2/权限/生命周期矩阵通过；生产依赖不含 oracle，私有 import 被拒绝。
 - 若存在不兼容，留下原始失败证据和明确的 blocked 配对，不把历史验收数字当作当前结果。
 
-本阶段不依赖 MAS，也不以创建新目录代替跨包闭环。
+本阶段不依赖 MAS，也不以创建新目录代替跨包闭环。专项现为 deferred：保留以上完整目标与实际失败，先按用户授权推进核心迁移，再以迁移后的版本补齐矩阵；不得把该顺序调整写成通过。
 
 ## M1：让 agent 成为多 Conversation 的受控运行时
 
@@ -80,7 +83,7 @@ M6 集成产品验收；按需要接入 GUI 和评估独立 repo
 - 相同 strategy ID 在不同 Conversation 的 journal/lease 独立；A 的 reload、导航 ABA、撤权和旧 tool completion 不取得 B 的权限。
 - A 的局部失败/abort 对 B 的影响符合显式 ownership；Session 级存储不确定阻断整个对应域。
 - 原生 steer/follow-up placement、故意 block、post-tool block、输入 committed 与生成终态的区别保持；禁止路径零未授权 HTTP/写入。
-- namespace 迁移、旧 Host API、隔离安装与 Dynamite 全部通过；新的 public schema 和 exports 有版本记录。
+- namespace 迁移、旧 Host API 与隔离安装通过；新的 public schema 和 exports 有版本记录。Dynamite 专项按延期记录保留，不能以其未通过阻塞本阶段，也不能宣称迁移后的 Dynamite 已受支持。
 
 ## M2：建立同 Session 的 MAS 服务
 
@@ -160,7 +163,7 @@ M6 集成产品验收；按需要接入 GUI 和评估独立 repo
 
 ### 工作
 
-1. 装配实际 server/CLI、MAS/DevPack 和可选 Dynamite。default strategy 的选择按 Conversation 独立授予；默认包与用户策略同样遵守 owner/lease/budget。
+1. 装配实际 server/CLI、MAS/DevPack；本轮 Dynamite 专项 deferred，不装配。default strategy 的选择按 Conversation 独立授予；默认包与用户策略同样遵守 owner/lease/budget。
 2. 在隔离消费者中安装实际产物，固定所有构建配对，验证无需 root overrides、workspace paths 或 sibling 源码即可运行。
 3. 覆盖同 Session 多 agent、同进程多 Session、独立 worker、task-bound/temporary/长期成员与可选 DevPack 的受支持组合；未支持配置明确拒绝。
 4. 如接入 GUI，先调查 pi-pocket 的固定版本、许可、transport 与 fork 维护方式，再选择 `apps/gui` 或独立 repo。GUI 只能消费 M5 协议；保留上游历史，不能直接取得 gate 控制对象。
@@ -170,7 +173,7 @@ M6 集成产品验收；按需要接入 GUI 和评估独立 repo
 
 - 公开声明、exports、真实 HTTP、tool 次数、原始存储、消息/成员终态、费用 unknown 与恢复结果全部可复核。
 - 用户可启动实际入口并观察 MAS，而不必从 library 测试结果推断产品存在。
-- patch 升级、Dynamite 升级和产品装配都有明确消费者回归；没有因 monorepo hoisting 隐藏版本漂移。
+- patch 升级和核心产品装配有明确消费者回归；没有因 monorepo hoisting 隐藏版本漂移。Dynamite 未升级/未装配，状态单独保持 deferred，待核心迁移完成后验证其升级及产品配对。
 - GUI 是否拆仓由稳定协议、独立构建/验收和维护需要决定，不作为 MAS 完成的必需条件。gate 更名、patch 独立发布和 SI 不自动加入范围。
 
 ## 3. 验证、交付与恢复规则
