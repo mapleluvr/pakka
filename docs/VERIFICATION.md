@@ -142,3 +142,45 @@ The 501-input pagination test is a completion/correctness test with a 180-second
 run took about 73 seconds. This is not evidence of equal latency to the original adapter. Automatic
 retry and compaction remain disabled; deferred model requests, arbitrary provider families,
 full C2 recovery and Dynamite integration are not newly claimed by these fixes.
+
+## Monorepo/MAS M0 — blocked Durable × Dynamite pairing
+
+The first implementation slice is on `feat/monorepo-mas-migration`, based on documentation
+commit `84bffb141bc610ed0c322e081c192a0e39508c4b` (production code unchanged from `6c77632`).
+The executable gate is `npm run test:dynamite`; pins and limits are in
+[integrations/dynamite](../integrations/dynamite/README.md). This is not M0 completion or MAS acceptance.
+
+| Gate                                                             | Initial result                                                                                                   |
+| ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| Pakka check/build/format and source tests                        | Passed; 127/127, no skips/cancellations                                                                          |
+| Outside-workspace installation of current host + pinned Dynamite | Passed; actual tarballs, public declarations and dependency inventory verified                                   |
+| Installed host smoke                                             | Passed; 7 local HTTP requests, 64/128 caps, zero added blocked dispatch, private imports rejected, oracle absent |
+| Installed Dynamite at `5ff775aee041fe63a82a7fcd1d108d17c206da4e` | **Blocked**; 1/6 passed, 5 behavior assertions failed, no skips                                                  |
+
+Initial evidence is `artifacts/dynamite/run-JVQkFr/summary.json`; the hardened gate's complete
+rerun is `artifacts/dynamite/run-pANLhY/summary.json`, including both actual tarballs. Both runs
+produce the same five compatibility failures and passing host smoke. Eight failing-first
+acceptance-parser regressions pass and reject missing/duplicate counts, missing tests,
+skip/todo/cancellation and inconsistent pass totals even if a test process returns zero.
+The summary records Node 24.18.0, npm 11.16.0, TypeScript 7.0.2, both tarball identities and
+the audited Durable `1.0.3-pakka.1` SHA-256. Model tests use only deterministic localhost
+providers and isolated profiles, not real credentials or paid endpoints. Source checkouts
+are fixed and unmodified; no sibling repository was edited.
+
+The pinned external adapter's `toRuntimeFrame()` (`src/pakka-adapter.ts:31–51`) still maps
+legacy `message/custom_message` into algorithm inputs. Current Durable entries are `pi.*`
+with `model[]`. The next real request has no numbering, `reduce("#1")` accepts no target,
+and compression sends no auxiliary HTTP request. The recovery test fails at its initial
+reduce assertion; it is not evidence that reopen itself failed. Matching versions and
+successful declaration compilation do not establish behavior compatibility.
+
+The gate intentionally returns nonzero for this pairing. The mapping/version repair and
+remaining source-edit/ABA/unknown-storage integration matrix are prerequisites to M1;
+production code is not changed to impersonate legacy raw entries. Historical integration
+numbers above remain historical and do not override this blocked result.
+
+A fresh-context, read-only adversarial review followed by one bounded follow-up concluded
+`OK with notes` for committing the local gate and **blocked** for passing M0. There are no
+remaining local gate implementation blockers. Both reports and the parent disposition
+are retained beside the final run; this verdict does not waive the remaining M0 matrix
+or authorize MAS production capabilities.

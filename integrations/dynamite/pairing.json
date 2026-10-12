@@ -1,0 +1,21 @@
+{
+	"schemaVersion": 1,
+	"dynamite": {
+		"repository": "https://github.com/mapleluvr/pakka-dynamite.git",
+		"commit": "5ff775aee041fe63a82a7fcd1d108d17c206da4e",
+		"name": "@pakka/dynamite",
+		"version": "0.1.0"
+	},
+	"agent": {
+		"name": "@pakka/agent",
+		"version": "0.1.0"
+	},
+	"durable": {
+		"version": "1.0.3-pakka.1",
+		"sha256": "535d90fd195a1e9c6c9dc1b22b7f0ca15aac41652bb7d644da616148947bcfa7"
+	},
+	"toolchain": {
+		"typescript": "7.0.2",
+		"nodeTypes": "26.6.4"
+	}
+}

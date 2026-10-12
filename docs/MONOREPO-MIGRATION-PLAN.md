@@ -1,6 +1,6 @@
 # Pakka monorepo 与 MAS 迁移计划
 
-状态：已采用的分阶段实施计划，尚未执行下列 M0–M6。此次交付仅建立仓库规范和计划，不创建空包、不更名 `@pakka/agent`、不启动代码迁移或发布。
+状态：已开始实施，分支为 `feat/monorepo-mas-migration`。M0 的固定源码/tarball 消费门禁已建立，当前 Durable × Dynamite 配对 **blocked**；M0 尚未通过，M1–M6 未启动，不创建空包、不更名 `@pakka/agent`、不发布。
 
 约束见 [MONOREPO-CONVENTIONS.md](MONOREPO-CONVENTIONS.md)；现有宿主行为见 [ARCHITECTURE.md](ARCHITECTURE.md)。[PI-DURABLE-MIGRATION-PLAN.md](PI-DURABLE-MIGRATION-PLAN.md) 记录此前后端切换，[MIGRATING-DYNAMITE.md](MIGRATING-DYNAMITE.md) 是早期算法迁移调查；它们不能替代本计划对当前版本的再验收。
 

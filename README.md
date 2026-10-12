@@ -19,6 +19,7 @@ npm run smoke:package
 
 - 测试不读取真实凭据、不调用付费模型；使用独立临时 profile 与 127.0.0.1 provider。
 - `smoke:package` 会打包、在 Git 仓库之外建立消费者、**不携带根 overrides** 安装 tarball，再编译公开声明，实际验证 cut、策略投影、scoped artifacts 与辅助推理的 wire 上限。需要访问 npm registry。
+- `npm run test:dynamite` 运行 [固定 Durable × Dynamite 配对门禁](integrations/dynamite/README.md)，需要 GitHub/npm 网络，模型仅使用本地 HTTP。当前固定配对为 **blocked**，不会以历史验收放行 MAS 迁移。
 - `artifacts/integration/manifest.jsonl` 索引每个测试的 HTTP payload、宿主快照与原始 JSONL 副本。生成物被 Git 忽略，每次运行重建当前 manifest、保留旧目录。
 - `artifacts/package-smoke/` 保存外部安装和执行日志。
 - [设计与约束](docs/ARCHITECTURE.md) · [策略控制 API 与精确接口](docs/STRATEGY-API.md) · [验证记录](docs/VERIFICATION.md) · [仓库规范](docs/MONOREPO-CONVENTIONS.md) · [迁移计划](docs/MONOREPO-MIGRATION-PLAN.md)
@@ -39,9 +40,12 @@ packages/agent/
 scripts/
   test.mjs               独立测试环境与证据目录
   pack-smoke.mjs          仓库外打包安装验证
+integrations/dynamite/
+  pairing.json           外部 commit、版本与 Durable artifact pin
+  run.mjs                真实 tarball 安装、HTTP 行为门禁与证据索引
 ```
 
-不创建空的 package 或 app。`@pakka/agent` 保留现名，承担 gate 职责；MAS 服务与可选 DevPack 放在 `packages/`，server/CLI/GUI 放在 `apps/`，Durable patch 继续留在 `patches/`，Dynamite 保持独立仓库。客户端只消费受控命令与 DTO。目标边界和分阶段验收见上方仓库规范与迁移计划；这些目录和 MAS 能力尚未实现。
+不创建空的 package 或 app。`@pakka/agent` 保留现名，承担 gate 职责；MAS 服务与可选 DevPack 放在 `packages/`，server/CLI/GUI 放在 `apps/`，Durable patch 继续留在 `patches/`，Dynamite 保持独立仓库。客户端只消费受控命令与 DTO。目标边界和分阶段验收见上方仓库规范与迁移计划；M0 跨仓门禁已开始实施并记录 blocked 配对，MAS 相关 package/app 和能力尚未实现。
 
 ## 宿主 API 示例
 
