@@ -20,9 +20,17 @@ Object.assign(env, {
 	NO_COLOR: "1",
 	PAKKA_TEST_ARTIFACTS: artifacts,
 });
-const files = readdirSync(new URL("../packages/agent/test/", import.meta.url))
-	.filter((f) => f.endsWith(".test.ts"))
-	.map((f) => "packages/agent/test/" + f);
+const files = readdirSync(new URL("../packages/", import.meta.url)).flatMap((pkg) => {
+	const directory = new URL(`../packages/${pkg}/test/`, import.meta.url);
+	try {
+		return readdirSync(directory)
+			.filter((f) => f.endsWith(".test.ts"))
+			.map((f) => `packages/${pkg}/test/${f}`);
+	} catch (error) {
+		if (error.code === "ENOENT") return [];
+		throw error;
+	}
+});
 const result = spawnSync(
 	process.execPath,
 	[

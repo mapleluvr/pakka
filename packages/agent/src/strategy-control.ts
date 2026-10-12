@@ -182,6 +182,9 @@ export class StrategyControl {
 			throw new Error("Invalid/stale tool invocation scope");
 		this.#ports.ready();
 	}
+	checkInvocation(scope: ToolInvocationScope): void {
+		this.#checkInvocation(scope);
+	}
 	runScope(): RunScopeToken {
 		this.#ports.ready();
 		const token = Object.freeze({});

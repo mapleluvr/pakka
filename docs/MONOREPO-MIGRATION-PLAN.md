@@ -85,7 +85,7 @@ Dynamite 延期是用户对顺序的明确调整：它不再阻塞 M1–M6，但
 - 原生 steer/follow-up placement、故意 block、post-tool block、输入 committed 与生成终态的区别保持；禁止路径零未授权 HTTP/写入。
 - namespace 迁移、旧 Host API 与隔离安装通过；新的 public schema 和 exports 有版本记录。Dynamite 专项按延期记录保留，不能以其未通过阻塞本阶段，也不能宣称迁移后的 Dynamite 已受支持。
 
-M1 已完成：`@pakka/agent@0.2.0`，156/156 真实回归、隔离 tarball（legacy 7 HTTP / managed 3 HTTP）和两轮独立复审均通过。范围、构建身份与残余限制见 [MIGRATION-M1-ACCEPTANCE.md](MIGRATION-M1-ACCEPTANCE.md)。M2–M6 尚未完成。
+M1 已完成：`@pakka/agent@0.2.0`，156/156 真实回归、隔离 tarball（legacy 7 HTTP / managed 3 HTTP）和两轮独立复审均通过。范围、构建身份与残余限制见 [MIGRATION-M1-ACCEPTANCE.md](MIGRATION-M1-ACCEPTANCE.md)。
 
 ## M2：建立同 Session 的 MAS 服务
 
@@ -105,6 +105,8 @@ M1 已完成：`@pakka/agent@0.2.0`，156/156 真实回归、隔离 tarball（le
 - A 可以按通信 policy 向 B 发送/回复，而不能据此读取完整 B transcript 或取得管理权；收件方拒绝、限流与预算可观察。
 - duplicate/conflicting requests、busy queue、steer/follow-up、超时和已 placed 后 abort 的 receipts 不被错误释放或重试。
 - 同 Session 的 task-owned 子树与 background boundary 使用真实 Durable 任务验证。
+
+M2 已验收：`@pakka/agent@0.3.0` + `@pakka/mas@0.1.0`，176/176 全量真实回归、17/17 focused MAS/ownership 回归、隔离 tarball consumer 和两份独立复审通过，P2 均已处理。完整证据与限制见 [MIGRATION-M2-ACCEPTANCE.md](MIGRATION-M2-ACCEPTANCE.md)。M3–M6 尚未完成。
 
 ## M3：多 Session、恢复投递与独立 worker
 

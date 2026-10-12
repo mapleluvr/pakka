@@ -2,8 +2,8 @@ import { randomUUID } from "node:crypto";
 import { readFileSync, realpathSync, existsSync } from "node:fs";
 import { mkdir, writeFile, open, readFile, unlink } from "node:fs/promises";
 import { join, resolve, relative, isAbsolute, dirname } from "node:path";
-import { BACKGROUND_CONTEXT } from "@earendil-works/chord/context";
-import type { JsonValue as ChordJsonValue } from "@earendil-works/chord";
+import { BACKGROUND_CONTEXT, withAbortSignal } from "@earendil-works/chord/context";
+import type { JsonValue as ChordJsonValue, JsonRepresentation } from "@earendil-works/chord";
 import {
 	Harness,
 	createRegistry,
@@ -14,6 +14,11 @@ import {
 	GenerationTask,
 	CompactionEntry,
 	defineDoc,
+	defineDocFamily,
+	UserEntry,
+	InboxDoc,
+	defineTask,
+	LiveDoc,
 	configure,
 	ProviderDoc,
 	StorageRejected,
@@ -29,6 +34,9 @@ import {
 	type EntryRecord,
 	type EntryDraft,
 	type EntryId,
+	type TaskId,
+	type ToolExecutionApi,
+	type ConversationOwnership,
 	type AgentEvent,
 	type AgentEventStream,
 } from "@earendil-works/pi-durable";
@@ -45,7 +53,7 @@ import {
 	type TSchema,
 } from "@earendil-works/pi-ai";
 import * as oac from "@earendil-works/pi-ai/api/openai-completions";
-import { copy, hash } from "./artifact-journal.ts";
+import { copy, hash, json } from "./artifact-journal.ts";
 import {
 	inspectLegacyJournals,
 	legacyPrimaryReservations,
@@ -68,6 +76,13 @@ import type {
 	ConversationSpec,
 	RuntimeOptions,
 	RuntimeView,
+	CatalogOptions,
+	CatalogMember,
+	CatalogEnroll,
+	RuntimeCatalog,
+	DeliveryReceipt,
+	CatalogDeliverySpec,
+	JsonObject,
 	ConversationProfile,
 } from "./types.ts";
 
@@ -93,6 +108,8 @@ export interface AdapterControl {
 		signal?: AbortSignal,
 	): Promise<{ messages: readonly MessageDTO[]; check(): void } | { block: string; check(): void }>;
 	runScope(): RunScopeToken;
+	checkInvocation(scope: ToolInvocationScope): void;
+	configurationChanged(): void;
 	invoke<T>(run: RunScopeToken, callback: (scope: ToolInvocationScope) => Promise<T>): Promise<T>;
 }
 
@@ -201,6 +218,7 @@ export interface ManagedAdapterPort {
 	profileOptions(id: string): HostOptions;
 	validateReference(ref: ConversationRef): void;
 	createConversation(spec: ConversationSpec): Promise<ConversationRef>;
+	catalog(options: CatalogOptions): RuntimeCatalog;
 	attach(
 		ref: ConversationRef,
 		notify: (notice: Notice) => void,
@@ -267,6 +285,61 @@ async function claimWriter(storageDir: string): Promise<() => Promise<void>> {
 	};
 }
 class MutationDenied extends Error {}
+type StoredMember = JsonRepresentation<CatalogMember>;
+type StoredDelivery = {
+	id: string;
+	spec: JsonRepresentation<CatalogDeliverySpec>;
+	fingerprint: string;
+	submissionId: number;
+};
+type CatalogRecord = {
+	version: number;
+	options: { namespace: string; maxDeliveries: number; maxPending: number };
+	members: Record<string, StoredMember>;
+	deliveries: Record<string, StoredDelivery>;
+};
+const CatalogDoc = defineDocFamily<CatalogRecord, JsonRepresentation<CatalogOptions>>({
+	kind: "pakka.catalog",
+	version: 1,
+	scope: "session",
+	family: true,
+	initial: (options) => ({ version: 0, options: { ...options }, members: {}, deliveries: {} }),
+});
+const BackgroundAnchor = defineTask<{}, { phase: "hold"; tick: number }, null>({
+	name: "pakka.background-anchor",
+	version: 1,
+	initial: () => ({ phase: "hold", tick: 0 }),
+	phases: {
+		hold: async (task, runtime, context) => {
+			await runtime.sleep(runtime.now() + 3600000, context);
+			await runtime.commit(
+				() => ({ status: "running", checkpoint: { phase: "hold", tick: task.state.checkpoint.tick + 1 } }),
+				context,
+			);
+		},
+	},
+	abort: async (_task, runtime, context) => {
+		await runtime.commit(() => ({ status: "terminal", outcome: { status: "aborted" } }), context);
+	},
+});
+function checkAuthority(check: () => void): void {
+	try {
+		check();
+	} catch (error) {
+		throw new MutationDenied(error instanceof Error ? error.message : String(error));
+	}
+}
+function storedJson<T>(value: unknown): T {
+	try {
+		json(value);
+		return JSON.parse(JSON.stringify(value)) as T;
+	} catch (error) {
+		throw new MutationDenied("Invalid finite JSON: " + String(error));
+	}
+}
+function validKey(value: string): boolean {
+	return typeof value === "string" && /^[a-zA-Z0-9][a-zA-Z0-9._-]{0,127}$/.test(value);
+}
 function conversationId(value: string): ConversationId {
 	if (!/^(0|[1-9][0-9]*)$/.test(value) || !Number.isSafeInteger(Number(value)))
 		throw new Error("Invalid Conversation identity");
@@ -307,6 +380,10 @@ export class DurableAdapter {
 	#disposed = false;
 	#providerSessionId: string | undefined;
 	#registry: Registry | undefined;
+	#nativeInvocations = new WeakMap<
+		object,
+		{ api: ToolExecutionApi; active: boolean; signal?: AbortSignal }
+	>();
 	#routes = new Map<ConversationId, DurableAdapter>();
 	#managed: ManagedState | undefined;
 	#releaseWriter: (() => Promise<void>) | undefined;
@@ -482,6 +559,7 @@ export class DurableAdapter {
 			let adapterRef: DurableAdapter | undefined;
 
 			const registry = createRegistry();
+			registry.install(defineExtension({ name: "pakka-runtime-tasks", tasks: [BackgroundAnchor] }));
 
 			const routes = new Map<ConversationId, DurableAdapter>();
 			const extensions = new Map<string, ReturnType<typeof defineExtension>>();
@@ -758,9 +836,15 @@ export class DurableAdapter {
 					execute: async (args, api, context) => {
 						const adapter = resolveAdapter(api.conversationId);
 						const scope = adapter.activeRunScope ?? adapter.#control.runScope();
-						const result = await adapter.#control.invoke(scope, (invocation) =>
-							tool.execute(args as Record<string, unknown>, context.abortSignal, invocation),
-						);
+						const result = await adapter.#control.invoke(scope, async (invocation) => {
+							const current = { api, active: true, signal: context.abortSignal };
+							adapter.#nativeInvocations.set(invocation, current);
+							try {
+								return await tool.execute(args as Record<string, unknown>, context.abortSignal, invocation);
+							} finally {
+								current.active = false;
+							}
+						});
 						return { content: [{ type: "text", text: result }] };
 					},
 				}),
@@ -841,6 +925,7 @@ export class DurableAdapter {
 				return profile;
 			},
 			validateReference: (ref: ConversationRef) => this.#validateReference(ref),
+			catalog: (options: CatalogOptions) => this.#catalog(options),
 			createConversation: async (spec: ConversationSpec): Promise<ConversationRef> => {
 				const managed = this.#managedReady();
 				const profileId = spec.profile ?? "default",
@@ -917,6 +1002,516 @@ export class DurableAdapter {
 				await this.#harness.close(BACKGROUND_CONTEXT);
 				this.#managed!.unsubscribe?.();
 				await this.#releaseWriter?.();
+			},
+		});
+	}
+	#invocation(ref: ConversationRef, scope: ToolInvocationScope): TaskId {
+		this.#validateReference(ref);
+		const route = this.#routes.get(conversationId(ref.conversationId)),
+			current = route ? route.#nativeInvocations.get(scope) : undefined;
+		if (
+			!route ||
+			!current?.active ||
+			current.signal?.aborted ||
+			current.api.conversationId !== conversationId(ref.conversationId)
+		)
+			throw new MutationDenied("Invalid/stale native task invocation scope");
+		route.#control.checkInvocation(scope);
+		return current.api.taskId;
+	}
+	#catalog(rawOptions: CatalogOptions): RuntimeCatalog {
+		this.#managedReady();
+		if (
+			!validKey(rawOptions.namespace) ||
+			[rawOptions.maxDeliveries, rawOptions.maxPending].some((n) => !Number.isSafeInteger(n) || n <= 0) ||
+			rawOptions.maxPending > rawOptions.maxDeliveries
+		)
+			throw new Error("Invalid finite catalog options");
+		const options = copy({
+			namespace: rawOptions.namespace,
+			maxDeliveries: rawOptions.maxDeliveries,
+			maxPending: rawOptions.maxPending,
+		});
+		const seed = { ...options };
+		const read = async () => {
+			this.#managedReady();
+			const state = await this.#harness.snapshot(CatalogDoc, options.namespace, BACKGROUND_CONTEXT);
+			if (state && hash(state.options) !== hash(options)) throw new Error("Catalog options conflict");
+			return state;
+		};
+		const view = async () => {
+			const state = await read();
+			return copy({
+				version: state?.version ?? 0,
+				members: Object.values(state?.members ?? {}),
+			}) as import("./types.ts").CatalogSnapshot;
+		};
+		const validateRef = (ref: ConversationRef) => {
+			try {
+				this.#validateReference(ref);
+			} catch (error) {
+				throw new MutationDenied(String(error));
+			}
+		};
+		const requireMember = (state: Readonly<CatalogRecord>, ref: ConversationRef) => {
+			validateRef(ref);
+			const member = Object.values(state.members).find((m) => hash(m.ref) === hash(ref));
+			if (!member) throw new MutationDenied("Foreign catalog member reference");
+			return member;
+		};
+		const optionsMatch = (state: CatalogRecord) => {
+			if (hash(state.options) !== hash(options)) throw new MutationDenied("Catalog options conflict");
+		};
+		const status = async (stored: StoredDelivery): Promise<DeliveryReceipt> => {
+			const native = await this.#harness.submission(stored.submissionId as SubmissionId, BACKGROUND_CONTEXT);
+			if (!native) {
+				this.storageUnknown("Catalog native admission missing");
+				throw new Error("Catalog native admission unknown");
+			}
+			const record = await native.status(BACKGROUND_CONTEXT);
+			return copy({
+				id: stored.id,
+				requestId: stored.spec.requestId,
+				principal: stored.spec.principal,
+				source: stored.spec.source,
+				target: stored.spec.target,
+				status: record.status,
+				...(record.entry !== undefined ? { entryId: String(record.entry) } : {}),
+				...(record.status === "unanswered" ? { reason: record.reason } : {}),
+			});
+		};
+		const find = async (id: string, check: () => void) => {
+			checkAuthority(check);
+			const stored = (await read())?.deliveries[id];
+			if (!stored) throw new Error("Unknown delivery receipt");
+			checkAuthority(check);
+			return stored;
+		};
+		const updateMany: RuntimeCatalog["updateMany"] = async (changes, expectedVersion, check) => {
+			checkAuthority(check);
+			if (!changes.length || new Set(changes.map((change) => change.key)).size !== changes.length)
+				throw new MutationDenied("Invalid catalog update batch");
+			const batch = changes.map(({ key, data }) => {
+				json(data);
+				return { key, data: storedJson<StoredMember["data"]>(data) };
+			});
+			await this.#persist(async (tx) => {
+				const state = await tx.doc(CatalogDoc, options.namespace, seed);
+				optionsMatch(state);
+				if (state.version !== expectedVersion) throw new MutationDenied("Catalog revision conflict");
+				for (const change of batch) {
+					const member = state.members[change.key];
+					if (!member) throw new MutationDenied("Member missing");
+					if (change.data.phase === "active") {
+						validateRef(member.ref);
+						const route = this.#routes.get(conversationId(member.ref.conversationId));
+						if (!route || route.#disposed || route.#failedReason)
+							throw new MutationDenied("Member not ready");
+						if (member.ownerTaskId !== undefined) {
+							const owner = await tx.task(Number(member.ownerTaskId) as TaskId);
+							if (!owner || owner.abortRequested || owner.state.status === "terminal")
+								throw new MutationDenied("Member owner task ended");
+						}
+					}
+				}
+				checkAuthority(check);
+				this.#managedReady();
+				for (const change of batch) state.members[change.key]!.data = change.data;
+				state.version++;
+			});
+			return view();
+		};
+		return Object.freeze({
+			snapshot: view,
+			updateMany,
+			checkInvocation: (ref: ConversationRef, scope: ToolInvocationScope) => {
+				this.#invocation(ref, scope);
+			},
+			enroll: async (rawSpecs: readonly CatalogEnroll[], check: () => void) => {
+				checkAuthority(check);
+				if (
+					!Array.isArray(rawSpecs) ||
+					rawSpecs.length === 0 ||
+					new Set(rawSpecs.map((s) => s.key)).size !== rawSpecs.length
+				)
+					throw new Error("Invalid member batch");
+				const specs = rawSpecs.map((s) => {
+					if (!validKey(s.key)) throw new Error("Invalid member key");
+					const profile = s.profile ?? "default";
+					if (!this.#managedReady().profiles.has(profile)) throw new Error("Unapproved runtime profile");
+					const lifetime = s.lifetime ?? "persistent";
+					if (!["persistent", "temporary", "task-bound", "background"].includes(lifetime))
+						throw new Error("Invalid member lifetime");
+					const taskId =
+						lifetime === "persistent"
+							? undefined
+							: s.invocation && s.source
+								? this.#invocation(s.source, s.invocation)
+								: undefined;
+					if (lifetime !== "persistent" && taskId === undefined)
+						throw new Error("Native task invocation required");
+					json(s.data);
+					return {
+						key: s.key,
+						profile,
+						data: storedJson<JsonObject>(s.data),
+						lifetime,
+						taskId,
+						source: s.source,
+						invocation: s.invocation,
+						fork: s.fork ? copy(s.fork) : undefined,
+					};
+				});
+				const committed = await this.#persist(async (tx) => {
+					const state = await tx.doc(CatalogDoc, options.namespace, seed),
+						runtime = await tx.doc(RuntimeDoc);
+					optionsMatch(state);
+					if (specs.some((s) => Object.hasOwn(state.members, s.key)))
+						throw new MutationDenied("Member already exists");
+					if (runtime.conversationCount + specs.length > runtime.limits.maxConversations)
+						throw new MutationDenied("Session Conversation limit exhausted");
+					for (const spec of specs)
+						if (spec.taskId !== undefined) {
+							const native = await tx.task(spec.taskId);
+							if (!native || native.abortRequested || native.state.status !== "running")
+								throw new MutationDenied("Native owner task ended");
+							if (this.#invocation(spec.source!, spec.invocation!) !== spec.taskId)
+								throw new MutationDenied("Native owner changed");
+						}
+					for (const spec of specs)
+						if (spec.fork) {
+							validateRef(spec.fork.source);
+							const source = requireMember(state, spec.fork.source);
+							if (source.data.phase !== "active" || spec.lifetime !== "persistent")
+								throw new MutationDenied("Fork source inactive or lifetime unsupported");
+							const native = await tx.conversation(conversationId(spec.fork.source.conversationId));
+							if (!native || native.owner)
+								throw new MutationDenied("Task-owned fork requires explicit new ownership");
+							const entry = await tx.entry(Number(spec.fork.entryId) as EntryId);
+							if (
+								!entry ||
+								!(
+									await tx.scanEntries(
+										{ conversationId: native.id, minEntryId: entry.id, maxEntryId: entry.id },
+										1,
+									)
+								).items.length
+							)
+								throw new MutationDenied("Invalid fork cutoff");
+							if ((await tx.doc(LiveDoc, native.id)).run) throw new MutationDenied("Fork source busy");
+						}
+					checkAuthority(check);
+					this.#managedReady();
+					const members: StoredMember[] = [];
+					for (const spec of specs) {
+						const resourceKey = "catalog-" + hash([options.namespace, spec.key]).slice(0, 40);
+						if (Object.hasOwn(runtime.resources, resourceKey))
+							throw new MutationDenied("Runtime member key conflict");
+						let ownerTaskId = spec.taskId;
+						if (spec.lifetime === "background")
+							ownerTaskId = await tx.createTask(
+								BackgroundAnchor,
+								{},
+								{
+									ownership: { kind: "conversation" },
+									conversationId: conversationId(spec.source!.conversationId),
+									background: true,
+								},
+							);
+						const ownership: ConversationOwnership =
+							ownerTaskId === undefined ? { kind: "ownerless" } : { kind: "task", taskId: ownerTaskId };
+						const created = spec.fork
+							? await tx.forkConversation(
+									conversationId(spec.fork.source.conversationId),
+									Number(spec.fork.entryId) as EntryId,
+									{ ownership },
+								)
+							: await tx.createConversation({ ownership });
+						const profile = this.#managedReady().profiles.get(spec.profile)!;
+						const extension = this.#registry!.snapshot().extension(
+							spec.profile === "default" ? "pakka-core-extension" : "pakka-profile-" + spec.profile,
+						)!;
+						await configure(tx, created.id, {
+							model: {
+								provider: "pakka-provider-" + hash(profile.endpoint).slice(0, 12),
+								modelId: profile.model,
+							},
+							extensions: [extension],
+							instructions: profile.systemPrompt,
+							cwd: profile.cwd,
+						});
+						const ref = {
+							key: resourceKey,
+							sessionId: this.#sessionId,
+							conversationId: String(created.id),
+							incarnation: randomUUID(),
+							profile: spec.profile,
+						};
+						runtime.resources[resourceKey] = ref;
+						runtime.conversationCount++;
+						const member: StoredMember = {
+							key: spec.key,
+							ref,
+							lifetime: spec.lifetime,
+							...(ownerTaskId !== undefined ? { ownerTaskId: String(ownerTaskId) } : {}),
+							data: spec.data as StoredMember["data"],
+						};
+						state.members[spec.key] = member;
+						members.push(member);
+					}
+					checkAuthority(check);
+					state.version++;
+					return copy(members);
+				});
+				return committed;
+			},
+			update: (key: string, data: JsonObject, expectedVersion: number, check: () => void) =>
+				updateMany([{ key, data }], expectedVersion, check),
+			configure: async (ref: ConversationRef, profileId: string, check: () => void) => {
+				checkAuthority(check);
+				validateRef(ref);
+				const profile = this.#managedReady().profiles.get(profileId);
+				if (!profile) throw new MutationDenied("Unapproved runtime profile");
+				const route = this.#routes.get(conversationId(ref.conversationId));
+				if (!route || route.#disposed || route.#failedReason) throw new MutationDenied("Member not ready");
+				const configured = await this.#persist(async (tx) => {
+					const state = await tx.doc(CatalogDoc, options.namespace, seed),
+						runtime = await tx.doc(RuntimeDoc);
+					optionsMatch(state);
+					const found = requireMember(state, ref),
+						to = conversationId(ref.conversationId);
+					if (
+						found.data.phase !== "active" ||
+						(await tx.doc(LiveDoc, to)).run ||
+						(await tx.doc(InboxDoc, to)).items.length
+					)
+						throw new MutationDenied("Configure requires active idle member");
+					checkAuthority(check);
+					const extension = this.#registry!.snapshot().extension(
+						profileId === "default" ? "pakka-core-extension" : "pakka-profile-" + profileId,
+					)!;
+					await configure(tx, to, {
+						extensions: [extension],
+						instructions: profile.systemPrompt,
+						cwd: profile.cwd,
+					});
+					checkAuthority(check);
+					const next = { ...ref, incarnation: randomUUID(), profile: profileId };
+					runtime.resources[ref.key] = next;
+					state.members[found.key]!.ref = next;
+					state.version++;
+					return storedJson<StoredMember>(state.members[found.key]);
+				});
+				route.#options = profile;
+				route.#control.configurationChanged();
+				await route.refreshCache();
+				return configured;
+			},
+			deliver: async (original: CatalogDeliverySpec, check: () => void) => {
+				checkAuthority(check);
+				if (
+					!validKey(original.requestId) ||
+					!validKey(original.principal) ||
+					typeof original.text !== "string" ||
+					!original.text.trim() ||
+					original.text.length > 65536 ||
+					original.text.startsWith("/") ||
+					!["prompt", "steer", "followUp"].includes(original.mode)
+				)
+					throw new Error("Invalid delivery input");
+				const spec = storedJson<StoredDelivery["spec"]>(original);
+				const id =
+					"catalog-" +
+					hash([options.namespace, spec.principal, spec.source?.incarnation ?? null, spec.requestId]);
+				const requestId = "pakka.catalog." + id,
+					fingerprint = hash(spec);
+				let committed: StoredDelivery;
+				try {
+					committed = await this.#persist(async (tx) => {
+						const state = await tx.doc(CatalogDoc, options.namespace, seed);
+						optionsMatch(state);
+						const target = requireMember(state, spec.target);
+						if (spec.source) {
+							const source = requireMember(state, spec.source);
+							if (source.data.phase !== "active") throw new MutationDenied("Source admission inactive");
+							if (source.ownerTaskId !== undefined) {
+								const owner = await tx.task(Number(source.ownerTaskId) as TaskId);
+								if (!owner || owner.abortRequested || owner.state.status === "terminal")
+									throw new MutationDenied("Source owner task ended");
+							}
+							const from = this.#routes.get(conversationId(spec.source.conversationId));
+							if (!from || from.#disposed || from.#failedReason)
+								throw new MutationDenied("Source Conversation not ready");
+						}
+						const old = state.deliveries[id];
+						if (old) {
+							if (old.fingerprint !== fingerprint)
+								throw new MutationDenied("Delivery payload/mode/target conflict");
+							checkAuthority(check);
+							return storedJson<StoredDelivery>(old);
+						}
+						if (target.data.phase !== "active") throw new MutationDenied("Recipient admission inactive");
+						if (target.ownerTaskId !== undefined) {
+							const owner = await tx.task(Number(target.ownerTaskId) as TaskId);
+							if (
+								!owner ||
+								owner.abortRequested ||
+								owner.state.status === "terminal" ||
+								(owner.state.status === "completing" && owner.state.outcome.status !== "completed")
+							)
+								throw new MutationDenied("Recipient owner task ended");
+						}
+						if (Object.keys(state.deliveries).length >= options.maxDeliveries)
+							throw new MutationDenied("Catalog delivery retention capacity exhausted");
+						const to = conversationId(target.ref.conversationId),
+							live = await tx.doc(LiveDoc, to),
+							inbox = await tx.doc(InboxDoc, to);
+						if (live.run && spec.mode === "prompt")
+							throw new MutationDenied("Recipient busy; explicit steer/followUp required");
+						if (!live.run && inbox.items.length)
+							throw new MutationDenied("Recipient has unresolved inbox boundary");
+						const pending = Object.values(state.deliveries).filter(
+							(d) => d.spec.target.conversationId === String(to),
+						);
+						let unsettled = 0;
+						for (const record of pending) {
+							const existing = await tx.submissionByRequest(to, "pakka.catalog." + record.id);
+							if (!existing) throw new Error("Catalog admission provenance missing");
+							if (existing.status === "placed" || existing.status === "queued") unsettled++;
+						}
+						if (unsettled >= options.maxPending)
+							throw new MutationDenied("Recipient pending delivery limit exhausted");
+						const existing = await tx.submissionByRequest(to, requestId);
+						if (existing) throw new Error("Native admission exists without catalog fingerprint");
+						const route = this.#routes.get(to);
+						if (!route || route.#disposed || route.#failedReason)
+							throw new MutationDenied("Recipient not ready");
+						checkAuthority(check);
+						this.#managedReady();
+						let submissionId: SubmissionId;
+						if (live.run) {
+							const sub = await tx.createSubmission({
+								conversationId: to,
+								requestId,
+								type: "input",
+								status: "queued",
+							});
+							submissionId = sub.id;
+							inbox.items.push({
+								id: sub.id,
+								mode: spec.mode === "steer" ? "steer" : "followUp",
+								content: spec.text,
+							});
+						} else {
+							const entry = await tx.appendEntry(UserEntry, to, {
+								model: [{ role: "user", content: spec.text, timestamp: Date.now() }],
+							});
+							const sub = await tx.createSubmission({
+								conversationId: to,
+								requestId,
+								type: "input",
+								status: "placed",
+								entry: entry.id,
+							});
+							submissionId = sub.id;
+							const taskId = await tx.createTask(
+								GenerationTask,
+								{},
+								{ ownership: { kind: "conversation" }, conversationId: to },
+							);
+							live.run = { taskId, inputs: [sub.id] };
+						}
+						checkAuthority(check);
+						const record: StoredDelivery = { id, spec, fingerprint, submissionId };
+						state.deliveries[id] = record;
+						state.version++;
+						return copy(record);
+					});
+				} catch (error) {
+					if (!this.#managed?.failure) throw error;
+					return copy({
+						id,
+						requestId: spec.requestId,
+						principal: spec.principal,
+						source: spec.source,
+						target: spec.target,
+						status: "unknown" as const,
+						reason: String(error),
+					});
+				}
+				this.#harness.resume();
+				return status(committed);
+			},
+			receipt: async (id: string, check: () => void) => {
+				const stored = await find(id, check);
+				const value = await status(stored);
+				checkAuthority(check);
+				return value;
+			},
+			wait: async (id: string, check: () => void, signal?: AbortSignal) => {
+				const stored = await find(id, check);
+				const native = await this.#harness.submission(
+					stored.submissionId as SubmissionId,
+					BACKGROUND_CONTEXT,
+				);
+				if (!native) throw new Error("Native admission missing");
+				await native.wait(signal ? withAbortSignal(signal, BACKGROUND_CONTEXT) : BACKGROUND_CONTEXT);
+				checkAuthority(check);
+				await this.#routes.get(conversationId(stored.spec.target.conversationId))?.refreshCache();
+				return status(stored);
+			},
+			withdraw: async (id: string, check: () => void) => {
+				const stored = await find(id, check);
+				await this.#persist(async (tx) => {
+					const to = conversationId(stored.spec.target.conversationId),
+						inbox = await tx.doc(InboxDoc, to),
+						record = await tx.submissionByRequest(to, "pakka.catalog." + stored.id);
+					if (!record) throw new Error("Native admission missing");
+					checkAuthority(check);
+					if (record.status === "queued") {
+						tx.settleSubmission(record.id, { status: "unanswered", reason: "aborted" });
+						inbox.items = inbox.items.filter((item) => item.id !== record.id);
+					}
+				});
+				return status(stored);
+			},
+			stop: async (ref: ConversationRef, check: () => void) => {
+				validateRef(ref);
+				checkAuthority(check);
+				const route = this.#routes.get(conversationId(ref.conversationId));
+				if (!route) throw new Error("Recipient not attached");
+				const state = await read(),
+					member = state && requireMember(state, ref);
+				checkAuthority(check);
+				if (member?.lifetime === "background" && member.ownerTaskId !== undefined) {
+					const id = Number(member.ownerTaskId) as TaskId;
+					await this.#harness.abortTask(id, BACKGROUND_CONTEXT);
+					await this.#harness.waitForTask(id, BACKGROUND_CONTEXT);
+				}
+				await route.#conversation.abort(BACKGROUND_CONTEXT, { background: true });
+				checkAuthority(check);
+				await route.refreshCache();
+			},
+			readiness: async (ref: ConversationRef) => {
+				validateRef(ref);
+				const route = this.#routes.get(conversationId(ref.conversationId));
+				if (!route || route.#disposed || route.#failedReason)
+					return copy({
+						phase: "failed" as const,
+						reason: (route ? route.#failedReason : undefined) ?? "Recipient not attached",
+					});
+				const state = await read(),
+					member = state && requireMember(state, ref);
+				if (member?.ownerTaskId !== undefined) {
+					const task = await this.#harness.getTask(Number(member.ownerTaskId) as TaskId, BACKGROUND_CONTEXT);
+					if (!task || task.abortRequested || task.state.status === "terminal")
+						return copy({ phase: "ended" as const });
+				}
+				await route.refreshCache();
+				return copy({
+					phase: route.#failedReason ? ("failed" as const) : ("ready" as const),
+					...(route.#failedReason ? { reason: route.#failedReason } : {}),
+				});
 			},
 		});
 	}

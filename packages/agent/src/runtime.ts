@@ -1,6 +1,15 @@
 import { DurableAdapter, type ManagedAdapterPort } from "./durable-adapter.ts";
 import { createHostWithAdapter } from "./host.ts";
-import type { ConversationRef, ConversationSpec, Host, Runtime, RuntimeOptions } from "./types.ts";
+import type {
+	CatalogOptions,
+	CatalogEnroll,
+	RuntimeCatalog,
+	ConversationRef,
+	ConversationSpec,
+	Host,
+	Runtime,
+	RuntimeOptions,
+} from "./types.ts";
 
 /** Composition only: all Pi/storage mutable objects remain in DurableAdapter. */
 export async function createRuntime(options: RuntimeOptions): Promise<Runtime> {
@@ -61,6 +70,23 @@ export async function createRuntime(options: RuntimeOptions): Promise<Runtime> {
 			const ref = await port.createConversation(spec);
 			await attach(ref);
 			return ref;
+		},
+		catalog: (options: CatalogOptions): RuntimeCatalog => {
+			const catalog = port.catalog(options);
+			return Object.freeze({
+				...catalog,
+				configure: async (ref: ConversationRef, profile: string, check: () => void) => {
+					const member = await catalog.configure(ref, profile, check);
+					await attach(member.ref);
+					return member;
+				},
+				enroll: async (specs: readonly CatalogEnroll[], check: () => void) => {
+					const members = await catalog.enroll(specs, check);
+					for (const member of members) await attach(member.ref);
+					check();
+					return members;
+				},
+			});
 		},
 		waitForIdle: () => port.waitForIdle(),
 		close: () =>

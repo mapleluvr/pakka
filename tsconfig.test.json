@@ -8,5 +8,5 @@
 		"noEmit": true,
 		"allowImportingTsExtensions": true
 	},
-	"include": ["packages/agent/src/**/*.ts", "packages/agent/test/**/*.ts"]
+	"include": ["packages/*/src/**/*.ts", "packages/*/test/**/*.ts"]
 }

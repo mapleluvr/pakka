@@ -202,3 +202,9 @@ The earlier M0 prerequisite wording is historical: the user subsequently authori
 Dynamite compatibility to remain **deferred / unresolved** with its complete
 [DC-01–DC-12 goals](DEFERRED-DYNAMITE-COMPATIBILITY.md), allowing M1–M6 to proceed.
 M0 is not passed, and Dynamite is not loaded or claimed compatible.
+
+## 4.2 Same-Session MAS M2 — accepted
+
+M2 is accepted on `feat/monorepo-mas-migration`: `@pakka/agent@0.3.0` and `@pakka/mas@0.1.0`. The final production-path suite is 176/176, focused MAS/ownership is 17/17, the final authority regressions are 2/2, and the installed tarball consumer passes with legacy/runtime/MAS local HTTP counts of 7/3/3. Evidence, review disposition and limits are in [MIGRATION-M2-ACCEPTANCE.md](MIGRATION-M2-ACCEPTANCE.md).
+
+M2 covers same-Session atomic enrollment/activation, principal/source/owner policy, native prompt/steer/followUp delivery, durable duplicate/conflict receipts, task/temporary/background lifetimes, retirement and unknown persistence. It does not claim cross-Session transaction/transport, independent process workers, DevPack or remote protocol. Dynamite remains deferred and uninstalled.

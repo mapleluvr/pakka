@@ -1,8 +1,8 @@
-# Conversation runtime API（`@pakka/agent@0.2.0`）
+# Conversation runtime API（`@pakka/agent@0.3.0`）
 
-M1 增加 `createRuntime(options)`：受信任 bootstrap 在一个 Durable Harness/storage 中管理多个 Conversation。`createHost()` 继续提供单 Conversation 兼容入口，使用原有 strategy journal namespace。两者不是可互换的 storage 开启方式：legacy host 不得重开 managed runtime storage，managed runtime 也不隐式采用旧 host storage/journal。
+M1 增加 `createRuntime(options)`：受信任 bootstrap 在一个 Durable Harness/storage 中管理多个 Conversation。M2 的同 Session MAS 服务通过该 runtime 的受控 catalog port 装配；MAS 的 client、membership 和 A2A 语义见 [MAS-API.md](MAS-API.md)。`createHost()` 继续提供单 Conversation 兼容入口，使用原有 strategy journal namespace。两者不是可互换的 storage 开启方式：legacy host 不得重开 managed runtime storage，managed runtime 也不隐式采用旧 host storage/journal。
 
-实现与验收状态以 [迁移计划](MONOREPO-MIGRATION-PLAN.md) 和 [验证记录](VERIFICATION.md) 为准。该入口不授予 agent 创建/控制资源的权限，不代表 MAS、A2A、跨 Session 恢复、task-owned 子树或进程隔离已经实现。
+实现与验收状态以 [迁移计划](MONOREPO-MIGRATION-PLAN.md) 和 [验证记录](VERIFICATION.md) 为准。Runtime API 本身不授予 agent 创建/控制资源的权限；跨 Session A2A、worker、DevPack、RPC 和进程隔离仍未实现。
 
 ## 创建与访问
 
@@ -71,4 +71,4 @@ M1 提供 `migrateLegacy: { expectedSessionId, expectedConversationId }` 的显�
 
 `createRuntime({ ...options, reopenSessionFile })` 验证 provenance、持久 runtime profile identity 与 limits，恢复所有现存成员的 authority 后才允许 progress。纯重开/inspection 不发送 HTTP。Session quotas 与 Conversation identity 保留，旧 capability、lease、tool scope、Host closure 不复活。M1 的 Host C2 ledger 仍是进程内状态；不要把这条兼容路径用作跨重启 A2A 去重。
 
-Dynamite 保持 [deferred](DEFERRED-DYNAMITE-COMPATIBILITY.md)。历史 pin 与 `@pakka/agent@0.2.0` 不等价，M1 不修改外部 mapper/算法，也不默认装配它。
+Dynamite 保持 [deferred](DEFERRED-DYNAMITE-COMPATIBILITY.md)。历史 pin 与 `@pakka/agent@0.3.0` 不等价；M1/M2 不修改外部 mapper/算法，也不默认装配它。

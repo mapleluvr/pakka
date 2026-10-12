@@ -5,12 +5,15 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
 const consumer = mkdtempSync(join(tmpdir(), "pakka-packed-consumer-"));
-let agentVersion;
-try {
-	agentVersion = JSON.parse(readFileSync(join(root, "packages", "agent", "package.json"), "utf8")).version;
-} catch (error) {
-	throw new Error("Invalid agent package metadata", { cause: error });
-}
+const versions = Object.fromEntries(
+	["agent", "mas"].map((name) => {
+		try {
+			return [name, JSON.parse(readFileSync(join(root, "packages", name, "package.json"), "utf8")).version];
+		} catch (error) {
+			throw new Error("Invalid " + name + " package metadata", { cause: error });
+		}
+	}),
+);
 const artifacts = join(root, "artifacts", "package-smoke");
 mkdirSync(artifacts, { recursive: true });
 const npmCli = process.env.npm_execpath;
@@ -43,6 +46,11 @@ function run(name, args, cwd) {
 	return r.stdout;
 }
 run("pack", [join(root, "scripts", "pack-agent.mjs"), consumer], root);
+run(
+	"pack-mas",
+	[npmCli, "pack", "--ignore-scripts", "--pack-destination", consumer],
+	join(root, "packages", "mas"),
+);
 writeFileSync(
 	join(consumer, "package.json"),
 	JSON.stringify(
@@ -50,7 +58,10 @@ writeFileSync(
 			name: "pakka-external-smoke",
 			private: true,
 			type: "module",
-			dependencies: { "@pakka/agent": `file:./pakka-agent-${agentVersion}.tgz` },
+			dependencies: {
+				"@pakka/agent": `file:./pakka-agent-${versions.agent}.tgz`,
+				"@pakka/mas": `file:./pakka-mas-${versions.mas}.tgz`,
+			},
 			devDependencies: { typescript: "7.0.2", "@types/node": "26.6.4" },
 		},
 		null,
@@ -60,6 +71,7 @@ writeFileSync(
 copyFileSync(join(root, "scripts", "consumer-smoke.mjs"), join(consumer, "smoke.mjs"));
 copyFileSync(join(root, "scripts", "consumer-types.ts"), join(consumer, "consumer-types.ts"));
 copyFileSync(join(root, "scripts", "consumer-runtime.mjs"), join(consumer, "runtime.mjs"));
+copyFileSync(join(root, "scripts", "consumer-mas.mjs"), join(consumer, "mas.mjs"));
 run(
 	"install",
 	[npmCli, "install", "--ignore-scripts", "--no-audit", "--no-fund", "--registry=https://registry.npmjs.org"],
@@ -85,4 +97,5 @@ writeFileSync(
 );
 console.log(run("smoke", [join(consumer, "smoke.mjs")], consumer));
 console.log(run("runtime", [join(consumer, "runtime.mjs")], consumer));
+console.log(run("mas", [join(consumer, "mas.mjs")], consumer));
 writeFileSync(join(artifacts, "consumer-path.txt"), consumer + "\n");

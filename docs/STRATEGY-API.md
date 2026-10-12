@@ -478,11 +478,75 @@ export interface RuntimeView {
 	readonly journalMigration?: JournalMigration;
 	readonly lastError?: string;
 }
+/** Bootstrap-owned catalog. Data never grants authority and commands never expose native handles. */
+export interface CatalogOptions {
+	readonly namespace: string;
+	readonly maxDeliveries: number;
+	readonly maxPending: number;
+}
+export type MemberLifetime = "persistent" | "temporary" | "task-bound" | "background";
+export interface CatalogMember {
+	readonly key: string;
+	readonly ref: ConversationRef;
+	readonly lifetime: MemberLifetime;
+	readonly ownerTaskId?: string;
+	readonly data: JsonObject;
+}
+export interface CatalogSnapshot {
+	readonly version: number;
+	readonly members: readonly CatalogMember[];
+}
+export interface CatalogEnroll extends ConversationSpec {
+	readonly data: JsonObject;
+	readonly lifetime?: MemberLifetime;
+	readonly source?: ConversationRef;
+	readonly invocation?: ToolInvocationScope;
+	readonly fork?: { readonly source: ConversationRef; readonly entryId: string };
+}
+export interface CatalogDeliverySpec {
+	readonly requestId: string;
+	readonly principal: string;
+	readonly source: ConversationRef | null;
+	readonly target: ConversationRef;
+	readonly text: string;
+	readonly mode: InputMode;
+}
+export interface DeliveryReceipt {
+	readonly id: string;
+	readonly requestId: string;
+	readonly principal: string;
+	readonly source: ConversationRef | null;
+	readonly target: ConversationRef;
+	readonly status: "queued" | "placed" | "done" | "unanswered" | "unknown";
+	readonly entryId?: string;
+	readonly reason?: string;
+}
+export interface RuntimeCatalog {
+	checkInvocation(ref: ConversationRef, scope: ToolInvocationScope): void;
+	snapshot(): Promise<CatalogSnapshot>;
+	enroll(specs: readonly CatalogEnroll[], check: () => void): Promise<readonly CatalogMember[]>;
+	update(key: string, data: JsonObject, expectedVersion: number, check: () => void): Promise<CatalogSnapshot>;
+	updateMany(
+		changes: readonly { readonly key: string; readonly data: JsonObject }[],
+		expectedVersion: number,
+		check: () => void,
+	): Promise<CatalogSnapshot>;
+	configure(ref: ConversationRef, profile: string, check: () => void): Promise<CatalogMember>;
+	deliver(spec: CatalogDeliverySpec, check: () => void): Promise<DeliveryReceipt>;
+	receipt(id: string, check: () => void): Promise<DeliveryReceipt>;
+	wait(id: string, check: () => void, signal?: AbortSignal): Promise<DeliveryReceipt>;
+	withdraw(id: string, check: () => void): Promise<DeliveryReceipt>;
+	stop(ref: ConversationRef, check: () => void): Promise<void>;
+	readiness(
+		ref: ConversationRef,
+	): Promise<{ readonly phase: "ready" | "failed" | "ended"; readonly reason?: string }>;
+}
 /** Trusted bootstrap/control plane, not an agent-facing permission grant. */
 export interface Runtime {
 	root(): Host;
 	view(): RuntimeView;
 	createConversation(spec: ConversationSpec): Promise<ConversationRef>;
+	catalog(options: CatalogOptions): RuntimeCatalog;
 	conversation(ref: ConversationRef): Promise<Host>;
 	waitForIdle(): Promise<void>;
 	close(): Promise<void>;

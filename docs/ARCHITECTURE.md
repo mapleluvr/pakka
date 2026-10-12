@@ -91,7 +91,7 @@ The adopted monorepo/MAS migration order is:
 
 - Fixed-artifact Durable × Dynamite compatibility remains failed and explicitly deferred by the user until after the core migration; [functional targets and resumption conditions](DEFERRED-DYNAMITE-COMPATIBILITY.md) are retained. It is not enabled or advertised as supported.
 - M1 provides Conversation-scoped authority, projections, artifacts, aggregate Session budgets, one-writer claims and declared failure handling in `@pakka/agent@0.2.0`. Managed reopen does not adopt legacy journal data implicitly; explicit `migrateLegacy` maps only an exact closed unique ownerless root with an audited prefix/namespace receipt and retained spent budgets. Terminal generation sidecars are reclaimed, so historical primary spending is conservatively reserved per generation marker, not reconstructed as exact HTTP counts. A writer claim surviving a crash is never silently stolen in M1.
-- MAS membership, ownership policy and A2A through controlled runtime ports.
+- M2 provides same-Session MAS membership, owner/capability policy, native A2A delivery, task lifetimes and unknown persistence through `@pakka/mas@0.1.0`; see [M2 acceptance](MIGRATION-M2-ACCEPTANCE.md). Cross-Session enrollment/transport, independent workers, DevPack and remote protocol remain later boundaries.
 - Recoverable multi-Session enrollment/delivery and workers with one writer per storage.
 - Optional MAS DevPack, then authenticated protocol/client and server/CLI entry points; GUI consumes those ports.
 

@@ -20,6 +20,19 @@ import type {
 	RuntimeOptions,
 	ConversationRef,
 } from "@pakka/agent";
+import type { Mas, MasClient, MemberSpec, SendSpec, AgentRef } from "@pakka/mas";
+
+export async function masContract(mas: Mas, client: MasClient, ref: AgentRef, input: SendSpec) {
+	const member: MemberSpec = { key: "reviewer", owner: "operator" };
+	await mas.bootstrap([member]);
+	const delivery = await client.send(ref, input);
+	const outcome = await client.wait(delivery.id);
+	// @ts-expect-error storage paths are not an agent-supplied resource creation option.
+	await client.spawn({ key: "worker", dataDir: "/untrusted" });
+	// @ts-expect-error sender cannot declare a different principal on an operation.
+	await client.send(ref, { ...input, principal: "forged" });
+	return outcome;
+}
 
 export function productionContract(options: HostOptions, receipt: Receipt) {
 	// @ts-expect-error AgentSession is only a test oracle, not a public runtime selection.

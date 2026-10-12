@@ -124,6 +124,16 @@ class Kernel {
 		return {
 			project: (signal) => this.#control.project(signal),
 			runScope: () => this.#control.runScope(),
+			checkInvocation: (scope) => this.#control.checkInvocation(scope),
+			configurationChanged: () => {
+				this.#generation++;
+				this.#epoch++;
+				this.#control.invalidate("reload");
+				this.#strategies.clear();
+				this.#owners.clear();
+				this.#policy = undefined;
+				this.#control.restored("reload");
+			},
 			invoke: (run, callback) => this.#control.invoke(run, callback),
 		};
 	}
