@@ -24,6 +24,23 @@ import type { Mas, MasClient, MemberSpec, SendSpec, AgentRef } from "@pakka/mas"
 import type { RuntimeStore } from "@pakka/agent";
 import type { Broker, BrokerClient, BrokerAgentRef } from "@pakka/mas/broker";
 import type { WorkerManager } from "@pakka/server";
+import { createMasDevPack, type MasDevPackOptions } from "@pakka/mas-devpack";
+import type { ApprovedSessions } from "@pakka/mas";
+
+export function devpackContract(client: MasClient, sessions: ApprovedSessions) {
+	const options: MasDevPackOptions = {
+		resolve: () => client,
+		sessions: () => sessions,
+		operationTimeoutMs: 1000,
+	};
+	const pack = createMasDevPack(options);
+	const tools: HostOptions["tools"] = pack.tools;
+	// @ts-expect-error no credentials in the public DevPack composition options.
+	createMasDevPack({ ...options, apiKey: "forged" });
+	// @ts-expect-error no mutable runtime/bootstrap objects escape through the contribution.
+	pack.runtime.createConversation();
+	return { tools, instructions: pack.instructions, revoke: pack.revoke };
+}
 
 export async function brokerContract(
 	broker: Broker,

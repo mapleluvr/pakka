@@ -1,5 +1,15 @@
 import { createRuntime, type Runtime } from "@pakka/agent";
-import { inProcessPlacement, type SessionEndpoint, type MemberSpec } from "@pakka/mas";
+import {
+	createMas,
+	inProcessPlacement,
+	type Mas,
+	type Member,
+	type MasGrant,
+	type SessionEndpoint,
+	type MemberSpec,
+} from "@pakka/mas";
+import { createMasDevPack } from "@pakka/mas-devpack";
+import { createHash } from "node:crypto";
 import {
 	configuration,
 	envelope,
@@ -10,6 +20,35 @@ import {
 	type WorkerRequest,
 } from "./worker-ipc.ts";
 
+function principal(member: Member): string {
+	return (
+		"worker-agent-" +
+		createHash("sha256")
+			.update(JSON.stringify([member.ref.sessionId, member.ref.conversationId]))
+			.digest("hex")
+			.slice(0, 48)
+	);
+}
+function effectiveGrants(
+	member: Member,
+	members: readonly Member[],
+	profiles: Readonly<Record<string, readonly MasGrant[]>>,
+): readonly MasGrant[] {
+	const parents = new Map(members.map((candidate) => [principal(candidate), candidate]));
+	let grants = [...(profiles[member.ref.profile] ?? [])],
+		current = member;
+	const seen = new Set<string>();
+	while (current.owner.startsWith("worker-agent-")) {
+		if (seen.has(current.owner)) throw new Error("Worker grant ownership cycle");
+		seen.add(current.owner);
+		const parent = parents.get(current.owner);
+		if (!parent) throw new Error("Worker grant owner unknown");
+		const ceiling = new Set(profiles[parent.ref.profile] ?? []);
+		grants = grants.filter((grant) => ceiling.has(grant));
+		current = parent;
+	}
+	return grants;
+}
 if (!process.send) throw new Error("Pakka worker requires its private manager IPC channel");
 let generation: string | undefined,
 	runtime: Runtime | undefined,
@@ -30,7 +69,57 @@ async function execute(message: WorkerRequest, signal: AbortSignal): Promise<unk
 		initialized = true;
 		generation = message.generation;
 		configuration(message.payload);
-		runtime = await createRuntime(message.payload.runtime);
+		const preset = message.payload;
+		let mas: Mas | undefined;
+		const contributions = new Map(
+			Object.entries(preset.devpack?.profiles ?? {}).map(
+				([id]) =>
+					[
+						id,
+						createMasDevPack({
+							operationTimeoutMs: preset.devpack?.operationTimeoutMs,
+							resolve: async (scope) => {
+								if (!runtime || !mas) throw new Error("Worker DevPack not initialized");
+								const members = (await mas.view()).members;
+								for (const member of members) {
+									if (member.ref.profile !== id) continue;
+									// Member keys/profiles cannot mint stronger descendant authority.
+									try {
+										const grants = effectiveGrants(member, members, preset.devpack!.profiles);
+										return mas
+											.connect({ principal: principal(member), source: member.ref, grants })
+											.forInvocation(scope);
+									} catch {
+										continue;
+									}
+								}
+								throw new Error("Foreign worker DevPack invocation");
+							},
+						}),
+					] as const,
+			),
+		);
+		const main = contributions.get("default");
+		runtime = await createRuntime({
+			...preset.runtime,
+			...(main
+				? {
+						tools: main.tools,
+						systemPrompt: [preset.runtime.systemPrompt, main.instructions].filter(Boolean).join("\n\n"),
+					}
+				: {}),
+			profiles: preset.runtime.profiles?.map((profile) => {
+				const pack = contributions.get(profile.id);
+				return pack
+					? {
+							...profile,
+							tools: pack.tools,
+							systemPrompt: [profile.systemPrompt, pack.instructions].filter(Boolean).join("\n\n"),
+						}
+					: profile;
+			}),
+		});
+		if (contributions.size) mas = await createMas({ runtime, ...preset.catalog });
 		endpoint = await inProcessPlacement({ runtime, ...message.payload.catalog }).open(
 			message.payload.runtime.reservedSessionId,
 		);

@@ -385,6 +385,8 @@ export interface DeliveryReceipt {
 	readonly reason?: string;
 }
 export interface RuntimeCatalog {
+	/** Recipient-only delivery metadata; no peer transcript or payload body. */
+	received(ref: ConversationRef, check: () => void): Promise<readonly DeliveryReceipt[]>;
 	checkInvocation(ref: ConversationRef, scope: ToolInvocationScope): void;
 	snapshot(): Promise<CatalogSnapshot>;
 	enroll(specs: readonly CatalogEnroll[], check: () => void): Promise<readonly CatalogMember[]>;

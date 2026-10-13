@@ -307,7 +307,17 @@ export function createWorkerManager(rawOptions: WorkerManagerOptions): WorkerMan
 		});
 		slot.opening = (async () => {
 			try {
-				await send(slot, "init", { runtime: config.runtime, catalog: config.catalog }, undefined, true);
+				await send(
+					slot,
+					"init",
+					{
+						runtime: config.runtime,
+						catalog: config.catalog,
+						...(config.devpack ? { devpack: config.devpack } : {}),
+					},
+					undefined,
+					true,
+				);
 				slot.phase = "ready";
 				slot.endpoint = endpoint;
 				await endpoint.view();

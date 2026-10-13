@@ -1218,6 +1218,20 @@ export class DurableAdapter {
 		};
 		return Object.freeze({
 			snapshot: view,
+			received: async (ref: ConversationRef, check: () => void) => {
+				checkAuthority(check);
+				const state = await read();
+				if (!state) throw new MutationDenied("Catalog member missing");
+				requireMember(state, ref);
+				const incoming: DeliveryReceipt[] = [];
+				for (const stored of Object.values(state.deliveries)) {
+					if (hash(stored.spec.target) !== hash(ref)) continue;
+					checkAuthority(check);
+					incoming.push(await status(stored));
+				}
+				checkAuthority(check);
+				return copy(incoming);
+			},
 			updateMany,
 			checkInvocation: (ref: ConversationRef, scope: ToolInvocationScope) => {
 				this.#invocation(ref, scope);

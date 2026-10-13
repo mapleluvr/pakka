@@ -636,3 +636,18 @@ store: (options: RuntimeStoreOptions) => port.store(options),
 验证命令：`npm ci --ignore-scripts`、`check`、`build`、`format:check`、`npm test`、`smoke:package`、strict OpenSpec；结果为全量 **196/196**、定向 **20/20**、真实独立 tarball/worker consumer HTTP **7/3/3/3**，重复 admission与重开零额外 HTTP。指定 adversarial-review两 bounded passes最终 OK with notes。完整固定产物身份、执行证据、P2处置及复审质量更正见 [MIGRATION-M3-ACCEPTANCE.md](MIGRATION-M3-ACCEPTANCE.md)。本轮没有重跑无变化的历史 patch 105/105，不将其冒充新结果。
 
 失效条件：Durable公共 doc/commit/admission/task/ownership API、generation block或恢复语义、版本/hash/build inputs变化，或新增不可信 receipt restore/外部 transport，应重新运行对应矩阵并追加记录。M4–M6、完整 crash-claim恢复、POSIX故障矩阵与 Dynamite兼容仍未由本条授权。
+
+## 条目 DURABLE-M4-8：可选 MAS contribution 与批准 Session 申请
+
+- ID: DURABLE-M4-8
+- 状态: verified with documented notes
+- 关联条目: extends DURABLE-M3-7；不改写历史记录
+- 基线: 同一 `pi-durable@1.0.3-pakka.1`；upstream `d78dc83d633229d12f8b79631384c4c2717c399f`；SHA-256 `535d90fd195a1e9c6c9dc1b22b7f0ca15aac41652bb7d644da616148947bcfa7`。
+- Pakka 变更: agent `0.4.0 → 0.5.0`，mas `0.2.0 → 0.3.0`，新增 mas-devpack `0.1.0`，private server `0.1.0 → 0.2.0`。没有手改 installed dependency，没有新增 source patch 或 build input。
+- 影响面: 使用 adapter 已有公开 `defineExtension` 注册明确批准的 tools/instructions；catalog 提供自身 incoming receipt metadata；有限固定 slot 申请复用 M3 public doc/commit/broker；实际 worker 的 native scope 与完整 capability-owner grant ceiling。
+
+变更前：受信任 MAS client/worker 已验收，业务模型缺少可选 agent-facing contribution 和批准跨 Session 申请。变更后：public factory 仅提供受控 tool/instruction DTO；真实调用组合既有 client、contribution 与 native invocation 检查。endpoint/凭据/预算/任意 tool code 不进入模型参数，Pi mutable objects 仍只在 adapter。ask 是 bounded generation receipt，不等于应用回复或工具效果确认。profile removal 按原生 public section/update 语义替换当前配置，保留历史 positional messages。
+
+验证：最终独立离线 clean staging `ci --ignore-scripts --offline`、build/check/format；完整 216/216、focused 20/20、复审修复 8/8；真实独立 tarball/native worker consumers HTTP 7/3/3/3/8；两轮指定 adversarial-review 均 OK with notes。旧实际 worker profile 提权从 1 次未授权 peer HTTP 修复为 0；distinct slot 一/两个实例的 40-slot real CAS 全部保留，没有 provider dispatch。完整 build identity、未处理的 report-only P2、原始失败与父级决定见 [MIGRATION-M4-ACCEPTANCE.md](MIGRATION-M4-ACCEPTANCE.md)。未重跑的历史补丁 105/105 不算本轮结果。
+
+失效条件：public native invocation/tool/section/ownership/admission/recovery 契约变化，grant ceiling 或 typed no-effect refusal producer 变化，patch/hash/build inputs 变化，或引入不可信 remote decoder/capability transport 时，重跑受影响真实矩阵并追加记录。本条不授权 M5 public auth/CLI、完整 crash-claim恢复、hostile-code sandbox、任意负载 fairness 或 Dynamite兼容。

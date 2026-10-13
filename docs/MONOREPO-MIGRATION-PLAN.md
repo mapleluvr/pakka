@@ -127,7 +127,7 @@ M2 已验收：`@pakka/agent@0.3.0` + `@pakka/mas@0.1.0`，176/176 全量真实�
 - worker 关闭后重开保持合法记录和投递身份，重新授予运行时权限；旧 token 不复活，旧 incarnation 消息不投递到替代 agent。记录 retention 到期后的旧 request 必须明确拒绝或重新协商，不能静默当作首次 admission。
 - 不能证明单 writer、预算、准入或物理状态时阻断操作；独立进程测试使用本地 provider 和受控退出，不使用真实模型。
 
-M3 已验收，带明确限制：`@pakka/agent@0.4.0` + `@pakka/mas@0.2.0` + private `@pakka/server@0.1.0`，196/196 全量、20/20 定向回归与真实独立 worker/tarball 消费通过；两轮指定 adversarial-review 为 OK with notes，残余项和复审质量更正见 [MIGRATION-M3-ACCEPTANCE.md](MIGRATION-M3-ACCEPTANCE.md)。M4–M6 尚未完成。
+M3 已验收，带明确限制：`@pakka/agent@0.4.0` + `@pakka/mas@0.2.0` + private `@pakka/server@0.1.0`，196/196 全量、20/20 定向回归与真实独立 worker/tarball 消费通过；两轮指定 adversarial-review 为 OK with notes，残余项和复审质量更正见 [MIGRATION-M3-ACCEPTANCE.md](MIGRATION-M3-ACCEPTANCE.md)。M4–M6 的状态见各自阶段。
 
 ## M4：MAS DevPack 与可选 built-in extension
 
@@ -146,6 +146,8 @@ M3 已验收，带明确限制：`@pakka/agent@0.4.0` + `@pakka/mas@0.2.0` + pri
 - late invocation、复制 token、跨 Conversation scope、卸载/撤权与 worker replacement 的请求无未授权效果。
 - DevPack 的故障不绕过 gate；临时成员退役后拒绝新消息，历史保留语义明确。
 - 安装产物不包含凭据、native handles、私有源码 import 或 import-time server/Session 启动。
+
+M4 已验收，带明确 notes：agent `0.5.0` + mas `0.3.0` + mas-devpack `0.1.0` + private server `0.2.0`，全量 216/216、定向 20/20、真实 native model tool/worker 和隔离 tarball HTTP 7/3/3/3/8 通过；两轮指定 adversarial-review 均 OK with notes。typed denial、post-send unknown、40-slot CAS、ancestor grant 反例及两项 report-only P2 见 [MIGRATION-M4-ACCEPTANCE.md](MIGRATION-M4-ACCEPTANCE.md)。M5–M6 尚未完成。
 
 ## M5：对外协议、客户端与 CLI
 

@@ -1,12 +1,12 @@
 # Pakka — integrated Pi host
 
-基于 Pi **1.0.3 发布包**和可重建的 Pi Durable 下游补丁 **1.0.3-pakka.1** 的 headless 整合宿主。默认生产路径为 Durable；AgentSession 仅用于测试对照。当前 package 为 `@pakka/agent@0.4.0`、MAS 服务 `@pakka/mas@0.2.0`，以及 private worker app `@pakka/server@0.1.0`；暂不发布。M1–M3 已验收，M3 跨 Session broker/worker 的范围与残余项见 [验收记录](docs/MIGRATION-M3-ACCEPTANCE.md)。
+基于 Pi **1.0.3 发布包**和可重建的 Pi Durable 下游补丁 **1.0.3-pakka.1** 的 headless 整合宿主。默认生产路径为 Durable；AgentSession 仅用于测试对照。当前 package 为 `@pakka/agent@0.5.0`、MAS 服务 `@pakka/mas@0.3.0`、可选 `@pakka/mas-devpack@0.1.0`，以及 private worker app `@pakka/server@0.2.0`；暂不发布。M1–M4 已验收（带明确限制，见 [M4 验收](docs/MIGRATION-M4-ACCEPTANCE.md)）；DevPack 公开接口和支持范围见 [API](docs/MAS-DEVPack-API.md)，M3 跨 Session broker/worker 的残余项见 [验收记录](docs/MIGRATION-M3-ACCEPTANCE.md)。
 
 它把会话封装、写权、生命周期和一部分 C2 放进同一个运行时，并用真实 Pi + 本地 HTTP provider + JSONL 做交叉测试。**不是完整 Kappa 迁移，也不是 TUI/CLI 成品。**
 
 ## 开始
 
-需要 Node 24+、npm 11；M2 验证环境为 Windows / Node 24.15.0 / npm 11.12.1；当前 M3 门禁使用 Windows / Node 24.18.0 / npm 11.16.0。
+需要 Node 24+、npm 11；M2 验证环境为 Windows / Node 24.15.0 / npm 11.12.1；当前 M3–M4 门禁使用 Windows / Node 24.18.0 / npm 11.16.0。
 
 ```sh
 npm ci --ignore-scripts
@@ -18,11 +18,11 @@ npm run smoke:package
 ```
 
 - 测试不读取真实凭据、不调用付费模型；使用独立临时 profile 与 127.0.0.1 provider。
-- `smoke:package` 会打包 `@pakka/agent`、`@pakka/mas` 与 private `@pakka/server`，在 Git 仓库之外建立消费者、**不携带根 overrides** 安装 tarball，再编译公开声明，实际验证 legacy host、Conversation runtime、同 Session MAS 的 activation、native delivery、owner policy、retirement 和 reopen dedup，并验证跨 Session broker、真实 worker PID 与丢回执后的全进程重开去重。需要访问 npm registry。
+- `smoke:package` 会打包 `@pakka/agent`、`@pakka/mas`、`@pakka/mas-devpack` 与 private `@pakka/server`，在 Git 仓库之外建立消费者、**不携带根 overrides** 安装 tarball，再编译公开声明，实际验证 legacy host、Conversation runtime、同 Session MAS 的 activation、native delivery、owner policy、retirement 和 reopen dedup，并验证跨 Session broker、真实 worker PID 与丢回执后的全进程重开去重；DevPack consumer 执行真实模型 tool call、撤权零投递与原生临时成员。需要访问 npm registry。
 - `npm run test:dynamite` 运行 [固定 Durable × Dynamite 配对门禁](integrations/dynamite/README.md)，需要 GitHub/npm 网络，模型仅使用本地 HTTP。历史固定配对失败，现按用户授权 **deferred**，不阻塞核心迁移；[问题与功能目标已留档](docs/DEFERRED-DYNAMITE-COMPATIBILITY.md)，完成迁移后再处理，不代表兼容通过。
 - `artifacts/integration/manifest.jsonl` 索引每个测试的 HTTP payload、宿主快照与原始 JSONL 副本。生成物被 Git 忽略，每次运行重建当前 manifest、保留旧目录。
 - `artifacts/package-smoke/` 保存外部安装和执行日志。
-- [设计与约束](docs/ARCHITECTURE.md) · [多 Conversation runtime API](docs/RUNTIME-API.md) · [同 Session MAS API](docs/MAS-API.md) · [跨 Session broker/worker API](docs/BROKER-API.md) · [策略控制 API 与精确接口](docs/STRATEGY-API.md) · [验证记录](docs/VERIFICATION.md) · [M1 验收](docs/MIGRATION-M1-ACCEPTANCE.md) · [M2 验收](docs/MIGRATION-M2-ACCEPTANCE.md) · [M3 验收](docs/MIGRATION-M3-ACCEPTANCE.md) · [仓库规范](docs/MONOREPO-CONVENTIONS.md) · [迁移计划](docs/MONOREPO-MIGRATION-PLAN.md)
+- [设计与约束](docs/ARCHITECTURE.md) · [多 Conversation runtime API](docs/RUNTIME-API.md) · [同 Session MAS API](docs/MAS-API.md) · [跨 Session broker/worker API](docs/BROKER-API.md) · [MAS DevPack API](docs/MAS-DEVPack-API.md) · [策略控制 API 与精确接口](docs/STRATEGY-API.md) · [验证记录](docs/VERIFICATION.md) · [M1 验收](docs/MIGRATION-M1-ACCEPTANCE.md) · [M2 验收](docs/MIGRATION-M2-ACCEPTANCE.md) · [M3 验收](docs/MIGRATION-M3-ACCEPTANCE.md) · [M4 验收](docs/MIGRATION-M4-ACCEPTANCE.md) · [仓库规范](docs/MONOREPO-CONVENTIONS.md) · [迁移计划](docs/MONOREPO-MIGRATION-PLAN.md)
 
 ## 目录
 
@@ -43,7 +43,11 @@ packages/mas/
   src/types.ts           冻结 MAS DTO 与 capability-bound client
   src/broker.ts          持久 enrollment/outbox 与跨 Session 回执 reconciliation
   src/session-endpoint.ts  受信任的已有 Session transport port
+  src/approved-sessions.ts  固定 template/slot 申请、lease 检查和恢复
   test/                  真实 Durable/local HTTP MAS 回归
+packages/mas-devpack/
+  src/index.ts           可选 tools/instructions contribution，真实 invocation 绑定
+  test/                  实际 model tool call、创建模式、reply、撤权与移除
 apps/server/
   src/worker-manager.ts  批准 preset、独占 storage writer 与真实进程生命周期
   src/worker.ts          private validated IPC 入口，不是对外 HTTP server
@@ -128,7 +132,7 @@ try {
 
 ## 暂未实现
 
-已实现受信任 bootstrap 的单 Session 多 Conversation runtime 和同 Session MAS 服务，接口和限制见 [RUNTIME-API.md](docs/RUNTIME-API.md) 与 [MAS-API.md](docs/MAS-API.md)。M3 的多 Session enrollment、持久 A2A/outbox 与独立 worker 已验收（带明确限制），见 [BROKER-API.md](docs/BROKER-API.md)。MAS DevPack仍未实现；完整 Pi input/skill/template/image/extension-command 兼容（slash 输入显式拒绝）；任意原生 Pi 插件；任意运行期 boundary context 提案；完整 AgentSubject/claim receipt 与 RPC；按次工具权限和 C2 tool-result 准入；legacy Host C2 的跨重启 claim 重建、完整 forced-crash 恢复、共享 storage 的多 writer、sandbox；全 provider 兼容、Dynamite 算法和默认装配；TUI 和产品 CLI。
+已实现受信任 bootstrap 的单 Session 多 Conversation runtime 和同 Session MAS 服务，接口和限制见 [RUNTIME-API.md](docs/RUNTIME-API.md) 与 [MAS-API.md](docs/MAS-API.md)。M3 的多 Session enrollment、持久 A2A/outbox 与独立 worker 已验收（带明确限制），见 [BROKER-API.md](docs/BROKER-API.md)。MAS DevPack 的可选受控 contribution 已验收（不是 stock Pi CLI 插件）；以下仍未实现：完整 Pi input/skill/template/image/extension-command 兼容（slash 输入显式拒绝）；任意原生 Pi 插件；任意运行期 boundary context 提案；完整 AgentSubject/claim receipt 与 RPC；按次工具权限和 C2 tool-result 准入；legacy Host C2 的跨重启 claim 重建、完整 forced-crash 恢复、共享 storage 的多 writer、sandbox；全 provider 兼容、Dynamite 算法和默认装配；TUI 和产品 CLI。
 
 当前仅接入显式配置的工具；工具允许执行不等于其副作用可回滚。context_edit 的 author intent 与 mutation 仍是两次写入，不是原子事务。
 

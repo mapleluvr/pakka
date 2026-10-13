@@ -1,3 +1,9 @@
+export { createApprovedSessions, MasRequestDenied } from "./approved-sessions.ts";
+export type {
+	ApprovedSessions,
+	ApprovedSessionTemplate,
+	ApprovedSessionResult,
+} from "./approved-sessions.ts";
 export { createBroker } from "./broker.ts";
 export { inProcessPlacement } from "./session-endpoint.ts";
 export type * from "./broker-types.ts";
@@ -139,7 +145,11 @@ export async function createMas(options: MasOptions): Promise<Mas> {
 									: "ready";
 		return dto({ namespace: options.namespace, version: cache.version, phase, members });
 	}
-	function connect(spec: Parameters<Mas["connect"]>[0], invocation?: ToolInvocationScope): MasClient {
+	function connect(
+		spec: Parameters<Mas["connect"]>[0],
+		invocation?: ToolInvocationScope,
+		parentCheck?: () => void,
+	): MasClient {
 		if (
 			!/^[a-zA-Z0-9][a-zA-Z0-9._-]{0,127}$/.test(spec.principal) ||
 			!Array.isArray(spec.grants) ||
@@ -152,6 +162,7 @@ export async function createMas(options: MasOptions): Promise<Mas> {
 			revision = revocations.get(principal) ?? 0;
 		if (source) target(source);
 		function check() {
+			parentCheck?.();
 			if ((revocations.get(principal) ?? 0) !== revision) throw new Error("Principal revoked");
 			if (options.runtime.view().phase !== "ready") throw new Error("Runtime is not ready");
 			if (source) {
@@ -198,6 +209,21 @@ export async function createMas(options: MasOptions): Promise<Mas> {
 			);
 		}
 		return Object.freeze({
+			identity: dto({ principal, source }),
+			inbox: async () => {
+				grant("reply");
+				if (!source) throw new Error("Inbox requires source Conversation");
+				return catalog.received(source, check);
+			},
+			authorize: grant,
+			withAuthority: (additional: () => void) => {
+				check();
+				if (typeof additional !== "function") throw new Error("Invalid authority check");
+				return connect({ principal, source, grants: [...allowed] }, invocation, () => {
+					check();
+					additional();
+				});
+			},
 			discover: () => {
 				grant("discover");
 				return dto(cache.members.map(member));
@@ -309,7 +335,7 @@ export async function createMas(options: MasOptions): Promise<Mas> {
 				check();
 				if (!source) throw new Error("Invocation requires source Conversation");
 				catalog.checkInvocation(source, scope);
-				return connect({ principal, source, grants: [...allowed] }, scope);
+				return connect({ principal, source, grants: [...allowed] }, scope, check);
 			},
 		});
 	}

@@ -1,6 +1,6 @@
-# Same-Session MAS API（`@pakka/mas@0.2.0`）
+# Same-Session MAS API（`@pakka/mas@0.3.0`）
 
-当前服务消费 `@pakka/agent@0.4.0` 公开控制端口；同 Session 契约在 M2 已验收，M3 复用它作为跨 Session 的原生准入路径。调用方向为 composition root → MAS service → gate → Durable adapter。业务 agent 只接收冻结的 `MasClient`；`Mas`、`Runtime`、catalog、model endpoint、凭据和原始 Pi handles 留在受信任装配层。实现与验收状态以 [迁移计划](MONOREPO-MIGRATION-PLAN.md) 为准。
+当前服务消费 `@pakka/agent@0.5.0` 公开控制端口；同 Session 契约在 M2 已验收，M3 复用它作为跨 Session 的原生准入路径。调用方向为 composition root → MAS service → gate → Durable adapter。业务 agent 只接收冻结的 `MasClient`；`Mas`、`Runtime`、catalog、model endpoint、凭据和原始 Pi handles 留在受信任装配层。实现与验收状态以 [迁移计划](MONOREPO-MIGRATION-PLAN.md) 为准。
 
 ## 使用
 
@@ -42,7 +42,7 @@ console.log(await caller.wait(sent.id));
 
 `mas.revoke(principal)` 撤销该服务实例已发行 client closure；重新授予由宿主显式 `connect`。service instance 是 authority issuer，不能把另一个独立实例当作同一 issuer 的撤权通道。Session 关闭或 scope 结束时旧 closure 失效；重开不恢复旧权限。
 
-工具调用通过 `client.forInvocation(scope)` 绑定实际 native invocation，scope 来自 gate 配置的 tool executor。复制、foreign Conversation 和过期 scope 无效。M4 再提供 agent-facing extension 装配，当前 API 由受信任业务代码消费。
+工具调用通过 `client.forInvocation(scope)` 绑定实际 native invocation，scope 来自 gate 配置的 tool executor。复制、foreign Conversation 和过期 scope 无效。M4 的可选 [DevPack](MAS-DEVPack-API.md) 提供 agent-facing contribution（[已验收，带限制](MIGRATION-M4-ACCEPTANCE.md)）。`authorize(action)` 仅检查既有 grant；`withAuthority(check)` 只能收窄 lease，后续 `forInvocation` 和再组合继续保留原 check 链。`inbox()` 在 reply grant 下仅返回自己的 incoming receipt metadata，不返回 payload 或 peer transcript。
 
 ## A2A 与回执
 
@@ -68,4 +68,4 @@ configure 只选择 runtime 批准的 profile，要求 idle active 成员，发�
 
 retire 先停止 admission，再 native abort/drain，最后保存 retired tombstone；原始 transcript、delivery 与花费记录保留。未知 persistence 封闭整个对应 Session，MAS view 报 unknown；未确认 commit 不自动重建。Conversation 已归因的局部故障沿用 M1 故障策略。
 
-本 API 只覆盖同 Session。同进程多 Session、独立 worker 与跨 Session outbox/reconciliation 由 [BROKER-API.md](BROKER-API.md) 的上层服务装配，M3 已验收（[范围与残余项](MIGRATION-M3-ACCEPTANCE.md)）；MAS DevPack 和对外协议仍按 M4–M5 实施。Dynamite 保持 [deferred](DEFERRED-DYNAMITE-COMPATIBILITY.md)。
+本 API 只覆盖同 Session。同进程多 Session、独立 worker 与跨 Session outbox/reconciliation 由 [BROKER-API.md](BROKER-API.md) 的上层服务装配，M3 已验收（[范围与残余项](MIGRATION-M3-ACCEPTANCE.md)）；MAS DevPack 已在 M4 验收，带明确限制；对外协议仍按 M5 实施。Dynamite 保持 [deferred](DEFERRED-DYNAMITE-COMPATIBILITY.md)。

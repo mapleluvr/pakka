@@ -1,5 +1,5 @@
 import type { RuntimeOptions, CatalogOptions } from "@pakka/agent";
-import type { RelayEnvelope } from "@pakka/mas";
+import type { RelayEnvelope, MasGrant } from "@pakka/mas";
 export type WorkerCommand =
 	| "init"
 	| "view"
@@ -28,6 +28,11 @@ export interface WorkerResponse {
 export interface WorkerConfiguration {
 	readonly runtime: RuntimeOptions & { readonly reservedSessionId: string };
 	readonly catalog: CatalogOptions;
+	/** Trusted named contributions; no function bodies, endpoints or arbitrary code cross IPC. */
+	readonly devpack?: {
+		readonly profiles: Readonly<Record<string, readonly MasGrant[]>>;
+		readonly operationTimeoutMs?: number;
+	};
 }
 export function object(value: unknown): value is Record<string, unknown> {
 	return !!value && typeof value === "object" && !Array.isArray(value);
@@ -65,7 +70,7 @@ function keys(value: Record<string, unknown>, allowed: readonly string[]): void 
 export function configuration(value: unknown): asserts value is WorkerConfiguration {
 	if (!object(value) || !object(value.runtime) || !object(value.catalog))
 		throw new Error("Invalid worker configuration");
-	keys(value, ["runtime", "catalog"]);
+	keys(value, ["runtime", "catalog", "devpack"]);
 	const runtime = value.runtime,
 		catalog = value.catalog;
 	keys(runtime, [
@@ -104,6 +109,48 @@ export function configuration(value: unknown): asserts value is WorkerConfigurat
 			))
 	)
 		throw new Error("Unsupported worker profiles");
+	if (value.devpack !== undefined) {
+		const pack = value.devpack;
+		if (!object(pack) || !object(pack.profiles) || !Object.keys(pack.profiles).length)
+			throw new Error("Invalid worker DevPack preset");
+		keys(pack, ["profiles", "operationTimeoutMs"]);
+		const profiles = new Set([
+			"default",
+			...(Array.isArray(runtime.profiles)
+				? runtime.profiles.filter(object).map((profile) => profile.id)
+				: []),
+		]);
+		const grants = [
+			"discover",
+			"send",
+			"reply",
+			"observe",
+			"spawn",
+			"steer",
+			"abort",
+			"retire",
+			"configure",
+			"fork",
+		];
+		for (const [id, list] of Object.entries(pack.profiles))
+			if (
+				!identity(id) ||
+				!profiles.has(id) ||
+				!Array.isArray(list) ||
+				list.length > grants.length ||
+				new Set(list).size !== list.length ||
+				list.some((grant) => typeof grant !== "string" || !grants.includes(grant))
+			)
+				throw new Error("Unapproved worker DevPack profile/grant");
+		if (
+			pack.operationTimeoutMs !== undefined &&
+			(!Number.isSafeInteger(pack.operationTimeoutMs) ||
+				typeof pack.operationTimeoutMs !== "number" ||
+				pack.operationTimeoutMs < 1 ||
+				pack.operationTimeoutMs > 120000)
+		)
+			throw new Error("Invalid worker DevPack deadline");
+	}
 	keys(catalog, ["namespace", "maxDeliveries", "maxPending"]);
 	if (
 		!identity(catalog.namespace) ||

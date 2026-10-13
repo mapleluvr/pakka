@@ -55,6 +55,13 @@ export interface SendSpec {
 	readonly mode?: InputMode;
 }
 export interface MasClient {
+	/** Serializable identity is descriptive only; the bound closures carry authority. */
+	readonly identity: { readonly principal: string; readonly source: ConversationRef | null };
+	inbox(): Promise<readonly DeliveryReceipt[]>;
+	/** Check an already-held grant without effects; this never grants new authority. */
+	authorize(action: MasGrant): void;
+	/** Narrow an existing lease; original checks survive every further binding. */
+	withAuthority(check: () => void): MasClient;
 	discover(): readonly Member[];
 	inspect(ref: ConversationRef): Promise<Member>;
 	send(target: ConversationRef, input: SendSpec): Promise<DeliveryReceipt>;

@@ -1,0 +1,22 @@
+{
+	"name": "@pakka/mas-devpack",
+	"version": "0.1.0",
+	"private": true,
+	"type": "module",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.js"
+		}
+	},
+	"files": [
+		"dist"
+	],
+	"scripts": {
+		"build": "tsc -p tsconfig.json"
+	},
+	"peerDependencies": {
+		"@pakka/agent": "0.5.0",
+		"@pakka/mas": "0.3.0"
+	}
+}

@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
 const consumer = mkdtempSync(join(tmpdir(), "pakka-packed-consumer-"));
 const versions = Object.fromEntries(
-	["agent", "mas", "server"].map((name) => {
+	["agent", "mas", "mas-devpack", "server"].map((name) => {
 		try {
 			return [
 				name,
@@ -57,6 +57,11 @@ run(
 	join(root, "packages", "mas"),
 );
 run(
+	"pack-devpack",
+	[npmCli, "pack", "--ignore-scripts", "--pack-destination", consumer],
+	join(root, "packages", "mas-devpack"),
+);
+run(
 	"pack-server",
 	[npmCli, "pack", "--ignore-scripts", "--pack-destination", consumer],
 	join(root, "apps", "server"),
@@ -72,6 +77,7 @@ writeFileSync(
 				"@pakka/agent": `file:./pakka-agent-${versions.agent}.tgz`,
 				"@pakka/mas": `file:./pakka-mas-${versions.mas}.tgz`,
 				"@pakka/server": `file:./pakka-server-${versions.server}.tgz`,
+				"@pakka/mas-devpack": `file:./pakka-mas-devpack-${versions["mas-devpack"]}.tgz`,
 			},
 			devDependencies: { typescript: "7.0.2", "@types/node": "26.6.4" },
 		},
@@ -84,6 +90,7 @@ copyFileSync(join(root, "scripts", "consumer-types.ts"), join(consumer, "consume
 copyFileSync(join(root, "scripts", "consumer-runtime.mjs"), join(consumer, "runtime.mjs"));
 copyFileSync(join(root, "scripts", "consumer-mas.mjs"), join(consumer, "mas.mjs"));
 copyFileSync(join(root, "scripts", "consumer-broker.mjs"), join(consumer, "broker.mjs"));
+copyFileSync(join(root, "scripts", "consumer-devpack.mjs"), join(consumer, "devpack.mjs"));
 run(
 	"install",
 	[npmCli, "install", "--ignore-scripts", "--no-audit", "--no-fund", "--registry=https://registry.npmjs.org"],
@@ -111,4 +118,5 @@ console.log(run("smoke", [join(consumer, "smoke.mjs")], consumer));
 console.log(run("runtime", [join(consumer, "runtime.mjs")], consumer));
 console.log(run("mas", [join(consumer, "mas.mjs")], consumer));
 console.log(run("broker", [join(consumer, "broker.mjs")], consumer));
+console.log(run("devpack", [join(consumer, "devpack.mjs")], consumer));
 writeFileSync(join(artifacts, "consumer-path.txt"), consumer + "\n");
