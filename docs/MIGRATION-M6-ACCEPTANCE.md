@@ -62,7 +62,7 @@ Windows / Node **24.18.0** / npm **11.16.0**。测试仅使用真实 production 
 
 - **Trusted root config hardening**：decoder 未提前拒绝 duplicate root keys，reopen 的 length predicate 也可因显式 full roster 路由到严格 baseline bootstrap。当前没有造成权限扩张/未确认 readiness 的证据；不以可选 hardening 扩大本轮代码。支持路径要求 distinct 初始 roots，不承诺 malformed trusted root 配置选择哪条恢复分支。
 - **Persistent membership ≠ live task**：temporary/task-bound 在持久 membership 中可能仍显示 active；inspection/native admission 才确定 ended。不得仅凭 snapshot membership phase 继续投递。
-- **Complexity/report quality**：parent 测量 production 为 `+205/-78`，net **127** physical lines；三个 app 文件共 **506** lines，没有新 workspace/framework/storage engine。Reviewers核验了 bounded owner walk 并反对无需求 benchmark，但没有给出要求的独立数值统计；parent 数字不冒充独立量化。
+- **Complexity/report quality**：parent 按 Git numstat 测量 production 为 `+204/-78`，net **126** physical lines；三个 app 文件共 **503** lines（不将文件末尾的 split 空项再计一行），没有新 workspace/framework/storage engine。Reviewers核验了 bounded owner walk 并反对无需求 benchmark，但没有给出要求的独立数值统计；parent 数字不冒充独立量化。
 - 继承 M5 的严格关联/pre-body capacity unknown、opaque callback effects unknown、保留 error codes、issuer 实例内 revoke、trusted-only broker provenance/config 和平台相关超限连接限制。
 - 没有 public broker/template provisioning、任意策略/工具模块加载、物理 delete、共享 storage 多 writer、lock theft、forced-crash 自动恢复、sandbox 或 exactly-once effects。新 Harness 不提供进程隔离；实际隔离 worker 仍由可信 manager 管理。
 - GUI 没有新增：真实 browser-safe client/protocol 已有消费者和验证，本轮没有 UI 使用/视觉验收需求。未来 GUI 消费这些端口，其 repo 决策随真实维护边界决定。
