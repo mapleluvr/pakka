@@ -1,6 +1,6 @@
 {
 	"name": "@pakka/mas-devpack",
-	"version": "0.1.0",
+	"version": "0.2.0",
 	"private": true,
 	"type": "module",
 	"exports": {
@@ -17,6 +17,6 @@
 	},
 	"peerDependencies": {
 		"@pakka/agent": "0.5.0",
-		"@pakka/mas": "0.3.0"
+		"@pakka/mas": "0.4.0"
 	}
 }

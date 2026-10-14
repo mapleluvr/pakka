@@ -11,7 +11,7 @@ import type {
 	RelayEnvelope,
 	SessionEndpoint,
 } from "./broker-types.ts";
-import { digest, immutable, validIdentity, agentRef, record } from "./broker-codec.ts";
+import { digest, immutable, validIdentity, agentRef, record, nativeReceipt } from "./broker-codec.ts";
 
 type Outbox = { action: "send" | "reply"; envelope: RelayEnvelope; receipt: BrokerReceipt };
 type State = {
@@ -116,6 +116,8 @@ export async function createBroker(rawOptions: BrokerOptions): Promise<Broker> {
 				!["pending", "queued", "placed", "done", "unanswered", "unknown"].includes(String(receipt.status))
 			)
 				throw new Error("Broker persistent receipt invalid");
+			if (receipt.native !== undefined && !nativeReceipt(receipt.native, id, envelope.target))
+				throw new Error("Broker persistent native receipt/provenance invalid");
 		}
 		// SAFETY: finite JSON comes from the store; schema/configuration, plan, refs and outbox envelopes/receipts are validated above before any effect.
 		return data as unknown as State;
@@ -328,6 +330,8 @@ export async function createBroker(rawOptions: BrokerOptions): Promise<Broker> {
 				if (source) await open(source);
 				check((await read()).state, item.action);
 				const native = await endpoint.deliver(item.envelope, controller.signal);
+				if (!nativeReceipt(native, item.envelope.id, item.envelope.target))
+					throw new Error("Broker native receipt/provenance invalid");
 				return await updateReceipt(item, { ...item.receipt, status: native.status, native });
 			} catch (error) {
 				const uncertain: BrokerReceipt = { ...item.receipt, status: "unknown", reason: String(error) };
@@ -435,6 +439,11 @@ export async function createBroker(rawOptions: BrokerOptions): Promise<Broker> {
 					const endpoint = await open(item.envelope.target);
 					check((await read()).state);
 					const native = await endpoint.wait(item.envelope, item.receipt.native.id);
+					if (
+						!nativeReceipt(native, item.envelope.id, item.envelope.target) ||
+						native.id !== item.receipt.native.id
+					)
+						throw new Error("Broker native receipt/provenance invalid");
 					check();
 					return await updateReceipt(item, { ...item.receipt, status: native.status, native });
 				} catch (error) {

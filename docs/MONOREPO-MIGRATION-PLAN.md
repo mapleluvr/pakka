@@ -147,7 +147,7 @@ M3 已验收，带明确限制：`@pakka/agent@0.4.0` + `@pakka/mas@0.2.0` + pri
 - DevPack 的故障不绕过 gate；临时成员退役后拒绝新消息，历史保留语义明确。
 - 安装产物不包含凭据、native handles、私有源码 import 或 import-time server/Session 启动。
 
-M4 已验收，带明确 notes：agent `0.5.0` + mas `0.3.0` + mas-devpack `0.1.0` + private server `0.2.0`，全量 216/216、定向 20/20、真实 native model tool/worker 和隔离 tarball HTTP 7/3/3/3/8 通过；两轮指定 adversarial-review 均 OK with notes。typed denial、post-send unknown、40-slot CAS、ancestor grant 反例及两项 report-only P2 见 [MIGRATION-M4-ACCEPTANCE.md](MIGRATION-M4-ACCEPTANCE.md)。M5–M6 尚未完成。
+M4 已验收，带明确 notes：agent `0.5.0` + mas `0.3.0` + mas-devpack `0.1.0` + private server `0.2.0`，全量 216/216、定向 20/20、真实 native model tool/worker 和隔离 tarball HTTP 7/3/3/3/8 通过；两轮指定 adversarial-review 均 OK with notes。typed denial、post-send unknown、40-slot CAS、ancestor grant 反例及两项 report-only P2 见 [MIGRATION-M4-ACCEPTANCE.md](MIGRATION-M4-ACCEPTANCE.md)。M4 的验收不推定 M5–M6 完成；M5 当前状态见下一节。
 
 ## M5：对外协议、客户端与 CLI
 
@@ -166,6 +166,8 @@ M4 已验收，带明确 notes：agent `0.5.0` + mas `0.3.0` + mas-devpack `0.1.
 - schema 错误、未知版本、伪造 source、跨身份重放和过期授权拒绝；断连不被当作未送达证明。
 - 浏览器消费者能编译并连接，不读取宿主文件；客户端看不到模型凭据和内部 handles。
 - 远端 capability 的安全与撤销契约有独立验收；未实现部分继续 unsupported，不能通过可序列化数据冒充 authority。
+
+M5 已验收，带明确 notes：agent `0.5.0` + mas `0.4.0` + mas-devpack `0.2.0` + protocol/client/cli `0.1.0` + private server `0.3.0`，全量 242/242、定向 26/26、真实 browser/server/CLI 与隔离 tarball HTTP 7/3/3/3/8/2 通过；第一轮指定复审 BLOCK 后完成真实反例修复，第二轮两方/closing 均 OK with notes。确定 pre-effect denied、opaque callback effects unknown、严格关联和 report-only P2 见 [MIGRATION-M5-ACCEPTANCE.md](MIGRATION-M5-ACCEPTANCE.md)。clean workspace 须先 build，再 check/test；M6 尚未完成。
 
 ## M6：产品配对验收与 GUI 决策
 

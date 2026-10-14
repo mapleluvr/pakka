@@ -4,7 +4,11 @@
 	"version": "0.1.0",
 	"type": "module",
 	"workspaces": [
-		"packages/*",
+		"packages/protocol",
+		"packages/agent",
+		"packages/mas",
+		"packages/mas-devpack",
+		"packages/client",
 		"apps/*"
 	],
 	"engines": {

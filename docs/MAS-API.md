@@ -1,4 +1,4 @@
-# Same-Session MAS API（`@pakka/mas@0.3.0`）
+# Same-Session MAS API（`@pakka/mas@0.4.0`）
 
 当前服务消费 `@pakka/agent@0.5.0` 公开控制端口；同 Session 契约在 M2 已验收，M3 复用它作为跨 Session 的原生准入路径。调用方向为 composition root → MAS service → gate → Durable adapter。业务 agent 只接收冻结的 `MasClient`；`Mas`、`Runtime`、catalog、model endpoint、凭据和原始 Pi handles 留在受信任装配层。实现与验收状态以 [迁移计划](MONOREPO-MIGRATION-PLAN.md) 为准。
 
@@ -68,4 +68,4 @@ configure 只选择 runtime 批准的 profile，要求 idle active 成员，发�
 
 retire 先停止 admission，再 native abort/drain，最后保存 retired tombstone；原始 transcript、delivery 与花费记录保留。未知 persistence 封闭整个对应 Session，MAS view 报 unknown；未确认 commit 不自动重建。Conversation 已归因的局部故障沿用 M1 故障策略。
 
-本 API 只覆盖同 Session。同进程多 Session、独立 worker 与跨 Session outbox/reconciliation 由 [BROKER-API.md](BROKER-API.md) 的上层服务装配，M3 已验收（[范围与残余项](MIGRATION-M3-ACCEPTANCE.md)）；MAS DevPack 已在 M4 验收，带明确限制；对外协议仍按 M5 实施。Dynamite 保持 [deferred](DEFERRED-DYNAMITE-COMPATIBILITY.md)。
+本 API 只覆盖同 Session。同进程多 Session、独立 worker 与跨 Session outbox/reconciliation 由 [BROKER-API.md](BROKER-API.md) 的上层服务装配，M3 已验收（[范围与残余项](MIGRATION-M3-ACCEPTANCE.md)）；MAS DevPack 已在 M4 验收，带明确限制；有限 loopback 协议已在 M5 验收，见 [应用 API](MAS-APPLICATION-API.md) 与 [限制](MIGRATION-M5-ACCEPTANCE.md)。Dynamite 保持 [deferred](DEFERRED-DYNAMITE-COMPATIBILITY.md)。

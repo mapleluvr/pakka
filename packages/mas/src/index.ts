@@ -1,4 +1,6 @@
-export { createApprovedSessions, MasRequestDenied } from "./approved-sessions.ts";
+export { createApprovedSessions } from "./approved-sessions.ts";
+import { MasRequestDenied } from "./errors.ts";
+export { MasRequestDenied } from "./errors.ts";
 export type {
 	ApprovedSessions,
 	ApprovedSessionTemplate,
@@ -177,13 +179,13 @@ export async function createMas(options: MasOptions): Promise<Mas> {
 		}
 		function owner(ref: ConversationRef, action: "abort" | "retire" | "configure" | "fork") {
 			grant(action);
-			if (target(ref).owner !== principal) throw new Error("Caller is not resource owner");
+			if (target(ref).owner !== principal) throw new MasRequestDenied("Caller is not resource owner");
 		}
 		async function receipt(id: string): Promise<DeliveryReceipt> {
 			check();
 			const found = await catalog.receipt(id, check);
 			if (found.principal !== principal && (!source || !same(found.target, source)))
-				throw new Error("Foreign delivery receipt");
+				throw new MasRequestDenied("Foreign delivery receipt");
 			return found;
 		}
 		async function sendAs(ref: ConversationRef, input: SendSpec, action: "send" | "reply" = "send") {
@@ -191,9 +193,15 @@ export async function createMas(options: MasOptions): Promise<Mas> {
 			grant(action);
 			const to = target(ref),
 				actual = dto(input);
-			if (to.phase !== "active") throw new Error("Recipient admission inactive or retired");
+			if (to.phase !== "active") throw new MasRequestDenied("Recipient admission inactive or retired");
 			if (actual.mode === "steer") grant("steer");
-			const decision = await admission(dto({ principal, source, target: to, input: actual }));
+			let decision: boolean;
+			try {
+				decision = await admission(dto({ principal, source, target: to, input: actual }));
+			} catch (error) {
+				// Opaque policy code may already have effects; its error type proves no rollback.
+				throw new Error("Recipient admission unconfirmed", { cause: error });
+			}
 			grant(action);
 			if (decision !== true) throw new Error("Recipient admission denied");
 			return catalog.deliver(
@@ -256,7 +264,7 @@ export async function createMas(options: MasOptions): Promise<Mas> {
 			withdraw: async (id: string) => {
 				grant("send");
 				const found = await receipt(id);
-				if (found.principal !== principal) throw new Error("Not delivery sender");
+				if (found.principal !== principal) throw new MasRequestDenied("Not delivery sender");
 				return catalog.withdraw(id, check);
 			},
 			spawn: async (input: Omit<MemberSpec, "owner">) => {

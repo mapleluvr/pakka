@@ -6,12 +6,15 @@ import { fileURLToPath } from "node:url";
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
 const consumer = mkdtempSync(join(tmpdir(), "pakka-packed-consumer-"));
 const versions = Object.fromEntries(
-	["agent", "mas", "mas-devpack", "server"].map((name) => {
+	["agent", "mas", "mas-devpack", "protocol", "client", "cli", "server"].map((name) => {
 		try {
 			return [
 				name,
 				JSON.parse(
-					readFileSync(join(root, name === "server" ? "apps" : "packages", name, "package.json"), "utf8"),
+					readFileSync(
+						join(root, ["server", "cli"].includes(name) ? "apps" : "packages", name, "package.json"),
+						"utf8",
+					),
 				).version,
 			];
 		} catch (error) {
@@ -61,11 +64,12 @@ run(
 	[npmCli, "pack", "--ignore-scripts", "--pack-destination", consumer],
 	join(root, "packages", "mas-devpack"),
 );
-run(
-	"pack-server",
-	[npmCli, "pack", "--ignore-scripts", "--pack-destination", consumer],
-	join(root, "apps", "server"),
-);
+for (const name of ["protocol", "client", "cli", "server"])
+	run(
+		"pack-" + name,
+		[npmCli, "pack", "--ignore-scripts", "--pack-destination", consumer],
+		join(root, ["cli", "server"].includes(name) ? "apps" : "packages", name),
+	);
 writeFileSync(
 	join(consumer, "package.json"),
 	JSON.stringify(
@@ -78,6 +82,9 @@ writeFileSync(
 				"@pakka/mas": `file:./pakka-mas-${versions.mas}.tgz`,
 				"@pakka/server": `file:./pakka-server-${versions.server}.tgz`,
 				"@pakka/mas-devpack": `file:./pakka-mas-devpack-${versions["mas-devpack"]}.tgz`,
+				"@pakka/protocol": `file:./pakka-protocol-${versions.protocol}.tgz`,
+				"@pakka/client": `file:./pakka-client-${versions.client}.tgz`,
+				"@pakka/cli": `file:./pakka-cli-${versions.cli}.tgz`,
 			},
 			devDependencies: { typescript: "7.0.2", "@types/node": "26.6.4" },
 		},
@@ -91,6 +98,23 @@ copyFileSync(join(root, "scripts", "consumer-runtime.mjs"), join(consumer, "runt
 copyFileSync(join(root, "scripts", "consumer-mas.mjs"), join(consumer, "mas.mjs"));
 copyFileSync(join(root, "scripts", "consumer-broker.mjs"), join(consumer, "broker.mjs"));
 copyFileSync(join(root, "scripts", "consumer-devpack.mjs"), join(consumer, "devpack.mjs"));
+copyFileSync(join(root, "scripts", "consumer-apps.mjs"), join(consumer, "apps.mjs"));
+copyFileSync(join(root, "scripts", "consumer-browser.ts"), join(consumer, "consumer-browser.ts"));
+writeFileSync(
+	join(consumer, "tsconfig.browser.json"),
+	JSON.stringify({
+		compilerOptions: {
+			target: "ES2022",
+			module: "ESNext",
+			moduleResolution: "Bundler",
+			strict: true,
+			noEmit: true,
+			types: [],
+			lib: ["ES2022", "DOM"],
+		},
+		files: ["consumer-browser.ts"],
+	}),
+);
 run(
 	"install",
 	[npmCli, "install", "--ignore-scripts", "--no-audit", "--no-fund", "--registry=https://registry.npmjs.org"],
@@ -110,6 +134,11 @@ run(
 	],
 	consumer,
 );
+run(
+	"browser-declarations",
+	[join(consumer, "node_modules", "typescript", "bin", "tsc"), "-p", "tsconfig.browser.json"],
+	consumer,
+);
 writeFileSync(
 	join(consumer, "dependency-tree.json"),
 	run("dependency-tree", [npmCli, "ls", "--all", "--json"], consumer),
@@ -119,4 +148,5 @@ console.log(run("runtime", [join(consumer, "runtime.mjs")], consumer));
 console.log(run("mas", [join(consumer, "mas.mjs")], consumer));
 console.log(run("broker", [join(consumer, "broker.mjs")], consumer));
 console.log(run("devpack", [join(consumer, "devpack.mjs")], consumer));
+console.log(run("apps", [join(consumer, "apps.mjs")], consumer));
 writeFileSync(join(artifacts, "consumer-path.txt"), consumer + "\n");

@@ -11,13 +11,8 @@ import type {
 import { createBroker } from "./broker.ts";
 import { digest, immutable, record, validIdentity, agentRef } from "./broker-codec.ts";
 
-/** Definitive refusal raised before this request reserves capacity or invokes an effectful endpoint. */
-export class MasRequestDenied extends Error {
-	constructor(message: string) {
-		super(message);
-		this.name = "MasRequestDenied";
-	}
-}
+import { MasRequestDenied } from "./errors.ts";
+export { MasRequestDenied } from "./errors.ts";
 export interface ApprovedSessionTemplate {
 	readonly location: "existing-session" | "new-session";
 	readonly principal: string;

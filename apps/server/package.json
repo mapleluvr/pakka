@@ -1,24 +1,37 @@
 {
 	"name": "@pakka/server",
-	"version": "0.2.0",
+	"version": "0.3.0",
 	"private": true,
 	"type": "module",
 	"exports": {
 		".": {
 			"types": "./dist/worker-manager.d.ts",
 			"import": "./dist/worker-manager.js"
+		},
+		"./http": {
+			"types": "./dist/http-server.d.ts",
+			"import": "./dist/http-server.js"
+		},
+		"./bootstrap": {
+			"types": "./dist/bootstrap.d.ts",
+			"import": "./dist/bootstrap.js"
 		}
 	},
 	"files": [
 		"dist"
 	],
+	"bin": {
+		"pakka-server": "dist/main.js"
+	},
 	"scripts": {
 		"build": "tsc -p tsconfig.json",
-		"start:worker": "node dist/worker.js"
+		"start:worker": "node dist/worker.js",
+		"start": "node dist/main.js"
 	},
 	"dependencies": {
 		"@pakka/agent": "0.5.0",
-		"@pakka/mas": "0.3.0",
-		"@pakka/mas-devpack": "0.1.0"
+		"@pakka/mas": "0.4.0",
+		"@pakka/mas-devpack": "0.2.0",
+		"@pakka/protocol": "0.1.0"
 	}
 }

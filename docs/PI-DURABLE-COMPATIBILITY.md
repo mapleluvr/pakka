@@ -651,3 +651,16 @@ store: (options: RuntimeStoreOptions) => port.store(options),
 验证：最终独立离线 clean staging `ci --ignore-scripts --offline`、build/check/format；完整 216/216、focused 20/20、复审修复 8/8；真实独立 tarball/native worker consumers HTTP 7/3/3/3/8；两轮指定 adversarial-review 均 OK with notes。旧实际 worker profile 提权从 1 次未授权 peer HTTP 修复为 0；distinct slot 一/两个实例的 40-slot real CAS 全部保留，没有 provider dispatch。完整 build identity、未处理的 report-only P2、原始失败与父级决定见 [MIGRATION-M4-ACCEPTANCE.md](MIGRATION-M4-ACCEPTANCE.md)。未重跑的历史补丁 105/105 不算本轮结果。
 
 失效条件：public native invocation/tool/section/ownership/admission/recovery 契约变化，grant ceiling 或 typed no-effect refusal producer 变化，patch/hash/build inputs 变化，或引入不可信 remote decoder/capability transport 时，重跑受影响真实矩阵并追加记录。本条不授权 M5 public auth/CLI、完整 crash-claim恢复、hostile-code sandbox、任意负载 fairness 或 Dynamite兼容。
+
+## 条目 DURABLE-M5-9：authenticated loopback 应用与受检恢复边界
+
+- ID: DURABLE-M5-9
+- 状态: verified with documented notes
+- 关联条目: extends DURABLE-M4-8；不改写历史记录
+- 基线: 同一 `pi-durable@1.0.3-pakka.1`；upstream `d78dc83d633229d12f8b79631384c4c2717c399f`；SHA-256 `535d90fd195a1e9c6c9dc1b22b7f0ca15aac41652bb7d644da616148947bcfa7`。
+- Pakka 变更: mas `0.3.0 → 0.4.0`、mas-devpack `0.1.0 → 0.2.0`、private server `0.2.0 → 0.3.0`；新增 protocol/client/cli `0.1.0`，agent 仍 `0.5.0`。未修改 installed SDK、source patch 或 build lock。
+- 影响面: browser-safe finite wire schema/client、实际 server/CLI bootstrap、server-bound source/grants/expiry、原生取消/withdraw/receipt、nested broker shape/correlation；不序列化进程内 capability 或 Pi objects。
+
+验证：最终离线 clean staging install/build/check/format、完整 242/242、focused 26/26、guard/effect 控制 13/13、实际 browser 和 tarball server/client/CLI；独立 consumers HTTP 7/3/3/3/8/2。第一轮指定 adversarial-review BLOCK 后修复四类确定本地拒绝，第二轮 A/B/closing 均 OK with notes。callback 实际产生 HTTP 后的拒绝、物理 native write failure、迟到 revoke/expiry 和丢回执仍 unknown；未以 HTTP status 放宽响应关联。完整 SHA、原始失败和 report-only P2 见 [MIGRATION-M5-ACCEPTANCE.md](MIGRATION-M5-ACCEPTANCE.md)。SDK 输入不变，历史 patch 105/105 未重跑，不算本轮结果。
+
+失效条件：public admission/withdraw/invocation/commit/callback 契约或 SDK cohort/patch/hash/build lock 变化、deny producer 变化、不可信 broker restore/外部传输、hostile config 或新的 isolation/cancellation 组合，应重跑受影响真实矩阵并追加记录。本条只授权已验收 loopback/MAS 应用；不授权公网多租户、任意 host RPC、完整 crash claim恢复、M6 默认产品装配或 Dynamite兼容。
