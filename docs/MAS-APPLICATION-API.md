@@ -7,7 +7,7 @@
 - `@pakka/protocol@0.1.0`：闭合 version-1 JSON schema、资源引用、scoped snapshot 和 receipt；无 Pi、Node、storage、凭据发现依赖。
 - `@pakka/client@0.1.0`：同一 fetch client 供 Node/CLI/browser 使用，校验响应、明确 deadline/cancellation/reconnect；不自动重试 mutation。
 - `@pakka/cli@0.1.0`：只读显式 connection/command JSON，调用 client、输出结果；不定义 MAS policy。
-- `@pakka/server@0.3.0`：保留 private worker manager 入口，新增 `@pakka/server/http`、`@pakka/server/bootstrap` 和 `pakka-server` executable。
+- 当前 private `@pakka/server@0.4.0`：保留 worker manager、`@pakka/server/http`、`@pakka/server/bootstrap` 和 `pakka-server` executable。M5 的固定历史产物是 `0.3.0`；`0.4.0` 的可选 product contribution 已在 M6 验收，见 [产品支持矩阵](MAS-PRODUCT-SUPPORT.md) 和 [M6 验收](MIGRATION-M6-ACCEPTANCE.md)。
 - 当前搭配 `@pakka/agent@0.5.0`、`@pakka/mas@0.4.0`、`@pakka/mas-devpack@0.2.0`。Dynamite 仍是 [deferred](DEFERRED-DYNAMITE-COMPATIBILITY.md)，不默认装配。
 
 请求中的 ref 只是受检地址，不是 capability。server 由专用 client token 找到宿主批准的 principal/source/grants，重新检查该 issuer role 和 MAS 权限。请求不能指定 caller、owner、storage path、provider/model credential、tools 或预算。不要把 provider API key 用作 client token。
@@ -53,7 +53,7 @@ Server config 的结构示例（全部值均为占位符，不是可用凭据）
 }
 ```
 
-`runtime` 的 JSON bootstrap 只接受文档列出的基础字段，以及 `reopenSessionFile`、`reservedSessionId`。profile 默认为 gate 的 `default`；未批准 profile 会由 gate 拒绝。functions、额外 tools/extensions/config 均不属于该 JSON bootstrap。需要已批准的程序化 profiles 时，由可信 composition root 使用 `createMasServer()` 装配既有服务，而不是从 RPC 传入配置。
+`runtime` 的 JSON bootstrap 接受以上基础字段、`reopenSessionFile`、`reservedSessionId`，以及 M6 新增的 `profiles: [{id, systemPrompt}]`。profile 默认为 gate 的 `default`；未批准 profile 会由 gate 拒绝。可选 `devpack` 的批准配置、RPC profile-management 组合拒绝和正常恢复范围见 [产品支持矩阵](MAS-PRODUCT-SUPPORT.md)。functions、额外 tools/extensions/config 均不属于该 JSON bootstrap；更复杂的程序化配置仍由可信 composition root 使用 `createMasServer()`，不能从 RPC 传入。
 
 ```powershell
 node apps/server/dist/main.js --config D:/explicit/server.json
@@ -139,4 +139,4 @@ Body/result 上限 131072 bytes；protocol depth 32；文本上限 65536 UTF-16 
 
 M5 执行证据在 `artifacts/migration-m5/`：真实 server/CLI 子进程、Chrome 原生执行、正常/非法 wire、迟到撤权/expiry、queued withdrawal、abort/retire、取消等待不影响已 placed input，以及隔离 tarball/DOM-only 编译。全部使用本地 deterministic HTTP provider；没有读取用户 credentials 或调用付费测试 provider。
 
-M5 的最终 full gate、固定产物身份与两轮以内指定对抗复审完成前，本文件不是放行声明。
+本文件的放行范围以 M5/M6 验收记录及产品支持矩阵为准；未支持配置不会因 schema 可表示而自动成为受支持能力。

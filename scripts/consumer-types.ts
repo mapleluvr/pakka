@@ -24,8 +24,20 @@ import type { Mas, MasClient, MemberSpec, SendSpec, AgentRef } from "@pakka/mas"
 import type { RuntimeStore } from "@pakka/agent";
 import type { Broker, BrokerClient, BrokerAgentRef } from "@pakka/mas/broker";
 import type { WorkerManager } from "@pakka/server";
+import type { BootstrapConfig } from "@pakka/server/bootstrap";
 import { createMasDevPack, type MasDevPackOptions } from "@pakka/mas-devpack";
 import type { ApprovedSessions } from "@pakka/mas";
+
+export function productContract(config: BootstrapConfig) {
+	const contribution: NonNullable<BootstrapConfig["devpack"]> = {
+		profiles: { default: ["spawn", "observe"] },
+	};
+	// @ts-expect-error strategy inference is not an agent MAS creation grant.
+	const invalid: NonNullable<BootstrapConfig["devpack"]> = { profiles: { default: ["model.infer"] } };
+	// @ts-expect-error mutable native handles are not JSON product contributions.
+	const forged: NonNullable<BootstrapConfig["devpack"]> = { profiles: { default: ["spawn"] }, session: {} };
+	return { config, contribution };
+}
 
 export function devpackContract(client: MasClient, sessions: ApprovedSessions) {
 	const options: MasDevPackOptions = {

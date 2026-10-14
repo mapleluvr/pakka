@@ -1,7 +1,9 @@
 import { createRuntime } from "@pakka/agent";
 import type { RuntimeOptions } from "@pakka/agent";
 import { createMas } from "@pakka/mas";
-import type { MasGrant } from "@pakka/mas";
+import type { Mas, MasGrant } from "@pakka/mas";
+import { profileDevPacks, retainedProductRoots } from "./profile-devpack.ts";
+import type { ProfileDevPackConfig } from "./profile-devpack.ts";
 import { identity } from "@pakka/protocol";
 import { createMasServer } from "./http-server.ts";
 import type { MasServer, ServerRole } from "./http-server.ts";
@@ -20,6 +22,7 @@ export interface BootstrapConfig {
 	readonly mas: { readonly namespace: string; readonly maxDeliveries: number; readonly maxPending: number };
 	readonly members: readonly { readonly key: string; readonly owner: string; readonly profile?: string }[];
 	readonly roles: readonly RoleConfig[];
+	readonly devpack?: ProfileDevPackConfig;
 	readonly http?: {
 		readonly port?: number;
 		readonly origins?: readonly string[];
@@ -46,14 +49,24 @@ function runtimeConfig(value: unknown): value is RuntimeOptions {
 		shape(
 			value,
 			["cwd", "dataDir", "endpoint", "model", "apiKey", "systemPrompt", "limits"],
-			["reopenSessionFile", "reservedSessionId", "maxOutputTokens"],
+			["reopenSessionFile", "reservedSessionId", "maxOutputTokens", "profiles"],
 		) &&
 		["cwd", "dataDir", "endpoint", "model", "apiKey", "systemPrompt"].every((key) => text(value[key])) &&
 		shape(value.limits, ["maxConversations", "maxPrimaryAttempts", "maxAuxiliaryAttempts"]) &&
 		Object.values(value.limits).every(positive) &&
 		(value.reopenSessionFile === undefined || text(value.reopenSessionFile)) &&
 		(value.reservedSessionId === undefined || identity(value.reservedSessionId)) &&
-		(value.maxOutputTokens === undefined || positive(value.maxOutputTokens))
+		(value.maxOutputTokens === undefined || positive(value.maxOutputTokens)) &&
+		(value.profiles === undefined ||
+			(Array.isArray(value.profiles) &&
+				value.profiles.length <= 128 &&
+				value.profiles.every(
+					(profile) =>
+						shape(profile, ["id", "systemPrompt"]) &&
+						identity(profile.id) &&
+						profile.id !== "default" &&
+						text(profile.systemPrompt),
+				)))
 	);
 }
 const grants: readonly MasGrant[] = [
@@ -70,7 +83,7 @@ const grants: readonly MasGrant[] = [
 ];
 export function decodeBootstrap(value: unknown): BootstrapConfig {
 	if (
-		!shape(value, ["schema", "runtime", "mas", "members", "roles"], ["http"]) ||
+		!shape(value, ["schema", "runtime", "mas", "members", "roles"], ["http", "devpack"]) ||
 		value.schema !== "pakka.server.v1" ||
 		!runtimeConfig(value.runtime) ||
 		!shape(value.mas, ["namespace", "maxDeliveries", "maxPending"]) ||
@@ -104,6 +117,36 @@ export function decodeBootstrap(value: unknown): BootstrapConfig {
 		)
 	)
 		throw new Error("Invalid explicit server configuration");
+	if (value.devpack !== undefined) {
+		const pack = value.devpack;
+		const approvedProfiles = new Set([
+			"default",
+			...(value.runtime.profiles ?? []).map((profile) => profile.id),
+		]);
+		if (
+			!shape(pack, ["profiles"], ["operationTimeoutMs"]) ||
+			!record(pack.profiles) ||
+			Object.keys(pack.profiles).length === 0 ||
+			Object.keys(pack.profiles).length > 128 ||
+			Object.entries(pack.profiles).some(
+				([id, allowed]) =>
+					!identity(id) ||
+					!approvedProfiles.has(id) ||
+					!Array.isArray(allowed) ||
+					allowed.some((grant) => !grants.includes(grant)),
+			) ||
+			(pack.operationTimeoutMs !== undefined &&
+				(!positive(pack.operationTimeoutMs) || Number(pack.operationTimeoutMs) > 60000))
+		)
+			throw new Error("Invalid approved product DevPack configuration");
+		// Remote profile selection cannot mint a model's root authority in this mode.
+		if (
+			value.roles.some((role) =>
+				role.grants.some((grant: MasGrant) => ["spawn", "configure", "fork"].includes(grant)),
+			)
+		)
+			throw new Error("RPC profile management with DevPack is unsupported");
+	}
 	if (value.http !== undefined) {
 		if (
 			!shape(value.http, [], ["port", "origins", "maxPending"]) ||
@@ -125,12 +168,48 @@ export function decodeBootstrap(value: unknown): BootstrapConfig {
 export async function bootstrapServer(
 	config: BootstrapConfig,
 ): Promise<{ readonly server: MasServer; close(): Promise<void> }> {
-	const approved = decodeBootstrap(config),
-		runtime = await createRuntime(approved.runtime);
+	const approved = decodeBootstrap(config);
+	let mas: Mas | undefined;
+	const packs = profileDevPacks(approved.devpack, () => mas),
+		main = packs.get("default");
+	const runtime = await createRuntime({
+		...approved.runtime,
+		...(main
+			? { tools: main.tools, systemPrompt: [approved.runtime.systemPrompt, main.instructions].join("\n\n") }
+			: {}),
+		profiles: approved.runtime.profiles?.map((profile) => {
+			const pack = packs.get(profile.id);
+			return pack
+				? {
+						...profile,
+						tools: pack.tools,
+						systemPrompt: [profile.systemPrompt, pack.instructions].join("\n\n"),
+					}
+				: { ...profile, tools: profile.tools ?? [] };
+		}),
+	});
 	try {
-		const mas = await createMas({ ...approved.mas, runtime });
-		await mas.bootstrap(approved.members);
-		await mas.activate();
+		mas = await createMas({ ...approved.mas, runtime });
+		const existing = await mas.view();
+		if (
+			approved.devpack &&
+			approved.runtime.reopenSessionFile &&
+			existing.members.length > approved.members.length
+		) {
+			retainedProductRoots(existing.members, approved.members);
+			const catalog = runtime.catalog(approved.mas);
+			for (const member of existing.members) {
+				if (
+					member.lifetime === "persistent" &&
+					member.phase === "active" &&
+					(await catalog.readiness(member.ref)).phase !== "ready"
+				)
+					throw new Error("Product reopen persistent readiness unconfirmed");
+			}
+		} else {
+			await mas.bootstrap(approved.members);
+			await mas.activate();
+		}
 		const view = await mas.view();
 		const roles: ServerRole[] = approved.roles.map((role) => {
 			const source =

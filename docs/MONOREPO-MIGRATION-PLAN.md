@@ -1,6 +1,6 @@
 # Pakka monorepo 与 MAS 迁移计划
 
-状态：实施中，分支为 `feat/monorepo-mas-migration`。M0 的固定源码/tarball 消费门禁已建立，已确认配对失败；用户明确授权将 Dynamite 专项标记为 **deferred / 未处理**，先完成 M1–M6 核心迁移，再处理兼容性。功能目标、原始失败身份与恢复条件见 [DEFERRED-DYNAMITE-COMPATIBILITY.md](DEFERRED-DYNAMITE-COMPATIBILITY.md)。这不是 M0 passed，也不解除其他权限/持久化/恢复门禁。不创建空包、不更名 `@pakka/agent`、不发布。
+状态：M1–M6 核心迁移已验收（带明确 notes），后续恢复 Dynamite 专项，分支为 `feat/monorepo-mas-migration`。M0 的固定源码/tarball 消费门禁已建立，已确认配对失败；用户明确授权将 Dynamite 专项标记为 **deferred / 未处理**，先完成 M1–M6 核心迁移，再处理兼容性。功能目标、原始失败身份与恢复条件见 [DEFERRED-DYNAMITE-COMPATIBILITY.md](DEFERRED-DYNAMITE-COMPATIBILITY.md)。这不是 M0 passed，也不解除其他权限/持久化/恢复门禁。不创建空包、不更名 `@pakka/agent`、不发布。
 
 约束见 [MONOREPO-CONVENTIONS.md](MONOREPO-CONVENTIONS.md)；现有宿主行为见 [ARCHITECTURE.md](ARCHITECTURE.md)。[PI-DURABLE-MIGRATION-PLAN.md](PI-DURABLE-MIGRATION-PLAN.md) 记录此前后端切换，[MIGRATING-DYNAMITE.md](MIGRATING-DYNAMITE.md) 是早期算法迁移调查；它们不能替代本计划对当前版本的再验收。
 
@@ -167,7 +167,7 @@ M4 已验收，带明确 notes：agent `0.5.0` + mas `0.3.0` + mas-devpack `0.1.
 - 浏览器消费者能编译并连接，不读取宿主文件；客户端看不到模型凭据和内部 handles。
 - 远端 capability 的安全与撤销契约有独立验收；未实现部分继续 unsupported，不能通过可序列化数据冒充 authority。
 
-M5 已验收，带明确 notes：agent `0.5.0` + mas `0.4.0` + mas-devpack `0.2.0` + protocol/client/cli `0.1.0` + private server `0.3.0`，全量 242/242、定向 26/26、真实 browser/server/CLI 与隔离 tarball HTTP 7/3/3/3/8/2 通过；第一轮指定复审 BLOCK 后完成真实反例修复，第二轮两方/closing 均 OK with notes。确定 pre-effect denied、opaque callback effects unknown、严格关联和 report-only P2 见 [MIGRATION-M5-ACCEPTANCE.md](MIGRATION-M5-ACCEPTANCE.md)。clean workspace 须先 build，再 check/test；M6 尚未完成。
+M5 已验收，带明确 notes：agent `0.5.0` + mas `0.4.0` + mas-devpack `0.2.0` + protocol/client/cli `0.1.0` + private server `0.3.0`，全量 242/242、定向 26/26、真实 browser/server/CLI 与隔离 tarball HTTP 7/3/3/3/8/2 通过；第一轮指定复审 BLOCK 后完成真实反例修复，第二轮两方/closing 均 OK with notes。确定 pre-effect denied、opaque callback effects unknown、严格关联和 report-only P2 见 [MIGRATION-M5-ACCEPTANCE.md](MIGRATION-M5-ACCEPTANCE.md)。clean workspace 须先 build，再 check/test；M6 状态见下一节。
 
 ## M6：产品配对验收与 GUI 决策
 
@@ -185,6 +185,8 @@ M5 已验收，带明确 notes：agent `0.5.0` + mas `0.4.0` + mas-devpack `0.2.
 - 用户可启动实际入口并观察 MAS，而不必从 library 测试结果推断产品存在。
 - patch 升级和核心产品装配有明确消费者回归；没有因 monorepo hoisting 隐藏版本漂移。Dynamite 未升级/未装配，状态单独保持 deferred，待核心迁移完成后验证其升级及产品配对。
 - GUI 是否拆仓由稳定协议、独立构建/验收和维护需要决定，不作为 MAS 完成的必需条件。gate 更名、patch 独立发布和 SI 不自动加入范围。
+
+M6 已在受支持 headless 范围验收：private server `0.4.0`，agent `0.5.0` + mas `0.4.0` + mas-devpack `0.2.0` + protocol/client/cli `0.1.0`；全量 **251/251**、定向 **17/17**、离线 clean staging 及隔离 tarball 消费通过，新增 product consumer 独立验证 **18 次 HTTP / 7 个 native tool-call/result pair**、四种 lifetime、动态 roster 正常 reopen 与 spent quota。第一轮完整指定复审两方/closing 均 OK with notes，候选 P2 被反驳并撤回；没有复审后的代码修改或冗余第二轮。GUI 本轮不创建，Dynamite 仍 deferred，下一步以此核心产物恢复 DC-01–DC-12。固定身份、hardening notes 和剩余限制见 [MIGRATION-M6-ACCEPTANCE.md](MIGRATION-M6-ACCEPTANCE.md) 与 [MAS-PRODUCT-SUPPORT.md](MAS-PRODUCT-SUPPORT.md)。
 
 ## 3. 验证、交付与恢复规则
 
