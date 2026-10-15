@@ -11,11 +11,13 @@ pakka/
 ├── packages/
 │   ├── agent/                 @pakka/agent：受控运行时与权限执行边界
 │   ├── mas/                   @pakka/mas：资源、所有权策略、A2A 与恢复
-│   └── mas-devpack/            @pakka/mas-devpack：可选的 agent-facing extension
+│   ├── mas-devpack/            @pakka/mas-devpack：可选 Agent contribution；计划增加 Web facets
+│   ├── protocol/              @pakka/protocol：browser-safe schemas
+│   └── client/                @pakka/client：共享连接与受控请求
 ├── apps/
 │   ├── server/                装配、认证、transport 与 worker 启动
 │   ├── cli/                   操作员命令入口
-│   └── gui/                   GUI；可在协议稳定后独立维护
+│   └── webui/                 计划中的 @pakka/webui（Pakka-Pocket 单一产品包）
 ├── integrations/
 │   └── dynamite/              固定外部版本的跨包验收
 ├── patches/
@@ -28,9 +30,9 @@ pakka/
 └── @pakka/dynamite             宿主无关 engine + Pakka adapter
 ```
 
-上图是目标布局。当前仅有 `packages/agent`；按真实实现创建目录，不创建空 package、空 app 或占位 exports。`pakka-si` 暂不纳入此次迁移。
+上图同时标明现有组件与下一项产品目标。M1–M6 的 agent/MAS/DevPack/protocol/client/server/CLI 已存在；`apps/webui` 尚未创建，准备范围见 [PAKKA-POCKET-PLAN.md](PAKKA-POCKET-PLAN.md)。按真实实现创建目录，不创建空 package、空 app 或占位 exports。`pakka-si` 不自动纳入此次迁移。
 
-`packages/` 放可复用库及 extension；`apps/` 放可执行产品与 composition root。只有真实应用加入时才扩展 workspace、构建和检查范围。进程部署拓扑由应用明确选择，与 package/repository 的数量无关。
+`packages/` 放可复用库及 extension；`apps/` 放可执行产品与 composition root。Pakka-Pocket 采用单一产品包 `@pakka/webui`，不另造空 SDK 包；可通过纯 public SDK 子路径供 extension peer 消费，边界见下节。只有真实应用加入时才扩展 workspace、构建和检查范围。进程部署拓扑由应用明确选择，与 package/repository 的数量无关。
 
 暂不引入 `@pakka/gate`、转发包或双名称发布。文档可以使用“gate 职责”描述 `@pakka/agent`，生产 import 和 package metadata 继续使用现名。
 
@@ -40,7 +42,7 @@ pakka/
 | -------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
 | `@pakka/agent`       | Pi 适配、身份与 capability、admission、生命周期、请求授权、受控存储和 inference | MAS 算法、Dynamite 算法、产品 UI 和默认装配                         |
 | `@pakka/mas`         | 资源登记、membership、所有权策略、消息路由、投递恢复与编排                      | 原始 Pi handles、模型凭据、另一个权限内核或复制的 Durable scheduler |
-| `@pakka/mas-devpack` | 工具、指令、参数校验、调用 scope 与结果呈现                                     | 自行授予权限、开启任意 endpoint、直接管理 storage/进程              |
+| `@pakka/mas-devpack` | 工具、指令、参数校验与调用 scope；计划通过公开 Web facets 提供 MAS Board        | 自行授予权限、开启任意 endpoint、直接管理 storage/进程              |
 | `@pakka/dynamite`    | 编号、窗口、reduce、摘要计划、策略记录及 Pakka binding adapter                  | 直接发送主输入、获取凭据、绕过 inference 预算或依赖 MAS CLI         |
 | server / CLI / GUI   | 产品装配或客户端入口                                                            | 在客户端重建权限、直接读写宿主内部文件或修改 Pi 对象                |
 | Durable patch        | 下游 Durable 契约与可重建产物                                                   | 安装后动态修改另一份 Durable、MAS 产品逻辑                          |
@@ -56,7 +58,7 @@ Dynamite adapter ──→ principal-bound StrategyBinding
 @pakka/agent     ──→ 固定的 patched Durable + pi-ai/chord
 ```
 
-MAS 和 Dynamite 不依赖 CLI；agent 不反向 import MAS、DevPack 或 Dynamite。`apps/` 可以装配库，库不能依赖 app。默认启用、工具组合、模型 allowlist、凭据、预算与 worker 隔离由受信任 bootstrap 明确配置。
+MAS 和 Dynamite 不依赖 CLI；agent 不反向 import MAS、DevPack 或 Dynamite。`apps/` 可以装配库，核心库不能依赖 app。Pakka-Pocket 的明确例外仅为可选 extension facet peer-consume `@pakka/webui` 的纯 public SDK exports：不得 import executable、私有 store/router/backend startup；现有 Agent-only export 不加载 WebUI。纯 SDK、browser/backend graph 与安装消费者必须独立验收。默认启用、工具组合、模型 allowlist、凭据、预算与 worker 隔离由受信任 bootstrap 明确配置。
 
 MAS policy 决定资源关系和可授予的动作；agent 在实际效果边界绑定调用身份、目标与有效期，并执行授权。MAS 通过窄端口完成登记和编排，不能取得可任意调用的原始事务或 Harness。可信 bootstrap 的控制端口与 agent-facing 端口必须分别授予。
 
@@ -66,7 +68,7 @@ MAS policy 决定资源关系和可授予的动作；agent 在实际效果边界
 
 生产 Pi mutable objects 和凭据继续封装在 `packages/agent/src/durable-adapter.ts`。多 Conversation/Session 支持也必须经过该适配边界。其他组件接收冻结 DTO 与绑定身份的命令 closure；测试 oracle 不进入生产 graph、声明或安装产物。
 
-Pakka extension 的安装契约在迁移阶段定义，必须包含契约版本、显式激活/卸载、请求的权限、受限服务端口和 invocation 生命周期。MAS DevPack 是可选 built-in extension；安装代码不等于授予全部能力。包入口不得通过自动发现、import 副作用或直接注册原生 Pi hook 绕过受控接口。
+现有 MAS DevPack 的 Agent contribution 继续遵守已验收契约；后续 [WebUI/扩展契约](WEBUI-DEVELOPMENT.md) 增加可选 Agent、Backend、WebUI、Client facets，包含版本、激活/卸载、受限服务端口与 generation/invocation 生命周期。用户授权安装插件即确认代码可信，不代表每个被邀请人获得其业务权限，也不构成恶意插件沙箱。MAS Board 必须通过和另一份普通扩展相同的公开插槽实现；WebUI-only 不自动安装模型工具，Agent-only 不依赖 Web 产品启动。包入口不得通过自动发现、import 副作用或直接注册原生 Pi hook 绕过受控接口。
 
 普通 hook 抛错仍可能被 Durable report-and-skip。拒绝生成使用受支持的 block/check 路径，在全部 hook 之后和 provider payload 边界重验；不以错误日志代替零 HTTP 证据。
 
@@ -119,7 +121,7 @@ Durable ownership 是生命周期关系，不是 ACL。应用 ownership 变更�
 
 ## 6. 协议与客户端的抽取条件
 
-初期可复用 `@pakka/mas` 的明确 client/transport 入口。第一个真实浏览器或独立服务消费者落地时，再根据协议边界抽取 `@pakka/protocol`；多个客户端共享连接实现时再抽取 `@pakka/client`。它们不是当前已有包。
+M5 已抽取 `@pakka/protocol` 与 `@pakka/client` 并验证实际浏览器/CLI 消费。现有 v1 为显式 loopback token 协议；Pakka-Pocket 的多人/邀请/远程路径需要新的版本化 schema/client 入口、person-scoped read model 和事件流，不能直接放宽 v1 默认。其目标不等于已经交付，见 [Pakka-Pocket 计划](PAKKA-POCKET-PLAN.md)。
 
 协议层只包含可序列化引用、命令、事件、错误、receipt、runtime schema 和版本协商；不能依赖 Node 文件系统、Pi runtime、server 启动或进程内 capability。TypeScript interface 不能替代消息 runtime validation。
 
@@ -149,13 +151,13 @@ Dynamite 专项已由用户授权延期，先完成核心迁移再处理；[已�
 
 ## 9. Repository 拆分规则
 
-| 组件                                | 当前选择             | 重新评估的条件                              |
-| ----------------------------------- | -------------------- | ------------------------------------------- |
-| agent / gate 职责 / Durable adapter | 同仓、同包           | 存在真实独立消费者、稳定端口和独立发布需要  |
-| Durable patch                       | Pakka 内版本化 patch | 有其他 downstream 消费者和独立发布/回归流程 |
-| MAS 服务与 DevPack                  | 同仓、分包           | 契约稳定且能够适配其他宿主                  |
-| Dynamite                            | 保持现有独立仓库     | 通过固定版本的跨仓验收维护兼容              |
-| GUI / pi-pocket fork                | 先按真实应用落地     | server 协议稳定，可脱离宿主源码开发与验收   |
-| CLI / server                        | 同仓应用             | 出现独立维护、发布或部署需求                |
+| 组件                                | 当前选择                                     | 重新评估的条件                              |
+| ----------------------------------- | -------------------------------------------- | ------------------------------------------- |
+| agent / gate 职责 / Durable adapter | 同仓、同包                                   | 存在真实独立消费者、稳定端口和独立发布需要  |
+| Durable patch                       | Pakka 内版本化 patch                         | 有其他 downstream 消费者和独立发布/回归流程 |
+| MAS 服务与 DevPack                  | 同仓、分包                                   | 契约稳定且能够适配其他宿主                  |
+| Dynamite                            | 保持现有独立仓库                             | 通过固定版本的跨仓验收维护兼容              |
+| GUI / pi-pocket 收编                | 计划为单一 `@pakka/webui` 产品包，与主仓维护 | 出现稳定公开协议、独立交付和真实拆仓需要    |
+| CLI / server                        | 同仓应用                                     | 出现独立维护、发布或部署需求                |
 
 独立 package 可以拥有自己的版本而留在同仓；独立进程也可以由同仓应用启动。只有消费契约、release 和集成验收均可独立时才拆 repo。GUI fork 保留上游历史与可复核的版本；本规范不假定未经调查的 pi-pocket transport/API 已兼容 Pakka。

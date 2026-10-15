@@ -194,6 +194,12 @@ M6 已在受支持 headless 范围验收：private server `0.4.0`，agent `0.5.0
 
 当前只允许宿主显式选择初始持久成员，不默认启用，不部署到 private worker 或动态子成员；lease 撤权不等于跨显式重新 bootstrap 的持久权限删除。配置和恢复范围见 [DYNAMITE-PRODUCT-API.md](DYNAMITE-PRODUCT-API.md)。完整指定产品复审已收敛，遗漏门禁脚本的冻结身份已修正并通过 35 文件/2 tarball 验证；B-1 的 P1/P2 分歧、B-2 产品预算正向拒绝观测限制和最终身份见 [验收记录](DYNAMITE-PRODUCT-ACCEPTANCE.md)。只放行此显式有限配对，未把 Dynamite 整体或历史 M0 改成 passed。
 
+### Core 后 Pakka-Pocket — 已确认范围，准备阶段
+
+下一项产品工作采用 [PAKKA-POCKET-PLAN.md](PAKKA-POCKET-PLAN.md) 和 [WEBUI-DEVELOPMENT.md](WEBUI-DEVELOPMENT.md)，对应 active OpenSpec `pakka-pocket-webui`。目标是单一 `@pakka/webui` 产品包：收编 pi-pocket UI，保留多人/邀请/远程，移除旧 subagent/PiP authority，不迁移旧数据。MAS Board 由 DevPack 的可选 WebUI/Backend/Client facet 通过通用公开插槽提供。扩展代码按安装即可信处理，业务数据和操作仍由服务端按当前人类身份授权；slash command 默认不触发模型。
+
+这是新的目标范围，不修改上面的历史 M6 与 Dynamite 验收身份，也不把现有 v1 listener 自动放宽成 remote。P0–P6 的实现依赖、真实浏览器/安装门禁和剩余技术收敛见新计划；当前只落地提案与规范，不创建空产品或宣称 GUI 已完成。
+
 ## 3. 验证、交付与恢复规则
 
 当前已有命令可以作为 M0 基线：
