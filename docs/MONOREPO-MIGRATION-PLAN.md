@@ -188,6 +188,12 @@ M5 已验收，带明确 notes：agent `0.5.0` + mas `0.4.0` + mas-devpack `0.2.
 
 M6 已在受支持 headless 范围验收：private server `0.4.0`，agent `0.5.0` + mas `0.4.0` + mas-devpack `0.2.0` + protocol/client/cli `0.1.0`；全量 **251/251**、定向 **17/17**、离线 clean staging 及隔离 tarball 消费通过，新增 product consumer 独立验证 **18 次 HTTP / 7 个 native tool-call/result pair**、四种 lifetime、动态 roster 正常 reopen 与 spent quota。第一轮完整指定复审两方/closing 均 OK with notes，候选 P2 被反驳并撤回；没有复审后的代码修改或冗余第二轮。GUI 本轮不创建，Dynamite 仍 deferred，下一步以此核心产物恢复 DC-01–DC-12。固定身份、hardening notes 和剩余限制见 [MIGRATION-M6-ACCEPTANCE.md](MIGRATION-M6-ACCEPTANCE.md) 与 [MAS-PRODUCT-SUPPORT.md](MAS-PRODUCT-SUPPORT.md)。
 
+### Core 后 Dynamite 专项 — 显式可选配对带 notes 验收
+
+保留历史 M0 配对的 1/6、五失败；新配对单独固定为 `agent@0.5.0 × dynamite@0.2.1`，private server `0.5.0`。库基线 `0.2.0` 已通过完整指定复审；实际产品触发后修复了无精确 inference receipt 时错误写 adoption 的边界，未改变核心 tarball或成熟压缩算法。候选执行门禁为核心 255/255、库 345/345、隔离库 47/47（299 本地 HTTP）、产品 5/5（107 HTTP、8 原生 tool call/result），均无 skip/todo/cancel；原有 M6 安装消费者也通过。
+
+当前只允许宿主显式选择初始持久成员，不默认启用，不部署到 private worker 或动态子成员；lease 撤权不等于跨显式重新 bootstrap 的持久权限删除。配置和恢复范围见 [DYNAMITE-PRODUCT-API.md](DYNAMITE-PRODUCT-API.md)。完整指定产品复审已收敛，遗漏门禁脚本的冻结身份已修正并通过 35 文件/2 tarball 验证；B-1 的 P1/P2 分歧、B-2 产品预算正向拒绝观测限制和最终身份见 [验收记录](DYNAMITE-PRODUCT-ACCEPTANCE.md)。只放行此显式有限配对，未把 Dynamite 整体或历史 M0 改成 passed。
+
 ## 3. 验证、交付与恢复规则
 
 当前已有命令可以作为 M0 基线：

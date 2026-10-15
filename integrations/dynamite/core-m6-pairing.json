@@ -1,0 +1,60 @@
+{
+	"schema": "pakka.dynamite.product-pairing.v1",
+	"status": "accepted-bounded",
+	"host": {
+		"commit": "55ccbae",
+		"name": "@pakka/agent",
+		"version": "0.5.0",
+		"tarballSha256": "c5a7e7e1d2c9206baa67c0e0b3cbb479b991582b8e9a64803352d9efd8df3036",
+		"durableVersion": "1.0.3-pakka.1",
+		"durableTarballSha256": "535d90fd195a1e9c6c9dc1b22b7f0ca15aac41652bb7d644da616148947bcfa7"
+	},
+	"dynamite": {
+		"repository": "https://github.com/mapleluvr/pakka-dynamite.git",
+		"commit": "dcc378abb839c277f78dc240035bb5c19d6ad318",
+		"baseCommit": "45648f58144bfa0b9d81a35d70a7d108186bf2a9",
+		"name": "@pakka/dynamite",
+		"version": "0.2.1",
+		"tarballSha256": "c1339c19531422f7db058628346b605bfb156b22a6bf06d9686a8219959c383d",
+		"sourceStatus": "committed-reviewed-bounded-product",
+		"reviewedTarballSha256": "760ae84d36f54e5fa6692fd6cb58dd93de8479d7f836f0ff66c7d52b73abe829"
+	},
+	"libraryEvidence": {
+		"sourceTests": 345,
+		"installedTests": 47,
+		"installedHttp": 299,
+		"providerErrors": 0,
+		"productAcceptance": false
+	},
+	"productEvidence": {
+		"status": "accepted-bounded",
+		"installedTests": 5,
+		"installedHttp": 107,
+		"nativeToolCallResults": 8,
+		"providerErrors": 0,
+		"reviewWorkflow": "c8a6f4d5-f998-4a0c-b43f-1b58d5370fec",
+		"reviewVerdict": "OK with notes",
+		"amendedReviewSourceFiles": 35,
+		"identityOmissionFixed": true,
+		"positiveProductBudgetRefusalObserved": false,
+		"scope": "explicit initial persistent members only; no default activation, worker or dynamic-child provisioning",
+		"acceptance": "../../docs/DYNAMITE-PRODUCT-ACCEPTANCE.md"
+	},
+	"historicalFailedPairing": "pairing.json",
+	"libraryBaseline": {
+		"dynamite": {
+			"repository": "https://github.com/mapleluvr/pakka-dynamite.git",
+			"commit": "45648f58144bfa0b9d81a35d70a7d108186bf2a9",
+			"name": "@pakka/dynamite",
+			"version": "0.2.0",
+			"tarballSha256": "35bf616c3a45d15a60e78c660ab3cb533d54dcba947cd9e9bdd4e58333ef6ae8"
+		},
+		"evidence": {
+			"sourceTests": 344,
+			"installedTests": 46,
+			"installedHttp": 288,
+			"providerErrors": 0,
+			"productAcceptance": false
+		}
+	}
+}

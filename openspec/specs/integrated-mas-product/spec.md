@@ -22,11 +22,11 @@ A trusted product bootstrap SHALL install DevPack only for explicitly approved p
 
 ### Requirement: Explicit supported combinations
 
-The product SHALL distinguish application RPC, trusted library/fixed-worker composition and unsupported public broker/template allocation. RPC spawn/configure/fork grants MUST be refused before opening storage in DevPack-enabled product bootstrap until their actor-to-agent ceilings are supported. Lifetime, normal-reopen identity/quota and unknown outcomes MUST remain native/controlled-service semantics.
+The product SHALL distinguish application RPC, trusted library/fixed-worker composition and unsupported public broker/template allocation. RPC spawn/configure/fork grants MUST be refused before opening storage in DevPack-enabled or Dynamite-enabled product bootstrap until their actor-to-agent ceilings are supported. Lifetime, normal-reopen identity/quota and unknown outcomes MUST remain native/controlled-service semantics.
 
 #### Scenario: Unsupported remote profile management
 
-- **WHEN** trusted startup combines model contributions with a profile-changing RPC role
+- **WHEN** trusted startup combines either model contribution with a profile-changing RPC role
 - **THEN** startup rejects before storage/model effects rather than silently enabling authority amplification
 
 #### Scenario: Normal product reopen
@@ -46,7 +46,7 @@ The product SHALL distinguish application RPC, trusted library/fixed-worker comp
 
 ### Requirement: Fixed-artifact product acceptance
 
-Supported combinations SHALL be exercised using real installed artifacts without workspace paths/root overrides and local deterministic providers. Evidence MUST distinguish native admission/generation/tool results from external effects and retain unknowns. GUI inclusion SHALL be a separate documented consumer/repository decision, not a prerequisite for headless acceptance. Deferred Dynamite MUST NOT be installed or advertised as compatible.
+Supported combinations SHALL be exercised using real installed artifacts without workspace paths/root overrides and local deterministic providers. Evidence MUST distinguish native admission/generation/tool results from external effects and retain unknowns. GUI inclusion SHALL be a separate documented consumer/repository decision, not a prerequisite for headless acceptance. Dynamite SHALL remain absent by default and SHALL only be advertised as optional supported pairing after the new fixed library and actual product gates pass; historical failed pairing MUST remain recorded.
 
 #### Scenario: Actual operator path
 

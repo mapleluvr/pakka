@@ -28,7 +28,19 @@ npm run test:dynamite
 
 当前第一组回归覆盖编号、reduce/flush、64/128 cap 的压缩候选与 wire adoption、reload/reopen 和缺失权限的零 dispatch。源 edit/ABA、unknown-storage 及其他组合回归仍是 [M0 退出条件](../../docs/MONOREPO-MIGRATION-PLAN.md)，本目录初始回归不代表完整 M0 已通过。
 
-## 当前固定配对：blocked
+## 核心迁移后的可选产品配对（独立候选）
+
+历史 `pairing.json` 和下节 blocked 结果保持原样。新的 `core-m6-pairing.json` 固定已接受的 M6 `agent@0.5.0` 和 corrective `dynamite@0.2.1`；外仓成熟算法未迁入此目录，SDK 原始 records 未伪装旧格式。
+
+```powershell
+npm run test:dynamite:product -- <accepted-agent-archive.tgz> <candidate-dynamite-archive.tgz>
+```
+
+这个独立 runner 在执行 build、pack 或安装前核验双方精确 SHA；两种 archive-byte 污染反例均返回 blocked、零子命令。它打包当前真实 server/client/CLI 并在仓库外安装，运行完整 5 项产品场景，拒绝缺项、skip/todo/cancelled；正常路径为 107 次本地 HTTP、8 个 native tool-call/result，另有一个明确的丢失摘要响应。它不从 sibling checkout 或 workspace overrides 取代已固定的 runtime archives。
+
+此显式限定配对已完成执行门禁、完整指定产品复审和身份遗漏修正；两方意见及剩余观测限制见 [验收记录](../../docs/DYNAMITE-PRODUCT-ACCEPTANCE.md)。不将历史 M0 改为 passed，不默认启用或推广到未验证组合。可用组合、显式安装、撤权与 reopen 语义见 [Dynamite 产品 API](../../docs/DYNAMITE-PRODUCT-API.md)。
+
+## 历史固定配对：blocked
 
 - Pakka 生产基线：`6c77632`；本轮宿主 checkout：`84bffb141bc610ed0c322e081c192a0e39508c4b`（相同生产代码，加仓库规范）。
 - Dynamite：`5ff775aee041fe63a82a7fcd1d108d17c206da4e`，`@pakka/dynamite@0.1.0`。

@@ -7,8 +7,8 @@
 - `@pakka/protocol@0.1.0`：闭合 version-1 JSON schema、资源引用、scoped snapshot 和 receipt；无 Pi、Node、storage、凭据发现依赖。
 - `@pakka/client@0.1.0`：同一 fetch client 供 Node/CLI/browser 使用，校验响应、明确 deadline/cancellation/reconnect；不自动重试 mutation。
 - `@pakka/cli@0.1.0`：只读显式 connection/command JSON，调用 client、输出结果；不定义 MAS policy。
-- 当前 private `@pakka/server@0.4.0`：保留 worker manager、`@pakka/server/http`、`@pakka/server/bootstrap` 和 `pakka-server` executable。M5 的固定历史产物是 `0.3.0`；`0.4.0` 的可选 product contribution 已在 M6 验收，见 [产品支持矩阵](MAS-PRODUCT-SUPPORT.md) 和 [M6 验收](MIGRATION-M6-ACCEPTANCE.md)。
-- 当前搭配 `@pakka/agent@0.5.0`、`@pakka/mas@0.4.0`、`@pakka/mas-devpack@0.2.0`。Dynamite 仍是 [deferred](DEFERRED-DYNAMITE-COMPATIBILITY.md)，不默认装配。
+- 当前 private `@pakka/server@0.5.0`：保留 worker manager、`@pakka/server/http`、`@pakka/server/bootstrap` 和 `pakka-server` executable，新增显式可选 Dynamite 装配（在 [限定范围](DYNAMITE-PRODUCT-ACCEPTANCE.md) 带 notes 验收）。M5 的固定历史产物是 `0.3.0`；`0.4.0` 的 DevPack product contribution 已在 M6 验收，见 [产品支持矩阵](MAS-PRODUCT-SUPPORT.md) 和 [M6 验收](MIGRATION-M6-ACCEPTANCE.md)。
+- 当前搭配 `@pakka/agent@0.5.0`、`@pakka/mas@0.4.0`、`@pakka/mas-devpack@0.2.0`。Dynamite 历史失败与 [延期目标](DEFERRED-DYNAMITE-COMPATIBILITY.md) 保留；迁移后可选配对的受限配置见 [Dynamite 产品 API](DYNAMITE-PRODUCT-API.md)，完整复审与身份闭环见上方验收记录；不默认装配或推广至 worker/动态子成员。
 
 请求中的 ref 只是受检地址，不是 capability。server 由专用 client token 找到宿主批准的 principal/source/grants，重新检查该 issuer role 和 MAS 权限。请求不能指定 caller、owner、storage path、provider/model credential、tools 或预算。不要把 provider API key 用作 client token。
 
@@ -53,7 +53,7 @@ Server config 的结构示例（全部值均为占位符，不是可用凭据）
 }
 ```
 
-`runtime` 的 JSON bootstrap 接受以上基础字段、`reopenSessionFile`、`reservedSessionId`，以及 M6 新增的 `profiles: [{id, systemPrompt}]`。profile 默认为 gate 的 `default`；未批准 profile 会由 gate 拒绝。可选 `devpack` 的批准配置、RPC profile-management 组合拒绝和正常恢复范围见 [产品支持矩阵](MAS-PRODUCT-SUPPORT.md)。functions、额外 tools/extensions/config 均不属于该 JSON bootstrap；更复杂的程序化配置仍由可信 composition root 使用 `createMasServer()`，不能从 RPC 传入。
+`runtime` 的 JSON bootstrap 接受以上基础字段、`reopenSessionFile`、`reservedSessionId`，以及 M6 新增的 `profiles: [{id, systemPrompt}]`。后续显式可选装配增加闭合的 `runtime.inference: {models, policies}`，模型/凭据/endpoint 和有限预算仅由宿主配置；选择方式和限制见 Dynamite 产品 API。profile 默认为 gate 的 `default`；未批准 profile 会由 gate 拒绝。可选 `devpack` 的批准配置、RPC profile-management 组合拒绝和正常恢复范围见 [产品支持矩阵](MAS-PRODUCT-SUPPORT.md)。functions、额外 tools/extensions/config 均不属于该 JSON bootstrap；更复杂的程序化配置仍由可信 composition root 使用 `createMasServer()`，不能从 RPC 传入。
 
 ```powershell
 node apps/server/dist/main.js --config D:/explicit/server.json

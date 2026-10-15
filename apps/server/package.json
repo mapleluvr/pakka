@@ -1,6 +1,6 @@
 {
 	"name": "@pakka/server",
-	"version": "0.4.0",
+	"version": "0.5.0",
 	"private": true,
 	"type": "module",
 	"exports": {
@@ -33,5 +33,13 @@
 		"@pakka/mas": "0.4.0",
 		"@pakka/mas-devpack": "0.2.0",
 		"@pakka/protocol": "0.1.0"
+	},
+	"peerDependencies": {
+		"@pakka/dynamite": "0.2.1"
+	},
+	"peerDependenciesMeta": {
+		"@pakka/dynamite": {
+			"optional": true
+		}
 	}
 }

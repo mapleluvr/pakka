@@ -4,6 +4,8 @@ import { createMas } from "@pakka/mas";
 import type { Mas, MasGrant } from "@pakka/mas";
 import { profileDevPacks, retainedProductRoots } from "./profile-devpack.ts";
 import type { ProfileDevPackConfig } from "./profile-devpack.ts";
+import { productDynamite, validProductDynamite } from "./product-dynamite.ts";
+import type { ProductDynamiteConfig } from "./product-dynamite.ts";
 import { identity } from "@pakka/protocol";
 import { createMasServer } from "./http-server.ts";
 import type { MasServer, ServerRole } from "./http-server.ts";
@@ -23,6 +25,7 @@ export interface BootstrapConfig {
 	readonly members: readonly { readonly key: string; readonly owner: string; readonly profile?: string }[];
 	readonly roles: readonly RoleConfig[];
 	readonly devpack?: ProfileDevPackConfig;
+	readonly dynamite?: ProductDynamiteConfig;
 	readonly http?: {
 		readonly port?: number;
 		readonly origins?: readonly string[];
@@ -44,12 +47,68 @@ function shape(
 }
 const positive = (value: unknown) => typeof value === "number" && Number.isSafeInteger(value) && value > 0;
 const text = (value: unknown) => typeof value === "string" && value.length > 0 && value.length <= 65536;
+function inferenceConfig(value: unknown): boolean {
+	if (
+		!shape(value, ["models", "policies"]) ||
+		!Array.isArray(value.models) ||
+		!Array.isArray(value.policies) ||
+		value.models.length < 1 ||
+		value.models.length > 128 ||
+		value.policies.length < 1 ||
+		value.policies.length > 128
+	)
+		return false;
+	if (
+		value.models.some(
+			(model) =>
+				!shape(
+					model,
+					["key", "model", "endpoint", "apiKey", "contextWindow", "maxTokens"],
+					["name", "reasoning", "headers"],
+				) ||
+				!identity(model.key) ||
+				!["model", "endpoint", "apiKey"].every((key) => text(model[key])) ||
+				!positive(model.contextWindow) ||
+				!positive(model.maxTokens) ||
+				(model.name !== undefined && !text(model.name)) ||
+				(model.reasoning !== undefined && typeof model.reasoning !== "boolean") ||
+				(model.headers !== undefined &&
+					(!record(model.headers) ||
+						Object.keys(model.headers).length > 128 ||
+						Object.values(model.headers).some((header) => !text(header)))),
+		)
+	)
+		return false;
+	const keys = value.models.map((model) => model.key);
+	return (
+		new Set(keys).size === keys.length &&
+		new Set(value.policies.map((policy) => (record(policy) ? policy.strategyId : null))).size ===
+			value.policies.length &&
+		value.policies.every(
+			(policy) =>
+				shape(policy, [
+					"strategyId",
+					"modelKeys",
+					"maxCalls",
+					"maxJobCalls",
+					"maxOutputTokens",
+					"timeoutMs",
+				]) &&
+				identity(policy.strategyId) &&
+				Array.isArray(policy.modelKeys) &&
+				policy.modelKeys.length > 0 &&
+				new Set(policy.modelKeys).size === policy.modelKeys.length &&
+				policy.modelKeys.every((key) => keys.includes(key)) &&
+				["maxCalls", "maxJobCalls", "maxOutputTokens", "timeoutMs"].every((key) => positive(policy[key])),
+		)
+	);
+}
 function runtimeConfig(value: unknown): value is RuntimeOptions {
 	return (
 		shape(
 			value,
 			["cwd", "dataDir", "endpoint", "model", "apiKey", "systemPrompt", "limits"],
-			["reopenSessionFile", "reservedSessionId", "maxOutputTokens", "profiles"],
+			["reopenSessionFile", "reservedSessionId", "maxOutputTokens", "profiles", "inference"],
 		) &&
 		["cwd", "dataDir", "endpoint", "model", "apiKey", "systemPrompt"].every((key) => text(value[key])) &&
 		shape(value.limits, ["maxConversations", "maxPrimaryAttempts", "maxAuxiliaryAttempts"]) &&
@@ -57,6 +116,7 @@ function runtimeConfig(value: unknown): value is RuntimeOptions {
 		(value.reopenSessionFile === undefined || text(value.reopenSessionFile)) &&
 		(value.reservedSessionId === undefined || identity(value.reservedSessionId)) &&
 		(value.maxOutputTokens === undefined || positive(value.maxOutputTokens)) &&
+		(value.inference === undefined || inferenceConfig(value.inference)) &&
 		(value.profiles === undefined ||
 			(Array.isArray(value.profiles) &&
 				value.profiles.length <= 128 &&
@@ -83,7 +143,7 @@ const grants: readonly MasGrant[] = [
 ];
 export function decodeBootstrap(value: unknown): BootstrapConfig {
 	if (
-		!shape(value, ["schema", "runtime", "mas", "members", "roles"], ["http", "devpack"]) ||
+		!shape(value, ["schema", "runtime", "mas", "members", "roles"], ["http", "devpack", "dynamite"]) ||
 		value.schema !== "pakka.server.v1" ||
 		!runtimeConfig(value.runtime) ||
 		!shape(value.mas, ["namespace", "maxDeliveries", "maxPending"]) ||
@@ -147,6 +207,17 @@ export function decodeBootstrap(value: unknown): BootstrapConfig {
 		)
 			throw new Error("RPC profile management with DevPack is unsupported");
 	}
+	if (value.dynamite !== undefined) {
+		// Root/member shape above is checked before this identity/selection validation.
+		if (!validProductDynamite(value.dynamite, value.members))
+			throw new Error("Invalid approved product Dynamite configuration");
+		if (
+			value.roles.some((role) =>
+				role.grants.some((grant: MasGrant) => ["spawn", "configure", "fork"].includes(grant)),
+			)
+		)
+			throw new Error("RPC profile management with Dynamite is unsupported");
+	}
 	if (value.http !== undefined) {
 		if (
 			!shape(value.http, [], ["port", "origins", "maxPending"]) ||
@@ -165,27 +236,35 @@ export function decodeBootstrap(value: unknown): BootstrapConfig {
 	return value as unknown as BootstrapConfig;
 }
 /** Host-selected config only. No import-time startup, discovery or model request. */
-export async function bootstrapServer(
-	config: BootstrapConfig,
-): Promise<{ readonly server: MasServer; close(): Promise<void> }> {
+export async function bootstrapServer(config: BootstrapConfig): Promise<{
+	readonly server: MasServer;
+	readonly revokeDynamite?: (key: string) => void;
+	close(): Promise<void>;
+}> {
 	const approved = decodeBootstrap(config);
 	let mas: Mas | undefined;
+	const dynamite = await productDynamite(approved);
 	const packs = profileDevPacks(approved.devpack, () => mas),
 		main = packs.get("default");
+	const tools = (profile: string) => {
+		const selected = [...(packs.get(profile)?.tools ?? []), ...(dynamite?.tools(profile) ?? [])];
+		if (new Set(selected.map((tool) => tool.name)).size !== selected.length)
+			throw new Error("Conflicting approved product tools");
+		return selected;
+	};
 	const runtime = await createRuntime({
 		...approved.runtime,
-		...(main
-			? { tools: main.tools, systemPrompt: [approved.runtime.systemPrompt, main.instructions].join("\n\n") }
-			: {}),
+		...(main || dynamite ? { tools: tools("default") } : {}),
+		...(main ? { systemPrompt: [approved.runtime.systemPrompt, main.instructions].join("\n\n") } : {}),
 		profiles: approved.runtime.profiles?.map((profile) => {
 			const pack = packs.get(profile.id);
 			return pack
 				? {
 						...profile,
-						tools: pack.tools,
+						tools: tools(profile.id),
 						systemPrompt: [profile.systemPrompt, pack.instructions].join("\n\n"),
 					}
-				: { ...profile, tools: profile.tools ?? [] };
+				: { ...profile, tools: dynamite ? tools(profile.id) : (profile.tools ?? []) };
 		}),
 	});
 	try {
@@ -210,6 +289,7 @@ export async function bootstrapServer(
 			await mas.bootstrap(approved.members);
 			await mas.activate();
 		}
+		await dynamite?.install(runtime, mas);
 		const view = await mas.view();
 		const roles: ServerRole[] = approved.roles.map((role) => {
 			const source =
@@ -233,17 +313,26 @@ export async function bootstrapServer(
 		let closed: Promise<void> | undefined;
 		return Object.freeze({
 			server,
+			...(dynamite ? { revokeDynamite: (key: string) => dynamite.revoke(key) } : {}),
 			close: () =>
 				(closed ??= (async () => {
 					try {
 						await server.close();
 					} finally {
-						await runtime.close();
+						try {
+							await dynamite?.close();
+						} finally {
+							await runtime.close();
+						}
 					}
 				})()),
 		});
 	} catch (error) {
-		await runtime.close();
+		try {
+			await dynamite?.close();
+		} finally {
+			await runtime.close();
+		}
 		throw error;
 	}
 }

@@ -1,6 +1,6 @@
 # Integrated MAS product — M6 support boundary
 
-M6 已在本文范围内验收（带 notes），证据、固定产物和复审结论见 [MIGRATION-M6-ACCEPTANCE.md](MIGRATION-M6-ACCEPTANCE.md)。核心产品使用真实 `pakka-server`/`pakka` executable、共享 client 和可选模型侧 DevPack。Dynamite 的历史失败仍 [deferred](DEFERRED-DYNAMITE-COMPATIBILITY.md)，默认策略是 native context；GUI 本轮不创建。
+M6 已在本文范围内验收（带 notes），证据、固定产物和复审结论见 [MIGRATION-M6-ACCEPTANCE.md](MIGRATION-M6-ACCEPTANCE.md)。核心产品使用真实 `pakka-server`/`pakka` executable、共享 client 和可选模型侧 DevPack。Dynamite 的历史失败仍 [留档](DEFERRED-DYNAMITE-COMPATIBILITY.md)，核心迁移后的显式可选产品配对已带 notes 验收，见 [固定身份与限制](DYNAMITE-PRODUCT-ACCEPTANCE.md) 和 [配置 API](DYNAMITE-PRODUCT-API.md)；默认策略仍是 native context，GUI 本轮不创建。
 
 ## 1. Operator startup and model authority
 
@@ -32,17 +32,17 @@ M6 已在本文范围内验收（带 notes），证据、固定产物和复审�
 
 ## 2. Support matrix
 
-| Surface / combination        | Current supported path                                                                                                           | What is not implied                                                                                   |
-| ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| Same-Session product         | One explicit server bootstrap, CLI/shared client, actual model tools, native A2A/reply, finite Session quota                     | Not a stock Pi CLI/extension sandbox                                                                  |
-| Persistent model child       | Current Session, approved profile, owner grant intersection; verified normal closed reopen                                       | No arbitrary storage/profile/grant input                                                              |
-| Temporary / task-bound       | Real creating tool-task ownership; after that tool ends, `inspect` is ended and late input fails closed                          | Not a scratch Conversation lasting the whole generation or next prompt; no physical history deletion  |
-| Background child             | Survives creating tool boundary; explicit authorized owner retire drains native anchor                                           | No unlimited lifetime/process isolation or external effect rollback                                   |
-| Existing/new Session request | Trusted programmatic `ApprovedSessions` with fixed templates/slots, tested separately through installed DevPack/broker consumers | Not exposed by product JSON/RPC; a model request without the service is refused, not auto-provisioned |
-| Same-process multi-Session   | Explicit trusted runtime/broker composition and installed broker path                                                            | Not a new fault-isolated process; not one global transaction/revision                                 |
-| Independent worker           | Trusted private worker manager/preset, native process IPC, installed real-PID tests                                              | No remote arbitrary process/configuration launch, no automatic forced-exit writer-claim release       |
-| Strategy                     | Native/default context in product; explicit principal-bound controlled strategy ports in gate package                            | Dynamite not enabled/supported; no arbitrary strategy module loading from JSON/RPC                    |
-| Browser / GUI                | Browser-safe shared client, real owned-Chrome validation in M5/full gate                                                         | No GUI app delivered; protocol/client is the future GUI boundary                                      |
+| Surface / combination        | Current supported path                                                                                                                                        | What is not implied                                                                                   |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| Same-Session product         | One explicit server bootstrap, CLI/shared client, actual model tools, native A2A/reply, finite Session quota                                                  | Not a stock Pi CLI/extension sandbox                                                                  |
+| Persistent model child       | Current Session, approved profile, owner grant intersection; verified normal closed reopen                                                                    | No arbitrary storage/profile/grant input                                                              |
+| Temporary / task-bound       | Real creating tool-task ownership; after that tool ends, `inspect` is ended and late input fails closed                                                       | Not a scratch Conversation lasting the whole generation or next prompt; no physical history deletion  |
+| Background child             | Survives creating tool boundary; explicit authorized owner retire drains native anchor                                                                        | No unlimited lifetime/process isolation or external effect rollback                                   |
+| Existing/new Session request | Trusted programmatic `ApprovedSessions` with fixed templates/slots, tested separately through installed DevPack/broker consumers                              | Not exposed by product JSON/RPC; a model request without the service is refused, not auto-provisioned |
+| Same-process multi-Session   | Explicit trusted runtime/broker composition and installed broker path                                                                                         | Not a new fault-isolated process; not one global transaction/revision                                 |
+| Independent worker           | Trusted private worker manager/preset, native process IPC, installed real-PID tests                                                                           | No remote arbitrary process/configuration launch, no automatic forced-exit writer-claim release       |
+| Strategy                     | Native/default context; explicit controlled ports. Explicit optional Dynamite is accepted in the bounded static-member slice ([API](DYNAMITE-PRODUCT-API.md)) | Not default activation, worker/dynamic-child provisioning or arbitrary module loading from JSON/RPC   |
+| Browser / GUI                | Browser-safe shared client, real owned-Chrome validation in M5/full gate                                                                                      | No GUI app delivered; protocol/client is the future GUI boundary                                      |
 
 仅程序化的组合不能标成 server/CLI 已公开的命令。产品用户需要完整原始 refs 和稳定 input.requestId，不能从 CLI 自报权限；A2A 的 source/reply provenance 来自已提交 receipt，不来自自然语言 sender 标记。
 
@@ -64,6 +64,6 @@ M6 已在本文范围内验收（带 notes），证据、固定产物和复审�
 
 源码 product 回归在 `apps/server/test/product.test.ts`；隔离消费者在 `scripts/consumer-product.mjs`，由 `npm run smoke:package` 安装实际 tarballs 并运行。它从真实 server/CLI 启动，核对 actual tool-call/results、批准 A2A/reply、权限拒绝、四种 lifetime、正常 reopen 与已消费 quota，保存独立的 HTTP 和原始 storage；不是成功 callback stub。完整门禁还保留各边界的实际 browser、同进程多 Session 和 real-worker 消费。
 
-M6 完整 gate 和第一轮完整指定有界对抗复审已通过，核心 package/artifact identities 已固定，见验收记录。下一步在独立 Dynamite 仓库修 frame contract，完成 DC-01–DC-12，再增加宿主批准的可选策略产品配对。默认策略改变不是兼容验收的隐含结果。
+M6 完整 gate 和第一轮完整指定有界对抗复审已通过，核心 package/artifact identities 已固定，见验收记录。后续独立 Dynamite 仓库的 `0.2.0` 库兼容复审已收敛；产品验收暴露的无 inference receipt 修订为 `0.2.1`，其 345 项源码、47 项安装与 5 项实际产品消费者已通过执行门禁，完整指定产品复审已收敛，遗漏门禁脚本的身份链已 red/green 修正；产品预算正向拒绝观测缺口按 [验收记录](DYNAMITE-PRODUCT-ACCEPTANCE.md) 保留。默认策略改变不是兼容验收的隐含结果。
 
 GUI 暂不新增 package/app：已有 client/protocol 是真实消费者边界，本轮没有 UI 使用需求或视觉验收。将来需要 GUI 时消费这些端口；是否独立 repo 按 [monorepo 规范](MONOREPO-CONVENTIONS.md) 的实际发布/团队边界再判断，不以本轮目录创建作为结论。
