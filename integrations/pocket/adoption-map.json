@@ -1,0 +1,182 @@
+{
+	"schemaVersion": 1,
+	"sourceRole": "upstream",
+	"status": "migration ledger, not implemented UI",
+	"groups": [
+		{
+			"id": "foundation",
+			"files": [
+				"web/avatar.js",
+				"web/back.js",
+				"web/gestures.js",
+				"web/highlight.js",
+				"web/rich.js",
+				"web/sheets.js",
+				"web/theme.js",
+				"web/themes.js",
+				"web/ui.js",
+				"web/sheets/appearance.js",
+				"web/sheets/shortcuts.js",
+				"web/sheets/text.js"
+			],
+			"owner": "@pakka/webui public primitives and generic shell",
+			"scope": "authenticated shell or local browser preference",
+			"modelEffect": "none",
+			"acceptance": "P2/P5: real desktop/mobile browser navigation, focus, keyboard, theme, safe Markdown and render-error behavior"
+		},
+		{
+			"id": "shell",
+			"files": [
+				"web/app.js",
+				"web/dock.js",
+				"web/home.js",
+				"web/launcher.js",
+				"web/sessions.js",
+				"web/store.js",
+				"web/peeks.js",
+				"web/sheets/menu.js",
+				"web/sheets/session.js",
+				"web/sheets/running.js"
+			],
+			"owner": "@pakka/webui shell with scoped read/action services",
+			"scope": "person-visible Pakka Conversations; UI Session label never renames the Durable transaction domain",
+			"modelEffect": "explicit prompt/steer/followUp only; native abort/withdraw remain distinct",
+			"acceptance": "P2/P5: authorized multi-view navigation, title/archive, active-run/receipt inspection, reconnect and unauthorized resource probes; no PiP or MAS state in the core store"
+		},
+		{
+			"id": "identity",
+			"files": ["web/signin.js", "web/share.js", "web/sheets/people.js", "web/sheets/viewers.js"],
+			"owner": "@pakka/webui people/invitation service",
+			"scope": "current person and explicitly invited resources; administration remains owner-authorized",
+			"modelEffect": "none",
+			"acceptance": "P1/P2: two real browsers, one-time invite competition, expiry/revoke/reopen, viewer read versus steer and server-filtered events"
+		},
+		{
+			"id": "conversation",
+			"files": [
+				"web/composer.js",
+				"web/transcript.js",
+				"web/history.js",
+				"web/calls.js",
+				"web/sheets/find.js",
+				"web/sheets/message.js",
+				"web/sheets/model.js"
+			],
+			"owner": "controlled Conversation read/display/input/profile services",
+			"scope": "current person, Conversation incarnation, input requester and approved profile ceiling",
+			"modelEffect": "only explicit inputs/edits/resubmission/model changes; no display-only automatic input",
+			"acceptance": "P1/P2/P5: real native message and tool run, pagination, prompt/steer/followUp, role change, old cursor refusal and captured subsequent HTTP"
+		},
+		{
+			"id": "human-collaboration",
+			"files": ["web/chat.js", "web/turns.js"],
+			"owner": "@pakka/webui collaboration service",
+			"scope": "visible resource plus current person/driver; attributed CAS notes and bounded presence",
+			"modelEffect": "none unless an explicit action sends selected content",
+			"acceptance": "P5: two-user side chat, notes/reactions/pins/quotes, driver competition and revocation; positive stored attribution and no human-only content in real model payload"
+		},
+		{
+			"id": "files",
+			"files": [
+				"web/files-panel.js",
+				"web/files.js",
+				"web/diff.js",
+				"web/diff-parse.js",
+				"web/sheets/file.js",
+				"web/sheets/folder.js",
+				"web/sheets/branch.js",
+				"web/sheets/worktree.js"
+			],
+			"owner": "approved file/git/workspace services with public view contributions",
+			"scope": "host-approved roots and actor-specific file/git actions; no ambient filesystem access",
+			"modelEffect": "none for viewing; deliberate agent notification is explicit",
+			"acceptance": "P5: real isolated edits/diffs/branch/worktree and attachments, traversal/link refusals, read-only actor, export scope and byte verification; retain Windows baseline differences"
+		},
+		{
+			"id": "browser-artifacts",
+			"files": ["web/browser.js", "web/browser-panel.js", "web/run-frame.js"],
+			"owner": "approved browser/artifact/approval services",
+			"scope": "current visible resource, browser instance and specific pending call",
+			"modelEffect": "none for viewing; explicit approved action only",
+			"acceptance": "P5: actual owned browser action, sandboxed artifact, denied/late real approval and isolated navigation; do not replace effects with screenshots"
+		},
+		{
+			"id": "notifications",
+			"files": ["web/notify.js", "web/sw.js"],
+			"owner": "@pakka/webui per-person notification service",
+			"scope": "current browser installation and visible resource; no global private payload broadcast",
+			"modelEffect": "none",
+			"acceptance": "P5: actual browser notification/service-worker subscription, role-sensitive payload and navigation, unregister/revocation and private canary checks"
+		},
+		{
+			"id": "voice",
+			"files": ["web/voice.js"],
+			"owner": "optional browser dictation contribution",
+			"scope": "current composer and explicit browser microphone permission",
+			"modelEffect": "none until the person submits the composer",
+			"acceptance": "P5: controlled recognizer lifecycle and real-browser UI, leave/change composer cleanup, no auto send; disclose browser-provider speech transport and never test with user audio"
+		},
+		{
+			"id": "commands-settings",
+			"files": [
+				"web/commands.js",
+				"web/sheets/extensions.js",
+				"web/sheets/spend.js",
+				"web/sheets/providers.js",
+				"web/trust.js"
+			],
+			"owner": "public extension command/settings slots and owner-approved runtime configuration services",
+			"scope": "extension generation, person role, approved profile/model and private setting namespace",
+			"modelEffect": "human commands default to none; inference/input is declared explicitly",
+			"acceptance": "P3/P5: independent extension, typed/tapped/button parity, settings change actual behavior, private replace/clear, one Preact and no CLI auth/settings discovery; project extension use requires explicit installation"
+		},
+		{
+			"id": "scheduled-inputs",
+			"files": ["web/sheets/schedules.js"],
+			"owner": "public automation contribution using controlled durable jobs",
+			"scope": "visible Conversation and durable originating actor authority at due time",
+			"modelEffect": "intentional scheduled input only",
+			"acceptance": "P5: real checkpoint/reopen and finite scheduled delivery, explicit cancel receipt, due-time revocation and no duplicate effect after lost response; never load the old task registry"
+		},
+		{
+			"id": "memory",
+			"files": ["web/sheets/memory.js"],
+			"owner": "optional project-memory contribution using scoped settings/records",
+			"scope": "approved project or explicitly global owner scope; person-filtered content",
+			"modelEffect": "only the extension's declared Agent facet contributes approved memory",
+			"acceptance": "P3/P5: real read/write/conflict/approval and next-provider payload, cross-project privacy, disable contribution without deleting stored history; no old Pi settings migration"
+		},
+		{
+			"id": "hooks",
+			"files": ["web/sheets/hooks.js"],
+			"owner": "explicit-Conversation webhook contribution; remove PiP-only targets and repository-watch authority",
+			"scope": "host-approved endpoint, verified incoming identity and originating person's Conversation permission",
+			"modelEffect": "declared webhook input only",
+			"acceptance": "P5: real local signed webhook, rotation/replay/body bounds, revoke at delivery and native receipt; no PiP or implicit background assistant"
+		},
+		{
+			"id": "mas-board",
+			"files": ["web/subagents-board.js", "web/subagents.js"],
+			"owner": "@pakka/mas-devpack public facets",
+			"scope": "server-filtered MAS membership/ownership/lifetime and current person's allowed operations",
+			"modelEffect": "explicit MAS input only; interface installation does not install model tools",
+			"acceptance": "P4: real model-created member then human Board send/steer/reply/abort/retire, independent-plugin slot parity, disable preserves members and existing jobs"
+		},
+		{
+			"id": "pip-removal",
+			"files": ["web/pip.js"],
+			"owner": "remove per confirmed product scope",
+			"scope": "none",
+			"modelEffect": "removed",
+			"acceptance": "P4/P6: production graph/assets lack PiP assistant, hidden Conversation, reporter/courier, watch/dispatch and original subagent authority"
+		},
+		{
+			"id": "legacy-import-replacement",
+			"files": ["web/sheets/pi-sessions.js"],
+			"owner": "replace with Pakka-owned Conversation search/restore; no old storage import/discovery",
+			"scope": "authorized Pakka data directory and current person's resources",
+			"modelEffect": "read/normal reopen only, no automatic inference",
+			"acceptance": "P2/P5: search and reopen owned history; no scan of Pi CLI directories, old Pocket database or user credentials; old imports are outside the confirmed no-data-migration scope"
+		}
+	]
+}

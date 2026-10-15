@@ -327,6 +327,54 @@ export interface ConversationRef {
 	readonly incarnation: string;
 	readonly profile: string;
 }
+/** Bootstrap writes application display data; actor identity must be bound by the server, never the model. */
+export interface DisplayWrite {
+	readonly namespace: string;
+	readonly actorId: string;
+	readonly requestId: string;
+	readonly kind: "card" | "chat";
+	readonly text: string;
+}
+export interface DisplayReceipt {
+	readonly ref: ConversationRef;
+	readonly namespace: string;
+	readonly actorId: string;
+	readonly requestId: string;
+	readonly entryId: string;
+}
+export interface TranscriptMessage {
+	readonly role: "user" | "assistant" | "toolResult";
+	readonly content: string | readonly JsonObject[];
+	readonly toolCallId?: string;
+	readonly toolName?: string;
+	readonly isError?: boolean;
+	readonly stopReason?: string;
+}
+export interface ConversationSnapshot {
+	readonly ref: ConversationRef;
+	/** Active committed transcript, at most the newest 256 entries. No raw native objects or configuration. */
+	readonly entries: readonly {
+		readonly id: string;
+		readonly conversationId: string;
+		readonly kind: string;
+		readonly taskId?: string;
+		readonly messages: readonly TranscriptMessage[];
+		readonly display?: DisplayWrite;
+	}[];
+	readonly entriesTruncated: boolean;
+	readonly live: {
+		readonly busy: boolean;
+		readonly message?: TranscriptMessage;
+		readonly tools: readonly {
+			readonly callId: string;
+			readonly name: string;
+			readonly status: "pending" | "running" | "done";
+			readonly taskId?: string;
+			readonly output?: string;
+		}[];
+	};
+	readonly usage: UsageDTO;
+}
 export interface ConversationSpec {
 	readonly key: string;
 	readonly profile?: string;
@@ -426,6 +474,10 @@ export interface Runtime {
 	createConversation(spec: ConversationSpec): Promise<ConversationRef>;
 	catalog(options: CatalogOptions): RuntimeCatalog;
 	store(options: RuntimeStoreOptions): RuntimeStore;
+	/** Passive scoped snapshot. The check runs before native acquisition and again before publishing. */
+	readConversation(ref: ConversationRef, check: () => void): Promise<ConversationSnapshot>;
+	/** Durable display-only record, never a model input; retries require an identical actor/request/payload. */
+	writeDisplay(ref: ConversationRef, input: DisplayWrite, check: () => void): Promise<DisplayReceipt>;
 	conversation(ref: ConversationRef): Promise<Host>;
 	waitForIdle(): Promise<void>;
 	close(): Promise<void>;

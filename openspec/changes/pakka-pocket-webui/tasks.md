@@ -1,9 +1,11 @@
 ## 1. P0 — Source inventory and native feasibility
 
-- [ ] 1.1 Pin the adopted pi-pocket tree and Phase 1/2 ancestry, retain code/font licenses and per-file provenance, and record a fresh upstream failure baseline without promoting reported counts.
-- [ ] 1.2 Expand the migration inventory into actual screens/actions, their service owner and required real consumer; enumerate every old subagent/PiP production edge for removal.
-- [ ] 1.3 Add real pinned-Durable failing probes for committed Conversation/tool observation, display-only append with unchanged head/requester, and controlled background job/cancellation support.
-- [ ] 1.4 Prove human action-to-native-effect/Agent-profile ceiling requirements; record any necessary public API/patch delta before using the new path.
+- [x] 1.1 Pin the adopted pi-pocket tree and Phase 1/2 ancestry, retain code/font licenses and per-file provenance, and record a fresh upstream failure baseline without promoting reported counts.
+- [x] 1.2 Expand the migration inventory into actual screens/actions, their service owner and required real consumer; enumerate every old subagent/PiP production edge for removal.
+- [x] 1.3 Add real pinned-Durable failing probes for committed Conversation/tool observation, display-only append with unchanged head/requester, and controlled background job/cancellation support.
+- [x] 1.4 Prove human action-to-native-effect/Agent-profile ceiling requirements; record any necessary public API/patch delta before using the new path.
+
+P0 evidence/decisions: `docs/PAKKA-POCKET-P0.md` and `integrations/pocket/README.md`. Core 263/263, source/native feasibility 8/8 and actual installed consumers pass. Upstream 378 pass / 40 fail / 130 skip remains a failing source baseline. Actor/profile ceiling implementation and the controlled job service remain P1 tasks; current v1 restrictions are unchanged. No product completion or independent P6 review is inferred from these checks.
 
 ## 2. P1 — Controlled services and versioned contracts
 

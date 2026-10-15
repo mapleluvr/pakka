@@ -3,3 +3,5 @@ patches/pi-durable/**/source.patch text eol=lf -whitespace
 patches/pi-durable/**/build-lock.json text eol=lf
 patches/pi-durable/**/artifact.json text eol=lf
 packages/agent/vendor/*.tgz binary
+# Preserve adopted upstream license bytes, including original whitespace.
+integrations/pocket/licenses/*.txt -text -whitespace

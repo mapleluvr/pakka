@@ -1,6 +1,6 @@
 ## Context
 
-This is a preparation-only change over Pakka `90a235f` on `feat/monorepo-mas-migration`. M1–M6 and the bounded optional Dynamite pair are accepted under their own artifact identities. No `@pakka/webui`, public Web extension host, complete Conversation read API, persistent people/invitation service or remote Web transport exists yet. Existing v1 application consumers use a finite loopback RPC, not the complete pi-pocket product model.
+Implementation has started from the proposal prepared over Pakka `90a235f` on `feat/monorepo-mas-migration`; P0 records are in [the source/native ledger](../../../docs/PAKKA-POCKET-P0.md). M1–M6 and the bounded optional Dynamite pair are accepted under their own artifact identities. No `@pakka/webui`, public Web extension host, complete Conversation read API, persistent people/invitation service or remote Web transport exists yet. Existing v1 application consumers use a finite loopback RPC, not the complete pi-pocket product model.
 
 The operator selected one product package, UI adoption without old data import, complete removal of pi-pocket subagent/PiP authority, multi-user/invitation/remote retention, trusted installed extensions, server-side visibility, custom backend RPC and custom Preact content. Slash commands default to human actions. These scope decisions are settled; the implementation choices below must not reopen them as excuses for a local-only or hardcoded-board delivery.
 
@@ -14,7 +14,7 @@ The operator selected one product package, UI adoption without old data import, 
 | Accepted Pakka runtime | `@pakka/agent@0.5.0`, Durable `1.0.3-pakka.1`                   | Public controlled ports and append-only compatibility record remain authoritative       |
 | Existing product pair  | `docs/DYNAMITE-PRODUCT-ACCEPTANCE.md`                           | Optional static-member composition only; GUI does not expand that pairing automatically |
 
-Read-only fetched source/issue metadata is under `artifacts/research/pi-pocket/`. It is investigation material, not an installed or accepted product. Issue comments report Phase 2 tests and inherited failures; this preparation did not execute those tests. Implementation must establish its own baseline and retain failures, rather than carry upstream counts forward as Pakka acceptance.
+Read-only proposal research is under `artifacts/research/pi-pocket/`; executable P0 evidence is under `artifacts/pakka-pocket/p0/`, with [versioned source checks and notices](../../../integrations/pocket/README.md). These are not an installed or accepted product. P0 measured the unmodified main tree independently on Windows: install/check pass; 548 tests = 378 pass + 40 fail + 130 skip. Failures/skips stay recorded and are not promoted to Pakka acceptance. Phase 2 is a separate Durable `1.0.2` branch whose parent is Phase 1; it does not contain the main Durable `1.1.0` UI baseline. Source/tree/license checks and the common ancestor are fixed in `integrations/pocket/source-lock.json`.
 
 ## Goals / Non-Goals
 
@@ -135,6 +135,6 @@ Rollout uses an explicit new product entry/data directory and opt-in extension c
 No unresolved product-scope approval remains from the clarification. The following are implementation investigations with stage deadlines, not invitations to reduce scope:
 
 1. P0/P1: prove the smallest public adapter read/display/job ports and actor-to-Agent ceilings; record any required API/patch delta before coding around it.
-2. P0: choose the exact adopted source tree after checking the Phase 1/2 ancestry and existing failure list. All references above are immutable; never adopt floating main/branch HEAD.
+2. P0 resolved: adopt `de612d5` UI and use `58a4fdc`/`2cb652c` only as independent command/interface references. The exact commits/trees and divergent ancestry are checked; never adopt floating main/branch HEAD. The observed upstream failure baseline is retained.
 3. P1/P2: fix export names, JSON schemas, concrete finite limits, metadata schema and reload protocol through a compilable independent extension consumer. No TypeScript sketch in this preparation is a shipped SDK.
 4. P2/P5: record which actual remote launcher tools/platforms are measured, and supply reproducible operator checks where public infrastructure cannot run in deterministic tests. Do not label an untested mode accepted.

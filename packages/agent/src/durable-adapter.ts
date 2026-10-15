@@ -15,6 +15,7 @@ import {
 	CompactionEntry,
 	defineDoc,
 	defineDocFamily,
+	defineEntry,
 	UserEntry,
 	InboxDoc,
 	defineTask,
@@ -39,6 +40,8 @@ import {
 	type ConversationOwnership,
 	type AgentEvent,
 	type AgentEventStream,
+	type LiveState,
+	type UsageState,
 } from "@earendil-works/pi-durable";
 import { openNodeJsonlStorage } from "@earendil-works/pi-durable/storage/jsonl/node";
 import {
@@ -86,6 +89,10 @@ import type {
 	CatalogDeliverySpec,
 	JsonObject,
 	ConversationProfile,
+	ConversationSnapshot,
+	TranscriptMessage,
+	DisplayWrite,
+	DisplayReceipt,
 } from "./types.ts";
 
 export type AdapterFrame = Pick<
@@ -136,6 +143,35 @@ function clean<T>(value: unknown): T {
 	}
 }
 
+/** Explicit display projection: excludes system changes, configuration, provider identity and opaque native fields. */
+function transcriptMessage(message: Message): TranscriptMessage | undefined {
+	if (message.role === "system") return undefined;
+	const content =
+		typeof message.content === "string"
+			? message.content
+			: message.content.map((part) => {
+					switch (part.type) {
+						case "text":
+							return { type: "text", text: part.text };
+						case "thinking":
+							return { type: "thinking", thinking: part.thinking };
+						case "image":
+							return { type: "image", data: part.data, mimeType: part.mimeType };
+						case "toolCall":
+							return { type: "toolCall", id: part.id, name: part.name, arguments: part.arguments };
+						default:
+							throw new Error("Unsupported native display content");
+					}
+				});
+	return storedJson<TranscriptMessage>({
+		role: message.role,
+		content,
+		...(message.role === "assistant" ? { stopReason: message.stopReason } : {}),
+		...(message.role === "toolResult"
+			? { toolCallId: message.toolCallId, toolName: message.toolName, isError: message.isError }
+			: {}),
+	});
+}
 function usageDTO(usage?: Usage): UsageDTO {
 	return {
 		input: usage?.input ?? 0,
@@ -222,6 +258,8 @@ export interface ManagedAdapterPort {
 	createConversation(spec: ConversationSpec): Promise<ConversationRef>;
 	catalog(options: CatalogOptions): RuntimeCatalog;
 	store(options: RuntimeStoreOptions): RuntimeStore;
+	readConversation(ref: ConversationRef, check: () => void): Promise<ConversationSnapshot>;
+	writeDisplay(ref: ConversationRef, input: DisplayWrite, check: () => void): Promise<DisplayReceipt>;
 	attach(
 		ref: ConversationRef,
 		notify: (notice: Notice) => void,
@@ -317,6 +355,19 @@ const CoordinatorDoc = defineDocFamily<
 	scope: "session",
 	family: true,
 	initial: (options) => ({ version: 0, options: { ...options }, data: {} }),
+});
+const DisplayEntry = defineEntry<JsonRepresentation<DisplayWrite>>("pakka.display");
+const DisplayReceipts = defineDocFamily<
+	{ count: number; receipts: Record<string, { fingerprint: string; entryId: string }> },
+	null
+>({
+	kind: "pakka.display-receipts",
+	version: 1,
+	scope: "conversation",
+	history: "latest",
+	fork: "initial",
+	family: true,
+	initial: () => ({ count: 0, receipts: {} }),
 });
 const BackgroundAnchor = defineTask<{}, { phase: "hold"; tick: number }, null>({
 	name: "pakka.background-anchor",
@@ -954,6 +1005,9 @@ export class DurableAdapter {
 			validateReference: (ref: ConversationRef) => this.#validateReference(ref),
 			catalog: (options: CatalogOptions) => this.#catalog(options),
 			store: (options: RuntimeStoreOptions) => this.#store(options),
+			readConversation: (ref: ConversationRef, check: () => void) => this.#readConversation(ref, check),
+			writeDisplay: (ref: ConversationRef, input: DisplayWrite, check: () => void) =>
+				this.#writeDisplay(ref, input, check),
 			createConversation: async (spec: ConversationSpec): Promise<ConversationRef> => {
 				const managed = this.#managedReady();
 				const profileId = spec.profile ?? "default",
@@ -1031,6 +1085,125 @@ export class DurableAdapter {
 				this.#managed!.unsubscribe?.();
 				await this.#releaseWriter?.();
 			},
+		});
+	}
+	async #readConversation(rawRef: ConversationRef, check: () => void): Promise<ConversationSnapshot> {
+		const ref = copy(rawRef);
+		const authorize = () =>
+			checkAuthority(() => {
+				this.#validateReference(ref);
+				check();
+			});
+		authorize();
+		const route = this.#routes.get(conversationId(ref.conversationId));
+		if (!route || route.#disposed) throw new MutationDenied("Conversation observation is not bound");
+		const watch = await route.#conversation.watch(BACKGROUND_CONTEXT);
+		let result: ConversationSnapshot;
+		try {
+			const native = watch.value;
+			const live = native.docs["pi.live"] as LiveState | undefined;
+			const usage = native.docs["pi.usage"] as UsageState | undefined;
+			const total = { ...usageDTO() };
+			for (const item of [...Object.values(usage?.models ?? {}), ...Object.values(usage?.tools ?? {})]) {
+				const value = usageDTO(item);
+				total.input += value.input;
+				total.output += value.output;
+				total.cacheRead += value.cacheRead;
+				total.cacheWrite += value.cacheWrite;
+				total.totalTokens += value.totalTokens;
+				if (value.cost !== null) total.cost = (total.cost ?? 0) + value.cost;
+			}
+			const message = live?.generation?.message
+				? transcriptMessage(live.generation.message as AssistantMessage)
+				: undefined;
+			result = {
+				ref,
+				entries: native.entries.slice(-256).map((entry) => ({
+					id: String(entry.id),
+					conversationId: String(entry.conversationId),
+					kind: entry.kind,
+					...(entry.byTaskId === undefined ? {} : { taskId: String(entry.byTaskId) }),
+					messages: (entry.model ?? []).flatMap((item) => {
+						const value = transcriptMessage(item);
+						return value ? [value] : [];
+					}),
+					...(entry.kind === DisplayEntry.kind ? { display: storedJson<DisplayWrite>(entry.data) } : {}),
+				})),
+				entriesTruncated: native.entries.length > 256,
+				live: {
+					busy: live?.run !== undefined,
+					...(message ? { message } : {}),
+					tools: (live?.tools ?? []).map((tool) => ({
+						callId: tool.callId,
+						name: tool.name,
+						status: tool.status,
+						...(tool.taskId === undefined ? {} : { taskId: String(tool.taskId) }),
+						...(tool.output === undefined ? {} : { output: tool.output }),
+					})),
+				},
+				usage: total,
+			};
+			if (Buffer.byteLength(JSON.stringify(result), "utf8") > 2 * 1024 * 1024)
+				throw new MutationDenied("Conversation observation capacity exceeded");
+			authorize();
+		} finally {
+			await watch.stop();
+		}
+		// Native cleanup yields: recheck after it, with no further await before publication.
+		authorize();
+		return copy(result);
+	}
+	async #writeDisplay(
+		rawRef: ConversationRef,
+		rawInput: DisplayWrite,
+		check: () => void,
+	): Promise<DisplayReceipt> {
+		const ref = copy(rawRef),
+			input = copy(rawInput);
+		const authorize = () =>
+			checkAuthority(() => {
+				this.#validateReference(ref);
+				check();
+			});
+		authorize();
+		if (
+			!input ||
+			Object.keys(input).some(
+				(key) => !["namespace", "actorId", "requestId", "kind", "text"].includes(key),
+			) ||
+			!validKey(input.namespace) ||
+			!validKey(input.actorId) ||
+			!validKey(input.requestId) ||
+			!["card", "chat"].includes(input.kind) ||
+			typeof input.text !== "string" ||
+			Buffer.byteLength(input.text, "utf8") > 16384
+		)
+			throw new MutationDenied("Invalid bounded display record");
+		const key = hash([input.actorId, input.requestId]),
+			fingerprint = hash(input);
+		const entryId = await this.#persist(async (tx) => {
+			authorize();
+			const state = await tx.doc(DisplayReceipts, conversationId(ref.conversationId), input.namespace, null);
+			const existing = state.receipts[key];
+			if (existing) {
+				if (existing.fingerprint !== fingerprint) throw new MutationDenied("Display request conflict");
+				return existing.entryId;
+			}
+			if (state.count >= 4096) throw new MutationDenied("Display namespace capacity exhausted");
+			authorize();
+			const entry = await tx.appendEntry(DisplayEntry, conversationId(ref.conversationId), {
+				data: storedJson<JsonRepresentation<DisplayWrite>>(input),
+			});
+			state.receipts[key] = { fingerprint, entryId: String(entry.id) };
+			state.count++;
+			return String(entry.id);
+		});
+		return copy({
+			ref,
+			namespace: input.namespace,
+			actorId: input.actorId,
+			requestId: input.requestId,
+			entryId,
 		});
 	}
 	#store(rawOptions: RuntimeStoreOptions): RuntimeStore {

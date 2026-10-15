@@ -68,6 +68,29 @@ try {
 	);
 	assert.ok(requests.some((body) => /MANAGED-WORKER/.test(JSON.stringify(body))));
 	assert.notEqual(a.view().providerSessionId, b.view().providerSessionId);
+	const storedBeforeRead = await readFile(runtime.view().sessionFile, "utf8");
+	const observed = await runtime.readConversation(ref, () => {});
+	assert.ok(Object.isFrozen(observed) && Object.isFrozen(observed.entries));
+	assert.match(JSON.stringify(observed), /UNIQUE-PEER-B/);
+	assert.doesNotMatch(JSON.stringify(observed), /UNIQUE-ROOT-A|MANAGED-WORKER|providerSessionId|local-only/);
+	assert.equal(await readFile(runtime.view().sessionFile, "utf8"), storedBeforeRead);
+	let checks = 0;
+	await assert.rejects(
+		runtime.readConversation(ref, () => {
+			if (++checks > 1) throw new Error("human read revoked");
+		}),
+		/revoked/,
+	);
+	const card = {
+		namespace: "consumer",
+		actorId: "person",
+		requestId: "display-only",
+		kind: "card",
+		text: "DISPLAY-ONLY-INSTALLED-CANARY",
+	};
+	const cardReceipt = await runtime.writeDisplay(ref, card, () => {});
+	assert.deepEqual(await runtime.writeDisplay(ref, card, () => {}), cardReceipt);
+	assert.equal(requests.length, 2, "observation and display-only records must not dispatch");
 	const ba = a.connect("strategy", ["context_artifacts.write"]),
 		bb = b.connect("strategy", ["context_artifacts.write"]);
 	for (const binding of [ba, bb])
@@ -95,12 +118,16 @@ try {
 	reopened = await createRuntime({ ...options, reopenSessionFile: file });
 	assert.equal(requests.length, 2, "reopen/inspection cannot dispatch");
 	assert.equal(reopened.view().budget.primaryAttempts, 2);
+	assert.deepEqual(await reopened.writeDisplay(ref, card, () => {}), cardReceipt);
+	const restoredSnapshot = await reopened.readConversation(ref, () => {});
+	assert.equal(restoredSnapshot.entries.filter((entry) => entry.kind === "pakka.display").length, 1);
 	const restored = await reopened.conversation(ref);
 	assert.equal(restored.view().conversationId, b.view().conversationId);
 	const client = restored.connect("user", ["input.submit"]);
 	await client.submit({ key: "third", text: "LAST-ALLOWED" });
 	await reopened.waitForIdle();
 	assert.equal(requests.length, 3);
+	assert.doesNotMatch(JSON.stringify(requests[2]), /DISPLAY-ONLY-INSTALLED-CANARY|display-only/);
 	const denied = await client.submit({ key: "fourth", text: "OVER-CAP" });
 	await reopened.waitForIdle();
 	assert.equal(requests.length, 3);
@@ -116,6 +143,8 @@ try {
 			journals: "independent",
 			quotas: "persistent",
 			reopen: "zero-dispatch",
+			observation: "scoped-frozen-passive",
+			display: "reopen-dedup-zero-model-contribution",
 		}),
 	);
 } finally {

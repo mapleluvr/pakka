@@ -1,0 +1,41 @@
+{
+	"schemaVersion": 1,
+	"sourceCommit": "de612d5622cdc66b6b8b4900c650c6f2efdf4c63",
+	"sourceTree": "0586dc7e9242dc5eca52d67b61abfd1f10b5d16b",
+	"platform": "win32-x64",
+	"node": "v24.18.0",
+	"isolation": {
+		"freshHome": true,
+		"inheritedCredentialValues": false,
+		"deterministicLocalProviders": true,
+		"upstreamSourceModified": false
+	},
+	"installExitCode": 0,
+	"typecheckExitCode": 0,
+	"tests": {
+		"total": 548,
+		"passed": 378,
+		"failed": 40,
+		"cancelled": 0,
+		"skipped": 130,
+		"todo": 0,
+		"exitCode": 1
+	},
+	"elapsedMs": { "install": 9062, "typecheck": 4343, "test": 329048 },
+	"interpretation": "Original upstream baseline only. FAIL; skipped cases are not accepted. Its faux provider and results do not constitute Pakka production evidence.",
+	"observedFailureClasses": [
+		"Windows/POSIX path serialization and filenames illegal on Windows (newline, asterisk, embedded drive colon)",
+		"git diff/worktree and file attribution assertions",
+		"Chromium/snap executable detection and a cut-off shell task",
+		"skill/trust/docs discovery and a failing test-module load",
+		"runtime-coupled approval, attachment, hook, provider/session-import assertions"
+	],
+	"classificationLimit": "These are observed categories, not a claim that every failure is an OS bug or harmless; individual behavior must be verified on its new controlled path.",
+	"evidence": {
+		"runner": "artifacts/pakka-pocket/p0/upstream-baseline.mjs",
+		"summary": "artifacts/pakka-pocket/p0/upstream-baseline.json",
+		"install": "artifacts/pakka-pocket/p0/upstream-install.log",
+		"typecheck": "artifacts/pakka-pocket/p0/upstream-check.log",
+		"test": "artifacts/pakka-pocket/p0/upstream-test.log"
+	}
+}

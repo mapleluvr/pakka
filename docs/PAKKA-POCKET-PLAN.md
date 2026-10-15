@@ -1,6 +1,6 @@
 # Pakka-Pocket 准备与迁移计划
 
-状态：已确认范围的设计准备，**尚未实施或验收**。本轮仅建立 OpenSpec 与开发规范，不创建空 workspace、不搬入生产源码、不迁移用户数据。实施入口为 [pakka-pocket-webui](../openspec/changes/pakka-pocket-webui/proposal.md)，技术决策见 [design](../openspec/changes/pakka-pocket-webui/design.md)，开发约定见 [WEBUI-DEVELOPMENT.md](WEBUI-DEVELOPMENT.md)。
+状态：**已进入实施，产品尚未验收**。P0 已固定来源与页面/action ledger，并增加受控 Conversation 读/显示端口；阶段门禁与决策见 [P0 记录](PAKKA-POCKET-P0.md)。没有创建空 workspace 或迁移旧数据。实施入口为 [pakka-pocket-webui](../openspec/changes/pakka-pocket-webui/proposal.md)，技术决策见 [design](../openspec/changes/pakka-pocket-webui/design.md)，开发约定见 [WEBUI-DEVELOPMENT.md](WEBUI-DEVELOPMENT.md)。
 
 ## 1. 已确定的产品目标
 
@@ -25,9 +25,9 @@
 | Native interfaces  | [58a4fdcc88ed755023aea9fac897735fca7396fe](https://github.com/mapleluvr/pi-pocket/tree/58a4fdcc88ed755023aea9fac897735fca7396fe)  | Phase 2：叠在 Phase 1 上的 Preact interface、RPC/assets generation    |
 | 讨论来源           | [issue #35 及评论](https://github.com/TannerMidd/pi-pocket/issues/35)                                                             | 需求与已存在实现线索，不是 Pakka 的通过证据                           |
 
-调查副本位于被忽略的 `artifacts/research/pi-pocket/`。本轮仅下载并阅读公开源码/metadata；没有运行 upstream 的 47 项或全量 suite。评论自报的通过/失败/skip 必须保留其来路，不能作为本仓验收。
+准备阶段的调查副本位于被忽略的 `artifacts/research/pi-pocket/`；当时没有执行 upstream suite，评论自报数字不是本仓验收。P0 实施已经独立重跑主树：548 项中 378 pass、40 fail、130 skip，安装与 check 通过；失败原样保留，见 [固定基线](../integrations/pocket/upstream-baseline.json)。
 
-P0 固定最终采用树和 Phase 1/2 ancestry、代码/字体许可证及逐文件来源。采用 MIT 代码保留 copyright/license；字体等其他资产单独核对授权。只收编所需 UI，不复制另一套 `node_modules`、Harness、SQLite writer、provider registry 或用户 sign-in discovery。
+P0 采用上表主 UI 树，Phase 2 是独立旧分支（Durable `1.0.2`），没有包含主树的 Durable `1.1.0` UI；两者共同祖先为 `096b7e198cb69846ce91ca45a18d144f688d478e`。[来源锁](../integrations/pocket/source-lock.json)、[61 个 Web 模块映射](../integrations/pocket/adoption-map.json) 与 [重现脚本](../integrations/pocket/README.md) 固定 ancestry、代码/字体许可证及逐文件来源。采用 MIT 代码保留 copyright/license；字体等其他资产单独核对授权。只收编所需 UI，不复制另一套 `node_modules`、Harness、SQLite writer、provider registry 或用户 sign-in discovery。
 
 ## 3. 来源到目标的迁移清单
 

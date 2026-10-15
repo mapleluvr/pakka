@@ -1,0 +1,28 @@
+{
+	"schemaVersion": 1,
+	"purpose": "UI source adoption and independent issue #35 references; not runtime dependencies or product acceptance",
+	"commonAncestor": "096b7e198cb69846ce91ca45a18d144f688d478e",
+	"upstream": {
+		"repository": "https://github.com/TannerMidd/pi-pocket.git",
+		"commit": "de612d5622cdc66b6b8b4900c650c6f2efdf4c63",
+		"tree": "0586dc7e9242dc5eca52d67b61abfd1f10b5d16b",
+		"durableVersion": "1.1.0"
+	},
+	"extensionReference": {
+		"repository": "https://github.com/mapleluvr/pi-pocket.git",
+		"commit": "58a4fdcc88ed755023aea9fac897735fca7396fe",
+		"tree": "fb7d4df3d773c91994883daa02209e40a55a14d3",
+		"phase1Parent": "2cb652c465f670ba8c66fc3ee639798caca8afbc",
+		"durableVersion": "1.0.2"
+	},
+	"licenses": {
+		"LICENSE": {
+			"license": "MIT",
+			"sha256": "41384dc5cf15ef69653ce54c918e0e90e6771eec108ab080ab02021f56b07ebe"
+		},
+		"web/fonts/OFL.txt": {
+			"license": "OFL-1.1",
+			"sha256": "a76abf002c49097d146e86740a3105a5d00450b1592e820a1109a8c5680cd697"
+		}
+	}
+}

@@ -94,6 +94,34 @@ export function productionContract(options: HostOptions, receipt: Receipt) {
 	return { blocked, generation: receipt.generation };
 }
 
+export async function pocketObservation(runtime: Runtime, ref: ConversationRef) {
+	const snapshot = await runtime.readConversation(ref, () => {});
+	const display = await runtime.writeDisplay(
+		ref,
+		{ namespace: "example", actorId: "person", requestId: "card", kind: "card", text: "display only" },
+		() => {},
+	);
+	// @ts-expect-error native Session is never part of an observation DTO.
+	snapshot.session.commit();
+	// @ts-expect-error raw native entry data is not a public read surface.
+	void snapshot.entries[0]!.raw;
+	// @ts-expect-error a human authority check is mandatory, not an optional default grant.
+	await runtime.readConversation(ref);
+	await runtime.writeDisplay(
+		ref,
+		{
+			namespace: "example",
+			actorId: "person",
+			requestId: "card",
+			text: "sneak",
+			// @ts-expect-error display writes cannot become model input by selecting a native kind.
+			kind: "pi.user",
+		},
+		() => {},
+	);
+	return { snapshot, display };
+}
+
 export async function managed(runtime: Runtime, options: RuntimeOptions, ref: ConversationRef) {
 	const host = await runtime.conversation(ref);
 	const identity = host.view().conversationId;

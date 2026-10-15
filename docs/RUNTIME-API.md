@@ -77,4 +77,12 @@ M1 提供 `migrateLegacy: { expectedSessionId, expectedConversationId }` 的显�
 
 `reservedSessionId` 是受信任 bootstrap 选择的 lowercase UUID storage/provenance 地址，不是 provider identity。它具有 create-once 语义；已存在目录不会被覆盖。重开必须明确指定同一 owned storage 的 `reopenSessionFile`，且 provenance、runtime 配置与 reservation 均匹配。worker manager 使用这条接口恢复固定 placement；未知初始化和遗留 writer claim 不允许分配替代目录或自动抢占。
 
-Dynamite 保持 [deferred](DEFERRED-DYNAMITE-COMPATIBILITY.md)。历史 pin 与 `@pakka/agent@0.5.0` 不等价；核心迁移不修改外部 mapper/算法，也不默认装配它。
+## Pocket P0 读取与显示端口（开发快照）
+
+受信任 bootstrap 可以用 `runtime.readConversation(ref, check)` 取得冻结的 `ConversationSnapshot`：已提交消息、display records、live tools 和 usage。只投影当前引用的 Conversation，不返回原生 handles、system/config/provider identity 等内部字段。读取不启动工作或提交存储；异步 native watch 清理后还会重验 `check`，才发布结果。当前为有限 tail（最多 256 entries、JSON envelope 2 MiB），`truncated` 不等于完整历史；P1 将补充分页与人类资源服务。
+
+`runtime.writeDisplay(ref, { namespace, actorId, requestId, kind: "card" | "chat", text }, check)` 在原生 commit line 绑定引用与授权。相同 scope/request/payload 稳定去重，正常 reopen 后保留 receipt；不同 actor/namespace 不共用请求。显示内容没有模型贡献，不推进 model head、不替换原 requester。每 Conversation 最多 512 个去重记录，text 最多 16384 个 UTF-16 code units；容量超限明确拒绝，不删除旧 receipt 来伪造新准入。
+
+`check` 是宿主提供的同步检查，**拒绝时必须 throw**，不是浏览器传来的 grant 或返回 boolean 的 policy。两项命令都不是远端 API，不能直接交给模型或 Web 客户端。usage 的 token 值可展示，未提供权威价格时 `cost` 保持 `null`，不能把默认零价格说成免费。
+
+阶段证明见 [P0 记录](PAKKA-POCKET-P0.md)；这不是 `@pakka/webui` 产品交付或通用后台 job 已完成的声明。已接受的可选 Dynamite [固定产品配对](DYNAMITE-PRODUCT-ACCEPTANCE.md) 仍以原 tarball SHA 为准，不自动覆盖新的开发快照；[历史失败配对](DEFERRED-DYNAMITE-COMPATIBILITY.md) 继续保留。
