@@ -121,7 +121,7 @@ export async function ownedBrowser(dir: string) {
 					const point = await evaluate(
 						"(()=>{const e=document.querySelector(" +
 							JSON.stringify(selector) +
-							");if(!e||e.disabled)return null;const r=e.getBoundingClientRect();return r.width&&r.height?{x:r.x+r.width/2,y:r.y+r.height/2}:null})()",
+							");if(!e||e.disabled)return null;e.scrollIntoView({block:'center',inline:'nearest',behavior:'instant'});const r=e.getBoundingClientRect(),x=r.x+r.width/2,y=r.y+r.height/2,p=document.elementFromPoint(x,y);return r.width&&r.height&&p&&e.contains(p)?{x,y}:null})()",
 					);
 					if (
 						!point ||

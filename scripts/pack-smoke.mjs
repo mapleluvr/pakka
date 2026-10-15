@@ -102,6 +102,7 @@ copyFileSync(join(root, "scripts", "consumer-devpack.mjs"), join(consumer, "devp
 copyFileSync(join(root, "scripts", "consumer-apps.mjs"), join(consumer, "apps.mjs"));
 copyFileSync(join(root, "scripts", "consumer-product.mjs"), join(consumer, "product.mjs"));
 copyFileSync(join(root, "scripts", "consumer-pocket-services.mjs"), join(consumer, "pocket-services.mjs"));
+copyFileSync(join(root, "scripts", "consumer-mas-board.mjs"), join(consumer, "mas-board.mjs"));
 copyFileSync(join(root, "scripts", "consumer-pocket-product.mjs"), join(consumer, "pocket-product.mjs"));
 copyFileSync(join(root, "apps/webui/test/browser.ts"), join(consumer, "pocket-browser.ts"));
 copyFileSync(join(root, "scripts", "consumer-browser.ts"), join(consumer, "consumer-browser.ts"));
@@ -125,6 +126,39 @@ run(
 	[npmCli, "install", "--ignore-scripts", "--no-audit", "--no-fund", "--registry=https://registry.npmjs.org"],
 	consumer,
 );
+// A separate sibling install must not resolve optional browser peers from this full consumer's node_modules.
+const headless = mkdtempSync(join(tmpdir(), "pakka-headless-consumer-"));
+const headlessDependencies = {};
+for (const name of ["agent", "mas", "mas-devpack"]) {
+	const archive = `pakka-${name}-${versions[name]}.tgz`;
+	copyFileSync(join(consumer, archive), join(headless, archive));
+	headlessDependencies["@pakka/" + name] = "file:./" + archive;
+}
+writeFileSync(
+	join(headless, "package.json"),
+	JSON.stringify({
+		name: "pakka-headless-smoke",
+		private: true,
+		type: "module",
+		dependencies: headlessDependencies,
+	}),
+);
+copyFileSync(join(root, "scripts", "consumer-devpack-headless.mjs"), join(headless, "headless.mjs"));
+run(
+	"install-headless",
+	[
+		npmCli,
+		"install",
+		"--offline",
+		"--ignore-scripts",
+		"--no-audit",
+		"--no-fund",
+		"--registry=https://registry.npmjs.org",
+	],
+	headless,
+);
+console.log(run("devpack-headless", [join(headless, "headless.mjs")], headless));
+writeFileSync(join(artifacts, "headless-consumer-path.txt"), headless + "\n");
 run(
 	"declarations",
 	[
@@ -157,4 +191,5 @@ console.log(run("apps", [join(consumer, "apps.mjs")], consumer));
 console.log(run("product", [join(consumer, "product.mjs")], consumer));
 console.log(run("pocket-services", [join(consumer, "pocket-services.mjs")], consumer));
 console.log(run("pocket-product", [join(consumer, "pocket-product.mjs")], consumer));
+console.log(run("mas-board", [join(consumer, "mas-board.mjs")], consumer));
 writeFileSync(join(artifacts, "consumer-path.txt"), consumer + "\n");

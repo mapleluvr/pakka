@@ -6,15 +6,20 @@ import { createRuntime, type RuntimeOptions, type JsonObject } from "@pakka/agen
 import { createPocketPeople, createPocketWorkspace, type PocketSession } from "@pakka/server/pocket";
 import { createPocketHttp, type PocketHttpOptions } from "./http.ts";
 import { createExtensionHost, type ExtensionSource } from "./extension-host.ts";
-import type { ExtensionService } from "./backend.ts";
-
+import type { ExtensionService, PocketServiceContext } from "./backend.ts";
+export type { PocketServiceContext } from "./backend.ts";
 export interface PocketProductOptions {
 	readonly runtime: RuntimeOptions;
 	readonly owner: string;
 	readonly initial?: readonly { readonly name: string; readonly profile: string }[];
 	readonly profiles?: readonly string[];
 	readonly extensions?: readonly ExtensionSource[];
-	readonly extensionServices?: Readonly<Record<string, ExtensionService>>;
+	/** Trusted composition only. Never an action/RPC callback; handlers receive bound services instead. */
+	readonly extensionServices?:
+		| Readonly<Record<string, ExtensionService>>
+		| ((
+				context: PocketServiceContext,
+		  ) => Readonly<Record<string, ExtensionService>> | Promise<Readonly<Record<string, ExtensionService>>>);
 	readonly transport?: Omit<PocketHttpOptions, "runtime" | "people" | "workspace" | "assets" | "extensions">;
 }
 const types: Readonly<Record<string, string>> = {
@@ -117,6 +122,7 @@ export async function startPocket(options: PocketProductOptions) {
 			.update(JSON.stringify({ owner: options.owner, initial, profiles }))
 			.digest("hex");
 		let initialOwner: PocketSession | null = null;
+		let ownerId: string;
 		const ready = () => {
 			if (runtime.view().phase !== "ready") throw new Error("Pocket runtime unavailable");
 		};
@@ -125,6 +131,7 @@ export async function startPocket(options: PocketProductOptions) {
 				throw new Error("Reopened storage has no confirmed Pocket product identity");
 			await store.compareAndSet(0, { schema: 1, phase: "initializing", fingerprint }, ready);
 			initialOwner = await people.initializeOwner(options.owner);
+			ownerId = initialOwner.person.id;
 			const actor = await people.authenticate(initialOwner.token),
 				client = workspace.bind(actor),
 				ids: string[] = [];
@@ -135,14 +142,16 @@ export async function startPocket(options: PocketProductOptions) {
 			const current = await store.snapshot();
 			await store.compareAndSet(
 				current.version,
-				{ schema: 1, phase: "ready", fingerprint, initial: ids },
+				{ schema: 2, phase: "ready", fingerprint, initial: ids, ownerId },
 				ready,
 			);
 		} else {
 			const data: JsonObject = saved.data;
 			if (
-				Object.keys(data).sort().join(",") !== "fingerprint,initial,phase,schema" ||
-				data.schema !== 1 ||
+				Object.keys(data).sort().join(",") !== "fingerprint,initial,ownerId,phase,schema" ||
+				data.schema !== 2 ||
+				typeof data.ownerId !== "string" ||
+				!/^[a-zA-Z0-9][-a-zA-Z0-9._:]{0,127}$/.test(data.ownerId) ||
 				data.phase !== "ready" ||
 				data.fingerprint !== fingerprint ||
 				!Array.isArray(data.initial) ||
@@ -155,13 +164,19 @@ export async function startPocket(options: PocketProductOptions) {
 				throw new Error(
 					"Pocket initialization unavailable or configuration conflict; explicit reconciliation required",
 				);
+			ownerId = data.ownerId;
 		}
+		const services =
+			typeof options.extensionServices === "function"
+				? await options.extensionServices(Object.freeze({ runtime, people, workspace, ownerId }))
+				: options.extensionServices;
+		ready();
 		const extensions = await createExtensionHost({
 			runtime,
 			people,
 			workspace,
 			sources: options.extensions ?? [],
-			services: options.extensionServices,
+			services,
 		});
 		http = await createPocketHttp({ ...options.transport, runtime, people, workspace, extensions, assets });
 		let closed = false;

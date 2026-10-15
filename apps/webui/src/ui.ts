@@ -12,7 +12,7 @@ export interface WebInterfaceContext {
 	call(
 		action: string,
 		input: ExtensionJson,
-		options?: { readonly requestId?: string },
+		options?: { readonly requestId?: string; readonly target?: AgentRef },
 	): Promise<ExtensionOperation>;
 	operation(id: string): Promise<ExtensionOperation>;
 	/** Checked read snapshots only. Unmount ends observation, never admitted work. */
@@ -23,7 +23,8 @@ export interface WebInterfaceContext {
 		options?: { readonly intervalMs?: number },
 	): () => void;
 	notice(text: string): void;
-	open(interfaceId: string): void;
+	/** Selecting a resource re-discovers its declarations and repeats server authorization. */
+	open(interfaceId: string, options?: { readonly target?: AgentRef }): void;
 	navigate(target: AgentRef): void;
 	close(): void;
 }

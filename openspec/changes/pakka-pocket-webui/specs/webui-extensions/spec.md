@@ -9,6 +9,17 @@ An extension SHALL declare a stable identity, compatibility version and any subs
 - **WHEN** separate extensions contribute only a GUI or only Agent tools
 - **THEN** each operates without fabricating the other facets, and importing its public declaration/browser entry starts no server, storage or inference
 
+#### Scenario: Explicit executable composition of approved native profiles
+
+- **WHEN** the operator starts the actual executable with an explicitly selected absolute local ESM options module
+- **THEN** the trusted root can compose public Agent contributions for approved profiles and current-human backend services, while the finite JSON startup path and its defaults remain available
+- **AND** browser/RPC commands cannot select that module, credentials, a native owner or a stronger profile; importing the browser facet does not activate Agent tools
+
+#### Scenario: Opaque host configuration failure
+
+- **WHEN** the operator-owned ESM root has an external effect and then throws during startup
+- **THEN** startup remains unconfirmed, output is redacted, no automatic module retry occurs, and the failed result is not represented as rollback
+
 ### Requirement: Human commands share explicit dispatch
 
 Slash input, command suggestions and equivalent buttons SHALL dispatch the same namespaced command identity with checked arguments, current actor, declared scope and model-effect classification. Reserved names and collisions SHALL be rejected without silently replacing another command/template. Human commands SHALL NOT implicitly submit model input, invoke inference or change the current model requester.

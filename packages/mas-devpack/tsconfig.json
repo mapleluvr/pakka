@@ -11,5 +11,5 @@
 		"outDir": "dist",
 		"rewriteRelativeImportExtensions": true
 	},
-	"include": ["src/**/*.ts"]
+	"include": ["src/index.ts", "src/ownership.ts", "src/workbench.ts", "src/profiles.ts"]
 }

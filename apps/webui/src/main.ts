@@ -147,21 +147,58 @@ export function decodePocketProduct(value: unknown): PocketProductOptions {
 		},
 	};
 }
+const productKeys = [
+	"runtime",
+	"owner",
+	"initial",
+	"profiles",
+	"transport",
+	"extensions",
+	"extensionServices",
+] as const;
+/** Explicit local host code, not a manifest action, browser request, or untrusted configuration decoder. */
+async function loadPocketModule(path: string): Promise<PocketProductOptions> {
+	if (!isAbsolute(path) || !path.endsWith(".mjs"))
+		throw new Error("Explicit absolute ESM configuration required");
+	const stat = await lstat(path);
+	if (!stat.isFile() || stat.isSymbolicLink() || stat.size > 131072)
+		throw new Error("Invalid ESM configuration file");
+	const loaded: unknown = await import(pathToFileURL(path).href);
+	if (!loaded || typeof loaded !== "object" || !("default" in loaded))
+		throw new Error("Default product options required");
+	const options = object(loaded.default, productKeys);
+	if (
+		typeof options.owner !== "string" ||
+		!options.owner.trim() ||
+		!options.runtime ||
+		typeof options.runtime !== "object" ||
+		Array.isArray(options.runtime)
+	)
+		throw new Error("Product options required");
+	// SAFETY: this is operator-selected executable composition, not decoded wire data. Closed top-level keys and required
+	// fields are checked here; startPocket, Runtime and extension registration validate their own controlled contracts.
+	return options as unknown as PocketProductOptions;
+}
+
 export async function runPocket(args: readonly string[]): Promise<number> {
 	let app: Awaited<ReturnType<typeof startPocket>> | undefined;
 	try {
 		if (
-			args[0] !== "--config" ||
+			!["--config", "--config-module"].includes(args[0] ?? "") ||
 			!args[1] ||
 			args[2] !== "--owner-file" ||
 			!args[3] ||
 			!(args.length === 4 || (args.length === 5 && args[4] === "--control-stdin"))
 		)
 			throw new Error("Explicit Pocket configuration and private owner-file path required");
-		const data = await readFile(args[1]);
-		if (data.byteLength > 131072) throw new Error("Pocket configuration too large");
-		const raw: unknown = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(data)),
+		let options: PocketProductOptions;
+		if (args[0] === "--config-module") options = await loadPocketModule(args[1]);
+		else {
+			const data = await readFile(args[1]);
+			if (data.byteLength > 131072) throw new Error("Pocket configuration too large");
+			const raw: unknown = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(data));
 			options = decodePocketProduct(raw);
+		}
 		if (!options.runtime.reopenSessionFile) {
 			try {
 				await lstat(args[3]);

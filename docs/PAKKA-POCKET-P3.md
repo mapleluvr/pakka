@@ -1,5 +1,7 @@
 # Pakka-Pocket P3 — 公共扩展宿主
 
+本页保留 P3 当时的阶段验收。后续 Agent facet 组装和 MAS Board/member panel 已在 [P4](PAKKA-POCKET-P4.md) 实现并独立验证。
+
 状态：公共 Backend/WebUI/Client 宿主的实现阶段门禁已通过。P3 在 [P2 实际产品](PAKKA-POCKET-P2.md) 上增加公开扩展宿主；尚未接入 MAS Board，也不把阶段性门禁当作 [完整迁移](PAKKA-POCKET-PLAN.md) 或 P6 独立复审完成。
 
 ## 公共入口与示例

@@ -34,3 +34,15 @@ The MAS WebUI SHALL display only server-filtered members and related receipts/ev
 
 - **WHEN** a viewer observes MAS Board while an authorized operator sends or retires a member
 - **THEN** the viewer receives only allowed state and cannot cause the action; the operator receives the original native result and late revocation is checked at the controlled effect boundary
+
+#### Scenario: Human reply through an actual incoming native receipt
+
+- **WHEN** an authorized human selects a member's incoming peer receipt and chooses reply
+- **THEN** the service binds the receiving member and original peer from the native receipt, checks current permissions on both resources, and returns the original native delivery result
+- **AND** a receipt for another member or an invisible peer grants no reply authority; an identical request reconciles the previous delivery without another HTTP effect
+
+#### Scenario: Transitive profile ceiling and independent removal
+
+- **WHEN** an approved limited Agent creates a stronger-profile child and that child creates a stronger-profile descendant
+- **THEN** the descendant's native actions remain limited by the complete owner ancestry, including the original limited ancestor
+- **AND** disabling WebUI/Client registrations or reopening with their facets absent preserves members, receipts and admitted native work; explicitly removing the Agent contribution replaces active tool selection without erasing native history

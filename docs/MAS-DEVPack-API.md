@@ -2,6 +2,10 @@
 
 固定配对：`@pakka/agent@0.5.0`、`@pakka/mas@0.3.0`、`@pakka/mas-devpack@0.1.0`、private `@pakka/server@0.2.0`。继续使用原 `pi-durable 1.0.3-pakka.1`，没有新增下游补丁。Dynamite 保持 [deferred](DEFERRED-DYNAMITE-COMPATIBILITY.md)，M5 公共 transport 和 CLI 尚未实现。
 
+## 可选 Web 产品 facets
+
+Pakka-Pocket P4 已通过公开 Backend/Client/WebUI 子入口提供 MAS Board 和 member panel，保留原 Agent-only 入口及其 headless 依赖图。实际组装、独立 profile 选择、人类权限、原生 reply、facet 移除与恢复的契约和验证见 [P4 记录](PAKKA-POCKET-P4.md)。Runtime 的固定批准 profile 集保持原契约；关闭 Agent contribution 使用已批准的无工具 profile 和真实 owner configure，不通过改写重开配置放宽身份校验。
+
 ## 安装边界
 
 ```ts

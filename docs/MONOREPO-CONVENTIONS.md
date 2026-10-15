@@ -42,7 +42,7 @@ pakka/
 | -------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
 | `@pakka/agent`       | Pi 适配、身份与 capability、admission、生命周期、请求授权、受控存储和 inference | MAS 算法、Dynamite 算法、产品 UI 和默认装配                         |
 | `@pakka/mas`         | 资源登记、membership、所有权策略、消息路由、投递恢复与编排                      | 原始 Pi handles、模型凭据、另一个权限内核或复制的 Durable scheduler |
-| `@pakka/mas-devpack` | 工具、指令、参数校验与调用 scope；计划通过公开 Web facets 提供 MAS Board        | 自行授予权限、开启任意 endpoint、直接管理 storage/进程              |
+| `@pakka/mas-devpack` | 工具、指令、调用 scope 与可选公开 Web facets/Board，见 P4 记录                  | 自行授予权限、开启任意 endpoint、直接管理 storage/进程              |
 | `@pakka/dynamite`    | 编号、窗口、reduce、摘要计划、策略记录及 Pakka binding adapter                  | 直接发送主输入、获取凭据、绕过 inference 预算或依赖 MAS CLI         |
 | server / CLI / GUI   | 产品装配或客户端入口                                                            | 在客户端重建权限、直接读写宿主内部文件或修改 Pi 对象                |
 | Durable patch        | 下游 Durable 契约与可重建产物                                                   | 安装后动态修改另一份 Durable、MAS 产品逻辑                          |

@@ -1,3 +1,4 @@
+import * as masBrowser from "@pakka/mas-devpack/client";
 import { Button, Stack, Field } from "@pakka/webui/components";
 import type { WebInterfaceProps } from "@pakka/webui/ui";
 import { createExtensionClient } from "@pakka/webui/client";
@@ -7,6 +8,15 @@ import { createPocketClient, type PocketCommand, type PocketSnapshot } from "@pa
 import { decodePocketRequest, decodePocketResponse } from "@pakka/protocol/pocket";
 import { createClient, type ClientResult, type ClientOptions, RemoteError } from "@pakka/client";
 import { decodeRequest, decodeResponse, type AgentRef, type Command } from "@pakka/protocol";
+export function publicMasBrowser(value: unknown) {
+	const view = masBrowser.readBoard(value);
+	// @ts-expect-error The browser-only MAS DTO is not a Runtime or a native command capability.
+	view.runtime.createConversation({ key: "forged" });
+	// @ts-expect-error Agent profile/tool composition does not belong to the browser export graph.
+	masBrowser.createMasProfilePacks({ profiles: {} });
+	return view.members.map((member) => member.ref.conversationId);
+}
+
 export function PublicExtension({ context }: WebInterfaceProps) {
 	const client = createExtensionClient({ endpoint: "http://127.0.0.1:1/pocket/extensions/rpc" });
 	// @ts-expect-error A browser interface receives no native runtime/storage/provider handles.

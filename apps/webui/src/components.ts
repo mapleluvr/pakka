@@ -4,7 +4,10 @@ export function Button({
 	children,
 	class: className,
 	...props
-}: ButtonHTMLAttributes<HTMLButtonElement> & { readonly children?: ComponentChildren }) {
+}: ButtonHTMLAttributes<HTMLButtonElement> & {
+	readonly children?: ComponentChildren;
+	readonly [attribute: `data-${string}`]: string | number | boolean | undefined;
+}) {
 	return h(
 		"button",
 		{ type: "button", ...props, class: ["button", className].filter(Boolean).join(" ") },

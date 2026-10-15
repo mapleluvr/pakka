@@ -1,4 +1,6 @@
-import { defineBackend, type BackendContext } from "@pakka/webui/backend";
+import { defineBackend, type BackendContext, type PocketServiceContext } from "@pakka/webui/backend";
+import { createMasProfilePacks } from "@pakka/mas-devpack/agent";
+import { masWorkbenchService } from "@pakka/mas-devpack/backend";
 import type { ExtensionHost } from "@pakka/webui/backend";
 import type {
 	ArtifactReceipt,
@@ -30,6 +32,16 @@ import type { WorkerManager } from "@pakka/server";
 import type { BootstrapConfig } from "@pakka/server/bootstrap";
 import { createMasDevPack, type MasDevPackOptions } from "@pakka/mas-devpack";
 import type { ApprovedSessions } from "@pakka/mas";
+
+export function publicMasFacets(context: PocketServiceContext, mas: Mas) {
+	const profiles = createMasProfilePacks({ profiles: { coordinator: ["spawn", "send"] } }, () => mas);
+	const service = masWorkbenchService({ ...context, mas });
+	// @ts-expect-error A product-service context contains the controlled Runtime port, never a mutable native Session.
+	context.runtime.session.commit();
+	// @ts-expect-error Human installation permission is not a native Agent grant.
+	createMasProfilePacks({ profiles: { forged: ["extensions.install"] } }, () => mas);
+	return { profiles, service };
+}
 
 export function extensionBackendContract(context: BackendContext, host: ExtensionHost) {
 	// @ts-expect-error Backend context does not expose native mutable Pi/session objects.

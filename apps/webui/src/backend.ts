@@ -1,5 +1,5 @@
-import type { ConversationRef, RuntimeJobReceipt, DisplayReceipt } from "@pakka/agent";
-import type { PocketPerson, PocketInputReceipt } from "@pakka/server/pocket";
+import type { ConversationRef, RuntimeJobReceipt, DisplayReceipt, Runtime } from "@pakka/agent";
+import type { PocketPerson, PocketInputReceipt, PocketPeople, PocketWorkspace } from "@pakka/server/pocket";
 import type {
 	ExtensionJson,
 	ExtensionCall,
@@ -7,6 +7,15 @@ import type {
 	ExtensionRegistration,
 	ExtensionPermission,
 } from "./extension.ts";
+
+/** Trusted product-service binding, isolated from executable/router and browser imports. */
+export interface PocketServiceContext {
+	readonly runtime: Runtime;
+	readonly people: PocketPeople;
+	readonly workspace: PocketWorkspace;
+	/** Original product owner identity; descriptive, never an authorization. */
+	readonly ownerId: string;
+}
 
 export interface ExtensionSetting {
 	readonly version: number;

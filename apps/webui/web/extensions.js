@@ -16,7 +16,16 @@ class ContentBoundary extends Component {
 			: props.children;
 	}
 }
-const currentKey = (target) => (target ? [target.key, target.incarnation, target.profile].join(":") : "app");
+const currentKey = (target) =>
+	target
+		? JSON.stringify([
+				target.sessionId,
+				target.conversationId,
+				target.key,
+				target.incarnation,
+				target.profile,
+			])
+		: "app";
 
 /** The application owns auth/navigation; all extension surfaces use this ordinary public registry. */
 export function useExtensions({ person, target, csrf, notice, error, navigate, opened }) {
@@ -39,6 +48,8 @@ export function useExtensions({ person, target, csrf, notice, error, navigate, o
 	);
 	const registry = useRef([]);
 	registry.current = registrations;
+	const activeInstances = useRef([]);
+	activeInstances.current = [surface, overlay].filter(Boolean);
 	useEffect(() => {
 		setRegistrations([]);
 		setSurface(null);
@@ -51,17 +62,32 @@ export function useExtensions({ person, target, csrf, notice, error, navigate, o
 		const refresh = async () => {
 			try {
 				const rows = await client.list(target, { signal: controller.signal });
+				const scopes = new Map([[currentKey(target), rows]]);
+				for (const instance of activeInstances.current) {
+					const key = currentKey(instance.target);
+					if (scopes.has(key)) continue;
+					try {
+						scopes.set(key, await client.list(instance.target, { signal: controller.signal }));
+					} catch (failure) {
+						if (failure.code === "UNAUTHORIZED") throw failure;
+						scopes.set(key, []);
+					}
+				}
 				if (!active) return;
 				setRegistrations(rows);
-				const keep = (instance) =>
-					instance &&
-					rows.some(
+				const keep = (instance) => {
+					if (!instance) return false;
+					const scoped = scopes.get(currentKey(instance.target));
+					// A newly opened instance was just authorized by its own discovery; check it on the next refresh.
+					if (!scoped) return true;
+					return scoped.some(
 						(row) =>
 							row.manifest.id === instance.registration.manifest.id &&
 							row.generation === instance.registration.generation &&
 							row.phase === "ready" &&
 							row.manifest.interfaces.some((view) => view.id === instance.view.id),
 					);
+				};
 				setSurface((old) => (keep(old) ? old : null));
 				setOverlay((old) => (keep(old) ? old : null));
 			} catch (failure) {
@@ -82,20 +108,20 @@ export function useExtensions({ person, target, csrf, notice, error, navigate, o
 			controller.abort();
 		};
 	}, [client, person?.role, currentKey(target)]);
-	const open = (registration, id) => {
+	const open = (registration, id, resource = latest.current.target) => {
 		const accepted = registry.current.find(
 				(row) =>
 					row.manifest.id === registration.manifest.id &&
 					row.generation === registration.generation &&
 					row.phase === "ready",
 			),
-			view = accepted?.manifest.interfaces.find((row) => row.id === id);
-		if (!view || (view.scope === "conversation" && !latest.current.target)) return;
+			view = accepted && registration.manifest.interfaces.find((row) => row.id === id);
+		if (!view || (view.scope === "conversation" && !resource)) return;
 		const instance = {
-			registration: accepted,
+			registration,
 			view,
 			id: crypto.randomUUID(),
-			target: latest.current.target,
+			target: resource,
 			person: latest.current.person,
 			trigger: document.activeElement,
 		};
@@ -408,12 +434,23 @@ function HostInterface({ instance, client, execute, open, close, notice, navigat
 			signal: controller.signal,
 			call: async (action, input, options = {}) => {
 				check();
+				const resource = options.target ?? instance.target;
+				const registration = options.target
+					? (await client.list(resource, { signal: controller.signal })).find(
+							(row) =>
+								row.manifest.id === instance.registration.manifest.id &&
+								row.generation === instance.registration.generation &&
+								row.phase === "ready",
+						)
+					: instance.registration;
+				check();
+				if (!registration) throw new Error("Interface resource is unavailable");
 				const result = await execute(
-					instance.registration,
+					registration,
 					action,
 					input,
 					{ ...options, signal: controller.signal },
-					instance.target,
+					resource,
 				);
 				check();
 				return result;
@@ -461,8 +498,28 @@ function HostInterface({ instance, client, execute, open, close, notice, navigat
 			notice: (text) => {
 				if (!controller.signal.aborted && typeof text === "string" && text.length <= 4096) notice(text);
 			},
-			open: (id) => {
-				if (!controller.signal.aborted) open(instance.registration, id);
+			open: (id, options = {}) => {
+				if (controller.signal.aborted) return;
+				if (!options.target) {
+					open(instance.registration, id, instance.target);
+					return;
+				}
+				void client
+					.list(options.target, { signal: controller.signal })
+					.then((rows) => {
+						check();
+						const registration = rows.find(
+							(row) =>
+								row.manifest.id === instance.registration.manifest.id &&
+								row.generation === instance.registration.generation &&
+								row.phase === "ready",
+						);
+						if (!registration) throw new Error("Interface resource is unavailable");
+						open(registration, id, options.target);
+					})
+					.catch(() => {
+						if (!controller.signal.aborted) notice("This extension resource is unavailable.");
+					});
 			},
 			navigate: (target) => {
 				if (!controller.signal.aborted) navigate(target);

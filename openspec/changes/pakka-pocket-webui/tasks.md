@@ -30,22 +30,24 @@ P1 service evidence: `docs/PAKKA-POCKET-P1.md`, full 296/296 and actual installe
 ## 4. P3 — Public extension host and independent consumers
 
 - [x] 4.1 Fix manifest/version/facet and public SDK/component exports using an independent type consumer; verify one Preact runtime and browser/backend/Agent import isolation.
-- [ ] 4.2 Implement staged registration, collision/compatibility checks, facet activation/removal and explicit partial/unknown installation handling.
+- [x] 4.2 Implement staged registration, collision/compatibility checks, facet activation/removal and explicit partial/unknown installation handling.
 - [x] 4.3 Implement one human-command dispatcher for typed slash, suggestions and buttons with checked scope/schema, private notices, display cards, interfaces and native receipts.
 - [ ] 4.4 Implement namespaced backend RPC/client bindings, permission rechecks, scoped settings/CAS, finite deadline/job policy and persistent request/payload reconciliation.
-- [ ] 4.5 Implement public navigation/page/panel/settings/sheet slots, host-owned focus/error/loading state and instance-bound late-result cleanup.
+- [x] 4.5 Implement public navigation/page/panel/settings/sheet slots, host-owned focus/error/loading state and instance-bound late-result cleanup.
 - [x] 4.6 Implement generation-bound asset acceptance/serving and reload-failure tests including changed bytes, traversal, symlink/junction and old-instance calls.
 - [x] 4.7 Deliver GUI-only and backend-setting examples installed unchanged through public exports; verify their actual behavior, typed/tapped parity and no implicit model input/secret leakage.
 
-P3 intermediate evidence: `docs/PAKKA-POCKET-P3.md`, full 332/332, focused 22/22 and installed public examples pass. The Backend/WebUI/Client host, command dispatcher, scoped CAS/reconciliation and public containers are implemented. Tasks 4.2/4.4/4.5 remain open for the actual Agent-facet composition, plugin-owned long job and member-panel consumers in P4/P5; this does not claim the remaining combinations are accepted. No P6 independent review or complete product clearance is inferred.
+P3 intermediate evidence: `docs/PAKKA-POCKET-P3.md`, full 332/332, focused 22/22 and installed public examples pass. The Backend/WebUI/Client host, command dispatcher, scoped CAS/reconciliation and public containers are implemented. Tasks 4.2/4.5 were subsequently completed by P4's actual approved Agent composition, independent facet removal and member-panel consumer. Task 4.4 remains open for a plugin-owned long-job consumer in P5; this does not claim remaining combinations are accepted. No P6 independent review or complete product clearance is inferred.
 
 ## 5. P4 — MAS DevPack workbench facets
 
-- [ ] 5.1 Add optional public DevPack Backend/WebUI/Client exports and peers without altering the headless Agent import graph or automatically enabling tools.
-- [ ] 5.2 Bind current human MAS observation/actions and checked subscriptions to the same public extension service interfaces used by the independent examples.
-- [ ] 5.3 Port reusable board/bar components into MAS Board/member/ownership/lifetime/receipt views, removing every original subagent/PiP production authority edge.
-- [ ] 5.4 Exercise actual model-tool creation and human Board send/steer/reply/abort/retire paths with positive native result/refusal evidence and cross-user filtering.
-- [ ] 5.5 Verify Board removal/old generation/late callbacks clean only interface resources, preserve members/history/admitted jobs and leave the basic workbench usable.
+- [x] 5.1 Add optional public DevPack Backend/WebUI/Client exports and peers without altering the headless Agent import graph or automatically enabling tools.
+- [x] 5.2 Bind current human MAS observation/actions and checked subscriptions to the same public extension service interfaces used by the independent examples.
+- [x] 5.3 Port reusable board/bar components into MAS Board/member/ownership/lifetime/receipt views, removing every original subagent/PiP production authority edge.
+- [x] 5.4 Exercise actual model-tool creation and human Board send/steer/reply/abort/retire paths with positive native result/refusal evidence and cross-user filtering.
+- [x] 5.5 Verify Board removal/old generation/late callbacks clean only interface resources, preserve members/history/admitted jobs and leave the basic workbench usable.
+
+P4 intermediate evidence: `docs/PAKKA-POCKET-P4.md`, full 343/343 plus the added fixed-profile/removal regression, final focused 22/22, unchanged-production identity and installed actual executable/Chrome consumer (8 local HTTP). A separate headless install contains/resolves neither WebUI nor Preact. Original native receipts/history, scoped viewer responses and spent quota are inspected independently. This is not the final P6 review or complete P5 UI/deployment acceptance.
 
 ## 6. P5 — Complete adopted UI and deployment workflows
 

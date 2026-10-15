@@ -1,0 +1,832 @@
+/* Adapted from the pinned pi-pocket board stylesheet; MIT, see LICENSE.pi-pocket. */
+/* ─── Subagents board ─────────────────────────────────────────── */
+
+/*
+ * Every subagent in every session, in the conversation's place: a square each, a row per session, the bar of states
+ * that filters by one, what needs you, and the one selected. Phones: one column, and a bar at the bottom.
+ */
+.board {
+	--done-cell: color-mix(in srgb, var(--ok) 40%, var(--bg));
+	position: relative;
+	flex: 1;
+	min-height: 0;
+	display: flex;
+	flex-direction: column;
+	background: var(--bg);
+	animation: fade var(--t-fade) var(--ease-almost);
+}
+
+.board-head {
+	flex: none;
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: calc(env(safe-area-inset-top) + 0.35rem) 0.4rem 0.35rem 1rem;
+	border-bottom: 1px solid var(--line);
+}
+
+.board-title {
+	flex: 1;
+	min-width: 0;
+}
+
+.board-title h2 {
+	margin: 0;
+	font-size: 1rem;
+	font-weight: 700;
+	line-height: 1.6;
+	color: var(--text);
+}
+
+.board-title h2::before {
+	content: "▪ ";
+	color: var(--accent);
+}
+
+.board-sub {
+	font-size: 0.72rem;
+	color: var(--muted);
+}
+
+.board-search {
+	flex: none;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	width: 220px;
+	height: 32px;
+	padding: 0 8px;
+	background: var(--card);
+	border: 1px solid transparent;
+	color: var(--muted);
+	transition: border-color var(--t-hover) var(--ease-out);
+}
+
+.board-search.filled,
+.board-search:focus-within {
+	border-color: var(--accent);
+}
+
+.board-search input {
+	flex: 1;
+	min-width: 0;
+	height: 100%;
+	padding: 0;
+	border: 0;
+	background: none;
+	font-size: 0.8rem;
+	color: var(--text);
+}
+
+.board-search-row {
+	flex: none;
+	padding: 10px 12px 0;
+}
+
+.board-search-row .board-search {
+	width: 100%;
+}
+
+/* A state's mark: its fill and edge, with "!" for what needs you. */
+.board-mark {
+	flex: none;
+	width: 12px;
+	height: 12px;
+	display: grid;
+	place-items: center;
+	border: 1px solid transparent;
+	color: var(--accent-ink);
+	font-size: 0.56rem;
+	font-weight: 800;
+	line-height: 1;
+}
+
+.board-mark.waiting,
+.board-cell.waiting {
+	background: var(--warn);
+	border-color: var(--warn);
+}
+
+.board-mark.failed,
+.board-cell.failed {
+	background: var(--err);
+	border-color: var(--err);
+}
+
+.board-mark.working,
+.board-cell.working {
+	background: var(--accent);
+	border-color: var(--accent);
+}
+
+.board-mark.stopped,
+.board-cell.stopped {
+	background: transparent;
+	border-color: var(--muted);
+}
+
+.board-mark.done,
+.board-cell.done {
+	background: var(--done-cell);
+	border-color: var(--done-cell);
+}
+
+/* How many are in each state, as one bar, and a legend that filters by one. */
+.board-summary-bar {
+	flex: none;
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	padding: 14px 16px 10px;
+	border-bottom: 1px solid var(--line);
+}
+
+.board-states {
+	display: flex;
+	gap: 2px;
+	height: 10px;
+}
+
+.board-state {
+	flex-basis: 0;
+	transition: opacity var(--t-fade) var(--ease-almost);
+}
+
+.board-state.waiting {
+	background: var(--warn);
+}
+
+.board-state.failed {
+	background: var(--err);
+}
+
+.board-state.working {
+	background: var(--accent);
+}
+
+.board-state.stopped {
+	background: var(--line-strong);
+}
+
+.board-state.done {
+	background: var(--done-cell);
+}
+
+.board-state.dim {
+	opacity: 0.25;
+}
+
+.board-legend {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px 18px;
+}
+
+.board-filter {
+	position: relative;
+	display: flex;
+	align-items: center;
+	gap: 7px;
+	padding: 2px 0 5px;
+	font-size: 0.76rem;
+	color: var(--muted);
+	transition: color var(--t-hover) var(--ease-out);
+}
+
+.board-filter:hover,
+.board-filter.on {
+	color: var(--text);
+}
+
+.board-filter.on::after {
+	content: "";
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	height: 2px;
+	background: var(--accent);
+}
+
+.board-filter .board-mark {
+	width: 9px;
+	height: 9px;
+}
+
+.board-filter-count {
+	font-weight: 700;
+	font-variant-numeric: tabular-nums;
+	color: var(--text);
+}
+
+.board-filter.waiting .board-filter-count {
+	color: var(--warn);
+}
+
+.board-filter.failed .board-filter-count {
+	color: var(--err);
+}
+
+.board-filter.working .board-filter-count {
+	color: var(--accent);
+}
+
+.board-filter.stopped .board-filter-count {
+	color: var(--muted);
+}
+
+.board-filter.done .board-filter-count {
+	color: var(--ok);
+}
+
+.board-body {
+	flex: 1;
+	min-height: 0;
+	display: flex;
+}
+
+.board-main {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+}
+
+.board-map {
+	flex: 1;
+	min-height: 0;
+	overflow-y: auto;
+	padding: 4px 16px 12px;
+}
+
+.board-empty {
+	padding: 1.2rem 0;
+	color: var(--muted);
+	font-size: 0.85rem;
+}
+
+/* A session: its title and how its subagents are, then a square for each. */
+.board-row {
+	display: grid;
+	grid-template-columns: 200px minmax(0, 1fr);
+	gap: 14px;
+	padding: 10px 0;
+	border-bottom: 1px solid var(--line);
+	transition: opacity var(--t-fade) var(--ease-almost);
+}
+
+.board-row.dim {
+	opacity: 0.4;
+}
+
+.board-session {
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 1px;
+	text-align: left;
+}
+
+.board-session-title {
+	min-width: 0;
+	display: flex;
+	align-items: center;
+	gap: 7px;
+}
+
+.board-session-name {
+	min-width: 0;
+	font-size: 0.8rem;
+	color: var(--text);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	transition: color var(--t-hover) var(--ease-out);
+}
+
+.board-session:hover .board-session-name {
+	color: var(--accent);
+}
+
+.board-summary {
+	padding-left: 14px;
+	font-size: 0.66rem;
+	color: var(--muted);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.board-summary.waiting {
+	color: var(--warn);
+}
+
+.board-summary.failed {
+	color: var(--err);
+}
+
+.board-summary.working {
+	color: var(--accent);
+}
+
+.board-cells {
+	display: flex;
+	flex-wrap: wrap;
+	align-content: flex-start;
+	gap: 3px;
+	padding-top: 2px;
+}
+
+/* A session's finished subagents left off the board, counted: "+12". */
+.board-older {
+	align-self: center;
+	margin-left: 3px;
+	color: var(--muted);
+	font-size: 0.7rem;
+}
+
+.board-cell {
+	width: 18px;
+	height: 18px;
+	display: grid;
+	place-items: center;
+	border: 1px solid transparent;
+	color: var(--accent-ink);
+	font-size: 0.58rem;
+	font-weight: 800;
+	line-height: 1;
+	outline-offset: 1px;
+	transition: opacity var(--t-fade) var(--ease-almost);
+}
+
+.board-cell:hover {
+	outline: 1px solid var(--body);
+}
+
+.board-cell.on {
+	outline: 2px solid var(--text);
+	outline-offset: 1px;
+}
+
+.board-cell.dim {
+	opacity: 0.15;
+}
+
+/* What the square under the mouse does, or the selected one's. */
+.board-status {
+	flex: none;
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	height: 30px;
+	padding: 0 16px;
+	border-top: 1px solid var(--line);
+	background: var(--o-bg-dark);
+	font-size: 0.72rem;
+	white-space: nowrap;
+	overflow: hidden;
+}
+
+.board-status .board-mark {
+	width: 8px;
+	height: 8px;
+}
+
+.board-status-name {
+	font-weight: 600;
+	color: var(--text);
+}
+
+.board-status-when {
+	color: var(--muted);
+}
+
+.board-status-line {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	color: var(--muted);
+}
+
+.board-status-line.working,
+.board-status-line.stopped,
+.board-status-line.done {
+	color: var(--body);
+}
+
+.board-status-line.waiting {
+	color: var(--warn);
+}
+
+.board-status-line.failed {
+	color: var(--err);
+}
+
+.board-keys {
+	flex: none;
+	margin-left: auto;
+	color: var(--faint);
+}
+
+/* The side: what needs you, then the one selected. */
+.board-side {
+	flex: none;
+	width: 310px;
+	display: flex;
+	flex-direction: column;
+	gap: 18px;
+	padding: 14px 16px;
+	border-left: 1px solid var(--line);
+	overflow-y: auto;
+}
+
+.board-needs {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.board-needs .label {
+	margin: 0 0 2px;
+}
+
+.board-needs-count {
+	color: var(--warn);
+}
+
+.board-need {
+	display: grid;
+	grid-template-columns: 14px minmax(0, 1fr);
+	align-items: center;
+	gap: 0 8px;
+	padding: 6px 8px;
+	text-align: left;
+	border: 1px solid transparent;
+	transition: background-color var(--t-hover) var(--ease-out);
+}
+
+.board-need:hover {
+	background: var(--hover);
+}
+
+.board-need.on {
+	background: var(--accent-soft);
+	border-color: var(--accent-line);
+}
+
+.board-need-main {
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+}
+
+.board-need-head {
+	font-size: 0.8rem;
+	color: var(--text);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.board-need-head b {
+	font-weight: 600;
+}
+
+.board-need.waiting .board-need-what {
+	color: var(--warn);
+}
+
+.board-need.failed .board-need-what {
+	color: var(--err);
+}
+
+.board-need-session {
+	font-size: 0.66rem;
+	color: var(--muted);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.board-detail {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	padding-top: 14px;
+	border-top: 1px solid var(--line);
+}
+
+.board-detail-head {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	min-width: 0;
+}
+
+.board-detail-name {
+	min-width: 0;
+	font-weight: 700;
+	font-size: 0.95rem;
+	color: var(--text);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.board-detail-state {
+	flex: none;
+	margin-left: auto;
+	font-size: 0.72rem;
+}
+
+.board-detail-state.waiting {
+	color: var(--warn);
+}
+
+.board-detail-state.failed {
+	color: var(--err);
+}
+
+.board-detail-state.working {
+	color: var(--accent);
+}
+
+.board-detail-state.stopped {
+	color: var(--muted);
+}
+
+.board-detail-state.done {
+	color: var(--ok);
+}
+
+.board-facts {
+	display: grid;
+	grid-template-columns: 62px minmax(0, 1fr);
+	gap: 7px 10px;
+	font-size: 0.78rem;
+}
+
+.board-facts > span:not([class]) {
+	color: var(--muted);
+}
+
+.board-link {
+	min-width: 0;
+	text-align: left;
+	color: var(--accent);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.board-link:hover {
+	text-decoration: underline;
+	text-underline-offset: 2px;
+}
+
+.board-when {
+	color: var(--text);
+	font-variant-numeric: tabular-nums;
+}
+
+.board-asked {
+	color: var(--body);
+	text-wrap: pretty;
+	overflow-wrap: anywhere;
+}
+
+.board-now {
+	color: var(--text);
+	overflow-wrap: anywhere;
+}
+
+.board-now.waiting {
+	color: var(--warn);
+}
+
+.board-error {
+	color: var(--err);
+	overflow-wrap: anywhere;
+}
+
+.board-detail .agent-chip {
+	align-self: flex-start;
+}
+
+.board-actions {
+	display: flex;
+	gap: 6px;
+}
+
+.board-actions .button {
+	padding: 0.3rem 0.65rem;
+	font-size: 0.82rem;
+}
+
+.board-stop:hover {
+	border-color: var(--err);
+	color: var(--err);
+}
+
+/* Phones: one column, what needs you first, thumb-sized squares, and the one selected in a bar at the bottom. */
+.board-list {
+	flex: 1;
+	min-height: 0;
+	overflow-y: auto;
+	padding: 0 12px 16px;
+}
+
+/* Room under the last row for the bar over it. */
+.board-list.with-bar {
+	padding-bottom: 200px;
+}
+
+.board.phone .board-needs {
+	gap: 2px;
+	padding: 12px 0;
+	border-bottom: 1px solid var(--line);
+}
+
+.board.phone .board-needs .label {
+	margin-bottom: 4px;
+}
+
+.board.phone .board-need {
+	gap: 0 10px;
+	min-height: 44px;
+	padding: 4px 8px;
+}
+
+.board.phone .board-need-head {
+	font-size: 0.84rem;
+}
+
+.board.phone .board-need-session {
+	font-size: 0.7rem;
+}
+
+.board.phone .board-row {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	padding: 12px 0;
+}
+
+.board.phone .board-session {
+	min-height: 24px;
+	justify-content: center;
+}
+
+.board.phone .board-session-title {
+	gap: 8px;
+}
+
+.board.phone .board-session-name {
+	font-size: 0.84rem;
+}
+
+.board.phone .board-summary {
+	flex: none;
+	margin-left: auto;
+	padding-left: 0;
+	font-size: 0.68rem;
+}
+
+.board.phone .board-cells {
+	gap: 4px;
+	padding-top: 0;
+}
+
+.board.phone .board-cell {
+	width: 36px;
+	height: 36px;
+	font-size: 0.72rem;
+}
+
+.board-bar {
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	z-index: 3;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	padding: 12px 12px calc(env(safe-area-inset-bottom) + 14px);
+	background: var(--bg);
+	border-top: 2px solid transparent;
+	border-image: var(--active) 1;
+	animation: rise-in var(--t-in) var(--ease-out);
+}
+
+.board-bar-head {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	min-width: 0;
+}
+
+.board-bar .board-detail-name {
+	font-size: 1rem;
+}
+
+.board-bar .board-detail-state {
+	margin-left: 0;
+}
+
+.board-bar-when {
+	margin-left: auto;
+	font-size: 0.72rem;
+	color: var(--muted);
+	font-variant-numeric: tabular-nums;
+	white-space: nowrap;
+}
+
+.board-bar-close {
+	flex: none;
+	width: 32px;
+	height: 32px;
+	display: grid;
+	place-items: center;
+	margin: -6px -6px -6px 0;
+	color: var(--body);
+}
+
+.board-bar-session {
+	font-size: 0.74rem;
+	color: var(--muted);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.board-bar-line {
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+	font-size: 0.8rem;
+	color: var(--body);
+	overflow-wrap: anywhere;
+}
+
+.board-bar-line.waiting {
+	color: var(--warn);
+}
+
+.board-bar-line.failed {
+	color: var(--err);
+}
+
+.board-bar-actions {
+	display: flex;
+	gap: 6px;
+}
+
+.board-bar-actions .button {
+	height: 44px;
+	font-size: 0.86rem;
+}
+
+.board-bar-actions .button.primary {
+	flex: 1;
+}
+
+.board-bar-actions .button:not(.primary) {
+	flex: none;
+	width: 96px;
+}
+
+/* The generic extension host supplies the container and the active human identity. */
+.mas-board {
+	min-height: 24rem;
+}
+.mas-member dl {
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr);
+	gap: 0.5rem 1rem;
+}
+.mas-member dd {
+	margin: 0;
+	overflow-wrap: anywhere;
+}
+.mas-member textarea {
+	width: 100%;
+	min-height: 7rem;
+}
+.mas-controls {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+}
+@media (max-width: 699px) {
+	.mas-board .board-head {
+		flex-wrap: wrap;
+	}
+	.mas-board .board-search {
+		width: 100%;
+	}
+	.mas-board .board-row {
+		flex-direction: column;
+	}
+}
