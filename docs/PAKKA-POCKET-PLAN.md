@@ -1,6 +1,6 @@
 # Pakka-Pocket 准备与迁移计划
 
-状态：**已进入实施，产品尚未验收**。P0 已固定来源与页面/action ledger，并增加受控 Conversation 读/显示端口；阶段门禁与决策见 [P0 记录](PAKKA-POCKET-P0.md)。没有创建空 workspace 或迁移旧数据。实施入口为 [pakka-pocket-webui](../openspec/changes/pakka-pocket-webui/proposal.md)，技术决策见 [design](../openspec/changes/pakka-pocket-webui/design.md)，开发约定见 [WEBUI-DEVELOPMENT.md](WEBUI-DEVELOPMENT.md)。
+状态：**已进入实施，产品尚未验收**。P0 已固定来源与页面/action ledger；[P1 受控服务](PAKKA-POCKET-P1.md)已增加人类身份、人工工作区、有限历史分页、原生后台任务及独立 v2 协议/client。阶段门禁见 [P0 记录](PAKKA-POCKET-P0.md) 与 P1 记录；GUI、HTTP/SSE 与扩展宿主在后续阶段。没有创建空 workspace 或迁移旧数据。实施入口为 [pakka-pocket-webui](../openspec/changes/pakka-pocket-webui/proposal.md)，技术决策见 [design](../openspec/changes/pakka-pocket-webui/design.md)，开发约定见 [WEBUI-DEVELOPMENT.md](WEBUI-DEVELOPMENT.md)。
 
 ## 1. 已确定的产品目标
 

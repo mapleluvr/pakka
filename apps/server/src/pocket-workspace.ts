@@ -1,0 +1,326 @@
+import { createHash } from "node:crypto";
+import type {
+	Runtime,
+	CatalogOptions,
+	ConversationRef,
+	ConversationReadOptions,
+	ConversationSnapshot,
+	InputMode,
+	DisplayReceipt,
+	DeliveryReceipt,
+	CatalogMember,
+} from "@pakka/agent";
+import type { PocketAuthority, PocketPeople, PocketPermission, PocketPerson } from "./pocket-people.ts";
+
+export interface PocketCreate {
+	readonly requestId: string;
+	readonly name: string;
+	readonly profile: string;
+}
+export interface PocketFork extends PocketCreate {
+	readonly entryId: string;
+}
+export interface PocketInput {
+	readonly requestId: string;
+	readonly text: string;
+	readonly mode: InputMode;
+}
+export interface PocketInputReceipt {
+	readonly id: string;
+	readonly requestId: string;
+	readonly actorId: string;
+	readonly target: ConversationRef;
+	readonly status: DeliveryReceipt["status"];
+	readonly entryId?: string;
+}
+export interface PocketWorkspaceClient {
+	list(): Promise<readonly ConversationRef[]>;
+	create(input: PocketCreate): Promise<ConversationRef>;
+	configure(ref: ConversationRef, profile: string): Promise<ConversationRef>;
+	fork(ref: ConversationRef, input: PocketFork): Promise<ConversationRef>;
+	read(ref: ConversationRef, page?: ConversationReadOptions): Promise<ConversationSnapshot>;
+	display(
+		ref: ConversationRef,
+		input: { readonly requestId: string; readonly kind: "chat" | "card"; readonly text: string },
+	): Promise<DisplayReceipt>;
+	submit(ref: ConversationRef, input: PocketInput): Promise<PocketInputReceipt>;
+	receipt(id: string): Promise<PocketInputReceipt>;
+	wait(id: string, signal?: AbortSignal): Promise<PocketInputReceipt>;
+	withdraw(id: string): Promise<PocketInputReceipt>;
+	abort(ref: ConversationRef): Promise<void>;
+}
+export interface PocketWorkspace {
+	bind(actor: PocketAuthority): PocketWorkspaceClient;
+}
+export interface PocketWorkspaceOptions {
+	readonly runtime: Runtime;
+	readonly people: PocketPeople;
+	readonly catalog: CatalogOptions;
+	/** Host-owned selection only; the browser never supplies this ceiling. */
+	readonly profileCeiling: (person: PocketPerson) => readonly string[];
+}
+const key = (v: unknown): v is string =>
+	typeof v === "string" && /^[a-zA-Z0-9][-a-zA-Z0-9._:]{0,159}$/.test(v);
+const hash = (v: unknown) => createHash("sha256").update(JSON.stringify(v)).digest("hex");
+const sameRef = (a: ConversationRef, b: ConversationRef) =>
+	["key", "sessionId", "conversationId", "incarnation", "profile"].every(
+		(k) => a[k as keyof ConversationRef] === b[k as keyof ConversationRef],
+	);
+function frozen<T>(v: T): T {
+	if (v && typeof v === "object") {
+		Object.values(v).forEach(frozen);
+		Object.freeze(v);
+	}
+	return v;
+}
+function denied(): never {
+	throw new Error("Pocket workspace authority denied");
+}
+
+/** Human workbench metadata composes the controlled catalog; it owns no scheduler or native handles. */
+export function createPocketWorkspace(options: PocketWorkspaceOptions): PocketWorkspace {
+	const { runtime, people } = options,
+		catalogOptions = Object.freeze({ ...options.catalog }),
+		catalog = runtime.catalog(catalogOptions);
+	let tail: Promise<unknown> = Promise.resolve();
+	const serial = <T>(operation: () => Promise<T>): Promise<T> => {
+		const running = tail.then(operation);
+		tail = running.then(
+			() => {},
+			() => {},
+		);
+		return running;
+	};
+	const member = async (ref: ConversationRef, check: () => void): Promise<CatalogMember> => {
+		check();
+		const snapshot = await catalog.snapshot();
+		check();
+		const found = snapshot.members.find(
+			(row) => row.data.kind === "pocket-workspace" && sameRef(row.ref, ref),
+		);
+		if (!found) return denied();
+		return found;
+	};
+	return Object.freeze({
+		bind: (actor: PocketAuthority): PocketWorkspaceClient => {
+			people.current(actor);
+			const current = () => people.current(actor);
+			const check = (permission: PocketPermission, ref?: ConversationRef) =>
+				people.check(actor, permission, ref?.conversationId);
+			const profileCheck = (profile: string) => {
+				const person = current();
+				const allowed = options.profileCeiling(person);
+				if (
+					!key(profile) ||
+					!Array.isArray(allowed) ||
+					!allowed.length ||
+					allowed.length > 64 ||
+					!allowed.every(key) ||
+					!allowed.includes(profile)
+				)
+					throw new Error("Pocket profile ceiling denied");
+			};
+			const create = (
+				input: PocketCreate,
+				source?: ConversationRef,
+				entryId?: string,
+			): Promise<ConversationRef> => {
+				check("create");
+				if (
+					!input ||
+					Object.keys(input).some(
+						(k) => !["requestId", "name", "profile", ...(source ? ["entryId"] : [])].includes(k),
+					) ||
+					!key(input.requestId) ||
+					typeof input.name !== "string" ||
+					!input.name.trim() ||
+					input.name.length > 80 ||
+					/[\x00-\x1f\x7f]/.test(input.name) ||
+					(source && (!entryId || !/^[0-9]+$/.test(entryId)))
+				)
+					return Promise.reject(new Error("Invalid bounded Pocket creation input"));
+				const saved = Object.freeze({
+						requestId: input.requestId,
+						name: input.name.trim(),
+						profile: input.profile,
+					}),
+					from = source ? structuredClone(source) : undefined,
+					personId = current().id;
+				const fingerprint = hash({ ...saved, source: from ?? null, entryId: entryId ?? null }),
+					id = "human-" + hash([personId, saved.requestId]).slice(0, 40);
+				const authorize = () => {
+					check("create");
+					profileCheck(saved.profile);
+					if (from) check("manage", from);
+				};
+				return serial(async () => {
+					authorize();
+					if (from) await member(from, authorize);
+					const before = await catalog.snapshot();
+					authorize();
+					const prior = before.members.find((m) => m.key === id);
+					if (prior) {
+						if (
+							prior.data.kind !== "pocket-workspace" ||
+							prior.data.personId !== personId ||
+							prior.data.fingerprint !== fingerprint
+						)
+							throw new Error("Pocket creation request conflict");
+						await runtime.conversation(prior.ref);
+						authorize();
+						return prior.ref;
+					}
+					const rows = await catalog.enroll(
+						[
+							{
+								key: id,
+								profile: saved.profile,
+								lifetime: "persistent",
+								data: {
+									kind: "pocket-workspace",
+									phase: "active",
+									personId,
+									requestId: saved.requestId,
+									name: saved.name,
+									fingerprint,
+								},
+								...(from ? { fork: { source: from, entryId: entryId! } } : {}),
+							},
+						],
+						authorize,
+					);
+					authorize();
+					return rows[0]!.ref;
+				});
+			};
+			const receiptCheck = (
+				value: DeliveryReceipt,
+				permission: PocketPermission = "read",
+			): PocketInputReceipt => {
+				const person = current();
+				if (value.principal !== person.id || value.source !== null) return denied();
+				check(permission, value.target);
+				return frozen({
+					id: value.id,
+					requestId: value.requestId,
+					actorId: person.id,
+					target: value.target,
+					status: value.status,
+					...(value.entryId ? { entryId: value.entryId } : {}),
+				});
+			};
+			const ownedReceipt = async (id: string, permission: PocketPermission = "read") => {
+				current();
+				const value = await catalog.receipt(id, () => {
+					current();
+				});
+				receiptCheck(value, permission);
+				return value;
+			};
+			return Object.freeze({
+				list: async () => {
+					current();
+					const snapshot = await catalog.snapshot();
+					const person = current();
+					const rows = snapshot.members.filter(
+						(row) =>
+							row.data.kind === "pocket-workspace" &&
+							row.data.phase === "active" &&
+							(person.resources === "*" || person.resources.includes(row.ref.conversationId)),
+					);
+					for (const row of rows) check("read", row.ref);
+					current();
+					return frozen(rows.map((row) => row.ref));
+				},
+				create: (input: PocketCreate) => create(input),
+				fork: (ref: ConversationRef, input: PocketFork) => create(input, ref, input.entryId),
+				configure: (raw: ConversationRef, profile: string) =>
+					serial(async () => {
+						const ref = structuredClone(raw),
+							authorize = () => {
+								check("manage", ref);
+								profileCheck(profile);
+							};
+						authorize();
+						await member(ref, authorize);
+						const changed = await catalog.configure(ref, profile, authorize);
+						authorize();
+						return changed.ref;
+					}),
+				read: async (ref: ConversationRef, page?: ConversationReadOptions) => {
+					const saved = structuredClone(ref),
+						authorize = () => check("read", saved);
+					authorize();
+					return runtime.readConversation(saved, authorize, page);
+				},
+				display: async (
+					ref: ConversationRef,
+					input: { readonly requestId: string; readonly kind: "chat" | "card"; readonly text: string },
+				) => {
+					const saved = structuredClone(ref),
+						authorize = () => check("send", saved);
+					authorize();
+					if (!input || Object.keys(input).some((k) => !["requestId", "kind", "text"].includes(k)))
+						throw new Error("Invalid Pocket display input");
+					return runtime.writeDisplay(
+						saved,
+						{
+							namespace: catalogOptions.namespace,
+							actorId: current().id,
+							requestId: input.requestId,
+							kind: input.kind,
+							text: input.text,
+						},
+						authorize,
+					);
+				},
+				submit: async (ref: ConversationRef, input: PocketInput) => {
+					const saved = structuredClone(ref),
+						data = structuredClone(input),
+						authorize = () => check(data.mode === "prompt" ? "send" : "steer", saved);
+					authorize();
+					await member(saved, authorize);
+					if (!data || Object.keys(data).some((k) => !["requestId", "text", "mode"].includes(k)))
+						throw new Error("Invalid Pocket input fields");
+					return receiptCheck(
+						await catalog.deliver(
+							{
+								requestId: data.requestId,
+								principal: current().id,
+								source: null,
+								target: saved,
+								text: data.text,
+								mode: data.mode,
+							},
+							authorize,
+						),
+					);
+				},
+				receipt: async (id: string) => receiptCheck(await ownedReceipt(id)),
+				wait: async (id: string, signal?: AbortSignal) => {
+					const value = await ownedReceipt(id);
+					const authorize = () => {
+						current();
+						check("read", value.target);
+					};
+					return receiptCheck(await catalog.wait(id, authorize, signal));
+				},
+				withdraw: async (id: string) => {
+					const value = await ownedReceipt(id, "send");
+					const authorize = () => {
+						current();
+						check("send", value.target);
+					};
+					return receiptCheck(await catalog.withdraw(id, authorize));
+				},
+				abort: async (ref: ConversationRef) => {
+					const saved = structuredClone(ref),
+						authorize = () => check("manage", saved);
+					authorize();
+					await member(saved, authorize);
+					await catalog.stop(saved, authorize);
+				},
+			});
+		},
+	});
+}

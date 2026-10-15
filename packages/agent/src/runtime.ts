@@ -6,10 +6,12 @@ import type {
 	RuntimeCatalog,
 	ConversationRef,
 	ConversationSpec,
+	ConversationReadOptions,
 	Host,
 	Runtime,
 	RuntimeOptions,
 	RuntimeStoreOptions,
+	RuntimeJobOptions,
 	DisplayWrite,
 } from "./types.ts";
 
@@ -69,7 +71,9 @@ export async function createRuntime(options: RuntimeOptions): Promise<Runtime> {
 		view: () => port.view(),
 		conversation: attach,
 		store: (options: RuntimeStoreOptions) => port.store(options),
-		readConversation: (ref: ConversationRef, check: () => void) => port.readConversation(ref, check),
+		jobs: (options: RuntimeJobOptions) => port.jobs(options),
+		readConversation: (ref: ConversationRef, check: () => void, options?: ConversationReadOptions) =>
+			port.readConversation(ref, check, options),
 		writeDisplay: (ref: ConversationRef, input: DisplayWrite, check: () => void) =>
 			port.writeDisplay(ref, input, check),
 		createConversation: async (spec: ConversationSpec) => {

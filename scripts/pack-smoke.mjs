@@ -100,6 +100,7 @@ copyFileSync(join(root, "scripts", "consumer-broker.mjs"), join(consumer, "broke
 copyFileSync(join(root, "scripts", "consumer-devpack.mjs"), join(consumer, "devpack.mjs"));
 copyFileSync(join(root, "scripts", "consumer-apps.mjs"), join(consumer, "apps.mjs"));
 copyFileSync(join(root, "scripts", "consumer-product.mjs"), join(consumer, "product.mjs"));
+copyFileSync(join(root, "scripts", "consumer-pocket-services.mjs"), join(consumer, "pocket-services.mjs"));
 copyFileSync(join(root, "scripts", "consumer-browser.ts"), join(consumer, "consumer-browser.ts"));
 writeFileSync(
 	join(consumer, "tsconfig.browser.json"),
@@ -151,4 +152,5 @@ console.log(run("broker", [join(consumer, "broker.mjs")], consumer));
 console.log(run("devpack", [join(consumer, "devpack.mjs")], consumer));
 console.log(run("apps", [join(consumer, "apps.mjs")], consumer));
 console.log(run("product", [join(consumer, "product.mjs")], consumer));
+console.log(run("pocket-services", [join(consumer, "pocket-services.mjs")], consumer));
 writeFileSync(join(artifacts, "consumer-path.txt"), consumer + "\n");

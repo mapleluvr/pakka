@@ -9,12 +9,14 @@ P0 evidence/decisions: `docs/PAKKA-POCKET-P0.md` and `integrations/pocket/README
 
 ## 2. P1 — Controlled services and versioned contracts
 
-- [ ] 2.1 Implement and test the smallest adapter-owned sanitized Conversation/activity read ports, with explicit human read permission and no raw storage readers.
-- [ ] 2.2 Implement and test controlled display-only records and long-job/receipt ports, retaining unknown outcomes, native ownership and single-writer rules.
-- [ ] 2.3 Define people, role/resource scope, invitation redemption/revocation and browser-session persistence with expiry, concurrency and normal-reopen regressions.
-- [ ] 2.4 Implement tested actor-to-Agent profile ceilings for Pocket create/configure/fork; keep unsupported combinations refused and preserve the v1 guard.
-- [ ] 2.5 Add negotiated finite Pocket request/result/event schemas and an isolated browser client entry while keeping existing v1 imports/defaults compatible.
-- [ ] 2.6 Verify exact broker receipt endpoint/namespace provenance before any new public publication path; otherwise keep that path unexposed and explicit.
+- [x] 2.1 Implement and test the smallest adapter-owned sanitized Conversation/activity read ports, with explicit human read permission and no raw storage readers.
+- [x] 2.2 Implement and test controlled display-only records and long-job/receipt ports, retaining unknown outcomes, native ownership and single-writer rules.
+- [x] 2.3 Define people, role/resource scope, invitation redemption/revocation and browser-session persistence with expiry, concurrency and normal-reopen regressions.
+- [x] 2.4 Implement tested actor-to-Agent profile ceilings for Pocket create/configure/fork; keep unsupported combinations refused and preserve the v1 guard.
+- [x] 2.5 Add negotiated finite Pocket request/result/event schemas and an isolated browser client entry while keeping existing v1 imports/defaults compatible.
+- [x] 2.6 Verify exact broker receipt endpoint/namespace provenance before any new public publication path; otherwise keep that path unexposed and explicit.
+
+P1 service evidence: `docs/PAKKA-POCKET-P1.md`, full 296/296 and actual installed `scripts/consumer-pocket-services.mjs` (1 local HTTP; original admission/budget/job/identity preserved on reopen). v1 consumers also pass. The protocol exports finite v2 schemas; actual network negotiation, sessions and streaming remain P2. No new public broker publication route was added: the exact provenance gate stays required before P4 uses cross-Session receipts. No Web product or independent P6 review is inferred.
 
 ## 3. P2 — Actual Web product and multiplayer transport
 

@@ -317,6 +317,8 @@ export interface RuntimeOptions extends HostOptions {
 	readonly reservedSessionId?: string;
 	/** Additional bootstrap-approved profiles; default inherits HostOptions. */
 	readonly profiles?: readonly ConversationProfile[];
+	/** Trusted, named/versioned backend programs; native objects never leave the adapter. */
+	readonly jobs?: readonly RuntimeJobDefinition[];
 	/** Opt-in mapping of a closed, provably single-Conversation legacy storage; never bulk import. */
 	readonly migrateLegacy?: { readonly expectedSessionId: string; readonly expectedConversationId: string };
 }
@@ -326,6 +328,48 @@ export interface ConversationRef {
 	readonly conversationId: string;
 	readonly incarnation: string;
 	readonly profile: string;
+}
+export interface RuntimeJobOptions {
+	readonly namespace: string;
+	readonly maxJobs: number;
+	readonly maxBytes: number;
+}
+export interface RuntimeJobSpec {
+	readonly requestId: string;
+	readonly actorId: string;
+	readonly target: ConversationRef;
+	readonly definition: string;
+	readonly payload: JsonObject;
+}
+export interface RuntimeJobReceipt extends RuntimeJobSpec {
+	readonly id: string;
+	readonly state: "queued" | "running" | "done" | "unknown";
+	readonly checkpoint: JsonObject;
+	readonly result?: JsonObject;
+	/** Native scheduler fact only. Aborting never asserts rollback of external effects. */
+	readonly nativeTerminal?: "completed" | "aborted";
+}
+export interface RuntimeJobContext {
+	readonly job: RuntimeJobReceipt;
+	readonly checkpoint: JsonObject;
+	check(): void;
+	/** Commit an approved recovery boundary; return after this transition. */
+	advance(checkpoint: JsonObject): Promise<void>;
+	complete(result: JsonObject): Promise<void>;
+	sleep(ms: number): Promise<void>;
+}
+export interface RuntimeJobDefinition {
+	readonly id: string;
+	readonly version: number;
+	/** Rechecks the current person's scope and Conversation before any approved step. */
+	authorize(actorId: string, target: ConversationRef): void;
+	run(context: RuntimeJobContext): Promise<void>;
+}
+export interface RuntimeJobs {
+	start(spec: RuntimeJobSpec, check: () => void): Promise<RuntimeJobReceipt>;
+	receipt(id: string, check: () => void): Promise<RuntimeJobReceipt>;
+	wait(id: string, check: () => void, signal?: AbortSignal): Promise<RuntimeJobReceipt>;
+	abort(id: string, check: () => void): Promise<RuntimeJobReceipt>;
 }
 /** Bootstrap writes application display data; actor identity must be bound by the server, never the model. */
 export interface DisplayWrite {
@@ -350,9 +394,14 @@ export interface TranscriptMessage {
 	readonly isError?: boolean;
 	readonly stopReason?: string;
 }
+export interface ConversationReadOptions {
+	readonly limit?: number;
+	/** Exclusive committed entry boundary within this exact Conversation reference. */
+	readonly beforeEntryId?: string;
+}
 export interface ConversationSnapshot {
 	readonly ref: ConversationRef;
-	/** Active committed transcript, at most the newest 256 entries. No raw native objects or configuration. */
+	/** A committed transcript page, at most 256 entries. No raw native objects or configuration. */
 	readonly entries: readonly {
 		readonly id: string;
 		readonly conversationId: string;
@@ -362,6 +411,8 @@ export interface ConversationSnapshot {
 		readonly display?: DisplayWrite;
 	}[];
 	readonly entriesTruncated: boolean;
+	/** Present only when earlier entries remain; use as the next page's exclusive boundary. */
+	readonly olderBeforeId?: string;
 	readonly live: {
 		readonly busy: boolean;
 		readonly message?: TranscriptMessage;
@@ -474,8 +525,13 @@ export interface Runtime {
 	createConversation(spec: ConversationSpec): Promise<ConversationRef>;
 	catalog(options: CatalogOptions): RuntimeCatalog;
 	store(options: RuntimeStoreOptions): RuntimeStore;
+	jobs(options: RuntimeJobOptions): RuntimeJobs;
 	/** Passive scoped snapshot. The check runs before native acquisition and again before publishing. */
-	readConversation(ref: ConversationRef, check: () => void): Promise<ConversationSnapshot>;
+	readConversation(
+		ref: ConversationRef,
+		check: () => void,
+		options?: ConversationReadOptions,
+	): Promise<ConversationSnapshot>;
 	/** Durable display-only record, never a model input; retries require an identical actor/request/payload. */
 	writeDisplay(ref: ConversationRef, input: DisplayWrite, check: () => void): Promise<DisplayReceipt>;
 	conversation(ref: ConversationRef): Promise<Host>;

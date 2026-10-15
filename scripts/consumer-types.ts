@@ -21,21 +21,52 @@ import type {
 	ConversationRef,
 } from "@pakka/agent";
 import type { Mas, MasClient, MemberSpec, SendSpec, AgentRef } from "@pakka/mas";
-import type { RuntimeStore } from "@pakka/agent";
+import type { RuntimeStore, RuntimeJobOptions } from "@pakka/agent";
+import type { PocketPeople, PocketAuthority, PocketWorkspace } from "@pakka/server/pocket";
 import type { Broker, BrokerClient, BrokerAgentRef } from "@pakka/mas/broker";
 import type { WorkerManager } from "@pakka/server";
 import type { BootstrapConfig } from "@pakka/server/bootstrap";
 import { createMasDevPack, type MasDevPackOptions } from "@pakka/mas-devpack";
 import type { ApprovedSessions } from "@pakka/mas";
 
+export async function pocketServiceContract(
+	people: PocketPeople,
+	actor: PocketAuthority,
+	workspace: PocketWorkspace,
+	runtime: Runtime,
+	ref: ConversationRef,
+) {
+	people.check(actor, "read", ref.conversationId);
+	const client = workspace.bind(actor);
+	await client.read(ref, { limit: 16 });
+	// @ts-expect-error A browser command cannot select an actor, credential or host configuration.
+	await client.create({ requestId: "one", name: "Work", profile: "safe", actorId: "forged" });
+	// @ts-expect-error Mutable native runtime handles are not part of the authority.
+	actor.session.commit();
+	const options: RuntimeJobOptions = { namespace: "jobs", maxJobs: 16, maxBytes: 65536 };
+	const port = runtime.jobs(options);
+	await port.start(
+		{ requestId: "one", actorId: actor.person.id, target: ref, definition: "approved", payload: {} },
+		() => people.check(actor, "send", ref.conversationId),
+	);
+	// @ts-expect-error Job admission requires an explicit bound authority check.
+	await port.start({
+		requestId: "one",
+		actorId: actor.person.id,
+		target: ref,
+		definition: "approved",
+		payload: {},
+	});
+}
+
 export function productContract(config: BootstrapConfig) {
 	const contribution: NonNullable<BootstrapConfig["devpack"]> = {
 		profiles: { default: ["spawn", "observe"] },
 	};
 	// @ts-expect-error strategy inference is not an agent MAS creation grant.
-	const invalid: NonNullable<BootstrapConfig["devpack"]> = { profiles: { default: ["model.infer"] } };
+	const _invalid: NonNullable<BootstrapConfig["devpack"]> = { profiles: { default: ["model.infer"] } };
 	// @ts-expect-error mutable native handles are not JSON product contributions.
-	const forged: NonNullable<BootstrapConfig["devpack"]> = { profiles: { default: ["spawn"] }, session: {} };
+	const _forged: NonNullable<BootstrapConfig["devpack"]> = { profiles: { default: ["spawn"] }, session: {} };
 	return { config, contribution };
 }
 

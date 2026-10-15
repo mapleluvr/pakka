@@ -1,5 +1,19 @@
+import { createPocketClient, type PocketCommand, type PocketSnapshot } from "@pakka/client/pocket";
+import { decodePocketRequest, decodePocketResponse } from "@pakka/protocol/pocket";
 import { createClient, type ClientResult, type ClientOptions, RemoteError } from "@pakka/client";
 import { decodeRequest, decodeResponse, type AgentRef, type Command } from "@pakka/protocol";
+export function pocketBrowserOnly(endpoint: string, csrf: () => string | null, ref: AgentRef) {
+	const client = createPocketClient({ endpoint, csrf });
+	const command: PocketCommand = { op: "read", target: ref, page: { limit: 8 } };
+	const decoded = decodePocketRequest({ version: 2, requestId: "read", command });
+	// @ts-expect-error A browser cannot choose another actor/principal for a command.
+	client.request({ ...command, actorId: "forged" });
+	// @ts-expect-error Model credentials are not browser client configuration.
+	createPocketClient({ endpoint, apiKey: "forged" });
+	const check: (value: PocketSnapshot) => string = (value) => value.ref.conversationId;
+	return { read: client.request(command), decoded, check, decodePocketResponse };
+}
+
 export function browserOnly(endpoint: string, token: string, ref: AgentRef) {
 	const options: ClientOptions = { endpoint, token };
 	const client = createClient(options);

@@ -90,9 +90,16 @@ import type {
 	JsonObject,
 	ConversationProfile,
 	ConversationSnapshot,
+	ConversationReadOptions,
 	TranscriptMessage,
 	DisplayWrite,
 	DisplayReceipt,
+	RuntimeJobOptions,
+	RuntimeJobSpec,
+	RuntimeJobReceipt,
+	RuntimeJobContext,
+	RuntimeJobDefinition,
+	RuntimeJobs,
 } from "./types.ts";
 
 export type AdapterFrame = Pick<
@@ -245,6 +252,7 @@ const RuntimeDoc = defineDoc<RuntimeRecord>({
 interface ManagedState {
 	profiles: Map<string, HostOptions>;
 	profileHashes: Record<string, string>;
+	jobTasks: Map<string, { definition: RuntimeJobDefinition; task: ReturnType<typeof backendJobTask> }>;
 	state: Readonly<RuntimeRecord>;
 	closed: boolean;
 	failure?: string;
@@ -258,7 +266,12 @@ export interface ManagedAdapterPort {
 	createConversation(spec: ConversationSpec): Promise<ConversationRef>;
 	catalog(options: CatalogOptions): RuntimeCatalog;
 	store(options: RuntimeStoreOptions): RuntimeStore;
-	readConversation(ref: ConversationRef, check: () => void): Promise<ConversationSnapshot>;
+	jobs(options: RuntimeJobOptions): RuntimeJobs;
+	readConversation(
+		ref: ConversationRef,
+		check: () => void,
+		options?: ConversationReadOptions,
+	): Promise<ConversationSnapshot>;
 	writeDisplay(ref: ConversationRef, input: DisplayWrite, check: () => void): Promise<DisplayReceipt>;
 	attach(
 		ref: ConversationRef,
@@ -369,6 +382,203 @@ const DisplayReceipts = defineDocFamily<
 	family: true,
 	initial: () => ({ count: 0, receipts: {} }),
 });
+type BackendJob = JsonRepresentation<{
+	spec: RuntimeJobSpec;
+	version: number;
+	fingerprint: string;
+	taskId: string;
+	state: RuntimeJobReceipt["state"];
+	checkpoint: JsonObject;
+	result?: JsonObject;
+	nativeTerminal?: "completed" | "aborted";
+}>;
+type BackendJobs = { options: JsonRepresentation<RuntimeJobOptions>; jobs: Record<string, BackendJob> };
+const BackendJobsDoc = defineDocFamily<BackendJobs, JsonRepresentation<RuntimeJobOptions>>({
+	kind: "pakka.backend-jobs",
+	version: 1,
+	scope: "session",
+	family: true,
+	initial: (options) => ({ options: { ...options }, jobs: {} }),
+});
+type JobInput = { options: JsonRepresentation<RuntimeJobOptions>; id: string };
+type JobCheckpoint =
+	| { phase: "pending"; data: JsonRepresentation<JsonObject> }
+	| { phase: "running"; data: JsonRepresentation<JsonObject> };
+function boundedJobData(value: JsonObject): JsonRepresentation<JsonObject> {
+	json(value);
+	if (
+		!value ||
+		typeof value !== "object" ||
+		Array.isArray(value) ||
+		Buffer.byteLength(JSON.stringify(value)) > 65536
+	)
+		throw new MutationDenied("Invalid bounded job data");
+	return storedJson<JsonRepresentation<JsonObject>>(value);
+}
+function jobRecord(
+	state: Readonly<BackendJobs>,
+	options: RuntimeJobOptions,
+	id: string,
+	taskId?: string,
+): BackendJob {
+	if (hash(state.options) !== hash(options)) throw new Error("Backend job options conflict");
+	const row = state.jobs[id];
+	if (!row) throw new MutationDenied("Unknown backend job receipt");
+	if (
+		!validKey(row.spec?.actorId) ||
+		!validKey(row.spec?.requestId) ||
+		!validKey(row.spec?.definition) ||
+		hash(row.spec) !== row.fingerprint ||
+		id !== "job-" + hash([options.namespace, row.spec.actorId, row.spec.requestId]) ||
+		!Number.isSafeInteger(row.version) ||
+		row.version < 1 ||
+		!/^[0-9]+$/.test(row.taskId) ||
+		(taskId !== undefined && row.taskId !== taskId) ||
+		!["queued", "running", "done", "unknown"].includes(row.state)
+	)
+		throw new Error("Backend job provenance unknown");
+	boundedJobData(row.checkpoint);
+	if (row.result !== undefined) boundedJobData(row.result);
+	return row;
+}
+function jobReceipt(row: Readonly<BackendJob>, id: string): RuntimeJobReceipt {
+	return copy({
+		...row.spec,
+		id,
+		state: row.state,
+		checkpoint: row.checkpoint,
+		...(row.result !== undefined ? { result: row.result } : {}),
+		...(row.nativeTerminal ? { nativeTerminal: row.nativeTerminal } : {}),
+	});
+}
+function checkJobCapacity(state: BackendJobs): void {
+	if (
+		Object.keys(state.jobs).length > state.options.maxJobs ||
+		Buffer.byteLength(JSON.stringify(state)) > state.options.maxBytes
+	)
+		throw new MutationDenied("Backend job retention capacity exhausted");
+}
+/** Native phases and in-progress markers stay in the adapter; an uncertain phase never replays host code. */
+function backendJobTask(definition: RuntimeJobDefinition, validate: (ref: ConversationRef) => void) {
+	return defineTask<JobInput, JobCheckpoint, null>({
+		name: "pakka.backend-job." + definition.id,
+		version: definition.version,
+		initial: () => ({ phase: "pending", data: {} }),
+		phases: {
+			pending: async (task, runtime, context) => {
+				const { options, id } = task.input;
+				let started: BackendJob | undefined,
+					transitioned = false;
+				const authorize = () => {
+					if (context.abortSignal?.aborted) throw context.abortSignal.reason;
+					if (transitioned) throw new Error("Job step already checkpointed");
+					if (!started) throw new Error("Job not started");
+					validate(started.spec.target);
+					checkAuthority(() => definition.authorize(started!.spec.actorId, copy(started!.spec.target)));
+				};
+				const unknown = async () => {
+					await runtime.commit(async (tx) => {
+						const state = await tx.doc(BackendJobsDoc, options.namespace, options),
+							row = jobRecord(state, options, id, String(task.id));
+						if (row.state !== "done") {
+							row.state = "unknown";
+							row.nativeTerminal = "completed";
+						}
+						return { status: "terminal", outcome: { status: "completed", result: null } };
+					}, context);
+				};
+				try {
+					await runtime.commit(async (tx) => {
+						const state = await tx.doc(BackendJobsDoc, options.namespace, options),
+							row = jobRecord(state, options, id, String(task.id));
+						if (
+							row.version !== definition.version ||
+							row.spec.definition !== definition.id ||
+							row.state !== "queued" ||
+							hash(row.checkpoint) !== hash(task.state.checkpoint.data)
+						)
+							throw new Error("Job checkpoint/provenance unknown");
+						started = storedJson<BackendJob>(row);
+						authorize();
+						row.state = "running";
+						started = storedJson<BackendJob>(row);
+						return {
+							status: "running",
+							checkpoint: { phase: "running", data: copy(task.state.checkpoint.data) },
+						};
+					}, context);
+					const port: RuntimeJobContext = Object.freeze({
+						job: jobReceipt(started!, id),
+						checkpoint: copy(task.state.checkpoint.data),
+						check: authorize,
+						advance: async (data: JsonObject) => {
+							authorize();
+							const next = boundedJobData(data);
+							await runtime.commit(async (tx) => {
+								const state = await tx.doc(BackendJobsDoc, options.namespace, options),
+									row = jobRecord(state, options, id, String(task.id));
+								authorize();
+								row.state = "queued";
+								row.checkpoint = next;
+								checkJobCapacity(state);
+								return { status: "running", checkpoint: { phase: "pending", data: next } };
+							}, context);
+							transitioned = true;
+						},
+						complete: async (data: JsonObject) => {
+							authorize();
+							const result = boundedJobData(data);
+							await runtime.commit(async (tx) => {
+								const state = await tx.doc(BackendJobsDoc, options.namespace, options),
+									row = jobRecord(state, options, id, String(task.id));
+								authorize();
+								row.state = "done";
+								row.result = result;
+								row.nativeTerminal = "completed";
+								checkJobCapacity(state);
+								return { status: "terminal", outcome: { status: "completed", result: null } };
+							}, context);
+							transitioned = true;
+						},
+						sleep: async (ms: number) => {
+							if (!Number.isSafeInteger(ms) || ms < 1 || ms > 3600000)
+								throw new Error("Invalid finite job sleep");
+							await runtime.sleep(runtime.now() + ms, context);
+						},
+					});
+					await definition.run(port);
+					if (!transitioned) await unknown();
+				} catch (error) {
+					if (context.abortSignal?.aborted) throw error;
+					if (!transitioned) await unknown();
+				}
+			},
+			running: async (task, runtime, context) => {
+				// Recovery of an in-progress handler is uncertain even when the JSON checkpoint is valid.
+				await runtime.commit(async (tx) => {
+					const state = await tx.doc(BackendJobsDoc, task.input.options.namespace, task.input.options),
+						row = jobRecord(state, task.input.options, task.input.id, String(task.id));
+					if (row.state !== "done") {
+						row.state = "unknown";
+						row.nativeTerminal = "completed";
+					}
+					return { status: "terminal", outcome: { status: "completed", result: null } };
+				}, context);
+			},
+		},
+		abort: async (task, runtime, context) => {
+			await runtime.commit(async (tx) => {
+				const state = await tx.doc(BackendJobsDoc, task.input.options.namespace, task.input.options),
+					row = jobRecord(state, task.input.options, task.input.id, String(task.id));
+				if (row.state !== "done") {
+					row.state = "unknown";
+					row.nativeTerminal = "aborted";
+				}
+				return { status: "terminal", outcome: { status: "aborted" } };
+			}, context);
+		},
+	});
+}
 const BackgroundAnchor = defineTask<{}, { phase: "hold"; tick: number }, null>({
 	name: "pakka.background-anchor",
 	version: 1,
@@ -483,7 +693,10 @@ export class DurableAdapter {
 		options: HostOptions,
 		notify: (notice: Notice) => void,
 		control: AdapterControl,
-		managedOptions?: Pick<RuntimeOptions, "limits" | "profiles" | "migrateLegacy" | "reservedSessionId">,
+		managedOptions?: Pick<
+			RuntimeOptions,
+			"limits" | "profiles" | "migrateLegacy" | "reservedSessionId" | "jobs"
+		>,
 	): Promise<DurableAdapter> {
 		const profiles = new Map<string, HostOptions>([["default", profileOptions(options)]]);
 		if (managedOptions) {
@@ -637,7 +850,38 @@ export class DurableAdapter {
 			let adapterRef: DurableAdapter | undefined;
 
 			const registry = createRegistry();
-			registry.install(defineExtension({ name: "pakka-runtime-tasks", tasks: [BackgroundAnchor] }));
+			const jobTasks: ManagedState["jobTasks"] = new Map();
+			if ((managedOptions?.jobs?.length ?? 0) > 32)
+				throw new Error("Too many approved backend job definitions");
+			for (const source of managedOptions?.jobs ?? []) {
+				if (
+					!validKey(source.id) ||
+					jobTasks.has(source.id) ||
+					!Number.isSafeInteger(source.version) ||
+					source.version < 1 ||
+					typeof source.authorize !== "function" ||
+					typeof source.run !== "function"
+				)
+					throw new Error("Invalid approved backend job definition");
+				const definition = Object.freeze({
+					id: source.id,
+					version: source.version,
+					authorize: source.authorize,
+					run: source.run,
+				});
+				const task = backendJobTask(definition, (ref) => {
+					if (!adapterRef) throw new Error("Backend not ready");
+					adapterRef.#managedReady();
+					adapterRef.#validateReference(ref);
+				});
+				jobTasks.set(definition.id, { definition, task });
+			}
+			registry.install(
+				defineExtension({
+					name: "pakka-runtime-tasks",
+					tasks: [BackgroundAnchor, ...[...jobTasks.values()].map((item) => item.task)],
+				}),
+			);
 
 			const routes = new Map<ConversationId, DurableAdapter>();
 			const extensions = new Map<string, ReturnType<typeof defineExtension>>();
@@ -835,7 +1079,7 @@ export class DurableAdapter {
 			routes.set(conversation.id, adapter);
 			if (managedOptions) {
 				const hashes = Object.fromEntries([...profiles].map(([id, profile]) => [id, profileHash(profile)]));
-				adapter.#managed = { profiles, profileHashes: hashes, state: savedRuntime!, closed: false };
+				adapter.#managed = { profiles, profileHashes: hashes, jobTasks, state: savedRuntime!, closed: false };
 				adapter.#managed.unsubscribe = harness.subscribeCommits((publication) => {
 					for (const change of publication.changes)
 						if (change.type === "document" && change.record.kind === "pakka.runtime" && change.value)
@@ -1005,7 +1249,9 @@ export class DurableAdapter {
 			validateReference: (ref: ConversationRef) => this.#validateReference(ref),
 			catalog: (options: CatalogOptions) => this.#catalog(options),
 			store: (options: RuntimeStoreOptions) => this.#store(options),
-			readConversation: (ref: ConversationRef, check: () => void) => this.#readConversation(ref, check),
+			jobs: (options: RuntimeJobOptions) => this.#jobs(options),
+			readConversation: (ref: ConversationRef, check: () => void, options?: ConversationReadOptions) =>
+				this.#readConversation(ref, check, options),
 			writeDisplay: (ref: ConversationRef, input: DisplayWrite, check: () => void) =>
 				this.#writeDisplay(ref, input, check),
 			createConversation: async (spec: ConversationSpec): Promise<ConversationRef> => {
@@ -1087,8 +1333,27 @@ export class DurableAdapter {
 			},
 		});
 	}
-	async #readConversation(rawRef: ConversationRef, check: () => void): Promise<ConversationSnapshot> {
-		const ref = copy(rawRef);
+	async #readConversation(
+		rawRef: ConversationRef,
+		check: () => void,
+		rawOptions: ConversationReadOptions = {},
+	): Promise<ConversationSnapshot> {
+		const ref = copy(rawRef),
+			options = copy(rawOptions);
+		if (
+			!options ||
+			typeof options !== "object" ||
+			Array.isArray(options) ||
+			Object.keys(options).some((key) => !["limit", "beforeEntryId"].includes(key)) ||
+			(options.limit !== undefined &&
+				(!Number.isSafeInteger(options.limit) || options.limit < 1 || options.limit > 256)) ||
+			(options.beforeEntryId !== undefined &&
+				(typeof options.beforeEntryId !== "string" ||
+					!options.beforeEntryId.length ||
+					options.beforeEntryId.length > 256 ||
+					/[\x00-\x1f\x7f]/.test(options.beforeEntryId)))
+		)
+			throw new MutationDenied("Invalid bounded Conversation page options");
 		const authorize = () =>
 			checkAuthority(() => {
 				this.#validateReference(ref);
@@ -1101,6 +1366,12 @@ export class DurableAdapter {
 		let result: ConversationSnapshot;
 		try {
 			const native = watch.value;
+			const end =
+				options.beforeEntryId === undefined
+					? native.entries.length
+					: native.entries.findIndex((entry) => String(entry.id) === options.beforeEntryId);
+			if (end < 0) throw new MutationDenied("Unknown Conversation page boundary");
+			const start = Math.max(0, end - (options.limit ?? 256));
 			const live = native.docs["pi.live"] as LiveState | undefined;
 			const usage = native.docs["pi.usage"] as UsageState | undefined;
 			const total = { ...usageDTO() };
@@ -1118,7 +1389,7 @@ export class DurableAdapter {
 				: undefined;
 			result = {
 				ref,
-				entries: native.entries.slice(-256).map((entry) => ({
+				entries: native.entries.slice(start, end).map((entry) => ({
 					id: String(entry.id),
 					conversationId: String(entry.conversationId),
 					kind: entry.kind,
@@ -1129,7 +1400,8 @@ export class DurableAdapter {
 					}),
 					...(entry.kind === DisplayEntry.kind ? { display: storedJson<DisplayWrite>(entry.data) } : {}),
 				})),
-				entriesTruncated: native.entries.length > 256,
+				entriesTruncated: start > 0,
+				...(start > 0 ? { olderBeforeId: String(native.entries[start]!.id) } : {}),
 				live: {
 					busy: live?.run !== undefined,
 					...(message ? { message } : {}),
@@ -1286,6 +1558,121 @@ export class DurableAdapter {
 			throw new MutationDenied("Invalid/stale native task invocation scope");
 		route.#control.checkInvocation(scope);
 		return current.api.taskId;
+	}
+	#jobs(raw: RuntimeJobOptions): RuntimeJobs {
+		this.#managedReady();
+		if (
+			!raw ||
+			!validKey(raw.namespace) ||
+			!Number.isSafeInteger(raw.maxJobs) ||
+			raw.maxJobs < 1 ||
+			raw.maxJobs > 512 ||
+			!Number.isSafeInteger(raw.maxBytes) ||
+			raw.maxBytes < 1024 ||
+			raw.maxBytes > 1048576
+		)
+			throw new Error("Invalid finite backend job options");
+		const options = copy({ namespace: raw.namespace, maxJobs: raw.maxJobs, maxBytes: raw.maxBytes });
+		const find = async (id: string, check: () => void) => {
+			checkAuthority(check);
+			this.#managedReady();
+			if (!validKey(id)) throw new MutationDenied("Invalid job receipt identity");
+			const state = await this.#harness.snapshot(BackendJobsDoc, options.namespace, BACKGROUND_CONTEXT);
+			if (!state) throw new MutationDenied("Unknown backend job receipt");
+			if (hash(state.options) !== hash(options)) throw new MutationDenied("Backend job options conflict");
+			let record: BackendJob;
+			try {
+				record = jobRecord(state, options, id);
+			} catch (error) {
+				if (!(error instanceof MutationDenied)) this.storageUnknown("Backend job provenance unknown");
+				throw error;
+			}
+			checkAuthority(check);
+			this.#managedReady();
+			return copy(record);
+		};
+		const receipt = async (id: string, check: () => void) => jobReceipt(await find(id, check), id);
+		return Object.freeze({
+			start: async (original: RuntimeJobSpec, check: () => void) => {
+				checkAuthority(check);
+				if (
+					!original ||
+					typeof original !== "object" ||
+					Object.keys(original).some(
+						(key) => !["requestId", "actorId", "target", "definition", "payload"].includes(key),
+					)
+				)
+					throw new MutationDenied("Invalid backend job input fields");
+				const spec = copy({ ...original, payload: boundedJobData(original.payload) }),
+					managed = this.#managedReady();
+				if (!validKey(spec.requestId) || !validKey(spec.actorId) || !validKey(spec.definition))
+					throw new MutationDenied("Invalid backend job input");
+				const approved = managed.jobTasks.get(spec.definition);
+				if (!approved) throw new MutationDenied("Unapproved backend job definition");
+				this.#validateReference(spec.target);
+				const id = "job-" + hash([options.namespace, spec.actorId, spec.requestId]),
+					fingerprint = hash(spec);
+				await this.#persist(async (tx) => {
+					const state = await tx.doc(BackendJobsDoc, options.namespace, options);
+					if (hash(state.options) !== hash(options)) throw new MutationDenied("Backend job options conflict");
+					const old = state.jobs[id];
+					if (old) {
+						if (old.fingerprint !== fingerprint || old.version !== approved.definition.version)
+							throw new MutationDenied("Backend job request conflict");
+						jobRecord(state, options, id);
+						checkAuthority(check);
+						return;
+					}
+					this.#validateReference(spec.target);
+					const native = await tx.conversation(conversationId(spec.target.conversationId));
+					if (!native) throw new MutationDenied("Job Conversation missing");
+					if (native.owner !== undefined) {
+						const owner = await tx.task(native.owner.taskId);
+						if (!owner || owner.abortRequested || owner.state.status === "terminal")
+							throw new MutationDenied("Job owner task ended");
+					}
+					checkAuthority(check);
+					checkAuthority(() => approved.definition.authorize(spec.actorId, spec.target));
+					this.#managedReady();
+					const taskId = await tx.createTask(
+						approved.task,
+						{ options, id },
+						{ ownership: { kind: "conversation" }, conversationId: native.id, background: true },
+					);
+					state.jobs[id] = {
+						spec: storedJson<BackendJob["spec"]>(spec),
+						version: approved.definition.version,
+						fingerprint,
+						taskId: String(taskId),
+						state: "queued",
+						checkpoint: {},
+					};
+					checkJobCapacity(state);
+					checkAuthority(check);
+					checkAuthority(() => approved.definition.authorize(spec.actorId, spec.target));
+				});
+				this.#harness.resume();
+				return receipt(id, check);
+			},
+			receipt,
+			wait: async (id: string, check: () => void, signal?: AbortSignal) => {
+				const saved = await find(id, check);
+				if (saved.state === "queued" || saved.state === "running")
+					await this.#harness.waitForTask(
+						Number(saved.taskId) as TaskId,
+						signal ? withAbortSignal(signal, BACKGROUND_CONTEXT) : BACKGROUND_CONTEXT,
+					);
+				return receipt(id, check);
+			},
+			abort: async (id: string, check: () => void) => {
+				const saved = await find(id, check);
+				if (saved.state === "queued" || saved.state === "running") {
+					checkAuthority(check);
+					await this.#harness.abortTask(Number(saved.taskId) as TaskId, BACKGROUND_CONTEXT);
+				}
+				return receipt(id, check);
+			},
+		});
 	}
 	#catalog(rawOptions: CatalogOptions): RuntimeCatalog {
 		this.#managedReady();

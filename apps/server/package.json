@@ -8,6 +8,10 @@
 			"types": "./dist/worker-manager.d.ts",
 			"import": "./dist/worker-manager.js"
 		},
+		"./pocket": {
+			"types": "./dist/pocket.d.ts",
+			"import": "./dist/pocket.js"
+		},
 		"./http": {
 			"types": "./dist/http-server.d.ts",
 			"import": "./dist/http-server.js"
