@@ -1,0 +1,46 @@
+{
+	"name": "@pakka/webui",
+	"version": "0.1.0",
+	"private": true,
+	"type": "module",
+	"bin": {
+		"pakka-pocket": "dist/main.js"
+	},
+	"exports": {
+		".": {
+			"types": "./dist/bootstrap.d.ts",
+			"import": "./dist/bootstrap.js"
+		},
+		"./http": {
+			"types": "./dist/http.d.ts",
+			"import": "./dist/http.js"
+		}
+	},
+	"files": [
+		"dist",
+		"web",
+		"licenses",
+		"LICENSE.pi-pocket",
+		"NOTICE.md"
+	],
+	"scripts": {
+		"build": "tsc -p tsconfig.json"
+	},
+	"dependencies": {
+		"@pakka/agent": "0.5.0",
+		"@pakka/client": "0.1.0",
+		"@pakka/protocol": "0.1.0",
+		"@pakka/server": "0.5.0",
+		"dompurify": "3.4.16",
+		"htm": "3.1.1",
+		"marked": "18.1.0",
+		"preact": "11.0.1",
+		"qrcode": "1.5.4"
+	},
+	"devDependencies": {
+		"@types/pngjs": "6.0.5",
+		"@types/qrcode": "1.5.6",
+		"jsqr": "1.4.0",
+		"pngjs": "7.0.0"
+	}
+}

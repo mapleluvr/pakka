@@ -2,3 +2,5 @@ node_modules/
 **/dist/
 artifacts/
 package-lock.json
+# Immutable adopted upstream theme, checked against its pinned source and license.
+apps/webui/web/pocket.css

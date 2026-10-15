@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en" data-tiling="on">
+	<head>
+		<meta charset="utf-8" />
+		<meta
+			name="viewport"
+			content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content"
+		/>
+		<meta name="color-scheme" content="dark light" />
+		<meta name="theme-color" content="#1a1b26" />
+		<title>Pakka-Pocket</title>
+		<link rel="stylesheet" href="/pocket.css" />
+		<link rel="stylesheet" href="/workbench.css" />
+		<script type="importmap">
+			{
+				"imports": {
+					"preact": "/vendor/preact.mjs",
+					"preact/hooks": "/vendor/hooks.mjs",
+					"htm": "/vendor/htm.mjs",
+					"marked": "/vendor/marked.mjs",
+					"dompurify": "/vendor/purify.mjs",
+					"@pakka/client/pocket": "/client/pocket.js",
+					"@pakka/protocol/pocket": "/protocol/pocket.js",
+					"@pakka/protocol": "/protocol/index.js"
+				}
+			}
+		</script>
+	</head>
+	<body>
+		<div id="app">
+			<div class="boot" role="status">
+				<div class="boot-mark">P</div>
+				<p>Starting Pakka-Pocket</p>
+			</div>
+		</div>
+		<script type="module" src="/app.js"></script>
+	</body>
+</html>

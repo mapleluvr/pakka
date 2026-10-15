@@ -20,12 +20,12 @@ P1 service evidence: `docs/PAKKA-POCKET-P1.md`, full 296/296 and actual installe
 
 ## 3. P2 — Actual Web product and multiplayer transport
 
-- [ ] 3.1 Create the real apps/webui consumer as @pakka/webui with executable/assets, explicit configuration, isolated data and workspace/build/check/pack coverage.
-- [ ] 3.2 Port the generic Conversation shell, navigation/composer and committed transcript/tool rendering without MAS-specific core state or original PocketApp authority.
-- [ ] 3.3 Implement people/invitation/QR/sign-in and role-sensitive controls through the real product, with concurrent one-time redemption and revocation tests.
-- [ ] 3.4 Add explicit local/remote configuration, browser sessions, CSRF/Origin and trusted-proxy/TLS boundaries without widening headless v1.
-- [ ] 3.5 Add server-filtered bounded SSE snapshot/cursor handoff, resource incarnation, gap/resnapshot and role-change invalidation with slow/disconnected browser tests.
-- [ ] 3.6 Complete basic prompt/native steer/followUp/receipt actions through two authorized browsers and an unauthorized browser using deterministic local providers.
+- [x] 3.1 Create the real apps/webui consumer as @pakka/webui with executable/assets, explicit configuration, isolated data and workspace/build/check/pack coverage.
+- [x] 3.2 Port the generic Conversation shell, navigation/composer and committed transcript/tool rendering without MAS-specific core state or original PocketApp authority.
+- [x] 3.3 Implement people/invitation/QR/sign-in and role-sensitive controls through the real product, with concurrent one-time redemption and revocation tests.
+- [x] 3.4 Add explicit local/remote configuration, browser sessions, CSRF/Origin and trusted-proxy/TLS boundaries without widening headless v1.
+- [x] 3.5 Add server-filtered bounded SSE snapshot/cursor handoff, resource incarnation, gap/resnapshot and role-change invalidation with slow/disconnected browser tests.
+- [x] 3.6 Complete basic prompt/native steer/followUp/receipt actions through two authorized browsers and an unauthorized browser using deterministic local providers.
 
 ## 4. P3 — Public extension host and independent consumers
 

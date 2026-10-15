@@ -1,0 +1,364 @@
+/* Pakka workbench composition over the unmodified adopted pi-pocket theme. */
+:root[data-mode="light"] {
+	--o-bg: #f3f2ed;
+	--o-bg-dark: #eae9e3;
+	--o-bg-darker: #deddd6;
+	--o-bg-light: #faf9f5;
+	--o-fg: #44474f;
+	--o-fg-dim: #777b82;
+	--o-fg-light: #30333b;
+	--o-fg-bright: #242730;
+	--o-accent: #315ea0;
+	--o-active: linear-gradient(#315ea0, #315ea0);
+}
+.pocket-workbench {
+	min-width: 0;
+}
+.pocket-workbench .sidebar {
+	flex-direction: column;
+	width: 284px;
+}
+.pocket-side-head {
+	padding: 22px 18px;
+	border-bottom: 1px solid var(--line);
+	display: grid;
+	gap: 8px;
+}
+.pocket-side-head strong {
+	letter-spacing: -0.02em;
+	color: var(--text);
+}
+.pocket-person {
+	color: var(--muted);
+	font-size: 0.76rem;
+	overflow-wrap: anywhere;
+}
+.pocket-nav {
+	display: grid;
+	gap: 4px;
+	padding: 12px 8px;
+	overflow-y: auto;
+	align-content: start;
+	flex: 1;
+}
+.pocket-nav button {
+	min-height: 48px;
+	padding: 10px;
+	text-align: left;
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	color: var(--body);
+}
+.pocket-nav button span:last-child {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.pocket-nav button.selected {
+	color: var(--accent);
+	background: var(--accent-soft);
+	border-left: 2px solid var(--accent);
+}
+.pocket-new {
+	display: flex;
+	gap: 5px;
+	padding: 12px;
+	border-top: 1px solid var(--line);
+}
+.pocket-new input {
+	width: 100%;
+	min-width: 0;
+}
+.pocket-side-foot {
+	padding: 12px;
+	display: flex;
+	justify-content: space-between;
+	border-top: 1px solid var(--line);
+	font-size: 0.78rem;
+}
+.pocket-side-foot button {
+	min-height: 40px;
+}
+.pocket-topbar {
+	min-height: 64px;
+	padding: 10px 20px;
+	gap: 14px;
+	flex-shrink: 0;
+}
+.pocket-title {
+	flex: 1;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-weight: 600;
+}
+.pocket-menu {
+	display: none;
+}
+.pocket-topbar button {
+	min-height: 40px;
+	font-size: 0.8rem;
+}
+.pocket-status {
+	color: var(--ok);
+	font-size: 0.76rem;
+}
+.pocket-welcome {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	justify-content: center;
+	align-items: center;
+	padding: 24px;
+	text-align: center;
+}
+.pocket-welcome h1 {
+	font-size: clamp(1.3rem, 2.4vw, 2rem);
+	letter-spacing: -0.05em;
+	margin-bottom: 0;
+}
+.pocket-welcome p {
+	color: var(--muted);
+}
+.pocket-brand {
+	display: grid;
+	place-items: center;
+	border: 2px solid var(--accent);
+	color: var(--accent);
+	width: 64px;
+	height: 64px;
+	font-size: 2rem;
+	margin-bottom: 20px;
+}
+.pocket-message {
+	margin: 16px 0;
+	overflow-wrap: anywhere;
+}
+.pocket-message-role {
+	font-size: 0.72rem;
+	text-transform: uppercase;
+	color: var(--muted);
+	margin-bottom: 6px;
+	letter-spacing: 0.08em;
+}
+.pocket-workbench .user-row {
+	display: block;
+	background: var(--card-2);
+	border-left: 2px solid var(--accent);
+	padding: 12px 16px;
+	margin: 16px 0;
+	overflow-wrap: anywhere;
+}
+.pocket-message pre,
+.pocket-workbench .user-row pre,
+.tool-card pre {
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+}
+.pocket-message details,
+.pocket-message .tool-card {
+	margin: 10px 0;
+}
+.pocket-image {
+	max-width: 100%;
+	max-height: 400px;
+}
+.pocket-display {
+	border-left: 2px solid var(--line-strong);
+	color: var(--muted);
+	padding: 8px 14px;
+	margin: 16px 0;
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+}
+.pocket-display > span {
+	font-size: 0.7rem;
+	text-transform: uppercase;
+}
+.pocket-display p {
+	margin-bottom: 0;
+}
+.pocket-composer {
+	padding: 10px 20px 16px;
+	width: 100%;
+	max-width: 784px;
+	margin: 0 auto;
+}
+.pocket-composer .composer {
+	overflow: hidden;
+}
+.pocket-composer textarea {
+	min-height: 78px;
+}
+.pocket-composer .composer-row {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 8px 10px;
+}
+.pocket-composer select {
+	border: 0;
+	background: var(--card);
+	color: var(--body);
+	min-width: 0;
+}
+.pocket-usage {
+	flex: 1;
+	font-size: 0.7rem;
+	color: var(--muted);
+	text-align: right;
+}
+.pocket-receipt {
+	font-size: 0.7rem;
+	color: var(--muted);
+	padding-top: 5px;
+}
+.pocket-notice {
+	background: var(--card-2);
+	border-top: 1px solid var(--line);
+	padding: 12px 18px;
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	font-size: 0.8rem;
+}
+.pocket-notice button {
+	margin-left: auto;
+}
+.pocket-signin {
+	min-height: 100dvh;
+	display: grid;
+	place-items: center;
+	padding: 24px;
+}
+.pocket-signin .signin {
+	width: min(100%, 420px);
+	padding: 30px;
+	border: 2px solid var(--o-inactive);
+	background: var(--panel);
+}
+.pocket-signin h1 {
+	font-size: 1.6rem;
+	margin: 0;
+	letter-spacing: -0.04em;
+}
+.pocket-signin p {
+	color: var(--muted);
+}
+.pocket-signin form,
+.pocket-signin label,
+.pocket-sheet label {
+	display: grid;
+	gap: 12px;
+}
+.pocket-signin input,
+.pocket-sheet input {
+	width: 100%;
+	min-width: 0;
+	padding: 12px;
+	background: var(--card);
+	border: 1px solid var(--line-strong);
+}
+.pocket-signin label {
+	font-size: 0.8rem;
+	margin: 8px 0;
+}
+.pocket-signin form {
+	margin-top: 28px;
+}
+.pocket-scrim {
+	position: fixed;
+	inset: 0;
+	background: var(--scrim);
+	z-index: 50;
+	display: grid;
+	place-items: center;
+	padding: 24px;
+}
+.pocket-sheet {
+	background: var(--panel);
+	border: 2px solid var(--o-inactive);
+	width: min(100%, 680px);
+	max-height: calc(100dvh - 48px);
+	overflow-y: auto;
+}
+.pocket-sheet > header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 16px;
+	border-bottom: 1px solid var(--line);
+	padding: 16px 20px;
+}
+.pocket-sheet h2 {
+	font-size: 1rem;
+	margin: 0;
+}
+.pocket-sheet-body {
+	padding: 20px;
+	display: grid;
+	gap: 20px;
+}
+.pocket-person-row {
+	display: flex;
+	gap: 12px;
+	align-items: center;
+	justify-content: space-between;
+	flex-wrap: wrap;
+}
+.pocket-person-row span:nth-child(2) {
+	color: var(--muted);
+	font-size: 0.75rem;
+}
+.pocket-sheet input {
+	font-size: 0.75rem;
+}
+@media (max-width: 959px) {
+	.pocket-menu {
+		display: block;
+	}
+	.pocket-workbench .sidebar {
+		position: fixed;
+		inset: 0 auto 0 0;
+		width: min(85vw, 300px);
+		z-index: 30;
+		box-shadow: 0 0 0 100vw #0008;
+	}
+	.pocket-workbench.drawer-open .sidebar {
+		display: flex;
+	}
+	.pocket-topbar {
+		padding: 10px 14px;
+		gap: 10px;
+	}
+	.pocket-topbar button {
+		max-width: 120px;
+	}
+	.pocket-title {
+		font-size: 0.8rem;
+	}
+	.pocket-composer {
+		padding: 8px 12px max(12px, env(safe-area-inset-bottom));
+	}
+	.pocket-usage {
+		font-size: 0.65rem;
+	}
+	.pocket-scrim {
+		align-items: end;
+		padding: 0;
+	}
+	.pocket-sheet {
+		width: 100%;
+		max-height: 90dvh;
+		border-bottom: none;
+	}
+}
+@media (prefers-reduced-motion: reduce) {
+	.pocket-workbench *,
+	.pocket-signin * {
+		animation: none !important;
+		transition: none !important;
+	}
+}

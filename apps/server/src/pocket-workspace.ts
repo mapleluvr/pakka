@@ -35,6 +35,7 @@ export interface PocketInputReceipt {
 }
 export interface PocketWorkspaceClient {
 	list(): Promise<readonly ConversationRef[]>;
+	navigation(): Promise<readonly { readonly ref: ConversationRef; readonly name: string }[]>;
 	create(input: PocketCreate): Promise<ConversationRef>;
 	configure(ref: ConversationRef, profile: string): Promise<ConversationRef>;
 	fork(ref: ConversationRef, input: PocketFork): Promise<ConversationRef>;
@@ -217,21 +218,29 @@ export function createPocketWorkspace(options: PocketWorkspaceOptions): PocketWo
 				receiptCheck(value, permission);
 				return value;
 			};
+			const navigation = async () => {
+				current();
+				const snapshot = await catalog.snapshot();
+				const person = current();
+				const rows = snapshot.members.filter(
+					(row) =>
+						row.data.kind === "pocket-workspace" &&
+						row.data.phase === "active" &&
+						(person.resources === "*" || person.resources.includes(row.ref.conversationId)),
+				);
+				for (const row of rows) check("read", row.ref);
+				current();
+				return frozen(
+					rows.map((row) => {
+						if (typeof row.data.name !== "string" || !row.data.name.trim() || row.data.name.length > 80)
+							throw new Error("Invalid Pocket conversation name");
+						return { ref: row.ref, name: row.data.name };
+					}),
+				);
+			};
 			return Object.freeze({
-				list: async () => {
-					current();
-					const snapshot = await catalog.snapshot();
-					const person = current();
-					const rows = snapshot.members.filter(
-						(row) =>
-							row.data.kind === "pocket-workspace" &&
-							row.data.phase === "active" &&
-							(person.resources === "*" || person.resources.includes(row.ref.conversationId)),
-					);
-					for (const row of rows) check("read", row.ref);
-					current();
-					return frozen(rows.map((row) => row.ref));
-				},
+				list: async () => frozen((await navigation()).map((row) => row.ref)),
+				navigation,
 				create: (input: PocketCreate) => create(input),
 				fork: (ref: ConversationRef, input: PocketFork) => create(input, ref, input.entryId),
 				configure: (raw: ConversationRef, profile: string) =>

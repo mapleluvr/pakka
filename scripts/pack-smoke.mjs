@@ -6,13 +6,13 @@ import { fileURLToPath } from "node:url";
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
 const consumer = mkdtempSync(join(tmpdir(), "pakka-packed-consumer-"));
 const versions = Object.fromEntries(
-	["agent", "mas", "mas-devpack", "protocol", "client", "cli", "server"].map((name) => {
+	["agent", "mas", "mas-devpack", "protocol", "client", "cli", "server", "webui"].map((name) => {
 		try {
 			return [
 				name,
 				JSON.parse(
 					readFileSync(
-						join(root, ["server", "cli"].includes(name) ? "apps" : "packages", name, "package.json"),
+						join(root, ["server", "cli", "webui"].includes(name) ? "apps" : "packages", name, "package.json"),
 						"utf8",
 					),
 				).version,
@@ -64,11 +64,11 @@ run(
 	[npmCli, "pack", "--ignore-scripts", "--pack-destination", consumer],
 	join(root, "packages", "mas-devpack"),
 );
-for (const name of ["protocol", "client", "cli", "server"])
+for (const name of ["protocol", "client", "cli", "server", "webui"])
 	run(
 		"pack-" + name,
 		[npmCli, "pack", "--ignore-scripts", "--pack-destination", consumer],
-		join(root, ["cli", "server"].includes(name) ? "apps" : "packages", name),
+		join(root, ["cli", "server", "webui"].includes(name) ? "apps" : "packages", name),
 	);
 writeFileSync(
 	join(consumer, "package.json"),
@@ -85,6 +85,7 @@ writeFileSync(
 				"@pakka/protocol": `file:./pakka-protocol-${versions.protocol}.tgz`,
 				"@pakka/client": `file:./pakka-client-${versions.client}.tgz`,
 				"@pakka/cli": `file:./pakka-cli-${versions.cli}.tgz`,
+				"@pakka/webui": `file:./pakka-webui-${versions.webui}.tgz`,
 			},
 			devDependencies: { typescript: "7.0.2", "@types/node": "26.6.4" },
 		},
@@ -101,6 +102,8 @@ copyFileSync(join(root, "scripts", "consumer-devpack.mjs"), join(consumer, "devp
 copyFileSync(join(root, "scripts", "consumer-apps.mjs"), join(consumer, "apps.mjs"));
 copyFileSync(join(root, "scripts", "consumer-product.mjs"), join(consumer, "product.mjs"));
 copyFileSync(join(root, "scripts", "consumer-pocket-services.mjs"), join(consumer, "pocket-services.mjs"));
+copyFileSync(join(root, "scripts", "consumer-pocket-product.mjs"), join(consumer, "pocket-product.mjs"));
+copyFileSync(join(root, "apps/webui/test/browser.ts"), join(consumer, "pocket-browser.ts"));
 copyFileSync(join(root, "scripts", "consumer-browser.ts"), join(consumer, "consumer-browser.ts"));
 writeFileSync(
 	join(consumer, "tsconfig.browser.json"),
@@ -153,4 +156,5 @@ console.log(run("devpack", [join(consumer, "devpack.mjs")], consumer));
 console.log(run("apps", [join(consumer, "apps.mjs")], consumer));
 console.log(run("product", [join(consumer, "product.mjs")], consumer));
 console.log(run("pocket-services", [join(consumer, "pocket-services.mjs")], consumer));
+console.log(run("pocket-product", [join(consumer, "pocket-product.mjs")], consumer));
 writeFileSync(join(artifacts, "consumer-path.txt"), consumer + "\n");

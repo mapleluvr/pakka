@@ -151,7 +151,11 @@ export type PocketResult =
 			readonly person: PocketPerson;
 			readonly sessionId: string;
 	  }
-	| { readonly kind: "list"; readonly conversations: readonly AgentRef[] }
+	| {
+			readonly kind: "list";
+			readonly conversations: readonly AgentRef[];
+			readonly titles?: Readonly<Record<string, string>>;
+	  }
 	| { readonly kind: "reference"; readonly ref: AgentRef }
 	| { readonly kind: "conversation"; readonly snapshot: PocketSnapshot }
 	| {
@@ -159,7 +163,12 @@ export type PocketResult =
 			readonly people: readonly PocketPerson[];
 			readonly invites: readonly PocketInvite[];
 	  }
-	| { readonly kind: "invite"; readonly invite: PocketInvite; readonly token: string | null }
+	| {
+			readonly kind: "invite";
+			readonly invite: PocketInvite;
+			readonly token: string | null;
+			readonly qr?: string;
+	  }
 	| {
 			readonly kind: "display";
 			readonly receipt: {
@@ -462,10 +471,20 @@ function result(v: unknown): v is PocketResult {
 			);
 		case "list":
 			return (
-				shape(v, ["kind", "conversations"]) &&
+				shape(v, ["kind", "conversations"], ["titles"]) &&
 				Array.isArray(v.conversations) &&
 				v.conversations.length <= 256 &&
-				v.conversations.every(ref)
+				v.conversations.every(ref) &&
+				(v.titles === undefined ||
+					(record(v.titles) &&
+						Object.keys(v.titles).length === v.conversations.length &&
+						Object.entries(v.titles).every(
+							([id, title]) =>
+								identity(id) &&
+								string(title, 80) &&
+								!!title.trim() &&
+								(v.conversations as AgentRef[]).some((row) => row.conversationId === id),
+						)))
 			);
 		case "reference":
 			return shape(v, ["kind", "ref"]) && ref(v.ref);
@@ -483,7 +502,11 @@ function result(v: unknown): v is PocketResult {
 			);
 		case "invite":
 			return (
-				shape(v, ["kind", "invite", "token"]) && invite(v.invite) && (v.token === null || secret(v.token))
+				shape(v, ["kind", "invite", "token"], ["qr"]) &&
+				invite(v.invite) &&
+				(v.token === null || secret(v.token)) &&
+				(v.qr === undefined ||
+					(secret(v.token) && string(v.qr, 131072) && /^data:image\/png;base64,[A-Za-z0-9+/]+=*$/.test(v.qr)))
 			);
 		case "display":
 			return (
