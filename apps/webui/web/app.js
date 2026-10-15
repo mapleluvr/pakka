@@ -7,6 +7,7 @@ import { marked } from "marked";
 import DOMPurify from "dompurify";
 import { createPocketClient } from "@pakka/client/pocket";
 import { decodePocketEvent } from "@pakka/protocol/pocket";
+import { useExtensions } from "./extensions.js";
 
 const html = htm.bind(h);
 const csrf = () => /(?:^|; )pakka_csrf=([A-Za-z0-9_-]{43})(?:;|$)/.exec(document.cookie)?.[1] ?? null;
@@ -85,7 +86,23 @@ function App() {
 		[newName, setNewName] = useState("");
 	const mounted = useRef(true),
 		scroll = useRef(null);
+	const extensions = useExtensions({
+		person,
+		target: selected,
+		csrf,
+		notice: notify,
+		opened: () => setDrawer(false),
+		error: (failure) => error(failure),
+		navigate: (ref) => {
+			if (refs.some((row) => row.key === ref.key && row.incarnation === ref.incarnation)) {
+				extensions.leave();
+				select(ref);
+				setDrawer(false);
+			} else notify("This conversation is unavailable.");
+		},
+	});
 	const invalidate = () => {
+		extensions.clear();
 		setView(null);
 		setRefs([]);
 		setTitles({});
@@ -223,7 +240,9 @@ function App() {
 		event.preventDefault();
 		if (!selected || !draft.trim()) return;
 		if (draft.trimStart().startsWith("/")) {
-			notify("Choose an installed command. Slash commands do not send model input.");
+			await run(async () => {
+				if (await extensions.slash(draft)) setDraft("");
+			});
 			return;
 		}
 		const text = draft;
@@ -299,6 +318,7 @@ function App() {
 							data-conversation=${ref.conversationId}
 							class=${selected?.key === ref.key ? "selected" : ""}
 							onClick=${() => {
+								extensions.leave();
 								select(ref);
 								setDrawer(false);
 							}}
@@ -307,6 +327,7 @@ function App() {
 						</button>`,
 				)}
 			</nav>
+			<nav class="pocket-nav" aria-label="Extensions">${extensions.navigation}</nav>
 			${canDrive &&
 			html`<form
 				class="pocket-new"
@@ -320,6 +341,7 @@ function App() {
 							profile: "default",
 						});
 						setNewName("");
+						extensions.leave();
 						await refresh();
 						select(created.ref);
 						setDrawer(false);
@@ -360,10 +382,11 @@ function App() {
 				</button>
 				<div class="pocket-title">${selected ? title(selected) : "Your workspace"}</div>
 				<span class="pocket-status">${view?.live.busy ? "Working" : view ? "Ready" : ""}</span
-				>${person.role === "admin" &&
+				>${extensions.button}${person.role === "admin" &&
 				html`<button data-action="people" onClick=${showPeople}>People & invites</button>`}
 			</header>
-			<div class="scroller" ref=${scroll}>
+			${extensions.page && extensions.surface}
+			<div class="scroller" ref=${scroll} hidden=${extensions.page}>
 				${selected
 					? html`<div class="transcript">
 							${!view
@@ -393,8 +416,10 @@ function App() {
 							<h1>Your agents, together.</h1>
 							<p>Select a conversation or start a new one.</p>
 						</div>`}
+				${!extensions.page && extensions.surface}
 			</div>
 			${selected &&
+			!extensions.page &&
 			html`<div class="composer-wrap pocket-composer">
 				<form class="composer" onSubmit=${send}>
 					<textarea
@@ -402,10 +427,10 @@ function App() {
 						aria-label="Message"
 						rows="3"
 						value=${draft}
-						placeholder=${canSend ? "Message your agent…" : "View-only access"}
-						disabled=${!canSend}
+						placeholder=${canSend ? "Message your agent…" : "Read-only commands…"}
 						onInput=${(event) => setDraft(event.currentTarget.value)}
 					/>
+					${draft.trimStart().startsWith("/") && extensions.suggestions(draft, () => setDraft(""))}
 					<div class="composer-row">
 						<select
 							aria-label="Input mode"
@@ -431,7 +456,10 @@ function App() {
 							class="button primary"
 							data-action="send"
 							type="submit"
-							disabled=${!canSend || working || !view || (mode === "prompt" && view?.live.busy)}
+							disabled=${(!canSend && !draft.trimStart().startsWith("/")) ||
+							working ||
+							!view ||
+							(mode === "prompt" && view?.live.busy && !draft.trimStart().startsWith("/"))}
 						>
 							Send
 						</button>
@@ -448,6 +476,7 @@ function App() {
 				${notice}<button aria-label="Dismiss notice" onClick=${() => notify("")}>×</button>
 			</div>`}
 		</main>
+		${extensions.overlay}
 		${sheet &&
 		html`<div
 			class="pocket-scrim"

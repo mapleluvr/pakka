@@ -54,6 +54,11 @@ Command, RPC, subscription and asset registrations SHALL bind the extension gene
 - **WHEN** a module reload fails after its asset bytes changed, or a browser calls the old generation
 - **THEN** the host refuses mismatched assets/new calls rather than serving changed bytes as the previously accepted generation
 
+#### Scenario: Interrupted or failed backend initialization survives reopen
+
+- **WHEN** a trusted module initialization fails, or its writer closes after an external effect but before import completes
+- **THEN** persisted loading/unknown state prevents automatic module re-entry on normal reopen; the registration remains unavailable until an authorized explicit reload reconciles it
+
 ### Requirement: Stable retries without arbitrary replay
 
 Mutating commands SHALL bind stable request identity, actor, resource, extension/action version and payload fingerprint to persistent operation records. Identical retries SHALL reconcile original receipts; conflicting payloads SHALL fail without another effect. Unknown/interrupted arbitrary handlers SHALL NOT be automatically re-entered. Closing UI, cancelling a wait or uninstalling a facet SHALL NOT prove rollback, refund consumed quota or delete business resources.

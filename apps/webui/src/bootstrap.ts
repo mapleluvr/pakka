@@ -5,13 +5,17 @@ import { fileURLToPath } from "node:url";
 import { createRuntime, type RuntimeOptions, type JsonObject } from "@pakka/agent";
 import { createPocketPeople, createPocketWorkspace, type PocketSession } from "@pakka/server/pocket";
 import { createPocketHttp, type PocketHttpOptions } from "./http.ts";
+import { createExtensionHost, type ExtensionSource } from "./extension-host.ts";
+import type { ExtensionService } from "./backend.ts";
 
 export interface PocketProductOptions {
 	readonly runtime: RuntimeOptions;
 	readonly owner: string;
 	readonly initial?: readonly { readonly name: string; readonly profile: string }[];
 	readonly profiles?: readonly string[];
-	readonly transport?: Omit<PocketHttpOptions, "runtime" | "people" | "workspace" | "assets">;
+	readonly extensions?: readonly ExtensionSource[];
+	readonly extensionServices?: Readonly<Record<string, ExtensionService>>;
+	readonly transport?: Omit<PocketHttpOptions, "runtime" | "people" | "workspace" | "assets" | "extensions">;
 }
 const types: Readonly<Record<string, string>> = {
 	html: "text/html; charset=utf-8",
@@ -56,6 +60,10 @@ async function publicAssets() {
 		["@pakka/client/pocket", "/client/pocket.js"],
 		["@pakka/protocol/pocket", "/protocol/pocket.js"],
 		["@pakka/protocol", "/protocol/index.js"],
+		["@pakka/webui/extension", "/sdk/extension.js"],
+		["@pakka/webui/client", "/sdk/extension-client.js"],
+		["@pakka/webui/components", "/sdk/components.js"],
+		["@pakka/webui/ui", "/sdk/ui.js"],
 		["preact", "/vendor/preact.mjs"],
 		["preact/hooks", "/vendor/hooks.mjs"],
 		["htm", "/vendor/htm.mjs"],
@@ -67,6 +75,12 @@ async function publicAssets() {
 			body: await readFile(fileURLToPath(import.meta.resolve(specifier!))),
 		});
 	}
+	assets.set("/sdk/extension-rpc.js", {
+		type: types.js!,
+		body: await readFile(
+			fileURLToPath(new URL("./extension-rpc.js", import.meta.resolve("@pakka/webui/client"))),
+		),
+	});
 	return assets;
 }
 
@@ -142,12 +156,20 @@ export async function startPocket(options: PocketProductOptions) {
 					"Pocket initialization unavailable or configuration conflict; explicit reconciliation required",
 				);
 		}
-		http = await createPocketHttp({ ...options.transport, runtime, people, workspace, assets });
+		const extensions = await createExtensionHost({
+			runtime,
+			people,
+			workspace,
+			sources: options.extensions ?? [],
+			services: options.extensionServices,
+		});
+		http = await createPocketHttp({ ...options.transport, runtime, people, workspace, extensions, assets });
 		let closed = false;
 		return Object.freeze({
 			runtime,
 			people,
 			workspace,
+			extensions,
 			http,
 			initialOwner,
 			close: async () => {

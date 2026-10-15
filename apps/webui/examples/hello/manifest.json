@@ -1,0 +1,39 @@
+{
+	"api": 1,
+	"id": "hello",
+	"version": "1.0.0",
+	"title": "Hello extension",
+	"facets": {
+		"webui": {
+			"entry": "index.js",
+			"publicDir": "web"
+		}
+	},
+	"actions": [],
+	"commands": [
+		{
+			"id": "open",
+			"title": "Open hello",
+			"slash": "hello",
+			"interface": "home"
+		}
+	],
+	"interfaces": [
+		{
+			"id": "home",
+			"title": "Hello extension",
+			"slot": "page",
+			"scope": "app",
+			"export": "Home",
+			"navigation": true
+		},
+		{
+			"id": "about",
+			"title": "About hello",
+			"slot": "sheet",
+			"scope": "app",
+			"export": "About",
+			"navigation": false
+		}
+	]
+}

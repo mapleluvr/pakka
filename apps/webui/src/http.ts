@@ -18,6 +18,10 @@ import {
 import { identity } from "@pakka/protocol";
 import QRCode from "qrcode";
 import type { PocketCommand, PocketErrorCode } from "@pakka/protocol/pocket";
+import type { ExtensionHost } from "./backend.ts";
+import { ExtensionRefusal } from "./extension-host.ts";
+import { decodeExtensionRequest, decodeExtensionResponse } from "./extension-rpc.ts";
+import { decodeValue, publicPath } from "./extension.ts";
 
 export interface PocketHttpOptions {
 	readonly runtime: Runtime;
@@ -30,6 +34,8 @@ export interface PocketHttpOptions {
 	readonly trustedProxyPeers?: readonly string[];
 	readonly pollMs?: number;
 	readonly maxConnections?: number;
+	/** Host-approved sources only; browser requests cannot supply modules or paths. */
+	readonly extensions?: ExtensionHost;
 	/** Host-accepted fixed public bytes only, no provider/configuration files. */
 	readonly assets?: ReadonlyMap<string, { readonly type: string; readonly body: string | Uint8Array }>;
 }
@@ -412,6 +418,96 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 					}
 					cookies(res, session);
 					send(res, 200, { version: 2, person: session.person, expiresAt: session.expiresAt });
+					return;
+				}
+				if (req.method === "POST" && url.pathname === "/pocket/extensions/rpc" && !url.search) {
+					if (!options.extensions) throw new Refusal(404, "UNSUPPORTED");
+					const raw = await json(req);
+					if (raw && typeof raw === "object" && "requestId" in raw && identity(raw.requestId))
+						requestId = raw.requestId;
+					let parsed;
+					try {
+						parsed = decodeExtensionRequest(raw);
+					} catch {
+						throw new Refusal(400, "INVALID_REQUEST");
+					}
+					const a = await actor(req);
+					guard(() => a.verifyCsrf(header(req, "x-pakka-csrf")));
+					const command = parsed.command,
+						extensions = options.extensions;
+					let result;
+					try {
+						switch (command.op) {
+							case "list":
+								result = { kind: "registrations", registrations: extensions.list(a, command.target) };
+								break;
+							case "operation":
+								result = { kind: "operation", operation: await extensions.operation(a, command.id) };
+								break;
+							case "call": {
+								const call = command.call,
+									registration = extensions
+										.list(a, call.target)
+										.find(
+											(row) =>
+												row.manifest.id === call.extension &&
+												row.generation === call.generation &&
+												row.phase === "ready",
+										);
+								const action = registration?.manifest.actions.find((row) => row.id === call.action);
+								if (!action) throw new Refusal(403, "FORBIDDEN");
+								try {
+									decodeValue(action.input, call.input);
+								} catch {
+									throw new Refusal(400, "INVALID_REQUEST");
+								}
+								dispatched = true;
+								result = { kind: "operation", operation: await extensions.call(a, call, controller.signal) };
+								break;
+							}
+							default:
+								guard(() => people.check(a, "extensions.install"));
+								dispatched = true;
+								if (command.op === "reload") await extensions.reload(a, command.extension);
+								else await extensions.setEnabled(a, command.extension, command.op === "enable");
+								result = { kind: "updated" };
+						}
+					} catch (error) {
+						if (error instanceof ExtensionRefusal && !dispatched)
+							throw new Refusal(error.code === "INVALID_REQUEST" ? 400 : 403, error.code);
+						throw error;
+					}
+					guard(() => people.current(a));
+					send(res, 200, decodeExtensionResponse({ version: 2, requestId, serverId, result }, requestId));
+					return;
+				}
+				if (req.method === "GET" && url.pathname.startsWith("/pocket/extensions/assets/")) {
+					if (!options.extensions) throw new Refusal(404, "UNSUPPORTED");
+					const a = await actor(req),
+						parts = url.pathname.slice("/pocket/extensions/assets/".length).split("/");
+					const [id, generation, ...path] = parts,
+						resource = url.searchParams.get("conversationId");
+					if (
+						!id ||
+						!generation ||
+						!publicPath(path.join("/")) ||
+						[...url.searchParams.keys()].some((key) => key !== "conversationId") ||
+						url.searchParams.getAll("conversationId").length > 1
+					)
+						throw new Refusal(400, "INVALID_REQUEST");
+					const target = resource
+						? runtime.view().conversations.find((ref) => ref.conversationId === resource)
+						: undefined;
+					if (resource && !target) throw new Refusal(403, "FORBIDDEN");
+					try {
+						const asset = await options.extensions.asset(a, id, generation, path.join("/"), target);
+						guard(() => people.current(a));
+						res.writeHead(200, { "Content-Type": asset.type });
+						res.end(asset.body);
+					} catch (error) {
+						if (error instanceof ExtensionRefusal) throw new Refusal(403, error.code);
+						throw error;
+					}
 					return;
 				}
 				if (req.method === "POST" && url.pathname === "/pocket/rpc" && !url.search) {

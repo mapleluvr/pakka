@@ -1,6 +1,6 @@
 # Pakka-Pocket WebUI 与扩展开发规范
 
-状态：`@pakka/webui` 的**目标开发契约**，与 [迁移计划](PAKKA-POCKET-PLAN.md) 和 [OpenSpec 设计](../openspec/changes/pakka-pocket-webui/design.md) 一起使用。目前没有可调用的 WebUI SDK；本文件不把未来 exports 或示例当作已实现 API。
+状态：`@pakka/webui` 的**目标开发契约**，与 [迁移计划](PAKKA-POCKET-PLAN.md) 和 [OpenSpec 设计](../openspec/changes/pakka-pocket-webui/design.md) 一起使用。[P3 公共扩展宿主](PAKKA-POCKET-P3.md)已实现 `extension`、`ui`、`components`、`client`、`backend` 子路径与非 MAS 示例；Agent facet 的产品组装、MAS Board 和完整产品验收仍在后续阶段。下面的目标约束继续有效，具体已实现 API 以 P3 记录和独立消费者为准。
 
 ## 1. 产品核心与扩展的分工
 
@@ -101,7 +101,7 @@ Card 是显示记录，不是偷偷添加 system/user message。必须用下一�
 
 ## 9. 实际开发与验证路径
 
-计划落地后，每个扩展至少提供：
+每个扩展至少提供：
 
 1. 能从 public exports 编译的独立消费者，无内部路径/根 overrides。
 2. 一份可原样安装的例子：GUI-only 或真实配置影响后续行为的工具/服务。

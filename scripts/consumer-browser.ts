@@ -1,7 +1,26 @@
+import { Button, Stack, Field } from "@pakka/webui/components";
+import type { WebInterfaceProps } from "@pakka/webui/ui";
+import { createExtensionClient } from "@pakka/webui/client";
+import { decodeManifest } from "@pakka/webui/extension";
+import { h } from "preact";
 import { createPocketClient, type PocketCommand, type PocketSnapshot } from "@pakka/client/pocket";
 import { decodePocketRequest, decodePocketResponse } from "@pakka/protocol/pocket";
 import { createClient, type ClientResult, type ClientOptions, RemoteError } from "@pakka/client";
 import { decodeRequest, decodeResponse, type AgentRef, type Command } from "@pakka/protocol";
+export function PublicExtension({ context }: WebInterfaceProps) {
+	const client = createExtensionClient({ endpoint: "http://127.0.0.1:1/pocket/extensions/rpc" });
+	// @ts-expect-error A browser interface receives no native runtime/storage/provider handles.
+	context.runtime.session.commit();
+	// @ts-expect-error A browser cannot forge actor/grants through the extension client.
+	client.control("example", "enable", { actorId: "forged" });
+	return h(
+		Stack,
+		null,
+		h(Field, { label: "Public label" }, context.person.name),
+		h(Button, { onClick: () => context.close() }, "Close"),
+	);
+}
+export { decodeManifest };
 export function pocketBrowserOnly(endpoint: string, csrf: () => string | null, ref: AgentRef) {
 	const client = createPocketClient({ endpoint, csrf });
 	const command: PocketCommand = { op: "read", target: ref, page: { limit: 8 } };

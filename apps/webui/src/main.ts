@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { readFile, writeFile, lstat } from "node:fs/promises";
-import { resolve } from "node:path";
+import { resolve, isAbsolute } from "node:path";
+import type { ExtensionFacet } from "./extension.ts";
 import { pathToFileURL } from "node:url";
 import { startPocket, type PocketProductOptions } from "./bootstrap.ts";
 
@@ -31,7 +32,7 @@ function strings(value: unknown, max: number): string[] {
 
 /** Finite, host-authored startup file. Endpoint/model/credentials never enter browser configuration. */
 export function decodePocketProduct(value: unknown): PocketProductOptions {
-	const root = object(value, ["runtime", "owner", "initial", "profiles", "transport"]),
+	const root = object(value, ["runtime", "owner", "initial", "profiles", "transport", "extensions"]),
 		runtime = object(root.runtime, [
 			"cwd",
 			"dataDir",
@@ -100,8 +101,30 @@ export function decodePocketProduct(value: unknown): PocketProductOptions {
 							: { maxConnections: integer(row.maxConnections, 1, 128) }),
 					};
 				})();
+	const extensions =
+		root.extensions === undefined
+			? undefined
+			: (() => {
+					if (!Array.isArray(root.extensions) || root.extensions.length > 64)
+						throw new Error("Invalid trusted extension sources");
+					return root.extensions.map((item) => {
+						const row = object(item, ["root", "facets"]),
+							path = text(row.root);
+						if (!isAbsolute(path)) throw new Error("Explicit absolute extension root required");
+						const facets = row.facets === undefined ? undefined : strings(row.facets, 4);
+						if (
+							facets &&
+							(new Set(facets).size !== facets.length ||
+								facets.some((facet) => !["agent", "backend", "webui", "client"].includes(facet)))
+						)
+							throw new Error("Invalid explicit extension facets");
+						// SAFETY: the finite facet strings above exactly match the public ExtensionFacet vocabulary.
+						return { root: path, ...(facets ? { facets: facets as ExtensionFacet[] } : {}) };
+					});
+				})();
 	return {
 		owner: text(root.owner, 80),
+		...(extensions ? { extensions } : {}),
 		initial,
 		...(root.profiles === undefined ? {} : { profiles: strings(root.profiles, 64) }),
 		...(transport ? { transport } : {}),

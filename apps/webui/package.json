@@ -14,6 +14,26 @@
 		"./http": {
 			"types": "./dist/http.d.ts",
 			"import": "./dist/http.js"
+		},
+		"./extension": {
+			"types": "./dist/extension.d.ts",
+			"import": "./dist/extension.js"
+		},
+		"./backend": {
+			"types": "./dist/backend.d.ts",
+			"import": "./dist/backend.js"
+		},
+		"./client": {
+			"types": "./dist/extension-client.d.ts",
+			"import": "./dist/extension-client.js"
+		},
+		"./ui": {
+			"types": "./dist/ui.d.ts",
+			"import": "./dist/ui.js"
+		},
+		"./components": {
+			"types": "./dist/components.d.ts",
+			"import": "./dist/components.js"
 		}
 	},
 	"files": [
@@ -21,7 +41,8 @@
 		"web",
 		"licenses",
 		"LICENSE.pi-pocket",
-		"NOTICE.md"
+		"NOTICE.md",
+		"examples"
 	],
 	"scripts": {
 		"build": "tsc -p tsconfig.json"

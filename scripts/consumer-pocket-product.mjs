@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import { createServer } from "node:http";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile, cp } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createPocketClient } from "@pakka/client/pocket";
@@ -51,6 +51,8 @@ const cwd = join(root, "pocket-product-cwd"),
 	ownerFile = join(root, "pocket-owner.txt");
 await mkdir(cwd);
 await mkdir(dataDir);
+const extensionRoot = join(root, "installed-extension-examples");
+await cp(join(root, "node_modules/@pakka/webui/examples"), extensionRoot, { recursive: true });
 let config = {
 	runtime: {
 		cwd,
@@ -62,6 +64,9 @@ let config = {
 		limits: { maxConversations: 8, maxPrimaryAttempts: 3, maxAuxiliaryAttempts: 2 },
 	},
 	owner: "Operator",
+	extensions: ["hello", "preferences"].map((name) => ({
+		root: join(extensionRoot, name),
+	})),
 	initial: [{ name: "Installed project", profile: "default" }],
 };
 let child, browser;
@@ -128,6 +133,26 @@ try {
 	const owner = await browser.page(link);
 	await owner.wait('document.querySelector("[data-action=signin]")');
 	await owner.click("[data-action=signin]");
+	await owner.wait('document.querySelector("[data-interface=hello-home]")');
+	await owner.click("[data-interface=hello-home]");
+	await owner.wait('document.querySelector("[data-hello-count]")?.textContent === "0"');
+	await owner.click("[data-increment]");
+	await owner.wait('document.querySelector("[data-hello-count]")?.textContent === "1"');
+	await owner.click("[data-interface=preferences-settings]");
+	await owner.wait('document.querySelector("input[name=exampleLabel]")');
+	await owner.type("input[name=exampleLabel]", "PRIVATE-INSTALLED-PREFERENCE");
+	await owner.click("[data-save-label]");
+	await owner.wait(
+		'document.querySelector("[data-current-label]")?.textContent === "PRIVATE-INSTALLED-PREFERENCE"',
+	);
+	await owner.click('[aria-label="Close Example preferences"]');
+	await owner.click("[data-action=commands]");
+	await owner.wait('document.querySelector("[data-command=preferences-status]")');
+	await owner.click("[data-command=preferences-status]");
+	await owner.wait(
+		'document.querySelector("[role=alert]")?.textContent.includes("PRIVATE-INSTALLED-PREFERENCE")',
+	);
+	assert.equal(requests.length, 0);
 	await owner.wait('document.querySelector("[data-conversation]")');
 	await owner.click("[data-conversation]");
 	await owner.wait('document.querySelector("[data-action=send]")?.disabled === false');
@@ -138,6 +163,12 @@ try {
 		),
 		true,
 	);
+	await owner.type("textarea[name=message]", '/preferences-card {"text":"INSTALLED-DISPLAY-CARD"}');
+	await owner.click("[data-action=send]");
+	await owner.wait(
+		'document.querySelector(".pocket-display")?.textContent.includes("INSTALLED-DISPLAY-CARD")',
+	);
+	assert.equal(requests.length, 0);
 	await owner.type("textarea[name=message]", "INSTALLED-EXPLICIT-WORK");
 	await owner.click("[data-action=send]");
 	await owner.wait('document.querySelector("main").innerText.includes("INSTALLED-POCKET-ANSWER")');
@@ -181,6 +212,11 @@ try {
 	await owner.wait('document.querySelector("[data-conversation]")');
 	await owner.click("[data-conversation]");
 	await owner.wait('document.querySelector("main").innerText.includes("INSTALLED-POCKET-ANSWER")');
+	await owner.click("[data-interface=preferences-settings]");
+	await owner.wait(
+		'document.querySelector("[data-current-label]")?.textContent === "PRIVATE-INSTALLED-PREFERENCE"',
+	);
+	await owner.click('[aria-label="Close Example preferences"]');
 	await owner.click("[data-action=people]");
 	await owner.wait('document.querySelector(".pocket-person-row button")');
 	await owner.click(".pocket-person-row button");
@@ -189,10 +225,12 @@ try {
 	await viewer.wait('document.querySelector("[data-action=signin]")');
 	assert.equal(await viewer.evaluate('document.body.innerText.includes("INSTALLED-POCKET-ANSWER")'), false);
 	assert.equal(requests.length, 1);
+	assert.equal(JSON.stringify(requests).includes("PRIVATE-INSTALLED-PREFERENCE"), false);
+	assert.equal(JSON.stringify(requests).includes("INSTALLED-DISPLAY-CARD"), false);
 	assert.deepEqual(errors, []);
 	await writeFile(join(root, "pocket-product-evidence/requests.json"), JSON.stringify(requests, null, 2));
 	console.log(
-		"Installed Pocket product passed: real executable/assets, desktop/mobile isolated Chrome, invitation/viewer/revocation and normal reopen; 1 local HTTP and no duplicate model work.",
+		"Installed Pocket product passed: real executable/assets/public GUI-only and backend settings extensions, desktop/mobile isolated Chrome, invitation/viewer/revocation and normal reopen; 1 local HTTP and no duplicate model work.",
 	);
 } finally {
 	await browser?.close();

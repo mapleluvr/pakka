@@ -1,3 +1,5 @@
+import { defineBackend, type BackendContext } from "@pakka/webui/backend";
+import type { ExtensionHost } from "@pakka/webui/backend";
 import type {
 	ArtifactReceipt,
 	ArtifactScope,
@@ -28,6 +30,15 @@ import type { WorkerManager } from "@pakka/server";
 import type { BootstrapConfig } from "@pakka/server/bootstrap";
 import { createMasDevPack, type MasDevPackOptions } from "@pakka/mas-devpack";
 import type { ApprovedSessions } from "@pakka/mas";
+
+export function extensionBackendContract(context: BackendContext, host: ExtensionHost) {
+	// @ts-expect-error Backend context does not expose native mutable Pi/session objects.
+	context.runtime.session.commit();
+	const module = defineBackend({
+		actions: { read: async (current) => (await current.settings.get("label")).value },
+	});
+	return { module, host, job: context.jobs.receipt("job-id") };
+}
 
 export async function pocketServiceContract(
 	people: PocketPeople,
@@ -67,6 +78,8 @@ export function productContract(config: BootstrapConfig) {
 	const _invalid: NonNullable<BootstrapConfig["devpack"]> = { profiles: { default: ["model.infer"] } };
 	// @ts-expect-error mutable native handles are not JSON product contributions.
 	const _forged: NonNullable<BootstrapConfig["devpack"]> = { profiles: { default: ["spawn"] }, session: {} };
+	void _invalid;
+	void _forged;
 	return { config, contribution };
 }
 
