@@ -42,6 +42,11 @@ function correlated(command: PocketCommand, result: PocketResult, personId?: str
 			return result.kind === "hello";
 		case "list":
 			return result.kind === "list";
+		case "notification.status":
+		case "notification.subscribe":
+		case "notification.unsubscribe":
+		case "notification.preferences":
+			return result.kind === "notification" && sameRef(command.target, result.target);
 		case "configuration":
 			return result.kind === "configuration" && sameRef(command.target, result.configuration.ref);
 		case "credential.status":

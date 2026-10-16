@@ -1,5 +1,11 @@
 import type { ConversationRef, RuntimeJobReceipt, DisplayReceipt, Runtime } from "@pakka/agent";
-import type { PocketPerson, PocketInputReceipt, PocketPeople, PocketWorkspace } from "@pakka/server/pocket";
+import type {
+	PocketPerson,
+	PocketInputReceipt,
+	PocketPeople,
+	PocketWorkspace,
+	PocketNotifications,
+} from "@pakka/server/pocket";
 import type {
 	ExtensionJson,
 	ExtensionCall,
@@ -14,6 +20,8 @@ export interface PocketServiceContext {
 	readonly runtime: Runtime;
 	readonly people: PocketPeople;
 	readonly workspace: PocketWorkspace;
+	/** Trusted event producer only; frontend handlers receive no publication or recipient-selection port. */
+	readonly notifications?: PocketNotifications;
 	/** Original product owner identity; descriptive, never an authorization. */
 	readonly ownerId: string;
 }
@@ -73,7 +81,10 @@ export interface ExtensionHost {
 	): Promise<ExtensionOperation>;
 	operation(actor: import("@pakka/server/pocket").PocketAuthority, id: string): Promise<ExtensionOperation>;
 	/** Read original operation without re-entering a handler or accepting a caller-supplied actor. */
-	operationByRequest(actor: import("@pakka/server/pocket").PocketAuthority, request: ExtensionOperationRequest): Promise<ExtensionOperation>;
+	operationByRequest(
+		actor: import("@pakka/server/pocket").PocketAuthority,
+		request: ExtensionOperationRequest,
+	): Promise<ExtensionOperation>;
 	setEnabled(
 		actor: import("@pakka/server/pocket").PocketAuthority,
 		id: string,

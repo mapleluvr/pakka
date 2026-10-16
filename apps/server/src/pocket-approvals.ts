@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { ConversationRef, HostOptions, JsonObject, Runtime, ToolInvocationScope } from "@pakka/agent";
 import type { PocketAuthority, PocketPeople } from "./pocket-people.ts";
+import type { PocketNotifications } from "./pocket-notifications.ts";
 
 type ApprovedTool = NonNullable<HostOptions["tools"]>[number];
 export interface PocketApproval {
@@ -37,6 +38,8 @@ export interface PocketApprovalsOptions {
 	readonly people: PocketPeople;
 	readonly namespace: string;
 	readonly timeoutMs?: number;
+	/** Host-selected notification producer; the browser cannot create pending native approvals. */
+	readonly notifications?: Pick<PocketNotifications, "publish">;
 }
 type Row = { -readonly [K in keyof PocketApproval]: PocketApproval[K] };
 const record = (v: unknown): v is Record<string, unknown> =>
@@ -298,6 +301,16 @@ export async function createPocketApprovals(options: PocketApprovalsOptions): Pr
 					rows.push(row);
 				}, verify);
 				verify();
+				if (options.notifications) {
+					void options.notifications
+						.publish({
+							requestId: "approval." + key,
+							target: row.ref,
+							kind: "approval",
+							preview: "A tool call is waiting for your decision.",
+						})
+						.catch(() => {});
+				}
 				timer = setTimeout(wake, Math.max(1, row.expiresAt - Date.now()));
 				signal?.addEventListener("abort", wake, { once: true });
 				const before = await read();

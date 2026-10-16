@@ -32,7 +32,15 @@ function strings(value: unknown, max: number): string[] {
 
 /** Finite, host-authored startup file. Endpoint/model/credentials never enter browser configuration. */
 export function decodePocketProduct(value: unknown): PocketProductOptions {
-	const root = object(value, ["runtime", "owner", "initial", "profiles", "transport", "extensions"]),
+	const root = object(value, [
+			"runtime",
+			"owner",
+			"initial",
+			"profiles",
+			"transport",
+			"extensions",
+			"notifications",
+		]),
 		runtime = object(root.runtime, [
 			"cwd",
 			"dataDir",
@@ -102,6 +110,32 @@ export function decodePocketProduct(value: unknown): PocketProductOptions {
 							: { maxConnections: integer(row.maxConnections, 1, 128) }),
 					};
 				})();
+	const notifications =
+		root.notifications === undefined
+			? undefined
+			: (() => {
+					const row = object(root.notifications, ["endpointOrigins", "subject", "trustedCa"]);
+					const endpointOrigins = strings(row.endpointOrigins, 16);
+					if (!endpointOrigins.length) throw new Error("Approved push origins required");
+					for (const origin of endpointOrigins) {
+						let url: URL;
+						try {
+							url = new URL(origin);
+						} catch {
+							throw new Error("Invalid approved push origin");
+						}
+						if (url.protocol !== "https:" || url.origin !== origin)
+							throw new Error("Exact HTTPS push origin required");
+					}
+					const subject = row.subject === undefined ? undefined : text(row.subject, 256);
+					if (subject !== undefined && !/^(mailto:[^\s@]+@[^\s]+|https:\/\/[^\s]+)$/.test(subject))
+						throw new Error("Invalid VAPID subject");
+					return {
+						endpointOrigins,
+						...(subject ? { subject } : {}),
+						...(row.trustedCa === undefined ? {} : { trustedCa: text(row.trustedCa, 65536) }),
+					};
+				})();
 	const extensions =
 		root.extensions === undefined
 			? undefined
@@ -129,6 +163,7 @@ export function decodePocketProduct(value: unknown): PocketProductOptions {
 		initial,
 		...(root.profiles === undefined ? {} : { profiles: strings(root.profiles, 64) }),
 		...(transport ? { transport } : {}),
+		...(notifications ? { notifications } : {}),
 		runtime: {
 			cwd: text(runtime.cwd),
 			dataDir: text(runtime.dataDir),
@@ -156,6 +191,7 @@ const productKeys = [
 	"transport",
 	"extensions",
 	"extensionServices",
+	"notifications",
 ] as const;
 /** Explicit local host code, not a manifest action, browser request, or untrusted configuration decoder. */
 async function loadPocketModule(path: string): Promise<PocketProductOptions> {
@@ -210,7 +246,7 @@ export async function runPocket(args: readonly string[]): Promise<number> {
 		}
 		app = await startPocket(options);
 		if (app.initialOwner)
-			await writeFile(args[3], app.http.origin + "/#signin=" + app.initialOwner.token + "\n", {
+			await writeFile(args[3], `${app.http.origin}/#signin=${app.initialOwner.token}\n`, {
 				flag: "wx",
 				mode: 0o600,
 			});
@@ -229,11 +265,11 @@ export async function runPocket(args: readonly string[]): Promise<number> {
 			}
 		});
 		process.stdout.write(
-			JSON.stringify({
+			`${JSON.stringify({
 				origin: app.http.origin,
 				serverId: app.http.serverId,
 				sessionFile: app.runtime.view().sessionFile,
-			}) + "\n",
+			})}\n`,
 		);
 		await stopped;
 		process.stdin.pause();

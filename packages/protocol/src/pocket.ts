@@ -182,7 +182,44 @@ export type PocketCollaborationCommand =
 			readonly target: AgentRef;
 			readonly input: { readonly state: "here" | "typing" | "away" | "leave" };
 	  };
+export interface PocketNotificationStatus {
+	readonly publicKey: string;
+	readonly preferences: {
+		readonly done: boolean;
+		readonly approval: boolean;
+		readonly chat: boolean;
+		readonly mention: boolean;
+	};
+	readonly devices: readonly { readonly id: string; readonly subscriptionKey: string }[];
+}
+export type PocketNotificationCommand =
+	| { readonly op: "notification.status"; readonly target: AgentRef }
+	| {
+			readonly op: "notification.subscribe";
+			readonly target: AgentRef;
+			readonly input: {
+				readonly requestId: string;
+				readonly subscription: {
+					readonly endpoint: string;
+					readonly keys: { readonly p256dh: string; readonly auth: string };
+				};
+			};
+	  }
+	| {
+			readonly op: "notification.unsubscribe";
+			readonly target: AgentRef;
+			readonly input: { readonly requestId: string; readonly deviceId: string };
+	  }
+	| {
+			readonly op: "notification.preferences";
+			readonly target: AgentRef;
+			readonly input: {
+				readonly requestId: string;
+				readonly preferences: Partial<PocketNotificationStatus["preferences"]>;
+			};
+	  };
 export type PocketCommand =
+	| PocketNotificationCommand
 	| PocketCollaborationCommand
 	| { readonly op: "configuration"; readonly target: AgentRef }
 	| { readonly op: "credential.status" }
@@ -266,6 +303,7 @@ export type PocketResult =
 	  }
 	| { readonly kind: "reference"; readonly ref: AgentRef }
 	| { readonly kind: "configuration"; readonly configuration: PocketConfiguration }
+	| { readonly kind: "notification"; readonly target: AgentRef; readonly status: PocketNotificationStatus }
 	| { readonly kind: "credential"; readonly status: PocketCredentialStatus }
 	| { readonly kind: "collaboration"; readonly snapshot: PocketCollaborationView }
 	| { readonly kind: "conversation"; readonly snapshot: PocketSnapshot }
@@ -626,8 +664,82 @@ function collaborationCommand(v: Record<string, unknown>): boolean {
 			return false;
 	}
 }
+function notificationStatus(v: unknown): v is PocketNotificationStatus {
+	return (
+		shape(v, ["publicKey", "preferences", "devices"]) &&
+		typeof v.publicKey === "string" &&
+		/^[A-Za-z0-9_-]{87}$/.test(v.publicKey) &&
+		shape(v.preferences, ["done", "approval", "chat", "mention"]) &&
+		Object.values(v.preferences).every((value) => typeof value === "boolean") &&
+		Array.isArray(v.devices) &&
+		v.devices.length <= 10 &&
+		v.devices.every(
+			(row) =>
+				shape(row, ["id", "subscriptionKey"]) &&
+				identity(row.id) &&
+				typeof row.subscriptionKey === "string" &&
+				/^[a-f0-9]{64}$/.test(row.subscriptionKey),
+		) &&
+		new Set(v.devices.map((row) => row.id)).size === v.devices.length
+	);
+}
+function notificationCommand(
+	v: Record<string, unknown>,
+): v is Record<string, unknown> & PocketNotificationCommand {
+	if (v.op === "notification.status") return shape(v, ["op", "target"]) && ref(v.target);
+	if (
+		!shape(v, ["op", "target", "input"]) ||
+		!ref(v.target) ||
+		!record(v.input) ||
+		!identity(v.input.requestId)
+	)
+		return false;
+	if (v.op === "notification.unsubscribe")
+		return shape(v.input, ["requestId", "deviceId"]) && identity(v.input.deviceId);
+	if (v.op === "notification.preferences")
+		return (
+			shape(v.input, ["requestId", "preferences"]) &&
+			record(v.input.preferences) &&
+			Object.keys(v.input.preferences).length > 0 &&
+			Object.entries(v.input.preferences).every(
+				([field, value]) =>
+					["done", "approval", "chat", "mention"].includes(field) && typeof value === "boolean",
+			)
+		);
+	if (
+		v.op !== "notification.subscribe" ||
+		!shape(v.input, ["requestId", "subscription"]) ||
+		!shape(v.input.subscription, ["endpoint", "keys"]) ||
+		!shape(v.input.subscription.keys, ["p256dh", "auth"])
+	)
+		return false;
+	const subscription = v.input.subscription;
+	const keys = v.input.subscription.keys;
+	if (
+		typeof subscription.endpoint !== "string" ||
+		subscription.endpoint.length > 4096 ||
+		typeof keys.p256dh !== "string" ||
+		!/^[A-Za-z0-9_-]{87}$/.test(keys.p256dh) ||
+		typeof keys.auth !== "string" ||
+		!/^[A-Za-z0-9_-]{22}$/.test(keys.auth)
+	)
+		return false;
+	try {
+		const url = new URL(subscription.endpoint);
+		return (
+			url.protocol === "https:" &&
+			!url.username &&
+			!url.password &&
+			!url.hash &&
+			url.href === subscription.endpoint
+		);
+	} catch {
+		return false;
+	}
+}
 function command(v: unknown): v is PocketCommand {
 	if (!record(v)) return false;
+	if (typeof v.op === "string" && v.op.startsWith("notification.")) return notificationCommand(v);
 	if (typeof v.op === "string" && v.op.startsWith("collaboration.")) return collaborationCommand(v);
 	switch (v.op) {
 		case "hello":
@@ -780,6 +892,8 @@ function result(v: unknown): v is PocketResult {
 			);
 		case "reference":
 			return shape(v, ["kind", "ref"]) && ref(v.ref);
+		case "notification":
+			return shape(v, ["kind", "target", "status"]) && ref(v.target) && notificationStatus(v.status);
 		case "credential":
 			return (
 				shape(v, ["kind", "status"]) &&

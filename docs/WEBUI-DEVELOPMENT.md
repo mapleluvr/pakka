@@ -97,6 +97,8 @@ Pakka-Pocket 的主 provider key 使用独立 `credential.status / credential.re
 
 owned 私密服务会持久保存显式提交的值，供未来原生主请求解析；保留已有启动 resolver，直到明确替换/清除。清除会阻止后续解析且重开不回退，但不撤回已发请求、不擦除旧持久日志，也不宣称加密。它的稳定写回执有每 Session 256 次的上限，不以自动遗忘回执扩大容量。
 
+通知使用独立的 `notification.status / subscribe / unsubscribe / preferences` 有限命令，设备与偏好绑定当前人类，当前 Conversation 在服务端校验。`PocketServiceContext.notifications` 是受信任 producer；浏览器命令不能决定通知收件人或文案。pending/unknown 的真实 push 不自动重发；worker 在显示和导航前用当前 Cookie 读取 metadata，HTTP 接受不作为 OS 显示的证据。状态仅返回公开 VAPID key、偏好和当前资源设备的 `{ id, subscriptionKey }`；摘要匹配真实 PushSubscription，丢注册响应后的核对不再写注册，也不返回 endpoint/auth/private VAPID。实际边界、保留上限与测量记录见 [P5 通知](PAKKA-POCKET-P5.md)。
+
 ## 8. 生命周期与资产
 
 - extension identity、generation、resource scope 与 open-instance identity 都要绑定。旧回调不能关闭/通知/写入新的界面实例。

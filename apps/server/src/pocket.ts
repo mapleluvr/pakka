@@ -1,4 +1,15 @@
 /** Host composition APIs for the Pocket product. Imports allocate no identities, writers or listeners. */
+export { createPocketNotifications } from "./pocket-notifications.js";
+export type {
+	PocketNotifications,
+	PocketNotificationsOptions,
+	PocketNotificationClient,
+	PocketNotificationStatus,
+	PocketNotificationPreferences,
+	PocketNotificationEvent,
+	PocketNotificationReceipt,
+	PocketNotificationKind,
+} from "./pocket-notifications.js";
 export { createPocketBrowser } from "./pocket-browser.js";
 export type {
 	PocketBrowser,

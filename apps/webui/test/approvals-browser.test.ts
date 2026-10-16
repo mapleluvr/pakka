@@ -51,6 +51,7 @@ test(
 					approvals = await createPocketApprovals({
 						runtime: context.runtime,
 						people: context.people,
+						notifications: context.notifications,
 						namespace: "browser.approvals",
 						timeoutMs: 20000,
 					});
@@ -98,6 +99,20 @@ test(
 				await owner.wait('document.querySelector("[data-approval-allow]")');
 			};
 			await submit("ASK-FIRST-PERMISSION");
+			await t.waitFor(
+				async () => {
+					const stored = await app!.runtime
+						.store({ namespace: "pocket.notifications", maxBytes: 1048576 })
+						.snapshot();
+					assert.ok(
+						Array.isArray(stored.data.events) &&
+							stored.data.events.some(
+								(row) => row && typeof row === "object" && !Array.isArray(row) && row.kind === "approval",
+							),
+					);
+				},
+				{ timeout: 4000 },
+			);
 			assert.equal(effects, 0);
 			await assert.rejects(readFile(join(m.f.cwd, "human-effect.txt")), { code: "ENOENT" });
 			await viewer.click('[aria-label="Toggle conversations"]');

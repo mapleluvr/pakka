@@ -71,6 +71,21 @@ export async function privateConfigurationBrowser(endpoint: string, csrf: () => 
 	return value.status.configured;
 }
 
+export async function notificationBrowser(endpoint: string, target: AgentRef) {
+	const client = createPocketClient({ endpoint });
+	const result = await client.request({ op: "notification.status", target });
+	if (result.kind !== "notification") throw new Error("Unexpected notification status");
+	for (const device of result.status.devices) {
+		const subscriptionKey: string = device.subscriptionKey;
+		void subscriptionKey;
+		// @ts-expect-error Status never returns a push endpoint or subscription secret.
+		void device.endpoint;
+	}
+	// @ts-expect-error Only the trusted server event producer can choose a notification recipient.
+	void client.request({ op: "notification.publish", target, actorId: "forged" });
+	return result.status.preferences;
+}
+
 export function browserOnly(endpoint: string, token: string, ref: AgentRef) {
 	const options: ClientOptions = { endpoint, token };
 	const client = createClient(options);

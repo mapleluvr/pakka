@@ -3,7 +3,7 @@ import { access, mkdir } from "node:fs/promises";
 import { join } from "node:path";
 
 type Value = Record<string, unknown>;
-export async function ownedBrowser(dir: string) {
+export async function ownedBrowser(dir: string, options: { readonly push?: boolean } = {}) {
 	const chrome = "C:/Program Files/Google/Chrome/Application/chrome.exe";
 	await access(chrome);
 	const local = join(dir, "AppData", "Local"),
@@ -14,7 +14,7 @@ export async function ownedBrowser(dir: string) {
 		[
 			"--headless=new",
 			"--disable-gpu",
-			"--disable-background-networking",
+			...(options.push ? [] : ["--disable-background-networking"]),
 			"--disable-component-update",
 			"--disable-sync",
 			"--disable-extensions",
@@ -60,9 +60,35 @@ export async function ownedBrowser(dir: string) {
 		ws.addEventListener("open", () => resolve(), { once: true });
 		ws.addEventListener("error", () => reject(new Error("Owned Chrome CDP failed")), { once: true });
 	});
+	const workers = new Map<string, { registrationId: string; scopeURL: string }>();
 	ws.addEventListener("message", (event) => {
 		try {
 			const v: unknown = JSON.parse(String(event.data));
+			if (
+				v &&
+				typeof v === "object" &&
+				"method" in v &&
+				v.method === "ServiceWorker.workerRegistrationUpdated" &&
+				"sessionId" in v &&
+				typeof v.sessionId === "string" &&
+				"params" in v &&
+				v.params &&
+				typeof v.params === "object" &&
+				"registrations" in v.params &&
+				Array.isArray(v.params.registrations)
+			) {
+				for (const row of v.params.registrations)
+					if (
+						row &&
+						typeof row === "object" &&
+						typeof row.registrationId === "string" &&
+						typeof row.scopeURL === "string"
+					)
+						workers.set(v.sessionId + ":" + row.scopeURL, {
+							registrationId: row.registrationId,
+							scopeURL: row.scopeURL,
+						});
+			}
 			if (!v || typeof v !== "object" || !("id" in v) || typeof v.id !== "number") return;
 			const waiter = pending.get(v.id);
 			if (!waiter) return;
@@ -83,7 +109,7 @@ export async function ownedBrowser(dir: string) {
 		});
 	return {
 		page: async (url: string, viewport = { width: 1440, height: 900 }) => {
-			const context = await call("Target.createBrowserContext"),
+			const context: Value = options.push ? {} : await call("Target.createBrowserContext"),
 				target = await call("Target.createTarget", {
 					url: "about:blank",
 					browserContextId: context.browserContextId,
@@ -92,6 +118,7 @@ export async function ownedBrowser(dir: string) {
 			const id = String(attached.sessionId);
 			await call("Page.enable", {}, id);
 			await call("Runtime.enable", {}, id);
+			await call("ServiceWorker.enable", {}, id);
 			await call(
 				"Emulation.setDeviceMetricsOverride",
 				{ ...viewport, deviceScaleFactor: 1, mobile: viewport.width < 600 },
@@ -110,6 +137,27 @@ export async function ownedBrowser(dir: string) {
 			await call("Page.navigate", { url }, id);
 			return {
 				evaluate,
+				allowNotifications: async () => {
+					const origin = await evaluate("location.origin");
+					if (typeof origin !== "string" || !/^https?:\/\/127\.0\.0\.1:\d+$/.test(origin))
+						throw Error("Unexpected owned notification origin");
+					await call("Browser.grantPermissions", {
+						origin,
+						browserContextId: context.browserContextId,
+						permissions: ["notifications"],
+					});
+				},
+				pushNotification: async (wake: { eventId: string; deviceId: string }) => {
+					const origin = await evaluate("location.origin");
+					if (typeof origin !== "string") throw Error("Missing owned origin");
+					const worker = workers.get(id + ":" + origin + "/");
+					if (!worker) throw Error("Owned notification worker not registered");
+					await call(
+						"ServiceWorker.deliverPushMessage",
+						{ origin, registrationId: worker.registrationId, data: JSON.stringify(wake) },
+						id,
+					);
+				},
 				navigate: async (target: string) => {
 					await call("Page.navigate", { url: target }, id);
 				},
@@ -158,7 +206,9 @@ export async function ownedBrowser(dir: string) {
 					return Buffer.from(String(result.data), "base64");
 				},
 				close: async () => {
-					await call("Target.disposeBrowserContext", { browserContextId: context.browserContextId });
+					if (typeof context.browserContextId === "string")
+						await call("Target.disposeBrowserContext", { browserContextId: context.browserContextId });
+					else await call("Target.closeTarget", { targetId: target.targetId });
 				},
 			};
 		},

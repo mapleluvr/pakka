@@ -10,6 +10,7 @@ import { decodePocketEvent } from "@pakka/protocol/pocket";
 import { useExtensions } from "./extensions.js";
 import { Collaboration } from "./collaboration.js";
 import { Configuration } from "./configuration.js";
+import { Notifications, clearNotifications } from "./notifications.js";
 
 const html = htm.bind(h);
 const csrf = () => /(?:^|; )pakka_csrf=([A-Za-z0-9_-]{43})(?:;|$)/.exec(document.cookie)?.[1] ?? null;
@@ -17,6 +18,7 @@ const client = createPocketClient({ endpoint: new URL("/pocket/rpc", location.hr
 const incoming = new URLSearchParams(location.hash.slice(1));
 let signInToken = incoming.get("signin") ?? incoming.get("invite") ?? "";
 const signInKind = incoming.has("invite") ? "invite" : "session";
+let requestedConversation = incoming.get("conversation");
 if (location.hash) history.replaceState(null, "", location.pathname + location.search);
 const markdown = (text) =>
 	DOMPurify.sanitize(marked.parse(String(text), { async: false }), {
@@ -108,6 +110,7 @@ function App() {
 		},
 	});
 	const invalidate = () => {
+		void clearNotifications().catch(() => {});
 		resourceContext.current = null;
 		extensions.clear();
 		setView(null);
@@ -141,6 +144,11 @@ function App() {
 		setPerson(hello.person);
 		setRefs(list.conversations);
 		setTitles(list.titles ?? {});
+		if (requestedConversation) {
+			const ref = list.conversations.find((row) => row.conversationId === requestedConversation);
+			requestedConversation = null;
+			if (ref) select(ref);
+		}
 	}
 	useEffect(() => {
 		void refresh().catch((failure) => {
@@ -413,6 +421,7 @@ function App() {
 				>
 					Appearance</button
 				><button
+					data-action="logout"
 					onClick=${() =>
 						void run(async () => {
 							await client.request({ op: "session.logout" });
@@ -432,6 +441,9 @@ function App() {
 				<div class="pocket-title">${selected ? title(selected) : "Your workspace"}</div>
 				<span class="pocket-status">${view?.live.busy ? "Working" : view ? "Ready" : ""}</span>${selected &&
 				html`<button data-action="settings" onClick=${() => openSheet("configuration")}>Settings</button>
+					<button data-action="notifications" onClick=${() => openSheet("notifications")}>
+						Notifications
+					</button>
 					<button data-action="collaboration" onClick=${showCollaboration}>
 						Team
 					</button>`}${extensions.button}${person.role === "admin" &&
@@ -528,6 +540,16 @@ function App() {
 			</div>`}
 		</main>
 		${extensions.overlay}
+		${sheet === "notifications" &&
+		selected &&
+		html`<${Notifications}
+			key=${person.id + ":" + selected.key + ":" + selected.incarnation}
+			target=${selected}
+			person=${person}
+			client=${client}
+			close=${() => openSheet(null)}
+			error=${error}
+		/>`}
 		${sheet === "configuration" &&
 		selected &&
 		html`<${Configuration}

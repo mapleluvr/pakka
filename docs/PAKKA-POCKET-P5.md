@@ -1,6 +1,6 @@
 # Pakka-Pocket P5 — 协作与保留工作流（实施中）
 
-状态：**P5 部分实施，不是产品交付/复审结论**。已接通人类协作、可选文件/Git、原生工具审批、受控浏览器、模型/用量设置与私密 provider 配置；通知、可选自动化以及完整远程部署清单仍继续实施，不能用本阶段测试总数替代 P6 的实际产品验收。
+状态：**P5 部分实施，不是产品交付/复审结论**。已接通人类协作、可选文件/Git、原生工具审批、受控浏览器、模型/用量设置、私密 provider 配置与真实通知服务；原生通知点击、可选自动化以及完整远程部署清单仍继续验收，不能用本阶段测试总数替代 P6 的实际产品验收。
 
 ## 1. 人类协作
 
@@ -79,9 +79,27 @@ export default {
 - 已解析凭据或已开始的请求不能被事后撤回；凭据失败也不退还已准备调用的尝试额度。持久存储/备份包含宿主批准保存的密钥，未承诺加密或清除历史字节。
 - 未确认的提交保持 `unknown`；表单禁用新写入，允许只读核对状态，核对不自动重发。存储损坏、迟到撤权和不透明错误失败封闭，私密错误文本不进入 transcript 或浏览器。
 
-本次设置/私密配置门禁：定向 **16/16**，全量 **408/408**（无 skip/cancel/todo），构建、类型、公开声明、代码格式和全部仓库外安装消费者通过；406 个源码/helper/TLS 资产 SHA 在三个阶段保持一致。实际 CLI 的产品消费者完成模型选择、替换/清除、手机 viewer、两次正常重开与撤权；**1 次模型 HTTP、3 次计费尝试**，没有重复配置或清除后的凭据回退。日志、身份、恢复反例与桌面/手机截图位于 `artifacts/pakka-pocket/p5/settings/`；`scripts/consumer-pocket-product.mjs` 是该安装路径。通知与其余可选界面仍未完成，6.4 不勾选。
+本次设置/私密配置门禁：定向 **16/16**，全量 **408/408**（无 skip/cancel/todo），构建、类型、公开声明、代码格式和全部仓库外安装消费者通过；406 个源码/helper/TLS 资产 SHA 在三个阶段保持一致。实际 CLI 的产品消费者完成模型选择、替换/清除、手机 viewer、两次正常重开与撤权；**1 次模型 HTTP、3 次计费尝试**，没有重复配置或清除后的凭据回退。日志、身份、恢复反例与桌面/手机截图位于 `artifacts/pakka-pocket/p5/settings/`；`scripts/consumer-pocket-product.mjs` 是该安装路径。后续通知门禁见第 6 节；其余可选界面仍未完成，6.4 不勾选。
 
-## 6. 当前可执行证据
+## 6. 原生通知、Web Push 与恢复（6.4 继续实施）
+
+`@pakka/server/pocket` 提供 `createPocketNotifications`；`startPocket` 组装人类身份、持久设备/偏好、真实完成事件的被动观察与服务关闭。`PocketServiceContext.notifications` 是宿主受信任 producer，可供实际审批等贡献发布已有业务事件；浏览器的有限 `notification.*` 命令只控制自己的设备、偏好和状态，不能选择 actor、通知文案或收件人。
+
+- UI 仅在显式浏览器通知权限下注册实际 service worker/PushSubscription，支持当前 Conversation 的本设备启用/注销、个人偏好和系统通知测试；旁聊、定向 mention、真实待审批和原生任务完成均有事件回归。偏好属于当前人类，不能修改另一个人的偏好。
+- 设备绑定当前人类与获准 Conversation。服务在真实 dispatch intent 提交后、请求发送前和 metadata 发布前复查当前资源权限。wake-up 只包含 opaque event/device ID；实际文案由 worker 经当前 Cookie 查询，失效/撤权/注销后不能用旧 push 恢复权限。登出清理本机通知。
+- 使用 `aes128gcm` Web Push 加密和 VAPID 签名。真实 TLS 接收端独立解密并验证签名，不以本实现的返回值自证；HTTP 接受仅记为 `accepted`，不能证明 OS 显示。真实浏览器另检查 service worker 创建的原生通知记录。
+- 注册响应丢失时，服务端只返回当前人类/资源设备的 `subscriptionKey`：对固定顺序的 `{ endpoint, keys: { p256dh, auth } }` 计算 SHA-256。UI 用本地实际订阅计算同一摘要，再只读当前状态识别本设备，不猜新设备 ID，也不再次发送注册写入。响应不返回 endpoint/auth 或 VAPID 私钥。
+- 业务事件和控制操作有稳定身份；已接受或未知的投递在原请求重试、正常 writer 重开后都不自动重发。真实已接受请求被接收端断开时保留 `unknown`；不能把已发送效果记成拒绝或回滚。
+- 默认批准的 push origins 为 `https://fcm.googleapis.com`、`https://updates.push.services.mozilla.com`、`https://web.push.apple.com`。宿主可用 `notifications: { endpointOrigins, subject?, trustedCa? }` 显式覆盖，JSON 与 ESM 启动均可组装。origin 必须为精确 HTTPS origin；有限 schema 拒绝未知字段，私有 CA 仍启用真实 TLS 校验。
+- 有限保留范围为每 Session 256 个事件、512 个控制操作、128 个设备记录和 128 份人类偏好；单人最多 10 个活动设备，每设备最多 64 个资源，store 上限 1 MiB。容量用尽拒绝新增记录，不通过遗忘原请求扩大容量。持久存储含生成的 VAPID 私钥与 push 订阅材料，未承诺加密或历史擦除；它们不进入模型或界面状态响应。
+
+本批定向 **21/21**、全量 **419/419**（无 fail/skip/cancel/todo），构建、类型、公开声明、代码格式及全部实际安装消费者通过；421 个冻结源码/helper/TLS 文件 SHA 在定向、全量和安装阶段保持一致。`scripts/consumer-pocket-notifications.mjs` 从仓库外实际 CLI 贯通 native completion、TLS 加密、worker 显示、手机偏好/权限、撤权、未知投递及正常重开：**2 次模型 HTTP、3 次 push 请求、已消费 attempts 保持 2**。桌面/手机截图直接检查通过，日志和实际归档位于 `artifacts/pakka-pocket/p5/notifications/`。
+
+外部 FCM 单独测量：全新本任务 Chrome profile 的一次真实订阅/完成通知/注销成功；后续全新 profile 存在订阅等待。复用本任务自建的 probe profile 后，丢失注册响应通过只读状态恢复、没有第二次注册写入，随后 FCM 通知生成了原生记录；每次测量 2 次本地模型 HTTP。结果分别在 `live-result.json`、`live-recovery-result.json`，不作为确定性 suite 的环境保证。
+
+真正的 OS 通知点击还未验收。补测用实际通知对象构造 `NotificationEvent` 时，Chrome 明确拒绝脚本事件的 `waitUntil` 和窗口 focus；这是触发方法的限制，既不是生产 handler 通过，也不据此认定生产缺陷。原诊断保存在 `native-navigation-diagnostic.log`。6.4/P6 仍须从真实通知动作检查重新授权导航；本阶段不修改 worker 迁就该触发方法。
+
+## 7. 当前可执行证据
 
 | 主体                                                  | 证据                                                                                 |
 | ----------------------------------------------------- | ------------------------------------------------------------------------------------ |
@@ -103,6 +121,11 @@ export default {
 | `apps/webui/test/browser-contribution.test.ts`        | 桌面/手机真实动作、丢响应后的可见核对与内层 unknown 保留，0 次模型 HTTP                |
 | `apps/webui/test/extension-http.test.ts`              | 原操作查询、错误 profile/incarnation、跨用户、撤权与 403/denied                     |
 | `scripts/consumer-pocket-controlled.mjs`             | 实际 CLI 审批与浏览器控制、2 次页面效果、原操作核对和正常重开；4 次模型 HTTP            |
+| `apps/server/test/pocket-notifications.test.ts`      | 真实 TLS/独立解密与 VAPID、晚撤权、定向收件人、输入捕获、未知投递及重开 |
+| `apps/webui/test/notifications-http.test.ts`          | 实际完成/旁聊事件、有限设备协议、当前 Cookie metadata 和越权探针 |
+| `apps/webui/test/notifications-browser.test.ts`       | 真实 worker 原生通知、登出清理、手机偏好隔离和桌面/手机布局 |
+| `apps/webui/test/notifications-main.test.ts`          | 非法 push authority 在存储和 provider 效果前被拒绝 |
+| `scripts/consumer-pocket-notifications.mjs`          | 实际 CLI/TLS/worker/reopen；2 次模型 HTTP、3 次 push、原未知投递不重发 |
 
 冻结副本的构建、类型和全量回归 **387/387** 通过，无 skip/cancel/todo；完整 `smoke:package` 的所有既有及新增消费者通过。386 个源码/夹具 SHA 在门禁前后保持一致，原树未变时才合回 12 个已测试文件。合回后的构建、类型和主动诊断通过；补充了“面板重新加载后等帧已解码再点击”的验收等待条件，原查询与效果断言未变，相关 8 项组合连续 5 轮通过，更新后的消费者再次通过同一安装产物。生产字节与已通过的全量/安装身份一致。
 
@@ -110,7 +133,7 @@ export default {
 
 设置补充用例为 `apps/server/test/pocket-configuration.test.ts`、`pocket-credentials.test.ts`、`pocket-credentials-boundaries.test.ts`，协议/client 的 configuration/credentials 用例，以及 `apps/webui/test/configuration-browser.test.ts`、`configuration-recovery.test.ts`、`credentials-http.test.ts`、`credentials-browser.test.ts`。它们分别核对真实持久状态、HTTP 身份与反关联、provider Authorization、实际界面/迟到读取和丢响应，不以 schema 通过替代功能证据。
 
-## 7. 不应混同的证据
+## 8. 不应混同的证据
 
 - 恢复 running intent 的测试通过受控公开 store 写入状态，不称为 kill-process/断电实验。
 - 图片使用真实 PNG 在浏览器解码；看到文字占位符不算图片字节证据。

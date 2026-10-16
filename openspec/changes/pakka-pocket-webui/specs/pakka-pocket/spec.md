@@ -99,6 +99,26 @@ The product SHALL expose dedicated administrator-only replace/clear operations f
 - **WHEN** an existing trusted bootstrap resolver finishes after an administrator has cleared it or throws an error containing private text
 - **THEN** its stale key is rejected, private error text does not enter the model transcript or browser, and no new provider request is inferred from a status query
 
+### Requirement: Native notifications preserve human resource authority
+
+Notifications SHALL use actual browser service workers and Web Push subscriptions under explicit browser permission. The server SHALL bind devices and preferences to the authenticated person, approve push-service origins and recheck current resource authority before dispatch or publication. Encrypted wake-up payloads SHALL contain only an opaque event reference; the worker SHALL resolve current authorized metadata before displaying or navigating. A push-service acceptance response SHALL NOT be treated as proof that the operating system displayed a notification. Notification registration, viewing and navigation SHALL NOT invoke the model.
+
+#### Scenario: A registered person receives a real resource update
+
+- **WHEN** an authorized person enables notifications and a real controlled resource event occurs
+- **THEN** the server submits a correctly encrypted and VAPID-signed push only to that person's approved device, the real worker can display a native notification and navigate to the reauthorized resource, and a resource-scoped viewer cannot receive another resource's private metadata
+
+#### Scenario: Revocation, unsubscribe and uncertain push delivery
+
+- **WHEN** a person is revoked, loses resource authority, changes accounts or unsubscribes, or a completed push response is lost
+- **THEN** subsequent dispatch/publication is filtered by current authority and device state, stale wake-ups cannot disclose private content or grant actions, and retry/reopen with the original event identity does not repeat an unconfirmed push
+
+#### Scenario: Lost device registration resolves by the current subscription
+
+- **WHEN** the server commits a device registration but the browser loses its response
+- **THEN** an explicit status read exposes only current-person/current-resource device identifiers and a SHA-256 digest of normalized `{ endpoint, keys: { p256dh, auth } }`, which the browser matches to its real subscription without repeating the registration or guessing a newly added device ID
+- **AND** device endpoints, auth material and the VAPID private key are not returned, and a legal status for another exact resource is rejected
+
 ### Requirement: One public UI extension path
 
 Navigation, pages, sheets, panels, settings entries, command triggers and scoped subscriptions SHALL be exposed through documented versioned public slots sufficient for MAS Board and an unrelated custom extension. Custom Preact content SHALL use the host's component instance and lifecycle, not a private store/router import. Trusted code is not sandboxed, but ordinary contribution APIs SHALL NOT require monkey patches or hidden built-in identity.

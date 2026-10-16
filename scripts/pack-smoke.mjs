@@ -109,6 +109,13 @@ copyFileSync(
 	join(consumer, "pocket-controlled.mjs"),
 );
 copyFileSync(join(root, "scripts", "consumer-pocket-product.mjs"), join(consumer, "pocket-product.mjs"));
+copyFileSync(
+	join(root, "scripts", "consumer-pocket-notifications.mjs"),
+	join(consumer, "pocket-notifications.mjs"),
+);
+mkdirSync(join(consumer, "tls"));
+for (const asset of ["key.pem", "cert.pem"])
+	copyFileSync(join(root, "apps", "webui", "test", "tls", asset), join(consumer, "tls", asset));
 copyFileSync(join(root, "apps/webui/test/browser.ts"), join(consumer, "pocket-browser.ts"));
 copyFileSync(join(root, "scripts", "consumer-browser.ts"), join(consumer, "consumer-browser.ts"));
 writeFileSync(
@@ -199,4 +206,5 @@ console.log(run("pocket-product", [join(consumer, "pocket-product.mjs")], consum
 console.log(run("mas-board", [join(consumer, "mas-board.mjs")], consumer));
 console.log(run("pocket-workflows", [join(consumer, "pocket-workflows.mjs")], consumer));
 console.log(run("pocket-controlled", [join(consumer, "pocket-controlled.mjs")], consumer));
+console.log(run("pocket-notifications", [join(consumer, "pocket-notifications.mjs")], consumer));
 writeFileSync(join(artifacts, "consumer-path.txt"), consumer + "\n");

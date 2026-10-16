@@ -8,12 +8,16 @@ import {
 	createPocketWorkspace,
 	createPocketCollaboration,
 	createPocketCredentials,
+	createPocketNotifications,
+	type PocketNotifications,
+	type PocketNotificationsOptions,
 	type PocketCredentials,
 	type PocketSession,
 } from "@pakka/server/pocket";
 import { createPocketHttp, type PocketHttpOptions } from "./http.ts";
 import { createExtensionHost, type ExtensionSource } from "./extension-host.ts";
 import type { ExtensionService, PocketServiceContext } from "./backend.ts";
+import { observeNotifications } from "./notification-monitor.ts";
 export type { PocketServiceContext } from "./backend.ts";
 export interface PocketProductOptions {
 	readonly runtime: RuntimeOptions;
@@ -21,6 +25,8 @@ export interface PocketProductOptions {
 	readonly initial?: readonly { readonly name: string; readonly profile: string }[];
 	readonly profiles?: readonly string[];
 	readonly extensions?: readonly ExtensionSource[];
+	/** Host-selected push destinations and TLS authority; browser device registration cannot extend them. */
+	readonly notifications?: Omit<PocketNotificationsOptions, "runtime" | "people" | "namespace">;
 	/** Trusted composition only. Never an action/RPC callback; handlers receive bound services instead. */
 	readonly extensionServices?:
 		| Readonly<Record<string, ExtensionService>>
@@ -29,7 +35,14 @@ export interface PocketProductOptions {
 		  ) => Readonly<Record<string, ExtensionService>> | Promise<Readonly<Record<string, ExtensionService>>>);
 	readonly transport?: Omit<
 		PocketHttpOptions,
-		"runtime" | "people" | "workspace" | "collaboration" | "credentials" | "assets" | "extensions"
+		| "runtime"
+		| "people"
+		| "workspace"
+		| "collaboration"
+		| "credentials"
+		| "notifications"
+		| "assets"
+		| "extensions"
 	>;
 }
 const types: Readonly<Record<string, string>> = {
@@ -126,12 +139,24 @@ export async function startPocket(options: PocketProductOptions) {
 		},
 	});
 	let http: Awaited<ReturnType<typeof createPocketHttp>> | undefined,
+		notifications: PocketNotifications | undefined,
+		monitor: { close(): Promise<void> } | undefined,
 		services: Readonly<Record<string, ExtensionService>> | undefined,
 		servicesDisposed = false;
 	async function releaseServices() {
 		if (servicesDisposed) return;
 		servicesDisposed = true;
 		let failed = false;
+		try {
+			await monitor?.close();
+		} catch {
+			failed = true;
+		}
+		try {
+			await notifications?.dispose();
+		} catch {
+			failed = true;
+		}
 		for (const service of [...new Set(Object.values(services ?? {}))].reverse()) {
 			try {
 				await service.dispose?.();
@@ -207,9 +232,23 @@ export async function startPocket(options: PocketProductOptions) {
 				);
 			ownerId = data.ownerId;
 		}
+		notifications = await createPocketNotifications({
+			endpointOrigins: [
+				"https://fcm.googleapis.com",
+				"https://updates.push.services.mozilla.com",
+				"https://web.push.apple.com",
+			],
+			...options.notifications,
+			runtime,
+			people,
+			namespace: "pocket.notifications",
+		});
+		monitor = await observeNotifications(runtime, notifications);
 		services =
 			typeof options.extensionServices === "function"
-				? await options.extensionServices(Object.freeze({ runtime, people, workspace, ownerId }))
+				? await options.extensionServices(
+						Object.freeze({ runtime, people, workspace, notifications, ownerId }),
+					)
 				: options.extensionServices;
 		ready();
 		const extensions = await createExtensionHost({
@@ -226,6 +265,7 @@ export async function startPocket(options: PocketProductOptions) {
 			workspace,
 			collaboration,
 			credentials,
+			notifications,
 			extensions,
 			assets,
 		});

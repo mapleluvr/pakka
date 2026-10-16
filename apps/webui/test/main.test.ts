@@ -20,6 +20,10 @@ test(
 				runtime: { ...m.config, dataDir: m.f.dataDir + "/executable" },
 				owner: "Operator",
 				initial: [{ name: "CLI project", profile: "default" }],
+				notifications: {
+					endpointOrigins: ["https://fcm.googleapis.com"],
+					subject: "mailto:synthetic@example.invalid",
+				},
 			}),
 		);
 		const child = spawn(
@@ -77,6 +81,22 @@ test(
 				body: JSON.stringify({ kind: "session", token }),
 			});
 			assert.equal(login.status, 200);
+			const cookies = login.headers
+				.getSetCookie()
+				.map((value) => value.split(";")[0])
+				.join("; ");
+			const requestId = crypto.randomUUID();
+			const devices = await fetch(endpoint.origin + "/pocket/rpc", {
+				method: "POST",
+				headers: {
+					Origin: endpoint.origin,
+					"Content-Type": "application/json",
+					Cookie: cookies,
+					"X-Pakka-CSRF": /pakka_csrf=([^;]+)/.exec(cookies)![1]!,
+				},
+				body: JSON.stringify({ version: 2, requestId, command: { op: "list" } }),
+			});
+			assert.equal(devices.status, 200);
 			child.stdin.end("stop\n");
 			assert.equal(await exited, 0, stderr);
 			assert.equal(m.f.requests.length, 0);

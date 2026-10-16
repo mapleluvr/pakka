@@ -22,6 +22,7 @@ import {
 	PocketCredentialConflict,
 	type PocketCollaboration,
 	type PocketCredentials,
+	type PocketNotifications,
 } from "@pakka/server/pocket";
 import type { PocketCommand, PocketErrorCode } from "@pakka/protocol/pocket";
 import type { ExtensionHost } from "./backend.ts";
@@ -35,6 +36,7 @@ export interface PocketHttpOptions {
 	readonly workspace: PocketWorkspace;
 	readonly collaboration?: PocketCollaboration;
 	readonly credentials?: PocketCredentials;
+	readonly notifications?: PocketNotifications;
 	readonly host?: string;
 	readonly port?: number;
 	readonly publicOrigin?: string;
@@ -175,7 +177,17 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 		? " 'sha256-" + createHash("sha256").update(importMap).digest("base64") + "'"
 		: "";
 	const serverId = randomUUID(),
+		notificationWork = new Set<Promise<unknown>>(),
 		streams = new Set<ServerResponse>();
+	function notifyEvent(input: Parameters<PocketNotifications["publish"]>[0]) {
+		if (!options.notifications || closed) return;
+		const task = Promise.resolve().then(() => options.notifications!.publish(input));
+		notificationWork.add(task);
+		void task.then(
+			() => notificationWork.delete(task),
+			() => notificationWork.delete(task),
+		);
+	}
 	let origin = "",
 		listeningHost = "",
 		publicHost = "",
@@ -234,6 +246,10 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 	function preflight(a: PocketAuthority, command: PocketCommand) {
 		let permission: PocketPermission | undefined, resource: string | undefined;
 		switch (command.op) {
+			case "notification.status":
+			case "notification.subscribe":
+			case "notification.unsubscribe":
+			case "notification.preferences":
 			case "configuration":
 			case "read":
 				permission = "read";
@@ -313,9 +329,24 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 			switch (command.op) {
 				case "collaboration.read":
 					break;
-				case "collaboration.post":
-					await human.post(command.target, command.input);
+				case "collaboration.post": {
+					const message = await human.post(command.target, command.input);
+					notifyEvent({
+						requestId: "chat." + message.id,
+						target: command.target,
+						kind: "chat",
+						preview: "There is a new message in team chat.",
+					});
+					if (message.mentions.length)
+						notifyEvent({
+							requestId: "mention." + message.id,
+							target: command.target,
+							kind: "mention",
+							preview: "You were mentioned in team chat.",
+							recipientIds: message.mentions,
+						});
 					break;
+				}
 				case "collaboration.note":
 					try {
 						await human.editNote(command.target, command.input);
@@ -354,6 +385,24 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 					conversations: rows.map((row) => row.ref),
 					titles: Object.fromEntries(rows.map((row) => [row.ref.conversationId, row.name])),
 				};
+			}
+			case "notification.status":
+			case "notification.subscribe":
+			case "notification.unsubscribe":
+			case "notification.preferences": {
+				if (!options.notifications) throw new Refusal(404, "UNSUPPORTED", true);
+				const bound = options.notifications.bind(a, () => {
+					if (signal.aborted) throw Error("Notification request ended");
+				});
+				const status =
+					command.op === "notification.status"
+						? await bound.status(command.target)
+						: command.op === "notification.subscribe"
+							? await bound.subscribe(command.target, command.input)
+							: command.op === "notification.unsubscribe"
+								? await bound.unsubscribe(command.target, command.input)
+								: await bound.preferences(command.target, command.input);
+				return { kind: "notification", target: command.target, status };
 			}
 			case "configuration":
 				return { kind: "configuration", configuration: await client.configuration(command.target) };
@@ -633,6 +682,31 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 					send(res, 200, response);
 					return;
 				}
+				if (req.method === "GET" && url.pathname === "/pocket/notifications/event") {
+					if (!options.notifications) throw new Refusal(404, "UNSUPPORTED");
+					const eventId = url.searchParams.get("eventId"),
+						deviceId = url.searchParams.get("deviceId");
+					if (
+						!eventId ||
+						!/^[a-f0-9]{64}$/.test(eventId) ||
+						!deviceId ||
+						!identity(deviceId) ||
+						url.searchParams.size !== 2 ||
+						url.searchParams.getAll("eventId").length !== 1 ||
+						url.searchParams.getAll("deviceId").length !== 1
+					)
+						throw new Refusal(400, "INVALID_REQUEST");
+					const a = await actor(req);
+					let entry;
+					try {
+						entry = await options.notifications.bind(a).event(eventId, deviceId);
+					} catch {
+						throw new Refusal(403, "FORBIDDEN");
+					}
+					guard(() => people.check(a, "read", entry.target.conversationId));
+					send(res, 200, entry);
+					return;
+				}
 				if (req.method === "GET" && url.pathname === "/pocket/events") {
 					const a = await actor(req),
 						id = url.searchParams.get("conversationId");
@@ -797,6 +871,7 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 				server.close((error) => (error ? reject(error) : resolve()));
 				server.closeAllConnections();
 			});
+			await Promise.allSettled([...notificationWork]);
 		},
 	});
 }
