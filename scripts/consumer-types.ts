@@ -1,4 +1,9 @@
-import { defineBackend, type BackendContext, type PocketServiceContext } from "@pakka/webui/backend";
+import {
+	defineBackend,
+	type BackendContext,
+	type PocketServiceContext,
+	type ExtensionIngressRequest,
+} from "@pakka/webui/backend";
 import { createMasProfilePacks } from "@pakka/mas-devpack/agent";
 import {
 	workspaceFilesService,
@@ -11,6 +16,8 @@ import {
 	workspaceSchedulesService,
 	workspaceMemoryService,
 	workspaceMemoryExtensionRoot,
+	workspaceHooksService,
+	workspaceHooksExtensionRoot,
 } from "@pakka/webui/workflows";
 import {
 	approvalTool,
@@ -273,6 +280,47 @@ export async function scheduledProduct(
 	// @ts-expect-error A workflow client cannot execute arbitrary scripts.
 	client.execute("code");
 	return { root: workspaceSchedulesExtensionRoot, definition: prepared.definition, dispose: service.dispose };
+}
+
+export async function publicWebhooks(
+	context: PocketServiceContext,
+	actor: PocketAuthority,
+	ref: ConversationRef,
+) {
+	const service = await workspaceHooksService(context, {
+			namespace: "external.hooks",
+			githubWriters: ["approved-writer"],
+		}),
+		client = service.bind(actor, ref, () => {}),
+		hooks = await client.list();
+	await client.create({
+		requestId: "explicit-hook",
+		name: "Deploy",
+		instructions: "Report failures.",
+		signed: true,
+		allowOutside: false,
+	});
+	await client.create({
+		requestId: "forged",
+		name: "Deploy",
+		instructions: "Report failures.",
+		signed: true,
+		allowOutside: false,
+		// @ts-expect-error Hook creation cannot forge its persisted creator.
+		creatorId: "forged",
+	});
+	// @ts-expect-error Ordinary hook lists never disclose credentials.
+	void hooks[0]!.secret;
+	// @ts-expect-error A human-bound hook client does not expose external admission.
+	client.receive({});
+	return { root: workspaceHooksExtensionRoot, ingress: service.ingress };
+}
+export function publicIngressBody(request: ExtensionIngressRequest) {
+	// @ts-expect-error A public ingress does not receive a native HTTP socket.
+	void request.socket;
+	// @ts-expect-error A public ingress does not inherit a browser's identity.
+	void request.actor;
+	return request.body;
 }
 
 export async function publicMemory(

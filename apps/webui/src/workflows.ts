@@ -1,6 +1,9 @@
 import { fileURLToPath } from "node:url";
 import {
 	createPocketFiles,
+	createPocketHooks,
+	type PocketHooksOptions,
+	type PocketHooksClient,
 	createPocketBrowser,
 	type PocketBrowserOptions,
 	type PocketBrowserClient,
@@ -24,6 +27,67 @@ export type WorkspaceFilesClient = {
 	readonly [K in keyof PocketFilesClient]: BoundMethod<PocketFilesClient[K]>;
 };
 export const workspaceFilesExtensionRoot = fileURLToPath(new URL("../contributions/files/", import.meta.url));
+
+export const workspaceHooksExtensionRoot = fileURLToPath(new URL("../contributions/hooks/", import.meta.url));
+/** Ordinary host-approved service: only raw external ingress authenticates outside Cookie/RPC. */
+export async function workspaceHooksService(
+	context: PocketServiceContext,
+	options: Omit<PocketHooksOptions, "runtime" | "people" | "workspace">,
+): Promise<ExtensionService<PocketHooksClient>> {
+	const hooks = await createPocketHooks({
+		...options,
+		runtime: context.runtime,
+		people: context.people,
+		workspace: context.workspace,
+	});
+	const statuses = {
+		accepted: 202,
+		ignored: 200,
+		unknown: 503,
+		denied: 404,
+		conflict: 409,
+		capacity: 429,
+	} as const;
+	const service: ExtensionService<PocketHooksClient> = {
+		permission: "read",
+		bind(actor, target, check) {
+			if (!target) throw Error("Webhook requires an explicit Conversation");
+			return hooks.bind(actor, target, check);
+		},
+		ingress: {
+			maxBytes: 5 * 1024 * 1024,
+			timeoutMs: 10000,
+			output: {
+				type: "object",
+				properties: {
+					state: {
+						enum: ["accepted", "ignored", "unknown", "denied", "conflict", "capacity"],
+					},
+					receiptId: { type: "string", maxLength: 160 },
+				},
+				required: ["state", "receiptId"],
+			},
+			handle: async (request) => {
+				if (request.path.length < 1 || request.path.length > 2)
+					return { status: 404, value: { state: "denied", receiptId: "" } };
+				const result = await hooks.receive(
+					{
+						id: request.path[0]!,
+						...(request.path.length === 2 ? { secret: request.path[1] } : {}),
+						headers: request.headers,
+						body: request.body,
+					},
+					request.check,
+				);
+				return {
+					status: statuses[result.state],
+					value: { state: result.state, receiptId: result.receipt?.id ?? "" },
+				};
+			},
+		},
+	};
+	return Object.freeze(service);
+}
 
 export const workspaceMemoryExtensionRoot = fileURLToPath(
 	new URL("../contributions/memory/", import.meta.url),

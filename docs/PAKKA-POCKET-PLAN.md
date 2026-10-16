@@ -116,6 +116,7 @@ P6 真实安装/浏览器/隐私/恢复/独立复审与交付
 
 - 补齐文件/变更、审批/browser、settings、协作、通知等实际后端与交互；其他 upstream 可选界面按 P0 归属清单闭合。
 - Memory 已接入独立人类 facet、项目范围、审批/冲突和宿主选择的 Agent 工具/当前上下文来源；实际 CLI 初验含 5 次模型 HTTP、5 次消费额度、两次正常重开及移除 WebUI。完整门禁和其余可选界面的状态分别记录在 [P5 阶段记录](PAKKA-POCKET-P5.md)，不以这个子集替代 6.4/P6。
+- 可选 [Webhook](WEBHOOKS.md) 已使用普通 Backend ingress 接入 GitHub HMAC/专用 URL secret、轮换、当前创建人权限与原生队列；同一实际安装产物初验含 3 次模型 HTTP、3 次消费额度、重开和只移除 WebUI 后继续投递。完整门禁单独留存，不以 HTTP accepted 代替模型终态。
 - 两人并发 notes/driver/commands、resource 撤权、slow SSE、重连/resnapshot、closed/unknown jobs、正常重开身份与预算均从产品入口验证。
 - local、LAN、tailnet、公网 tunnel 的 launcher/config 行为分别验证。自动测试使用真实本地代理/TLS；外部基础设施测量不得用 mock 域名替代。
 - UI development rules 落入组件、例子、type/browser test；新增主题/图标优先 repo 原生资源，保留许可证。

@@ -109,6 +109,22 @@ async function json(req: IncomingMessage): Promise<unknown> {
 		throw new Refusal(400, "INVALID_REQUEST");
 	}
 }
+async function rawBody(req: IncomingMessage, maxBytes: number): Promise<Uint8Array> {
+	if (header(req, "content-encoding")) throw new Refusal(400, "INVALID_REQUEST");
+	const length = header(req, "content-length");
+	if (length && (!/^[0-9]+$/.test(length) || Number(length) > maxBytes)) throw new Refusal(413, "CAPACITY");
+	const chunks: Buffer[] = [];
+	let bytes = 0;
+	for await (const chunk of req.iterator({ destroyOnReturn: false })) {
+		bytes += chunk.length;
+		if (bytes > maxBytes) {
+			req.resume();
+			throw new Refusal(413, "CAPACITY");
+		}
+		chunks.push(Buffer.from(chunk));
+	}
+	return Buffer.concat(chunks, bytes);
+}
 function originValue(raw: string): URL {
 	let url: URL;
 	try {
@@ -526,13 +542,43 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 			if (closed || busy >= capacity) throw new Refusal(503, "CAPACITY");
 			busy++;
 			try {
-				boundary(req, req.method !== "GET");
+				boundary(req, false);
 				let url: URL;
 				try {
 					url = new URL(req.url ?? "", origin);
 				} catch {
 					throw new Refusal(400, "INVALID_REQUEST");
 				}
+				if (req.method === "POST" && url.pathname.startsWith("/pocket/ingress/")) {
+					if (url.search || url.hash || (req.url ?? "") !== url.pathname || !options.extensions)
+						throw new Refusal(404, "UNSUPPORTED");
+					const [extension, service, ...path] = url.pathname.slice("/pocket/ingress/".length).split("/");
+					if (
+						!extension ||
+						!service ||
+						!/^[a-z][a-z0-9-]{0,63}$/.test(extension) ||
+						!/^[A-Za-z][A-Za-z0-9._-]{0,79}$/.test(service) ||
+						path.length > 4 ||
+						path.some((part) => !/^[A-Za-z0-9_-]{1,160}$/.test(part))
+					)
+						throw new Refusal(404, "UNSUPPORTED");
+					let route;
+					try {
+						route = options.extensions.ingress(extension, service);
+					} catch {
+						throw new Refusal(404, "UNSUPPORTED");
+					}
+					const body = await rawBody(req, route.maxBytes);
+					const headers: Record<string, string> = {};
+					for (const [key, value] of Object.entries(req.headers))
+						if (typeof value === "string" && !["cookie", "x-pakka-csrf", "proxy-authorization"].includes(key))
+							headers[key] = value;
+					dispatched = true;
+					const result = await route.handle({ path, headers, body, signal: controller.signal });
+					send(res, result.status, result.value);
+					return;
+				}
+				if (req.method !== "GET") boundary(req, true);
 				if (req.method === "POST" && url.pathname === "/pocket/exchange" && !url.search) {
 					const input = await json(req);
 					if (!input || typeof input !== "object" || Array.isArray(input))

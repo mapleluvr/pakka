@@ -1,6 +1,6 @@
 # Pakka-Pocket P5 — 协作与保留工作流（实施中）
 
-状态：**P5 部分实施，不是产品交付/复审结论**。已接通人类协作、可选文件/Git、原生工具审批、受控浏览器、模型/用量设置、私密 provider 配置与真实通知服务；原生计划输入及插件长任务也已通过本批实际安装验收；原生通知点击、其余可选界面以及完整远程部署清单仍继续验收，不能用本阶段测试总数替代 P6 的实际产品验收。
+状态：**P5 部分实施，不是产品交付/复审结论**。已接通人类协作、可选文件/Git、原生工具审批、受控浏览器、模型/用量设置、私密 provider 配置、真实通知服务、项目记忆和可选 Webhook；原生计划输入及插件长任务也已通过实际安装验收；原生通知点击、其余可选界面以及完整远程部署清单仍继续验收，不能用本阶段测试总数替代 P6 的实际产品验收。
 
 ## 1. 人类协作
 
@@ -127,6 +127,20 @@ export default {
 
 首次安装在既有文件/协作消费者登录前曾遇到 8 秒启动等待超时，页面停在 `Starting Pakka-Pocket`，原因未确认。同一失败归档加被动 CDP 诊断后连续 3 次通过；恢复原始驱动、生产与测试源码均未改的新一轮完整安装也通过，不能称为启动问题已修复。失败日志、诊断 driver/runner、8 个失败归档及其 SHA 独立保留在 `failed-install/`，P6 继续复查。其余 red/green、实际 provider payload、Runtime 视图、原生存储、桌面/手机截图和最终门禁位于 `artifacts/pakka-pocket/p5/memory/`。其余可选界面、部署及 P6 仍未完成。
 
+## 外部 Webhook 与普通 ingress 贡献（6.4 部分完成）
+
+固定上游 `de612d5622cd` 的 `web/sheets/hooks.js` 与 `src/server/hooks.ts` 分别映射到普通 Webhooks 面板和受控服务。只保留显式 Conversation 的外部 POST 工作流，不接回 PiP、repository-watch 轮询或 GitHub 凭据发现。公开组装、认证路径和容量见 [Webhook 使用说明](WEBHOOKS.md)。
+
+- `workspaceHooksService` / `workspaceHooksExtensionRoot` 从 `@pakka/webui/workflows` 装配普通 Backend/Client/WebUI；底层 `createPocketHooks` 从 `@pakka/server/pocket` 导出。通用 shell 只负责 namespaced ingress，不含 hook/MAS 调度逻辑。
+- 受信任 Backend 可声明有限 `ExtensionService.ingress`。handler 只取得复制的原始 body、过滤后的有限 header、验证后的路径、取消信号与当前 generation 检查；不取得 Cookie/CSRF authority、socket、模块或任意响应 header。超时保持未知，关闭扩展拦截尚未准入的效果。
+- GitHub 用原始字节 HMAC-SHA256 验签，并保守筛选已签正文的作者；更改未签 delivery header 不能重放同一已记录正文。Generic 用专用 URL secret 与固定 idempotency key。轮换旧密钥、移除、创建人撤权、driver 交接和迟到失效均在原生准入前复查。
+- 配置固定绑定真实创建人和精确 Conversation reference。原始 DTO 保留 Runtime 的字段顺序，规范排序仅用于独立指纹；损坏/跨资源回执拒绝恢复。已提交但未确认的投递保留 `unknown`，重试和正常重开不重新进入效果。
+- 列表和 mutation/operation 不返回 secret。授权人显式读取的 setup 不落入通用操作记录；面板替换后的迟到响应不能显示到新实例。丢创建响应和后端提交后抛错都提供原请求只读核对，不重复创建。手机 viewer 没有私密设置，手机 operator 能实际操作。
+- 每人最多 20 个活动入口，每 hook 每小时 30 个新的非忽略请求，body 最大 5 MiB；记录和 Store 有固定容量，不丢弃原回执扩容。真实第 31 次输入被拒绝。忙碌场景中已确认排入原生队列的输入在 HTTP 结束、禁用扩展后仍完成，不能称作随界面取消；只移除 WebUI 保留 Backend 的后续投递。
+- 手机顶部 People 裁切反例已 red/green：操作区在窄屏换行，控件中心可见且能通过真实鼠标打开；桌面布局保留。直接检查 Webhooks 桌面/手机截图，记录由真实持久服务驱动。
+
+本批最终定向 **31/31**、全量 **489/489**（无 fail/skip/cancel/todo），构建、类型、独立公开声明、代码格式及完整 `smoke:package` 的全部消费者通过；469 个冻结源码/helper/TLS 文件在定向、全量和实际安装前后 SHA 一致。新归档的实际 CLI 验证 **3 次模型 HTTP、3 次已消费额度**，包含签名去重、轮换、正常重开、viewer 隔离与只移除 WebUI 后保留 Backend 入口。8 个实际归档匹配隔离 lock integrity，原生存储、provider payload、回执和消费脚本身份保存在 `artifacts/pakka-pocket/p5/hooks/delivery/`。门禁后仅更新两份阶段记录，并把交付 helper 的初验计数 25 更正为实际最终 31；原 helper 与前后 SHA 均保留，不改变测试或生产字节。首次打包在隔离 npm 下载 `@esbuild/win32-x64@0.28.2` 时触发原 180 秒截止时间；同 URL 的独立测量也超时。未改截止时间/依赖的新一次打包完成，其中该包下载耗时 53.4 秒，环境等待不称为已修复。消费者首次错误将派生 `received` 当成原始字段；已按真实 accepted delivery 记录及 native budget 核对，在相同归档 SHA 下重跑通过。原始失败、对照测量、red/green、provider payload、原生存储及归档脚本位于 `artifacts/pakka-pocket/p5/hooks/`；初次截图 I/O 错误保留给 P6，不以本轮未复现宣称已解决。
+
 ## 7. 当前可执行证据
 
 | 主体                                                    | 证据                                                                                  |
@@ -164,6 +178,8 @@ export default {
 计划输入补充用例为 `apps/server/test/pocket-schedules.test.ts`、`pocket-schedules-boundaries.test.ts`、`pocket-schedules-persistence.test.ts`、`apps/webui/test/schedules-browser.test.ts`、`schedules-recovery.test.ts`、`packages/agent/test/runtime-backend-job-progress.test.ts` 和实际 CLI 消费者 `scripts/consumer-pocket-schedules.mjs`。原生 progress 反例是直接执行真实 Durable 程序，准入状态反例则在真实原生准入/HTTP 后受控丢失确认视图：后者证明分类与停止后续周期，不称为真实磁盘断电实验。
 
 Memory 补充用例为 `packages/agent/test/runtime-context.test.ts`、`runtime-context-boundaries.test.ts`、`apps/server/test/pocket-memory.test.ts`、`pocket-memory-boundaries.test.ts`、`pocket-memory-native.test.ts`、`pocket-memory-native-changes.test.ts`、`apps/webui/test/memory-browser.test.ts`、`memory-recovery.test.ts` 与实际 CLI 消费者 `scripts/consumer-pocket-memory.mjs`。未知结果恢复分别覆盖浏览器已消费响应后断连和真实写入后受控抛错；它们不称为断电实验。
+
+Webhook 补充用例为 `apps/server/test/pocket-hooks.test.ts`、`pocket-hooks-boundaries.test.ts`、`pocket-hooks-persistence.test.ts`，`apps/webui/test/extension-ingress.test.ts`、`hooks-browser.test.ts`、`hooks-recovery.test.ts`、`hooks-read-boundary.test.ts`、`hooks-busy.test.ts`，以及实际 CLI 消费者 `scripts/consumer-pocket-hooks.mjs`。已提交后受控丢结果的测试证明固定身份核对与不重放；不称为断电实验。真实原生忙碌队列、GitHub HMAC、30 次小时额度和持久回执另有正向效果记录。
 
 ## 8. 不应混同的证据
 

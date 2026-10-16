@@ -1,4 +1,18 @@
 /** Host composition APIs for the Pocket product. Imports allocate no identities, writers or listeners. */
+export { createPocketHooks } from "./pocket-hooks.js";
+export type {
+	PocketHooks,
+	PocketHooksOptions,
+	PocketHooksClient,
+	PocketHookView,
+	PocketHookMutation,
+	PocketHookCredentials,
+	PocketHookResult,
+	PocketHookDelivery,
+	PocketHookCreate,
+	PocketHookChange,
+	PocketHookPost,
+} from "./pocket-hooks.js";
 export { createPocketMemory } from "./pocket-memory.js";
 export type {
 	PocketMemory,

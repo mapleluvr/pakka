@@ -1,0 +1,118 @@
+.workspace-hooks {
+	box-sizing: border-box;
+	max-width: 900px;
+	min-width: 0;
+	margin: 0 auto;
+	padding: 1rem;
+	overflow-wrap: anywhere;
+}
+.workspace-hooks p {
+	line-height: 1.6;
+}
+.hook-compose {
+	display: grid;
+	gap: 0.75rem;
+	padding: 1rem 0;
+}
+.workspace-hooks label {
+	display: block;
+}
+.workspace-hooks input:not([type="checkbox"]),
+.workspace-hooks textarea {
+	box-sizing: border-box;
+	display: block;
+	width: 100%;
+	padding: 0.75rem;
+	margin-top: 0.35rem;
+	border: 1px solid var(--line);
+	border-radius: 0.5rem;
+	background: var(--panel);
+	color: inherit;
+	font: inherit;
+}
+.workspace-hooks textarea {
+	min-height: 6rem;
+	resize: vertical;
+}
+.workspace-hooks .hook-check {
+	display: flex;
+	gap: 0.6rem;
+	align-items: flex-start;
+	line-height: 1.5;
+}
+.workspace-hooks input[type="checkbox"] {
+	width: auto;
+	min-width: auto;
+	flex: 0 0 auto;
+	margin: 0.3rem 0 0;
+}
+.hook-meta {
+	color: var(--muted);
+	font-size: 0.85rem;
+}
+.hook-row {
+	min-width: 0;
+	padding: 1rem 0;
+	border-top: 1px solid var(--line);
+}
+.hook-row header {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.5rem;
+}
+.hook-instructions {
+	white-space: pre-wrap;
+}
+.hook-actions {
+	display: flex;
+	gap: 0.5rem;
+	flex-wrap: wrap;
+	align-items: center;
+	margin: 0.75rem 0;
+}
+.hook-setup,
+.hook-confirm {
+	min-width: 0;
+	padding: 0.75rem;
+	border: 1px solid var(--line);
+	border-radius: 0.5rem;
+	background: var(--panel);
+	margin-top: 0.75rem;
+}
+.hook-setup label + label {
+	margin-top: 0.75rem;
+}
+.hook-deliveries {
+	margin-top: 1rem;
+	min-width: 0;
+}
+.hook-delivery {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem 1rem;
+	padding: 0.75rem 0;
+	border-top: 1px solid var(--line);
+	min-width: 0;
+}
+.hook-delivery code {
+	flex-basis: 100%;
+	font-size: 0.8rem;
+	overflow-wrap: anywhere;
+}
+@media (max-width: 600px) {
+	.workspace-hooks {
+		padding: 0.75rem;
+	}
+	.workspace-hooks input:not([type="checkbox"]),
+	.workspace-hooks textarea {
+		font-size: 16px;
+	}
+	.hook-actions > * {
+		min-width: 0;
+	}
+	.hook-row header {
+		align-items: flex-start;
+	}
+}

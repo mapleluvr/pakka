@@ -82,6 +82,8 @@ Card 是显示记录，不是偷偷添加 system/user message。必须用下一�
 - 外层 operation 已记录 `done` 不证明内层 job/browser/native effect 已完成；内层仍为 `unknown` 时必须保留待确认身份，不解锁重复效果。
 - 明确 pre-effect guard 的拒绝可报 denied；opaque callback 可能已有效果，其异常/断连/超时保持 unknown。不要解析报错文本推断 rollback。
 - Memory 是相同插槽的另一实际消费者：`workspaceMemoryService`/`workspaceMemoryExtensionRoot` 绑定当前人类与精确资源；宿主分别选择 `createPocketMemory().tools` 与 `.source`。人类界面不自动激活 Agent 能力；记忆审批、版本冲突、暂停与原操作核对见 [P5 阶段记录](PAKKA-POCKET-P5.md)。
+- 对外 incoming endpoint 可由已安装 Backend 的 `ExtensionService.ingress` 声明：有限 raw body/headers/path、截止时间、封闭输出 schema 与 generation live check；handler 不取得 socket、Cookie/CSRF authority、模块或任意响应 header。服务先验证外部身份，再把 live check 传到受控效果边界，超时保持 unknown。
+- Webhooks 已通过这一通用接口实现签名/专用 secret、轮换、原请求恢复和真实 native follow-up；明确 Conversation 的目标与当前创建人权限由服务端绑定，移除 WebUI 保留 Backend。私密 setup 是显式授权的只读操作，不落入通用 operation ledger；详细路径与容量见 [Webhook 说明](WEBHOOKS.md)。
 - 不把 metadata 写和 native Durable effect 称为跨存储原子提交。保留各自 operation/receipt 与不确定状态。
 
 ## 7. 多人可见性与私密数据
@@ -92,7 +94,7 @@ Card 是显示记录，不是偷偷添加 system/user message。必须用下一�
 2. 查看不意味着 send/steer/manage；MAS 通信权限也不意味着完整 transcript read。
 3. 驱动与授权变化在等待后的效果边界重验，撤权关闭后续 stream/读/操作；不声称撤回已经发给浏览器的字节。
 4. 私有 toast 只回当前操作者；shared card/notes 明确共享 scope；人类 side chat/presence 默认不进入模型。
-5. 已存 secret 不回填表单，不进 URL、command history、browser persistent storage、task/entry、广播或 export。配置敏感值区分 keep/replace/clear；provider credentials 不成为通用 plugin client 字段。
+5. 已存 provider secret 不回填表单，不进 URL、command history、browser persistent storage、task/entry、广播或 export。配置敏感值区分 keep/replace/clear；provider credentials 不成为通用 plugin client 字段。外部 Webhook 的专用 URL secret 是显式授权 setup 的独立契约，不能套用为 provider key 的返回接口。
 
 Pakka-Pocket 的主 provider key 使用独立 `credential.status / credential.replace / credential.clear` 命令，不进入扩展 command palette 或通用 settings 回填。只有具备全局安装权限的当前人类可调用；scoped admin 也不能改变全 Session 的凭据。写请求带稳定 request ID 和预期 version，只返回 `{ version, configured }`。表单提交即清空输入，未知响应后只能显式读取当前状态，不自动重发密钥；读到当前配置不等于证明原写操作的完整历史。
 

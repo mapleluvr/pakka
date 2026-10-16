@@ -4,7 +4,15 @@ import { isAbsolute, join, relative, resolve, sep } from "node:path";
 import { pathToFileURL } from "node:url";
 import type { Runtime, JsonObject, ConversationRef } from "@pakka/agent";
 import type { PocketAuthority, PocketPeople, PocketWorkspace } from "@pakka/server/pocket";
-import { decodeManifest, decodeValue, extensionId, frozen, isRecord, publicPath } from "./extension.ts";
+import {
+	decodeManifest,
+	decodeSchema,
+	decodeValue,
+	extensionId,
+	frozen,
+	isRecord,
+	publicPath,
+} from "./extension.ts";
 import type {
 	ExtensionRegistration,
 	ExtensionCall,
@@ -20,6 +28,9 @@ import type {
 	ExtensionHost,
 	ExtensionService,
 	ExtensionSetting,
+	ExtensionIngress,
+	ExtensionIngressRequest,
+	ExtensionIngressResponse,
 } from "./backend.ts";
 
 export interface ExtensionSource {
@@ -345,6 +356,32 @@ async function activate(entry: Accepted): Promise<void> {
 export async function createExtensionHost(options: ExtensionHostOptions): Promise<ExtensionHost> {
 	const { runtime, people, workspace } = options;
 	if (!Array.isArray(options.sources) || options.sources.length > 64) return refuse("INVALID_REQUEST");
+	const ingressServices = new Map<string, ExtensionIngress>();
+	for (const [name, service] of Object.entries(options.services ?? {})) {
+		const raw = service.ingress;
+		if (!raw) continue;
+		if (
+			!/^[A-Za-z][A-Za-z0-9._-]{0,79}$/.test(name) ||
+			Object.keys(raw).some((key) => !["maxBytes", "timeoutMs", "output", "handle"].includes(key)) ||
+			!Number.isSafeInteger(raw.maxBytes) ||
+			raw.maxBytes < 1 ||
+			raw.maxBytes > 5 * 1024 * 1024 ||
+			!Number.isSafeInteger(raw.timeoutMs) ||
+			raw.timeoutMs < 50 ||
+			raw.timeoutMs > 30000 ||
+			typeof raw.handle !== "function"
+		)
+			return refuse("INVALID_REQUEST");
+		ingressServices.set(
+			name,
+			Object.freeze({
+				maxBytes: raw.maxBytes,
+				timeoutMs: raw.timeoutMs,
+				output: decodeSchema(structuredClone(raw.output)),
+				handle: raw.handle,
+			}),
+		);
+	}
 	const accepted = new Map<string, Accepted>(),
 		store = runtime.store({ namespace: "pocket.extensions", maxBytes: 1048576 });
 	let tail: Promise<unknown> = Promise.resolve();
@@ -515,6 +552,95 @@ export async function createExtensionHost(options: ExtensionHostOptions): Promis
 		return present(saved);
 	};
 	return Object.freeze({
+		ingress: (extension: string, service: string) => {
+			const entry = entryFor(extension),
+				route = ingressServices.get(service),
+				generation = entry.view.generation;
+			if (
+				!route ||
+				!entry.view.facets.includes("backend") ||
+				!entry.view.manifest.services?.includes(service)
+			)
+				return refuse("UNSUPPORTED");
+			return Object.freeze({
+				maxBytes: route.maxBytes,
+				handle: async (
+					request: Omit<ExtensionIngressRequest, "check">,
+				): Promise<ExtensionIngressResponse> => {
+					if (
+						!request ||
+						!(request.body instanceof Uint8Array) ||
+						request.body.length > route.maxBytes ||
+						!Array.isArray(request.path) ||
+						request.path.length > 4 ||
+						request.path.some((part) => typeof part !== "string" || !/^[A-Za-z0-9_-]{1,160}$/.test(part)) ||
+						!isRecord(request.headers) ||
+						Object.keys(request.headers).length > 64 ||
+						Object.entries(request.headers).some(
+							([key, value]) =>
+								!/^[a-z0-9-]{1,80}$/.test(key) || typeof value !== "string" || value.length > 8192,
+						)
+					)
+						return refuse("INVALID_REQUEST");
+					const controller = new AbortController();
+					let rejectStopped!: (error: Error) => void;
+					const stopped = new Promise<never>((_resolve, reject) => {
+						rejectStopped = reject;
+					});
+					const abort = () => {
+						controller.abort();
+						rejectStopped(Error("Incoming operation outcome unconfirmed"));
+					};
+					request.signal.addEventListener("abort", abort, { once: true });
+					const timer = setTimeout(abort, route.timeoutMs);
+					const check = () => {
+						if (controller.signal.aborted || request.signal.aborted || runtime.view().phase !== "ready")
+							return refuse();
+						entryFor(extension, generation);
+					};
+					try {
+						check();
+						const headers = Object.freeze(
+							Object.fromEntries(
+								Object.entries(request.headers).filter(
+									([key]) => !["cookie", "x-pakka-csrf", "proxy-authorization"].includes(key),
+								),
+							),
+						);
+						const context = Object.freeze({
+							path: Object.freeze([...request.path]),
+							headers,
+							body: new Uint8Array(request.body),
+							signal: controller.signal,
+							check,
+						});
+						const response = await Promise.race([
+							Promise.resolve().then(() => {
+								check();
+								return route.handle(context);
+							}),
+							stopped,
+						]);
+						check();
+						if (
+							!isRecord(response) ||
+							Object.keys(response).some((key) => !["status", "value"].includes(key)) ||
+							![200, 202, 400, 401, 403, 404, 409, 413, 429, 500, 503].includes(response.status)
+						)
+							throw Error("Invalid bounded incoming result");
+						const value = decodeValue(route.output, response.value);
+						if (Buffer.byteLength(JSON.stringify(value)) > 262144)
+							throw Error("Incoming output capacity exceeded");
+						check();
+						return Object.freeze({ status: response.status, value });
+					} finally {
+						clearTimeout(timer);
+						request.signal.removeEventListener("abort", abort);
+						controller.abort();
+					}
+				},
+			});
+		},
 		list: (actor: PocketAuthority, target?: ConversationRef) => {
 			authorize(actor, "read", target);
 			return frozen(
@@ -550,11 +676,26 @@ export async function createExtensionHost(options: ExtensionHostOptions): Promis
 			);
 		},
 		operation,
-		operationByRequest: async (actor: PocketAuthority, request: ExtensionOperationRequest): Promise<ExtensionOperation> => {
+		operationByRequest: async (
+			actor: PocketAuthority,
+			request: ExtensionOperationRequest,
+		): Promise<ExtensionOperation> => {
 			const person = current(actor);
-			if (!isRecord(request) || !extensionId(request.extension) || !requestKey(request.requestId) || Object.keys(request).some(key => !["extension", "requestId", "target"].includes(key))) return refuse("INVALID_REQUEST");
+			if (
+				!isRecord(request) ||
+				!extensionId(request.extension) ||
+				!requestKey(request.requestId) ||
+				Object.keys(request).some((key) => !["extension", "requestId", "target"].includes(key))
+			)
+				return refuse("INVALID_REQUEST");
 			authorize(actor, "read", request.target);
-			const saved = (await snapshot()).state.operations.find(row => row.extension === request.extension && row.actorId === person.id && row.requestId === request.requestId && (row.target ? !!request.target && sameRef(row.target, request.target) : !request.target));
+			const saved = (await snapshot()).state.operations.find(
+				(row) =>
+					row.extension === request.extension &&
+					row.actorId === person.id &&
+					row.requestId === request.requestId &&
+					(row.target ? !!request.target && sameRef(row.target, request.target) : !request.target),
+			);
 			if (!saved) return refuse();
 			authorize(actor, saved.permission, saved.target ?? undefined);
 			return present(saved);

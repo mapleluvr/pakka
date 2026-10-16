@@ -166,6 +166,24 @@ Memory SHALL be an optional contribution with separate Agent and Backend/Client/
 - **WHEN** a stale edit is submitted, approved injection is disabled or the product normally reopens after a lost mutation response
 - **THEN** a conflicting version does not overwrite the winner or lose a local draft, disabling injection preserves stored lessons while omitting them from future requests, and reading the original request resolves its saved mutation without applying it again or resetting quota
 
+### Requirement: Explicit Conversation webhooks
+
+The product MAY install a Webhook contribution for a host-approved Conversation. Its human-created hooks SHALL deliver as the current persisted creator, using the same Conversation, driver and native admission checks as other automated inputs. Only explicit human setup MAY create or rotate a hook; WebUI installation SHALL NOT create a model tool or hidden assistant. Normal lists, original-operation results, provider messages and process output SHALL exclude credentials; a separate authorized setup read MAY disclose the current hook URL/signing secret.
+
+GitHub requests SHALL verify HMAC-SHA256 over exact body bytes and screen outsider-authored payloads by default, without discovering GitHub or Pi credentials. A host-approved writer list or explicit human override MAY expand that content policy. Generic hooks SHALL verify their endpoint secret. A fixed delivery/body identity SHALL be recorded before native input; retries, changed unsigned delivery headers, lost responses and normal reopen SHALL NOT re-enter an unknown admission. Rotation, removal, creator revocation or an invalidated extension SHALL block a not-yet-started input without claiming to roll back prior admission.
+
+The contribution SHALL retain finite limits: 20 hooks per person, 60-character names, 2000-character instructions, at most 30 new accepted posts per hook/hour, 5 MiB incoming bytes, and a payload excerpt fitted within the native 8192-character input limit. Invalid signatures, oversized bodies, conflicting identities and unauthorized creators SHALL have no new provider effect. Repository-watch authority and PiP targets SHALL NOT migrate with this interface.
+
+#### Scenario: Signed retry and rotation preserve exact effects
+
+- **WHEN** a valid local signed post is delivered, retried under a changed delivery header, and followed by an explicit secret rotation
+- **THEN** the original body produces only one native input, its receipt and consumed attempts persist after normal reopen, the old secret is refused, and a fresh valid event uses the current creator's exact scope
+
+#### Scenario: Late revocation and lost admission result
+
+- **WHEN** the creator or extension is invalidated while a committed incoming intent waits, or native admission occurs before its result becomes unknown
+- **THEN** no not-yet-started unauthorized input is admitted; any earlier effect and charged attempt remain accounted for, and retry/reopen does not submit a replacement input
+
 ### Requirement: Host-approved context contributions
 
 The Runtime MAY accept named, versioned context sources selected explicitly for approved profiles. A source SHALL receive only a frozen exact Conversation reference and cancellation signal, return bounded text or an explicit omission plus a live validity check, and never receive native Pi objects. The adapter SHALL recheck the exact incarnation and all source checks before actual provider dispatch. Source failures, malformed output or stale checks SHALL block that dispatch. Live checks SHALL complete synchronously with an undefined result; thenables and other returned values SHALL block the request, and opaque source errors SHALL be redacted from native output. Definition identity SHALL participate in persisted profile identity; adding a WebUI facet SHALL NOT activate any source. Current context contributions SHALL NOT rewrite raw history or become permanently replayed instructions after the source omits them.

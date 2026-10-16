@@ -56,6 +56,20 @@ Custom backend RPC SHALL declare finite input/output/event schemas, extension/ac
 - **WHEN** a role is revoked during awaited admission, or an opaque handler produces an effect and then fails
 - **THEN** the former has no unauthorized controlled effect and the latter remains unknown; raw error text or a generic exception type does not prove no effect
 
+### Requirement: Host-selected external ingress
+
+A trusted backend service MAY declare a finite external ingress with a raw-body byte limit, execution deadline and closed response schema. The product SHALL expose it only under that installed extension's namespaced service route, require the existing host/proxy transport boundary, and bind a live check to the accepted backend generation, resource service and cancellation signal. The body, a finite header DTO and validated path segments SHALL be the only incoming request data. Native HTTP sockets, Cookie authority, module paths and arbitrary response headers SHALL NOT be supplied. External identity SHALL be verified by the service before any controlled effect; opening an endpoint SHALL NOT mint a human session.
+
+#### Scenario: Disabled generation blocks an awaited incoming effect
+
+- **WHEN** an external request has entered an approved handler, but its extension is disabled before a new controlled effect starts
+- **THEN** the captured check rejects that effect, later requests cannot enter the handler, and any unconfirmed earlier effect remains unknown without replay
+
+#### Scenario: Oversized request is rejected before invocation
+
+- **WHEN** an external sender exceeds the host-selected raw-body byte limit, changes the transport host/proxy boundary, or selects an undeclared service
+- **THEN** the server refuses before invoking the handler and no target effect occurs
+
 ### Requirement: Generation and exact asset lifecycle
 
 Command, RPC, subscription and asset registrations SHALL bind the extension generation and actor/resource scope. New calls against disabled, replaced or unauthorized registrations SHALL fail closed. Failed preparation SHALL retain the prior known-good generation only when its registrations/bytes remain confirmed; partial unknown Agent/backend installation SHALL be marked unavailable until reconciled, not described as global rollback. Assets SHALL be restricted to accepted real-root bytes and safe types, excluding links/traversal/private files.

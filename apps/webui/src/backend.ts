@@ -13,6 +13,7 @@ import type {
 	ExtensionOperationRequest,
 	ExtensionRegistration,
 	ExtensionPermission,
+	Schema,
 } from "./extension.ts";
 
 /** Trusted product-service binding, isolated from executable/router and browser imports. */
@@ -69,7 +70,32 @@ export interface BackendModule {
 export function defineBackend(module: BackendModule): BackendModule {
 	return Object.freeze(module);
 }
+export interface ExtensionIngressRequest {
+	readonly path: readonly string[];
+	readonly headers: Readonly<Record<string, string>>;
+	readonly body: Uint8Array;
+	readonly signal: AbortSignal;
+	/** Check backend generation and cancellation immediately before a controlled effect. */
+	check(): void;
+}
+export interface ExtensionIngressResponse {
+	readonly status: 200 | 202 | 400 | 401 | 403 | 404 | 409 | 413 | 429 | 500 | 503;
+	readonly value: ExtensionJson;
+}
+export interface ExtensionIngress {
+	readonly maxBytes: number;
+	readonly timeoutMs: number;
+	readonly output: Schema;
+	/** Authenticates its own external sender; receives no browser authority or native HTTP objects. */
+	handle(request: ExtensionIngressRequest): Promise<ExtensionIngressResponse>;
+}
+export interface ExtensionIngressRoute {
+	readonly maxBytes: number;
+	handle(request: Omit<ExtensionIngressRequest, "check">): Promise<ExtensionIngressResponse>;
+}
 export interface ExtensionHost {
+	/** Trusted HTTP adapter only. Neither Cookie RPC nor browser clients expose this port. */
+	ingress(extension: string, service: string): ExtensionIngressRoute;
 	list(
 		actor: import("@pakka/server/pocket").PocketAuthority,
 		target?: ConversationRef,
@@ -101,6 +127,8 @@ export interface ExtensionHost {
 	): Promise<{ readonly type: string; readonly body: Uint8Array }>;
 }
 export interface ExtensionService<T extends object = object> {
+	/** Opt-in route under this service's manifest-declared backend extension. */
+	readonly ingress?: ExtensionIngress;
 	/** Optional host-resource cleanup; invoked once on product close or failed registration. No member/work cancellation is implied. */
 	dispose?(): Promise<void>;
 	readonly permission: ExtensionPermission;

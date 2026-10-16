@@ -1,0 +1,791 @@
+{
+	"api": 1,
+	"id": "workspace-hooks",
+	"version": "1.0.0",
+	"title": "Webhooks",
+	"facets": {
+		"backend": "backend.mjs",
+		"client": "client.js",
+		"webui": {
+			"entry": "index.js",
+			"publicDir": "web"
+		}
+	},
+	"services": ["hooks"],
+	"actions": [
+		{
+			"id": "read",
+			"version": 1,
+			"scope": "conversation",
+			"permission": "read",
+			"effect": "read",
+			"timeoutMs": 5000,
+			"input": {
+				"type": "object",
+				"properties": {},
+				"required": []
+			},
+			"output": {
+				"type": "object",
+				"properties": {
+					"hooks": {
+						"type": "array",
+						"maxItems": 256,
+						"items": {
+							"type": "object",
+							"properties": {
+								"id": {
+									"type": "string",
+									"maxLength": 160
+								},
+								"target": {
+									"type": "object",
+									"properties": {
+										"key": {
+											"type": "string",
+											"maxLength": 160
+										},
+										"sessionId": {
+											"type": "string",
+											"maxLength": 160
+										},
+										"conversationId": {
+											"type": "string",
+											"maxLength": 160
+										},
+										"incarnation": {
+											"type": "string",
+											"maxLength": 160
+										},
+										"profile": {
+											"type": "string",
+											"maxLength": 160
+										}
+									},
+									"required": ["key", "sessionId", "conversationId", "incarnation", "profile"]
+								},
+								"name": {
+									"type": "string",
+									"maxLength": 60
+								},
+								"instructions": {
+									"type": "string",
+									"maxLength": 2000
+								},
+								"signed": {
+									"type": "boolean"
+								},
+								"allowOutside": {
+									"type": "boolean"
+								},
+								"active": {
+									"type": "boolean"
+								},
+								"version": {
+									"type": "integer",
+									"minimum": 1,
+									"maximum": 9007199254740991
+								},
+								"received": {
+									"type": "integer",
+									"minimum": 0,
+									"maximum": 9007199254740991
+								},
+								"lastReceivedAt": {
+									"anyOf": [
+										{
+											"type": "integer",
+											"minimum": 1,
+											"maximum": 9007199254740991
+										},
+										{
+											"type": "null"
+										}
+									]
+								}
+							},
+							"required": [
+								"id",
+								"target",
+								"name",
+								"instructions",
+								"signed",
+								"allowOutside",
+								"active",
+								"version",
+								"received",
+								"lastReceivedAt"
+							]
+						}
+					},
+					"canManage": {
+						"type": "boolean"
+					}
+				},
+				"required": ["hooks", "canManage"]
+			}
+		},
+		{
+			"id": "create",
+			"version": 1,
+			"scope": "conversation",
+			"permission": "steer",
+			"effect": "write",
+			"timeoutMs": 5000,
+			"input": {
+				"type": "object",
+				"properties": {
+					"name": {
+						"type": "string",
+						"maxLength": 60
+					},
+					"instructions": {
+						"type": "string",
+						"maxLength": 2000
+					},
+					"signed": {
+						"type": "boolean"
+					},
+					"allowOutside": {
+						"type": "boolean"
+					}
+				},
+				"required": ["name", "instructions", "signed", "allowOutside"]
+			},
+			"output": {
+				"type": "object",
+				"properties": {
+					"state": {
+						"enum": ["done", "conflict"]
+					},
+					"hook": {
+						"anyOf": [
+							{
+								"type": "object",
+								"properties": {
+									"id": {
+										"type": "string",
+										"maxLength": 160
+									},
+									"target": {
+										"type": "object",
+										"properties": {
+											"key": {
+												"type": "string",
+												"maxLength": 160
+											},
+											"sessionId": {
+												"type": "string",
+												"maxLength": 160
+											},
+											"conversationId": {
+												"type": "string",
+												"maxLength": 160
+											},
+											"incarnation": {
+												"type": "string",
+												"maxLength": 160
+											},
+											"profile": {
+												"type": "string",
+												"maxLength": 160
+											}
+										},
+										"required": ["key", "sessionId", "conversationId", "incarnation", "profile"]
+									},
+									"name": {
+										"type": "string",
+										"maxLength": 60
+									},
+									"instructions": {
+										"type": "string",
+										"maxLength": 2000
+									},
+									"signed": {
+										"type": "boolean"
+									},
+									"allowOutside": {
+										"type": "boolean"
+									},
+									"active": {
+										"type": "boolean"
+									},
+									"version": {
+										"type": "integer",
+										"minimum": 1,
+										"maximum": 9007199254740991
+									},
+									"received": {
+										"type": "integer",
+										"minimum": 0,
+										"maximum": 9007199254740991
+									},
+									"lastReceivedAt": {
+										"anyOf": [
+											{
+												"type": "integer",
+												"minimum": 1,
+												"maximum": 9007199254740991
+											},
+											{
+												"type": "null"
+											}
+										]
+									}
+								},
+								"required": [
+									"id",
+									"target",
+									"name",
+									"instructions",
+									"signed",
+									"allowOutside",
+									"active",
+									"version",
+									"received",
+									"lastReceivedAt"
+								]
+							},
+							{
+								"type": "null"
+							}
+						]
+					}
+				},
+				"required": ["state", "hook"]
+			}
+		},
+		{
+			"id": "rotate",
+			"version": 1,
+			"scope": "conversation",
+			"permission": "steer",
+			"effect": "write",
+			"timeoutMs": 5000,
+			"input": {
+				"type": "object",
+				"properties": {
+					"id": {
+						"type": "string",
+						"maxLength": 160
+					},
+					"expectedVersion": {
+						"type": "integer",
+						"minimum": 1,
+						"maximum": 9007199254740991
+					}
+				},
+				"required": ["id", "expectedVersion"]
+			},
+			"output": {
+				"type": "object",
+				"properties": {
+					"state": {
+						"enum": ["done", "conflict"]
+					},
+					"hook": {
+						"anyOf": [
+							{
+								"type": "object",
+								"properties": {
+									"id": {
+										"type": "string",
+										"maxLength": 160
+									},
+									"target": {
+										"type": "object",
+										"properties": {
+											"key": {
+												"type": "string",
+												"maxLength": 160
+											},
+											"sessionId": {
+												"type": "string",
+												"maxLength": 160
+											},
+											"conversationId": {
+												"type": "string",
+												"maxLength": 160
+											},
+											"incarnation": {
+												"type": "string",
+												"maxLength": 160
+											},
+											"profile": {
+												"type": "string",
+												"maxLength": 160
+											}
+										},
+										"required": ["key", "sessionId", "conversationId", "incarnation", "profile"]
+									},
+									"name": {
+										"type": "string",
+										"maxLength": 60
+									},
+									"instructions": {
+										"type": "string",
+										"maxLength": 2000
+									},
+									"signed": {
+										"type": "boolean"
+									},
+									"allowOutside": {
+										"type": "boolean"
+									},
+									"active": {
+										"type": "boolean"
+									},
+									"version": {
+										"type": "integer",
+										"minimum": 1,
+										"maximum": 9007199254740991
+									},
+									"received": {
+										"type": "integer",
+										"minimum": 0,
+										"maximum": 9007199254740991
+									},
+									"lastReceivedAt": {
+										"anyOf": [
+											{
+												"type": "integer",
+												"minimum": 1,
+												"maximum": 9007199254740991
+											},
+											{
+												"type": "null"
+											}
+										]
+									}
+								},
+								"required": [
+									"id",
+									"target",
+									"name",
+									"instructions",
+									"signed",
+									"allowOutside",
+									"active",
+									"version",
+									"received",
+									"lastReceivedAt"
+								]
+							},
+							{
+								"type": "null"
+							}
+						]
+					}
+				},
+				"required": ["state", "hook"]
+			}
+		},
+		{
+			"id": "remove",
+			"version": 1,
+			"scope": "conversation",
+			"permission": "steer",
+			"effect": "write",
+			"timeoutMs": 5000,
+			"input": {
+				"type": "object",
+				"properties": {
+					"id": {
+						"type": "string",
+						"maxLength": 160
+					},
+					"expectedVersion": {
+						"type": "integer",
+						"minimum": 1,
+						"maximum": 9007199254740991
+					}
+				},
+				"required": ["id", "expectedVersion"]
+			},
+			"output": {
+				"type": "object",
+				"properties": {
+					"state": {
+						"enum": ["done", "conflict"]
+					},
+					"hook": {
+						"anyOf": [
+							{
+								"type": "object",
+								"properties": {
+									"id": {
+										"type": "string",
+										"maxLength": 160
+									},
+									"target": {
+										"type": "object",
+										"properties": {
+											"key": {
+												"type": "string",
+												"maxLength": 160
+											},
+											"sessionId": {
+												"type": "string",
+												"maxLength": 160
+											},
+											"conversationId": {
+												"type": "string",
+												"maxLength": 160
+											},
+											"incarnation": {
+												"type": "string",
+												"maxLength": 160
+											},
+											"profile": {
+												"type": "string",
+												"maxLength": 160
+											}
+										},
+										"required": ["key", "sessionId", "conversationId", "incarnation", "profile"]
+									},
+									"name": {
+										"type": "string",
+										"maxLength": 60
+									},
+									"instructions": {
+										"type": "string",
+										"maxLength": 2000
+									},
+									"signed": {
+										"type": "boolean"
+									},
+									"allowOutside": {
+										"type": "boolean"
+									},
+									"active": {
+										"type": "boolean"
+									},
+									"version": {
+										"type": "integer",
+										"minimum": 1,
+										"maximum": 9007199254740991
+									},
+									"received": {
+										"type": "integer",
+										"minimum": 0,
+										"maximum": 9007199254740991
+									},
+									"lastReceivedAt": {
+										"anyOf": [
+											{
+												"type": "integer",
+												"minimum": 1,
+												"maximum": 9007199254740991
+											},
+											{
+												"type": "null"
+											}
+										]
+									}
+								},
+								"required": [
+									"id",
+									"target",
+									"name",
+									"instructions",
+									"signed",
+									"allowOutside",
+									"active",
+									"version",
+									"received",
+									"lastReceivedAt"
+								]
+							},
+							{
+								"type": "null"
+							}
+						]
+					}
+				},
+				"required": ["state", "hook"]
+			}
+		},
+		{
+			"id": "credentials",
+			"version": 1,
+			"scope": "conversation",
+			"permission": "steer",
+			"effect": "read",
+			"timeoutMs": 5000,
+			"input": {
+				"type": "object",
+				"properties": {
+					"id": {
+						"type": "string",
+						"maxLength": 160
+					}
+				},
+				"required": ["id"]
+			},
+			"output": {
+				"type": "object",
+				"properties": {
+					"id": {
+						"type": "string",
+						"maxLength": 160
+					},
+					"version": {
+						"type": "integer",
+						"minimum": 1,
+						"maximum": 9007199254740991
+					},
+					"signed": {
+						"type": "boolean"
+					},
+					"secret": {
+						"type": "string",
+						"maxLength": 43
+					}
+				},
+				"required": ["id", "version", "signed", "secret"]
+			}
+		},
+		{
+			"id": "operation",
+			"version": 1,
+			"scope": "conversation",
+			"permission": "read",
+			"effect": "read",
+			"timeoutMs": 5000,
+			"input": {
+				"type": "object",
+				"properties": {
+					"requestId": {
+						"type": "string",
+						"maxLength": 160
+					}
+				},
+				"required": ["requestId"]
+			},
+			"output": {
+				"type": "object",
+				"properties": {
+					"state": {
+						"enum": ["done", "conflict"]
+					},
+					"hook": {
+						"anyOf": [
+							{
+								"type": "object",
+								"properties": {
+									"id": {
+										"type": "string",
+										"maxLength": 160
+									},
+									"target": {
+										"type": "object",
+										"properties": {
+											"key": {
+												"type": "string",
+												"maxLength": 160
+											},
+											"sessionId": {
+												"type": "string",
+												"maxLength": 160
+											},
+											"conversationId": {
+												"type": "string",
+												"maxLength": 160
+											},
+											"incarnation": {
+												"type": "string",
+												"maxLength": 160
+											},
+											"profile": {
+												"type": "string",
+												"maxLength": 160
+											}
+										},
+										"required": ["key", "sessionId", "conversationId", "incarnation", "profile"]
+									},
+									"name": {
+										"type": "string",
+										"maxLength": 60
+									},
+									"instructions": {
+										"type": "string",
+										"maxLength": 2000
+									},
+									"signed": {
+										"type": "boolean"
+									},
+									"allowOutside": {
+										"type": "boolean"
+									},
+									"active": {
+										"type": "boolean"
+									},
+									"version": {
+										"type": "integer",
+										"minimum": 1,
+										"maximum": 9007199254740991
+									},
+									"received": {
+										"type": "integer",
+										"minimum": 0,
+										"maximum": 9007199254740991
+									},
+									"lastReceivedAt": {
+										"anyOf": [
+											{
+												"type": "integer",
+												"minimum": 1,
+												"maximum": 9007199254740991
+											},
+											{
+												"type": "null"
+											}
+										]
+									}
+								},
+								"required": [
+									"id",
+									"target",
+									"name",
+									"instructions",
+									"signed",
+									"allowOutside",
+									"active",
+									"version",
+									"received",
+									"lastReceivedAt"
+								]
+							},
+							{
+								"type": "null"
+							}
+						]
+					}
+				},
+				"required": ["state", "hook"]
+			}
+		},
+		{
+			"id": "deliveries",
+			"version": 1,
+			"scope": "conversation",
+			"permission": "read",
+			"effect": "read",
+			"timeoutMs": 5000,
+			"input": {
+				"type": "object",
+				"properties": {
+					"id": {
+						"type": "string",
+						"maxLength": 160
+					}
+				},
+				"required": ["id"]
+			},
+			"output": {
+				"type": "array",
+				"maxItems": 512,
+				"items": {
+					"type": "object",
+					"properties": {
+						"id": {
+							"type": "string",
+							"maxLength": 160
+						},
+						"receivedAt": {
+							"type": "integer",
+							"minimum": 1,
+							"maximum": 9007199254740991
+						},
+						"result": {
+							"type": "object",
+							"properties": {
+								"state": {
+									"enum": ["accepted", "ignored", "unknown", "denied", "conflict", "capacity"]
+								},
+								"receipt": {
+									"anyOf": [
+										{
+											"type": "object",
+											"properties": {
+												"id": {
+													"type": "string",
+													"maxLength": 160
+												},
+												"requestId": {
+													"type": "string",
+													"maxLength": 160
+												},
+												"actorId": {
+													"type": "string",
+													"maxLength": 160
+												},
+												"target": {
+													"type": "object",
+													"properties": {
+														"key": {
+															"type": "string",
+															"maxLength": 160
+														},
+														"sessionId": {
+															"type": "string",
+															"maxLength": 160
+														},
+														"conversationId": {
+															"type": "string",
+															"maxLength": 160
+														},
+														"incarnation": {
+															"type": "string",
+															"maxLength": 160
+														},
+														"profile": {
+															"type": "string",
+															"maxLength": 160
+														}
+													},
+													"required": ["key", "sessionId", "conversationId", "incarnation", "profile"]
+												},
+												"status": {
+													"enum": ["queued", "placed", "done", "unanswered", "unknown"]
+												},
+												"entryId": {
+													"type": "string",
+													"maxLength": 160
+												}
+											},
+											"required": ["id", "requestId", "actorId", "target", "status"]
+										},
+										{
+											"type": "null"
+										}
+									]
+								}
+							},
+							"required": ["state", "receipt"]
+						}
+					},
+					"required": ["id", "receivedAt", "result"]
+				}
+			}
+		}
+	],
+	"commands": [
+		{
+			"id": "hooks",
+			"title": "Open webhooks",
+			"slash": "webhooks",
+			"interface": "hooks"
+		}
+	],
+	"interfaces": [
+		{
+			"id": "hooks",
+			"title": "Webhooks",
+			"slot": "page",
+			"scope": "conversation",
+			"export": "Hooks",
+			"navigation": true
+		}
+	]
+}
