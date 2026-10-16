@@ -141,6 +141,12 @@ export default {
 
 本批最终定向 **31/31**、全量 **489/489**（无 fail/skip/cancel/todo），构建、类型、独立公开声明、代码格式及完整 `smoke:package` 的全部消费者通过；469 个冻结源码/helper/TLS 文件在定向、全量和实际安装前后 SHA 一致。新归档的实际 CLI 验证 **3 次模型 HTTP、3 次已消费额度**，包含签名去重、轮换、正常重开、viewer 隔离与只移除 WebUI 后保留 Backend 入口。8 个实际归档匹配隔离 lock integrity，原生存储、provider payload、回执和消费脚本身份保存在 `artifacts/pakka-pocket/p5/hooks/delivery/`。门禁后仅更新两份阶段记录，并把交付 helper 的初验计数 25 更正为实际最终 31；原 helper 与前后 SHA 均保留，不改变测试或生产字节。首次打包在隔离 npm 下载 `@esbuild/win32-x64@0.28.2` 时触发原 180 秒截止时间；同 URL 的独立测量也超时。未改截止时间/依赖的新一次打包完成，其中该包下载耗时 53.4 秒，环境等待不称为已修复。消费者首次错误将派生 `received` 当成原始字段；已按真实 accepted delivery 记录及 native budget 核对，在相同归档 SHA 下重跑通过。原始失败、对照测量、red/green、provider payload、原生存储及归档脚本位于 `artifacts/pakka-pocket/p5/hooks/`；初次截图 I/O 错误保留给 P6，不以本轮未复现宣称已解决。
 
+## 6f. 明确排除 Plan mode / Goals
+
+用户补充确认 Plan mode 与 Goals/Done when 为 non-goal，不再继续实现、补测试或验收，后续计划移除。此调整不影响已验收的定时输入（scheduled inputs）。
+
+25 个未提交候选文件已单独暂存于本地 stash `7cb96c20df7562610ccddc9d3915403c2c0ac725`；原始字节、SHA 清单与停止门禁的记录保存在 `artifacts/pakka-pocket/p5/planning/parked-candidate.json` 及相邻目录。候选已从当前生产源码和默认测试/打包路径中撤出；未完成的候选门禁已停止，不作为新的交付基线。后续清理不阻塞范围内的 UI、部署和 P6 验收。
+
 ## 7. 当前可执行证据
 
 | 主体                                                    | 证据                                                                                  |

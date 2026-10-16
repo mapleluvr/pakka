@@ -11,6 +11,8 @@ Pakka has an accepted headless runtime, MAS, DevPack, protocol/client and option
 - Make slash commands human-invoked by default: no model input/inference or change of current requester unless the chosen action explicitly submits work. Allow namespaced backend RPC with checked schemas, scope, deadlines and honest retry outcomes.
 - Establish GUI/extension development rules and executable acceptance through real installed server/browser paths, synthetic identities, deterministic local providers and retained source/asset identity.
 
+Plan mode and Goals/Done when are operator-excluded non-goals. Their provisional implementation is parked for later removal; no further implementation or acceptance is required for this change. Scheduled inputs remain in scope.
+
 ## Capabilities
 
 ### New Capabilities

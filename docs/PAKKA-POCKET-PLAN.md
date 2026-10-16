@@ -12,6 +12,7 @@
 6. 扩展可选 Agent、Backend、WebUI、Client 四面。授权安装者添加插件即确认代码可信，不建设不可信插件沙箱；普通用户业务权限仍由服务端执行。
 7. 自定义 Preact sheets/panels/pages、settings、导航、slash command 和自定义 backend RPC 是公共扩展能力。MAS Board 不使用特权内部旁路。
 8. Slash command 默认是人的操作，不自动创建模型输入、推理或 requester 变化；显式发送任务的 action 才进入受控模型路径。
+9. Plan mode 与 Goals/Done when 是用户明确排除的 non-goal，不继续实现或验收；已有未提交候选单独暂存，后续计划移除。定时输入（scheduled inputs）继续保留。
 
 这是用户对后续产品范围的调整，不重写 M1–M6 的 headless 验收，也不自动扩大 [Dynamite 已验收配对](DYNAMITE-PRODUCT-ACCEPTANCE.md)。
 
@@ -46,7 +47,7 @@ P0 采用上表主 UI 树，Phase 2 是独立旧分支（Durable `1.0.2`），�
 | files/changes、git branch/worktree views、exports/uploads/artifacts | 对应受控服务与 UI/可选贡献      | 文件根、path/size/MIME、工具/文件权限、HTML sandbox 和导出域              | 隔离文件夹真实读/改/拒绝；泄漏与 XSS canary               |
 | approval/browser panels                                             | 通用 view slot + 实际服务贡献   | 审批必须绑定真实 pending call；browser 操作绑定批准资源，不能只移画面     | 显式批准/拒绝真实 call、scope 变更、browser 实际动作      |
 | model/provider、settings、budget、notifications                     | owner/scoped settings 与服务    | 公开选项/私密配置分离，模型只选批准引用，saved secrets 不回传             | 配置影响后续真实行为；通知按用户/资源过滤                 |
-| upstream memory/plan/goals/schedules 等可选界面                     | 逐项映射到独立通用贡献/受控后台 | 不以直接加载原 Durable extension 兼容替代迁移；不自动接回 PiP             | P0 登记保留位置、后端与测试；P5 清单逐项闭合              |
+| upstream memory/schedules/voice 等范围内可选界面                     | 逐项映射到独立通用贡献/受控后台 | 不以直接加载原 Durable extension 兼容替代迁移；不自动接回 PiP             | P0 登记保留位置、后端与测试；P5 清单逐项闭合              |
 | launcher local/LAN/tailnet/tunnel                                   | WebUI 产品启动路径              | 明确 TLS/proxy/auth 边界；不放宽 headless v1 默认入口                     | 实际代理+浏览器测试，真实外部部署另记测量身份             |
 
 ## 4. 依赖顺序与退出条件

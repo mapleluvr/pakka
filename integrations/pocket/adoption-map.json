@@ -2,6 +2,16 @@
 	"schemaVersion": 1,
 	"sourceRole": "upstream",
 	"status": "migration ledger, not implemented UI",
+	"excludedCapabilities": [
+		{
+			"id": "plan-mode",
+			"reason": "Operator-excluded non-goal; provisional work parked for later removal, with no further implementation or acceptance."
+		},
+		{
+			"id": "goals",
+			"reason": "Goals/Done when is an operator-excluded non-goal; scheduled inputs remain in scope."
+		}
+	],
 	"groups": [
 		{
 			"id": "foundation",

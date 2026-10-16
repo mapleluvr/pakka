@@ -54,7 +54,7 @@ P4 intermediate evidence: `docs/PAKKA-POCKET-P4.md`, full 343/343 plus the added
 - [x] 6.1 Port side chat/presence/notes/pins/reactions and turn-taking with conflict/attribution tests and captured proof that human-side content is not implicit model input.
 - [x] 6.2 Port files/changes/branches/worktrees/uploads/exports/artifact views to approved services, testing real isolated files, scope/path bounds and safe rendering.
 - [x] 6.3 Port approval and browser panels to real controlled pending-call/browser services, including unauthorized/late decisions and actual action results.
-- [ ] 6.4 Port settings/model/budget/notification and remaining mapped optional interfaces, with private configuration handling and real subsequent behavior checks.
+- [ ] 6.4 Port settings/model/budget/notification and remaining in-scope optional interfaces, with private configuration handling and real subsequent behavior checks. Plan mode and Goals/Done when are excluded non-goals; scheduled inputs remain included.
 - [ ] 6.5 Verify normal reopen, persisted people/revocation, original operations and spent quotas; test disconnect/lost response and interrupted jobs without unsafe replay.
 - [ ] 6.6 Complete local/LAN/tailnet/tunnel launcher checks with actual proxy/TLS fixtures and recorded operator measurements for external deployment tools; do not claim mocked connectivity as support.
 - [ ] 6.7 Close the per-screen/action inventory and run desktop/mobile/keyboard/accessibility inspections against the development rules, leaving no decorative or silently removed control.

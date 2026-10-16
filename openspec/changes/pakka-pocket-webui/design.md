@@ -28,6 +28,8 @@ Read-only proposal research is under `artifacts/research/pi-pocket/`; executable
 
 **Non-Goals for this change:**
 
+- Plan mode and Goals/Done when, explicitly excluded by the operator. Park their provisional work for later removal and stop related implementation/acceptance; this exclusion does not affect scheduled inputs.
+
 - Importing pi-pocket SQLite, identities, pending tasks or settings; retaining or replacing PiP with another privileged assistant.
 - Running existing Pi CLI/TUI extensions unchanged; a PTY bridge, untrusted marketplace/sandbox or arbitrary global monkey-patch compatibility.
 - Upgrading Durable, copying pi-pocket's runtime alongside Pakka, changing Dynamite algorithms or automatically enabling strategies on newly created members.
