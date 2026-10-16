@@ -1,0 +1,666 @@
+{
+	"api": 1,
+	"id": "workspace-memory",
+	"version": "1.0.0",
+	"title": "Memory",
+	"facets": {
+		"backend": "backend.mjs",
+		"client": "client.js",
+		"webui": {
+			"entry": "index.js",
+			"publicDir": "web"
+		}
+	},
+	"services": ["memory"],
+	"actions": [
+		{
+			"id": "read",
+			"version": 1,
+			"scope": "conversation",
+			"permission": "read",
+			"effect": "read",
+			"timeoutMs": 5000,
+			"input": {
+				"type": "object",
+				"properties": {},
+				"required": []
+			},
+			"output": {
+				"type": "object",
+				"properties": {
+					"project": {
+						"anyOf": [
+							{
+								"type": "object",
+								"properties": {
+									"id": {
+										"type": "string",
+										"maxLength": 160
+									},
+									"name": {
+										"type": "string",
+										"maxLength": 80
+									}
+								},
+								"required": ["id", "name"]
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"enabled": {
+						"type": "boolean"
+					},
+					"owner": {
+						"type": "boolean"
+					},
+					"canWrite": {
+						"type": "boolean"
+					},
+					"lessons": {
+						"type": "array",
+						"maxItems": 256,
+						"items": {
+							"type": "object",
+							"properties": {
+								"id": {
+									"type": "string",
+									"maxLength": 160
+								},
+								"text": {
+									"type": "string",
+									"maxLength": 300
+								},
+								"scope": {
+									"enum": ["project", "global"]
+								},
+								"version": {
+									"type": "integer",
+									"minimum": 1,
+									"maximum": 9007199254740991
+								},
+								"pending": {
+									"type": "boolean"
+								},
+								"authorName": {
+									"type": "string",
+									"maxLength": 80
+								},
+								"byAgent": {
+									"type": "boolean"
+								},
+								"mine": {
+									"type": "boolean"
+								},
+								"proposal": {
+									"anyOf": [
+										{
+											"type": "object",
+											"properties": {
+												"text": {
+													"anyOf": [
+														{
+															"type": "string",
+															"maxLength": 300
+														},
+														{
+															"type": "null"
+														}
+													]
+												},
+												"authorName": {
+													"type": "string",
+													"maxLength": 80
+												},
+												"byAgent": {
+													"type": "boolean"
+												},
+												"mine": {
+													"type": "boolean"
+												}
+											},
+											"required": ["text", "authorName", "byAgent", "mine"]
+										},
+										{
+											"type": "null"
+										}
+									]
+								}
+							},
+							"required": [
+								"id",
+								"text",
+								"scope",
+								"version",
+								"pending",
+								"authorName",
+								"byAgent",
+								"mine",
+								"proposal"
+							]
+						}
+					},
+					"limits": {
+						"type": "object",
+						"properties": {
+							"text": {
+								"type": "integer",
+								"minimum": 1,
+								"maximum": 9007199254740991
+							},
+							"project": {
+								"type": "integer",
+								"minimum": 1,
+								"maximum": 9007199254740991
+							},
+							"global": {
+								"type": "integer",
+								"minimum": 1,
+								"maximum": 9007199254740991
+							}
+						},
+						"required": ["text", "project", "global"]
+					}
+				},
+				"required": ["project", "enabled", "owner", "canWrite", "lessons", "limits"]
+			}
+		},
+		{
+			"id": "add",
+			"version": 1,
+			"scope": "conversation",
+			"permission": "send",
+			"effect": "write",
+			"timeoutMs": 5000,
+			"input": {
+				"type": "object",
+				"properties": {
+					"text": {
+						"type": "string",
+						"maxLength": 300
+					},
+					"scope": {
+						"enum": ["project", "global"]
+					}
+				},
+				"required": ["text", "scope"]
+			},
+			"output": {
+				"type": "object",
+				"properties": {
+					"state": {
+						"enum": ["done", "conflict"]
+					},
+					"lesson": {
+						"anyOf": [
+							{
+								"type": "object",
+								"properties": {
+									"id": {
+										"type": "string",
+										"maxLength": 160
+									},
+									"text": {
+										"type": "string",
+										"maxLength": 300
+									},
+									"scope": {
+										"enum": ["project", "global"]
+									},
+									"version": {
+										"type": "integer",
+										"minimum": 1,
+										"maximum": 9007199254740991
+									},
+									"pending": {
+										"type": "boolean"
+									},
+									"authorName": {
+										"type": "string",
+										"maxLength": 80
+									},
+									"byAgent": {
+										"type": "boolean"
+									},
+									"mine": {
+										"type": "boolean"
+									},
+									"proposal": {
+										"anyOf": [
+											{
+												"type": "object",
+												"properties": {
+													"text": {
+														"anyOf": [
+															{
+																"type": "string",
+																"maxLength": 300
+															},
+															{
+																"type": "null"
+															}
+														]
+													},
+													"authorName": {
+														"type": "string",
+														"maxLength": 80
+													},
+													"byAgent": {
+														"type": "boolean"
+													},
+													"mine": {
+														"type": "boolean"
+													}
+												},
+												"required": ["text", "authorName", "byAgent", "mine"]
+											},
+											{
+												"type": "null"
+											}
+										]
+									}
+								},
+								"required": [
+									"id",
+									"text",
+									"scope",
+									"version",
+									"pending",
+									"authorName",
+									"byAgent",
+									"mine",
+									"proposal"
+								]
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"enabled": {
+						"type": "boolean"
+					}
+				},
+				"required": ["state", "lesson", "enabled"]
+			}
+		},
+		{
+			"id": "change",
+			"version": 1,
+			"scope": "conversation",
+			"permission": "send",
+			"effect": "write",
+			"timeoutMs": 5000,
+			"input": {
+				"type": "object",
+				"properties": {
+					"id": {
+						"type": "string",
+						"maxLength": 160
+					},
+					"expectedVersion": {
+						"type": "integer",
+						"minimum": 1,
+						"maximum": 9007199254740991
+					},
+					"action": {
+						"enum": ["edit", "remove", "approve", "discard"]
+					},
+					"text": {
+						"type": "string",
+						"maxLength": 300
+					}
+				},
+				"required": ["id", "expectedVersion", "action"]
+			},
+			"output": {
+				"type": "object",
+				"properties": {
+					"state": {
+						"enum": ["done", "conflict"]
+					},
+					"lesson": {
+						"anyOf": [
+							{
+								"type": "object",
+								"properties": {
+									"id": {
+										"type": "string",
+										"maxLength": 160
+									},
+									"text": {
+										"type": "string",
+										"maxLength": 300
+									},
+									"scope": {
+										"enum": ["project", "global"]
+									},
+									"version": {
+										"type": "integer",
+										"minimum": 1,
+										"maximum": 9007199254740991
+									},
+									"pending": {
+										"type": "boolean"
+									},
+									"authorName": {
+										"type": "string",
+										"maxLength": 80
+									},
+									"byAgent": {
+										"type": "boolean"
+									},
+									"mine": {
+										"type": "boolean"
+									},
+									"proposal": {
+										"anyOf": [
+											{
+												"type": "object",
+												"properties": {
+													"text": {
+														"anyOf": [
+															{
+																"type": "string",
+																"maxLength": 300
+															},
+															{
+																"type": "null"
+															}
+														]
+													},
+													"authorName": {
+														"type": "string",
+														"maxLength": 80
+													},
+													"byAgent": {
+														"type": "boolean"
+													},
+													"mine": {
+														"type": "boolean"
+													}
+												},
+												"required": ["text", "authorName", "byAgent", "mine"]
+											},
+											{
+												"type": "null"
+											}
+										]
+									}
+								},
+								"required": [
+									"id",
+									"text",
+									"scope",
+									"version",
+									"pending",
+									"authorName",
+									"byAgent",
+									"mine",
+									"proposal"
+								]
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"enabled": {
+						"type": "boolean"
+					}
+				},
+				"required": ["state", "lesson", "enabled"]
+			}
+		},
+		{
+			"id": "activation",
+			"version": 1,
+			"scope": "conversation",
+			"permission": "manage",
+			"effect": "write",
+			"timeoutMs": 5000,
+			"input": {
+				"type": "object",
+				"properties": {
+					"enabled": {
+						"type": "boolean"
+					}
+				},
+				"required": ["enabled"]
+			},
+			"output": {
+				"type": "object",
+				"properties": {
+					"state": {
+						"enum": ["done", "conflict"]
+					},
+					"lesson": {
+						"anyOf": [
+							{
+								"type": "object",
+								"properties": {
+									"id": {
+										"type": "string",
+										"maxLength": 160
+									},
+									"text": {
+										"type": "string",
+										"maxLength": 300
+									},
+									"scope": {
+										"enum": ["project", "global"]
+									},
+									"version": {
+										"type": "integer",
+										"minimum": 1,
+										"maximum": 9007199254740991
+									},
+									"pending": {
+										"type": "boolean"
+									},
+									"authorName": {
+										"type": "string",
+										"maxLength": 80
+									},
+									"byAgent": {
+										"type": "boolean"
+									},
+									"mine": {
+										"type": "boolean"
+									},
+									"proposal": {
+										"anyOf": [
+											{
+												"type": "object",
+												"properties": {
+													"text": {
+														"anyOf": [
+															{
+																"type": "string",
+																"maxLength": 300
+															},
+															{
+																"type": "null"
+															}
+														]
+													},
+													"authorName": {
+														"type": "string",
+														"maxLength": 80
+													},
+													"byAgent": {
+														"type": "boolean"
+													},
+													"mine": {
+														"type": "boolean"
+													}
+												},
+												"required": ["text", "authorName", "byAgent", "mine"]
+											},
+											{
+												"type": "null"
+											}
+										]
+									}
+								},
+								"required": [
+									"id",
+									"text",
+									"scope",
+									"version",
+									"pending",
+									"authorName",
+									"byAgent",
+									"mine",
+									"proposal"
+								]
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"enabled": {
+						"type": "boolean"
+					}
+				},
+				"required": ["state", "lesson", "enabled"]
+			}
+		},
+		{
+			"id": "operation",
+			"version": 1,
+			"scope": "conversation",
+			"permission": "read",
+			"effect": "read",
+			"timeoutMs": 5000,
+			"input": {
+				"type": "object",
+				"properties": {
+					"requestId": {
+						"type": "string",
+						"maxLength": 160
+					}
+				},
+				"required": ["requestId"]
+			},
+			"output": {
+				"type": "object",
+				"properties": {
+					"state": {
+						"enum": ["done", "conflict"]
+					},
+					"lesson": {
+						"anyOf": [
+							{
+								"type": "object",
+								"properties": {
+									"id": {
+										"type": "string",
+										"maxLength": 160
+									},
+									"text": {
+										"type": "string",
+										"maxLength": 300
+									},
+									"scope": {
+										"enum": ["project", "global"]
+									},
+									"version": {
+										"type": "integer",
+										"minimum": 1,
+										"maximum": 9007199254740991
+									},
+									"pending": {
+										"type": "boolean"
+									},
+									"authorName": {
+										"type": "string",
+										"maxLength": 80
+									},
+									"byAgent": {
+										"type": "boolean"
+									},
+									"mine": {
+										"type": "boolean"
+									},
+									"proposal": {
+										"anyOf": [
+											{
+												"type": "object",
+												"properties": {
+													"text": {
+														"anyOf": [
+															{
+																"type": "string",
+																"maxLength": 300
+															},
+															{
+																"type": "null"
+															}
+														]
+													},
+													"authorName": {
+														"type": "string",
+														"maxLength": 80
+													},
+													"byAgent": {
+														"type": "boolean"
+													},
+													"mine": {
+														"type": "boolean"
+													}
+												},
+												"required": ["text", "authorName", "byAgent", "mine"]
+											},
+											{
+												"type": "null"
+											}
+										]
+									}
+								},
+								"required": [
+									"id",
+									"text",
+									"scope",
+									"version",
+									"pending",
+									"authorName",
+									"byAgent",
+									"mine",
+									"proposal"
+								]
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"enabled": {
+						"type": "boolean"
+					}
+				},
+				"required": ["state", "lesson", "enabled"]
+			}
+		}
+	],
+	"commands": [
+		{
+			"id": "memory",
+			"title": "Open memory",
+			"slash": "memory",
+			"interface": "memory"
+		}
+	],
+	"interfaces": [
+		{
+			"id": "memory",
+			"title": "Memory",
+			"slot": "page",
+			"scope": "conversation",
+			"export": "Memory",
+			"navigation": true
+		}
+	]
+}

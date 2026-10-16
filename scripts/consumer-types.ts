@@ -9,8 +9,15 @@ import {
 	workspaceApprovalsExtensionRoot,
 	workspaceSchedulesExtensionRoot,
 	workspaceSchedulesService,
+	workspaceMemoryService,
+	workspaceMemoryExtensionRoot,
 } from "@pakka/webui/workflows";
-import { approvalTool, createPocketSchedules, type PocketApprovals } from "@pakka/server/pocket";
+import {
+	approvalTool,
+	createPocketSchedules,
+	createPocketMemory,
+	type PocketApprovals,
+} from "@pakka/server/pocket";
 import { masWorkbenchService } from "@pakka/mas-devpack/backend";
 import type { ExtensionHost } from "@pakka/webui/backend";
 import type {
@@ -266,6 +273,29 @@ export async function scheduledProduct(
 	// @ts-expect-error A workflow client cannot execute arbitrary scripts.
 	client.execute("code");
 	return { root: workspaceSchedulesExtensionRoot, definition: prepared.definition, dispose: service.dispose };
+}
+
+export async function publicMemory(
+	context: PocketServiceContext,
+	actor: PocketAuthority,
+	ref: ConversationRef,
+) {
+	const prepared = createPocketMemory({
+		namespace: "external.memory",
+		profiles: ["default"],
+		projects: [{ id: "project", name: "Project", resources: [ref.conversationId] }],
+	});
+	const service = await workspaceMemoryService(context, prepared),
+		client = service.bind(actor, ref, () => {});
+	const view = await client.read();
+	await client.add({ requestId: "explicit-lesson", scope: "project", text: "Approved commands" });
+	// @ts-expect-error The host binds the author; callers cannot forge a human or Agent identity.
+	await client.add({ requestId: "forged", scope: "global", text: "forged", actorId: "another-person" });
+	// @ts-expect-error A source gets an exact reference and signal, never a provider credential.
+	void prepared.source.render({ target: ref, signal: new AbortController().signal, apiKey: "forged" });
+	// @ts-expect-error Memory read DTOs are readonly; edits must carry their expectedVersion.
+	view.lessons[0]!.text = "rewrite";
+	return { root: workspaceMemoryExtensionRoot, source: prepared.source, tools: prepared.tools };
 }
 
 export async function managed(runtime: Runtime, options: RuntimeOptions, ref: ConversationRef) {

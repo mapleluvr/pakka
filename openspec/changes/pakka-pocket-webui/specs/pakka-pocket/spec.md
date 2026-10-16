@@ -152,6 +152,34 @@ Navigation, pages, sheets, panels, settings entries, command triggers and scoped
 - **WHEN** MAS DevPack and a separately installed GUI-only extension register their interfaces
 - **THEN** both use the same public registration mechanism and the GUI-only interface opens without an Agent tool, model or Conversation
 
+### Requirement: Approved project memory
+
+Memory SHALL be an optional contribution with separate Agent and Backend/Client/WebUI activation. The host SHALL define named projects and their Conversation resource membership; requests SHALL NOT introduce arbitrary directories, project membership or authors. Approved project lessons SHALL apply only to that project and approved global lessons MAY apply across the current product Session. A global administrator SHALL approve new lessons or proposed edits before another person's or model-created content can change future model context. Read-only viewers SHALL NOT write; non-administrators SHALL see only applicable approved lessons and their own pending proposals. Every mutation SHALL bind current authority, exact resource, stable request identity and expected lesson version. Unknown persistence SHALL NOT replay a mutation or falsely approve a proposal.
+
+#### Scenario: Approval changes the actual next model context
+
+- **WHEN** an operator or real native memory tool proposes a project lesson and a global administrator approves its current version
+- **THEN** only the explicitly selected Agent profile includes the approved lesson in its next actual provider request, a different project's private lesson is absent, and human-only installation does not activate that Agent contribution
+
+#### Scenario: Conflict, disable and reopen preserve their distinct meanings
+
+- **WHEN** a stale edit is submitted, approved injection is disabled or the product normally reopens after a lost mutation response
+- **THEN** a conflicting version does not overwrite the winner or lose a local draft, disabling injection preserves stored lessons while omitting them from future requests, and reading the original request resolves its saved mutation without applying it again or resetting quota
+
+### Requirement: Host-approved context contributions
+
+The Runtime MAY accept named, versioned context sources selected explicitly for approved profiles. A source SHALL receive only a frozen exact Conversation reference and cancellation signal, return bounded text or an explicit omission plus a live validity check, and never receive native Pi objects. The adapter SHALL recheck the exact incarnation and all source checks before actual provider dispatch. Source failures, malformed output or stale checks SHALL block that dispatch. Live checks SHALL complete synchronously with an undefined result; thenables and other returned values SHALL block the request, and opaque source errors SHALL be redacted from native output. Definition identity SHALL participate in persisted profile identity; adding a WebUI facet SHALL NOT activate any source. Current context contributions SHALL NOT rewrite raw history or become permanently replayed instructions after the source omits them.
+
+#### Scenario: Current approved context affects only its selected profile
+
+- **WHEN** an installed Agent contribution supplies current approved memory for one profile and a later read omits that memory
+- **THEN** the actual provider payload contains the current text only for that profile, the next request after omission has no stale text, and raw Conversation history is unchanged by the source
+
+#### Scenario: A delayed credential cannot outlive a context check
+
+- **WHEN** context preparation completes but its captured state changes while provider credentials resolve
+- **THEN** the live check blocks the actual request rather than sending stale or unauthorized context, and an already prepared attempt is not refunded
+
 ### Requirement: Actual product and browser acceptance
 
 Acceptance SHALL exercise the installed product executable/assets and public SDK in an out-of-repository consumer with no workspace paths/root overrides. Tests SHALL use isolated desktop/mobile browsers, synthetic people/invitations, deterministic local providers and real persisted state. Required cases, source/asset identities, admitted inputs, provider/tool effects and unresolved outcomes SHALL be recorded separately from schema validation.

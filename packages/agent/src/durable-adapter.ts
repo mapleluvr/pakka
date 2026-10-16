@@ -101,6 +101,7 @@ import type {
 	RuntimeJobContext,
 	RuntimeJobDefinition,
 	RuntimeJobs,
+	RuntimeContextSource,
 } from "./types.ts";
 
 export type AdapterFrame = Pick<
@@ -253,6 +254,7 @@ const RuntimeDoc = defineDoc<RuntimeRecord>({
 interface ManagedState {
 	profiles: Map<string, HostOptions>;
 	profileHashes: Record<string, string>;
+	contextSources: readonly RuntimeContextSource[];
 	jobTasks: Map<string, { definition: RuntimeJobDefinition; task: ReturnType<typeof backendJobTask> }>;
 	state: Readonly<RuntimeRecord>;
 	closed: boolean;
@@ -283,12 +285,57 @@ export interface ManagedAdapterPort {
 	waitForIdle(): Promise<void>;
 	close(): Promise<void>;
 }
-function profileHash(options: HostOptions): string {
+function prepareContextSources(
+	value: unknown,
+	profiles: ReadonlyMap<string, HostOptions>,
+): readonly RuntimeContextSource[] {
+	if (value === undefined) return Object.freeze([]);
+	if (!Array.isArray(value) || value.length > 16) throw new Error("Invalid finite context sources");
+	const ids = new Set<string>();
+	return Object.freeze(
+		value.map((source: unknown) => {
+			if (!source || typeof source !== "object" || Array.isArray(source))
+				throw new Error("Invalid context source");
+			const row = source as Record<string, unknown>;
+			if (
+				Object.keys(row).some((key) => !["id", "version", "profiles", "render"].includes(key)) ||
+				typeof row.id !== "string" ||
+				!/^[a-zA-Z0-9][a-zA-Z0-9._-]{0,63}$/.test(row.id) ||
+				ids.has(row.id) ||
+				!Number.isSafeInteger(row.version) ||
+				Number(row.version) < 1 ||
+				typeof row.render !== "function" ||
+				!Array.isArray(row.profiles) ||
+				!row.profiles.length ||
+				row.profiles.length > 64 ||
+				row.profiles.some((id) => typeof id !== "string" || !profiles.has(id)) ||
+				new Set(row.profiles).size !== row.profiles.length
+			)
+				throw new Error("Invalid context source identity, profile selection or renderer");
+			ids.add(row.id);
+			// The callback slot is host code; data and registry membership are copied before storage opens.
+			const render = row.render;
+			return Object.freeze({
+				id: row.id,
+				version: Number(row.version),
+				profiles: Object.freeze([...row.profiles]),
+				render: (input: Parameters<RuntimeContextSource["render"]>[0]) => render(input),
+			});
+		}),
+	);
+}
+function profileHash(
+	options: HostOptions,
+	contextSources: readonly RuntimeContextSource[],
+	profileId: string,
+): string {
+	const selected = contextSources.filter((source) => source.profiles.includes(profileId));
 	return hash({
 		endpoint: options.endpoint,
 		model: options.model,
 		cwd: resolve(options.cwd),
 		systemPrompt: options.systemPrompt ?? "",
+		...(selected.length ? { contextSources: selected.map(({ id, version }) => ({ id, version })) } : {}),
 		tools: (options.tools ?? []).map(({ name, description, parameters }) => ({
 			name,
 			description,
@@ -711,7 +758,7 @@ export class DurableAdapter {
 		control: AdapterControl,
 		managedOptions?: Pick<
 			RuntimeOptions,
-			"limits" | "profiles" | "migrateLegacy" | "reservedSessionId" | "jobs"
+			"limits" | "profiles" | "migrateLegacy" | "reservedSessionId" | "jobs" | "contextSources"
 		>,
 	): Promise<DurableAdapter> {
 		const profiles = new Map<string, HostOptions>([["default", profileOptions(options)]]);
@@ -731,6 +778,7 @@ export class DurableAdapter {
 				profiles.set(profile.id, profileOptions(options, profile));
 			}
 		}
+		const contextSources = prepareContextSources(managedOptions?.contextSources, profiles);
 		const modelKeys = new Set<string>();
 		for (const model of options.inference?.models ?? []) {
 			if (
@@ -994,7 +1042,7 @@ export class DurableAdapter {
 						state.sessionId = sessionId;
 						state.limits = { ...managedOptions.limits };
 						state.profiles = Object.fromEntries(
-							[...profiles].map(([id, profile]) => [id, profileHash(profile)]),
+							[...profiles].map(([id, profile]) => [id, profileHash(profile, contextSources, id)]),
 						);
 						state.conversationCount = 1;
 						state.budget = { primaryAttempts, auxiliaryAttempts: journals.auxiliaryAttempts };
@@ -1034,7 +1082,7 @@ export class DurableAdapter {
 								state.sessionId = sessionId;
 								state.limits = { ...managedOptions.limits };
 								state.profiles = Object.fromEntries(
-									[...profiles].map(([id, profile]) => [id, profileHash(profile)]),
+									[...profiles].map(([id, profile]) => [id, profileHash(profile, contextSources, id)]),
 								);
 								state.conversationCount = 1;
 								state.resources.root = {
@@ -1053,7 +1101,9 @@ export class DurableAdapter {
 				? await harness.snapshot(RuntimeDoc, BACKGROUND_CONTEXT)
 				: undefined;
 			if (managedOptions) {
-				const expected = Object.fromEntries([...profiles].map(([id, profile]) => [id, profileHash(profile)]));
+				const expected = Object.fromEntries(
+					[...profiles].map(([id, profile]) => [id, profileHash(profile, contextSources, id)]),
+				);
 				if (
 					!savedRuntime ||
 					savedRuntime.sessionId !== sessionId ||
@@ -1104,8 +1154,17 @@ export class DurableAdapter {
 			adapter.#registry = registry;
 			routes.set(conversation.id, adapter);
 			if (managedOptions) {
-				const hashes = Object.fromEntries([...profiles].map(([id, profile]) => [id, profileHash(profile)]));
-				adapter.#managed = { profiles, profileHashes: hashes, jobTasks, state: savedRuntime!, closed: false };
+				const hashes = Object.fromEntries(
+					[...profiles].map(([id, profile]) => [id, profileHash(profile, contextSources, id)]),
+				);
+				adapter.#managed = {
+					profiles,
+					profileHashes: hashes,
+					contextSources,
+					jobTasks,
+					state: savedRuntime!,
+					closed: false,
+				};
 				adapter.#managed.unsubscribe = harness.subscribeCommits((publication) => {
 					for (const change of publication.changes)
 						if (change.type === "document" && change.record.kind === "pakka.runtime" && change.value)
@@ -1208,10 +1267,74 @@ export class DurableAdapter {
 							const permitted = await adapter.#control.project(context.abortSignal);
 							permitted.check();
 							if ("block" in permitted) return { block: permitted.block };
+							const checks: (() => void)[] = [permitted.check];
+							const sections: Record<string, string> = {};
+							let chars = 0;
+							for (const source of adapter.#managed?.contextSources ?? []) {
+								if (!source.profiles.includes(profile)) continue;
+								const target = Object.values(adapter.#managedReady().state.resources).find(
+									(ref) => ref.conversationId === String(api.conversationId),
+								);
+								if (!target) throw new Error("Context Conversation is unavailable");
+								const ref = copy(target),
+									currentAdapter = adapter;
+								const check = () => {
+									currentAdapter.#validateReference(ref);
+									if (context.abortSignal?.aborted) throw new Error("Context preparation aborted");
+								};
+								check();
+								let result: unknown;
+								try {
+									result = await source.render(Object.freeze({ target: ref, signal: context.abortSignal }));
+								} catch {
+									throw new Error("Context source unavailable");
+								}
+								if (!result || typeof result !== "object" || Array.isArray(result))
+									throw new Error("Invalid context source result");
+								const value = result as Record<string, unknown>;
+								if (
+									Object.keys(value).some((key) => !["text", "check"].includes(key)) ||
+									typeof value.check !== "function" ||
+									(value.text !== null &&
+										(typeof value.text !== "string" ||
+											value.text.length > 32768 ||
+											/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/.test(value.text)))
+								)
+									throw new Error("Invalid bounded context source result");
+								const sourceCheck = value.check;
+								const live = () => {
+									check();
+									let checked: unknown;
+									try {
+										checked = sourceCheck();
+									} catch {
+										throw new Error("Context validity unavailable");
+									}
+									if (checked !== undefined) {
+										// Consume a rejected async guard while refusing dispatch; a void callback is not an awaitable permission.
+										void Promise.resolve(checked).catch(() => {});
+										throw new Error("Context validity check must finish synchronously");
+									}
+								};
+								live();
+								checks.push(live);
+								if (typeof value.text === "string") {
+									chars += value.text.length;
+									if (chars > 65536) throw new Error("Context contribution capacity exhausted");
+									sections["pakka.context." + source.id] = value.text;
+								}
+							}
+							const check = () => {
+								for (const current of checks) current();
+							};
+							check();
 							if (!(await adapter.#reserveAttempt("primary")))
 								return { block: "Session primary attempt budget exhausted" };
-							permitted.check();
-							return { messages: clean<Message[]>(permitted.messages), check: permitted.check };
+							check();
+							const messages = clean<Message[]>(permitted.messages);
+							if (Object.keys(sections).length)
+								messages.push({ role: "system", content: "", sections, timestamp: Date.now() });
+							return { messages, check };
 						} catch (error) {
 							const failure = error instanceof Error ? error : new Error(String(error));
 							adapter?.markFailed(failure);

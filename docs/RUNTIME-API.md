@@ -49,6 +49,16 @@ Pakka-Pocket 保留宿主已有 resolver 作为初始来源，仅全局管理员
 
 `runtime.profileChoices()` 只向受信任宿主返回冻结的 `{ id, model }[]`，不包含 instructions、工具代码或密钥。人类 API 在它之上按当前 profile ceiling 过滤；该列表本身不是授予配置权限。
 
+## 受信任的当前上下文贡献（P5 开发快照）
+
+`RuntimeOptions.contextSources` 接受宿主明确选择的 `RuntimeContextSource[]`。每个来源声明稳定的 `id`、正整数 `version` 和获准的 `profiles`；只有所选 profile 的主请求调用它。注册表在打开 storage 前复制并验证，来源身份参与这些 profile 的持久身份，正常重开拒绝未确认的定义替换。更改 renderer 实现时，宿主应显式更改定义版本。
+
+`render({ target, signal })` 接收冻结的精确 `ConversationRef` 与取消信号，可以异步读取宿主服务，返回 `{ text, check }`。`text: null` 明确省略本次贡献；单源最多 32768 个 UTF-16 code units，全部来源合计最多 65536。`check()` 必须同步完成并返回 `undefined`，重新校验读取时捕获的状态；异步/thenable 返回、额外结果字段、非法文本或私密来源错误都阻止实际 provider dispatch。检查覆盖异步凭据解析之后的效果边界；已准备的 attempt 不因迟到失效退还。
+
+这些文本只装入当前主请求的临时 system sections，不改写 raw Conversation history，也不成为永久重放的 instructions。历史中的用户内容或真实工具结果仍保留原始含义。调用方不会取得 Pi Harness、Conversation、Tx、provider 凭据或可伪造的原生 scope。通过原有公开准备 callback 保留既有的权限、projection、receipt 与配额检查。
+
+可选 memory 的真实消费见 [`consumer-pocket-memory.mjs`](../scripts/consumer-pocket-memory.mjs)：`createPocketMemory()` 分别提供 `.tools`、`.source` 和 `.attach()`；宿主在 Runtime 里显式选择前两者，并在首次工作前绑定受控服务。只安装 Backend/Client/WebUI 不会自动安装工具或来源。项目范围、人类审批与恢复语义见 [P5 阶段记录](PAKKA-POCKET-P5.md)。
+
 ## 身份、作用域与 journal
 
 - `sessionId` 保留现有 Pakka storage/provenance ID 的含义；`durableSessionId` 显式指向同一存储域。

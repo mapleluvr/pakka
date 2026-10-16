@@ -112,6 +112,21 @@ export default {
 
 本批最终构建、类型、公开声明与代码格式通过，定向 **33/33**、全量 **437/437**（无 fail/skip/cancel/todo）及全部实际安装消费者通过；435 个冻结源码/helper/TLS 文件 SHA 在定向、全量与安装阶段保持一致。新安装归档的实际 CLI 消费者验证 **2 次 provider HTTP、2 次已消费额度**、正常重开、原请求只读核对，以及移除 WebUI facet 后原 native job 继续工作。8 个实际归档与 lock integrity 逐一匹配，另保存 native storage、provider payload、原生投递回执和消费脚本 SHA。Task 4.4 的实际插件长任务消费已完成，6.5 的完整产品恢复仍随其余工作流继续验收。重开初次失败的原存储已保留：任务实际按 305 秒延迟等待，夹具填写顺序修正并在提交前断言精确值 5，不改生产延时或恢复规则。日志、red/green、native journals、桌面/手机截图与最终交付归档放在 `artifacts/pakka-pocket/p5/automation/`。其余可选界面、真实通知点击、部署与 P6 仍未完成。
 
+## 项目记忆与独立 Agent 贡献（6.4 部分完成）
+
+固定上游 `de612d5622cd` 的 `web/sheets/memory.js`、`src/server/memory.ts` 和 `src/server/extensions/memory.ts` 在本批分别映射到普通 Memory 面板、受控持久服务和宿主显式选择的原生工具/当前上下文来源。项目由宿主批准的 Conversation key/ID 集合定义；请求不选择目录、作者、成员归属或原生 scope，也不接回原 PiP 控制面。`resources: "*"` 只用于单一项目的当前产品 Session。
+
+- `createPocketMemory({ namespace, profiles, projects })` 从 `@pakka/server/pocket` 提供相互独立的 `.tools`、`.source` 和 `.attach()`。`workspaceMemoryService(context, prepared)` 与 `workspaceMemoryExtensionRoot` 从 `@pakka/webui/workflows` 装配普通 Backend/Client/WebUI 插槽。仅启用人类 facet 不宣告工具，也不自动注入内容。
+- 当前上下文来源走 [Runtime 公共端口](RUNTIME-API.md)，只取得冻结的精确 reference 与取消信号，在真实 provider dispatch 前重验已读版本。项目 A/B 的已批准内容隔离，global 记录只属于当前产品 Session；source 定义身份与固定 profile 集合一起校验重开。
+- sender 和真实模型工具只能提出待审批的新记忆、更新或遗忘；全局管理员的明确操作才改变获准内容。待审批更新保留原已批准文本，待审批删除仍保留原内容。只读 viewer 看不到他人的未批准提议，也不能写入；模型不能指定人类作者或伪造 invocation。
+- 每条文本最多 300 个 UTF-16 code units，项目/global 分别最多 40/30 条，未批准提议最多 20 条；已保留记录和 mutation ledger 分别有限额 256/512。编辑、审批和遗忘带精确 `expectedVersion`。冲突保留获胜版本和当前面板的本地草稿，状态刷新及审批分组移动不会清空编辑。
+- `enabled` 是已安装来源的自动注入开关，界面显示允许/暂停；它不会安装 Agent facet。暂停保留记忆、提议与原生历史，只省略后续请求的当前记忆贡献。历史中的真实工具结果照常保留，不把省略当前 system 文本称作删除历史。
+- 写入绑定 actor/resource/request。浏览器丢响应和后端提交后抛错都通过原操作只读核对；界面重开不再进入写 handler。已准备的 attempt、损坏/不明状态及未确认操作继续遵守封闭规则，不推断回滚或退还额度。
+
+本批最终定向 **38/38**、全量 **464/464**（无 fail/skip/cancel/todo），构建、类型、独立公开声明和代码格式均通过，10 个关键路径主动诊断清零；450 个冻结源码/helper/TLS 文件在定向、全量和实际安装前后 SHA 一致。完整 `smoke:package` 的全部消费者通过，8 个实际归档逐一匹配 lock integrity 并保存到 `artifacts/pakka-pocket/p5/memory/delivery/`。新归档的实际 CLI 驱动原生 `memory` 工具提议、审批、暂停、profile 切换、两次正常重开和移除 WebUI，核对 **5 次模型 HTTP、5 次已消费额度、1 次原生工具结果**，原写入未重放且记录保留。重开验收用 Chrome 原生 `Page.reload` 并核对 `timeOrigin`，不把 hash 导航当作新页面；旧页面跨服务重启的重连留给 P6 独立验证。
+
+首次安装在既有文件/协作消费者登录前曾遇到 8 秒启动等待超时，页面停在 `Starting Pakka-Pocket`，原因未确认。同一失败归档加被动 CDP 诊断后连续 3 次通过；恢复原始驱动、生产与测试源码均未改的新一轮完整安装也通过，不能称为启动问题已修复。失败日志、诊断 driver/runner、8 个失败归档及其 SHA 独立保留在 `failed-install/`，P6 继续复查。其余 red/green、实际 provider payload、Runtime 视图、原生存储、桌面/手机截图和最终门禁位于 `artifacts/pakka-pocket/p5/memory/`。其余可选界面、部署及 P6 仍未完成。
+
 ## 7. 当前可执行证据
 
 | 主体                                                    | 证据                                                                                  |
@@ -147,6 +162,8 @@ export default {
 设置补充用例为 `apps/server/test/pocket-configuration.test.ts`、`pocket-credentials.test.ts`、`pocket-credentials-boundaries.test.ts`，协议/client 的 configuration/credentials 用例，以及 `apps/webui/test/configuration-browser.test.ts`、`configuration-recovery.test.ts`、`credentials-http.test.ts`、`credentials-browser.test.ts`。它们分别核对真实持久状态、HTTP 身份与反关联、provider Authorization、实际界面/迟到读取和丢响应，不以 schema 通过替代功能证据。
 
 计划输入补充用例为 `apps/server/test/pocket-schedules.test.ts`、`pocket-schedules-boundaries.test.ts`、`pocket-schedules-persistence.test.ts`、`apps/webui/test/schedules-browser.test.ts`、`schedules-recovery.test.ts`、`packages/agent/test/runtime-backend-job-progress.test.ts` 和实际 CLI 消费者 `scripts/consumer-pocket-schedules.mjs`。原生 progress 反例是直接执行真实 Durable 程序，准入状态反例则在真实原生准入/HTTP 后受控丢失确认视图：后者证明分类与停止后续周期，不称为真实磁盘断电实验。
+
+Memory 补充用例为 `packages/agent/test/runtime-context.test.ts`、`runtime-context-boundaries.test.ts`、`apps/server/test/pocket-memory.test.ts`、`pocket-memory-boundaries.test.ts`、`pocket-memory-native.test.ts`、`pocket-memory-native-changes.test.ts`、`apps/webui/test/memory-browser.test.ts`、`memory-recovery.test.ts` 与实际 CLI 消费者 `scripts/consumer-pocket-memory.mjs`。未知结果恢复分别覆盖浏览器已消费响应后断连和真实写入后受控抛错；它们不称为断电实验。
 
 ## 8. 不应混同的证据
 

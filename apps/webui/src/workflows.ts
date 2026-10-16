@@ -11,6 +11,8 @@ import {
 	type PocketSchedule,
 	type PocketScheduleInput,
 	type PocketSchedulesPreparation,
+	type PocketMemoryPreparation,
+	type PocketMemoryClient,
 } from "@pakka/server/pocket";
 import type { ConversationRef } from "@pakka/agent";
 import type { ExtensionService, PocketServiceContext } from "./backend.ts";
@@ -22,6 +24,25 @@ export type WorkspaceFilesClient = {
 	readonly [K in keyof PocketFilesClient]: BoundMethod<PocketFilesClient[K]>;
 };
 export const workspaceFilesExtensionRoot = fileURLToPath(new URL("../contributions/files/", import.meta.url));
+
+export const workspaceMemoryExtensionRoot = fileURLToPath(
+	new URL("../contributions/memory/", import.meta.url),
+);
+/** Ordinary service slot: current actor and exact resource are bound before every memory command. */
+export async function workspaceMemoryService(
+	context: PocketServiceContext,
+	prepared: PocketMemoryPreparation,
+): Promise<ExtensionService<PocketMemoryClient>> {
+	const memory = await prepared.attach(context);
+	const service: ExtensionService<PocketMemoryClient> = {
+		permission: "read",
+		bind(actor, target, check) {
+			if (!target) throw Error("Memory requires a current Conversation");
+			return memory.bind(actor, target, check);
+		},
+	};
+	return Object.freeze(service);
+}
 
 export type WorkspaceSchedule = Omit<PocketSchedule, "target">;
 export interface WorkspaceSchedulesClient {

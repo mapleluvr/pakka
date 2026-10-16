@@ -1,0 +1,91 @@
+.workspace-memory {
+	max-width: 900px;
+	margin: 0 auto;
+	min-width: 0;
+	overflow-wrap: anywhere;
+	padding: 1rem;
+}
+.workspace-memory header {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.75rem;
+	align-items: center;
+	justify-content: space-between;
+}
+.workspace-memory p {
+	line-height: 1.6;
+}
+.memory-compose {
+	display: grid;
+	gap: 0.75rem;
+	padding: 1rem 0;
+}
+.workspace-memory textarea {
+	box-sizing: border-box;
+	display: block;
+	width: 100%;
+	min-height: 5rem;
+	resize: vertical;
+	padding: 0.75rem;
+	border: 1px solid var(--line);
+	border-radius: 0.5rem;
+	background: var(--panel);
+	color: inherit;
+	font: inherit;
+}
+.workspace-memory select {
+	padding: 0.5rem;
+	background: var(--panel);
+	color: inherit;
+	border: 1px solid var(--line);
+	border-radius: 0.5rem;
+}
+.memory-row {
+	min-width: 0;
+	border-top: 1px solid var(--line);
+	padding: 1rem 0;
+}
+.memory-row blockquote {
+	margin: 1rem 0;
+	padding: 0.75rem;
+	border-left: 3px solid var(--accent);
+	background: var(--panel);
+}
+.memory-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+	margin-top: 0.75rem;
+}
+.memory-meta {
+	color: var(--muted);
+	font-size: 0.875rem;
+}
+.memory-state {
+	font-size: 0.8rem;
+	padding: 0.25rem 0.5rem;
+	border: 1px solid var(--line);
+	border-radius: 999px;
+}
+.memory-row label {
+	display: block;
+	margin: 0.5rem 0;
+}
+.memory-readonly {
+	color: var(--muted);
+}
+@media (max-width: 600px) {
+	.workspace-memory {
+		padding: 0.75rem;
+	}
+	.memory-compose .memory-actions > * {
+		flex: 1;
+		min-width: 0;
+	}
+	.memory-row header {
+		align-items: flex-start;
+	}
+	.workspace-memory textarea {
+		font-size: 16px;
+	}
+}

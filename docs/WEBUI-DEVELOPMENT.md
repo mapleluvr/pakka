@@ -81,6 +81,7 @@ Card 是显示记录，不是偷偷添加 system/user message。必须用下一�
 - 实际 public SDK 的 `ExtensionClient.operationByRequest({ extension, requestId, target })` 可在丢失 host operation ID 时只读查询原请求；服务端绑定当前 person 和精确 AgentRef，并在发布前重查原权限。`UIContext.operationByRequest(requestId)` 另绑定当前 open instance。
 - 外层 operation 已记录 `done` 不证明内层 job/browser/native effect 已完成；内层仍为 `unknown` 时必须保留待确认身份，不解锁重复效果。
 - 明确 pre-effect guard 的拒绝可报 denied；opaque callback 可能已有效果，其异常/断连/超时保持 unknown。不要解析报错文本推断 rollback。
+- Memory 是相同插槽的另一实际消费者：`workspaceMemoryService`/`workspaceMemoryExtensionRoot` 绑定当前人类与精确资源；宿主分别选择 `createPocketMemory().tools` 与 `.source`。人类界面不自动激活 Agent 能力；记忆审批、版本冲突、暂停与原操作核对见 [P5 阶段记录](PAKKA-POCKET-P5.md)。
 - 不把 metadata 写和 native Durable effect 称为跨存储原子提交。保留各自 operation/receipt 与不确定状态。
 
 ## 7. 多人可见性与私密数据

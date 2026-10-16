@@ -313,12 +313,29 @@ export interface JournalMigration {
 		readonly prefixSha256: string;
 	}[];
 }
+export interface RuntimeContextValue {
+	/** Current text only; null explicitly omits this contribution for the next request. */
+	readonly text: string | null;
+	/** Revalidate captured state at actual provider dispatch, including after asynchronous credential resolution. */
+	check(): void;
+}
+export interface RuntimeContextSource {
+	readonly id: string;
+	readonly version: number;
+	/** Explicit approved profile selection; no implicit activation by a WebUI facet. */
+	readonly profiles: readonly string[];
+	render(
+		input: Readonly<{ target: ConversationRef; signal: AbortSignal | undefined }>,
+	): RuntimeContextValue | Promise<RuntimeContextValue>;
+}
 export interface RuntimeOptions extends HostOptions {
 	readonly limits: RuntimeLimits;
 	/** Trusted UUID for create-once storage placement; an existing directory requires explicit reopen. */
 	readonly reservedSessionId?: string;
 	/** Additional bootstrap-approved profiles; default inherits HostOptions. */
 	readonly profiles?: readonly ConversationProfile[];
+	/** Trusted named/versioned context contributions; no native objects cross this callback. */
+	readonly contextSources?: readonly RuntimeContextSource[];
 	/** Trusted, named/versioned backend programs; native objects never leave the adapter. */
 	readonly jobs?: readonly RuntimeJobDefinition[];
 	/** Opt-in mapping of a closed, provably single-Conversation legacy storage; never bulk import. */

@@ -1,4 +1,18 @@
 /** Host composition APIs for the Pocket product. Imports allocate no identities, writers or listeners. */
+export { createPocketMemory } from "./pocket-memory.js";
+export type {
+	PocketMemory,
+	PocketMemoryPreparation,
+	PocketMemoryContext,
+	PocketMemoryProject,
+	PocketMemoryView,
+	PocketMemoryLesson,
+	PocketMemoryProposal,
+	PocketMemoryMutation,
+	PocketMemoryAdd,
+	PocketMemoryChange,
+	PocketMemoryClient,
+} from "./pocket-memory.js";
 export { createPocketSchedules } from "./pocket-schedules.js";
 export type {
 	PocketSchedule,

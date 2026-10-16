@@ -161,6 +161,9 @@ export async function ownedBrowser(dir: string, options: { readonly push?: boole
 				navigate: async (target: string) => {
 					await call("Page.navigate", { url: target }, id);
 				},
+				reload: async () => {
+					await call("Page.reload", {}, id);
+				},
 				type: async (selector: string, text: string) => {
 					await evaluate("document.querySelector(" + JSON.stringify(selector) + ").focus()");
 					await call("Input.insertText", { text }, id);
