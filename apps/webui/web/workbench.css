@@ -426,6 +426,44 @@
 	font-size: 0.7rem;
 	color: var(--accent);
 }
+.pocket-configuration form,
+.pocket-configuration label {
+	display: grid;
+	gap: 12px;
+}
+.pocket-configuration select,
+.pocket-configuration input {
+	width: 100%;
+	min-width: 0;
+	padding: 10px;
+	background: var(--card);
+	color: var(--body);
+	border: 1px solid var(--line-strong);
+	font: inherit;
+}
+.pocket-configuration button {
+	min-height: 44px;
+}
+.pocket-configuration section {
+	border-top: 1px solid var(--line);
+	padding-top: 12px;
+}
+.pocket-configuration h3 {
+	font-size: 0.9rem;
+}
+.pocket-configuration dl {
+	margin: 0;
+}
+.pocket-configuration dl > div {
+	display: flex;
+	gap: 14px;
+	justify-content: space-between;
+	padding: 5px 0;
+}
+.pocket-configuration dd {
+	margin: 0;
+	overflow-wrap: anywhere;
+}
 @media (prefers-reduced-motion: reduce) {
 	.pocket-workbench *,
 	.pocket-signin * {

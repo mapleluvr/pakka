@@ -52,6 +52,25 @@ export function pocketBrowserOnly(endpoint: string, csrf: () => string | null, r
 	return { read: client.request(command), decoded, check, decodePocketResponse };
 }
 
+export async function privateConfigurationBrowser(endpoint: string, csrf: () => string | null) {
+	const client = createPocketClient({ endpoint, csrf });
+	const value = await client.request({ op: "credential.status" });
+	if (value.kind !== "credential") throw new Error("Unexpected private configuration response");
+	// @ts-expect-error Public credential status does not return the saved secret.
+	void value.status.secret;
+	void client.request({
+		op: "credential.replace",
+		input: {
+			requestId: "replace",
+			expectedVersion: value.status.version,
+			secret: "synthetic",
+			// @ts-expect-error A private configuration command cannot change the provider endpoint.
+			endpoint: "https://forged.invalid",
+		},
+	});
+	return value.status.configured;
+}
+
 export function browserOnly(endpoint: string, token: string, ref: AgentRef) {
 	const options: ClientOptions = { endpoint, token };
 	const client = createClient(options);

@@ -7,6 +7,8 @@ import {
 	createPocketPeople,
 	createPocketWorkspace,
 	createPocketCollaboration,
+	createPocketCredentials,
+	type PocketCredentials,
 	type PocketSession,
 } from "@pakka/server/pocket";
 import { createPocketHttp, type PocketHttpOptions } from "./http.ts";
@@ -27,7 +29,7 @@ export interface PocketProductOptions {
 		  ) => Readonly<Record<string, ExtensionService>> | Promise<Readonly<Record<string, ExtensionService>>>);
 	readonly transport?: Omit<
 		PocketHttpOptions,
-		"runtime" | "people" | "workspace" | "collaboration" | "assets" | "extensions"
+		"runtime" | "people" | "workspace" | "collaboration" | "credentials" | "assets" | "extensions"
 	>;
 }
 const types: Readonly<Record<string, string>> = {
@@ -114,7 +116,15 @@ export async function startPocket(options: PocketProductOptions) {
 	)
 		throw new Error("Invalid approved Pocket product configuration");
 	const assets = await publicAssets();
-	const runtime = await createRuntime(options.runtime);
+	const bootstrapCredential = options.runtime.resolveApiKey ?? (() => options.runtime.apiKey);
+	let credentials: PocketCredentials | undefined;
+	const runtime = await createRuntime({
+		...options.runtime,
+		resolveApiKey: async () => {
+			if (!credentials) throw new Error("Private configuration is not yet bound");
+			return credentials.resolve();
+		},
+	});
 	let http: Awaited<ReturnType<typeof createPocketHttp>> | undefined,
 		services: Readonly<Record<string, ExtensionService>> | undefined,
 		servicesDisposed = false;
@@ -141,6 +151,12 @@ export async function startPocket(options: PocketProductOptions) {
 				profileCeiling: () => profiles,
 				beforeInput: (actor, ref) => collaboration.checkInput(actor, ref),
 			});
+		credentials = await createPocketCredentials({
+			runtime,
+			people,
+			namespace: "pocket.credentials",
+			bootstrap: bootstrapCredential,
+		});
 		const store = runtime.store({ namespace: "pocket.bootstrap", maxBytes: 65536 }),
 			saved = await store.snapshot();
 		const fingerprint = createHash("sha256")
@@ -209,6 +225,7 @@ export async function startPocket(options: PocketProductOptions) {
 			people,
 			workspace,
 			collaboration,
+			credentials,
 			extensions,
 			assets,
 		});

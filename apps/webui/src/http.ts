@@ -17,7 +17,12 @@ import {
 } from "@pakka/protocol/pocket";
 import { identity } from "@pakka/protocol";
 import QRCode from "qrcode";
-import { PocketCollaborationConflict, type PocketCollaboration } from "@pakka/server/pocket";
+import {
+	PocketCollaborationConflict,
+	PocketCredentialConflict,
+	type PocketCollaboration,
+	type PocketCredentials,
+} from "@pakka/server/pocket";
 import type { PocketCommand, PocketErrorCode } from "@pakka/protocol/pocket";
 import type { ExtensionHost } from "./backend.ts";
 import { ExtensionRefusal } from "./extension-host.ts";
@@ -29,6 +34,7 @@ export interface PocketHttpOptions {
 	readonly people: PocketPeople;
 	readonly workspace: PocketWorkspace;
 	readonly collaboration?: PocketCollaboration;
+	readonly credentials?: PocketCredentials;
 	readonly host?: string;
 	readonly port?: number;
 	readonly publicOrigin?: string;
@@ -228,6 +234,7 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 	function preflight(a: PocketAuthority, command: PocketCommand) {
 		let permission: PocketPermission | undefined, resource: string | undefined;
 		switch (command.op) {
+			case "configuration":
 			case "read":
 				permission = "read";
 				resource = command.target.conversationId;
@@ -264,6 +271,11 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 			case "create":
 			case "fork":
 				permission = "create";
+				break;
+			case "credential.status":
+			case "credential.replace":
+			case "credential.clear":
+				permission = "extensions.install";
 				break;
 			case "invite":
 			case "invite.revoke":
@@ -342,6 +354,28 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 					conversations: rows.map((row) => row.ref),
 					titles: Object.fromEntries(rows.map((row) => [row.ref.conversationId, row.name])),
 				};
+			}
+			case "configuration":
+				return { kind: "configuration", configuration: await client.configuration(command.target) };
+			case "credential.status":
+			case "credential.replace":
+			case "credential.clear": {
+				if (!options.credentials) throw new Refusal(404, "UNSUPPORTED", true);
+				const privateClient = options.credentials.bind(a, () => {
+					if (signal.aborted) throw new Error("Private configuration request ended");
+				});
+				try {
+					const status =
+						command.op === "credential.status"
+							? await privateClient.status()
+							: command.op === "credential.replace"
+								? await privateClient.replace(command.input)
+								: await privateClient.clear(command.input);
+					return { kind: "credential", status };
+				} catch (failure) {
+					if (failure instanceof PocketCredentialConflict) throw new Refusal(409, "CONFLICT", true);
+					throw failure;
+				}
 			}
 			case "create":
 				return {
@@ -503,7 +537,10 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 								result = { kind: "registrations", registrations: extensions.list(a, command.target) };
 								break;
 							case "operationByRequest":
-								result = { kind: "operation", operation: await extensions.operationByRequest(a, command.request) };
+								result = {
+									kind: "operation",
+									operation: await extensions.operationByRequest(a, command.request),
+								};
 								break;
 							case "operation":
 								result = { kind: "operation", operation: await extensions.operation(a, command.id) };

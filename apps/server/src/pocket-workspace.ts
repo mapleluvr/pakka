@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import type {
 	Runtime,
+	RuntimeView,
 	CatalogOptions,
 	ConversationRef,
 	ConversationReadOptions,
@@ -33,7 +34,16 @@ export interface PocketInputReceipt {
 	readonly status: DeliveryReceipt["status"];
 	readonly entryId?: string;
 }
+export interface PocketConfiguration {
+	readonly ref: ConversationRef;
+	readonly choices: readonly { readonly id: string; readonly model: string }[];
+	readonly canConfigure: boolean;
+	readonly usage: ConversationSnapshot["usage"];
+	/** Session totals are visible only to a global admin, never inferred from a single visible Conversation. */
+	readonly session: { readonly limits: RuntimeView["limits"]; readonly budget: RuntimeView["budget"] } | null;
+}
 export interface PocketWorkspaceClient {
+	configuration(ref: ConversationRef): Promise<PocketConfiguration>;
 	list(): Promise<readonly ConversationRef[]>;
 	navigation(): Promise<readonly { readonly ref: ConversationRef; readonly name: string }[]>;
 	create(input: PocketCreate): Promise<ConversationRef>;
@@ -243,6 +253,30 @@ export function createPocketWorkspace(options: PocketWorkspaceOptions): PocketWo
 			return Object.freeze({
 				list: async () => frozen((await navigation()).map((row) => row.ref)),
 				navigation,
+				configuration: async (raw: ConversationRef): Promise<PocketConfiguration> => {
+					const ref = structuredClone(raw),
+						authorize = () => check("read", ref);
+					authorize();
+					await member(ref, authorize);
+					const snapshot = await runtime.readConversation(ref, authorize, { limit: 1 });
+					const person = current(),
+						ceiling = options.profileCeiling(person);
+					if (!Array.isArray(ceiling) || ceiling.length > 64 || !ceiling.every(key))
+						throw new Error("Invalid profile ceiling");
+					const choices = runtime.profileChoices().filter((row) => ceiling.includes(row.id));
+					const view = runtime.view();
+					authorize();
+					return frozen({
+						ref,
+						choices,
+						canConfigure: ["admin", "driver"].includes(person.role),
+						usage: snapshot.usage,
+						session:
+							person.role === "admin" && person.resources === "*"
+								? { limits: view.limits, budget: view.budget }
+								: null,
+					});
+				},
 				create: (input: PocketCreate) => create(input),
 				fork: (ref: ConversationRef, input: PocketFork) => create(input, ref, input.entryId),
 				configure: (raw: ConversationRef, profile: string) =>

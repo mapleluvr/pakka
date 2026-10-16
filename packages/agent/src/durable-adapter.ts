@@ -261,6 +261,7 @@ interface ManagedState {
 /** Internal pure-command seam. Never exports a Harness, Session, registry or Tx. */
 export interface ManagedAdapterPort {
 	view(): RuntimeView;
+	profileChoices(): readonly { readonly id: string; readonly model: string }[];
 	profileOptions(id: string): HostOptions;
 	validateReference(ref: ConversationRef): void;
 	createConversation(spec: ConversationSpec): Promise<ConversationRef>;
@@ -834,9 +835,21 @@ export class DurableAdapter {
 					auth: {
 						apiKey: {
 							name: "Main API Key",
-							resolve: async () => ({
-								auth: { apiKey: mainApiKey, baseUrl: options.endpoint },
-							}),
+							resolve: async () => {
+								try {
+									const apiKey = options.resolveApiKey ? await options.resolveApiKey() : mainApiKey;
+									if (
+										typeof apiKey !== "string" ||
+										!apiKey ||
+										apiKey.length > 4096 ||
+										/[\x00-\x1f\x7f]/.test(apiKey)
+									)
+										throw new Error("Unavailable credential");
+									return { auth: { apiKey, baseUrl: options.endpoint } };
+								} catch {
+									throw new Error("Configured provider credential unavailable");
+								}
+							},
 						},
 					},
 					api: { "openai-completions": oac },
@@ -1250,6 +1263,8 @@ export class DurableAdapter {
 					...(managed.failure ? { lastError: managed.failure } : {}),
 				});
 			},
+			profileChoices: () =>
+				copy([...this.#managedReady().profiles].map(([id, profile]) => ({ id, model: profile.model }))),
 			profileOptions: (id: string) => {
 				const profile = this.#managedReady().profiles.get(id);
 				if (!profile) throw new Error("Unapproved runtime profile");

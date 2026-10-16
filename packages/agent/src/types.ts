@@ -524,6 +524,8 @@ export interface RuntimeStore {
 export interface Runtime {
 	root(): Host;
 	view(): RuntimeView;
+	/** Host-only public metadata; contains no credentials, instructions or tool code. */
+	profileChoices(): readonly { readonly id: string; readonly model: string }[];
 	createConversation(spec: ConversationSpec): Promise<ConversationRef>;
 	catalog(options: CatalogOptions): RuntimeCatalog;
 	store(options: RuntimeStoreOptions): RuntimeStore;
@@ -547,6 +549,8 @@ export interface HostOptions {
 	endpoint: string;
 	model: string;
 	apiKey: string;
+	/** Optional trusted host source. Called for each future primary credential resolution; no ambient credential discovery. */
+	resolveApiKey?: () => string | Promise<string>;
 	systemPrompt?: string;
 	steeringMode?: "all" | "one-at-a-time";
 	/** Explicit trusted reopen of a session created under this dataDir. Never falls back to new. */

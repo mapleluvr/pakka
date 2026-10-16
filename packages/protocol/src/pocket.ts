@@ -81,6 +81,24 @@ export interface PocketSnapshot {
 		readonly cost: number | null;
 	};
 }
+export interface PocketConfiguration {
+	readonly ref: AgentRef;
+	readonly choices: readonly { readonly id: string; readonly model: string }[];
+	readonly canConfigure: boolean;
+	readonly usage: PocketSnapshot["usage"];
+	readonly session: {
+		readonly limits: {
+			readonly maxConversations: number;
+			readonly maxPrimaryAttempts: number;
+			readonly maxAuxiliaryAttempts: number;
+		};
+		readonly budget: { readonly primaryAttempts: number; readonly auxiliaryAttempts: number };
+	} | null;
+}
+export interface PocketCredentialStatus {
+	readonly version: number;
+	readonly configured: boolean;
+}
 export interface PocketInputReceipt {
 	readonly id: string;
 	readonly requestId: string;
@@ -166,6 +184,20 @@ export type PocketCollaborationCommand =
 	  };
 export type PocketCommand =
 	| PocketCollaborationCommand
+	| { readonly op: "configuration"; readonly target: AgentRef }
+	| { readonly op: "credential.status" }
+	| {
+			readonly op: "credential.replace";
+			readonly input: {
+				readonly requestId: string;
+				readonly expectedVersion: number;
+				readonly secret: string;
+			};
+	  }
+	| {
+			readonly op: "credential.clear";
+			readonly input: { readonly requestId: string; readonly expectedVersion: number };
+	  }
 	| { readonly op: "hello" | "list" | "people" | "session.rotate" | "session.logout" }
 	| { readonly op: "create"; readonly requestId: string; readonly name: string; readonly profile: string }
 	| { readonly op: "configure"; readonly target: AgentRef; readonly profile: string }
@@ -233,6 +265,8 @@ export type PocketResult =
 			readonly titles?: Readonly<Record<string, string>>;
 	  }
 	| { readonly kind: "reference"; readonly ref: AgentRef }
+	| { readonly kind: "configuration"; readonly configuration: PocketConfiguration }
+	| { readonly kind: "credential"; readonly status: PocketCredentialStatus }
 	| { readonly kind: "collaboration"; readonly snapshot: PocketCollaborationView }
 	| { readonly kind: "conversation"; readonly snapshot: PocketSnapshot }
 	| {
@@ -436,6 +470,42 @@ function snapshot(v: unknown): v is PocketSnapshot {
 			(typeof v.usage.cost === "number" && Number.isFinite(v.usage.cost) && v.usage.cost >= 0))
 	);
 }
+function configuration(v: unknown): v is PocketConfiguration {
+	if (
+		!shape(v, ["ref", "choices", "canConfigure", "usage", "session"]) ||
+		!ref(v.ref) ||
+		typeof v.canConfigure !== "boolean" ||
+		!Array.isArray(v.choices) ||
+		v.choices.length > 64 ||
+		!v.choices.every(
+			(choice) =>
+				shape(choice, ["id", "model"]) &&
+				identity(choice.id) &&
+				string(choice.model, 256) &&
+				!!choice.model &&
+				choice.model.trim() === choice.model &&
+				!/[\x00-\x1f\x7f]/.test(choice.model),
+		) ||
+		new Set(v.choices.map((choice) => choice.id)).size !== v.choices.length ||
+		!shape(v.usage, ["input", "output", "cacheRead", "cacheWrite", "totalTokens", "cost"]) ||
+		![v.usage.input, v.usage.output, v.usage.cacheRead, v.usage.cacheWrite, v.usage.totalTokens].every((n) =>
+			integer(n),
+		) ||
+		!(
+			v.usage.cost === null ||
+			(typeof v.usage.cost === "number" && Number.isFinite(v.usage.cost) && v.usage.cost >= 0)
+		)
+	)
+		return false;
+	if (v.session === null) return true;
+	return (
+		shape(v.session, ["limits", "budget"]) &&
+		shape(v.session.limits, ["maxConversations", "maxPrimaryAttempts", "maxAuxiliaryAttempts"]) &&
+		Object.values(v.session.limits).every((n) => integer(n, 1)) &&
+		shape(v.session.budget, ["primaryAttempts", "auxiliaryAttempts"]) &&
+		Object.values(v.session.budget).every((n) => integer(n))
+	);
+}
 const humanText = (v: unknown, max: number): v is string =>
 	string(v, max) && !/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/.test(v);
 const humanIds = (v: unknown, max: number): v is string[] =>
@@ -589,6 +659,29 @@ function command(v: unknown): v is PocketCommand {
 				entryId(v.entryId) &&
 				/^[0-9]+$/.test(v.entryId)
 			);
+		case "credential.status":
+			return shape(v, ["op"]);
+		case "credential.replace":
+			return (
+				shape(v, ["op", "input"]) &&
+				shape(v.input, ["requestId", "expectedVersion", "secret"]) &&
+				identity(v.input.requestId) &&
+				integer(v.input.expectedVersion) &&
+				typeof v.input.secret === "string" &&
+				v.input.secret.length > 0 &&
+				v.input.secret.length <= 4096 &&
+				v.input.secret.trim() === v.input.secret &&
+				!/[\x00-\x1f\x7f]/.test(v.input.secret)
+			);
+		case "credential.clear":
+			return (
+				shape(v, ["op", "input"]) &&
+				shape(v.input, ["requestId", "expectedVersion"]) &&
+				identity(v.input.requestId) &&
+				integer(v.input.expectedVersion)
+			);
+		case "configuration":
+			return shape(v, ["op", "target"]) && ref(v.target);
 		case "read":
 			return (
 				shape(v, ["op", "target"], ["page"]) &&
@@ -687,6 +780,15 @@ function result(v: unknown): v is PocketResult {
 			);
 		case "reference":
 			return shape(v, ["kind", "ref"]) && ref(v.ref);
+		case "credential":
+			return (
+				shape(v, ["kind", "status"]) &&
+				shape(v.status, ["version", "configured"]) &&
+				integer(v.status.version) &&
+				typeof v.status.configured === "boolean"
+			);
+		case "configuration":
+			return shape(v, ["kind", "configuration"]) && configuration(v.configuration);
 		case "conversation":
 			return shape(v, ["kind", "snapshot"]) && snapshot(v.snapshot);
 		case "collaboration":

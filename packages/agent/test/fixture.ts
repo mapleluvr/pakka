@@ -42,12 +42,15 @@ export async function fixture(
 	const root = await mkdtemp(join(tmpdir(), "pakka-integration-"));
 	const requests: Payload[] = [];
 	const errors: unknown[] = [];
+	// Synthetic deterministic-provider evidence only; never reads ambient credentials.
+	const authorization: (string | undefined)[] = [];
 	const server = createServer((request, response) => {
 		void (async () => {
 			let body = "";
 			for await (const chunk of request) body += chunk;
 			const payload = JSON.parse(body) as Payload;
 			requests.push(payload);
+			authorization.push(request.headers.authorization);
 			const n = requests.length;
 			const answer = await reply(payload, n);
 			if ("error" in answer) {
@@ -107,6 +110,7 @@ export async function fixture(
 		cwd,
 		dataDir,
 		requests,
+		authorization,
 		errors,
 		endpoint: "http://127.0.0.1:" + address.port + "/v1",
 		async start(extra: FixtureOptions = {}) {

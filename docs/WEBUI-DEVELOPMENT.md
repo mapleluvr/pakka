@@ -93,6 +93,10 @@ Card 是显示记录，不是偷偷添加 system/user message。必须用下一�
 4. 私有 toast 只回当前操作者；shared card/notes 明确共享 scope；人类 side chat/presence 默认不进入模型。
 5. 已存 secret 不回填表单，不进 URL、command history、browser persistent storage、task/entry、广播或 export。配置敏感值区分 keep/replace/clear；provider credentials 不成为通用 plugin client 字段。
 
+Pakka-Pocket 的主 provider key 使用独立 `credential.status / credential.replace / credential.clear` 命令，不进入扩展 command palette 或通用 settings 回填。只有具备全局安装权限的当前人类可调用；scoped admin 也不能改变全 Session 的凭据。写请求带稳定 request ID 和预期 version，只返回 `{ version, configured }`。表单提交即清空输入，未知响应后只能显式读取当前状态，不自动重发密钥；读到当前配置不等于证明原写操作的完整历史。
+
+owned 私密服务会持久保存显式提交的值，供未来原生主请求解析；保留已有启动 resolver，直到明确替换/清除。清除会阻止后续解析且重开不回退，但不撤回已发请求、不擦除旧持久日志，也不宣称加密。它的稳定写回执有每 Session 256 次的上限，不以自动遗忘回执扩大容量。
+
 ## 8. 生命周期与资产
 
 - extension identity、generation、resource scope 与 open-instance identity 都要绑定。旧回调不能关闭/通知/写入新的界面实例。

@@ -1,6 +1,6 @@
 // Pakka-Pocket workbench. Adapted from pi-pocket's app/composer/transcript patterns; authority is the public Pocket client.
 import { render } from "preact";
-import { useEffect, useRef, useState } from "preact/hooks";
+import { useEffect, useLayoutEffect, useRef, useState } from "preact/hooks";
 import htm from "htm";
 import { h } from "preact";
 import { marked } from "marked";
@@ -9,6 +9,7 @@ import { createPocketClient } from "@pakka/client/pocket";
 import { decodePocketEvent } from "@pakka/protocol/pocket";
 import { useExtensions } from "./extensions.js";
 import { Collaboration } from "./collaboration.js";
+import { Configuration } from "./configuration.js";
 
 const html = htm.bind(h);
 const csrf = () => /(?:^|; )pakka_csrf=([A-Za-z0-9_-]{43})(?:;|$)/.exec(document.cookie)?.[1] ?? null;
@@ -150,13 +151,16 @@ function App() {
 			mounted.current = false;
 		};
 	}, []);
-	useEffect(() => {
+	useLayoutEffect(() => {
 		setView(null);
 		setShared(null);
 		openSheet(null);
 		setReceipt(null);
 		setRetry(null);
+	}, [selected?.conversationId, selected?.incarnation, person?.id]);
+	useEffect(() => {
 		if (!selected || !person) return;
+		const binding = resourceContext.current;
 		let active = true,
 			sequence = 0,
 			generation;
@@ -166,7 +170,7 @@ function App() {
 		events.addEventListener("pocket", (event) => {
 			try {
 				const value = decodePocketEvent(JSON.parse(event.data));
-				if (!active) return;
+				if (!active || resourceContext.current !== binding) return;
 				if (value.kind === "invalidated" || value.kind === "resnapshot") {
 					setView(null);
 					setShared(null);
@@ -198,7 +202,7 @@ function App() {
 			}
 		});
 		events.onerror = () => {
-			if (active) {
+			if (active && resourceContext.current === binding) {
 				setView(null);
 				setShared(null);
 				void refresh().catch(error);
@@ -283,6 +287,14 @@ function App() {
 				});
 			setDraft("");
 		});
+	}
+	async function configurationApplied(next) {
+		const binding = resourceContext.current;
+		await refresh();
+		if (!mounted.current || resourceContext.current !== binding) return;
+		extensions.leave();
+		select(next);
+		openSheet(null);
 	}
 	async function showPeople() {
 		await run(async () => {
@@ -419,9 +431,10 @@ function App() {
 				</button>
 				<div class="pocket-title">${selected ? title(selected) : "Your workspace"}</div>
 				<span class="pocket-status">${view?.live.busy ? "Working" : view ? "Ready" : ""}</span>${selected &&
-				html`<button data-action="collaboration" onClick=${showCollaboration}>
-					Team
-				</button>`}${extensions.button}${person.role === "admin" &&
+				html`<button data-action="settings" onClick=${() => openSheet("configuration")}>Settings</button>
+					<button data-action="collaboration" onClick=${showCollaboration}>
+						Team
+					</button>`}${extensions.button}${person.role === "admin" &&
 				html`<button data-action="people" onClick=${showPeople}>People & invites</button>`}
 			</header>
 			${extensions.page && extensions.surface}
@@ -515,6 +528,17 @@ function App() {
 			</div>`}
 		</main>
 		${extensions.overlay}
+		${sheet === "configuration" &&
+		selected &&
+		html`<${Configuration}
+			key=${person.id + ":" + selected.key + ":" + selected.incarnation}
+			target=${selected}
+			client=${client}
+			busy=${view?.live.busy ?? true}
+			applied=${configurationApplied}
+			close=${() => openSheet(null)}
+			error=${error}
+		/>`}
 		${sheet === "collaboration" &&
 		selected &&
 		shared &&

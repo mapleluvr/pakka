@@ -9,6 +9,7 @@ import { ownedBrowser } from "./pocket-browser.ts";
 
 const root = dirname(fileURLToPath(import.meta.url)),
 	requests = [],
+	authorization = [],
 	errors = [];
 const provider = createServer((req, res) => {
 	void (async () => {
@@ -23,6 +24,7 @@ const provider = createServer((req, res) => {
 			return;
 		}
 		requests.push(body);
+		authorization.push(req.headers.authorization);
 		res.writeHead(200, { "Content-Type": "text/event-stream" });
 		for (const choice of [
 			{ index: 0, delta: { role: "assistant", content: "INSTALLED-POCKET-ANSWER" }, finish_reason: null },
@@ -61,9 +63,11 @@ let config = {
 		model: "local",
 		apiKey: "PRIVATE-PROVIDER-CANARY",
 		systemPrompt: "Installed workbench",
+		profiles: [{ id: "alternate", model: "installed-alternate", systemPrompt: "Approved installed model" }],
 		limits: { maxConversations: 8, maxPrimaryAttempts: 3, maxAuxiliaryAttempts: 2 },
 	},
 	owner: "Operator",
+	profiles: ["default", "alternate"],
 	extensions: ["hello", "preferences"].map((name) => ({
 		root: join(extensionRoot, name),
 	})),
@@ -169,10 +173,34 @@ try {
 		'document.querySelector(".pocket-display")?.textContent.includes("INSTALLED-DISPLAY-CARD")',
 	);
 	assert.equal(requests.length, 0);
+	await owner.click("[data-action=settings]");
+	await owner.wait('document.querySelector("[data-model-choice]")');
+	assert.match(String(await owner.evaluate('document.querySelector("[data-cost]").innerText')), /unknown/i);
+	await owner.wait('document.querySelector("[data-credential-input]")?.disabled===false');
+	await owner.type("[data-credential-input]", "SYNTHETIC-INSTALLED-REPLACEMENT");
+	await owner.click("[data-credential-replace]");
+	await owner.wait(
+		'document.querySelector("[data-credential-status]")?.dataset.version==="1"&&document.querySelector("[data-credential-input]").value===""',
+	);
+	assert.equal(
+		await owner.evaluate(
+			'JSON.stringify({...localStorage,...sessionStorage}).includes("SYNTHETIC-INSTALLED-REPLACEMENT")||document.body.innerText.includes("SYNTHETIC-INSTALLED-REPLACEMENT")',
+		),
+		false,
+	);
+	await owner.evaluate(
+		'(()=>{const select=document.querySelector("[data-model-choice]");select.value="alternate";select.dispatchEvent(new Event("change",{bubbles:true}));})()',
+	);
+	await owner.click("[data-save-configuration]");
+	await owner.wait(
+		'!document.querySelector("[data-save-configuration]")&&document.querySelector("[data-action=send]")?.disabled===false',
+	);
 	await owner.type("textarea[name=message]", "INSTALLED-EXPLICIT-WORK");
 	await owner.click("[data-action=send]");
 	await owner.wait('document.querySelector("main").innerText.includes("INSTALLED-POCKET-ANSWER")');
 	assert.equal(requests.length, 1);
+	assert.equal(requests[0].model, "installed-alternate");
+	assert.equal(authorization[0], "Bearer SYNTHETIC-INSTALLED-REPLACEMENT");
 	await owner.click("[data-action=people]");
 	await owner.wait('document.querySelector("[data-action=invite]")');
 	await owner.click("[data-action=invite]");
@@ -188,6 +216,12 @@ try {
 	await viewer.wait('document.querySelector("main").innerText.includes("INSTALLED-POCKET-ANSWER")');
 	assert.equal(await viewer.evaluate('document.querySelector("[data-action=send]").disabled'), true);
 	assert.equal(await viewer.evaluate("document.documentElement.scrollWidth > innerWidth"), false);
+	await viewer.click("[data-action=settings]");
+	await viewer.wait('document.querySelector("[data-model-choice]")');
+	assert.equal(await viewer.evaluate('document.querySelector("[data-model-choice]").disabled'), true);
+	assert.equal(await viewer.evaluate('Boolean(document.querySelector("[data-session-budget]"))'), false);
+	assert.equal(await viewer.evaluate('Boolean(document.querySelector("[data-credential-input]"))'), false);
+	await viewer.click('[aria-label="Close settings"]');
 	const stranger = await browser.page(info.origin);
 	await stranger.wait('document.querySelector("[data-action=signin]")');
 	assert.equal(await stranger.evaluate('document.body.innerText.includes("INSTALLED-EXPLICIT-WORK")'), false);
@@ -212,6 +246,28 @@ try {
 	await owner.wait('document.querySelector("[data-conversation]")');
 	await owner.click("[data-conversation]");
 	await owner.wait('document.querySelector("main").innerText.includes("INSTALLED-POCKET-ANSWER")');
+	await owner.click("[data-action=settings]");
+	await owner.wait('document.querySelector("[data-model-choice]")');
+	assert.equal(await owner.evaluate('document.querySelector("[data-model-choice]").value'), "alternate");
+	assert.match(
+		String(await owner.evaluate('document.querySelector("[data-session-budget]").innerText')),
+		/1 \/ 3/,
+	);
+	await owner.wait('document.querySelector("[data-credential-clear]")?.disabled===false');
+	assert.equal(
+		await owner.evaluate('document.querySelector("[data-credential-status]").dataset.version'),
+		"1",
+	);
+	await owner.click("[data-credential-clear]");
+	await owner.wait(
+		'document.querySelector("[data-credential-status]")?.dataset.version==="2"&&document.querySelector("[data-credential-status]").dataset.configured==="false"',
+	);
+	await owner.click('[aria-label="Close settings"]');
+	await owner.wait('document.querySelector("[data-action=send]")?.disabled===false');
+	await owner.type("textarea[name=message]", "INSTALLED-AFTER-PRIVATE-CLEAR");
+	await owner.click("[data-action=send]");
+	await owner.wait('document.querySelector(".pocket-receipt")?.innerText.includes("unanswered")');
+	assert.equal(requests.length, 1);
 	await owner.click("[data-interface=preferences-settings]");
 	await owner.wait(
 		'document.querySelector("[data-current-label]")?.textContent === "PRIVATE-INSTALLED-PREFERENCE"',
@@ -227,10 +283,35 @@ try {
 	assert.equal(requests.length, 1);
 	assert.equal(JSON.stringify(requests).includes("PRIVATE-INSTALLED-PREFERENCE"), false);
 	assert.equal(JSON.stringify(requests).includes("INSTALLED-DISPLAY-CARD"), false);
+	assert.equal(JSON.stringify(requests).includes("SYNTHETIC-INSTALLED-REPLACEMENT"), false);
+	await owner.click('[aria-label="Close people"]');
+	await stop();
+	info = await start();
+	assert.equal(info.sessionFile, sessionFile);
+	await owner.navigate(info.origin);
+	await owner.wait('document.querySelector("[data-conversation]")');
+	await owner.click("[data-conversation]");
+	await owner.click("[data-action=settings]");
+	await owner.wait('document.querySelector("[data-credential-status]")?.dataset.version==="2"');
+	assert.equal(
+		await owner.evaluate('document.querySelector("[data-credential-status]").dataset.configured'),
+		"false",
+	);
+	assert.match(
+		String(await owner.evaluate('document.querySelector("[data-session-budget]").innerText')),
+		/2 \/ 3/,
+	);
+	await owner.click('[aria-label="Close settings"]');
+	await owner.wait('document.querySelector("[data-action=send]")?.disabled===false');
+	await owner.type("textarea[name=message]", "INSTALLED-PRIVATE-CLEAR-REOPEN");
+	await owner.click("[data-action=send]");
+	await owner.wait('document.querySelector(".pocket-receipt")?.innerText.includes("unanswered")');
+	assert.equal(requests.length, 1, "a cleared key never falls back after normal reopen");
+	assert.equal(child.captured().includes("SYNTHETIC-INSTALLED-REPLACEMENT"), false);
 	assert.deepEqual(errors, []);
 	await writeFile(join(root, "pocket-product-evidence/requests.json"), JSON.stringify(requests, null, 2));
 	console.log(
-		"Installed Pocket product passed: real executable/assets/public GUI-only and backend settings extensions, desktop/mobile isolated Chrome, invitation/viewer/revocation and normal reopen; 1 local HTTP and no duplicate model work.",
+		"Installed Pocket product passed: real executable/assets/public GUI-only and backend settings extensions, desktop/mobile isolated Chrome, invitation/viewer/revocation, exact approved model selection, private provider replace/clear and scoped usage across normal reopen; 1 local HTTP, 3 charged attempts and no fallback or duplicate model work.",
 	);
 } finally {
 	await browser?.close();

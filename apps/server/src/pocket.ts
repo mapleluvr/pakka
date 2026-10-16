@@ -56,11 +56,20 @@ export type {
 	PocketInvite,
 	PocketRole,
 } from "./pocket-people.js";
+export { createPocketCredentials, PocketCredentialConflict } from "./pocket-credentials.js";
+export type {
+	PocketCredentials,
+	PocketCredentialsOptions,
+	PocketCredentialStatus,
+	PocketCredentialWrite,
+	PocketCredentialClient,
+} from "./pocket-credentials.js";
 export { createPocketWorkspace } from "./pocket-workspace.js";
 export type {
 	PocketWorkspace,
 	PocketWorkspaceOptions,
 	PocketWorkspaceClient,
+	PocketConfiguration,
 	PocketCreate,
 	PocketFork,
 	PocketInput,

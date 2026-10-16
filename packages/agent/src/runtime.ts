@@ -69,6 +69,7 @@ export async function createRuntime(options: RuntimeOptions): Promise<Runtime> {
 	return Object.freeze({
 		root: () => root,
 		view: () => port.view(),
+		profileChoices: () => port.profileChoices(),
 		conversation: attach,
 		store: (options: RuntimeStoreOptions) => port.store(options),
 		jobs: (options: RuntimeJobOptions) => port.jobs(options),

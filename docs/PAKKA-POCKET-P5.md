@@ -1,6 +1,6 @@
 # Pakka-Pocket P5 — 协作与保留工作流（实施中）
 
-状态：**P5 部分实施，不是产品交付/复审结论**。已接通人类协作、可选文件/Git、原生工具审批和受控浏览器贡献；settings/notification、可选自动化以及完整远程部署清单仍继续实施，不能用本阶段测试总数替代 P6 的实际产品验收。
+状态：**P5 部分实施，不是产品交付/复审结论**。已接通人类协作、可选文件/Git、原生工具审批、受控浏览器、模型/用量设置与私密 provider 配置；通知、可选自动化以及完整远程部署清单仍继续实施，不能用本阶段测试总数替代 P6 的实际产品验收。
 
 ## 1. 人类协作
 
@@ -63,13 +63,23 @@ export default {
 - 外层 extension operation 为 `done` 只说明 handler 结果已保存；若内层 browser action 仍为 `unknown`，面板继续保留待确认状态并禁用新动作。
 - 产品正常关闭或启动注册失败都会调用已创建服务的 `dispose`；逐项清理失败不会跳过其余服务或 Runtime 的关闭。
 
-## 5. 模型设置的受控端口（6.4 继续实施）
+## 5. 模型、用量与私密 provider 设置（6.4 部分完成）
 
 `ConversationProfile.model` 是宿主启动时批准的同 provider 模型 ID；未指定时沿用默认模型，显式值限制为 1–256 code units 且不含控制字符或首尾空白。profile 不能替换 endpoint、凭据或 cwd。JSON 产品、server bootstrap 和 worker IPC 都以有限 schema 保留该字段，浏览器仅可在自己的 profile ceiling 内选择 profile。
 
 受控 configure 在同一 native commit 更新 model/tools/instructions 并生成新 incarnation。真实 provider payload 验证下一次请求使用确切 ID；正常重开保留配置与已消费额度，原请求不重放。更改持久 bootstrap 中某个 profile 的模型定义会拒绝重开，不会悄悄重定向原工作。费用不确定仍为 `null`。
 
-本端口的组合回归 13/13，全量 392/392 与全部实际安装消费者通过。安装 runtime 消费者在 3 次本地 HTTP 中独立核对默认/另一模型和重开后的同模型。构建前后 391 个源码/helper/TLS 资产 SHA 一致，记录在 `artifacts/pakka-pocket/p5/model-port/`。此项不将 settings UI、私密设置 replace/clear 或通知勾成完成；这些产品流程继续实施。
+模型端口基线的组合回归 13/13、全量 392/392 与全部实际安装消费者通过。安装 runtime 消费者在 3 次本地 HTTP 中独立核对默认/另一模型和重开后的同模型；391 个源码/helper/TLS 资产 SHA 一致，记录在 `artifacts/pakka-pocket/p5/model-port/`。以下界面与私密配置另有后续门禁，未沿用该端口计数作为验收。
+
+- 实际设置面板仅列出当前人类 profile ceiling 内的选择；configure 后使用新的 incarnation。下一次 provider 请求使用所选模型，原引用不能继续写入。
+- Conversation 用量按资源过滤，不确定费用显示为 `Unknown`；全 Session 配额只返回给具有全局资源范围的管理员。viewer 和 scoped admin 均不能借由直连 RPC 取得总额或管理主凭据。
+- 模型切换已提交但响应丢失时，显式重载工作区只读当前引用，不重复 configure；关闭或切换资源后的迟到设置读取不能填入新面板。
+- 专用密码表单提供 replace/clear；输入提交后立即清空，不进入浏览器持久存储、slash、操作结果或错误。公开返回值仅包含配置状态与版本，不返回旧值。
+- 宿主原有 `resolveApiKey` 在显式覆盖前继续调用；替换改变下一次实际 provider Authorization，clear 后拒绝 dispatch，正常重开仍不回退启动密钥。延迟返回的旧 resolver 不能越过已提交的 clear。
+- 已解析凭据或已开始的请求不能被事后撤回；凭据失败也不退还已准备调用的尝试额度。持久存储/备份包含宿主批准保存的密钥，未承诺加密或清除历史字节。
+- 未确认的提交保持 `unknown`；表单禁用新写入，允许只读核对状态，核对不自动重发。存储损坏、迟到撤权和不透明错误失败封闭，私密错误文本不进入 transcript 或浏览器。
+
+本次设置/私密配置门禁：定向 **16/16**，全量 **408/408**（无 skip/cancel/todo），构建、类型、公开声明、代码格式和全部仓库外安装消费者通过；406 个源码/helper/TLS 资产 SHA 在三个阶段保持一致。实际 CLI 的产品消费者完成模型选择、替换/清除、手机 viewer、两次正常重开与撤权；**1 次模型 HTTP、3 次计费尝试**，没有重复配置或清除后的凭据回退。日志、身份、恢复反例与桌面/手机截图位于 `artifacts/pakka-pocket/p5/settings/`；`scripts/consumer-pocket-product.mjs` 是该安装路径。通知与其余可选界面仍未完成，6.4 不勾选。
 
 ## 6. 当前可执行证据
 
@@ -97,6 +107,8 @@ export default {
 冻结副本的构建、类型和全量回归 **387/387** 通过，无 skip/cancel/todo；完整 `smoke:package` 的所有既有及新增消费者通过。386 个源码/夹具 SHA 在门禁前后保持一致，原树未变时才合回 12 个已测试文件。合回后的构建、类型和主动诊断通过；补充了“面板重新加载后等帧已解码再点击”的验收等待条件，原查询与效果断言未变，相关 8 项组合连续 5 轮通过，更新后的消费者再次通过同一安装产物。生产字节与已通过的全量/安装身份一致。
 
 原失败、red/green、386 文件身份、合并记录、阶段日志和桌面/手机截图保存在 `artifacts/pakka-pocket/p5/`。`writer-check/operation-lookup/` 记录这次单 writer 合并；`installed-recovery-final.json` 绑定实际安装档案及补充消费者 SHA。Markdown lint 按用户指示留到收尾，不阻塞功能推进。
+
+设置补充用例为 `apps/server/test/pocket-configuration.test.ts`、`pocket-credentials.test.ts`、`pocket-credentials-boundaries.test.ts`，协议/client 的 configuration/credentials 用例，以及 `apps/webui/test/configuration-browser.test.ts`、`configuration-recovery.test.ts`、`credentials-http.test.ts`、`credentials-browser.test.ts`。它们分别核对真实持久状态、HTTP 身份与反关联、provider Authorization、实际界面/迟到读取和丢响应，不以 schema 通过替代功能证据。
 
 ## 7. 不应混同的证据
 

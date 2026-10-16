@@ -38,7 +38,7 @@ const approvedModelProfile: ConversationProfile = { id: "approved", model: "exac
 void approvedModelProfile;
 import type { Mas, MasClient, MemberSpec, SendSpec, AgentRef } from "@pakka/mas";
 import type { RuntimeStore, RuntimeJobOptions } from "@pakka/agent";
-import type { PocketPeople, PocketAuthority, PocketWorkspace } from "@pakka/server/pocket";
+import type { PocketPeople, PocketAuthority, PocketWorkspace, PocketCredentials } from "@pakka/server/pocket";
 import type { Broker, BrokerClient, BrokerAgentRef } from "@pakka/mas/broker";
 import type { WorkerManager } from "@pakka/server";
 import type { BootstrapConfig } from "@pakka/server/bootstrap";
@@ -108,6 +108,19 @@ export function extensionBackendContract(context: BackendContext, host: Extensio
 		request: Parameters<ExtensionHost["operationByRequest"]>[1],
 	) => host.operationByRequest(actor, request);
 	return { module, host, lookup, job: context.jobs.receipt("job-id") };
+}
+
+export async function privateConfigurationContract(credentials: PocketCredentials, actor: PocketAuthority) {
+	const client = credentials.bind(actor);
+	const status = await client.status();
+	// @ts-expect-error The bound human client cannot read the saved key.
+	void status.secret;
+	// @ts-expect-error The host credential resolver is not exposed to a human client.
+	void client.resolve();
+	await client.replace({ requestId: "replace", expectedVersion: status.version, secret: "synthetic" });
+	// @ts-expect-error Clear is explicit and never accepts a replacement value.
+	void client.clear({ requestId: "clear", expectedVersion: status.version, secret: "forged" });
+	return credentials.resolve;
 }
 
 export async function pocketServiceContract(

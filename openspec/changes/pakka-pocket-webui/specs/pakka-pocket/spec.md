@@ -74,6 +74,31 @@ The browser contribution SHALL use an isolated host-owned browser profile and Co
 - **WHEN** a viewer attempts a write action, an old interface/generation submits an action, or navigation leaves approved origins
 - **THEN** the server refuses the action or blocks the request before an unauthorized target effect, limits publication to current resource visibility, and does not automatically replay an unconfirmed input
 
+### Requirement: Scoped human model settings and usage
+
+The workbench SHALL list only profile/model choices approved for the current person, and SHALL apply a selected profile through the existing resource management boundary. The next actual provider request SHALL use that approved model ID. Provider credentials, endpoint configuration and raw runtime state SHALL NOT be returned by the settings read. Conversation usage SHALL preserve unknown cost; Session-wide quota totals SHALL be visible only to an administrator with global resource scope.
+
+#### Scenario: Real selection and scoped viewer
+
+- **WHEN** an authorized person changes configuration through the workbench and a resource-scoped viewer opens the same settings
+- **THEN** the next actual request uses the chosen model, the workbench uses the new incarnation, and the viewer cannot configure the resource or receive Session-wide totals
+- **AND** an unknown response to a configuration mutation is not automatically retried; explicit workspace reload reads current state without repeating the mutation
+
+### Requirement: Explicit private provider configuration
+
+The product SHALL expose dedicated administrator-only replace/clear operations for its primary provider key. Reads, results, command palettes, browser persistence and user-visible errors SHALL NOT round-trip the saved value. The current bootstrap resolver SHALL remain the source until an explicit override; clearing SHALL remain cleared across normal reopen rather than falling back to that source. The owned credential store MAY persist the explicitly submitted value for future resolution; this SHALL NOT imply encryption or rollback of requests that already resolved a key.
+
+#### Scenario: Replace and clear change real provider authentication
+
+- **WHEN** a global administrator replaces or clears the key from the dedicated form
+- **THEN** subsequent actual provider resolution uses the replacement or refuses dispatch after clear, only public configured/version metadata is returned, and normal reopen preserves the decision and spent attempt reservations
+- **AND** a viewer, scoped administrator, late revoked request, malformed operation or uncertain commit cannot bypass the same server authority and stable request identity
+
+#### Scenario: Delayed existing resolver and private errors
+
+- **WHEN** an existing trusted bootstrap resolver finishes after an administrator has cleared it or throws an error containing private text
+- **THEN** its stale key is rejected, private error text does not enter the model transcript or browser, and no new provider request is inferred from a status query
+
 ### Requirement: One public UI extension path
 
 Navigation, pages, sheets, panels, settings entries, command triggers and scoped subscriptions SHALL be exposed through documented versioned public slots sufficient for MAS Board and an unrelated custom extension. Custom Preact content SHALL use the host's component instance and lifecycle, not a private store/router import. Trusted code is not sandboxed, but ordinary contribution APIs SHALL NOT require monkey patches or hidden built-in identity.

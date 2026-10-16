@@ -37,9 +37,17 @@ try {
 
 `Runtime` 是 bootstrap 控制对象；`Host` 是一个 Conversation 的控制对象。每个 Host 分别连接 principal、激活 strategy 和绑定工具 invocation。调用方只获得冻结的 DTO 与身份绑定的命令 closure。Pi 的 Harness、Session、Conversation、Registry、Models 和 Tx 不通过公开接口返回。
 
-bootstrap 必须给出三项正的有限整数配额。额外 profile 接受允许的 `id`、instructions、配置的工具，以及可选的 `model` ID。省略 `model` 时沿用 HostOptions；显式值必须为 1–256 个 UTF-16 code units，不含控制字符或首尾空白。模型仍使用该 Runtime 固定的 provider、endpoint、凭据和主调用参数，profile 不能改写 credentials、cwd、storage path 或原始 extensions。创建相同 key/profile 返回已有 resource；同 key 的不同 profile 被拒绝。
+bootstrap 必须给出三项正的有限整数配额。额外 profile 接受允许的 `id`、instructions、配置的工具，以及可选的 `model` ID。省略 `model` 时沿用 HostOptions；显式值必须为 1–256 个 UTF-16 code units，不含控制字符或首尾空白。模型仍使用该 Runtime 固定的 provider、endpoint、宿主批准的凭据来源和主调用参数，profile 不能改写 credentials、cwd、storage path 或原始 extensions。创建相同 key/profile 返回已有 resource；同 key 的不同 profile 被拒绝。
 
-例如 `{ id: "reviewer", model: "approved-review-model", systemPrompt: "Review the requested work." }` 在启动时注册该确切模型 ID。通过受控 catalog 的配置操作切换 profile 时，model、instructions 和 tools 在同一 native commit 更新；原 incarnation 作废，下一次实际 provider 请求采用新模型。人类只能选其 profile ceiling 内的配置；重开校验模型所属的 profile identity，并保留已消费额度。这是 P5 6.4 的受控端口，尚不能据此声称 settings 界面、私密配置 replace/clear 或通知迁移已完成。
+例如 `{ id: "reviewer", model: "approved-review-model", systemPrompt: "Review the requested work." }` 在启动时注册该确切模型 ID。通过受控 catalog 的配置操作切换 profile 时，model、instructions 和 tools 在同一 native commit 更新；原 incarnation 作废，下一次实际 provider 请求采用新模型。人类只能选其 profile ceiling 内的配置；重开校验模型所属的 profile identity，并保留已消费额度。对应的设置界面与私密配置 replace/clear 已通过实际产品、provider 和仓库外安装门禁，见 [P5 阶段记录](PAKKA-POCKET-P5.md)；通知与其余可选界面继续实施。
+
+### 主模型凭据来源
+
+`HostOptions.resolveApiKey?: () => string | Promise<string>` 是可选、仅由受信任宿主提供的主模型凭据来源。不传时继续使用显式 `apiKey`；传入时，每次原生主请求解析凭据都会调用它，resolver 拒绝或返回非法值时失败封闭，不回退、发现环境凭据或发出 provider HTTP。对外只保留通用错误，原异常中的私密文本不进入原生输出。这是 adapter 对公开 auth callback 的配置，不修改 Durable，也不序列化到 browser/worker 配置。辅助 inference 的既有独立配置不受它隐式改写。
+
+Pakka-Pocket 保留宿主已有 resolver 作为初始来源，仅全局管理员的专用 replace/clear 操作建立覆盖；clear 后正常重开仍不回退原值。已解析凭据或已开始的请求不会被 retroactive 撤销，已准备的调用不因凭据失败退还额度。服务端私密存储和备份必须按凭据数据保护：清除当前来源不承诺物理擦除持久历史或加密。
+
+`runtime.profileChoices()` 只向受信任宿主返回冻结的 `{ id, model }[]`，不包含 instructions、工具代码或密钥。人类 API 在它之上按当前 profile ceiling 过滤；该列表本身不是授予配置权限。
 
 ## 身份、作用域与 journal
 
