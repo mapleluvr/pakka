@@ -88,7 +88,8 @@ export function decodeExtensionRequest(value: unknown): ExtensionRequest {
 			shape(command, ["op", "request"]);
 			const request = command.request;
 			shape(request, ["extension", "requestId"], ["target"]);
-			if (!extensionId(request.extension) || !identity(request.requestId)) throw new Error("Invalid original extension request");
+			if (!extensionId(request.extension) || !identity(request.requestId))
+				throw new Error("Invalid original extension request");
 			if (request.target !== undefined) decodeTarget(request.target);
 			break;
 		}

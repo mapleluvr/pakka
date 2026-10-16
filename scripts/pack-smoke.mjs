@@ -112,6 +112,7 @@ copyFileSync(join(root, "scripts", "consumer-pocket-product.mjs"), join(consumer
 copyFileSync(join(root, "scripts", "consumer-pocket-schedules.mjs"), join(consumer, "pocket-schedules.mjs"));
 copyFileSync(join(root, "scripts", "consumer-pocket-memory.mjs"), join(consumer, "pocket-memory.mjs"));
 copyFileSync(join(root, "scripts", "consumer-pocket-hooks.mjs"), join(consumer, "pocket-hooks.mjs"));
+copyFileSync(join(root, "scripts", "consumer-pocket-voice.mjs"), join(consumer, "pocket-voice.mjs"));
 copyFileSync(
 	join(root, "scripts", "consumer-pocket-notifications.mjs"),
 	join(consumer, "pocket-notifications.mjs"),
@@ -213,4 +214,5 @@ console.log(run("pocket-notifications", [join(consumer, "pocket-notifications.mj
 console.log(run("pocket-schedules", [join(consumer, "pocket-schedules.mjs")], consumer));
 console.log(run("pocket-memory", [join(consumer, "pocket-memory.mjs")], consumer));
 console.log(run("pocket-hooks", [join(consumer, "pocket-hooks.mjs")], consumer));
+console.log(run("pocket-voice", [join(consumer, "pocket-voice.mjs")], consumer));
 writeFileSync(join(artifacts, "consumer-path.txt"), consumer + "\n");

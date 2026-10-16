@@ -151,8 +151,12 @@ const readHooks = (page, target) =>
 		"(await client.call({extension:row.manifest.id,generation:row.generation,action:'read',requestId:crypto.randomUUID(),target,input:{}})).value",
 	);
 async function reloadProduct(page, target) {
+	const requested = origin + "/#conversation=" + encodeURIComponent(target.conversationId);
+	await page.navigate(requested);
+	await page.wait(
+		"location.hash === " + JSON.stringify("#conversation=" + encodeURIComponent(target.conversationId)),
+	);
 	const before = await page.evaluate("performance.timeOrigin");
-	await page.navigate(origin + "/#conversation=" + encodeURIComponent(target.conversationId));
 	await page.reload();
 	await page.wait(
 		"performance.timeOrigin!==" +

@@ -198,6 +198,20 @@ The Runtime MAY accept named, versioned context sources selected explicitly for 
 - **WHEN** context preparation completes but its captured state changes while provider credentials resolve
 - **THEN** the live check blocks the actual request rather than sending stale or unauthorized context, and an already prepared attempt is not refunded
 
+### Requirement: Optional browser dictation stays in the current draft
+
+The workbench MAY offer dictation when the browser exposes speech recognition in a secure context. Starting recognition SHALL require an explicit human action, disclose that audio may be sent to the browser's speech provider, and update only the current composer's draft. Interim/final results SHALL preserve the person's caret and edits. Recognition SHALL stop on send, composer/resource replacement, logout, loss of input eligibility or page hiding, and late callbacks SHALL NOT change a replacement draft. Unsupported browsers SHALL retain ordinary text entry. No test SHALL use user audio; controlled recognizer lifecycle evidence SHALL be distinguished from actual speech-provider accuracy.
+
+#### Scenario: Recognized text waits for explicit submission
+
+- **WHEN** a person starts dictation and the recognizer emits interim and final results
+- **THEN** the current draft reflects those results without model HTTP, and only the person's later Send places the reviewed text into a real provider request
+
+#### Scenario: The old recognizer cannot edit another resource
+
+- **WHEN** the current composer is replaced or loses input eligibility before an old recognition result arrives
+- **THEN** recognition is stopped, the replacement draft is unchanged, and no model request is created
+
 ### Requirement: Actual product and browser acceptance
 
 Acceptance SHALL exercise the installed product executable/assets and public SDK in an out-of-repository consumer with no workspace paths/root overrides. Tests SHALL use isolated desktop/mobile browsers, synthetic people/invitations, deterministic local providers and real persisted state. Required cases, source/asset identities, admitted inputs, provider/tool effects and unresolved outcomes SHALL be recorded separately from schema validation.

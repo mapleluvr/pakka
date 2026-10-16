@@ -1,6 +1,6 @@
 # Pakka-Pocket P5 — 协作与保留工作流（实施中）
 
-状态：**P5 部分实施，不是产品交付/复审结论**。已接通人类协作、可选文件/Git、原生工具审批、受控浏览器、模型/用量设置、私密 provider 配置、真实通知服务、项目记忆和可选 Webhook；原生计划输入及插件长任务也已通过实际安装验收；原生通知点击、其余可选界面以及完整远程部署清单仍继续验收，不能用本阶段测试总数替代 P6 的实际产品验收。
+状态：**P5 部分实施，不是产品交付/复审结论**。已接通人类协作、可选文件/Git、原生工具审批、受控浏览器、模型/用量设置、私密 provider 配置、真实通知服务、项目记忆、可选 Webhook 和浏览器语音听写；原生计划输入及插件长任务也已通过实际安装验收；原生通知点击、其余可选界面以及完整远程部署清单仍继续验收，不能用本阶段测试总数替代 P6 的实际产品验收。
 
 ## 1. 人类协作
 
@@ -141,6 +141,16 @@ export default {
 
 本批最终定向 **31/31**、全量 **489/489**（无 fail/skip/cancel/todo），构建、类型、独立公开声明、代码格式及完整 `smoke:package` 的全部消费者通过；469 个冻结源码/helper/TLS 文件在定向、全量和实际安装前后 SHA 一致。新归档的实际 CLI 验证 **3 次模型 HTTP、3 次已消费额度**，包含签名去重、轮换、正常重开、viewer 隔离与只移除 WebUI 后保留 Backend 入口。8 个实际归档匹配隔离 lock integrity，原生存储、provider payload、回执和消费脚本身份保存在 `artifacts/pakka-pocket/p5/hooks/delivery/`。门禁后仅更新两份阶段记录，并把交付 helper 的初验计数 25 更正为实际最终 31；原 helper 与前后 SHA 均保留，不改变测试或生产字节。首次打包在隔离 npm 下载 `@esbuild/win32-x64@0.28.2` 时触发原 180 秒截止时间；同 URL 的独立测量也超时。未改截止时间/依赖的新一次打包完成，其中该包下载耗时 53.4 秒，环境等待不称为已修复。消费者首次错误将派生 `received` 当成原始字段；已按真实 accepted delivery 记录及 native budget 核对，在相同归档 SHA 下重跑通过。原始失败、对照测量、red/green、provider payload、原生存储及归档脚本位于 `artifacts/pakka-pocket/p5/hooks/`；初次截图 I/O 错误保留给 P6，不以本轮未复现宣称已解决。
 
+## 浏览器语音听写（6.4 部分完成）
+
+`apps/webui/web/voice.js` 是普通 workbench composer capability，不增加 server、Runtime 或 provider authority。浏览器只有在安全上下文暴露 SpeechRecognition/WebkitSpeechRecognition 时显示 Dictate；明确点击才开始识别，并将 interim/final 结果写入当前草稿，不自动发送或产生模型请求。
+
+- 识别状态绑定当前 Conversation、composer generation 和人类输入资格；发送、切换 Conversation、打开替代界面、登出、失去写权限、页面隐藏都会停止识别。
+- 结果按当前 caret 与已存在的人工编辑合并；旧 recognizer 的迟到回调不能填充替换后的草稿。无语音能力的浏览器保留普通文本输入。
+- `apps/webui/test/voice-browser.test.ts` 通过真实 Chrome 事件驱动覆盖 interim/final、人工编辑、8192 code-unit 上限、切换/登出/失去资格、手机 viewer 与不支持回退；source-path focused 组合为 **9/9**，实际安装 consumer 也通过。
+- 仓库外 `@pakka/webui` CLI consumer 从真实打包资产完成语音草稿、明确 Send、正常重开和 viewer 隔离；重载后的按钮存在性按真实浏览器能力判断，并确认旧测试 recognizer 不存活；该 consumer 产生 **1 次模型 HTTP**。测试使用合成 recognizer，不声称验证真实语音识别准确率。
+- voice 加入后的最终源代码门禁为 **check/format + 全量 492/492**，无 skip/cancel/todo；最终 `smoke:package` 的全部消费者（含 voice）通过。`apps/webui/test/voice-browser.test.ts` 的 9/9 focused 结果、安装归档与 SHA 身份保存在 `artifacts/pakka-pocket/p5/voice/`。
+
 ## 6f. 明确排除 Plan mode / Goals
 
 用户补充确认 Plan mode 与 Goals/Done when 为 non-goal，不再继续实现、补测试或验收，后续计划移除。此调整不影响已验收的定时输入（scheduled inputs）。
@@ -173,7 +183,9 @@ export default {
 | `apps/webui/test/notifications-http.test.ts`            | 实际完成/旁聊事件、有限设备协议、当前 Cookie metadata 和越权探针                      |
 | `apps/webui/test/notifications-browser.test.ts`         | 真实 worker 原生通知、登出清理、手机偏好隔离和桌面/手机布局                           |
 | `apps/webui/test/notifications-main.test.ts`            | 非法 push authority 在存储和 provider 效果前被拒绝                                    |
-| `scripts/consumer-pocket-notifications.mjs`             | 实际 CLI/TLS/worker/reopen；2 次模型 HTTP、3 次 push、原未知投递不重发                |
+| `apps/webui/test/voice-browser.test.ts`                    | 真实 Chrome 的 interim/final、caret、生命周期、上限、手机 viewer 与无能力回退          |
+| `scripts/consumer-pocket-voice.mjs`                       | 实际打包 CLI 的草稿、明确 Send、重载能力匹配和 viewer 隔离；1 次模型 HTTP              |
+| `scripts/consumer-pocket-notifications.mjs`               | 实际 CLI/TLS/worker/reopen；2 次模型 HTTP、3 次 push、原未知投递不重发                |
 
 冻结副本的构建、类型和全量回归 **387/387** 通过，无 skip/cancel/todo；完整 `smoke:package` 的所有既有及新增消费者通过。386 个源码/夹具 SHA 在门禁前后保持一致，原树未变时才合回 12 个已测试文件。合回后的构建、类型和主动诊断通过；补充了“面板重新加载后等帧已解码再点击”的验收等待条件，原查询与效果断言未变，相关 8 项组合连续 5 轮通过，更新后的消费者再次通过同一安装产物。生产字节与已通过的全量/安装身份一致。
 

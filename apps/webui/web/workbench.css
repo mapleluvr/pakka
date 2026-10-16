@@ -194,9 +194,24 @@
 }
 .pocket-composer .composer-row {
 	display: flex;
+	flex-wrap: wrap;
 	align-items: center;
 	gap: 10px;
 	padding: 8px 10px;
+}
+.pocket-dictation-help {
+	margin: 0;
+	padding: 0 12px 6px;
+	font-size: 0.7rem;
+	line-height: 1.4;
+	color: var(--muted);
+}
+.pocket-dictate {
+	white-space: nowrap;
+}
+.pocket-dictate[aria-pressed="true"] {
+	outline: 2px solid currentColor;
+	outline-offset: 1px;
 }
 .pocket-composer select {
 	border: 0;

@@ -11,6 +11,7 @@ import { useExtensions } from "./extensions.js";
 import { Collaboration } from "./collaboration.js";
 import { Configuration } from "./configuration.js";
 import { Notifications, clearNotifications } from "./notifications.js";
+import { useDictation, MicButton } from "./voice.js";
 
 const html = htm.bind(h);
 const csrf = () => /(?:^|; )pakka_csrf=([A-Za-z0-9_-]{43})(?:;|$)/.exec(document.cookie)?.[1] ?? null;
@@ -91,6 +92,7 @@ function App() {
 		[newName, setNewName] = useState("");
 	const mounted = useRef(true),
 		scroll = useRef(null),
+		composer = useRef(null),
 		resourceContext = useRef(null);
 	const contextKey = JSON.stringify([person?.id, selected?.key, selected?.incarnation]);
 	if (resourceContext.current?.key !== contextKey) resourceContext.current = { key: contextKey };
@@ -270,6 +272,7 @@ function App() {
 	}
 	async function send(event) {
 		event.preventDefault();
+		dictation.stop();
 		if (!selected || !draft.trim()) return;
 		if (draft.trimStart().startsWith("/")) {
 			await run(async () => {
@@ -319,6 +322,20 @@ function App() {
 			canSend &&
 			(!shared?.driver.personId ||
 				(shared.driver.personId === person?.id && shared.driver.expiresAt > Date.now()));
+	const dictation = useDictation(composer, setDraft, {
+		scope: contextKey + ":" + mode,
+		enabled: Boolean(
+			selected &&
+				view &&
+				!working &&
+				!sheet &&
+				!drawer &&
+				!extensions.page &&
+				!extensions.overlay &&
+				(mode === "chat" || canInput),
+		),
+		notice: notify,
+	});
 	const showCollaboration = () => {
 		const binding = resourceContext.current;
 		void run(async () => {
@@ -487,13 +504,19 @@ function App() {
 			html`<div class="composer-wrap pocket-composer">
 				<form class="composer" onSubmit=${send}>
 					<textarea
+						ref=${composer}
 						name="message"
+						maxlength="8192"
 						aria-label="Message"
 						rows="3"
 						value=${draft}
 						placeholder=${canSend ? "Message your agent…" : "Read-only commands…"}
 						onInput=${(event) => setDraft(event.currentTarget.value)}
 					/>
+					${dictation.available &&
+					html`<p id="pocket-dictation-help" class="pocket-dictation-help" data-dictation-help>
+						Browser speech recognition is provided by this browser. Review the draft before sending.
+					</p>`}
 					${draft.trimStart().startsWith("/") && extensions.suggestions(draft, () => setDraft(""))}
 					<div class="composer-row">
 						<select
@@ -506,7 +529,7 @@ function App() {
 							html`<option value="steer">Steer</option>
 								<option value="followUp">Follow up</option>`}
 							<option value="chat">Team chat</option></select
-						><span class="pocket-usage"
+						><${MicButton} dictation=${dictation} /><span class="pocket-usage"
 							>${view ? view.usage.totalTokens.toLocaleString() + " tokens" : ""}</span
 						>${canDrive &&
 						view?.live.busy &&
