@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { readFileSync, realpathSync, existsSync } from "node:fs";
 import { mkdir, writeFile, open, readFile, unlink } from "node:fs/promises";
 import { join, resolve, relative, isAbsolute, dirname } from "node:path";
+import { isDeepStrictEqual } from "node:util";
 import { BACKGROUND_CONTEXT, withAbortSignal } from "@earendil-works/chord/context";
 import type { JsonValue as ChordJsonValue, JsonRepresentation } from "@earendil-works/chord";
 import {
@@ -526,6 +527,9 @@ function backendJobTask(definition: RuntimeJobDefinition, validate: (ref: Conver
 						advance: async (data: JsonObject) => {
 							authorize();
 							const next = boundedJobData(data);
+							// Durable progress uses JSON structural equality, not key order or object identity.
+							if (isDeepStrictEqual(next, storedJson<JsonObject>(task.state.checkpoint.data)))
+								throw new Error("Job checkpoint must make durable progress");
 							await runtime.commit(async (tx) => {
 								const state = await tx.doc(BackendJobsDoc, options.namespace, options),
 									row = jobRecord(state, options, id, String(task.id));

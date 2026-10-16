@@ -62,6 +62,14 @@ export interface PocketWorkspaceClient {
 }
 export interface PocketWorkspace {
 	bind(actor: PocketAuthority): PocketWorkspaceClient;
+	/** Trusted backend programs only; no session or browser authority is minted from a persisted person ID. */
+	checkScheduledInput(actorId: string, ref: ConversationRef): void;
+	submitScheduled(
+		actorId: string,
+		ref: ConversationRef,
+		input: { readonly requestId: string; readonly text: string },
+		check: () => void,
+	): Promise<PocketInputReceipt>;
 }
 export interface PocketWorkspaceOptions {
 	readonly runtime: Runtime;
@@ -71,6 +79,8 @@ export interface PocketWorkspaceOptions {
 	readonly profileCeiling: (person: PocketPerson) => readonly string[];
 	/** Host-owned synchronous collaboration/driver check; repeated at native admission, never a wire grant. */
 	readonly beforeInput?: (actor: PocketAuthority, ref: ConversationRef) => void;
+	/** Same current-driver guard for a persisted originating person; required when beforeInput is configured. */
+	readonly beforeScheduledInput?: (actorId: string, ref: ConversationRef) => void;
 }
 const key = (v: unknown): v is string =>
 	typeof v === "string" && /^[a-zA-Z0-9][-a-zA-Z0-9._:]{0,159}$/.test(v);
@@ -114,7 +124,58 @@ export function createPocketWorkspace(options: PocketWorkspaceOptions): PocketWo
 		if (!found) return denied();
 		return found;
 	};
+	const checkScheduledInput = (actorId: string, ref: ConversationRef) => {
+		people.authorizePerson(actorId, "steer", ref.conversationId);
+		if (options.beforeInput && !options.beforeScheduledInput)
+			throw new Error("Scheduled collaboration authority is not configured");
+		options.beforeScheduledInput?.(actorId, ref);
+	};
 	return Object.freeze({
+		checkScheduledInput,
+		submitScheduled: async (
+			actorId: string,
+			raw: ConversationRef,
+			input: { readonly requestId: string; readonly text: string },
+			check: () => void,
+		): Promise<PocketInputReceipt> => {
+			const ref = structuredClone(raw),
+				data = structuredClone(input);
+			if (
+				!data ||
+				Object.keys(data).some((key) => !["requestId", "text"].includes(key)) ||
+				!key(data.requestId) ||
+				typeof data.text !== "string" ||
+				!data.text.trim() ||
+				data.text.length > 8192
+			)
+				throw new Error("Invalid bounded scheduled input");
+			const authorize = () => {
+				check();
+				checkScheduledInput(actorId, ref);
+			};
+			authorize();
+			await member(ref, authorize);
+			const receipt = await catalog.deliver(
+				{
+					requestId: data.requestId,
+					principal: actorId,
+					source: null,
+					target: ref,
+					text: data.text,
+					mode: "followUp",
+				},
+				authorize,
+			);
+			authorize();
+			return frozen({
+				id: receipt.id,
+				requestId: receipt.requestId,
+				actorId,
+				target: receipt.target,
+				status: receipt.status,
+				...(receipt.entryId ? { entryId: receipt.entryId } : {}),
+			});
+		},
 		bind: (actor: PocketAuthority): PocketWorkspaceClient => {
 			people.current(actor);
 			const current = () => people.current(actor);

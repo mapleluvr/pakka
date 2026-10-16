@@ -119,6 +119,30 @@ Notifications SHALL use actual browser service workers and Web Push subscription
 - **THEN** an explicit status read exposes only current-person/current-resource device identifiers and a SHA-256 digest of normalized `{ endpoint, keys: { p256dh, auth } }`, which the browser matches to its real subscription without repeating the registration or guessing a newly added device ID
 - **AND** device endpoints, auth material and the VAPID private key are not returned, and a legal status for another exact resource is rejected
 
+### Requirement: Scheduled inputs are native durable work
+
+An optional automation contribution SHALL install a host-approved named job through the public Runtime job port and ordinary Backend/Client/WebUI facets. A schedule SHALL capture its originating person, exact Conversation reference, bounded input, due time and stable request identity. At delivery it SHALL recheck current person/resource and collaboration-driver authority, preserve native follow-up semantics and return the actual native delivery receipt. Closing a UI wait SHALL NOT cancel admitted work. Cancellation SHALL report the native terminal outcome without claiming rollback of an already delivered input. Native backend advance SHALL reject JSON-equivalent recovery data before publishing a new queued state. An unhandled program failure or unknown native input admission SHALL preserve an unknown job outcome rather than claim completed work or start another scheduled occurrence.
+
+#### Scenario: Scheduled work survives a normal writer reopen
+
+- **WHEN** an operator creates a future input, leaves its interface and normally reopens the product before the due time
+- **THEN** only the committed checkpoint continues, no input is delivered early, one actual native admission produces the due provider request and the original schedule request resolves to the same job without resetting spent quota
+
+#### Scenario: Revoked or interrupted work cannot be replayed
+
+- **WHEN** the creator loses resource/driver authority, the schedule is cancelled, or a running handler has an unconfirmed delivery result
+- **THEN** current checks prevent any not-yet-admitted input, the real job/receipt preserves its outcome, and reading or retrying the original request does not restart the handler or infer rollback
+
+#### Scenario: A program cannot claim progress with equivalent checkpoint data
+
+- **WHEN** an approved native program makes a real filesystem effect and then attempts an unhandled advance with unchanged JSON data, including reordered object keys or equivalent JSON zero
+- **THEN** its public receipt becomes unknown without a scheduler progress fault, the original request and normal writer reopen do not repeat the effect, and unknown retained work does not release capacity
+
+#### Scenario: An unknown admission stops the remaining schedule
+
+- **WHEN** a real native input has taken effect but the received admission confirmation is unknown
+- **THEN** both a one-shot and a recurring schedule remain unknown, no later occurrence is dispatched and reading or retrying the original schedule does not spend another attempt
+
 ### Requirement: One public UI extension path
 
 Navigation, pages, sheets, panels, settings entries, command triggers and scoped subscriptions SHALL be exposed through documented versioned public slots sufficient for MAS Board and an unrelated custom extension. Custom Preact content SHALL use the host's component instance and lifecycle, not a private store/router import. Trusted code is not sandboxed, but ordinary contribution APIs SHALL NOT require monkey patches or hidden built-in identity.

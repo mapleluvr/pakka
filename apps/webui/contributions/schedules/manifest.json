@@ -1,0 +1,367 @@
+{
+	"api": 1,
+	"id": "workspace-schedules",
+	"version": "1.0.0",
+	"title": "Scheduled inputs",
+	"facets": {
+		"backend": "backend.mjs",
+		"client": "client.js",
+		"webui": {
+			"entry": "index.js",
+			"publicDir": "web"
+		}
+	},
+	"services": ["schedules"],
+	"actions": [
+		{
+			"id": "list",
+			"version": 1,
+			"scope": "conversation",
+			"permission": "read",
+			"effect": "read",
+			"timeoutMs": 5000,
+			"input": {
+				"type": "object",
+				"properties": {},
+				"required": []
+			},
+			"output": {
+				"type": "object",
+				"properties": {
+					"schedules": {
+						"type": "array",
+						"maxItems": 128,
+						"items": {
+							"type": "object",
+							"properties": {
+								"id": {
+									"type": "string",
+									"maxLength": 160
+								},
+								"requestId": {
+									"type": "string",
+									"maxLength": 160
+								},
+								"actorId": {
+									"type": "string",
+									"maxLength": 160
+								},
+								"actorName": {
+									"type": "string",
+									"maxLength": 80
+								},
+								"text": {
+									"type": "string",
+									"maxLength": 8192
+								},
+								"dueAt": {
+									"type": "integer",
+									"minimum": 0,
+									"maximum": 9007199254740991
+								},
+								"intervalMs": {
+									"anyOf": [
+										{
+											"type": "integer",
+											"minimum": 1000,
+											"maximum": 31622400000
+										},
+										{
+											"type": "null"
+										}
+									]
+								},
+								"maxRuns": {
+									"type": "integer",
+									"minimum": 1,
+									"maximum": 32
+								},
+								"completed": {
+									"type": "integer",
+									"minimum": 0,
+									"maximum": 32
+								},
+								"state": {
+									"enum": ["waiting", "running", "done", "cancelled", "unknown"]
+								},
+								"jobId": {
+									"anyOf": [
+										{
+											"type": "string",
+											"maxLength": 160
+										},
+										{
+											"type": "null"
+										}
+									]
+								},
+								"nativeTerminal": {
+									"enum": ["aborted", "completed"]
+								},
+								"deliveryId": {
+									"type": "string",
+									"maxLength": 160
+								}
+							},
+							"required": [
+								"id",
+								"requestId",
+								"actorId",
+								"actorName",
+								"text",
+								"dueAt",
+								"intervalMs",
+								"maxRuns",
+								"completed",
+								"state",
+								"jobId"
+							]
+						}
+					}
+				},
+				"required": ["schedules"]
+			}
+		},
+		{
+			"id": "add",
+			"version": 1,
+			"scope": "conversation",
+			"permission": "steer",
+			"effect": "model",
+			"timeoutMs": 5000,
+			"input": {
+				"type": "object",
+				"properties": {
+					"text": {
+						"type": "string",
+						"maxLength": 8192
+					},
+					"dueAt": {
+						"type": "integer",
+						"minimum": 1,
+						"maximum": 9007199254740991
+					},
+					"intervalMs": {
+						"type": "integer",
+						"minimum": 1000,
+						"maximum": 31622400000
+					},
+					"maxRuns": {
+						"type": "integer",
+						"minimum": 1,
+						"maximum": 32
+					}
+				},
+				"required": ["text", "dueAt"]
+			},
+			"output": {
+				"type": "object",
+				"properties": {
+					"id": {
+						"type": "string",
+						"maxLength": 160
+					},
+					"requestId": {
+						"type": "string",
+						"maxLength": 160
+					},
+					"actorId": {
+						"type": "string",
+						"maxLength": 160
+					},
+					"actorName": {
+						"type": "string",
+						"maxLength": 80
+					},
+					"text": {
+						"type": "string",
+						"maxLength": 8192
+					},
+					"dueAt": {
+						"type": "integer",
+						"minimum": 0,
+						"maximum": 9007199254740991
+					},
+					"intervalMs": {
+						"anyOf": [
+							{
+								"type": "integer",
+								"minimum": 1000,
+								"maximum": 31622400000
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"maxRuns": {
+						"type": "integer",
+						"minimum": 1,
+						"maximum": 32
+					},
+					"completed": {
+						"type": "integer",
+						"minimum": 0,
+						"maximum": 32
+					},
+					"state": {
+						"enum": ["waiting", "running", "done", "cancelled", "unknown"]
+					},
+					"jobId": {
+						"anyOf": [
+							{
+								"type": "string",
+								"maxLength": 160
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"nativeTerminal": {
+						"enum": ["aborted", "completed"]
+					},
+					"deliveryId": {
+						"type": "string",
+						"maxLength": 160
+					}
+				},
+				"required": [
+					"id",
+					"requestId",
+					"actorId",
+					"actorName",
+					"text",
+					"dueAt",
+					"intervalMs",
+					"maxRuns",
+					"completed",
+					"state",
+					"jobId"
+				]
+			}
+		},
+		{
+			"id": "cancel",
+			"version": 1,
+			"scope": "conversation",
+			"permission": "steer",
+			"effect": "write",
+			"timeoutMs": 5000,
+			"input": {
+				"type": "object",
+				"properties": {
+					"id": {
+						"type": "string",
+						"maxLength": 160
+					}
+				},
+				"required": ["id"]
+			},
+			"output": {
+				"type": "object",
+				"properties": {
+					"id": {
+						"type": "string",
+						"maxLength": 160
+					},
+					"requestId": {
+						"type": "string",
+						"maxLength": 160
+					},
+					"actorId": {
+						"type": "string",
+						"maxLength": 160
+					},
+					"actorName": {
+						"type": "string",
+						"maxLength": 80
+					},
+					"text": {
+						"type": "string",
+						"maxLength": 8192
+					},
+					"dueAt": {
+						"type": "integer",
+						"minimum": 0,
+						"maximum": 9007199254740991
+					},
+					"intervalMs": {
+						"anyOf": [
+							{
+								"type": "integer",
+								"minimum": 1000,
+								"maximum": 31622400000
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"maxRuns": {
+						"type": "integer",
+						"minimum": 1,
+						"maximum": 32
+					},
+					"completed": {
+						"type": "integer",
+						"minimum": 0,
+						"maximum": 32
+					},
+					"state": {
+						"enum": ["waiting", "running", "done", "cancelled", "unknown"]
+					},
+					"jobId": {
+						"anyOf": [
+							{
+								"type": "string",
+								"maxLength": 160
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"nativeTerminal": {
+						"enum": ["aborted", "completed"]
+					},
+					"deliveryId": {
+						"type": "string",
+						"maxLength": 160
+					}
+				},
+				"required": [
+					"id",
+					"requestId",
+					"actorId",
+					"actorName",
+					"text",
+					"dueAt",
+					"intervalMs",
+					"maxRuns",
+					"completed",
+					"state",
+					"jobId"
+				]
+			}
+		}
+	],
+	"commands": [
+		{
+			"id": "schedules",
+			"title": "Open scheduled inputs",
+			"slash": "schedule",
+			"interface": "schedules"
+		}
+	],
+	"interfaces": [
+		{
+			"id": "schedules",
+			"title": "Scheduled inputs",
+			"slot": "page",
+			"scope": "conversation",
+			"export": "Schedules",
+			"navigation": true
+		}
+	]
+}

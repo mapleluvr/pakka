@@ -7,8 +7,10 @@ import {
 	workspaceBrowserExtensionRoot,
 	workspaceApprovalsService,
 	workspaceApprovalsExtensionRoot,
+	workspaceSchedulesExtensionRoot,
+	workspaceSchedulesService,
 } from "@pakka/webui/workflows";
-import { approvalTool, type PocketApprovals } from "@pakka/server/pocket";
+import { approvalTool, createPocketSchedules, type PocketApprovals } from "@pakka/server/pocket";
 import { masWorkbenchService } from "@pakka/mas-devpack/backend";
 import type { ExtensionHost } from "@pakka/webui/backend";
 import type {
@@ -247,6 +249,23 @@ export async function pocketObservation(runtime: Runtime, ref: ConversationRef) 
 		() => {},
 	);
 	return { snapshot, display };
+}
+
+export async function scheduledProduct(
+	context: PocketServiceContext,
+	actor: PocketAuthority,
+	ref: ConversationRef,
+) {
+	const prepared = createPocketSchedules({ namespace: "external.schedules", maxSchedules: 8 });
+	const service = await workspaceSchedulesService(context, prepared);
+	const client = service.bind(actor, ref, () => {});
+	await client.list();
+	await client.add({ requestId: "external-plan", text: "explicit work", dueAt: Date.now() + 60000 });
+	// @ts-expect-error Browser input cannot select a persisted creator or native job owner.
+	await client.add({ requestId: "forged", text: "work", dueAt: Date.now() + 60000, actorId: "forged" });
+	// @ts-expect-error A workflow client cannot execute arbitrary scripts.
+	client.execute("code");
+	return { root: workspaceSchedulesExtensionRoot, definition: prepared.definition, dispose: service.dispose };
 }
 
 export async function managed(runtime: Runtime, options: RuntimeOptions, ref: ConversationRef) {

@@ -8,6 +8,9 @@ import {
 	type PocketFilesClient,
 	type PocketApprovals,
 	type PocketApproval,
+	type PocketSchedule,
+	type PocketScheduleInput,
+	type PocketSchedulesPreparation,
 } from "@pakka/server/pocket";
 import type { ConversationRef } from "@pakka/agent";
 import type { ExtensionService, PocketServiceContext } from "./backend.ts";
@@ -19,6 +22,41 @@ export type WorkspaceFilesClient = {
 	readonly [K in keyof PocketFilesClient]: BoundMethod<PocketFilesClient[K]>;
 };
 export const workspaceFilesExtensionRoot = fileURLToPath(new URL("../contributions/files/", import.meta.url));
+
+export type WorkspaceSchedule = Omit<PocketSchedule, "target">;
+export interface WorkspaceSchedulesClient {
+	list(): Promise<readonly WorkspaceSchedule[]>;
+	add(input: PocketScheduleInput): Promise<WorkspaceSchedule>;
+	cancel(id: string): Promise<WorkspaceSchedule>;
+}
+export const workspaceSchedulesExtensionRoot = fileURLToPath(
+	new URL("../contributions/schedules/", import.meta.url),
+);
+function scheduleView(row: PocketSchedule): WorkspaceSchedule {
+	const { target: _target, ...value } = row;
+	return Object.freeze(value);
+}
+/** Ordinary public service slot, with host waiters disposed separately from accepted native work. */
+export async function workspaceSchedulesService(
+	context: PocketServiceContext,
+	prepared: PocketSchedulesPreparation,
+): Promise<ExtensionService<WorkspaceSchedulesClient>> {
+	const schedules = await prepared.attach(context);
+	const registration: ExtensionService<WorkspaceSchedulesClient> = {
+		permission: "read",
+		dispose: () => schedules.dispose(),
+		bind(actor, target, check) {
+			if (!target) throw Error("Scheduled input requires a current Conversation");
+			const client = schedules.bind(actor, check);
+			return Object.freeze({
+				list: async () => Object.freeze((await client.list(target)).map(scheduleView)),
+				add: async (input: PocketScheduleInput) => scheduleView(await client.add(target, input)),
+				cancel: async (id: string) => scheduleView(await client.cancel(target, id)),
+			});
+		},
+	};
+	return Object.freeze(registration);
+}
 
 export type WorkspaceBrowserClient = {
 	readonly [K in keyof PocketBrowserClient]: BoundMethod<PocketBrowserClient[K]>;

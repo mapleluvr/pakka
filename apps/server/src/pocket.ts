@@ -1,4 +1,13 @@
 /** Host composition APIs for the Pocket product. Imports allocate no identities, writers or listeners. */
+export { createPocketSchedules } from "./pocket-schedules.js";
+export type {
+	PocketSchedule,
+	PocketScheduleInput,
+	PocketScheduleClient,
+	PocketSchedules,
+	PocketSchedulesPreparation,
+	PocketScheduleContext,
+} from "./pocket-schedules.js";
 export { createPocketNotifications } from "./pocket-notifications.js";
 export type {
 	PocketNotifications,

@@ -96,3 +96,11 @@ M1 提供 `migrateLegacy: { expectedSessionId, expectedConversationId }` 的显�
 `check` 是宿主提供的同步检查，**拒绝时必须 throw**，不是浏览器传来的 grant 或返回 boolean 的 policy。两项命令都不是远端 API，不能直接交给模型或 Web 客户端。usage 的 token 值可展示，未提供权威价格时 `cost` 保持 `null`，不能把默认零价格说成免费。
 
 阶段证明见 [P0 记录](PAKKA-POCKET-P0.md)；这不是 `@pakka/webui` 产品交付或通用后台 job 已完成的声明。已接受的可选 Dynamite [固定产品配对](DYNAMITE-PRODUCT-ACCEPTANCE.md) 仍以原 tarball SHA 为准，不自动覆盖新的开发快照；[历史失败配对](DEFERRED-DYNAMITE-COMPATIBILITY.md) 继续保留。
+
+## 受控后台 job 与 checkpoint（P1 / P5 开发快照）
+
+宿主在 `RuntimeOptions.jobs` 中批准有名称和版本的程序，再经 `runtime.jobs({ namespace, maxJobs, maxBytes })` 绑定当前人类/资源校验。浏览器不能提交可执行程序或恢复任意模块；收到的是冻结 job receipt，不是 native task。见 [P1 服务记录](PAKKA-POCKET-P1.md) 与 [P5 实际消费者](PAKKA-POCKET-P5.md)。
+
+`RuntimeJobContext.advance(data)` 必须提交真正改变的 JSON checkpoint；对象键重排、重新分配相同对象、JSON 中等价的正负零都不算进展。适配器在排入新的 queued 状态前拒绝无进展数据；未由受信任程序处理的失败保存为 `unknown`，不留下 native 已 faulted、公开记录却仍声称可继续等待的新增任务。该保护不迁移历史 faulted job 的状态。
+
+计划等待保留绝对 `nextDueAt`，并让每次等待 checkpoint 的有限序号递增；普通重开不会提前投递或改变本次投递身份。只有已提交的 checkpoint 可以继续，运行中未确认的效果不重放；原请求及保留容量继续占用，关闭 UI 等待不等于 native abort。计划 job 的 `done` 只表示本计划的输入已准入，不证明模型已回答；原生输入确认仍为 `unknown` 时，计划也保持 `unknown` 并停止后续周期。

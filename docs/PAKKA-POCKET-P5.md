@@ -1,6 +1,6 @@
 # Pakka-Pocket P5 — 协作与保留工作流（实施中）
 
-状态：**P5 部分实施，不是产品交付/复审结论**。已接通人类协作、可选文件/Git、原生工具审批、受控浏览器、模型/用量设置、私密 provider 配置与真实通知服务；原生通知点击、可选自动化以及完整远程部署清单仍继续验收，不能用本阶段测试总数替代 P6 的实际产品验收。
+状态：**P5 部分实施，不是产品交付/复审结论**。已接通人类协作、可选文件/Git、原生工具审批、受控浏览器、模型/用量设置、私密 provider 配置与真实通知服务；原生计划输入及插件长任务也已通过本批实际安装验收；原生通知点击、其余可选界面以及完整远程部署清单仍继续验收，不能用本阶段测试总数替代 P6 的实际产品验收。
 
 ## 1. 人类协作
 
@@ -99,39 +99,54 @@ export default {
 
 真正的 OS 通知点击还未验收。补测用实际通知对象构造 `NotificationEvent` 时，Chrome 明确拒绝脚本事件的 `waitUntil` 和窗口 focus；这是触发方法的限制，既不是生产 handler 通过，也不据此认定生产缺陷。原诊断保存在 `native-navigation-diagnostic.log`。6.4/P6 仍须从真实通知动作检查重新授权导航；本阶段不修改 worker 迁就该触发方法。
 
+## 原生计划输入与插件长任务（4.4 / 6.5）
+
+`createPocketSchedules({ namespace, maxSchedules })` 在打开 Runtime 前提供有名称/版本的 `definition`；宿主把它加入既有 `RuntimeOptions.jobs`，再在公开 service factory 中调用 `workspaceSchedulesService(context, prepared)`。可选 `workspaceSchedulesExtensionRoot` 使用普通 Backend/Client/WebUI 插槽，不增加通用 shell 的调度分支，也不装入模型工具。实际 ESM 组装见 [安装消费者](../scripts/consumer-pocket-schedules.mjs)。
+
+- 每条计划绑定真实创建人、精确资源引用、原请求和文本。到期在 native 准入边界复查当前人类权限与 driver；引用变更后不追随新 incarnation。viewer 只读，浏览器不能选择执行程序、actor、endpoint 或 credentials。
+- 文本原样传入受控 `followUp`，不另加前缀挤占原 8192 code-unit 上限。首个到期时间限定在未来 366 天内，单计划最多 32 次，周期在 1 秒至 366 天之间；宿主最多保留 128 个计划，另有 1 MiB store 上限。已完成/未知记录不自动遗忘以扩充容量。
+- native checkpoint 保存绝对 `nextDueAt`、已准入次数和稳定投递身份；每次等待递增有限 `waits`。重开只连接已存在任务，不从不明 intent 新建替代任务。关闭页面或 service waiter 不取消已接受工作；保留定义但移除 WebUI 后仍可完成原任务。
+- 取消在等待持久回执前建立实时阻断；已提交但尚未返回的取消也拦住到期新输入。只有 native terminal 确认为 `aborted` 才展示取消，不能声称已准入输入被回滚。
+- `done` 表示计划输入已准入，不表示模型已回答。真实准入结果丢失或确认视图为 `unknown` 时，不假定无效果，也不计为完成或开始下一个周期。原请求和面板重开只读核对，不再次调度或退还尝试额度。
+- 实际原生任务反例发现同一 JSON checkpoint 会造成 native fault 与公开 queued 错位。适配器现于排入新 queued 状态前拒绝无进展的 `advance`；未处理失败保留 `unknown`。空对象、嵌套键重排和 JSON 正负零的真实磁盘效果均未因原请求重试/重开而重复，保留容量未释放。该改动不迁移历史 faulted job。
+
+本批最终构建、类型、公开声明与代码格式通过，定向 **33/33**、全量 **437/437**（无 fail/skip/cancel/todo）及全部实际安装消费者通过；435 个冻结源码/helper/TLS 文件 SHA 在定向、全量与安装阶段保持一致。新安装归档的实际 CLI 消费者验证 **2 次 provider HTTP、2 次已消费额度**、正常重开、原请求只读核对，以及移除 WebUI facet 后原 native job 继续工作。8 个实际归档与 lock integrity 逐一匹配，另保存 native storage、provider payload、原生投递回执和消费脚本 SHA。Task 4.4 的实际插件长任务消费已完成，6.5 的完整产品恢复仍随其余工作流继续验收。重开初次失败的原存储已保留：任务实际按 305 秒延迟等待，夹具填写顺序修正并在提交前断言精确值 5，不改生产延时或恢复规则。日志、red/green、native journals、桌面/手机截图与最终交付归档放在 `artifacts/pakka-pocket/p5/automation/`。其余可选界面、真实通知点击、部署与 P6 仍未完成。
+
 ## 7. 当前可执行证据
 
-| 主体                                                  | 证据                                                                                 |
-| ----------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| `apps/server/test/pocket-collaboration.test.ts`       | 真实 Durable 记录、两人 notes/driver 竞争、期限/资源边界、正常重开                   |
-| `apps/webui/test/collaboration-http.test.ts`          | 实际认证 HTTP/SSE、viewer 参与、服务端过滤及确定冲突                                 |
-| `apps/webui/test/collaboration-browser.test.ts`       | 两人桌面/手机交互、typing、pin/reaction、notes 草稿、driver、实际模型 payload        |
-| `apps/webui/test/collaboration-late.test.ts`          | 真正延后的读取不能影响新 Conversation                                                |
-| `apps/server/test/pocket-files.test.ts`               | 真实磁盘、Git、链接/配置拒绝、原生忙碌、effect 记录和重开                            |
-| `apps/webui/test/files-browser.test.ts`               | 文件编辑/上传、安全文本显示、diff、分支/worktree 的实际鼠标流程，0 次模型 HTTP       |
-| `apps/webui/test/files-boundaries.test.ts`            | 本地草稿与外部文件冲突、真实 PNG 解码、手机 viewer、直接 RPC 越权拒绝，0 次模型 HTTP |
-| `packages/protocol/test/pocket-collaboration.test.ts` | 有限协作命令/DTO 的结构检查，不作为实际能力证明                                      |
-| `scripts/consumer-pocket-workflows.mjs`               | 仓库外实际 CLI 的多人、真实文件/diff、原请求去重和正常重开；2 次模型 HTTP、额度保持 2 |
-| `apps/webui/test/files-effect-boundary.test.ts`       | 真实 intent 提交后关闭扩展/abort，不产生迟到磁盘写入，原请求不重放                     |
-| `apps/server/test/pocket-approvals.test.ts`           | 原生 invocation、允许/拒绝、撤权/abort/失效界面和不明效果的真实存储回归                |
-| `apps/webui/test/approvals-browser.test.ts`           | 实际操作者/手机 viewer 面板、原工具效果与模型终态                                     |
-| `apps/server/test/pocket-browser.test.ts`             | 真实独立页面、PNG 解码、origin/resource 权限、原 intent 及正常重开                    |
-| `apps/server/test/pocket-browser-network.test.ts`     | 实际 HTTPS 隧道与未批准 CONNECT 拒绝                                                 |
-| `apps/server/test/pocket-browser-network-reset.test.ts` | 24 次真实拒绝连接后 reset，错误留在该连接且目标请求为 0                            |
-| `apps/webui/test/browser-contribution.test.ts`        | 桌面/手机真实动作、丢响应后的可见核对与内层 unknown 保留，0 次模型 HTTP                |
-| `apps/webui/test/extension-http.test.ts`              | 原操作查询、错误 profile/incarnation、跨用户、撤权与 403/denied                     |
-| `scripts/consumer-pocket-controlled.mjs`             | 实际 CLI 审批与浏览器控制、2 次页面效果、原操作核对和正常重开；4 次模型 HTTP            |
-| `apps/server/test/pocket-notifications.test.ts`      | 真实 TLS/独立解密与 VAPID、晚撤权、定向收件人、输入捕获、未知投递及重开 |
-| `apps/webui/test/notifications-http.test.ts`          | 实际完成/旁聊事件、有限设备协议、当前 Cookie metadata 和越权探针 |
-| `apps/webui/test/notifications-browser.test.ts`       | 真实 worker 原生通知、登出清理、手机偏好隔离和桌面/手机布局 |
-| `apps/webui/test/notifications-main.test.ts`          | 非法 push authority 在存储和 provider 效果前被拒绝 |
-| `scripts/consumer-pocket-notifications.mjs`          | 实际 CLI/TLS/worker/reopen；2 次模型 HTTP、3 次 push、原未知投递不重发 |
+| 主体                                                    | 证据                                                                                  |
+| ------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| `apps/server/test/pocket-collaboration.test.ts`         | 真实 Durable 记录、两人 notes/driver 竞争、期限/资源边界、正常重开                    |
+| `apps/webui/test/collaboration-http.test.ts`            | 实际认证 HTTP/SSE、viewer 参与、服务端过滤及确定冲突                                  |
+| `apps/webui/test/collaboration-browser.test.ts`         | 两人桌面/手机交互、typing、pin/reaction、notes 草稿、driver、实际模型 payload         |
+| `apps/webui/test/collaboration-late.test.ts`            | 真正延后的读取不能影响新 Conversation                                                 |
+| `apps/server/test/pocket-files.test.ts`                 | 真实磁盘、Git、链接/配置拒绝、原生忙碌、effect 记录和重开                             |
+| `apps/webui/test/files-browser.test.ts`                 | 文件编辑/上传、安全文本显示、diff、分支/worktree 的实际鼠标流程，0 次模型 HTTP        |
+| `apps/webui/test/files-boundaries.test.ts`              | 本地草稿与外部文件冲突、真实 PNG 解码、手机 viewer、直接 RPC 越权拒绝，0 次模型 HTTP  |
+| `packages/protocol/test/pocket-collaboration.test.ts`   | 有限协作命令/DTO 的结构检查，不作为实际能力证明                                       |
+| `scripts/consumer-pocket-workflows.mjs`                 | 仓库外实际 CLI 的多人、真实文件/diff、原请求去重和正常重开；2 次模型 HTTP、额度保持 2 |
+| `apps/webui/test/files-effect-boundary.test.ts`         | 真实 intent 提交后关闭扩展/abort，不产生迟到磁盘写入，原请求不重放                    |
+| `apps/server/test/pocket-approvals.test.ts`             | 原生 invocation、允许/拒绝、撤权/abort/失效界面和不明效果的真实存储回归               |
+| `apps/webui/test/approvals-browser.test.ts`             | 实际操作者/手机 viewer 面板、原工具效果与模型终态                                     |
+| `apps/server/test/pocket-browser.test.ts`               | 真实独立页面、PNG 解码、origin/resource 权限、原 intent 及正常重开                    |
+| `apps/server/test/pocket-browser-network.test.ts`       | 实际 HTTPS 隧道与未批准 CONNECT 拒绝                                                  |
+| `apps/server/test/pocket-browser-network-reset.test.ts` | 24 次真实拒绝连接后 reset，错误留在该连接且目标请求为 0                               |
+| `apps/webui/test/browser-contribution.test.ts`          | 桌面/手机真实动作、丢响应后的可见核对与内层 unknown 保留，0 次模型 HTTP               |
+| `apps/webui/test/extension-http.test.ts`                | 原操作查询、错误 profile/incarnation、跨用户、撤权与 403/denied                       |
+| `scripts/consumer-pocket-controlled.mjs`                | 实际 CLI 审批与浏览器控制、2 次页面效果、原操作核对和正常重开；4 次模型 HTTP          |
+| `apps/server/test/pocket-notifications.test.ts`         | 真实 TLS/独立解密与 VAPID、晚撤权、定向收件人、输入捕获、未知投递及重开               |
+| `apps/webui/test/notifications-http.test.ts`            | 实际完成/旁聊事件、有限设备协议、当前 Cookie metadata 和越权探针                      |
+| `apps/webui/test/notifications-browser.test.ts`         | 真实 worker 原生通知、登出清理、手机偏好隔离和桌面/手机布局                           |
+| `apps/webui/test/notifications-main.test.ts`            | 非法 push authority 在存储和 provider 效果前被拒绝                                    |
+| `scripts/consumer-pocket-notifications.mjs`             | 实际 CLI/TLS/worker/reopen；2 次模型 HTTP、3 次 push、原未知投递不重发                |
 
 冻结副本的构建、类型和全量回归 **387/387** 通过，无 skip/cancel/todo；完整 `smoke:package` 的所有既有及新增消费者通过。386 个源码/夹具 SHA 在门禁前后保持一致，原树未变时才合回 12 个已测试文件。合回后的构建、类型和主动诊断通过；补充了“面板重新加载后等帧已解码再点击”的验收等待条件，原查询与效果断言未变，相关 8 项组合连续 5 轮通过，更新后的消费者再次通过同一安装产物。生产字节与已通过的全量/安装身份一致。
 
 原失败、red/green、386 文件身份、合并记录、阶段日志和桌面/手机截图保存在 `artifacts/pakka-pocket/p5/`。`writer-check/operation-lookup/` 记录这次单 writer 合并；`installed-recovery-final.json` 绑定实际安装档案及补充消费者 SHA。Markdown lint 按用户指示留到收尾，不阻塞功能推进。
 
 设置补充用例为 `apps/server/test/pocket-configuration.test.ts`、`pocket-credentials.test.ts`、`pocket-credentials-boundaries.test.ts`，协议/client 的 configuration/credentials 用例，以及 `apps/webui/test/configuration-browser.test.ts`、`configuration-recovery.test.ts`、`credentials-http.test.ts`、`credentials-browser.test.ts`。它们分别核对真实持久状态、HTTP 身份与反关联、provider Authorization、实际界面/迟到读取和丢响应，不以 schema 通过替代功能证据。
+
+计划输入补充用例为 `apps/server/test/pocket-schedules.test.ts`、`pocket-schedules-boundaries.test.ts`、`pocket-schedules-persistence.test.ts`、`apps/webui/test/schedules-browser.test.ts`、`schedules-recovery.test.ts`、`packages/agent/test/runtime-backend-job-progress.test.ts` 和实际 CLI 消费者 `scripts/consumer-pocket-schedules.mjs`。原生 progress 反例是直接执行真实 Durable 程序，准入状态反例则在真实原生准入/HTTP 后受控丢失确认视图：后者证明分类与停止后续周期，不称为真实磁盘断电实验。
 
 ## 8. 不应混同的证据
 

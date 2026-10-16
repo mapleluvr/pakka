@@ -355,7 +355,7 @@ export interface RuntimeJobContext {
 	readonly job: RuntimeJobReceipt;
 	readonly checkpoint: JsonObject;
 	check(): void;
-	/** Commit an approved recovery boundary; return after this transition. */
+	/** Commit changed JSON recovery data; equivalent data is rejected. Return after a successful transition. */
 	advance(checkpoint: JsonObject): Promise<void>;
 	complete(result: JsonObject): Promise<void>;
 	sleep(ms: number): Promise<void>;

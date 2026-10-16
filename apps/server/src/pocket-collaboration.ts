@@ -84,6 +84,8 @@ export interface PocketCollaboration {
 	bind(actor: PocketAuthority): PocketCollaborationClient;
 	/** Synchronous final-effect guard composed into native admission by the host. */
 	checkInput(actor: PocketAuthority, ref: ConversationRef): void;
+	/** Trusted native jobs recheck a persisted person, without minting a login/session authority. */
+	checkScheduledInput(actorId: string, ref: ConversationRef): void;
 }
 export interface PocketCollaborationOptions {
 	readonly runtime: Runtime;
@@ -345,19 +347,33 @@ async function open(
 		const { fingerprint: _, ...publicMessage } = m;
 		return publicMessage;
 	};
-	const checkInput = (actor: PocketAuthority, ref: ConversationRef) => {
-		const person = read(actor, ref);
+	const checkDriver = (actorId: string, ref: ConversationRef) => {
 		if (pendingDriver.has(ref.conversationId)) throw new Error("Driver transition pending");
 		const d = existing(ref)?.driver;
 		if (d?.personId) {
 			people.authorizePerson(d.personId, "steer", ref.conversationId);
-			if (d.personId !== person.id || d.expiresAt === null || d.expiresAt <= time())
+			if (d.personId !== actorId || d.expiresAt === null || d.expiresAt <= time())
 				throw new Error("Current driver lease denied or expired");
 		}
 	};
 	await refresh();
 	return Object.freeze({
-		checkInput,
+		checkInput: (actor: PocketAuthority, ref: ConversationRef) => checkDriver(read(actor, ref).id, ref),
+		checkScheduledInput: (actorId: string, ref: ConversationRef) => {
+			ready();
+			people.authorizePerson(actorId, "steer", ref.conversationId);
+			if (
+				!runtime
+					.view()
+					.conversations.some((row) =>
+						["key", "sessionId", "conversationId", "incarnation", "profile"].every(
+							(key) => row[key as keyof ConversationRef] === ref[key as keyof ConversationRef],
+						),
+					)
+			)
+				throw Error("Pocket collaboration stale resource denied");
+			checkDriver(actorId, ref);
+		},
 		bind(actor: PocketAuthority): PocketCollaborationClient {
 			people.current(actor);
 			return Object.freeze({
