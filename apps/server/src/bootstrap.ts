@@ -122,7 +122,13 @@ function runtimeConfig(value: unknown): value is RuntimeOptions {
 				value.profiles.length <= 128 &&
 				value.profiles.every(
 					(profile) =>
-						shape(profile, ["id", "systemPrompt"]) &&
+						shape(profile, ["id", "systemPrompt"], ["model"]) &&
+						(profile.model === undefined ||
+							(typeof profile.model === "string" &&
+								profile.model.length > 0 &&
+								profile.model.length <= 256 &&
+								profile.model.trim() === profile.model &&
+								!/[\x00-\x1f\x7f]/.test(profile.model))) &&
 						identity(profile.id) &&
 						profile.id !== "default" &&
 						text(profile.systemPrompt),

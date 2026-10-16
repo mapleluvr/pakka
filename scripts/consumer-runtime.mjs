@@ -42,7 +42,7 @@ const options = {
 	apiKey: "local-only",
 	systemPrompt: "MANAGED-DEFAULT",
 	limits: { maxConversations: 2, maxPrimaryAttempts: 3, maxAuxiliaryAttempts: 1 },
-	profiles: [{ id: "worker", systemPrompt: "MANAGED-WORKER" }],
+	profiles: [{ id: "worker", model: "alternate-local", systemPrompt: "MANAGED-WORKER" }],
 };
 let runtime, reopened;
 try {
@@ -67,6 +67,8 @@ try {
 		),
 	);
 	assert.ok(requests.some((body) => /MANAGED-WORKER/.test(JSON.stringify(body))));
+	assert.equal(requests.find((body) => /UNIQUE-ROOT-A/.test(JSON.stringify(body)))?.model, "local");
+	assert.equal(requests.find((body) => /UNIQUE-PEER-B/.test(JSON.stringify(body)))?.model, "alternate-local");
 	assert.notEqual(a.view().providerSessionId, b.view().providerSessionId);
 	const storedBeforeRead = await readFile(runtime.view().sessionFile, "utf8");
 	const observed = await runtime.readConversation(ref, () => {});
@@ -127,6 +129,7 @@ try {
 	await client.submit({ key: "third", text: "LAST-ALLOWED" });
 	await reopened.waitForIdle();
 	assert.equal(requests.length, 3);
+	assert.equal(requests[2].model, "alternate-local");
 	assert.doesNotMatch(JSON.stringify(requests[2]), /DISPLAY-ONLY-INSTALLED-CANARY|display-only/);
 	const denied = await client.submit({ key: "fourth", text: "OVER-CAP" });
 	await reopened.waitForIdle();
@@ -143,6 +146,7 @@ try {
 			journals: "independent",
 			quotas: "persistent",
 			reopen: "zero-dispatch",
+			profileModel: "exact-approved-id-persisted",
 			observation: "scoped-frozen-passive",
 			display: "reopen-dedup-zero-model-contribution",
 		}),

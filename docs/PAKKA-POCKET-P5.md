@@ -63,7 +63,15 @@ export default {
 - 外层 extension operation 为 `done` 只说明 handler 结果已保存；若内层 browser action 仍为 `unknown`，面板继续保留待确认状态并禁用新动作。
 - 产品正常关闭或启动注册失败都会调用已创建服务的 `dispose`；逐项清理失败不会跳过其余服务或 Runtime 的关闭。
 
-## 5. 当前可执行证据
+## 5. 模型设置的受控端口（6.4 继续实施）
+
+`ConversationProfile.model` 是宿主启动时批准的同 provider 模型 ID；未指定时沿用默认模型，显式值限制为 1–256 code units 且不含控制字符或首尾空白。profile 不能替换 endpoint、凭据或 cwd。JSON 产品、server bootstrap 和 worker IPC 都以有限 schema 保留该字段，浏览器仅可在自己的 profile ceiling 内选择 profile。
+
+受控 configure 在同一 native commit 更新 model/tools/instructions 并生成新 incarnation。真实 provider payload 验证下一次请求使用确切 ID；正常重开保留配置与已消费额度，原请求不重放。更改持久 bootstrap 中某个 profile 的模型定义会拒绝重开，不会悄悄重定向原工作。费用不确定仍为 `null`。
+
+本端口的组合回归 13/13，全量 392/392 与全部实际安装消费者通过。安装 runtime 消费者在 3 次本地 HTTP 中独立核对默认/另一模型和重开后的同模型。构建前后 391 个源码/helper/TLS 资产 SHA 一致，记录在 `artifacts/pakka-pocket/p5/model-port/`。此项不将 settings UI、私密设置 replace/clear 或通知勾成完成；这些产品流程继续实施。
+
+## 6. 当前可执行证据
 
 | 主体                                                  | 证据                                                                                 |
 | ----------------------------------------------------- | ------------------------------------------------------------------------------------ |
@@ -90,7 +98,7 @@ export default {
 
 原失败、red/green、386 文件身份、合并记录、阶段日志和桌面/手机截图保存在 `artifacts/pakka-pocket/p5/`。`writer-check/operation-lookup/` 记录这次单 writer 合并；`installed-recovery-final.json` 绑定实际安装档案及补充消费者 SHA。Markdown lint 按用户指示留到收尾，不阻塞功能推进。
 
-## 6. 不应混同的证据
+## 7. 不应混同的证据
 
 - 恢复 running intent 的测试通过受控公开 store 写入状态，不称为 kill-process/断电实验。
 - 图片使用真实 PNG 在浏览器解码；看到文字占位符不算图片字节证据。

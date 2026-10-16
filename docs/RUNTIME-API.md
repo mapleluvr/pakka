@@ -37,7 +37,9 @@ try {
 
 `Runtime` 是 bootstrap 控制对象；`Host` 是一个 Conversation 的控制对象。每个 Host 分别连接 principal、激活 strategy 和绑定工具 invocation。调用方只获得冻结的 DTO 与身份绑定的命令 closure。Pi 的 Harness、Session、Conversation、Registry、Models 和 Tx 不通过公开接口返回。
 
-bootstrap 必须给出三项正的有限整数配额。额外 profile 只接受允许的 `id`、instructions 和配置的工具；profile 不允许输入任意 model、credentials、cwd、storage path 或原始 extensions。默认 profile 沿用 HostOptions。创建相同 key/profile 返回已有 resource；同 key 的不同 profile 被拒绝。
+bootstrap 必须给出三项正的有限整数配额。额外 profile 接受允许的 `id`、instructions、配置的工具，以及可选的 `model` ID。省略 `model` 时沿用 HostOptions；显式值必须为 1–256 个 UTF-16 code units，不含控制字符或首尾空白。模型仍使用该 Runtime 固定的 provider、endpoint、凭据和主调用参数，profile 不能改写 credentials、cwd、storage path 或原始 extensions。创建相同 key/profile 返回已有 resource；同 key 的不同 profile 被拒绝。
+
+例如 `{ id: "reviewer", model: "approved-review-model", systemPrompt: "Review the requested work." }` 在启动时注册该确切模型 ID。通过受控 catalog 的配置操作切换 profile 时，model、instructions 和 tools 在同一 native commit 更新；原 incarnation 作废，下一次实际 provider 请求采用新模型。人类只能选其 profile ceiling 内的配置；重开校验模型所属的 profile identity，并保留已消费额度。这是 P5 6.4 的受控端口，尚不能据此声称 settings 界面、私密配置 replace/clear 或通知迁移已完成。
 
 ## 身份、作用域与 journal
 

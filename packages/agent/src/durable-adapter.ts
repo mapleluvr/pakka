@@ -299,8 +299,19 @@ function profileHash(options: HostOptions): string {
 	});
 }
 function profileOptions(options: HostOptions, profile?: ConversationProfile): HostOptions {
+	const model = profile?.model === undefined ? options.model : profile.model;
+	if (
+		profile?.model !== undefined &&
+		(typeof model !== "string" ||
+			!model ||
+			model.length > 256 ||
+			model.trim() !== model ||
+			/[\x00-\x1f\x7f]/.test(model))
+	)
+		throw new Error("Invalid bootstrap profile model identifier");
 	return Object.freeze({
 		...options,
+		model,
 		systemPrompt: profile?.systemPrompt ?? options.systemPrompt,
 		tools: (profile?.tools ?? options.tools)?.map((tool) =>
 			Object.freeze({ ...tool, parameters: copy(tool.parameters) }),
@@ -829,21 +840,19 @@ export class DurableAdapter {
 						},
 					},
 					api: { "openai-completions": oac },
-					models: [
-						{
-							id: mainModelId,
-							name: mainModelId,
-							provider: mainProviderId,
-							api: "openai-completions",
-							baseUrl: options.endpoint,
-							reasoning: false,
-							input: ["text"],
-							cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
-							contextWindow: 128000,
-							maxTokens: 4096,
-							compat: { maxTokensField: "max_tokens", supportsMidConvoSystemMessages: true },
-						},
-					],
+					models: [...new Set([...profiles.values()].map((profile) => profile.model))].map((modelId) => ({
+						id: modelId,
+						name: modelId,
+						provider: mainProviderId,
+						api: "openai-completions",
+						baseUrl: options.endpoint,
+						reasoning: false,
+						input: ["text"],
+						cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+						contextWindow: 128000,
+						maxTokens: 4096,
+						compat: { maxTokensField: "max_tokens", supportsMidConvoSystemMessages: true },
+					})),
 				}),
 			);
 
@@ -1960,6 +1969,10 @@ export class DurableAdapter {
 						profileId === "default" ? "pakka-core-extension" : "pakka-profile-" + profileId,
 					)!;
 					await configure(tx, to, {
+						model: {
+							provider: "pakka-provider-" + hash(profile.endpoint).slice(0, 12),
+							modelId: profile.model,
+						},
 						extensions: [extension],
 						instructions: profile.systemPrompt,
 						cwd: profile.cwd,

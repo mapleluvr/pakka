@@ -290,6 +290,8 @@ export interface RuntimeLimits {
 }
 export interface ConversationProfile {
 	readonly id: string;
+	/** Bootstrap-approved ID on the Runtime provider; inherits the default when omitted. */
+	readonly model?: string;
 	readonly systemPrompt?: string;
 	readonly tools?: HostOptions["tools"];
 }

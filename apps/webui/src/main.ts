@@ -52,9 +52,10 @@ export function decodePocketProduct(value: unknown): PocketProductOptions {
 					if (!Array.isArray(runtime.profiles) || runtime.profiles.length > 64)
 						throw new Error("Invalid approved profiles");
 					return runtime.profiles.map((item) => {
-						const row = object(item, ["id", "systemPrompt"]);
+						const row = object(item, ["id", "systemPrompt", "model"]);
 						return {
 							id: text(row.id, 128),
+							...(row.model === undefined ? {} : { model: text(row.model, 256) }),
 							...(row.systemPrompt === undefined ? {} : { systemPrompt: text(row.systemPrompt, 65536) }),
 						};
 					});

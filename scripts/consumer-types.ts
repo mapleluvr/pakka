@@ -32,7 +32,10 @@ import type {
 	Runtime,
 	RuntimeOptions,
 	ConversationRef,
+	ConversationProfile,
 } from "@pakka/agent";
+const approvedModelProfile: ConversationProfile = { id: "approved", model: "exact-host-approved-model" };
+void approvedModelProfile;
 import type { Mas, MasClient, MemberSpec, SendSpec, AgentRef } from "@pakka/mas";
 import type { RuntimeStore, RuntimeJobOptions } from "@pakka/agent";
 import type { PocketPeople, PocketAuthority, PocketWorkspace } from "@pakka/server/pocket";
