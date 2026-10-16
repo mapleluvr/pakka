@@ -2,7 +2,12 @@ import { PocketRemoteError } from "@pakka/client/pocket";
 import type { PocketClientOptions, PocketRequestOptions } from "@pakka/client/pocket";
 import type { AgentRef } from "@pakka/protocol/pocket";
 import { decodeValue } from "./extension.ts";
-import type { ExtensionCall, ExtensionOperation, ExtensionRegistration } from "./extension.ts";
+import type {
+	ExtensionCall,
+	ExtensionOperation,
+	ExtensionOperationRequest,
+	ExtensionRegistration,
+} from "./extension.ts";
 import { decodeExtensionRequest, decodeExtensionResponse } from "./extension-rpc.ts";
 import type { ExtensionCommandEnvelope, ExtensionResult } from "./extension-rpc.ts";
 
@@ -10,6 +15,10 @@ export interface ExtensionClient {
 	list(target?: AgentRef, options?: PocketRequestOptions): Promise<readonly ExtensionRegistration[]>;
 	call(input: ExtensionCall, options?: PocketRequestOptions): Promise<ExtensionOperation>;
 	operation(id: string, options?: PocketRequestOptions): Promise<ExtensionOperation>;
+	operationByRequest(
+		request: ExtensionOperationRequest,
+		options?: PocketRequestOptions,
+	): Promise<ExtensionOperation>;
 	control(
 		extension: string,
 		action: "enable" | "disable" | "reload",
@@ -145,6 +154,16 @@ export function createExtensionClient(
 		operation: async (id: string, input: PocketRequestOptions = {}) => {
 			const result = await request({ op: "operation", id }, input);
 			if (result.kind !== "operation" || result.operation.id !== id) return unknown(input.requestId);
+			return correlated(result.operation, input);
+		},
+		operationByRequest: async (original: ExtensionOperationRequest, input: PocketRequestOptions = {}) => {
+			const result = await request({ op: "operationByRequest", request: original }, input);
+			if (
+				result.kind !== "operation" ||
+				result.operation.extension !== original.extension ||
+				result.operation.requestId !== original.requestId
+			)
+				return unknown(input.requestId);
 			return correlated(result.operation, input);
 		},
 		control: async (

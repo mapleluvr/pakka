@@ -17,6 +17,7 @@ import {
 } from "@pakka/protocol/pocket";
 import { identity } from "@pakka/protocol";
 import QRCode from "qrcode";
+import { PocketCollaborationConflict, type PocketCollaboration } from "@pakka/server/pocket";
 import type { PocketCommand, PocketErrorCode } from "@pakka/protocol/pocket";
 import type { ExtensionHost } from "./backend.ts";
 import { ExtensionRefusal } from "./extension-host.ts";
@@ -27,6 +28,7 @@ export interface PocketHttpOptions {
 	readonly runtime: Runtime;
 	readonly people: PocketPeople;
 	readonly workspace: PocketWorkspace;
+	readonly collaboration?: PocketCollaboration;
 	readonly host?: string;
 	readonly port?: number;
 	readonly publicOrigin?: string;
@@ -47,10 +49,12 @@ export interface PocketHttp {
 class Refusal extends Error {
 	readonly status: number;
 	readonly code: PocketErrorCode;
-	constructor(status: number, code: PocketErrorCode) {
+	readonly confirmedNoEffect: boolean;
+	constructor(status: number, code: PocketErrorCode, confirmedNoEffect = false) {
 		super("Pocket request refused");
 		this.status = status;
 		this.code = code;
+		this.confirmedNoEffect = confirmedNoEffect;
 	}
 }
 const header = (req: IncomingMessage, name: string) =>
@@ -228,6 +232,22 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 				permission = "read";
 				resource = command.target.conversationId;
 				break;
+			case "collaboration.read":
+			case "collaboration.post":
+			case "collaboration.react":
+			case "collaboration.presence":
+				permission = "read";
+				resource = command.target.conversationId;
+				break;
+			case "collaboration.note":
+			case "collaboration.pin":
+				permission = "send";
+				resource = command.target.conversationId;
+				break;
+			case "collaboration.driver":
+				permission = command.input.action === "take" ? "manage" : "steer";
+				resource = command.target.conversationId;
+				break;
 			case "display":
 				permission = "send";
 				resource = command.target.conversationId;
@@ -257,6 +277,7 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 			people.current(a);
 			if (permission) people.check(a, permission, resource);
 			if (command.op === "fork") people.check(a, "manage", command.target.conversationId);
+			if (command.op === "submit") options.collaboration?.checkInput(a, command.target);
 		});
 	}
 	async function execute(
@@ -266,6 +287,46 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 		signal: AbortSignal,
 	): Promise<unknown> {
 		const client = workspace.bind(a);
+		if (
+			command.op === "collaboration.read" ||
+			command.op === "collaboration.post" ||
+			command.op === "collaboration.note" ||
+			command.op === "collaboration.react" ||
+			command.op === "collaboration.pin" ||
+			command.op === "collaboration.driver" ||
+			command.op === "collaboration.presence"
+		) {
+			if (!options.collaboration) throw new Refusal(404, "UNSUPPORTED");
+			const human = options.collaboration.bind(a);
+			switch (command.op) {
+				case "collaboration.read":
+					break;
+				case "collaboration.post":
+					await human.post(command.target, command.input);
+					break;
+				case "collaboration.note":
+					try {
+						await human.editNote(command.target, command.input);
+					} catch (failure) {
+						if (failure instanceof PocketCollaborationConflict) throw new Refusal(409, "CONFLICT", true);
+						throw failure;
+					}
+					break;
+				case "collaboration.react":
+					await human.react(command.target, command.input);
+					break;
+				case "collaboration.pin":
+					await human.pin(command.target, command.input);
+					break;
+				case "collaboration.driver":
+					await human.setDriver(command.target, command.input);
+					break;
+				case "collaboration.presence":
+					await human.presence(command.target, command.input);
+					break;
+			}
+			return { kind: "collaboration", snapshot: await human.snapshot(command.target) };
+		}
 		switch (command.op) {
 			case "hello":
 				return {
@@ -441,6 +502,9 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 							case "list":
 								result = { kind: "registrations", registrations: extensions.list(a, command.target) };
 								break;
+							case "operationByRequest":
+								result = { kind: "operation", operation: await extensions.operationByRequest(a, command.request) };
+								break;
 							case "operation":
 								result = { kind: "operation", operation: await extensions.operation(a, command.id) };
 								break;
@@ -551,6 +615,7 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 					const streamId = randomUUID();
 					let sequence = 0,
 						prior = "",
+						priorHuman = "",
 						lastSent = 0;
 					const emit = async (data: Record<string, unknown>) => {
 						people.check(a, "read", id);
@@ -607,6 +672,14 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 								await emit({ kind: "conversation", snapshot });
 								prior = bytes;
 							}
+							if (options.collaboration) {
+								const shared = await options.collaboration.bind(a).snapshot(ref),
+									bytesHuman = JSON.stringify(shared);
+								if (bytesHuman !== priorHuman) {
+									await emit({ kind: "collaboration", snapshot: shared });
+									priorHuman = bytesHuman;
+								}
+							}
 							await new Promise<void>((resolve) => {
 								const finish = () => {
 									clearTimeout(timer);
@@ -652,7 +725,7 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 				serverId,
 				error: {
 					code: refusal ? error.code : "UNKNOWN",
-					outcome: refusal && !dispatched ? "denied" : "unknown",
+					outcome: refusal && (!dispatched || error.confirmedNoEffect) ? "denied" : "unknown",
 					message: refusal ? "Pocket request refused" : "Pocket operation outcome unconfirmed",
 				},
 			});

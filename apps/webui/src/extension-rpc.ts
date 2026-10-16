@@ -7,6 +7,7 @@ import type {
 	ExtensionFacet,
 	ExtensionJson,
 	ExtensionOperation,
+	ExtensionOperationRequest,
 	ExtensionRegistration,
 } from "./extension.ts";
 
@@ -14,6 +15,7 @@ export type ExtensionCommandEnvelope =
 	| { readonly op: "list"; readonly target?: AgentRef }
 	| { readonly op: "call"; readonly call: ExtensionCall }
 	| { readonly op: "operation"; readonly id: string }
+	| { readonly op: "operationByRequest"; readonly request: ExtensionOperationRequest }
 	| { readonly op: "enable" | "disable" | "reload"; readonly extension: string };
 export interface ExtensionRequest {
 	readonly version: 2;
@@ -82,6 +84,14 @@ export function decodeExtensionRequest(value: unknown): ExtensionRequest {
 			shape(command, ["op"], ["target"]);
 			if (command.target !== undefined) decodeTarget(command.target);
 			break;
+		case "operationByRequest": {
+			shape(command, ["op", "request"]);
+			const request = command.request;
+			shape(request, ["extension", "requestId"], ["target"]);
+			if (!extensionId(request.extension) || !identity(request.requestId)) throw new Error("Invalid original extension request");
+			if (request.target !== undefined) decodeTarget(request.target);
+			break;
+		}
 		case "operation":
 			shape(command, ["op", "id"]);
 			if (!identity(command.id)) throw new Error("Invalid extension operation id");

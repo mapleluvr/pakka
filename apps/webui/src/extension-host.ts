@@ -9,6 +9,7 @@ import type {
 	ExtensionRegistration,
 	ExtensionCall,
 	ExtensionOperation,
+	ExtensionOperationRequest,
 	ExtensionJson,
 	ExtensionFacet,
 	ExtensionAction,
@@ -549,6 +550,15 @@ export async function createExtensionHost(options: ExtensionHostOptions): Promis
 			);
 		},
 		operation,
+		operationByRequest: async (actor: PocketAuthority, request: ExtensionOperationRequest): Promise<ExtensionOperation> => {
+			const person = current(actor);
+			if (!isRecord(request) || !extensionId(request.extension) || !requestKey(request.requestId) || Object.keys(request).some(key => !["extension", "requestId", "target"].includes(key))) return refuse("INVALID_REQUEST");
+			authorize(actor, "read", request.target);
+			const saved = (await snapshot()).state.operations.find(row => row.extension === request.extension && row.actorId === person.id && row.requestId === request.requestId && (row.target ? !!request.target && sameRef(row.target, request.target) : !request.target));
+			if (!saved) return refuse();
+			authorize(actor, saved.permission, saved.target ?? undefined);
+			return present(saved);
+		},
 		setEnabled: (actor: PocketAuthority, id: string, enabled: boolean) =>
 			lifecycle(async () => {
 				authorize(actor, "extensions.install");

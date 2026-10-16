@@ -1,0 +1,149 @@
+{
+	"api": 1,
+	"id": "workspace-approvals",
+	"version": "1.0.0",
+	"title": "Tool approvals",
+	"facets": {
+		"backend": "backend.mjs",
+		"client": "client.js",
+		"webui": {
+			"entry": "index.js",
+			"publicDir": "web"
+		}
+	},
+	"services": ["approvals"],
+	"actions": [
+		{
+			"id": "list",
+			"version": 1,
+			"scope": "conversation",
+			"permission": "read",
+			"effect": "read",
+			"timeoutMs": 5000,
+			"input": {
+				"type": "object",
+				"properties": {},
+				"required": []
+			},
+			"output": {
+				"type": "object",
+				"properties": {
+					"approvals": {
+						"type": "array",
+						"maxItems": 512,
+						"items": {
+							"type": "object",
+							"properties": {
+								"id": {
+									"type": "string",
+									"maxLength": 160
+								},
+								"tool": {
+									"type": "string",
+									"maxLength": 80
+								},
+								"argumentsText": {
+									"type": "string",
+									"maxLength": 16384
+								},
+								"createdAt": {
+									"type": "integer",
+									"minimum": 1,
+									"maximum": 9007199254740991
+								},
+								"expiresAt": {
+									"type": "integer",
+									"minimum": 1,
+									"maximum": 9007199254740991
+								},
+								"state": {
+									"enum": ["pending", "allowed", "denied", "running", "done", "unknown"]
+								},
+								"decidedBy": {
+									"type": "string",
+									"maxLength": 160
+								}
+							},
+							"required": ["id", "tool", "argumentsText", "createdAt", "expiresAt", "state"]
+						}
+					}
+				},
+				"required": ["approvals"]
+			}
+		},
+		{
+			"id": "decide",
+			"version": 1,
+			"scope": "conversation",
+			"permission": "manage",
+			"effect": "write",
+			"timeoutMs": 5000,
+			"input": {
+				"type": "object",
+				"properties": {
+					"id": {
+						"type": "string",
+						"maxLength": 160
+					},
+					"allow": {
+						"type": "boolean"
+					}
+				},
+				"required": ["id", "allow"]
+			},
+			"output": {
+				"type": "object",
+				"properties": {
+					"id": {
+						"type": "string",
+						"maxLength": 160
+					},
+					"tool": {
+						"type": "string",
+						"maxLength": 80
+					},
+					"argumentsText": {
+						"type": "string",
+						"maxLength": 16384
+					},
+					"createdAt": {
+						"type": "integer",
+						"minimum": 1,
+						"maximum": 9007199254740991
+					},
+					"expiresAt": {
+						"type": "integer",
+						"minimum": 1,
+						"maximum": 9007199254740991
+					},
+					"state": {
+						"enum": ["pending", "allowed", "denied", "running", "done", "unknown"]
+					},
+					"decidedBy": {
+						"type": "string",
+						"maxLength": 160
+					}
+				},
+				"required": ["id", "tool", "argumentsText", "createdAt", "expiresAt", "state"]
+			}
+		}
+	],
+	"commands": [
+		{
+			"id": "approvals",
+			"title": "Open tool approvals",
+			"slash": "approvals",
+			"interface": "approvals"
+		}
+	],
+	"interfaces": [
+		{
+			"id": "approvals",
+			"title": "Tool approvals",
+			"slot": "page",
+			"scope": "conversation",
+			"export": "Approvals",
+			"navigation": true
+		}
+	]
+}

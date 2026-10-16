@@ -1,0 +1,785 @@
+{
+	"api": 1,
+	"id": "workspace-files",
+	"version": "1.0.0",
+	"title": "Files & changes",
+	"facets": {
+		"backend": "backend.mjs",
+		"client": "client.js",
+		"webui": {
+			"entry": "index.js",
+			"publicDir": "web"
+		}
+	},
+	"services": ["files"],
+	"actions": [
+		{
+			"id": "roots",
+			"version": 1,
+			"scope": "conversation",
+			"permission": "read",
+			"effect": "read",
+			"timeoutMs": 15000,
+			"input": {
+				"type": "object",
+				"properties": {},
+				"required": []
+			},
+			"output": {
+				"type": "object",
+				"properties": {
+					"roots": {
+						"type": "array",
+						"maxItems": 16,
+						"items": {
+							"type": "object",
+							"properties": {
+								"id": {
+									"type": "string",
+									"maxLength": 160
+								},
+								"writable": {
+									"type": "boolean"
+								},
+								"git": {
+									"type": "boolean"
+								}
+							},
+							"required": ["id", "writable", "git"]
+						}
+					}
+				},
+				"required": ["roots"]
+			}
+		},
+		{
+			"id": "list",
+			"version": 1,
+			"scope": "conversation",
+			"permission": "read",
+			"effect": "read",
+			"timeoutMs": 15000,
+			"input": {
+				"type": "object",
+				"properties": {
+					"root": {
+						"type": "string",
+						"maxLength": 160
+					},
+					"path": {
+						"type": "string",
+						"maxLength": 512
+					}
+				},
+				"required": ["root", "path"]
+			},
+			"output": {
+				"type": "object",
+				"properties": {
+					"root": {
+						"type": "string",
+						"maxLength": 160
+					},
+					"path": {
+						"type": "string",
+						"maxLength": 512
+					},
+					"entries": {
+						"type": "array",
+						"maxItems": 500,
+						"items": {
+							"type": "object",
+							"properties": {
+								"name": {
+									"type": "string",
+									"maxLength": 256
+								},
+								"path": {
+									"type": "string",
+									"maxLength": 512
+								},
+								"kind": {
+									"enum": ["file", "directory"]
+								},
+								"bytes": {
+									"type": "integer",
+									"minimum": 0,
+									"maximum": 9007199254740991
+								}
+							},
+							"required": ["name", "path", "kind", "bytes"]
+						}
+					},
+					"truncated": {
+						"type": "boolean"
+					}
+				},
+				"required": ["root", "path", "entries", "truncated"]
+			}
+		},
+		{
+			"id": "read",
+			"version": 1,
+			"scope": "conversation",
+			"permission": "read",
+			"effect": "read",
+			"timeoutMs": 15000,
+			"input": {
+				"type": "object",
+				"properties": {
+					"root": {
+						"type": "string",
+						"maxLength": 160
+					},
+					"path": {
+						"type": "string",
+						"maxLength": 512
+					}
+				},
+				"required": ["root", "path"]
+			},
+			"output": {
+				"type": "object",
+				"properties": {
+					"root": {
+						"type": "string",
+						"maxLength": 160
+					},
+					"path": {
+						"type": "string",
+						"maxLength": 512
+					},
+					"bytes": {
+						"type": "integer",
+						"minimum": 0,
+						"maximum": 262144
+					},
+					"sha256": {
+						"type": "string",
+						"maxLength": 64
+					},
+					"type": {
+						"type": "string",
+						"maxLength": 64
+					},
+					"text": {
+						"type": "string",
+						"maxLength": 131072
+					},
+					"base64": {
+						"type": "string",
+						"maxLength": 174764
+					}
+				},
+				"required": ["root", "path", "bytes", "sha256", "type"]
+			}
+		},
+		{
+			"id": "export",
+			"version": 1,
+			"scope": "conversation",
+			"permission": "read",
+			"effect": "read",
+			"timeoutMs": 15000,
+			"input": {
+				"type": "object",
+				"properties": {
+					"root": {
+						"type": "string",
+						"maxLength": 160
+					},
+					"path": {
+						"type": "string",
+						"maxLength": 512
+					}
+				},
+				"required": ["root", "path"]
+			},
+			"output": {
+				"type": "object",
+				"properties": {
+					"root": {
+						"type": "string",
+						"maxLength": 160
+					},
+					"path": {
+						"type": "string",
+						"maxLength": 512
+					},
+					"bytes": {
+						"type": "integer",
+						"minimum": 0,
+						"maximum": 262144
+					},
+					"sha256": {
+						"type": "string",
+						"maxLength": 64
+					},
+					"base64": {
+						"type": "string",
+						"maxLength": 174764
+					}
+				},
+				"required": ["root", "path", "bytes", "sha256", "base64"]
+			}
+		},
+		{
+			"id": "write",
+			"version": 1,
+			"scope": "conversation",
+			"permission": "manage",
+			"effect": "write",
+			"timeoutMs": 15000,
+			"input": {
+				"type": "object",
+				"properties": {
+					"root": {
+						"type": "string",
+						"maxLength": 160
+					},
+					"path": {
+						"type": "string",
+						"maxLength": 512
+					},
+					"expectedSha256": {
+						"anyOf": [
+							{
+								"type": "string",
+								"maxLength": 64
+							},
+							{
+								"type": "null"
+							}
+						]
+					},
+					"text": {
+						"type": "string",
+						"maxLength": 65536
+					}
+				},
+				"required": ["root", "path", "expectedSha256", "text"]
+			},
+			"output": {
+				"type": "object",
+				"properties": {
+					"requestId": {
+						"type": "string",
+						"maxLength": 160
+					},
+					"state": {
+						"enum": ["done", "unknown", "conflict"]
+					},
+					"value": {
+						"type": "object",
+						"properties": {
+							"path": {
+								"type": "string",
+								"maxLength": 512
+							},
+							"sha256": {
+								"type": "string",
+								"maxLength": 64
+							},
+							"name": {
+								"type": "string",
+								"maxLength": 64
+							},
+							"branch": {
+								"type": "string",
+								"maxLength": 100
+							}
+						},
+						"required": []
+					}
+				},
+				"required": ["requestId", "state"]
+			}
+		},
+		{
+			"id": "upload",
+			"version": 1,
+			"scope": "conversation",
+			"permission": "manage",
+			"effect": "write",
+			"timeoutMs": 15000,
+			"input": {
+				"type": "object",
+				"properties": {
+					"root": {
+						"type": "string",
+						"maxLength": 160
+					},
+					"path": {
+						"type": "string",
+						"maxLength": 512
+					},
+					"base64": {
+						"type": "string",
+						"maxLength": 87384
+					}
+				},
+				"required": ["root", "path", "base64"]
+			},
+			"output": {
+				"type": "object",
+				"properties": {
+					"requestId": {
+						"type": "string",
+						"maxLength": 160
+					},
+					"state": {
+						"enum": ["done", "unknown", "conflict"]
+					},
+					"value": {
+						"type": "object",
+						"properties": {
+							"path": {
+								"type": "string",
+								"maxLength": 512
+							},
+							"sha256": {
+								"type": "string",
+								"maxLength": 64
+							},
+							"name": {
+								"type": "string",
+								"maxLength": 64
+							},
+							"branch": {
+								"type": "string",
+								"maxLength": 100
+							}
+						},
+						"required": []
+					}
+				},
+				"required": ["requestId", "state"]
+			}
+		},
+		{
+			"id": "changes",
+			"version": 1,
+			"scope": "conversation",
+			"permission": "read",
+			"effect": "read",
+			"timeoutMs": 15000,
+			"input": {
+				"type": "object",
+				"properties": {
+					"root": {
+						"type": "string",
+						"maxLength": 160
+					}
+				},
+				"required": ["root"]
+			},
+			"output": {
+				"type": "object",
+				"properties": {
+					"files": {
+						"type": "array",
+						"maxItems": 500,
+						"items": {
+							"type": "object",
+							"properties": {
+								"path": {
+									"type": "string",
+									"maxLength": 512
+								},
+								"status": {
+									"type": "string",
+									"maxLength": 2
+								},
+								"previousPath": {
+									"type": "string",
+									"maxLength": 512
+								}
+							},
+							"required": ["path", "status"]
+						}
+					}
+				},
+				"required": ["files"]
+			}
+		},
+		{
+			"id": "diff",
+			"version": 1,
+			"scope": "conversation",
+			"permission": "read",
+			"effect": "read",
+			"timeoutMs": 15000,
+			"input": {
+				"type": "object",
+				"properties": {
+					"root": {
+						"type": "string",
+						"maxLength": 160
+					},
+					"path": {
+						"type": "string",
+						"maxLength": 512
+					}
+				},
+				"required": ["root", "path"]
+			},
+			"output": {
+				"type": "object",
+				"properties": {
+					"path": {
+						"type": "string",
+						"maxLength": 512
+					},
+					"text": {
+						"type": "string",
+						"maxLength": 262144
+					}
+				},
+				"required": ["path", "text"]
+			}
+		},
+		{
+			"id": "branches",
+			"version": 1,
+			"scope": "conversation",
+			"permission": "read",
+			"effect": "read",
+			"timeoutMs": 15000,
+			"input": {
+				"type": "object",
+				"properties": {
+					"root": {
+						"type": "string",
+						"maxLength": 160
+					}
+				},
+				"required": ["root"]
+			},
+			"output": {
+				"type": "object",
+				"properties": {
+					"branches": {
+						"type": "array",
+						"maxItems": 512,
+						"items": {
+							"type": "object",
+							"properties": {
+								"name": {
+									"type": "string",
+									"maxLength": 100
+								},
+								"current": {
+									"type": "boolean"
+								},
+								"commit": {
+									"type": "string",
+									"maxLength": 64
+								}
+							},
+							"required": ["name", "current", "commit"]
+						}
+					}
+				},
+				"required": ["branches"]
+			}
+		},
+		{
+			"id": "switch-branch",
+			"version": 1,
+			"scope": "conversation",
+			"permission": "manage",
+			"effect": "write",
+			"timeoutMs": 15000,
+			"input": {
+				"type": "object",
+				"properties": {
+					"root": {
+						"type": "string",
+						"maxLength": 160
+					},
+					"name": {
+						"type": "string",
+						"maxLength": 100
+					},
+					"create": {
+						"type": "boolean"
+					}
+				},
+				"required": ["root", "name", "create"]
+			},
+			"output": {
+				"type": "object",
+				"properties": {
+					"requestId": {
+						"type": "string",
+						"maxLength": 160
+					},
+					"state": {
+						"enum": ["done", "unknown", "conflict"]
+					},
+					"value": {
+						"type": "object",
+						"properties": {
+							"path": {
+								"type": "string",
+								"maxLength": 512
+							},
+							"sha256": {
+								"type": "string",
+								"maxLength": 64
+							},
+							"name": {
+								"type": "string",
+								"maxLength": 64
+							},
+							"branch": {
+								"type": "string",
+								"maxLength": 100
+							}
+						},
+						"required": []
+					}
+				},
+				"required": ["requestId", "state"]
+			}
+		},
+		{
+			"id": "worktrees",
+			"version": 1,
+			"scope": "conversation",
+			"permission": "read",
+			"effect": "read",
+			"timeoutMs": 15000,
+			"input": {
+				"type": "object",
+				"properties": {
+					"root": {
+						"type": "string",
+						"maxLength": 160
+					}
+				},
+				"required": ["root"]
+			},
+			"output": {
+				"type": "object",
+				"properties": {
+					"worktrees": {
+						"type": "array",
+						"maxItems": 64,
+						"items": {
+							"type": "object",
+							"properties": {
+								"name": {
+									"type": "string",
+									"maxLength": 64
+								},
+								"branch": {
+									"type": "string",
+									"maxLength": 100
+								}
+							},
+							"required": ["name", "branch"]
+						}
+					}
+				},
+				"required": ["worktrees"]
+			}
+		},
+		{
+			"id": "add-worktree",
+			"version": 1,
+			"scope": "conversation",
+			"permission": "manage",
+			"effect": "write",
+			"timeoutMs": 15000,
+			"input": {
+				"type": "object",
+				"properties": {
+					"root": {
+						"type": "string",
+						"maxLength": 160
+					},
+					"name": {
+						"type": "string",
+						"maxLength": 64
+					},
+					"branch": {
+						"type": "string",
+						"maxLength": 100
+					}
+				},
+				"required": ["root", "name", "branch"]
+			},
+			"output": {
+				"type": "object",
+				"properties": {
+					"requestId": {
+						"type": "string",
+						"maxLength": 160
+					},
+					"state": {
+						"enum": ["done", "unknown", "conflict"]
+					},
+					"value": {
+						"type": "object",
+						"properties": {
+							"path": {
+								"type": "string",
+								"maxLength": 512
+							},
+							"sha256": {
+								"type": "string",
+								"maxLength": 64
+							},
+							"name": {
+								"type": "string",
+								"maxLength": 64
+							},
+							"branch": {
+								"type": "string",
+								"maxLength": 100
+							}
+						},
+						"required": []
+					}
+				},
+				"required": ["requestId", "state"]
+			}
+		},
+		{
+			"id": "remove-worktree",
+			"version": 1,
+			"scope": "conversation",
+			"permission": "manage",
+			"effect": "write",
+			"timeoutMs": 15000,
+			"input": {
+				"type": "object",
+				"properties": {
+					"root": {
+						"type": "string",
+						"maxLength": 160
+					},
+					"name": {
+						"type": "string",
+						"maxLength": 64
+					},
+					"force": {
+						"type": "boolean"
+					}
+				},
+				"required": ["root", "name", "force"]
+			},
+			"output": {
+				"type": "object",
+				"properties": {
+					"requestId": {
+						"type": "string",
+						"maxLength": 160
+					},
+					"state": {
+						"enum": ["done", "unknown", "conflict"]
+					},
+					"value": {
+						"type": "object",
+						"properties": {
+							"path": {
+								"type": "string",
+								"maxLength": 512
+							},
+							"sha256": {
+								"type": "string",
+								"maxLength": 64
+							},
+							"name": {
+								"type": "string",
+								"maxLength": 64
+							},
+							"branch": {
+								"type": "string",
+								"maxLength": 100
+							}
+						},
+						"required": []
+					}
+				},
+				"required": ["requestId", "state"]
+			}
+		},
+		{
+			"id": "receipt",
+			"version": 1,
+			"scope": "conversation",
+			"permission": "read",
+			"effect": "read",
+			"timeoutMs": 15000,
+			"input": {
+				"type": "object",
+				"properties": {
+					"root": {
+						"type": "string",
+						"maxLength": 160
+					},
+					"requestId": {
+						"type": "string",
+						"maxLength": 160
+					}
+				},
+				"required": ["root", "requestId"]
+			},
+			"output": {
+				"type": "object",
+				"properties": {
+					"requestId": {
+						"type": "string",
+						"maxLength": 160
+					},
+					"state": {
+						"enum": ["done", "unknown", "conflict"]
+					},
+					"value": {
+						"type": "object",
+						"properties": {
+							"path": {
+								"type": "string",
+								"maxLength": 512
+							},
+							"sha256": {
+								"type": "string",
+								"maxLength": 64
+							},
+							"name": {
+								"type": "string",
+								"maxLength": 64
+							},
+							"branch": {
+								"type": "string",
+								"maxLength": 100
+							}
+						},
+						"required": []
+					}
+				},
+				"required": ["requestId", "state"]
+			}
+		}
+	],
+	"commands": [
+		{
+			"id": "files",
+			"title": "Open files & changes",
+			"slash": "files",
+			"interface": "files"
+		}
+	],
+	"interfaces": [
+		{
+			"id": "files",
+			"title": "Files & changes",
+			"slot": "page",
+			"scope": "conversation",
+			"export": "Files",
+			"navigation": true
+		}
+	]
+}

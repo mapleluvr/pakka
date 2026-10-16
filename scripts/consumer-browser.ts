@@ -19,6 +19,15 @@ export function publicMasBrowser(value: unknown) {
 
 export function PublicExtension({ context }: WebInterfaceProps) {
 	const client = createExtensionClient({ endpoint: "http://127.0.0.1:1/pocket/extensions/rpc" });
+	const original = {
+		extension: context.extension,
+		requestId: "original-browser-action",
+		...(context.target ? { target: context.target } : {}),
+	};
+	void client.operationByRequest(original);
+	void context.operationByRequest(original.requestId);
+	// @ts-expect-error The original-operation query binds its actor on the server, not from the browser.
+	client.operationByRequest({ ...original, actorId: "forged" });
 	// @ts-expect-error A browser interface receives no native runtime/storage/provider handles.
 	context.runtime.session.commit();
 	// @ts-expect-error A browser cannot forge actor/grants through the extension client.

@@ -31,6 +31,10 @@
 			"types": "./dist/ui.d.ts",
 			"import": "./dist/ui.js"
 		},
+		"./workflows": {
+			"types": "./dist/workflows.d.ts",
+			"import": "./dist/workflows.js"
+		},
 		"./components": {
 			"types": "./dist/components.d.ts",
 			"import": "./dist/components.js"
@@ -42,7 +46,8 @@
 		"licenses",
 		"LICENSE.pi-pocket",
 		"NOTICE.md",
-		"examples"
+		"examples",
+		"contributions"
 	],
 	"scripts": {
 		"build": "tsc -p tsconfig.json"

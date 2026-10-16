@@ -4,6 +4,7 @@ import type {
 	ExtensionJson,
 	ExtensionCall,
 	ExtensionOperation,
+	ExtensionOperationRequest,
 	ExtensionRegistration,
 	ExtensionPermission,
 } from "./extension.ts";
@@ -71,6 +72,8 @@ export interface ExtensionHost {
 		signal?: AbortSignal,
 	): Promise<ExtensionOperation>;
 	operation(actor: import("@pakka/server/pocket").PocketAuthority, id: string): Promise<ExtensionOperation>;
+	/** Read original operation without re-entering a handler or accepting a caller-supplied actor. */
+	operationByRequest(actor: import("@pakka/server/pocket").PocketAuthority, request: ExtensionOperationRequest): Promise<ExtensionOperation>;
 	setEnabled(
 		actor: import("@pakka/server/pocket").PocketAuthority,
 		id: string,
@@ -87,6 +90,8 @@ export interface ExtensionHost {
 	): Promise<{ readonly type: string; readonly body: Uint8Array }>;
 }
 export interface ExtensionService<T extends object = object> {
+	/** Optional host-resource cleanup; invoked once on product close or failed registration. No member/work cancellation is implied. */
+	dispose?(): Promise<void>;
 	readonly permission: ExtensionPermission;
 	bind(
 		actor: import("@pakka/server/pocket").PocketAuthority,

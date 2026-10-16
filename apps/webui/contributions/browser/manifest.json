@@ -1,0 +1,216 @@
+{
+	"api": 1,
+	"id": "workspace-browser",
+	"version": "1.0.0",
+	"title": "Project browser",
+	"facets": {
+		"backend": "backend.mjs",
+		"client": "client.js",
+		"webui": {
+			"entry": "index.js",
+			"publicDir": "web"
+		}
+	},
+	"services": ["browser"],
+	"actions": [
+		{
+			"id": "view",
+			"version": 1,
+			"scope": "conversation",
+			"permission": "read",
+			"effect": "read",
+			"timeoutMs": 15000,
+			"input": {
+				"type": "object",
+				"properties": {},
+				"required": []
+			},
+			"output": {
+				"type": "object",
+				"properties": {
+					"view": {
+						"type": "object",
+						"properties": {
+							"open": {
+								"type": "boolean"
+							},
+							"url": {
+								"type": "string",
+								"maxLength": 2048
+							},
+							"title": {
+								"type": "string",
+								"maxLength": 512
+							},
+							"text": {
+								"type": "string",
+								"maxLength": 16000
+							}
+						},
+						"required": ["open", "url", "title", "text"]
+					},
+					"frame": {
+						"type": "object",
+						"properties": {
+							"type": {
+								"enum": ["image/png"]
+							},
+							"base64": {
+								"type": "string",
+								"maxLength": 196608
+							}
+						},
+						"required": ["type", "base64"]
+					}
+				},
+				"required": ["view"]
+			}
+		},
+		{
+			"id": "navigate",
+			"version": 1,
+			"scope": "conversation",
+			"permission": "send",
+			"effect": "write",
+			"timeoutMs": 15000,
+			"input": {
+				"type": "object",
+				"properties": {
+					"url": {
+						"type": "string",
+						"maxLength": 2048
+					}
+				},
+				"required": ["url"]
+			},
+			"output": {
+				"type": "object",
+				"properties": {
+					"requestId": {
+						"type": "string",
+						"maxLength": 160
+					},
+					"state": {
+						"enum": ["done", "unknown"]
+					}
+				},
+				"required": ["requestId", "state"]
+			}
+		},
+		{
+			"id": "click",
+			"version": 1,
+			"scope": "conversation",
+			"permission": "send",
+			"effect": "write",
+			"timeoutMs": 15000,
+			"input": {
+				"type": "object",
+				"properties": {
+					"selector": {
+						"type": "string",
+						"maxLength": 256
+					}
+				},
+				"required": ["selector"]
+			},
+			"output": {
+				"type": "object",
+				"properties": {
+					"requestId": {
+						"type": "string",
+						"maxLength": 160
+					},
+					"state": {
+						"enum": ["done", "unknown"]
+					}
+				},
+				"required": ["requestId", "state"]
+			}
+		},
+		{
+			"id": "fill",
+			"version": 1,
+			"scope": "conversation",
+			"permission": "send",
+			"effect": "write",
+			"timeoutMs": 15000,
+			"input": {
+				"type": "object",
+				"properties": {
+					"selector": {
+						"type": "string",
+						"maxLength": 256
+					},
+					"text": {
+						"type": "string",
+						"maxLength": 4096
+					}
+				},
+				"required": ["selector", "text"]
+			},
+			"output": {
+				"type": "object",
+				"properties": {
+					"requestId": {
+						"type": "string",
+						"maxLength": 160
+					},
+					"state": {
+						"enum": ["done", "unknown"]
+					}
+				},
+				"required": ["requestId", "state"]
+			}
+		},
+		{
+			"id": "receipt",
+			"version": 1,
+			"scope": "conversation",
+			"permission": "read",
+			"effect": "read",
+			"timeoutMs": 15000,
+			"input": {
+				"type": "object",
+				"properties": {
+					"requestId": {
+						"type": "string",
+						"maxLength": 160
+					}
+				},
+				"required": ["requestId"]
+			},
+			"output": {
+				"type": "object",
+				"properties": {
+					"requestId": {
+						"type": "string",
+						"maxLength": 160
+					},
+					"state": {
+						"enum": ["done", "unknown"]
+					}
+				},
+				"required": ["requestId", "state"]
+			}
+		}
+	],
+	"commands": [
+		{
+			"id": "browser",
+			"title": "Open project browser",
+			"slash": "browser",
+			"interface": "browser"
+		}
+	],
+	"interfaces": [
+		{
+			"id": "browser",
+			"title": "Project browser",
+			"slot": "page",
+			"scope": "conversation",
+			"export": "Browser",
+			"navigation": true
+		}
+	]
+}

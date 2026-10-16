@@ -50,6 +50,8 @@ export interface PocketPeople {
 	/** Identity-bound synchronous checks for trusted services at publication/commit time. */
 	current(actor: PocketAuthority): PocketPerson;
 	check(actor: PocketAuthority, permission: PocketPermission, conversationId?: string): void;
+	/** Trusted service recheck of a persisted originating person. This issues no browser session/capability. */
+	authorizePerson(id: string, permission: PocketPermission, conversationId?: string): PocketPerson;
 	invite(
 		actor: PocketAuthority,
 		input: PocketInviteInput,
@@ -351,11 +353,8 @@ async function openPeople(
 			return deny();
 		return { s, p };
 	}
-	function bound(actor: PocketAuthority, permission: PocketPermission, resource?: string) {
-		const id = bindings.get(actor);
-		if (!id) return deny();
-		const { s, p } = sessionFor(id);
-		if (!permissions[p.role].includes(permission)) return deny();
+	function personAllowed(p: Person, permission: PocketPermission, resource?: string) {
+		if (!p.active || blockedPeople.has(p.id) || !permissions[p.role].includes(permission)) return deny();
 		if (["read", "send", "steer", "manage"].includes(permission)) {
 			if (
 				!resource ||
@@ -364,6 +363,12 @@ async function openPeople(
 			)
 				return deny();
 		} else if (p.resources !== "*") return deny();
+	}
+	function bound(actor: PocketAuthority, permission: PocketPermission, resource?: string) {
+		const id = bindings.get(actor);
+		if (!id) return deny();
+		const { s, p } = sessionFor(id);
+		personAllowed(p, permission, resource);
 		return { s, p };
 	}
 	function makeSession(person: Person): { saved: Session; issued: PocketSession } {
@@ -456,6 +461,13 @@ async function openPeople(
 		},
 		check: (actor: PocketAuthority, permission: PocketPermission, resource?: string) => {
 			bound(actor, permission, resource);
+		},
+		authorizePerson: (id: string, permission: PocketPermission, resource?: string) => {
+			ready();
+			const p = state.people.find((person) => person.id === id);
+			if (!p) return deny();
+			personAllowed(p, permission, resource);
+			return personView(p);
 		},
 		initializeOwner: async (name: string) => {
 			if (!isName(name)) throw new Error("Invalid Pocket person name");

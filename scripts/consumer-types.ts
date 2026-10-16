@@ -1,5 +1,14 @@
 import { defineBackend, type BackendContext, type PocketServiceContext } from "@pakka/webui/backend";
 import { createMasProfilePacks } from "@pakka/mas-devpack/agent";
+import {
+	workspaceFilesService,
+	workspaceFilesExtensionRoot,
+	workspaceBrowserService,
+	workspaceBrowserExtensionRoot,
+	workspaceApprovalsService,
+	workspaceApprovalsExtensionRoot,
+} from "@pakka/webui/workflows";
+import { approvalTool, type PocketApprovals } from "@pakka/server/pocket";
 import { masWorkbenchService } from "@pakka/mas-devpack/backend";
 import type { ExtensionHost } from "@pakka/webui/backend";
 import type {
@@ -33,6 +42,48 @@ import type { BootstrapConfig } from "@pakka/server/bootstrap";
 import { createMasDevPack, type MasDevPackOptions } from "@pakka/mas-devpack";
 import type { ApprovedSessions } from "@pakka/mas";
 
+export async function publicControlledWorkflows(
+	context: PocketServiceContext,
+	approvals: PocketApprovals,
+	actor: PocketAuthority,
+	ref: ConversationRef,
+) {
+	const service = await workspaceBrowserService(context, {
+		namespace: "approved.browser",
+		executable: "/host-approved/chrome",
+		origins: ["https://approved.example"],
+		resources: [ref.conversationId],
+	});
+	const client = service.bind(actor, ref, () => {});
+	await client.navigate({ requestId: "navigate", url: "https://approved.example" });
+	// @ts-expect-error The bound browser API cannot execute arbitrary JavaScript from a caller.
+	client.evaluate("arbitrary code");
+	const tool = approvalTool(
+		{
+			name: "approved_effect",
+			description: "Governed effect",
+			parameters: { type: "object", properties: {} },
+			execute: async () => "done",
+		},
+		() => ({ approvals, target: ref }),
+	);
+	await service.dispose?.();
+	return {
+		tool,
+		approvals: workspaceApprovalsService(approvals),
+		browserRoot: workspaceBrowserExtensionRoot,
+		approvalRoot: workspaceApprovalsExtensionRoot,
+	};
+}
+
+export async function publicFilesWorkflow(context: PocketServiceContext) {
+	const service = await workspaceFilesService(context, {
+		namespace: "approved.files",
+		roots: [{ id: "approved", path: "/host-approved", resources: "*", writable: true }],
+	});
+	return { service, root: workspaceFilesExtensionRoot };
+}
+
 export function publicMasFacets(context: PocketServiceContext, mas: Mas) {
 	const profiles = createMasProfilePacks({ profiles: { coordinator: ["spawn", "send"] } }, () => mas);
 	const service = masWorkbenchService({ ...context, mas });
@@ -49,7 +100,11 @@ export function extensionBackendContract(context: BackendContext, host: Extensio
 	const module = defineBackend({
 		actions: { read: async (current) => (await current.settings.get("label")).value },
 	});
-	return { module, host, job: context.jobs.receipt("job-id") };
+	const lookup = (
+		actor: Parameters<ExtensionHost["operationByRequest"]>[0],
+		request: Parameters<ExtensionHost["operationByRequest"]>[1],
+	) => host.operationByRequest(actor, request);
+	return { module, host, lookup, job: context.jobs.receipt("job-id") };
 }
 
 export async function pocketServiceContract(

@@ -78,6 +78,8 @@ Card 是显示记录，不是偷偷添加 system/user message。必须用下一�
 - 业务 settings/notes 等使用明确 namespace 与版本冲突规则；user、Conversation 和 extension 的 scope 不能仅靠 UI 选项约束。
 - 长工作通过受控 job/receipt 服务；HTTP 与 wait 均有有限期限，关闭/取消 wait 不等于取消已接受的 job。
 - 同 actor/resource/request 的相同参数只 reconciliation；不同参数拒绝冲突。未知 handler 不自动重进，不能宣称任意外部效果 exactly-once。
+- 实际 public SDK 的 `ExtensionClient.operationByRequest({ extension, requestId, target })` 可在丢失 host operation ID 时只读查询原请求；服务端绑定当前 person 和精确 AgentRef，并在发布前重查原权限。`UIContext.operationByRequest(requestId)` 另绑定当前 open instance。
+- 外层 operation 已记录 `done` 不证明内层 job/browser/native effect 已完成；内层仍为 `unknown` 时必须保留待确认身份，不解锁重复效果。
 - 明确 pre-effect guard 的拒绝可报 denied；opaque callback 可能已有效果，其异常/断连/超时保持 unknown。不要解析报错文本推断 rollback。
 - 不把 metadata 写和 native Durable effect 称为跨存储原子提交。保留各自 operation/receipt 与不确定状态。
 

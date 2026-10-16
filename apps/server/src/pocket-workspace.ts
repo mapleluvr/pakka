@@ -59,6 +59,8 @@ export interface PocketWorkspaceOptions {
 	readonly catalog: CatalogOptions;
 	/** Host-owned selection only; the browser never supplies this ceiling. */
 	readonly profileCeiling: (person: PocketPerson) => readonly string[];
+	/** Host-owned synchronous collaboration/driver check; repeated at native admission, never a wire grant. */
+	readonly beforeInput?: (actor: PocketAuthority, ref: ConversationRef) => void;
 }
 const key = (v: unknown): v is string =>
 	typeof v === "string" && /^[a-zA-Z0-9][-a-zA-Z0-9._:]{0,159}$/.test(v);
@@ -286,7 +288,10 @@ export function createPocketWorkspace(options: PocketWorkspaceOptions): PocketWo
 				submit: async (ref: ConversationRef, input: PocketInput) => {
 					const saved = structuredClone(ref),
 						data = structuredClone(input),
-						authorize = () => check(data.mode === "prompt" ? "send" : "steer", saved);
+						authorize = () => {
+							check(data.mode === "prompt" ? "send" : "steer", saved);
+							options.beforeInput?.(actor, saved);
+						};
 					authorize();
 					await member(saved, authorize);
 					if (!data || Object.keys(data).some((k) => !["requestId", "text", "mode"].includes(k)))

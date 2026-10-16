@@ -89,7 +89,83 @@ export interface PocketInputReceipt {
 	readonly status: "queued" | "placed" | "done" | "unanswered" | "unknown";
 	readonly entryId?: string;
 }
+export interface PocketChatMessage {
+	readonly id: string;
+	readonly requestId: string;
+	readonly authorId: string;
+	readonly authorName: string;
+	readonly text: string;
+	readonly createdAt: number;
+	readonly quoteId: string | null;
+	readonly mentions: readonly string[];
+	readonly pinned: boolean;
+	readonly reactions: readonly { readonly emoji: string; readonly people: readonly string[] }[];
+}
+export interface PocketCollaborationView {
+	readonly conversationId: string;
+	readonly version: number;
+	readonly messages: readonly PocketChatMessage[];
+	readonly note: {
+		readonly version: number;
+		readonly text: string;
+		readonly authorId: string | null;
+		readonly updatedAt: number | null;
+	};
+	readonly driver: {
+		readonly version: number;
+		readonly personId: string | null;
+		readonly expiresAt: number | null;
+	};
+	readonly presence: readonly {
+		readonly personId: string;
+		readonly name: string;
+		readonly state: "here" | "typing";
+		readonly expiresAt: number;
+	}[];
+}
+export type PocketCollaborationCommand =
+	| { readonly op: "collaboration.read"; readonly target: AgentRef }
+	| {
+			readonly op: "collaboration.post";
+			readonly target: AgentRef;
+			readonly input: {
+				readonly requestId: string;
+				readonly text: string;
+				readonly quoteId?: string;
+				readonly mentions?: readonly string[];
+			};
+	  }
+	| {
+			readonly op: "collaboration.note";
+			readonly target: AgentRef;
+			readonly input: { readonly expectedVersion: number; readonly text: string };
+	  }
+	| {
+			readonly op: "collaboration.react";
+			readonly target: AgentRef;
+			readonly input: { readonly messageId: string; readonly emoji: string; readonly active: boolean };
+	  }
+	| {
+			readonly op: "collaboration.pin";
+			readonly target: AgentRef;
+			readonly input: { readonly messageId: string; readonly pinned: boolean };
+	  }
+	| {
+			readonly op: "collaboration.driver";
+			readonly target: AgentRef;
+			readonly input: {
+				readonly expectedVersion: number;
+				readonly action: "claim" | "release" | "take";
+				readonly ttlMs?: number;
+			};
+	  }
+	| {
+			readonly op: "collaboration.presence";
+			readonly target: AgentRef;
+			readonly input: { readonly state: "here" | "typing" | "away" | "leave" };
+	  };
 export type PocketCommand =
+	| PocketCollaborationCommand
 	| { readonly op: "hello" | "list" | "people" | "session.rotate" | "session.logout" }
 	| { readonly op: "create"; readonly requestId: string; readonly name: string; readonly profile: string }
 	| { readonly op: "configure"; readonly target: AgentRef; readonly profile: string }
@@ -157,6 +233,7 @@ export type PocketResult =
 			readonly titles?: Readonly<Record<string, string>>;
 	  }
 	| { readonly kind: "reference"; readonly ref: AgentRef }
+	| { readonly kind: "collaboration"; readonly snapshot: PocketCollaborationView }
 	| { readonly kind: "conversation"; readonly snapshot: PocketSnapshot }
 	| {
 			readonly kind: "people";
@@ -208,6 +285,7 @@ export type PocketEvent = {
 	readonly sequence: number;
 } & (
 	| { readonly kind: "conversation"; readonly snapshot: PocketSnapshot }
+	| { readonly kind: "collaboration"; readonly snapshot: PocketCollaborationView }
 	| { readonly kind: "resnapshot" | "invalidated" }
 );
 
@@ -358,8 +436,129 @@ function snapshot(v: unknown): v is PocketSnapshot {
 			(typeof v.usage.cost === "number" && Number.isFinite(v.usage.cost) && v.usage.cost >= 0))
 	);
 }
+const humanText = (v: unknown, max: number): v is string =>
+	string(v, max) && !/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/.test(v);
+const humanIds = (v: unknown, max: number): v is string[] =>
+	Array.isArray(v) && v.length <= max && v.every(identity) && new Set(v).size === v.length;
+const reactionEmoji = (v: unknown): boolean =>
+	typeof v === "string" && ["👍", "👎", "❤️", "🎉", "👀", "✅"].includes(v);
+function collaboration(v: unknown): v is PocketCollaborationView {
+	if (
+		!shape(v, ["conversationId", "version", "messages", "note", "driver", "presence"]) ||
+		!identity(v.conversationId) ||
+		!integer(v.version)
+	)
+		return false;
+	const { messages, note, driver, presence } = v;
+	if (
+		!Array.isArray(messages) ||
+		messages.length > 256 ||
+		!messages.every(
+			(m) =>
+				shape(m, [
+					"id",
+					"requestId",
+					"authorId",
+					"authorName",
+					"text",
+					"createdAt",
+					"quoteId",
+					"mentions",
+					"pinned",
+					"reactions",
+				]) &&
+				identity(m.id) &&
+				identity(m.requestId) &&
+				identity(m.authorId) &&
+				humanText(m.authorName, 80) &&
+				!!m.authorName.trim() &&
+				humanText(m.text, 8192) &&
+				!!m.text.trim() &&
+				integer(m.createdAt) &&
+				(m.quoteId === null || identity(m.quoteId)) &&
+				humanIds(m.mentions, 16) &&
+				typeof m.pinned === "boolean" &&
+				Array.isArray(m.reactions) &&
+				m.reactions.length <= 6 &&
+				m.reactions.every(
+					(r) => shape(r, ["emoji", "people"]) && reactionEmoji(r.emoji) && humanIds(r.people, 128),
+				) &&
+				new Set(m.reactions.map((r) => r.emoji)).size === m.reactions.length,
+		)
+	)
+		return false;
+	return (
+		new Set(messages.map((m) => m.id)).size === messages.length &&
+		messages.every((m, i) => m.quoteId === null || messages.slice(0, i).some((q) => q.id === m.quoteId)) &&
+		shape(note, ["version", "text", "authorId", "updatedAt"]) &&
+		integer(note.version) &&
+		humanText(note.text, 32768) &&
+		((note.version === 0 && note.text === "" && note.authorId === null && note.updatedAt === null) ||
+			(note.version > 0 && identity(note.authorId) && integer(note.updatedAt))) &&
+		shape(driver, ["version", "personId", "expiresAt"]) &&
+		integer(driver.version) &&
+		((driver.personId === null && driver.expiresAt === null) ||
+			(identity(driver.personId) && integer(driver.expiresAt))) &&
+		Array.isArray(presence) &&
+		presence.length <= 128 &&
+		presence.every(
+			(p) =>
+				shape(p, ["personId", "name", "state", "expiresAt"]) &&
+				identity(p.personId) &&
+				humanText(p.name, 80) &&
+				!!p.name.trim() &&
+				["here", "typing"].includes(p.state as string) &&
+				integer(p.expiresAt),
+		) &&
+		new Set(presence.map((p) => p.personId)).size === presence.length
+	);
+}
+function collaborationCommand(v: Record<string, unknown>): boolean {
+	if (v.op === "collaboration.read") return shape(v, ["op", "target"]) && ref(v.target);
+	if (!shape(v, ["op", "target", "input"]) || !ref(v.target)) return false;
+	const i = v.input;
+	switch (v.op) {
+		case "collaboration.post":
+			return (
+				shape(i, ["requestId", "text"], ["quoteId", "mentions"]) &&
+				identity(i.requestId) &&
+				humanText(i.text, 8192) &&
+				!!i.text.trim() &&
+				(i.quoteId === undefined || identity(i.quoteId)) &&
+				(i.mentions === undefined || humanIds(i.mentions, 16))
+			);
+		case "collaboration.note":
+			return shape(i, ["expectedVersion", "text"]) && integer(i.expectedVersion) && humanText(i.text, 32768);
+		case "collaboration.react":
+			return (
+				shape(i, ["messageId", "emoji", "active"]) &&
+				identity(i.messageId) &&
+				reactionEmoji(i.emoji) &&
+				typeof i.active === "boolean"
+			);
+		case "collaboration.pin":
+			return shape(i, ["messageId", "pinned"]) && identity(i.messageId) && typeof i.pinned === "boolean";
+		case "collaboration.driver":
+			return (
+				shape(i, ["expectedVersion", "action"], ["ttlMs"]) &&
+				integer(i.expectedVersion) &&
+				(i.action === "release"
+					? i.ttlMs === undefined
+					: (i.action === "claim" || i.action === "take") && integer(i.ttlMs, 1000, 300000))
+			);
+		case "collaboration.presence":
+			return (
+				shape(i, ["state"]) &&
+				typeof i.state === "string" &&
+				["here", "typing", "away", "leave"].includes(i.state)
+			);
+		default:
+			return false;
+	}
+}
 function command(v: unknown): v is PocketCommand {
 	if (!record(v)) return false;
+	if (typeof v.op === "string" && v.op.startsWith("collaboration.")) return collaborationCommand(v);
 	switch (v.op) {
 		case "hello":
 		case "list":
@@ -490,6 +689,8 @@ function result(v: unknown): v is PocketResult {
 			return shape(v, ["kind", "ref"]) && ref(v.ref);
 		case "conversation":
 			return shape(v, ["kind", "snapshot"]) && snapshot(v.snapshot);
+		case "collaboration":
+			return shape(v, ["kind", "snapshot"]) && collaboration(v.snapshot);
 		case "people":
 			return (
 				shape(v, ["kind", "people", "invites"]) &&
@@ -617,6 +818,8 @@ export function decodePocketEvent(value: unknown): PocketEvent {
 			integer(v.sequence) &&
 			(v.kind === "conversation"
 				? snapshot(v.snapshot)
-				: ["resnapshot", "invalidated"].includes(v.kind as string) && v.snapshot === undefined),
+				: v.kind === "collaboration"
+					? collaboration(v.snapshot)
+					: ["resnapshot", "invalidated"].includes(v.kind as string) && v.snapshot === undefined),
 	);
 }

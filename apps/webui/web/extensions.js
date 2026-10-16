@@ -461,6 +461,19 @@ function HostInterface({ instance, client, execute, open, close, notice, navigat
 				check();
 				return result;
 			},
+			operationByRequest: async (requestId) => {
+				check();
+				const result = await client.operationByRequest(
+					{
+						extension: instance.registration.manifest.id,
+						requestId,
+						...(instance.target ? { target: instance.target } : {}),
+					},
+					{ signal: controller.signal },
+				);
+				check();
+				return result;
+			},
 			subscribe: (action, input, receive, { intervalMs = 1000 } = {}) => {
 				check();
 				const declaration = instance.registration.manifest.actions.find((row) => row.id === action);

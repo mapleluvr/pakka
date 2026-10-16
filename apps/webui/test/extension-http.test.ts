@@ -117,6 +117,26 @@ test(
 			const duplicate = await m.extensionRpc({ op: "call", call });
 			assert.ok("result" in duplicate.decoded);
 			assert.deepEqual(duplicate.decoded.result, saved.decoded.result);
+			const lookup = {
+				op: "operationByRequest",
+				request: { extension: call.extension, requestId: call.requestId, target: m.ref },
+			};
+			const found = await m.extensionRpc(lookup);
+			assert.equal(found.response.status, 200);
+			assert.ok("result" in found.decoded);
+			assert.deepEqual(found.decoded.result, saved.decoded.result);
+			const wrongResource = await m.extensionRpc({
+				...lookup,
+				request: { ...lookup.request, target: { ...m.ref, profile: "foreign-profile" } },
+			});
+			assert.equal(wrongResource.response.status, 403);
+			assert.ok("error" in wrongResource.decoded && wrongResource.decoded.error.outcome === "denied");
+			const wrongIncarnation = await m.extensionRpc({
+				...lookup,
+				request: { ...lookup.request, target: { ...m.ref, incarnation: "stale-incarnation" } },
+			});
+			assert.equal(wrongIncarnation.response.status, 403);
+			assert.ok("error" in wrongIncarnation.decoded && wrongIncarnation.decoded.error.outcome === "denied");
 			const invitation = await m.people.invite(m.actor, {
 				requestId: "viewer",
 				role: "viewer",
@@ -125,6 +145,9 @@ test(
 			});
 			assert.ok(invitation.token);
 			const viewer = await m.exchange(invitation.token, "invite", "Viewer");
+			const otherActor = await m.extensionRpc(lookup, viewer);
+			assert.equal(otherActor.response.status, 403);
+			assert.ok("error" in otherActor.decoded && otherActor.decoded.error.outcome === "denied");
 			const denied = await m.extensionRpc(
 				{ op: "call", call: { ...call, requestId: "viewer-write" } },
 				viewer,
@@ -150,6 +173,28 @@ test(
 			);
 			const snapshot = await m.client.read(m.ref);
 			assert.equal(snapshot.entries.filter((e) => e.display?.text === "HTTP-PLUGIN-CARD").length, 1);
+			assert.equal(m.f.requests.length, 0);
+			const senderInvite = await m.people.invite(m.actor, {
+				requestId: "lookup-sender",
+				role: "sender",
+				resources: [m.ref.conversationId],
+				ttlMs: 60000,
+			});
+			assert.ok(senderInvite.token);
+			const sender = await m.exchange(senderInvite.token, "invite", "Lookup sender");
+			const senderCall = { ...call, requestId: "sender-card" };
+			assert.equal((await m.extensionRpc({ op: "call", call: senderCall }, sender)).response.status, 200);
+			const senderLookup = {
+				op: "operationByRequest",
+				request: { extension: senderCall.extension, requestId: senderCall.requestId, target: m.ref },
+			};
+			assert.equal((await m.extensionRpc(senderLookup, sender)).response.status, 200);
+			const person = (await m.people.list(m.actor)).people.find((row) => row.name === "Lookup sender");
+			assert.ok(person);
+			await m.people.revokePerson(m.actor, person.id);
+			const revokedLookup = await m.extensionRpc(senderLookup, sender);
+			assert.equal(revokedLookup.response.status, 401);
+			assert.ok("error" in revokedLookup.decoded && revokedLookup.decoded.error.outcome === "denied");
 			assert.equal(m.f.requests.length, 0);
 		} finally {
 			await m.close();
@@ -209,6 +254,14 @@ test(
 				await m.runtime.waitForIdle();
 				assert.deepEqual(await client.call(call), result);
 				assert.deepEqual(await client.operation(result.id), result);
+				assert.deepEqual(
+					await client.operationByRequest({
+						extension: call.extension,
+						requestId: call.requestId,
+						target: m.ref,
+					}),
+					result,
+				);
 				assert.equal(m.f.requests.length, 1);
 				await client.control(row.manifest.id, "disable");
 				await assert.rejects(

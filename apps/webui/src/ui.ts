@@ -15,6 +15,8 @@ export interface WebInterfaceContext {
 		options?: { readonly requestId?: string; readonly target?: AgentRef },
 	): Promise<ExtensionOperation>;
 	operation(id: string): Promise<ExtensionOperation>;
+	/** Read this interface actor/resource's original request without re-entering its handler. */
+	operationByRequest(requestId: string): Promise<ExtensionOperation>;
 	/** Checked read snapshots only. Unmount ends observation, never admitted work. */
 	subscribe(
 		action: string,

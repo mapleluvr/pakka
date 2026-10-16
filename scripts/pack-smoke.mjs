@@ -103,6 +103,11 @@ copyFileSync(join(root, "scripts", "consumer-apps.mjs"), join(consumer, "apps.mj
 copyFileSync(join(root, "scripts", "consumer-product.mjs"), join(consumer, "product.mjs"));
 copyFileSync(join(root, "scripts", "consumer-pocket-services.mjs"), join(consumer, "pocket-services.mjs"));
 copyFileSync(join(root, "scripts", "consumer-mas-board.mjs"), join(consumer, "mas-board.mjs"));
+copyFileSync(join(root, "scripts", "consumer-pocket-workflows.mjs"), join(consumer, "pocket-workflows.mjs"));
+copyFileSync(
+	join(root, "scripts", "consumer-pocket-controlled.mjs"),
+	join(consumer, "pocket-controlled.mjs"),
+);
 copyFileSync(join(root, "scripts", "consumer-pocket-product.mjs"), join(consumer, "pocket-product.mjs"));
 copyFileSync(join(root, "apps/webui/test/browser.ts"), join(consumer, "pocket-browser.ts"));
 copyFileSync(join(root, "scripts", "consumer-browser.ts"), join(consumer, "consumer-browser.ts"));
@@ -192,4 +197,6 @@ console.log(run("product", [join(consumer, "product.mjs")], consumer));
 console.log(run("pocket-services", [join(consumer, "pocket-services.mjs")], consumer));
 console.log(run("pocket-product", [join(consumer, "pocket-product.mjs")], consumer));
 console.log(run("mas-board", [join(consumer, "mas-board.mjs")], consumer));
+console.log(run("pocket-workflows", [join(consumer, "pocket-workflows.mjs")], consumer));
+console.log(run("pocket-controlled", [join(consumer, "pocket-controlled.mjs")], consumer));
 writeFileSync(join(artifacts, "consumer-path.txt"), consumer + "\n");

@@ -3,7 +3,12 @@ import { readdir, readFile, lstat } from "node:fs/promises";
 import { join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createRuntime, type RuntimeOptions, type JsonObject } from "@pakka/agent";
-import { createPocketPeople, createPocketWorkspace, type PocketSession } from "@pakka/server/pocket";
+import {
+	createPocketPeople,
+	createPocketWorkspace,
+	createPocketCollaboration,
+	type PocketSession,
+} from "@pakka/server/pocket";
 import { createPocketHttp, type PocketHttpOptions } from "./http.ts";
 import { createExtensionHost, type ExtensionSource } from "./extension-host.ts";
 import type { ExtensionService, PocketServiceContext } from "./backend.ts";
@@ -20,7 +25,10 @@ export interface PocketProductOptions {
 		| ((
 				context: PocketServiceContext,
 		  ) => Readonly<Record<string, ExtensionService>> | Promise<Readonly<Record<string, ExtensionService>>>);
-	readonly transport?: Omit<PocketHttpOptions, "runtime" | "people" | "workspace" | "assets" | "extensions">;
+	readonly transport?: Omit<
+		PocketHttpOptions,
+		"runtime" | "people" | "workspace" | "collaboration" | "assets" | "extensions"
+	>;
 }
 const types: Readonly<Record<string, string>> = {
 	html: "text/html; charset=utf-8",
@@ -107,14 +115,31 @@ export async function startPocket(options: PocketProductOptions) {
 		throw new Error("Invalid approved Pocket product configuration");
 	const assets = await publicAssets();
 	const runtime = await createRuntime(options.runtime);
-	let http: Awaited<ReturnType<typeof createPocketHttp>> | undefined;
+	let http: Awaited<ReturnType<typeof createPocketHttp>> | undefined,
+		services: Readonly<Record<string, ExtensionService>> | undefined,
+		servicesDisposed = false;
+	async function releaseServices() {
+		if (servicesDisposed) return;
+		servicesDisposed = true;
+		let failed = false;
+		for (const service of [...new Set(Object.values(services ?? {}))].reverse()) {
+			try {
+				await service.dispose?.();
+			} catch {
+				failed = true;
+			}
+		}
+		if (failed) throw Error("Pocket service shutdown unconfirmed");
+	}
 	try {
 		const people = await createPocketPeople({ runtime, namespace: "pocket.people" }),
+			collaboration = await createPocketCollaboration({ runtime, people, namespace: "pocket.collaboration" }),
 			workspace = createPocketWorkspace({
 				runtime,
 				people,
 				catalog: { namespace: "pocket.workspace", maxDeliveries: 512, maxPending: 32 },
 				profileCeiling: () => profiles,
+				beforeInput: (actor, ref) => collaboration.checkInput(actor, ref),
 			});
 		const store = runtime.store({ namespace: "pocket.bootstrap", maxBytes: 65536 }),
 			saved = await store.snapshot();
@@ -166,7 +191,7 @@ export async function startPocket(options: PocketProductOptions) {
 				);
 			ownerId = data.ownerId;
 		}
-		const services =
+		services =
 			typeof options.extensionServices === "function"
 				? await options.extensionServices(Object.freeze({ runtime, people, workspace, ownerId }))
 				: options.extensionServices;
@@ -178,12 +203,21 @@ export async function startPocket(options: PocketProductOptions) {
 			sources: options.extensions ?? [],
 			services,
 		});
-		http = await createPocketHttp({ ...options.transport, runtime, people, workspace, extensions, assets });
+		http = await createPocketHttp({
+			...options.transport,
+			runtime,
+			people,
+			workspace,
+			collaboration,
+			extensions,
+			assets,
+		});
 		let closed = false;
 		return Object.freeze({
 			runtime,
 			people,
 			workspace,
+			collaboration,
 			extensions,
 			http,
 			initialOwner,
@@ -193,7 +227,11 @@ export async function startPocket(options: PocketProductOptions) {
 				try {
 					await http!.close();
 				} finally {
-					await runtime.close();
+					try {
+						await releaseServices();
+					} finally {
+						await runtime.close();
+					}
 				}
 			},
 		});
@@ -201,7 +239,11 @@ export async function startPocket(options: PocketProductOptions) {
 		try {
 			await http?.close();
 		} finally {
-			await runtime.close();
+			try {
+				await releaseServices();
+			} finally {
+				await runtime.close();
+			}
 		}
 		throw error;
 	}

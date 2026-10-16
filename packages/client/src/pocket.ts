@@ -62,6 +62,16 @@ function correlated(command: PocketCommand, result: PocketResult, personId?: str
 			);
 		case "read":
 			return result.kind === "conversation" && sameRef(command.target, result.snapshot.ref);
+		case "collaboration.read":
+		case "collaboration.post":
+		case "collaboration.note":
+		case "collaboration.react":
+		case "collaboration.pin":
+		case "collaboration.driver":
+		case "collaboration.presence":
+			return (
+				result.kind === "collaboration" && result.snapshot.conversationId === command.target.conversationId
+			);
 		case "display":
 			return (
 				result.kind === "display" &&

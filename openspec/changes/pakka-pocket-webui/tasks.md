@@ -51,13 +51,15 @@ P4 intermediate evidence: `docs/PAKKA-POCKET-P4.md`, full 343/343 plus the added
 
 ## 6. P5 — Complete adopted UI and deployment workflows
 
-- [ ] 6.1 Port side chat/presence/notes/pins/reactions and turn-taking with conflict/attribution tests and captured proof that human-side content is not implicit model input.
-- [ ] 6.2 Port files/changes/branches/worktrees/uploads/exports/artifact views to approved services, testing real isolated files, scope/path bounds and safe rendering.
-- [ ] 6.3 Port approval and browser panels to real controlled pending-call/browser services, including unauthorized/late decisions and actual action results.
+- [x] 6.1 Port side chat/presence/notes/pins/reactions and turn-taking with conflict/attribution tests and captured proof that human-side content is not implicit model input.
+- [x] 6.2 Port files/changes/branches/worktrees/uploads/exports/artifact views to approved services, testing real isolated files, scope/path bounds and safe rendering.
+- [x] 6.3 Port approval and browser panels to real controlled pending-call/browser services, including unauthorized/late decisions and actual action results.
 - [ ] 6.4 Port settings/model/budget/notification and remaining mapped optional interfaces, with private configuration handling and real subsequent behavior checks.
 - [ ] 6.5 Verify normal reopen, persisted people/revocation, original operations and spent quotas; test disconnect/lost response and interrupted jobs without unsafe replay.
 - [ ] 6.6 Complete local/LAN/tailnet/tunnel launcher checks with actual proxy/TLS fixtures and recorded operator measurements for external deployment tools; do not claim mocked connectivity as support.
 - [ ] 6.7 Close the per-screen/action inventory and run desktop/mobile/keyboard/accessibility inspections against the development rules, leaving no decorative or silently removed control.
+
+P5 intermediate evidence: `docs/PAKKA-POCKET-P5.md`, full 387/387 and all isolated-install consumers pass. Installed collaboration/files use 2 local model HTTP; installed approval/browser controls use 4, with two independently counted page effects and no repeated effect after lost-response reconciliation. Exact-source single-writer merge, wrong-person/resource/revocation checks, nested unknown preservation and owned-service cleanup are recorded. Remaining settings/optional interfaces, job consumer, deployment/inventory closure and P6 acceptance stay open. Markdown lint is deferred per operator instruction.
 
 ## 7. P6 — Evidence, bounded review and delivery
 

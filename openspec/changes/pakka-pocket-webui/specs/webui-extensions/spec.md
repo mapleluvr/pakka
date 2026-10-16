@@ -74,6 +74,17 @@ Command, RPC, subscription and asset registrations SHALL bind the extension gene
 
 Mutating commands SHALL bind stable request identity, actor, resource, extension/action version and payload fingerprint to persistent operation records. Identical retries SHALL reconcile original receipts; conflicting payloads SHALL fail without another effect. Unknown/interrupted arbitrary handlers SHALL NOT be automatically re-entered. Closing UI, cancelling a wait or uninstalling a facet SHALL NOT prove rollback, refund consumed quota or delete business resources.
 
+#### Scenario: Locate an original operation after its response is lost
+
+- **WHEN** a human retained an external request ID but never received the host operation ID
+- **THEN** a read-only lookup binds the current person, extension and exact original resource to the saved operation and rechecks its permission before publication
+- **AND** closing/reopening the interface can inspect that operation without re-entering its handler; an absent or unknown record never implies rollback or authorizes replay
+
+#### Scenario: Recorded handler retains an unknown native effect
+
+- **WHEN** the extension handler has persisted a result but that result reports its native effect as unknown
+- **THEN** querying the original operation does not promote the inner result to success, discard its pending identity or enable another effect as a recovery action
+
 #### Scenario: Lost result after an accepted mutation
 
 - **WHEN** a response is lost after a real controlled write or model admission

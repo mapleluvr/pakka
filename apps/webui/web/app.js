@@ -8,6 +8,7 @@ import DOMPurify from "dompurify";
 import { createPocketClient } from "@pakka/client/pocket";
 import { decodePocketEvent } from "@pakka/protocol/pocket";
 import { useExtensions } from "./extensions.js";
+import { Collaboration } from "./collaboration.js";
 
 const html = htm.bind(h);
 const csrf = () => /(?:^|; )pakka_csrf=([A-Za-z0-9_-]{43})(?:;|$)/.exec(document.cookie)?.[1] ?? null;
@@ -67,7 +68,8 @@ function App() {
 		[refs, setRefs] = useState([]),
 		[titles, setTitles] = useState({}),
 		[selected, select] = useState(null),
-		[view, setView] = useState(null);
+		[view, setView] = useState(null),
+		[shared, setShared] = useState(null);
 	const title = (ref) => titles[ref.conversationId] ?? label(ref);
 	const [name, setName] = useState(""),
 		[token, setToken] = useState(signInToken),
@@ -85,7 +87,10 @@ function App() {
 		[drawer, setDrawer] = useState(false),
 		[newName, setNewName] = useState("");
 	const mounted = useRef(true),
-		scroll = useRef(null);
+		scroll = useRef(null),
+		resourceContext = useRef(null);
+	const contextKey = JSON.stringify([person?.id, selected?.key, selected?.incarnation]);
+	if (resourceContext.current?.key !== contextKey) resourceContext.current = { key: contextKey };
 	const extensions = useExtensions({
 		person,
 		target: selected,
@@ -102,8 +107,10 @@ function App() {
 		},
 	});
 	const invalidate = () => {
+		resourceContext.current = null;
 		extensions.clear();
 		setView(null);
+		setShared(null);
 		setRefs([]);
 		setTitles({});
 		select(null);
@@ -121,7 +128,9 @@ function App() {
 		notify(
 			failure.outcome === "unknown"
 				? "The result is unconfirmed. Check the receipt before retrying."
-				: "This operation was refused.",
+				: failure.code === "CONFLICT"
+					? "This shared record changed. Reload it before saving again."
+					: "This operation was refused.",
 		);
 	};
 	async function refresh() {
@@ -143,6 +152,8 @@ function App() {
 	}, []);
 	useEffect(() => {
 		setView(null);
+		setShared(null);
+		openSheet(null);
 		setReceipt(null);
 		setRetry(null);
 		if (!selected || !person) return;
@@ -158,29 +169,38 @@ function App() {
 				if (!active) return;
 				if (value.kind === "invalidated" || value.kind === "resnapshot") {
 					setView(null);
+					setShared(null);
 					sequence = 0;
 					generation = value.streamId;
 					return;
 				}
-				if (
-					value.snapshot.ref.key !== selected.key ||
-					value.snapshot.ref.incarnation !== selected.incarnation ||
-					value.snapshot.ref.sessionId !== selected.sessionId ||
-					(generation === value.streamId && value.sequence <= sequence)
-				)
-					throw new Error("Stale stream");
+				if (generation === value.streamId && value.sequence <= sequence) throw new Error("Stale stream");
 				generation = value.streamId;
 				sequence = value.sequence;
-				setView(value.snapshot);
+				if (value.kind === "collaboration") {
+					if (value.snapshot.conversationId !== selected.conversationId)
+						throw new Error("Foreign collaboration");
+					setShared(value.snapshot);
+				} else {
+					if (
+						value.snapshot.ref.key !== selected.key ||
+						value.snapshot.ref.incarnation !== selected.incarnation ||
+						value.snapshot.ref.sessionId !== selected.sessionId
+					)
+						throw new Error("Stale resource");
+					setView(value.snapshot);
+				}
 			} catch {
 				events.close();
 				setView(null);
+				setShared(null);
 				notify("Connection changed. Select the conversation again to reconnect.");
 			}
 		});
 		events.onerror = () => {
 			if (active) {
 				setView(null);
+				setShared(null);
 				void refresh().catch(error);
 			}
 		};
@@ -247,15 +267,15 @@ function App() {
 		}
 		const text = draft;
 		await run(async () => {
-			if (mode === "chat")
-				await client.request({
-					op: "display",
+			if (mode === "chat") {
+				const result = await client.request({
+					op: "collaboration.post",
 					target: selected,
-					requestId: crypto.randomUUID(),
-					kind: "chat",
-					text,
+					input: { requestId: crypto.randomUUID(), text },
 				});
-			else
+				setShared(result.snapshot);
+				openSheet("collaboration");
+			} else
 				await submit({
 					op: "submit",
 					target: selected,
@@ -274,7 +294,24 @@ function App() {
 		});
 	}
 	const canSend = person && person.role !== "viewer",
-		canDrive = person && ["driver", "admin"].includes(person.role);
+		canDrive = person && ["driver", "admin"].includes(person.role),
+		canInput =
+			canSend &&
+			(!shared?.driver.personId ||
+				(shared.driver.personId === person?.id && shared.driver.expiresAt > Date.now()));
+	const showCollaboration = () => {
+		const binding = resourceContext.current;
+		void run(async () => {
+			try {
+				const result = await client.request({ op: "collaboration.read", target: selected });
+				if (!mounted.current || resourceContext.current !== binding) return;
+				setShared(result.snapshot);
+				openSheet("collaboration");
+			} catch (failure) {
+				if (resourceContext.current === binding) throw failure;
+			}
+		});
+	};
 	if (!person)
 		return html`<main class="pocket-signin">
 			<section class="signin">
@@ -381,8 +418,10 @@ function App() {
 					☰
 				</button>
 				<div class="pocket-title">${selected ? title(selected) : "Your workspace"}</div>
-				<span class="pocket-status">${view?.live.busy ? "Working" : view ? "Ready" : ""}</span
-				>${extensions.button}${person.role === "admin" &&
+				<span class="pocket-status">${view?.live.busy ? "Working" : view ? "Ready" : ""}</span>${selected &&
+				html`<button data-action="collaboration" onClick=${showCollaboration}>
+					Team
+				</button>`}${extensions.button}${person.role === "admin" &&
 				html`<button data-action="people" onClick=${showPeople}>People & invites</button>`}
 			</header>
 			${extensions.page && extensions.surface}
@@ -436,9 +475,8 @@ function App() {
 							aria-label="Input mode"
 							value=${mode}
 							onChange=${(event) => setMode(event.currentTarget.value)}
-							disabled=${!canSend}
 						>
-							<option value="prompt">Prompt</option>
+							<option value="prompt" disabled=${!canSend}>Prompt</option>
 							${canDrive &&
 							html`<option value="steer">Steer</option>
 								<option value="followUp">Follow up</option>`}
@@ -456,7 +494,7 @@ function App() {
 							class="button primary"
 							data-action="send"
 							type="submit"
-							disabled=${(!canSend && !draft.trimStart().startsWith("/")) ||
+							disabled=${(mode !== "chat" && !canInput && !draft.trimStart().startsWith("/")) ||
 							working ||
 							!view ||
 							(mode === "prompt" && view?.live.busy && !draft.trimStart().startsWith("/"))}
@@ -477,7 +515,21 @@ function App() {
 			</div>`}
 		</main>
 		${extensions.overlay}
-		${sheet &&
+		${sheet === "collaboration" &&
+		selected &&
+		shared &&
+		html`<${Collaboration}
+			key=${selected.conversationId + ":" + selected.incarnation}
+			person=${person}
+			target=${selected}
+			client=${client}
+			snapshot=${shared}
+			updated=${setShared}
+			notice=${notify}
+			error=${error}
+			close=${() => openSheet(null)}
+		/>`}
+		${sheet === "people" &&
 		html`<div
 			class="pocket-scrim"
 			onClick=${(event) => {

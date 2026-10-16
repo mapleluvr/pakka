@@ -82,6 +82,8 @@ export interface ExtensionCall {
 		readonly profile: string;
 	};
 }
+/** External request identity only; the server binds the current actor and verifies the exact resource. */
+export type ExtensionOperationRequest = Pick<ExtensionCall, "extension" | "requestId" | "target">;
 export interface ExtensionOperation {
 	readonly id: string;
 	readonly extension: string;

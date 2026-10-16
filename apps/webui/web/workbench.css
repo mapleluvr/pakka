@@ -355,6 +355,77 @@
 		border-bottom: none;
 	}
 }
+.pocket-collaboration .pocket-sheet-body > section {
+	min-width: 0;
+	border-top: 1px solid var(--line);
+	padding-top: 16px;
+}
+.pocket-collaboration h3 {
+	font-size: 0.9rem;
+	margin: 0 0 12px;
+}
+.pocket-collaboration button {
+	min-height: 44px;
+	padding: 6px 12px;
+}
+.pocket-collaboration textarea,
+.pocket-collaboration select {
+	width: 100%;
+	min-width: 0;
+	padding: 10px;
+	color: var(--body);
+	background: var(--card);
+	border: 1px solid var(--line-strong);
+	font: inherit;
+}
+.pocket-collaboration textarea {
+	resize: vertical;
+}
+.pocket-collaboration form,
+.pocket-collaboration label {
+	display: grid;
+	gap: 10px;
+}
+.pocket-collaboration small,
+.pocket-secondary {
+	font-size: 0.76rem;
+	color: var(--muted);
+}
+.pocket-chat-messages {
+	display: grid;
+	gap: 14px;
+	margin: 16px 0;
+}
+.pocket-chat-row {
+	border-left: 2px solid var(--line-strong);
+	padding: 6px 12px;
+	overflow-wrap: anywhere;
+}
+.pocket-chat-row header,
+.pocket-chat-row footer {
+	display: flex;
+	gap: 8px;
+	flex-wrap: wrap;
+	align-items: center;
+}
+.pocket-chat-row time {
+	font-size: 0.7rem;
+	color: var(--muted);
+}
+.pocket-chat-row p,
+.pocket-chat-row blockquote {
+	white-space: pre-wrap;
+}
+.pocket-chat-row blockquote {
+	margin: 10px 0;
+	border-left: 2px solid var(--line);
+	padding-left: 10px;
+	color: var(--muted);
+}
+.pocket-chat-row header span {
+	font-size: 0.7rem;
+	color: var(--accent);
+}
 @media (prefers-reduced-motion: reduce) {
 	.pocket-workbench *,
 	.pocket-signin * {
