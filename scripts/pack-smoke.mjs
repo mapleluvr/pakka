@@ -27,7 +27,7 @@ mkdirSync(artifacts, { recursive: true });
 const npmCli = process.env.npm_execpath;
 if (!npmCli) throw new Error("Run via npm run smoke:package");
 const env = {};
-for (const k of ["PATH", "PATHEXT", "SystemRoot", "WINDIR", "COMSPEC", "TEMP", "TMP"])
+for (const k of ["PATH", "PATHEXT", "SystemRoot", "WINDIR", "COMSPEC", "TEMP", "TMP", "PAKKA_TEST_CHROME"])
 	if (process.env[k]) env[k] = process.env[k];
 Object.assign(env, {
 	HOME: consumer,

@@ -37,9 +37,18 @@ The existing v1 headless transport SHALL bind IPv4 loopback with explicit approv
 
 ### Requirement: Controlled Pocket observation bridge
 
-GUI observation SHALL use authorized frozen DTOs and identity-bound commands produced by the owning controlled adapter/services. Conversation history access SHALL have explicit human read permission rather than borrowing MAS send/discover or a strategy frame. Backend code SHALL NOT read native JSONL/SQLite to construct a second runtime or export raw Pi objects. Stored broker receipt provenance SHALL be verified against the exact endpoint/namespace before publication if the new public path exposes those receipts.
+GUI observation SHALL use authorized frozen DTOs and identity-bound commands produced by the owning controlled adapter/services. Conversation history access SHALL have explicit human read permission rather than borrowing MAS send/discover or a strategy frame. Backend code SHALL NOT read native JSONL/SQLite to construct a second runtime or export raw Pi objects.
 
 #### Scenario: Read view and cross-scope receipt
 
 - **WHEN** an authenticated human opens a Conversation or a saved broker receipt
 - **THEN** the server validates the current resource scope and receipt provenance before returning only approved display fields; malformed or foreign state fails closed without routing or provider effects
+
+### Requirement: Broker receipt publication provenance
+
+Stored broker receipt provenance SHALL be verified against the exact endpoint/namespace before publication if the new public path exposes those receipts.
+
+#### Scenario: Broker receipt publication provenance
+
+- **WHEN** A stored broker receipt is published
+- **THEN** The exact endpoint and namespace are verified before publication; a foreign receipt causes no routing or provider effect.

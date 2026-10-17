@@ -9,7 +9,7 @@ const artifacts = join(fileURLToPath(root), "artifacts", "integration");
 mkdirSync(artifacts, { recursive: true });
 writeFileSync(join(artifacts, "manifest.jsonl"), "");
 const env = {};
-for (const k of ["PATH", "PATHEXT", "SystemRoot", "WINDIR", "COMSPEC", "TEMP", "TMP"])
+for (const k of ["PATH", "PATHEXT", "SystemRoot", "WINDIR", "COMSPEC", "TEMP", "TMP", "PAKKA_TEST_CHROME"])
 	if (process.env[k]) env[k] = process.env[k];
 Object.assign(env, {
 	HOME: profile,

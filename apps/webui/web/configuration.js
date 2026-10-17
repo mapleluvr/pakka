@@ -1,6 +1,7 @@
 import { h } from "preact";
 import { useEffect, useRef, useState } from "preact/hooks";
 import htm from "htm";
+import { Icon } from "@pakka/webui/components";
 import { PrivateCredentials } from "./credentials.js";
 const html = htm.bind(h);
 
@@ -112,7 +113,9 @@ export function Configuration({ target, client, busy, applied, close, error }) {
 		>
 			<header>
 				<h2>Conversation settings</h2>
-				<button aria-label="Close settings" onClick=${close}>×</button>
+				<button class="pocket-icon-button" aria-label="Close settings" onClick=${close}>
+					<${Icon} name="close" />
+				</button>
 			</header>
 			<div class="pocket-sheet-body">
 				${!value

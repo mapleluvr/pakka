@@ -69,7 +69,7 @@ test(
 			await guest.type("textarea[name=teamChat]", "BOB-HUMAN-DRAFT");
 			await owner.wait('document.querySelector("[data-presence]")?.innerText.includes("Bob is typing")');
 			await guest.click("[data-action=react-chat]");
-			await owner.wait('document.querySelector("[data-chat-message]").innerText.includes("👍 1")');
+			await owner.wait('document.querySelector("[data-action=react-chat]")?.textContent.trim() === "1"');
 			await owner.click("[data-action=pin-chat]");
 			await guest.wait('document.querySelector("[data-chat-message]").innerText.includes("Pinned")');
 			await owner.type("textarea[name=sharedNote]", "SHARED-NOTE-DO-NOT-MODEL");

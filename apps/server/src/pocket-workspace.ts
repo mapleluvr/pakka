@@ -10,6 +10,7 @@ import type {
 	DisplayReceipt,
 	DeliveryReceipt,
 	CatalogMember,
+	JsonObject,
 } from "@pakka/agent";
 import type { PocketAuthority, PocketPeople, PocketPermission, PocketPerson } from "./pocket-people.ts";
 
@@ -20,6 +21,24 @@ export interface PocketCreate {
 }
 export interface PocketFork extends PocketCreate {
 	readonly entryId: string;
+}
+export interface PocketNavigation {
+	readonly ref: ConversationRef;
+	readonly name: string;
+	readonly version: number;
+	readonly archived: boolean;
+}
+export interface PocketMetadataInput {
+	readonly requestId: string;
+	readonly expectedVersion: number;
+	readonly name: string;
+	readonly archived: boolean;
+}
+export class PocketMetadataConflict extends Error {
+	constructor() {
+		super("Pocket conversation metadata changed");
+		this.name = "PocketMetadataConflict";
+	}
 }
 export interface PocketInput {
 	readonly requestId: string;
@@ -45,7 +64,15 @@ export interface PocketConfiguration {
 export interface PocketWorkspaceClient {
 	configuration(ref: ConversationRef): Promise<PocketConfiguration>;
 	list(): Promise<readonly ConversationRef[]>;
-	navigation(): Promise<readonly { readonly ref: ConversationRef; readonly name: string }[]>;
+	navigation(): Promise<readonly PocketNavigation[]>;
+	setMetadata(ref: ConversationRef, input: PocketMetadataInput): Promise<PocketNavigation>;
+	/** Read original metadata result only. Missing records never re-enter mutation admission. */
+	metadataReceipt(ref: ConversationRef, input: PocketMetadataInput): Promise<PocketNavigation | null>;
+	/** Read an original create/fork result only, under the same current scope and approved profile. */
+	creationReceipt(
+		input: PocketCreate,
+		fork?: { readonly source: ConversationRef; readonly entryId: string },
+	): Promise<ConversationRef | null>;
 	create(input: PocketCreate): Promise<ConversationRef>;
 	configure(ref: ConversationRef, profile: string): Promise<ConversationRef>;
 	fork(ref: ConversationRef, input: PocketFork): Promise<ConversationRef>;
@@ -98,6 +125,32 @@ function frozen<T>(v: T): T {
 }
 function denied(): never {
 	throw new Error("Pocket workspace authority denied");
+}
+
+const object = (value: unknown): value is JsonObject =>
+	!!value && typeof value === "object" && !Array.isArray(value);
+const nameValid = (name: unknown): name is string =>
+	typeof name === "string" && !!name.trim() && name.length <= 80 && !/[\x00-\x1f\x7f]/.test(name);
+function metadata(row: CatalogMember): PocketNavigation {
+	const state = row.data.metadata;
+	if (
+		!nameValid(row.data.name) ||
+		(state !== undefined &&
+			(!object(state) ||
+				!Number.isSafeInteger(state.version) ||
+				Number(state.version) < 1 ||
+				Number(state.version) > 256 ||
+				typeof state.archived !== "boolean" ||
+				!Array.isArray(state.receipts) ||
+				state.receipts.length !== state.version))
+	)
+		throw Error("Invalid Pocket conversation metadata");
+	return frozen({
+		ref: row.ref,
+		name: row.data.name,
+		version: object(state) ? Number(state.version) : 0,
+		archived: !!(object(state) && state.archived),
+	});
 }
 
 /** Human workbench metadata composes the controlled catalog; it owns no scheduler or native handles. */
@@ -198,7 +251,8 @@ export function createPocketWorkspace(options: PocketWorkspaceOptions): PocketWo
 				input: PocketCreate,
 				source?: ConversationRef,
 				entryId?: string,
-			): Promise<ConversationRef> => {
+				lookupOnly = false,
+			): Promise<ConversationRef | null> => {
 				check("create");
 				if (
 					!input ||
@@ -244,6 +298,7 @@ export function createPocketWorkspace(options: PocketWorkspaceOptions): PocketWo
 						authorize();
 						return prior.ref;
 					}
+					if (lookupOnly) return null;
 					const rows = await catalog.enroll(
 						[
 							{
@@ -303,17 +358,103 @@ export function createPocketWorkspace(options: PocketWorkspaceOptions): PocketWo
 				);
 				for (const row of rows) check("read", row.ref);
 				current();
-				return frozen(
-					rows.map((row) => {
-						if (typeof row.data.name !== "string" || !row.data.name.trim() || row.data.name.length > 80)
-							throw new Error("Invalid Pocket conversation name");
-						return { ref: row.ref, name: row.data.name };
-					}),
-				);
+				return frozen(rows.map(metadata));
+			};
+			const changeMetadata = (
+				raw: ConversationRef,
+				input: PocketMetadataInput,
+				lookupOnly = false,
+			): Promise<PocketNavigation | null> => {
+				const ref = structuredClone(raw),
+					saved = structuredClone(input),
+					personId = current().id;
+				if (
+					!saved ||
+					Object.keys(saved).some((k) => !["requestId", "expectedVersion", "name", "archived"].includes(k)) ||
+					!key(saved.requestId) ||
+					!Number.isSafeInteger(saved.expectedVersion) ||
+					saved.expectedVersion < 0 ||
+					!nameValid(saved.name) ||
+					typeof saved.archived !== "boolean"
+				)
+					return Promise.reject(Error("Invalid bounded Pocket metadata input"));
+				const fingerprint = hash({ ref, ...saved, name: saved.name.trim() }),
+					authorize = () => check("manage", ref);
+				return serial(async () => {
+					authorize();
+					const snapshot = await catalog.snapshot();
+					authorize();
+					const row = snapshot.members.find(
+						(row) => row.data.kind === "pocket-workspace" && sameRef(row.ref, ref),
+					);
+					if (!row) return denied();
+					const currentState = metadata(row),
+						state = row.data.metadata;
+					const receipts = object(state) && Array.isArray(state.receipts) ? state.receipts : [];
+					for (const receipt of receipts) {
+						if (
+							!object(receipt) ||
+							!key(receipt.actorId) ||
+							!key(receipt.requestId) ||
+							typeof receipt.fingerprint !== "string" ||
+							!/^[a-f0-9]{64}$/.test(receipt.fingerprint) ||
+							!nameValid(receipt.name) ||
+							typeof receipt.archived !== "boolean" ||
+							!Number.isSafeInteger(receipt.version) ||
+							Number(receipt.version) < 1 ||
+							Number(receipt.version) > currentState.version
+						)
+							throw Error("Invalid Pocket metadata receipt");
+						if (receipt.actorId === personId && receipt.requestId === saved.requestId) {
+							if (receipt.fingerprint !== fingerprint) throw new PocketMetadataConflict();
+							authorize();
+							return frozen({
+								ref,
+								name: receipt.name,
+								archived: receipt.archived,
+								version: Number(receipt.version),
+							});
+						}
+					}
+					if (lookupOnly) return null;
+					if (currentState.version !== saved.expectedVersion) throw new PocketMetadataConflict();
+					if (receipts.length >= 256) throw Error("Pocket metadata receipt capacity reached");
+					const next = {
+						name: saved.name.trim(),
+						archived: saved.archived,
+						version: currentState.version + 1,
+					};
+					await catalog.update(
+						row.key,
+						{
+							...row.data,
+							name: next.name,
+							metadata: {
+								version: next.version,
+								archived: next.archived,
+								receipts: [
+									...receipts,
+									{ ...next, actorId: personId, requestId: saved.requestId, fingerprint },
+								],
+							},
+						},
+						snapshot.version,
+						authorize,
+					);
+					authorize();
+					return frozen({ ref, ...next });
+				});
 			};
 			return Object.freeze({
 				list: async () => frozen((await navigation()).map((row) => row.ref)),
 				navigation,
+				setMetadata: async (ref: ConversationRef, input: PocketMetadataInput) => {
+					const result = await changeMetadata(ref, input);
+					if (!result) throw Error("Metadata admission unconfirmed");
+					return result;
+				},
+				metadataReceipt: (ref: ConversationRef, input: PocketMetadataInput) =>
+					changeMetadata(ref, input, true),
 				configuration: async (raw: ConversationRef): Promise<PocketConfiguration> => {
 					const ref = structuredClone(raw),
 						authorize = () => check("read", ref);
@@ -338,8 +479,20 @@ export function createPocketWorkspace(options: PocketWorkspaceOptions): PocketWo
 								: null,
 					});
 				},
-				create: (input: PocketCreate) => create(input),
-				fork: (ref: ConversationRef, input: PocketFork) => create(input, ref, input.entryId),
+				create: async (input: PocketCreate) => {
+					const ref = await create(input);
+					if (!ref) throw Error("Creation admission unconfirmed");
+					return ref;
+				},
+				fork: async (source: ConversationRef, input: PocketFork) => {
+					const ref = await create(input, source, input.entryId);
+					if (!ref) throw Error("Fork admission unconfirmed");
+					return ref;
+				},
+				creationReceipt: (
+					input: PocketCreate,
+					fork?: { readonly source: ConversationRef; readonly entryId: string },
+				) => create(input, fork?.source, fork?.entryId, true),
 				configure: (raw: ConversationRef, profile: string) =>
 					serial(async () => {
 						const ref = structuredClone(raw),
@@ -357,7 +510,22 @@ export function createPocketWorkspace(options: PocketWorkspaceOptions): PocketWo
 					const saved = structuredClone(ref),
 						authorize = () => check("read", saved);
 					authorize();
-					return runtime.readConversation(saved, authorize, page);
+					const snapshot = await runtime.readConversation(saved, authorize, page);
+					authorize();
+					const person = current();
+					const entries = snapshot.entries.map((entry) => {
+						if (
+							!entry.sourceConversationId ||
+							person.resources === "*" ||
+							person.resources.includes(entry.sourceConversationId)
+						)
+							return entry;
+						// An explicit native fork copies history, not a read grant to its source resource.
+						const { sourceConversationId: _source, ...scoped } = entry;
+						return scoped;
+					});
+					authorize();
+					return frozen({ ...snapshot, entries });
 				},
 				display: async (
 					ref: ConversationRef,

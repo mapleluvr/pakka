@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { DurableAdapter } from "./durable-adapter.ts";
 import type { Notice, AdapterControl } from "./durable-adapter.ts";
-import { StrategyControl, type StrategyLease } from "./strategy-control.ts";
+import { StrategyControl, LifecycleTransitionRevoked, type StrategyLease } from "./strategy-control.ts";
 import type {
 	Capability,
 	Client,
@@ -186,6 +186,7 @@ class Kernel {
 		]);
 	}
 	#ready(): void {
+		if (this.#phase === "transitioning") throw new LifecycleTransitionRevoked();
 		if (this.#phase !== "ready") throw new Error("Host is " + this.#phase);
 	}
 	#emit(event: HostEvent): void {

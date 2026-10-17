@@ -6,7 +6,7 @@ import {
 	type TargetedEvent,
 } from "preact";
 import { useEffect, useState } from "preact/hooks";
-import { Button, Field, Notice, Stack } from "@pakka/webui/components";
+import { Button, Field, Icon, Notice, Stack } from "@pakka/webui/components";
 import type { WebInterfaceProps } from "@pakka/webui/ui";
 import {
 	readBoard,
@@ -53,7 +53,7 @@ export function Board({ context }: WebInterfaceProps) {
 			h(
 				"div",
 				{ class: "board-title" },
-				h("h2", null, "Team"),
+				h("h2", null, h(Icon, { name: "board" }), "Team"),
 				h(
 					"div",
 					{ class: "board-sub" },

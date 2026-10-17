@@ -58,6 +58,7 @@ import {
 } from "@earendil-works/pi-ai";
 import * as oac from "@earendil-works/pi-ai/api/openai-completions";
 import { copy, hash, json } from "./artifact-journal.ts";
+import { LifecycleTransitionRevoked } from "./strategy-control.ts";
 import {
 	inspectLegacyJournals,
 	legacyPrimaryReservations,
@@ -399,6 +400,13 @@ async function claimWriter(storageDir: string): Promise<() => Promise<void>> {
 	};
 }
 class MutationDenied extends Error {}
+/** This attempted input created no admission; any original receipt remains authoritative. */
+export class ConversationUnavailableError extends MutationDenied {
+	constructor() {
+		super("Recipient not ready");
+		this.name = "ConversationUnavailableError";
+	}
+}
 type StoredMember = JsonRepresentation<CatalogMember>;
 type StoredDelivery = {
 	id: string;
@@ -1337,7 +1345,7 @@ export class DurableAdapter {
 							return { messages, check };
 						} catch (error) {
 							const failure = error instanceof Error ? error : new Error(String(error));
-							adapter?.markFailed(failure);
+							if (!(failure instanceof LifecycleTransitionRevoked)) adapter?.markFailed(failure);
 							return { block: failure.message };
 						}
 					},
@@ -1542,7 +1550,10 @@ export class DurableAdapter {
 				ref,
 				entries: native.entries.slice(start, end).map((entry) => ({
 					id: String(entry.id),
-					conversationId: String(entry.conversationId),
+					conversationId: ref.conversationId,
+					...(String(entry.conversationId) === ref.conversationId
+						? {}
+						: { sourceConversationId: String(entry.conversationId) }),
 					kind: entry.kind,
 					...(entry.byTaskId === undefined ? {} : { taskId: String(entry.byTaskId) }),
 					messages: (entry.model ?? []).flatMap((item) => {
@@ -2208,8 +2219,7 @@ export class DurableAdapter {
 						const existing = await tx.submissionByRequest(to, requestId);
 						if (existing) throw new Error("Native admission exists without catalog fingerprint");
 						const route = this.#routes.get(to);
-						if (!route || route.#disposed || route.#failedReason)
-							throw new MutationDenied("Recipient not ready");
+						if (!route || route.#disposed || route.#failedReason) throw new ConversationUnavailableError();
 						checkAuthority(check);
 						this.#managedReady();
 						let submissionId: SubmissionId;

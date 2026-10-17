@@ -84,6 +84,14 @@ type JobRecord = Authority & {
 	requireArtifactReceipt: boolean;
 };
 
+/** Expected invalidation before dispatch; distinct from a projector or storage fault. */
+export class LifecycleTransitionRevoked extends Error {
+	constructor() {
+		super("Host is transitioning");
+		this.name = "LifecycleTransitionRevoked";
+	}
+}
+
 export class StrategyControl {
 	#ports: Ports;
 	#root: string;
@@ -879,7 +887,8 @@ export class StrategyControl {
 			}
 			return { messages: applyProjection(basis.frame, plan), check };
 		} catch (error) {
-			this.#ports.fail("Projection control failure: " + String(error));
+			if (!(error instanceof LifecycleTransitionRevoked))
+				this.#ports.fail("Projection control failure: " + String(error));
 			throw error;
 		} finally {
 			if (this.#request?.id === requestId) this.#request = undefined;

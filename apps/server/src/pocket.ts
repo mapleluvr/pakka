@@ -112,13 +112,15 @@ export type {
 	PocketCredentialWrite,
 	PocketCredentialClient,
 } from "./pocket-credentials.js";
-export { createPocketWorkspace } from "./pocket-workspace.js";
+export { createPocketWorkspace, PocketMetadataConflict } from "./pocket-workspace.js";
 export type {
 	PocketWorkspace,
 	PocketWorkspaceOptions,
 	PocketWorkspaceClient,
 	PocketConfiguration,
 	PocketCreate,
+	PocketNavigation,
+	PocketMetadataInput,
 	PocketFork,
 	PocketInput,
 	PocketInputReceipt,

@@ -188,12 +188,17 @@ const readMemory = (page, ref) =>
 const system = (n) => JSON.stringify(requests[n].messages.filter((message) => message.role === "system"));
 async function reloadProduct(page, target) {
 	const before = await page.evaluate("performance.timeOrigin");
-	await page.navigate(origin + "/#conversation=" + encodeURIComponent(target.conversationId));
 	await page.reload();
 	await page.wait(
-		"performance.timeOrigin!==" +
-			JSON.stringify(before) +
-			'&&document.querySelector("textarea[name=message]")',
+		"performance.timeOrigin!==" + JSON.stringify(before) + '&&document.querySelector("[data-conversation]")',
+	);
+	// The application consumes a conversation fragment after selecting the authorized target.
+	await page.navigate(origin + "/#conversation=" + encodeURIComponent(target.conversationId));
+	const selected = '[data-conversation="' + target.conversationId + '"].selected';
+	await page.wait(
+		"!!document.querySelector(" +
+			JSON.stringify(selected) +
+			')&&document.querySelector(".pocket-status")?.textContent==="Ready"&&!!document.querySelector("textarea[name=message]")',
 	);
 }
 async function work(page, target, text, count) {

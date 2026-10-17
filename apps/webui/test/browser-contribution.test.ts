@@ -6,7 +6,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { runtimeFixture } from "../../../packages/agent/test/runtime-fixture.ts";
 import { startPocket } from "../src/bootstrap.ts";
 import { workspaceBrowserExtensionRoot, workspaceBrowserService } from "../src/workflows.ts";
-import { ownedBrowser } from "./browser.ts";
+import { browserExecutable, ownedBrowser } from "./browser.ts";
 
 test(
 	"Pocket browser contribution: actual UI controls owned page, real frame renders, mobile viewer cannot act",
@@ -42,7 +42,7 @@ test(
 					browser: await workspaceBrowserService(context, {
 						namespace: "project.browser",
 						origins: [origin],
-						executable: "C:/Program Files/Google/Chrome/Application/chrome.exe",
+						executable: await browserExecutable(),
 						resources: [context.runtime.view().conversations.at(-1)!.conversationId],
 					}),
 				}),

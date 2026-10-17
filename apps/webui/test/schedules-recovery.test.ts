@@ -50,6 +50,10 @@ test(
 			await page.wait('document.querySelector("textarea[name=message]")');
 			await page.click("[data-interface=workspace-schedules-schedules]");
 			await page.wait('document.querySelector("[data-schedule-reconcile]")?.disabled===false');
+			// The extension stylesheet can arrive after the pending button is rendered.
+			await page.wait(
+				'Array.from(document.querySelectorAll("link[rel=stylesheet]")).some(link => link.href.endsWith("/schedules.css") && !!link.sheet)',
+			);
 			await page.click("[data-schedule-reconcile]");
 			await page.wait('!document.querySelector("[data-schedule-reconcile]")');
 			assert.equal(await page.evaluate("globalThis.__scheduleAdds"), 1);

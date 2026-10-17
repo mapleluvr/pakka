@@ -79,7 +79,9 @@ async function start() {
 	child = spawn(
 		process.execPath,
 		[
-			join(root, "node_modules/@pakka/webui/dist/main.js"),
+			process.platform === "win32"
+				? join(root, "node_modules/@pakka/webui/dist/main.js")
+				: join(root, "node_modules/.bin/pakka-pocket"),
 			"--config",
 			configFile,
 			"--owner-file",

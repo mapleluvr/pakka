@@ -12,6 +12,11 @@ test(
 	"Pocket remote: actual TLS proxy uses exact trusted peer/origin and secure cookies; direct/plain/spoofed access is rejected",
 	{ timeout: 20000 },
 	async () => {
+		// Load required assets before allocating a Runtime/listener, so a missing fixture cannot leak handles.
+		const [key, cert] = await Promise.all([
+			readFile(new URL("./tls/key.pem", import.meta.url)),
+			readFile(new URL("./tls/cert.pem", import.meta.url)),
+		]);
 		const m = await fixture();
 		const reserve = createTcp();
 		await new Promise<void>((r) => reserve.listen(0, "127.0.0.1", r));
@@ -19,10 +24,6 @@ test(
 		assert.ok(address && typeof address !== "string");
 		const backendPort = address.port;
 		await new Promise<void>((r) => reserve.close(() => r()));
-		const [key, cert] = await Promise.all([
-			readFile(new URL("./tls/key.pem", import.meta.url)),
-			readFile(new URL("./tls/cert.pem", import.meta.url)),
-		]);
 		let publicHost = "",
 			forwardedProto = "https";
 		const proxy = createHttps({ key, cert }, (incoming, outgoing) => {

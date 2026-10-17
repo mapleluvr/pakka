@@ -121,6 +121,7 @@ P6 真实安装/浏览器/隐私/恢复/独立复审与交付
 - 两人并发 notes/driver/commands、resource 撤权、slow SSE、重连/resnapshot、closed/unknown jobs、正常重开身份与预算均从产品入口验证。
 - local、LAN、tailnet、公网 tunnel 的 launcher/config 行为分别验证。自动测试使用真实本地代理/TLS；外部基础设施测量不得用 mock 域名替代。
 - UI development rules 落入组件、例子、type/browser test；新增主题/图标优先 repo 原生资源，保留许可证。
+- [Linux closeout 进行记录](PAKKA-POCKET-LINUX.md)保留本轮启动/门禁修复、action ledger 补齐、独立 GUI 候选和剩余缺口；第一轮仍是“实操验收中”，不据此提前勾选 P5/P6。
 
 退出：迁移清单无未说明的空控件或隐含删除；多人/邀请/远程不是下一版 deferred。尚未实测的部署模式不得标为支持完成，也不得反过来取消用户已确认的目标。
 
@@ -135,6 +136,8 @@ P6 真实安装/浏览器/隐私/恢复/独立复审与交付
 退出：同一个实际产品身份同时证明工作台、通用插件、MAS 插件和多人远程能力，留下精确版本/产物/残余项；不能把 OpenSpec 完成或各 library 的总测试数称为产品通过。
 
 ## 5. 验收矩阵与正向证据
+
+P5/P6 及后续阶段在目标和逐项通过条件明确、且可通过 Computer Use 验证时，持续采用 [分阶段 Computer Use 实操验收](WEBUI-DEVELOPMENT.md#10-分阶段-computer-use-实操验收)。主代理完成必要的简单测试及项目门禁后，由默认模型 `Mapleluv-ChatCompletions/deepseek-flash:max` 的后台子代理在实际候选快照、独立 worktree 和独立 agent-workspace-linux 桌面中完成 GUI 实操。阶段在有效结果返回前保持“实操验收中”；主代理并行推进不依赖验收结论的工作。快照、A/B 诊断、中断/恢复、重测与证据规则按该节执行，不改变本表的通过目标，也不替代 P6 指定的对抗审查。
 
 | 场景                    | 最小真实主体                                         | 除零效果外必须保留的证据                                                  |
 | ----------------------- | ---------------------------------------------------- | ------------------------------------------------------------------------- |

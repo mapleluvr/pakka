@@ -1,6 +1,7 @@
 import { h, Component } from "preact";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import htm from "htm";
+import { Icon } from "@pakka/webui/components";
 import { createExtensionClient } from "@pakka/webui/client";
 import { decodeValue } from "@pakka/webui/extension";
 
@@ -214,6 +215,21 @@ export function useExtensions({ person, target, csrf, notice, error, navigate, o
 				open(registration, command.interface);
 				return true;
 			}
+			const action = registration.manifest.actions.find((row) => row.id === command.action);
+			if (action) {
+				try {
+					decodeValue(action.input, input);
+				} catch {
+					const required = action.input.required ?? [];
+					latest.current.notice(
+						"Enter /" +
+							command.slash +
+							" followed by valid JSON arguments." +
+							(required.length ? " Required fields: " + required.join(", ") + "." : ""),
+					);
+					return false;
+				}
+			}
 			const result = await execute(registration, command.action, input);
 			if (!live()) return false;
 			latest.current.notice(
@@ -401,7 +417,9 @@ function Container({ title, modal, close, children, trigger }) {
 	>
 		<header>
 			<h2>${title}</h2>
-			<button aria-label=${"Close " + title} onClick=${close}>×</button>
+			<button class="pocket-icon-button" aria-label=${"Close " + title} onClick=${close}>
+				<${Icon} name="close" />
+			</button>
 		</header>
 		<div class="pocket-sheet-body">${children}</div>
 	</section>`;

@@ -5,7 +5,7 @@ import { mkdir, readFile, writeFile, readdir } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { createRuntime } from "@pakka/agent";
-import { ownedBrowser } from "./pocket-browser.ts";
+import { browserExecutable, ownedBrowser } from "./pocket-browser.ts";
 
 const root = dirname(fileURLToPath(import.meta.url)),
 	requests = [],
@@ -129,7 +129,7 @@ import {approvalTool,createPocketApprovals} from '@pakka/server/pocket';
 import {workspaceApprovalsExtensionRoot,workspaceApprovalsService,workspaceBrowserExtensionRoot,workspaceBrowserService} from '@pakka/webui/workflows';
 let approvals,target;
 const tool=approvalTool({name:'approved_write',description:'Write a fixed local file after human approval',parameters:{type:'object',properties:{text:{type:'string'}},required:['text']},execute:async args=>{await writeFile(${JSON.stringify(effectFile)},String(args.text));return 'INSTALLED-APPROVED-EFFECT';}},()=>({approvals,target}));
-export default {runtime:{...${JSON.stringify(options)},tools:[tool]},owner:'Owner',initial:[{name:'Controlled project',profile:'default'}],extensions:[{root:workspaceApprovalsExtensionRoot,facets:['backend','webui','client']},{root:workspaceBrowserExtensionRoot,facets:['backend','webui','client']}],extensionServices:async context=>{target=context.runtime.view().conversations.at(-1);approvals=await createPocketApprovals({...context,namespace:'installed.approvals',timeoutMs:20000});return{approvals:workspaceApprovalsService(approvals),browser:await workspaceBrowserService(context,{namespace:'installed.browser',origins:[${JSON.stringify(approvedOrigin)}],executable:'C:/Program Files/Google/Chrome/Application/chrome.exe',resources:[target.conversationId]})};}};
+export default {runtime:{...${JSON.stringify(options)},tools:[tool]},owner:'Owner',initial:[{name:'Controlled project',profile:'default'}],extensions:[{root:workspaceApprovalsExtensionRoot,facets:['backend','webui','client']},{root:workspaceBrowserExtensionRoot,facets:['backend','webui','client']}],extensionServices:async context=>{target=context.runtime.view().conversations.at(-1);approvals=await createPocketApprovals({...context,namespace:'installed.approvals',timeoutMs:20000});return{approvals:workspaceApprovalsService(approvals),browser:await workspaceBrowserService(context,{namespace:'installed.browser',origins:[${JSON.stringify(approvedOrigin)}],executable:${JSON.stringify(await browserExecutable())},resources:[target.conversationId]})};}};
 `,
 	);
 }

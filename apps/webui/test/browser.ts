@@ -1,11 +1,47 @@
 import { spawn } from "node:child_process";
-import { access, mkdir } from "node:fs/promises";
-import { join } from "node:path";
+import { constants } from "node:fs";
+import { access, mkdir, realpath, stat } from "node:fs/promises";
+import { delimiter, isAbsolute, join } from "node:path";
 
 type Value = Record<string, unknown>;
+
+/** Test infrastructure only: explicit browser choice fails closed; absence never skips a gate. */
+export async function browserExecutable(
+	env: NodeJS.ProcessEnv = process.env,
+	platform: NodeJS.Platform = process.platform,
+): Promise<string> {
+	const explicit = env.PAKKA_TEST_CHROME;
+	if (explicit !== undefined && !isAbsolute(explicit))
+		throw Error("PAKKA_TEST_CHROME must be an absolute executable path");
+	const candidates =
+		explicit !== undefined
+			? [explicit]
+			: [
+					...(platform === "win32" ? ["C:/Program Files/Google/Chrome/Application/chrome.exe"] : []),
+					...(platform === "darwin" ? ["/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"] : []),
+					...(env.PATH ?? "")
+						.split(delimiter)
+						.filter((part) => isAbsolute(part))
+						.flatMap((part) =>
+							(platform === "win32"
+								? ["chrome.exe", "chromium.exe"]
+								: ["chromium", "chromium-browser", "google-chrome", "google-chrome-stable"]
+							).map((name) => join(part, name)),
+						),
+				];
+	for (const candidate of candidates) {
+		try {
+			await access(candidate, process.platform === "win32" ? constants.F_OK : constants.X_OK);
+			if ((await stat(candidate)).isFile()) return await realpath(candidate);
+		} catch {
+			// A configured override has exactly one candidate: do not fall back to another browser.
+		}
+	}
+	throw Error("No usable test browser. Set PAKKA_TEST_CHROME to an absolute Chrome/Chromium executable");
+}
+
 export async function ownedBrowser(dir: string, options: { readonly push?: boolean } = {}) {
-	const chrome = "C:/Program Files/Google/Chrome/Application/chrome.exe";
-	await access(chrome);
+	const chrome = await browserExecutable();
 	const local = join(dir, "AppData", "Local"),
 		roaming = join(dir, "AppData", "Roaming");
 	await Promise.all([mkdir(local, { recursive: true }), mkdir(roaming, { recursive: true })]);
@@ -164,11 +200,43 @@ export async function ownedBrowser(dir: string, options: { readonly push?: boole
 				reload: async () => {
 					await call("Page.reload", {}, id);
 				},
-				type: async (selector: string, text: string) => {
+				type: async (selector: string, text: string, options?: { readonly replace?: boolean }) => {
 					await evaluate("document.querySelector(" + JSON.stringify(selector) + ").focus()");
-					await call("Input.insertText", { text }, id);
+					if (options?.replace) {
+						const modifiers = process.platform === "darwin" ? 4 : 2;
+						await call(
+							"Input.dispatchKeyEvent",
+							{ type: "keyDown", key: "a", code: "KeyA", windowsVirtualKeyCode: 65, modifiers },
+							id,
+						);
+						await call(
+							"Input.dispatchKeyEvent",
+							{ type: "keyUp", key: "a", code: "KeyA", windowsVirtualKeyCode: 65, modifiers },
+							id,
+						);
+						await call(
+							"Input.dispatchKeyEvent",
+							{ type: "keyDown", key: "Backspace", code: "Backspace", windowsVirtualKeyCode: 8 },
+							id,
+						);
+						await call(
+							"Input.dispatchKeyEvent",
+							{ type: "keyUp", key: "Backspace", code: "Backspace", windowsVirtualKeyCode: 8 },
+							id,
+						);
+					}
+					if (text) await call("Input.insertText", { text }, id);
 				},
-				click: async (selector: string) => {
+				key: async (key: "Escape" | "Tab" | "Enter", shift = false) => {
+					const code = { Escape: 27, Tab: 9, Enter: 13 }[key];
+					for (const type of ["keyDown", "keyUp"])
+						await call(
+							"Input.dispatchKeyEvent",
+							{ type, key, code: key, windowsVirtualKeyCode: code, modifiers: shift ? 8 : 0 },
+							id,
+						);
+				},
+				click: async (selector: string, options: { readonly beforePress?: () => Promise<void> } = {}) => {
 					const point = await evaluate(
 						"(()=>{const e=document.querySelector(" +
 							JSON.stringify(selector) +
@@ -183,6 +251,8 @@ export async function ownedBrowser(dir: string, options: { readonly push?: boole
 						typeof point.y !== "number"
 					)
 						throw new Error("Browser control not interactable: " + selector);
+					// Test-only scheduling seam: preserve the original pointer coordinates while real UI work completes.
+					await options.beforePress?.();
 					await call(
 						"Input.dispatchMouseEvent",
 						{ type: "mousePressed", x: point.x, y: point.y, button: "left", clickCount: 1 },

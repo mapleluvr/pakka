@@ -1,13 +1,14 @@
 import { test } from "node:test";
 import { strict as assert } from "node:assert";
 import { spawn } from "node:child_process";
-import { access, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { createServer } from "node:http";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { createMas } from "@pakka/mas";
 import { createMasServer } from "../src/http-server.ts";
 import { runtimeFixture } from "../../../packages/agent/test/runtime-fixture.ts";
+import { browserExecutable } from "../../webui/test/browser.ts";
 
 type CdpResult = Record<string, unknown>;
 const record = (value: unknown): value is CdpResult =>
@@ -69,8 +70,7 @@ test(
 	"M5 browser: compiled shared client connects with no Node globals and executes real authenticated admission",
 	{ timeout: 30000 },
 	async () => {
-		const chrome = "C:/Program Files/Google/Chrome/Application/chrome.exe";
-		await access(chrome); // Mandatory Windows acceptance, never a skipped pass.
+		const chrome = await browserExecutable(); // Mandatory real browser acceptance, never a skipped pass.
 		const m = await runtimeFixture(),
 			dir = await mkdtemp(join(process.env.PAKKA_TEST_ARTIFACTS ?? tmpdir(), "browser-"));
 		const assets = new Map<string, string>([

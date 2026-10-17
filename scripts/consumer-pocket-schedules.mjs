@@ -172,6 +172,10 @@ try {
 	await page.wait('document.querySelector("textarea[name=message]")');
 	await page.click("[data-interface=workspace-schedules-schedules]");
 	await page.wait('document.querySelector("[data-schedule-reconcile]")?.disabled===false');
+	// The extension stylesheet can arrive after the pending button is rendered.
+	await page.wait(
+		'Array.from(document.querySelectorAll("link[rel=stylesheet]")).some(link => link.href.endsWith("/schedules.css") && !!link.sheet)',
+	);
 	await page.click("[data-schedule-reconcile]");
 	await page.wait('!document.querySelector("[data-schedule-reconcile]")');
 	assert.equal(await page.evaluate("globalThis.__scheduleWrites"), 1);
@@ -225,10 +229,7 @@ try {
 	assert.equal(origin, priorOrigin);
 	await page.navigate(origin + "/#conversation=" + target.conversationId);
 	await page.wait('document.querySelector("textarea[name=message]")');
-	assert.equal(
-		await page.evaluate('document.querySelector("[data-interface=workspace-schedules-schedules]")'),
-		null,
-	);
+	await page.wait('!document.querySelector("[data-interface=workspace-schedules-schedules]")');
 	await until(() => requests.length === 2);
 	await page.wait('document.querySelector("main").innerText.includes("INSTALLED-SCHEDULE-RESULT")');
 	const after = await ext(

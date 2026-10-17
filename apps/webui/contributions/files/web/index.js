@@ -1,7 +1,7 @@
 import { h } from "preact";
 import { useEffect, useRef, useState } from "preact/hooks";
 import htm from "htm";
-import { Button, Notice } from "@pakka/webui/components";
+import { Button, Icon, Notice } from "@pakka/webui/components";
 import { fileCall } from "./client.js";
 const html = htm.bind(h);
 
@@ -61,8 +61,8 @@ function FileTree({ tree, file, writable, working, upload, openFile }) {
 						class=${file?.path === row.path ? "selected" : ""}
 						onClick=${() => openFile(row)}
 					>
-						<span aria-hidden="true">${row.kind === "directory" ? "▸" : "·"}</span
-						><span>${row.name}</span>${row.kind === "file" && html`<small>${row.bytes} B</small>`}
+						<${Icon} name=${row.kind === "directory" ? "folder" : "file"} />
+						<span>${row.name}</span>${row.kind === "file" && html`<small>${row.bytes} B</small>`}
 					</button>`,
 			)}
 		</nav>

@@ -39,6 +39,9 @@ artifacts/
 .env.*
 !.env.example
 *.pem
+# Deliberately public, localhost-only TLS fixture; never deployment credentials.
+!apps/webui/test/tls/cert.pem
+!apps/webui/test/tls/key.pem
 *.key
 
 # --- Logs --------------------------------------------------------------------

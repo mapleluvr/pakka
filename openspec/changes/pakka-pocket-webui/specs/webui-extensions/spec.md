@@ -49,16 +49,25 @@ Trusted extensions SHALL be able to provide custom Preact sheets, panels and ful
 
 ### Requirement: Namespaced checked backend operations
 
-Custom backend RPC SHALL declare finite input/output/event schemas, extension/action/version identity, resource scope, required permissions, finite admission/execution policy and read/write behavior. The host SHALL bind current human authority and recheck it at controlled effect boundaries. Stateful changes SHALL use scoped persistence/conflict rules; long work SHALL return a job/receipt through a controlled task service rather than exposing raw Tx/Harness or relying on an unbounded HTTP handler.
+Custom backend RPC SHALL declare finite input/output/event schemas, extension/action/version identity, resource scope, required permissions, finite admission/execution policy and read/write behavior. The host SHALL bind current human authority and recheck it at controlled effect boundaries.
 
 #### Scenario: Late revocation and an effect before failure
 
 - **WHEN** a role is revoked during awaited admission, or an opaque handler produces an effect and then fails
 - **THEN** the former has no unauthorized controlled effect and the latter remains unknown; raw error text or a generic exception type does not prove no effect
 
+### Requirement: Scoped persistence and durable backend work
+
+Stateful changes SHALL use scoped persistence/conflict rules; long work SHALL return a job/receipt through a controlled task service rather than exposing raw Tx/Harness or relying on an unbounded HTTP handler.
+
+#### Scenario: Scoped persistence and durable backend work
+
+- **WHEN** A backend change conflicts or accepted work outlives an HTTP request
+- **THEN** Scoped conflict handling preserves committed state and controlled jobs expose their original receipts without raw native transaction access.
+
 ### Requirement: Host-selected external ingress
 
-A trusted backend service MAY declare a finite external ingress with a raw-body byte limit, execution deadline and closed response schema. The product SHALL expose it only under that installed extension's namespaced service route, require the existing host/proxy transport boundary, and bind a live check to the accepted backend generation, resource service and cancellation signal. The body, a finite header DTO and validated path segments SHALL be the only incoming request data. Native HTTP sockets, Cookie authority, module paths and arbitrary response headers SHALL NOT be supplied. External identity SHALL be verified by the service before any controlled effect; opening an endpoint SHALL NOT mint a human session.
+A trusted backend service MAY declare a finite external ingress with a raw-body byte limit, execution deadline and closed response schema. The product SHALL expose it only under that installed extension's namespaced service route, require the existing host/proxy transport boundary, and bind a live check to the accepted backend generation, resource service and cancellation signal.
 
 #### Scenario: Disabled generation blocks an awaited incoming effect
 
@@ -70,9 +79,18 @@ A trusted backend service MAY declare a finite external ingress with a raw-body 
 - **WHEN** an external sender exceeds the host-selected raw-body byte limit, changes the transport host/proxy boundary, or selects an undeclared service
 - **THEN** the server refuses before invoking the handler and no target effect occurs
 
+### Requirement: Closed ingress data and external authentication
+
+The body, a finite header DTO and validated path segments SHALL be the only incoming request data. Native HTTP sockets, Cookie authority, module paths and arbitrary response headers SHALL NOT be supplied. External identity SHALL be verified by the service before any controlled effect; opening an endpoint SHALL NOT mint a human session.
+
+#### Scenario: Closed ingress data and external authentication
+
+- **WHEN** An external service request enters an installed handler
+- **THEN** Only the bounded DTO is exposed, external identity precedes a controlled effect and no human session or arbitrary response authority is minted.
+
 ### Requirement: Generation and exact asset lifecycle
 
-Command, RPC, subscription and asset registrations SHALL bind the extension generation and actor/resource scope. New calls against disabled, replaced or unauthorized registrations SHALL fail closed. Failed preparation SHALL retain the prior known-good generation only when its registrations/bytes remain confirmed; partial unknown Agent/backend installation SHALL be marked unavailable until reconciled, not described as global rollback. Assets SHALL be restricted to accepted real-root bytes and safe types, excluding links/traversal/private files.
+Command, RPC, subscription and asset registrations SHALL bind the extension generation and actor/resource scope. New calls against disabled, replaced or unauthorized registrations SHALL fail closed. Failed preparation SHALL retain the prior known-good generation only when its registrations/bytes remain confirmed; partial unknown Agent/backend installation SHALL be marked unavailable until reconciled, not described as global rollback.
 
 #### Scenario: Changed bytes under an old generation
 
@@ -83,6 +101,15 @@ Command, RPC, subscription and asset registrations SHALL bind the extension gene
 
 - **WHEN** a trusted module initialization fails, or its writer closes after an external effect but before import completes
 - **THEN** persisted loading/unknown state prevents automatic module re-entry on normal reopen; the registration remains unavailable until an authorized explicit reload reconciles it
+
+### Requirement: Accepted asset bytes and safe real-root types
+
+Assets SHALL be restricted to accepted real-root bytes and safe types, excluding links/traversal/private files.
+
+#### Scenario: Accepted asset bytes and safe real-root types
+
+- **WHEN** An extension requests an asset outside its accepted real root or through a link
+- **THEN** The asset is refused instead of exposing private files or serving unaccepted bytes.
 
 ### Requirement: Stable retries without arbitrary replay
 

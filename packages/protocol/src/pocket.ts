@@ -54,6 +54,8 @@ export interface PocketSnapshot {
 	readonly entries: readonly {
 		readonly id: string;
 		readonly conversationId: string;
+		/** Native fork attribution; never a target/resource grant. */
+		readonly sourceConversationId?: string;
 		readonly kind: string;
 		readonly taskId?: string;
 		readonly messages: readonly PocketMessage[];
@@ -94,6 +96,12 @@ export interface PocketConfiguration {
 		};
 		readonly budget: { readonly primaryAttempts: number; readonly auxiliaryAttempts: number };
 	} | null;
+}
+export interface PocketNavigation {
+	readonly ref: AgentRef;
+	readonly name: string;
+	readonly version: number;
+	readonly archived: boolean;
 }
 export interface PocketCredentialStatus {
 	readonly version: number;
@@ -218,6 +226,26 @@ export type PocketNotificationCommand =
 				readonly preferences: Partial<PocketNotificationStatus["preferences"]>;
 			};
 	  };
+export type PocketOriginalCommand =
+	| { readonly op: "create"; readonly requestId: string; readonly name: string; readonly profile: string }
+	| {
+			readonly op: "conversation.set";
+			readonly target: AgentRef;
+			readonly input: {
+				readonly requestId: string;
+				readonly expectedVersion: number;
+				readonly name: string;
+				readonly archived: boolean;
+			};
+	  }
+	| {
+			readonly op: "fork";
+			readonly target: AgentRef;
+			readonly requestId: string;
+			readonly name: string;
+			readonly profile: string;
+			readonly entryId: string;
+	  };
 export type PocketCommand =
 	| PocketNotificationCommand
 	| PocketCollaborationCommand
@@ -236,16 +264,9 @@ export type PocketCommand =
 			readonly input: { readonly requestId: string; readonly expectedVersion: number };
 	  }
 	| { readonly op: "hello" | "list" | "people" | "session.rotate" | "session.logout" }
-	| { readonly op: "create"; readonly requestId: string; readonly name: string; readonly profile: string }
+	| PocketOriginalCommand
+	| { readonly op: "conversation.lookup"; readonly original: PocketOriginalCommand }
 	| { readonly op: "configure"; readonly target: AgentRef; readonly profile: string }
-	| {
-			readonly op: "fork";
-			readonly target: AgentRef;
-			readonly requestId: string;
-			readonly name: string;
-			readonly profile: string;
-			readonly entryId: string;
-	  }
 	| {
 			readonly op: "read";
 			readonly target: AgentRef;
@@ -300,6 +321,20 @@ export type PocketResult =
 			readonly kind: "list";
 			readonly conversations: readonly AgentRef[];
 			readonly titles?: Readonly<Record<string, string>>;
+			readonly states?: Readonly<Record<string, { readonly version: number; readonly archived: boolean }>>;
+	  }
+	| { readonly kind: "metadata"; readonly requestId: string; readonly metadata: PocketNavigation }
+	| {
+			readonly kind: "conversation.operation";
+			readonly command: "conversation.set";
+			readonly requestId: string;
+			readonly result: PocketNavigation | null;
+	  }
+	| {
+			readonly kind: "conversation.operation";
+			readonly command: "create" | "fork";
+			readonly requestId: string;
+			readonly result: AgentRef | null;
 	  }
 	| { readonly kind: "reference"; readonly ref: AgentRef }
 	| { readonly kind: "configuration"; readonly configuration: PocketConfiguration }
@@ -337,6 +372,7 @@ export type PocketErrorCode =
 	| "UNAUTHORIZED"
 	| "FORBIDDEN"
 	| "CONFLICT"
+	| "CONVERSATION_UNAVAILABLE"
 	| "CAPACITY"
 	| "UNKNOWN"
 	| "UNSUPPORTED";
@@ -476,9 +512,15 @@ function snapshot(v: unknown): v is PocketSnapshot {
 	if (
 		!v.entries.every(
 			(e) =>
-				shape(e, ["id", "conversationId", "kind", "messages"], ["taskId", "display"]) &&
+				shape(
+					e,
+					["id", "conversationId", "kind", "messages"],
+					["taskId", "display", "sourceConversationId"],
+				) &&
 				entryId(e.id) &&
 				e.conversationId === id &&
+				(e.sourceConversationId === undefined ||
+					(identity(e.sourceConversationId) && e.sourceConversationId !== id)) &&
 				entryId(e.kind) &&
 				(e.taskId === undefined || entryId(e.taskId)) &&
 				Array.isArray(e.messages) &&
@@ -742,6 +784,13 @@ function command(v: unknown): v is PocketCommand {
 	if (typeof v.op === "string" && v.op.startsWith("notification.")) return notificationCommand(v);
 	if (typeof v.op === "string" && v.op.startsWith("collaboration.")) return collaborationCommand(v);
 	switch (v.op) {
+		case "conversation.lookup":
+			return (
+				shape(v, ["op", "original"]) &&
+				record(v.original) &&
+				["conversation.set", "create", "fork"].includes(String(v.original.op)) &&
+				command(v.original)
+			);
 		case "hello":
 		case "list":
 		case "people":
@@ -759,6 +808,18 @@ function command(v: unknown): v is PocketCommand {
 			);
 		case "configure":
 			return shape(v, ["op", "target", "profile"]) && ref(v.target) && identity(v.profile);
+		case "conversation.set":
+			return (
+				shape(v, ["op", "target", "input"]) &&
+				ref(v.target) &&
+				shape(v.input, ["requestId", "expectedVersion", "name", "archived"]) &&
+				identity(v.input.requestId) &&
+				integer(v.input.expectedVersion) &&
+				string(v.input.name, 80) &&
+				!!v.input.name.trim() &&
+				!/[\x00-\x1f\x7f]/.test(v.input.name) &&
+				typeof v.input.archived === "boolean"
+			);
 		case "fork":
 			return (
 				shape(v, ["op", "target", "requestId", "name", "profile", "entryId"]) &&
@@ -875,7 +936,7 @@ function result(v: unknown): v is PocketResult {
 			);
 		case "list":
 			return (
-				shape(v, ["kind", "conversations"], ["titles"]) &&
+				shape(v, ["kind", "conversations"], ["titles", "states"]) &&
 				Array.isArray(v.conversations) &&
 				v.conversations.length <= 256 &&
 				v.conversations.every(ref) &&
@@ -888,7 +949,35 @@ function result(v: unknown): v is PocketResult {
 								string(title, 80) &&
 								!!title.trim() &&
 								(v.conversations as AgentRef[]).some((row) => row.conversationId === id),
+						))) &&
+				(v.states === undefined ||
+					(record(v.states) &&
+						Object.keys(v.states).length === v.conversations.length &&
+						Object.entries(v.states).every(
+							([id, state]) =>
+								identity(id) &&
+								(v.conversations as AgentRef[]).some((row) => row.conversationId === id) &&
+								shape(state, ["version", "archived"]) &&
+								integer(state.version, 0, 256) &&
+								typeof state.archived === "boolean",
 						)))
+			);
+		case "conversation.operation":
+			if (!shape(v, ["kind", "command", "requestId", "result"]) || !identity(v.requestId)) return false;
+			if (v.command === "conversation.set")
+				return v.result === null || result({ kind: "metadata", requestId: v.requestId, metadata: v.result });
+			return ["create", "fork"].includes(String(v.command)) && (v.result === null || ref(v.result));
+		case "metadata":
+			return (
+				shape(v, ["kind", "requestId", "metadata"]) &&
+				identity(v.requestId) &&
+				shape(v.metadata, ["ref", "name", "version", "archived"]) &&
+				ref(v.metadata.ref) &&
+				string(v.metadata.name, 80) &&
+				!!v.metadata.name.trim() &&
+				!/[\x00-\x1f\x7f]/.test(v.metadata.name) &&
+				integer(v.metadata.version, 1, 256) &&
+				typeof v.metadata.archived === "boolean"
 			);
 		case "reference":
 			return shape(v, ["kind", "ref"]) && ref(v.ref);
@@ -954,6 +1043,7 @@ function failure(v: unknown): v is PocketFailure {
 			"UNAUTHORIZED",
 			"FORBIDDEN",
 			"CONFLICT",
+			"CONVERSATION_UNAVAILABLE",
 			"CAPACITY",
 			"UNKNOWN",
 			"UNSUPPORTED",

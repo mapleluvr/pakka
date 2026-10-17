@@ -58,6 +58,38 @@ function correlated(command: PocketCommand, result: PocketResult, personId?: str
 				result.status.version === command.input.expectedVersion + 1 &&
 				result.status.configured === (command.op === "credential.replace")
 			);
+		case "conversation.lookup": {
+			const original = command.original;
+			if (
+				result.kind !== "conversation.operation" ||
+				result.command !== original.op ||
+				result.requestId !==
+					(original.op === "conversation.set" ? original.input.requestId : original.requestId)
+			)
+				return false;
+			if (result.result === null) return true;
+			if (original.op === "conversation.set" && result.command === "conversation.set")
+				return correlated(
+					original,
+					{ kind: "metadata", requestId: result.requestId, metadata: result.result },
+					personId,
+				);
+			if (
+				(original.op === "create" || original.op === "fork") &&
+				(result.command === "create" || result.command === "fork")
+			)
+				return correlated(original, { kind: "reference", ref: result.result }, personId);
+			return false;
+		}
+		case "conversation.set":
+			return (
+				result.kind === "metadata" &&
+				result.requestId === command.input.requestId &&
+				sameRef(command.target, result.metadata.ref) &&
+				result.metadata.version === command.input.expectedVersion + 1 &&
+				result.metadata.name === command.input.name.trim() &&
+				result.metadata.archived === command.input.archived
+			);
 		case "create":
 			return result.kind === "reference" && result.ref.profile === command.profile;
 		case "configure":

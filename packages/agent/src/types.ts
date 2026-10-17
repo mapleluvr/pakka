@@ -423,7 +423,10 @@ export interface ConversationSnapshot {
 	/** A committed transcript page, at most 256 entries. No raw native objects or configuration. */
 	readonly entries: readonly {
 		readonly id: string;
+		/** Scope of this authorized transcript view, including entries inherited by a native fork. */
 		readonly conversationId: string;
+		/** Original native entry owner when inherited; this is attribution, never read authority. */
+		readonly sourceConversationId?: string;
 		readonly kind: string;
 		readonly taskId?: string;
 		readonly messages: readonly TranscriptMessage[];

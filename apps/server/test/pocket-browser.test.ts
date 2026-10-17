@@ -7,8 +7,9 @@ import { runtimeFixture } from "../../../packages/agent/test/runtime-fixture.ts"
 import { createPocketPeople } from "../src/pocket-people.ts";
 import { createPocketWorkspace } from "../src/pocket-workspace.ts";
 import { createPocketBrowser } from "../src/pocket-browser.ts";
+import { browserExecutable } from "../../webui/test/browser.ts";
 
-async function setup() {
+async function setup(options: { readonly effectDelayMs?: number } = {}) {
 	let actions = 0,
 		forbidden = 0;
 	const outsidePaths: string[] = [];
@@ -23,8 +24,12 @@ async function setup() {
 	const outsideOrigin = "http://127.0.0.1:" + outer.port;
 	const page = createServer((request, response) => {
 		if (request.url === "/effect") {
-			actions++;
-			response.end("ACTION-RECORDED");
+			const effect = () => {
+				actions++;
+				response.end("ACTION-RECORDED");
+			};
+			if (options.effectDelayMs) setTimeout(effect, options.effectDelayMs);
+			else effect();
 			return;
 		}
 		if (request.url === "/redirect") {
@@ -64,7 +69,7 @@ async function setup() {
 			runtime: m.runtime,
 			people,
 			namespace: "owned.browser",
-			executable: "C:/Program Files/Google/Chrome/Application/chrome.exe",
+			executable: await browserExecutable(),
 			origins: [origin],
 			resources,
 		});
@@ -129,12 +134,18 @@ for (const unconfirmed of [false, true])
 		`Pocket owned browser: ${unconfirmed ? "restored running intent" : "completed click"} survives writer reopen without another page effect`,
 		{ timeout: 20000 },
 		async () => {
-			const f = await setup();
+			const f = await setup({ effectDelayMs: 50 });
 			let runtime: Runtime | undefined, reopened: Awaited<ReturnType<typeof createPocketBrowser>> | undefined;
 			try {
 				const client = f.browser.bind(f.owner);
 				await client.navigate(f.ref, { requestId: "original-navigation", url: f.origin });
 				await client.click(f.ref, { requestId: "original-click", selector: "#record" });
+				// A completed DOM click does not imply its asynchronous remote fetch has completed.
+				// Observe the actual page acknowledgement before closing/reopening the owned browser.
+				const deadline = Date.now() + 2000;
+				while (!(await client.snapshot(f.ref)).text.includes("REAL-ACTION:") && Date.now() < deadline)
+					await new Promise((resolve) => setTimeout(resolve, 10));
+				assert.match((await client.snapshot(f.ref)).text, /REAL-ACTION:/);
 				assert.equal(f.actions(), 1);
 				await f.browser.close();
 				if (unconfirmed) {
@@ -156,7 +167,7 @@ for (const unconfirmed of [false, true])
 					runtime,
 					people,
 					namespace: "owned.browser",
-					executable: "C:/Program Files/Google/Chrome/Application/chrome.exe",
+					executable: await browserExecutable(),
 					origins: [f.origin],
 					resources: [f.ref.conversationId],
 				});

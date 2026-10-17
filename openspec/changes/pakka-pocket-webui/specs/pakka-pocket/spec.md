@@ -86,7 +86,7 @@ The workbench SHALL list only profile/model choices approved for the current per
 
 ### Requirement: Explicit private provider configuration
 
-The product SHALL expose dedicated administrator-only replace/clear operations for its primary provider key. Reads, results, command palettes, browser persistence and user-visible errors SHALL NOT round-trip the saved value. The current bootstrap resolver SHALL remain the source until an explicit override; clearing SHALL remain cleared across normal reopen rather than falling back to that source. The owned credential store MAY persist the explicitly submitted value for future resolution; this SHALL NOT imply encryption or rollback of requests that already resolved a key.
+The product SHALL expose dedicated administrator-only replace/clear operations for its primary provider key. Reads, results, command palettes, browser persistence and user-visible errors SHALL NOT round-trip the saved value. The current bootstrap resolver SHALL remain the source until an explicit override; clearing SHALL remain cleared across normal reopen rather than falling back to that source.
 
 #### Scenario: Replace and clear change real provider authentication
 
@@ -99,9 +99,18 @@ The product SHALL expose dedicated administrator-only replace/clear operations f
 - **WHEN** an existing trusted bootstrap resolver finishes after an administrator has cleared it or throws an error containing private text
 - **THEN** its stale key is rejected, private error text does not enter the model transcript or browser, and no new provider request is inferred from a status query
 
+### Requirement: Private provider persistence is not rollback
+
+The owned credential store MAY persist the explicitly submitted value for future resolution; this SHALL NOT imply encryption or rollback of requests that already resolved a key.
+
+#### Scenario: Private provider persistence is not rollback
+
+- **WHEN** A submitted override is persisted after an earlier request resolved its key
+- **THEN** Persistence does not claim encryption or rollback of the earlier request.
+
 ### Requirement: Native notifications preserve human resource authority
 
-Notifications SHALL use actual browser service workers and Web Push subscriptions under explicit browser permission. The server SHALL bind devices and preferences to the authenticated person, approve push-service origins and recheck current resource authority before dispatch or publication. Encrypted wake-up payloads SHALL contain only an opaque event reference; the worker SHALL resolve current authorized metadata before displaying or navigating. A push-service acceptance response SHALL NOT be treated as proof that the operating system displayed a notification. Notification registration, viewing and navigation SHALL NOT invoke the model.
+Notifications SHALL use actual browser service workers and Web Push subscriptions under explicit browser permission. The server SHALL bind devices and preferences to the authenticated person, approve push-service origins and recheck current resource authority before dispatch or publication. Encrypted wake-up payloads SHALL contain only an opaque event reference; the worker SHALL resolve current authorized metadata before displaying or navigating.
 
 #### Scenario: A registered person receives a real resource update
 
@@ -119,9 +128,18 @@ Notifications SHALL use actual browser service workers and Web Push subscription
 - **THEN** an explicit status read exposes only current-person/current-resource device identifiers and a SHA-256 digest of normalized `{ endpoint, keys: { p256dh, auth } }`, which the browser matches to its real subscription without repeating the registration or guessing a newly added device ID
 - **AND** device endpoints, auth material and the VAPID private key are not returned, and a legal status for another exact resource is rejected
 
+### Requirement: Notification evidence and model-free navigation
+
+A push-service acceptance response SHALL NOT be treated as proof that the operating system displayed a notification. Notification registration, viewing and navigation SHALL NOT invoke the model.
+
+#### Scenario: Notification evidence and model-free navigation
+
+- **WHEN** A push service accepts an event and the person opens the notification
+- **THEN** Acceptance alone does not prove operating-system display, and registration, viewing and navigation cause no model request.
+
 ### Requirement: Scheduled inputs are native durable work
 
-An optional automation contribution SHALL install a host-approved named job through the public Runtime job port and ordinary Backend/Client/WebUI facets. A schedule SHALL capture its originating person, exact Conversation reference, bounded input, due time and stable request identity. At delivery it SHALL recheck current person/resource and collaboration-driver authority, preserve native follow-up semantics and return the actual native delivery receipt. Closing a UI wait SHALL NOT cancel admitted work. Cancellation SHALL report the native terminal outcome without claiming rollback of an already delivered input. Native backend advance SHALL reject JSON-equivalent recovery data before publishing a new queued state. An unhandled program failure or unknown native input admission SHALL preserve an unknown job outcome rather than claim completed work or start another scheduled occurrence.
+An optional automation contribution SHALL install a host-approved named job through the public Runtime job port and ordinary Backend/Client/WebUI facets. A schedule SHALL capture its originating person, exact Conversation reference, bounded input, due time and stable request identity. At delivery it SHALL recheck current person/resource and collaboration-driver authority, preserve native follow-up semantics and return the actual native delivery receipt.
 
 #### Scenario: Scheduled work survives a normal writer reopen
 
@@ -143,6 +161,15 @@ An optional automation contribution SHALL install a host-approved named job thro
 - **WHEN** a real native input has taken effect but the received admission confirmation is unknown
 - **THEN** both a one-shot and a recurring schedule remain unknown, no later occurrence is dispatched and reading or retrying the original schedule does not spend another attempt
 
+### Requirement: Scheduled cancellation and unknown native outcomes
+
+Closing a UI wait SHALL NOT cancel admitted work. Cancellation SHALL report the native terminal outcome without claiming rollback of an already delivered input. Native backend advance SHALL reject JSON-equivalent recovery data before publishing a new queued state. An unhandled program failure or unknown native input admission SHALL preserve an unknown job outcome rather than claim completed work or start another scheduled occurrence.
+
+#### Scenario: Scheduled cancellation and unknown native outcomes
+
+- **WHEN** A wait closes, cancellation races delivery or native progress becomes unconfirmed
+- **THEN** Native receipts retain the actual or unknown outcome, no rollback is inferred and no later occurrence starts from unknown progress.
+
 ### Requirement: One public UI extension path
 
 Navigation, pages, sheets, panels, settings entries, command triggers and scoped subscriptions SHALL be exposed through documented versioned public slots sufficient for MAS Board and an unrelated custom extension. Custom Preact content SHALL use the host's component instance and lifecycle, not a private store/router import. Trusted code is not sandboxed, but ordinary contribution APIs SHALL NOT require monkey patches or hidden built-in identity.
@@ -154,7 +181,7 @@ Navigation, pages, sheets, panels, settings entries, command triggers and scoped
 
 ### Requirement: Approved project memory
 
-Memory SHALL be an optional contribution with separate Agent and Backend/Client/WebUI activation. The host SHALL define named projects and their Conversation resource membership; requests SHALL NOT introduce arbitrary directories, project membership or authors. Approved project lessons SHALL apply only to that project and approved global lessons MAY apply across the current product Session. A global administrator SHALL approve new lessons or proposed edits before another person's or model-created content can change future model context. Read-only viewers SHALL NOT write; non-administrators SHALL see only applicable approved lessons and their own pending proposals. Every mutation SHALL bind current authority, exact resource, stable request identity and expected lesson version. Unknown persistence SHALL NOT replay a mutation or falsely approve a proposal.
+Memory SHALL be an optional contribution with separate Agent and Backend/Client/WebUI activation. The host SHALL define named projects and their Conversation resource membership; requests SHALL NOT introduce arbitrary directories, project membership or authors. Approved project lessons SHALL apply only to that project and approved global lessons MAY apply across the current product Session.
 
 #### Scenario: Approval changes the actual next model context
 
@@ -166,13 +193,18 @@ Memory SHALL be an optional contribution with separate Agent and Backend/Client/
 - **WHEN** a stale edit is submitted, approved injection is disabled or the product normally reopens after a lost mutation response
 - **THEN** a conflicting version does not overwrite the winner or lose a local draft, disabling injection preserves stored lessons while omitting them from future requests, and reading the original request resolves its saved mutation without applying it again or resetting quota
 
+### Requirement: Memory approval and mutation authority
+
+A global administrator SHALL approve new lessons or proposed edits before another person's or model-created content can change future model context. Read-only viewers SHALL NOT write; non-administrators SHALL see only applicable approved lessons and their own pending proposals. Every mutation SHALL bind current authority, exact resource, stable request identity and expected lesson version. Unknown persistence SHALL NOT replay a mutation or falsely approve a proposal.
+
+#### Scenario: Memory approval and mutation authority
+
+- **WHEN** A viewer writes or a person or model proposes a lesson change
+- **THEN** Current scope and expected version are checked, administrator approval precedes context changes and unknown persistence is not replayed.
+
 ### Requirement: Explicit Conversation webhooks
 
-The product MAY install a Webhook contribution for a host-approved Conversation. Its human-created hooks SHALL deliver as the current persisted creator, using the same Conversation, driver and native admission checks as other automated inputs. Only explicit human setup MAY create or rotate a hook; WebUI installation SHALL NOT create a model tool or hidden assistant. Normal lists, original-operation results, provider messages and process output SHALL exclude credentials; a separate authorized setup read MAY disclose the current hook URL/signing secret.
-
-GitHub requests SHALL verify HMAC-SHA256 over exact body bytes and screen outsider-authored payloads by default, without discovering GitHub or Pi credentials. A host-approved writer list or explicit human override MAY expand that content policy. Generic hooks SHALL verify their endpoint secret. A fixed delivery/body identity SHALL be recorded before native input; retries, changed unsigned delivery headers, lost responses and normal reopen SHALL NOT re-enter an unknown admission. Rotation, removal, creator revocation or an invalidated extension SHALL block a not-yet-started input without claiming to roll back prior admission.
-
-The contribution SHALL retain finite limits: 20 hooks per person, 60-character names, 2000-character instructions, at most 30 new accepted posts per hook/hour, 5 MiB incoming bytes, and a payload excerpt fitted within the native 8192-character input limit. Invalid signatures, oversized bodies, conflicting identities and unauthorized creators SHALL have no new provider effect. Repository-watch authority and PiP targets SHALL NOT migrate with this interface.
+The product MAY install a Webhook contribution for a host-approved Conversation. Its human-created hooks SHALL deliver as the current persisted creator, using the same Conversation, driver and native admission checks as other automated inputs. Only explicit human setup MAY create or rotate a hook; WebUI installation SHALL NOT create a model tool or hidden assistant.
 
 #### Scenario: Signed retry and rotation preserve exact effects
 
@@ -184,9 +216,36 @@ The contribution SHALL retain finite limits: 20 hooks per person, 60-character n
 - **WHEN** the creator or extension is invalidated while a committed incoming intent waits, or native admission occurs before its result becomes unknown
 - **THEN** no not-yet-started unauthorized input is admitted; any earlier effect and charged attempt remain accounted for, and retry/reopen does not submit a replacement input
 
+### Requirement: Webhook credentials and signed content policy
+
+Normal lists, original-operation results, provider messages and process output SHALL exclude credentials; a separate authorized setup read MAY disclose the current hook URL/signing secret. GitHub requests SHALL verify HMAC-SHA256 over exact body bytes and screen outsider-authored payloads by default, without discovering GitHub or Pi credentials. A host-approved writer list or explicit human override MAY expand that content policy.
+
+#### Scenario: Webhook credentials and signed content policy
+
+- **WHEN** A hook is listed or a GitHub payload reaches the service
+- **THEN** Normal results contain no credential, exact-body signatures and outsider policy are checked, and only authorized explicit setup can reveal current setup material.
+
+### Requirement: Webhook replay identity and late authority
+
+Generic hooks SHALL verify their endpoint secret. A fixed delivery/body identity SHALL be recorded before native input; retries, changed unsigned delivery headers, lost responses and normal reopen SHALL NOT re-enter an unknown admission. Rotation, removal, creator revocation or an invalidated extension SHALL block a not-yet-started input without claiming to roll back prior admission.
+
+#### Scenario: Webhook replay identity and late authority
+
+- **WHEN** A generic delivery is retried, rotated or invalidated before admission
+- **THEN** Its secret and original body identity are checked, unknown admission is not re-entered and no not-yet-started unauthorized input is admitted.
+
+### Requirement: Webhook finite bounds and excluded authority
+
+The contribution SHALL retain finite limits: 20 hooks per person, 60-character names, 2000-character instructions, at most 30 new accepted posts per hook/hour, 5 MiB incoming bytes, and a payload excerpt fitted within the native 8192-character input limit. Invalid signatures, oversized bodies, conflicting identities and unauthorized creators SHALL have no new provider effect. Repository-watch authority and PiP targets SHALL NOT migrate with this interface.
+
+#### Scenario: Webhook finite bounds and excluded authority
+
+- **WHEN** An incoming event exceeds a declared limit or requests repository-watch or PiP authority
+- **THEN** The finite boundary is enforced without a new provider effect and excluded authority is not restored.
+
 ### Requirement: Host-approved context contributions
 
-The Runtime MAY accept named, versioned context sources selected explicitly for approved profiles. A source SHALL receive only a frozen exact Conversation reference and cancellation signal, return bounded text or an explicit omission plus a live validity check, and never receive native Pi objects. The adapter SHALL recheck the exact incarnation and all source checks before actual provider dispatch. Source failures, malformed output or stale checks SHALL block that dispatch. Live checks SHALL complete synchronously with an undefined result; thenables and other returned values SHALL block the request, and opaque source errors SHALL be redacted from native output. Definition identity SHALL participate in persisted profile identity; adding a WebUI facet SHALL NOT activate any source. Current context contributions SHALL NOT rewrite raw history or become permanently replayed instructions after the source omits them.
+The Runtime MAY accept named, versioned context sources selected explicitly for approved profiles. A source SHALL receive only a frozen exact Conversation reference and cancellation signal, return bounded text or an explicit omission plus a live validity check, and never receive native Pi objects. The adapter SHALL recheck the exact incarnation and all source checks before actual provider dispatch. Source failures, malformed output or stale checks SHALL block that dispatch.
 
 #### Scenario: Current approved context affects only its selected profile
 
@@ -198,9 +257,18 @@ The Runtime MAY accept named, versioned context sources selected explicitly for 
 - **WHEN** context preparation completes but its captured state changes while provider credentials resolve
 - **THEN** the live check blocks the actual request rather than sending stale or unauthorized context, and an already prepared attempt is not refunded
 
+### Requirement: Context validity and omission lifecycle
+
+Live checks SHALL complete synchronously with an undefined result; thenables and other returned values SHALL block the request, and opaque source errors SHALL be redacted from native output. Definition identity SHALL participate in persisted profile identity; adding a WebUI facet SHALL NOT activate any source. Current context contributions SHALL NOT rewrite raw history or become permanently replayed instructions after the source omits them.
+
+#### Scenario: Context validity and omission lifecycle
+
+- **WHEN** A source check returns a thenable, fails or later omits its text
+- **THEN** Dispatch fails closed with private errors redacted; neither WebUI activation nor old raw history keeps an omitted source active.
+
 ### Requirement: Optional browser dictation stays in the current draft
 
-The workbench MAY offer dictation when the browser exposes speech recognition in a secure context. Starting recognition SHALL require an explicit human action, disclose that audio may be sent to the browser's speech provider, and update only the current composer's draft. Interim/final results SHALL preserve the person's caret and edits. Recognition SHALL stop on send, composer/resource replacement, logout, loss of input eligibility or page hiding, and late callbacks SHALL NOT change a replacement draft. Unsupported browsers SHALL retain ordinary text entry. No test SHALL use user audio; controlled recognizer lifecycle evidence SHALL be distinguished from actual speech-provider accuracy.
+The workbench MAY offer dictation when the browser exposes speech recognition in a secure context. Starting recognition SHALL require an explicit human action, disclose that audio may be sent to the browser's speech provider, and update only the current composer's draft. Interim/final results SHALL preserve the person's caret and edits.
 
 #### Scenario: Recognized text waits for explicit submission
 
@@ -211,6 +279,15 @@ The workbench MAY offer dictation when the browser exposes speech recognition in
 
 - **WHEN** the current composer is replaced or loses input eligibility before an old recognition result arrives
 - **THEN** recognition is stopped, the replacement draft is unchanged, and no model request is created
+
+### Requirement: Dictation cancellation and honest test evidence
+
+Recognition SHALL stop on send, composer/resource replacement, logout, loss of input eligibility or page hiding, and late callbacks SHALL NOT change a replacement draft. Unsupported browsers SHALL retain ordinary text entry. No test SHALL use user audio; controlled recognizer lifecycle evidence SHALL be distinguished from actual speech-provider accuracy.
+
+#### Scenario: Dictation cancellation and honest test evidence
+
+- **WHEN** Input eligibility or the composer changes while recognition is active
+- **THEN** The recognizer stops, late callbacks cannot edit a replacement and synthetic lifecycle coverage is not reported as real speech accuracy.
 
 ### Requirement: Actual product and browser acceptance
 

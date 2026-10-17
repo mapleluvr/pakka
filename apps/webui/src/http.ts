@@ -1,7 +1,7 @@
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { randomUUID, createHash } from "node:crypto";
 import { isIP } from "node:net";
-import type { Runtime } from "@pakka/agent";
+import { ConversationUnavailableError, type Runtime } from "@pakka/agent";
 import type {
 	PocketAuthority,
 	PocketPeople,
@@ -20,6 +20,7 @@ import QRCode from "qrcode";
 import {
 	PocketCollaborationConflict,
 	PocketCredentialConflict,
+	PocketMetadataConflict,
 	type PocketCollaboration,
 	type PocketCredentials,
 	type PocketNotifications,
@@ -260,6 +261,10 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 		res.end(JSON.stringify(value));
 	}
 	function preflight(a: PocketAuthority, command: PocketCommand) {
+		if (command.op === "conversation.lookup") {
+			preflight(a, command.original);
+			return;
+		}
 		let permission: PocketPermission | undefined, resource: string | undefined;
 		switch (command.op) {
 			case "notification.status":
@@ -296,6 +301,7 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 				resource = command.target.conversationId;
 				break;
 			case "abort":
+			case "conversation.set":
 			case "configure":
 				permission = "manage";
 				resource = command.target.conversationId;
@@ -400,6 +406,9 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 					kind: "list",
 					conversations: rows.map((row) => row.ref),
 					titles: Object.fromEntries(rows.map((row) => [row.ref.conversationId, row.name])),
+					states: Object.fromEntries(
+						rows.map((row) => [row.ref.conversationId, { version: row.version, archived: row.archived }]),
+					),
 				};
 			}
 			case "notification.status":
@@ -420,6 +429,47 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 								: await bound.preferences(command.target, command.input);
 				return { kind: "notification", target: command.target, status };
 			}
+			case "conversation.lookup": {
+				const original = command.original;
+				try {
+					if (original.op === "conversation.set")
+						return {
+							kind: "conversation.operation",
+							command: original.op,
+							requestId: original.input.requestId,
+							result: await client.metadataReceipt(original.target, original.input),
+						};
+					const input = {
+						requestId: original.requestId,
+						name: original.name,
+						profile: original.profile,
+						...(original.op === "fork" ? { entryId: original.entryId } : {}),
+					};
+					return {
+						kind: "conversation.operation",
+						command: original.op,
+						requestId: original.requestId,
+						result: await client.creationReceipt(
+							input,
+							original.op === "fork" ? { source: original.target, entryId: original.entryId } : undefined,
+						),
+					};
+				} catch (failure) {
+					if (failure instanceof PocketMetadataConflict) throw new Refusal(409, "CONFLICT", true);
+					throw failure;
+				}
+			}
+			case "conversation.set":
+				try {
+					return {
+						kind: "metadata",
+						requestId: command.input.requestId,
+						metadata: await client.setMetadata(command.target, command.input),
+					};
+				} catch (failure) {
+					if (failure instanceof PocketMetadataConflict) throw new Refusal(409, "CONFLICT", true);
+					throw failure;
+				}
 			case "configuration":
 				return { kind: "configuration", configuration: await client.configuration(command.target) };
 			case "credential.status":
@@ -475,7 +525,13 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 					}),
 				};
 			case "submit":
-				return { kind: "receipt", receipt: await client.submit(command.target, command.input) };
+				try {
+					return { kind: "receipt", receipt: await client.submit(command.target, command.input) };
+				} catch (failure) {
+					if (failure instanceof ConversationUnavailableError)
+						throw new Refusal(409, "CONVERSATION_UNAVAILABLE", true);
+					throw failure;
+				}
 			case "receipt":
 				return { kind: "receipt", receipt: await client.receipt(command.id) };
 			case "wait":

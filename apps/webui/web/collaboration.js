@@ -2,6 +2,7 @@
 import { h } from "preact";
 import { useEffect, useRef, useState } from "preact/hooks";
 import htm from "htm";
+import { Icon } from "@pakka/webui/components";
 const html = htm.bind(h);
 
 export function Collaboration({ person, target, client, snapshot, updated, notice, error, close }) {
@@ -134,7 +135,9 @@ export function Collaboration({ person, target, client, snapshot, updated, notic
 		>
 			<header>
 				<h2>Team collaboration</h2>
-				<button aria-label="Close collaboration" onClick=${close}>×</button>
+				<button class="pocket-icon-button" aria-label="Close collaboration" onClick=${close}>
+					<${Icon} name="close" />
+				</button>
 			</header>
 			<div class="pocket-sheet-body">
 				<p class="pocket-secondary">Human workspace · chat and notes stay outside the model context.</p>
@@ -199,6 +202,7 @@ export function Collaboration({ person, target, client, snapshot, updated, notic
 									<footer>
 										<button
 											disabled=${pending}
+											class="pocket-reaction"
 											data-action="react-chat"
 											aria-label=${"React to message from " + message.authorName}
 											onClick=${() =>
@@ -214,7 +218,8 @@ export function Collaboration({ person, target, client, snapshot, updated, notic
 													},
 												})}
 										>
-											👍 ${message.reactions.find((r) => r.emoji === "👍")?.people.length ?? 0}
+											<${Icon} name="thumbsUp" /> ${message.reactions.find((r) => r.emoji === "👍")?.people
+												.length ?? 0}
 										</button>
 										<button onClick=${() => setQuote(message.id)}>Quote</button>${canEdit &&
 										html`<button

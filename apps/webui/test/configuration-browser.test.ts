@@ -81,7 +81,11 @@ test(
 			await viewer.wait('document.querySelector("[data-conversation]")');
 			await viewer.click('[aria-label="Toggle conversations"]');
 			await viewer.click("[data-conversation]");
-			await viewer.click("[data-action=settings]");
+			// A real first SSE snapshot may arrive after aiming and before pressing.
+			// The Settings target must remain at the same coordinates as status becomes Ready.
+			await viewer.click("[data-action=settings]", {
+				beforePress: () => viewer.wait('document.querySelector(".pocket-status")?.textContent==="Ready"'),
+			});
 			await viewer.wait('document.querySelector("[data-model-choice]")');
 			assert.equal(await viewer.evaluate('document.querySelector("[data-model-choice]").disabled'), true);
 			assert.equal(await viewer.evaluate('Boolean(document.querySelector("[data-session-budget]"))'), false);

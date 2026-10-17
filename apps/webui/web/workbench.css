@@ -1,4 +1,8 @@
 /* Pakka workbench composition over the unmodified adopted pi-pocket theme. */
+html,
+body {
+	font-family: var(--pocket-font-family, var(--mono));
+}
 :root[data-mode="light"] {
 	--o-bg: #f3f2ed;
 	--o-bg-dark: #eae9e3;
@@ -13,6 +17,36 @@
 }
 .pocket-workbench {
 	min-width: 0;
+}
+.pocket-icon {
+	display: inline-block;
+	inline-size: 24px;
+	block-size: 24px;
+	flex: 0 0 auto;
+	vertical-align: middle;
+	pointer-events: none;
+}
+.pocket-icon-button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-inline-size: 44px;
+	min-block-size: 44px;
+	padding: 10px;
+	flex: 0 0 auto;
+}
+.pocket-icon-button:hover {
+	background: var(--hover);
+	color: var(--text);
+}
+.pocket-icon-button:focus-visible {
+	outline: 2px solid var(--accent);
+	outline-offset: 2px;
+}
+.pocket-reaction {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
 }
 .pocket-workbench .sidebar {
 	flex-direction: column;
@@ -60,6 +94,31 @@
 	background: var(--accent-soft);
 	border-left: 2px solid var(--accent);
 }
+.pocket-navigation-tools {
+	display: grid;
+	gap: 8px;
+	padding: 12px;
+	font-size: 0.75rem;
+}
+.pocket-navigation-tools input[type="search"],
+.pocket-history-find input {
+	min-width: 0;
+	width: 100%;
+}
+.pocket-navigation-tools label {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+.pocket-navigation-tools input[type="checkbox"] {
+	width: auto;
+}
+.pocket-history-find {
+	display: grid;
+	gap: 6px;
+	font-size: 0.75rem;
+	margin-bottom: 12px;
+}
 .pocket-new {
 	display: flex;
 	gap: 5px;
@@ -102,6 +161,7 @@
 	font-size: 0.8rem;
 }
 .pocket-status {
+	min-inline-size: 7ch;
 	color: var(--ok);
 	font-size: 0.76rem;
 }
@@ -194,10 +254,21 @@
 }
 .pocket-composer .composer-row {
 	display: flex;
+	flex-wrap: nowrap;
+	align-items: center;
+	gap: 8px;
+	padding: 8px 10px;
+}
+.pocket-composer .composer-row button {
+	flex: 0 0 auto;
+	min-height: 44px;
+}
+.pocket-composer-meta {
+	display: flex;
 	flex-wrap: wrap;
 	align-items: center;
 	gap: 10px;
-	padding: 8px 10px;
+	padding: 0 10px 8px;
 }
 .pocket-dictation-help {
 	margin: 0;
@@ -214,10 +285,40 @@
 	outline-offset: 1px;
 }
 .pocket-composer select {
+	width: auto;
+	max-width: 14rem;
+	flex: 0 1 auto;
+	margin-inline-end: auto;
+	min-height: 44px;
 	border: 0;
 	background: var(--card);
 	color: var(--body);
 	min-width: 0;
+}
+@media (pointer: coarse) {
+	.pocket-composer textarea {
+		font-size: max(16px, 0.9rem);
+	}
+}
+.pocket-appearance > p {
+	margin: 0;
+	color: var(--muted);
+	font-size: 0.85rem;
+}
+.pocket-font-preview {
+	min-width: 0;
+	padding: 12px;
+	border: 1px solid var(--line);
+	overflow-wrap: anywhere;
+}
+.pocket-font-preview p {
+	margin: 0;
+}
+.pocket-font-preview p + p {
+	margin-top: 8px;
+}
+.pocket-font-preview code {
+	font-family: var(--mono);
 }
 .pocket-usage {
 	flex: 1;
@@ -330,16 +431,28 @@
 .pocket-sheet input {
 	font-size: 0.75rem;
 }
+.pocket-drawer-backdrop {
+	display: none;
+}
 @media (max-width: 959px) {
-	.pocket-menu {
+	.pocket-drawer-backdrop {
 		display: block;
+		position: fixed;
+		inset: 0 0 0 min(85vw, 300px);
+		z-index: 29;
+		padding: 0;
+		border: none;
+		border-radius: 0;
+		background: #0008;
+	}
+	.pocket-menu {
+		display: inline-flex;
 	}
 	.pocket-workbench .sidebar {
 		position: fixed;
 		inset: 0 auto 0 0;
 		width: min(85vw, 300px);
 		z-index: 30;
-		box-shadow: 0 0 0 100vw #0008;
 	}
 	.pocket-workbench.drawer-open .sidebar {
 		display: flex;

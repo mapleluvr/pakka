@@ -12,6 +12,10 @@ import { Collaboration } from "./collaboration.js";
 import { Configuration } from "./configuration.js";
 import { Notifications, clearNotifications } from "./notifications.js";
 import { useDictation, MicButton } from "./voice.js";
+import { Sheet } from "./sheet.js";
+import { Icon } from "@pakka/webui/components";
+import { ConversationSettings } from "./navigation.js";
+import { Appearance, readAppearance, applyAppearance } from "./appearance.js";
 
 const html = htm.bind(h);
 const csrf = () => /(?:^|; )pakka_csrf=([A-Za-z0-9_-]{43})(?:;|$)/.exec(document.cookie)?.[1] ?? null;
@@ -29,7 +33,8 @@ const markdown = (text) =>
 	});
 const label = (ref) => ref.profile + " · " + ref.conversationId.slice(0, 8);
 
-function Message({ message }) {
+applyAppearance(readAppearance());
+function Message({ message, onDraft }) {
 	const content =
 		typeof message.content === "string" ? [{ type: "text", text: message.content }] : message.content;
 	return html`<article
@@ -65,12 +70,33 @@ function Message({ message }) {
 								/>`
 							: null,
 		)}
+		${message.role === "user" &&
+		onDraft &&
+		html`<button
+			data-action="use-draft"
+			onClick=${() =>
+				onDraft(
+					content
+						.filter((part) => part.type === "text")
+						.map((part) => part.text)
+						.join("\n"),
+				)}
+		>
+			Use as draft
+		</button>`}
 	</article>`;
 }
 function App() {
 	const [person, setPerson] = useState(null),
 		[refs, setRefs] = useState([]),
 		[titles, setTitles] = useState({}),
+		[states, setStates] = useState({}),
+		[pendingNavigation, setPendingNavigation] = useState({}),
+		[query, setQuery] = useState(""),
+		[showArchived, setShowArchived] = useState(false),
+		[find, setFind] = useState(""),
+		[historyEntries, setHistoryEntries] = useState([]),
+		[historyCursor, setHistoryCursor] = useState(undefined),
 		[selected, select] = useState(null),
 		[view, setView] = useState(null),
 		[shared, setShared] = useState(null);
@@ -90,8 +116,14 @@ function App() {
 		[retry, setRetry] = useState(null),
 		[drawer, setDrawer] = useState(false),
 		[newName, setNewName] = useState("");
+	const drawerToggle = useRef(null);
+	const dismissDrawer = () => {
+		setDrawer(false);
+		drawerToggle.current?.focus();
+	};
 	const mounted = useRef(true),
 		scroll = useRef(null),
+		follow = useRef(true),
 		composer = useRef(null),
 		resourceContext = useRef(null);
 	const contextKey = JSON.stringify([person?.id, selected?.key, selected?.incarnation]);
@@ -119,6 +151,11 @@ function App() {
 		setShared(null);
 		setRefs([]);
 		setTitles({});
+		setStates({});
+		setPendingNavigation({});
+		setHistoryEntries([]);
+		setHistoryCursor(undefined);
+		setFind("");
 		select(null);
 		setPeople(null);
 		openSheet(null);
@@ -134,9 +171,11 @@ function App() {
 		notify(
 			failure.outcome === "unknown"
 				? "The result is unconfirmed. Check the receipt before retrying."
-				: failure.code === "CONFLICT"
-					? "This shared record changed. Reload it before saving again."
-					: "This operation was refused.",
+				: failure.code === "CONVERSATION_UNAVAILABLE"
+					? "Model input is unavailable in this conversation. Start a new conversation. Existing requests and spent attempts are kept."
+					: failure.code === "CONFLICT"
+						? "This shared record changed. Reload it before saving again."
+						: "This operation was refused.",
 		);
 	};
 	async function refresh() {
@@ -146,18 +185,32 @@ function App() {
 		setPerson(hello.person);
 		setRefs(list.conversations);
 		setTitles(list.titles ?? {});
+		setStates(list.states ?? {});
 		if (requestedConversation) {
 			const ref = list.conversations.find((row) => row.conversationId === requestedConversation);
 			requestedConversation = null;
-			if (ref) select(ref);
+			if (ref) {
+				extensions.leave();
+				select(ref);
+				setDrawer(false);
+			}
 		}
 	}
 	useEffect(() => {
+		const navigate = () => {
+			const conversation = new URLSearchParams(location.hash.slice(1)).get("conversation");
+			if (!conversation) return;
+			requestedConversation = conversation;
+			history.replaceState(null, "", location.pathname + location.search);
+			void refresh().catch(error);
+		};
+		window.addEventListener("hashchange", navigate);
 		void refresh().catch((failure) => {
 			if (failure.code === "UNAUTHORIZED") setPerson(null);
 			else error(failure);
 		});
 		return () => {
+			window.removeEventListener("hashchange", navigate);
 			mounted.current = false;
 		};
 	}, []);
@@ -167,6 +220,10 @@ function App() {
 		openSheet(null);
 		setReceipt(null);
 		setRetry(null);
+		setHistoryEntries([]);
+		setHistoryCursor(undefined);
+		setFind("");
+		follow.current = true;
 	}, [selected?.conversationId, selected?.incarnation, person?.id]);
 	useEffect(() => {
 		if (!selected || !person) return;
@@ -224,7 +281,7 @@ function App() {
 		};
 	}, [selected?.conversationId, selected?.incarnation, person?.id]);
 	useEffect(() => {
-		if (scroll.current) scroll.current.scrollTop = scroll.current.scrollHeight;
+		if (scroll.current && follow.current) scroll.current.scrollTop = scroll.current.scrollHeight;
 	}, [view]);
 	async function run(action) {
 		setWorking(true);
@@ -255,7 +312,13 @@ function App() {
 	}
 	async function submit(command) {
 		setRetry(command);
-		const result = await client.request(command);
+		let result;
+		try {
+			result = await client.request(command);
+		} catch (failure) {
+			if (failure.outcome === "denied") setRetry(null);
+			throw failure;
+		}
 		setRetry(null);
 		if (result.kind === "receipt") {
 			setReceipt(result.receipt);
@@ -316,6 +379,52 @@ function App() {
 			openSheet("people");
 		});
 	}
+	async function navigationChanged(ref, archived) {
+		const binding = resourceContext.current;
+		await refresh();
+		if (!mounted.current || resourceContext.current !== binding) return;
+		extensions.leave();
+		openSheet(null);
+		select(archived ? null : ref);
+		if (archived) notify("Archive hides navigation only; it does not cancel admitted work.");
+	}
+	async function earlier() {
+		const binding = resourceContext.current,
+			cursor = historyCursor === undefined ? view?.olderBeforeId : historyCursor;
+		if (!cursor) return;
+		await run(async () => {
+			const result = await client.request({
+				op: "read",
+				target: selected,
+				page: { limit: 64, beforeEntryId: cursor },
+			});
+			if (!mounted.current || resourceContext.current !== binding) return;
+			follow.current = false;
+			setHistoryEntries((previous) => [...result.snapshot.entries, ...previous]);
+			setHistoryCursor(result.snapshot.entriesTruncated ? result.snapshot.olderBeforeId : null);
+		});
+	}
+	function useDraft(text) {
+		if (text.length > 8192) {
+			notify("This input exceeds the current draft limit; it was not truncated or sent.");
+			return;
+		}
+		setDraft(text);
+		notify("Copied to draft. Review and Send explicitly to create a new native input.");
+		composer.current?.focus();
+	}
+	const allEntries = [
+		...new Map([...historyEntries, ...(view?.entries ?? [])].map((entry) => [entry.id, entry])).values(),
+	];
+	const visibleEntries = allEntries.filter(
+		(entry) =>
+			!find ||
+			JSON.stringify([entry.messages, entry.display?.text])
+				.toLocaleLowerCase()
+				.includes(find.toLocaleLowerCase()),
+	);
+	const olderCursor =
+		historyCursor === undefined ? (view?.entriesTruncated ? view.olderBeforeId : null) : historyCursor;
 	const canSend = person && person.role !== "viewer",
 		canDrive = person && ["driver", "admin"].includes(person.role),
 		canInput =
@@ -379,27 +488,68 @@ function App() {
 				${notice && html`<p role="alert">${notice}</p>`}
 			</section>
 		</main>`;
-	return html`<div class=${"layout pocket-workbench" + (drawer ? " drawer-open" : "")}>
-		<aside class="sidebar window">
+	return html`<div
+		class=${"layout pocket-workbench" + (drawer ? " drawer-open" : "")}
+		onKeyDown=${(event) => {
+			if (drawer && event.key === "Escape" && !event.defaultPrevented) {
+				event.preventDefault();
+				dismissDrawer();
+			}
+		}}
+	>
+		${drawer &&
+		html`<button
+			type="button"
+			class="pocket-drawer-backdrop"
+			aria-label="Close conversations"
+			onClick=${dismissDrawer}
+		/>`}
+		<aside class="sidebar window" id="pocket-sidebar">
 			<div class="pocket-side-head">
 				<strong>Pakka-Pocket</strong><span class="pocket-person">${person.name} · ${person.role}</span>
 			</div>
+			<div class="pocket-navigation-tools">
+				<input
+					aria-label="Find conversations"
+					type="search"
+					value=${query}
+					onInput=${(event) => setQuery(event.currentTarget.value)}
+					placeholder="Find conversations"
+				/>
+				<label
+					><input
+						type="checkbox"
+						data-action="show-archived"
+						checked=${showArchived}
+						onChange=${(event) => setShowArchived(event.currentTarget.checked)}
+					/>
+					Show archived</label
+				>
+				<button class="button" onClick=${() => void run(refresh)}>Refresh conversations</button>
+			</div>
 			<nav class="pocket-nav" aria-label="Conversations">
-				${refs.map(
-					(ref) =>
-						html`<button
-							key=${ref.key}
-							data-conversation=${ref.conversationId}
-							class=${selected?.key === ref.key ? "selected" : ""}
-							onClick=${() => {
-								extensions.leave();
-								select(ref);
-								setDrawer(false);
-							}}
-						>
-							<span>◈</span><span>${title(ref)}</span>
-						</button>`,
-				)}
+				${refs
+					.filter(
+						(ref) =>
+							(showArchived || !states[ref.conversationId]?.archived) &&
+							title(ref).toLocaleLowerCase().includes(query.toLocaleLowerCase()),
+					)
+					.map(
+						(ref) =>
+							html`<button
+								key=${ref.key}
+								data-conversation=${ref.conversationId}
+								class=${selected?.key === ref.key ? "selected" : ""}
+								onClick=${() => {
+									extensions.leave();
+									select(ref);
+									setDrawer(false);
+								}}
+							>
+								<${Icon} name="conversation" />
+								<span>${title(ref)}${states[ref.conversationId]?.archived ? " · Archived" : ""}</span>
+							</button>`,
+					)}
 			</nav>
 			<nav class="pocket-nav" aria-label="Extensions">${extensions.navigation}</nav>
 			${canDrive &&
@@ -428,13 +578,23 @@ function App() {
 					placeholder="New conversation"
 					onInput=${(event) => setNewName(event.currentTarget.value)}
 					required
-				/><button class="button" type="submit" disabled=${working}>+</button>
+				/><button
+					class="button pocket-icon-button"
+					type="submit"
+					aria-label="Create conversation"
+					title="Create conversation"
+					disabled=${working}
+				>
+					<${Icon} name="plus" />
+				</button>
 			</form>`}
 			<div class="pocket-side-foot">
 				<button
-					onClick=${() =>
-						(document.documentElement.dataset.mode =
-							document.documentElement.dataset.mode === "light" ? "dark" : "light")}
+					data-action="appearance"
+					onClick=${() => {
+						setDrawer(false);
+						openSheet("appearance");
+					}}
 				>
 					Appearance</button
 				><button
@@ -452,12 +612,22 @@ function App() {
 		</aside>
 		<main class="pane window">
 			<header class="topbar pocket-topbar">
-				<button class="pocket-menu" aria-label="Toggle conversations" onClick=${() => setDrawer(!drawer)}>
-					☰
+				<button
+					class="pocket-menu pocket-icon-button"
+					aria-label="Toggle conversations"
+					aria-controls="pocket-sidebar"
+					aria-expanded=${drawer}
+					ref=${drawerToggle}
+					onClick=${() => setDrawer(!drawer)}
+				>
+					<${Icon} name="menu" />
 				</button>
 				<div class="pocket-title">${selected ? title(selected) : "Your workspace"}</div>
 				<span class="pocket-status">${view?.live.busy ? "Working" : view ? "Ready" : ""}</span>${selected &&
-				html`<button data-action="settings" onClick=${() => openSheet("configuration")}>Settings</button>
+				html`<button data-action="conversation" onClick=${() => openSheet("conversation")}>
+						Conversation
+					</button>
+					<button data-action="settings" onClick=${() => openSheet("configuration")}>Settings</button>
 					<button data-action="notifications" onClick=${() => openSheet("notifications")}>
 						Notifications
 					</button>
@@ -467,12 +637,40 @@ function App() {
 				html`<button data-action="people" onClick=${showPeople}>People & invites</button>`}
 			</header>
 			${extensions.page && extensions.surface}
-			<div class="scroller" ref=${scroll} hidden=${extensions.page}>
+			<div
+				class="scroller"
+				ref=${scroll}
+				hidden=${extensions.page}
+				onScroll=${(event) => {
+					const node = event.currentTarget;
+					follow.current = node.scrollHeight - node.scrollTop - node.clientHeight < 80;
+				}}
+			>
 				${selected
 					? html`<div class="transcript">
+							<label class="pocket-history-find"
+								>Find loaded history<input
+									type="search"
+									aria-label="Find loaded history"
+									value=${find}
+									onInput=${(event) => setFind(event.currentTarget.value)}
+							/></label>
+							${olderCursor &&
+							html`<button
+								class="button"
+								data-action="show-earlier"
+								disabled=${working}
+								onClick=${() => void earlier()}
+							>
+								Show earlier history
+							</button>`}
+							${find &&
+							html`<p role="status">
+								${visibleEntries.length} matching loaded entries. Earlier unread history is not searched.
+							</p>`}
 							${!view
 								? html`<p role="status">Connecting…</p>`
-								: view.entries.map(
+								: visibleEntries.map(
 										(entry) =>
 											html`<section key=${entry.id} data-entry=${entry.id}>
 												${entry.display
@@ -481,7 +679,12 @@ function App() {
 															<p>${entry.display.text}</p>
 														</aside>`
 													: entry.messages.map(
-															(message, index) => html`<${Message} key=${index} message=${message} />`,
+															(message, index) =>
+																html`<${Message}
+																	key=${index}
+																	message=${message}
+																	onDraft=${canSend ? useDraft : undefined}
+																/>`,
 														)}
 											</section>`,
 									)}${view?.live.message &&
@@ -529,8 +732,6 @@ function App() {
 							html`<option value="steer">Steer</option>
 								<option value="followUp">Follow up</option>`}
 							<option value="chat">Team chat</option></select
-						><${MicButton} dictation=${dictation} /><span class="pocket-usage"
-							>${view ? view.usage.totalTokens.toLocaleString() + " tokens" : ""}</span
 						>${canDrive &&
 						view?.live.busy &&
 						html`<button
@@ -550,19 +751,57 @@ function App() {
 							Send
 						</button>
 					</div>
+					<div class="pocket-composer-meta">
+						<${MicButton} dictation=${dictation} />
+						<span class="pocket-usage"
+							>${view ? view.usage.totalTokens.toLocaleString() + " tokens" : ""}</span
+						>
+					</div>
 				</form>
 				${receipt &&
 				html`<div class="pocket-receipt" role="status">
 					${receipt.status} · ${receipt.id.slice(0, 12)}
+					${receipt.status === "queued" &&
+					canSend &&
+					html`<button
+						disabled=${working}
+						onClick=${() =>
+							void run(async () => {
+								const original = receipt,
+									result = await client.request({ op: "withdraw", id: original.id });
+								setReceipt((current) => (current?.id === original.id ? result.receipt : current));
+							})}
+					>
+						Withdraw original input
+					</button>`}
 				</div>`}${retry &&
 				html`<button onClick=${() => void run(() => submit(retry))}>Retry original request</button>`}
 			</div>`}
 			${notice &&
 			html`<div class="pocket-notice" role="alert">
-				${notice}<button aria-label="Dismiss notice" onClick=${() => notify("")}>×</button>
+				${notice}<button class="pocket-icon-button" aria-label="Dismiss notice" onClick=${() => notify("")}>
+					<${Icon} name="close" />
+				</button>
 			</div>`}
 		</main>
-		${extensions.overlay}
+		${extensions.overlay} ${sheet === "appearance" && html`<${Appearance} close=${() => openSheet(null)} />`}
+		${sheet === "conversation" &&
+		selected &&
+		html`<${ConversationSettings}
+			key=${contextKey}
+			target=${selected}
+			name=${title(selected)}
+			state=${states[selected.conversationId] ?? { version: 0, archived: false }}
+			entries=${allEntries}
+			canManage=${person.role === "admin"}
+			client=${client}
+			changed=${navigationChanged}
+			refresh=${refresh}
+			pending=${pendingNavigation[contextKey] ?? null}
+			setPending=${(command) => setPendingNavigation((previous) => ({ ...previous, [contextKey]: command }))}
+			close=${() => openSheet(null)}
+			error=${error}
+		/>`}
 		${sheet === "notifications" &&
 		selected &&
 		html`<${Notifications}
@@ -599,16 +838,10 @@ function App() {
 			close=${() => openSheet(null)}
 		/>`}
 		${sheet === "people" &&
-		html`<div
-			class="pocket-scrim"
-			onClick=${(event) => {
-				if (event.target === event.currentTarget) openSheet(null);
-			}}
-		>
-			<section class="pocket-sheet" role="dialog" aria-modal="true" aria-label="People and invitations">
+		html`<${Sheet} label="People and invitations" close=${() => openSheet(null)}>
 				<header>
 					<h2>People & invitations</h2>
-					<button aria-label="Close people" onClick=${() => openSheet(null)}>×</button>
+					<button class="pocket-icon-button" aria-label="Close people" onClick=${() => openSheet(null)}><${Icon} name="close" /></button>
 				</header>
 				<div class="pocket-sheet-body">
 					${people?.people.map(
@@ -657,25 +890,28 @@ function App() {
 							})}
 					>
 						Create invitation</button
-					>${qr &&
-					html`<img
-						class="pocket-qr"
-						alt="One-use invitation QR code"
-						width="180"
-						height="180"
-						src=${qr}
-					/>`}${link &&
-					html`<label
-						>One-use invitation link<input name="inviteLink" readonly value=${link} /><button
-							class="button"
-							onClick=${() => navigator.clipboard?.writeText(link)}
-						>
-							Copy link
-						</button></label
-					>`}
+					>${
+						qr &&
+						html`<img
+							class="pocket-qr"
+							alt="One-use invitation QR code"
+							width="180"
+							height="180"
+							src=${qr}
+						/>`
+					}${
+						link &&
+						html`<label
+							>One-use invitation link<input name="inviteLink" readonly value=${link} /><button
+								class="button"
+								onClick=${() => navigator.clipboard?.writeText(link)}
+							>
+								Copy link
+							</button></label
+						>`
+					}
 				</div>
-			</section>
-		</div>`}
+		</${Sheet}>`}
 	</div>`;
 }
 const root = document.getElementById("app");

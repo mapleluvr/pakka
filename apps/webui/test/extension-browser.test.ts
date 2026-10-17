@@ -70,6 +70,17 @@ test(
 			await page.click("[data-suggestion=preferences-status]");
 			await page.wait('document.querySelector("textarea[name=message]").value === ""');
 			assert.equal(m.f.requests.length, 0);
+			await page.click("[data-action=commands]");
+			await page.wait('document.querySelector("[data-command=preferences-card]")');
+			await page.click("[data-command=preferences-card]");
+			await page.wait(
+				'document.querySelector("[role=alert]")?.textContent.includes("/preferences-card") && document.querySelector("[role=alert]")?.textContent.includes("text")',
+			);
+			assert.equal(
+				m.f.requests.length,
+				0,
+				"A command missing its required input must explain usage without invoking a model",
+			);
 			await page.type("textarea[name=message]", '/preferences-card {"text":"DISPLAY-CARD-CANARY"}');
 			await page.click("[data-action=send]");
 			await page.wait(

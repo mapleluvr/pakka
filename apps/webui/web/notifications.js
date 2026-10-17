@@ -2,6 +2,7 @@
 import { h } from "preact";
 import { useEffect, useRef, useState } from "preact/hooks";
 import htm from "htm";
+import { Icon } from "@pakka/webui/components";
 const html = htm.bind(h);
 let registering;
 const capable = () => isSecureContext && "Notification" in globalThis && "serviceWorker" in navigator;
@@ -192,7 +193,9 @@ export function Notifications({ target, person, client, close, error }) {
 		>
 			<header>
 				<h2>Notifications</h2>
-				<button aria-label="Close notifications" onClick=${close}>×</button>
+				<button class="pocket-icon-button" aria-label="Close notifications" onClick=${close}>
+					<${Icon} name="close" />
+				</button>
 			</header>
 			<div class="pocket-sheet-body">
 				<p>Enable this device for the current conversation. Only updates you can still read are displayed.</p>

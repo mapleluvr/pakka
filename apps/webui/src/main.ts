@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { readFile, writeFile, lstat } from "node:fs/promises";
+import { readFile, writeFile, lstat, realpath } from "node:fs/promises";
 import { resolve, isAbsolute } from "node:path";
 import type { ExtensionFacet } from "./extension.ts";
 import { pathToFileURL } from "node:url";
@@ -287,5 +287,6 @@ export async function runPocket(args: readonly string[]): Promise<number> {
 		return 1;
 	}
 }
-if (process.argv[1] && pathToFileURL(resolve(process.argv[1])).href === import.meta.url)
+const invokedFile = process.argv[1] ? await realpath(process.argv[1]).catch(() => undefined) : undefined;
+if (invokedFile && pathToFileURL(invokedFile).href === import.meta.url)
 	process.exitCode = await runPocket(process.argv.slice(2));

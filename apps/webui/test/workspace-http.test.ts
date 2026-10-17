@@ -52,6 +52,39 @@ test(
 			assert.ok("result" in fork.decoded && fork.decoded.result.kind === "reference");
 			const child: AgentRef = fork.decoded.result.ref;
 			assert.notEqual(child.conversationId, current.conversationId);
+			const inherited = await m.rpc({ op: "read", target: child });
+			assert.equal(
+				inherited.response.status,
+				200,
+				"a newly forked workbench must render its inherited transcript before new inference",
+			);
+			assert.ok("result" in inherited.decoded && inherited.decoded.result.kind === "conversation");
+			assert.match(JSON.stringify(inherited.decoded.result.snapshot.entries), /INHERITED-FROM-WEB/);
+			assert.ok(
+				inherited.decoded.result.snapshot.entries.every(
+					(entry) => entry.conversationId === child.conversationId,
+				),
+			);
+			assert.ok(
+				inherited.decoded.result.snapshot.entries.some(
+					(entry) => entry.sourceConversationId === current.conversationId,
+				),
+			);
+			const childInvite = await m.people.invite(m.actor, {
+				requestId: "fork-viewer",
+				role: "viewer",
+				resources: [child.conversationId],
+				ttlMs: 60000,
+			});
+			assert.ok(childInvite.token);
+			const childViewer = await m.exchange(childInvite.token, "invite", "Fork viewer");
+			const scopedRead = await m.rpc({ op: "read", target: child }, childViewer);
+			assert.ok("result" in scopedRead.decoded && scopedRead.decoded.result.kind === "conversation");
+			assert.match(JSON.stringify(scopedRead.decoded.result.snapshot.entries), /INHERITED-FROM-WEB/);
+			assert.ok(
+				scopedRead.decoded.result.snapshot.entries.every((entry) => entry.sourceConversationId === undefined),
+				"a cloned transcript does not grant source resource metadata",
+			);
 			const next = await m.rpc({
 				op: "submit",
 				target: child,
