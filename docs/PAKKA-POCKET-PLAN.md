@@ -47,7 +47,7 @@ P0 采用上表主 UI 树，Phase 2 是独立旧分支（Durable `1.0.2`），�
 | files/changes、git branch/worktree views、exports/uploads/artifacts | 对应受控服务与 UI/可选贡献      | 文件根、path/size/MIME、工具/文件权限、HTML sandbox 和导出域              | 隔离文件夹真实读/改/拒绝；泄漏与 XSS canary               |
 | approval/browser panels                                             | 通用 view slot + 实际服务贡献   | 审批必须绑定真实 pending call；browser 操作绑定批准资源，不能只移画面     | 显式批准/拒绝真实 call、scope 变更、browser 实际动作      |
 | model/provider、settings、budget、notifications                     | owner/scoped settings 与服务    | 公开选项/私密配置分离，模型只选批准引用，saved secrets 不回传             | 配置影响后续真实行为；通知按用户/资源过滤                 |
-| upstream memory/schedules/voice 等范围内可选界面                     | 逐项映射到独立通用贡献/受控后台 | 不以直接加载原 Durable extension 兼容替代迁移；不自动接回 PiP             | P0 登记保留位置、后端与测试；P5 清单逐项闭合              |
+| upstream memory/schedules/voice 等范围内可选界面                    | 逐项映射到独立通用贡献/受控后台 | 不以直接加载原 Durable extension 兼容替代迁移；不自动接回 PiP             | P0 登记保留位置、后端与测试；P5 清单逐项闭合              |
 | launcher local/LAN/tailnet/tunnel                                   | WebUI 产品启动路径              | 明确 TLS/proxy/auth 边界；不放宽 headless v1 默认入口                     | 实际代理+浏览器测试，真实外部部署另记测量身份             |
 
 ## 4. 依赖顺序与退出条件

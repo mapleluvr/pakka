@@ -183,9 +183,9 @@ export default {
 | `apps/webui/test/notifications-http.test.ts`            | 实际完成/旁聊事件、有限设备协议、当前 Cookie metadata 和越权探针                      |
 | `apps/webui/test/notifications-browser.test.ts`         | 真实 worker 原生通知、登出清理、手机偏好隔离和桌面/手机布局                           |
 | `apps/webui/test/notifications-main.test.ts`            | 非法 push authority 在存储和 provider 效果前被拒绝                                    |
-| `apps/webui/test/voice-browser.test.ts`                    | 真实 Chrome 的 interim/final、caret、生命周期、上限、手机 viewer 与无能力回退          |
-| `scripts/consumer-pocket-voice.mjs`                       | 实际打包 CLI 的草稿、明确 Send、重载能力匹配和 viewer 隔离；1 次模型 HTTP              |
-| `scripts/consumer-pocket-notifications.mjs`               | 实际 CLI/TLS/worker/reopen；2 次模型 HTTP、3 次 push、原未知投递不重发                |
+| `apps/webui/test/voice-browser.test.ts`                 | 真实 Chrome 的 interim/final、caret、生命周期、上限、手机 viewer 与无能力回退         |
+| `scripts/consumer-pocket-voice.mjs`                     | 实际打包 CLI 的草稿、明确 Send、重载能力匹配和 viewer 隔离；1 次模型 HTTP             |
+| `scripts/consumer-pocket-notifications.mjs`             | 实际 CLI/TLS/worker/reopen；2 次模型 HTTP、3 次 push、原未知投递不重发                |
 
 冻结副本的构建、类型和全量回归 **387/387** 通过，无 skip/cancel/todo；完整 `smoke:package` 的所有既有及新增消费者通过。386 个源码/夹具 SHA 在门禁前后保持一致，原树未变时才合回 12 个已测试文件。合回后的构建、类型和主动诊断通过；补充了“面板重新加载后等帧已解码再点击”的验收等待条件，原查询与效果断言未变，相关 8 项组合连续 5 轮通过，更新后的消费者再次通过同一安装产物。生产字节与已通过的全量/安装身份一致。
 

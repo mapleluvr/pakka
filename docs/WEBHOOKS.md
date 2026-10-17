@@ -10,16 +10,14 @@ Webhook 是可选的普通 Backend/Client/WebUI 贡献。人类在明确的 Conv
 import { workspaceHooksExtensionRoot, workspaceHooksService } from "@pakka/webui/workflows";
 
 export default {
-  // 此处还需宿主批准的 runtime、owner、initial 和可选 transport 配置。
-  extensions: [
-    { root: workspaceHooksExtensionRoot, facets: ["backend", "client", "webui"] },
-  ],
-  extensionServices: async context => ({
-    hooks: await workspaceHooksService(context, {
-      namespace: "project.webhooks",
-      githubWriters: ["host-approved-writer"],
-    }),
-  }),
+	// 此处还需宿主批准的 runtime、owner、initial 和可选 transport 配置。
+	extensions: [{ root: workspaceHooksExtensionRoot, facets: ["backend", "client", "webui"] }],
+	extensionServices: async (context) => ({
+		hooks: await workspaceHooksService(context, {
+			namespace: "project.webhooks",
+			githubWriters: ["host-approved-writer"],
+		}),
+	}),
 };
 ```
 
