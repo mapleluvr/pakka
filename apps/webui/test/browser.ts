@@ -232,7 +232,14 @@ export async function ownedBrowser(dir: string, options: { readonly push?: boole
 					for (const type of ["keyDown", "keyUp"])
 						await call(
 							"Input.dispatchKeyEvent",
-							{ type, key, code: key, windowsVirtualKeyCode: code, modifiers: shift ? 8 : 0 },
+							{
+								type,
+								key,
+								code: key,
+								windowsVirtualKeyCode: code,
+								modifiers: shift ? 8 : 0,
+								...(type === "keyDown" && key === "Enter" ? { text: "\r", unmodifiedText: "\r" } : {}),
+							},
 							id,
 						);
 				},

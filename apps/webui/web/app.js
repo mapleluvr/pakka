@@ -10,6 +10,12 @@ import { decodePocketEvent } from "@pakka/protocol/pocket";
 import { useExtensions } from "./extensions.js";
 import { Collaboration } from "./collaboration.js";
 import { Configuration } from "./configuration.js";
+import {
+	useConversationConfiguration,
+	ModelPicker,
+	DirectoryPicker,
+	clearDirectoryPreferences,
+} from "./conversation-configuration.js";
 import { Notifications, clearNotifications } from "./notifications.js";
 import { useDictation, MicButton } from "./voice.js";
 import { Sheet } from "./sheet.js";
@@ -144,6 +150,7 @@ function App() {
 		},
 	});
 	const invalidate = () => {
+		clearDirectoryPreferences(person);
 		void clearNotifications().catch(() => {});
 		resourceContext.current = null;
 		extensions.clear();
@@ -178,6 +185,7 @@ function App() {
 						: "This operation was refused.",
 		);
 	};
+	const configuration = useConversationConfiguration(selected, person, client, error);
 	async function refresh() {
 		const hello = await client.request({ op: "hello" });
 		const list = await client.request({ op: "list" });
@@ -551,7 +559,19 @@ function App() {
 							</button>`,
 					)}
 			</nav>
-			<nav class="pocket-nav" aria-label="Extensions">${extensions.navigation}</nav>
+			${(extensions.workspaceNavigation.length > 0 || extensions.navigation.length > 0) &&
+			html`<div class="pocket-tool-navigation" role="region" aria-label="Tools and extensions" tabindex="0">
+				${extensions.workspaceNavigation.length > 0 &&
+				html`<nav class="pocket-nav" aria-label="WebUI">
+					<h2>WebUI</h2>
+					${extensions.workspaceNavigation}
+				</nav>`}
+				${extensions.navigation.length > 0 &&
+				html`<nav class="pocket-nav" aria-label="Extensions">
+					<h2>Extensions</h2>
+					${extensions.navigation}
+				</nav>`}
+			</div>`}
 			${canDrive &&
 			html`<form
 				class="pocket-new"
@@ -562,7 +582,8 @@ function App() {
 							op: "create",
 							requestId: crypto.randomUUID(),
 							name: newName,
-							profile: "default",
+							profile: selected?.profile ?? "default",
+							...(selected ? { inherit: selected } : {}),
 						});
 						setNewName("");
 						extensions.leave();
@@ -602,6 +623,7 @@ function App() {
 					onClick=${() =>
 						void run(async () => {
 							await client.request({ op: "session.logout" });
+							clearDirectoryPreferences(person);
 							invalidate();
 							setPerson(null);
 						})}
@@ -622,7 +644,21 @@ function App() {
 				>
 					<${Icon} name="menu" />
 				</button>
-				<div class="pocket-title">${selected ? title(selected) : "Your workspace"}</div>
+				<div class="pocket-heading">
+					<div class="pocket-title">${selected ? title(selected) : "Your workspace"}</div>
+					${selected &&
+					html`<button
+						type="button"
+						class="pocket-directory-trigger"
+						data-action="cwd"
+						aria-label=${"Working directory: " + (configuration?.current?.cwd ?? "Loading")}
+						title=${configuration?.current?.cwd ?? ""}
+						disabled=${!configuration?.canConfigure}
+						onClick=${() => openSheet("directory")}
+					>
+						<${Icon} name="folder" /><span>${configuration?.current?.cwd ?? "Loading directory…"}</span>
+					</button>`}
+				</div>
 				<span class="pocket-status">${view?.live.busy ? "Working" : view ? "Ready" : ""}</span>${selected &&
 				html`<button data-action="conversation" onClick=${() => openSheet("conversation")}>
 						Conversation
@@ -705,6 +741,18 @@ function App() {
 			${selected &&
 			!extensions.page &&
 			html`<div class="composer-wrap pocket-composer">
+				<div class="pocket-model-bar">
+					<button
+						type="button"
+						class="pocket-model-trigger"
+						data-action="model"
+						aria-haspopup="dialog"
+						disabled=${!configuration?.canConfigure}
+						onClick=${() => openSheet("model")}
+					>
+						<span>${configuration?.current?.model ?? "Loading model…"}</span><${Icon} name="chevron" />
+					</button>
+				</div>
 				<form class="composer" onSubmit=${send}>
 					<textarea
 						ref=${composer}
@@ -809,6 +857,20 @@ function App() {
 			target=${selected}
 			person=${person}
 			client=${client}
+			close=${() => openSheet(null)}
+			error=${error}
+		/>`}
+		${(sheet === "model" || sheet === "directory") &&
+		selected &&
+		configuration &&
+		html`<${sheet === "model" ? ModelPicker : DirectoryPicker}
+			key=${person.id + ":" + selected.key + ":" + selected.incarnation}
+			target=${selected}
+			person=${person}
+			value=${configuration}
+			client=${client}
+			busy=${view?.live.busy ?? true}
+			applied=${configurationApplied}
 			close=${() => openSheet(null)}
 			error=${error}
 		/>`}

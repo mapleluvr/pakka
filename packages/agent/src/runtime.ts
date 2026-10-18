@@ -2,6 +2,7 @@ import { DurableAdapter, type ManagedAdapterPort } from "./durable-adapter.ts";
 import { createHostWithAdapter } from "./host.ts";
 import type {
 	CatalogOptions,
+	ConversationConfigurationChange,
 	CatalogEnroll,
 	RuntimeCatalog,
 	ConversationRef,
@@ -43,7 +44,7 @@ export async function createRuntime(options: RuntimeOptions): Promise<Runtime> {
 		const attaching = pending.get(ref.key);
 		if (attaching) return attaching;
 		const operation = createHostWithAdapter(
-			port.profileOptions(ref.profile),
+			await port.optionsFor(ref),
 			(_opts, notify, control) => port.attach(ref, notify, control),
 			2,
 		)
@@ -70,6 +71,8 @@ export async function createRuntime(options: RuntimeOptions): Promise<Runtime> {
 		root: () => root,
 		view: () => port.view(),
 		profileChoices: () => port.profileChoices(),
+		configuration: (ref: ConversationRef) => port.configuration(ref),
+		directoryRoots: (profiles?: readonly string[]) => port.directoryRoots(profiles),
 		conversation: attach,
 		store: (options: RuntimeStoreOptions) => port.store(options),
 		jobs: (options: RuntimeJobOptions) => port.jobs(options),
@@ -86,6 +89,15 @@ export async function createRuntime(options: RuntimeOptions): Promise<Runtime> {
 			const catalog = port.catalog(options);
 			return Object.freeze({
 				...catalog,
+				configureAgent: async (
+					ref: ConversationRef,
+					change: ConversationConfigurationChange,
+					check: () => void,
+				) => {
+					const member = await catalog.configureAgent(ref, change, check);
+					await attach(member.ref);
+					return member;
+				},
 				configure: async (ref: ConversationRef, profile: string, check: () => void) => {
 					const member = await catalog.configure(ref, profile, check);
 					await attach(member.ref);

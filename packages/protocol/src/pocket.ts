@@ -83,9 +83,18 @@ export interface PocketSnapshot {
 		readonly cost: number | null;
 	};
 }
+export interface PocketDirectoryView {
+	readonly path: string;
+	readonly parent: string | null;
+	readonly roots: readonly string[];
+	readonly directories: readonly string[];
+	readonly places: readonly string[];
+	readonly truncated: boolean;
+}
 export interface PocketConfiguration {
 	readonly ref: AgentRef;
-	readonly choices: readonly { readonly id: string; readonly model: string }[];
+	readonly current?: { readonly model: string; readonly cwd: string };
+	readonly choices: readonly { readonly id: string; readonly model: string; readonly cwd?: string }[];
 	readonly canConfigure: boolean;
 	readonly usage: PocketSnapshot["usage"];
 	readonly session: {
@@ -227,7 +236,13 @@ export type PocketNotificationCommand =
 			};
 	  };
 export type PocketOriginalCommand =
-	| { readonly op: "create"; readonly requestId: string; readonly name: string; readonly profile: string }
+	| {
+			readonly op: "create";
+			readonly requestId: string;
+			readonly name: string;
+			readonly profile: string;
+			readonly inherit?: AgentRef;
+	  }
 	| {
 			readonly op: "conversation.set";
 			readonly target: AgentRef;
@@ -267,6 +282,17 @@ export type PocketCommand =
 	| PocketOriginalCommand
 	| { readonly op: "conversation.lookup"; readonly original: PocketOriginalCommand }
 	| { readonly op: "configure"; readonly target: AgentRef; readonly profile: string }
+	| {
+			readonly op: "configure.agent";
+			readonly target: AgentRef;
+			readonly change: { readonly model?: string; readonly cwd?: string };
+	  }
+	| {
+			readonly op: "directory.list";
+			readonly target: AgentRef;
+			readonly path?: string;
+			readonly places?: readonly string[];
+	  }
 	| {
 			readonly op: "read";
 			readonly target: AgentRef;
@@ -338,6 +364,7 @@ export type PocketResult =
 	  }
 	| { readonly kind: "reference"; readonly ref: AgentRef }
 	| { readonly kind: "configuration"; readonly configuration: PocketConfiguration }
+	| { readonly kind: "directories"; readonly target: AgentRef; readonly view: PocketDirectoryView }
 	| { readonly kind: "notification"; readonly target: AgentRef; readonly status: PocketNotificationStatus }
 	| { readonly kind: "credential"; readonly status: PocketCredentialStatus }
 	| { readonly kind: "collaboration"; readonly snapshot: PocketCollaborationView }
@@ -550,16 +577,37 @@ function snapshot(v: unknown): v is PocketSnapshot {
 			(typeof v.usage.cost === "number" && Number.isFinite(v.usage.cost) && v.usage.cost >= 0))
 	);
 }
+const configurationText = (v: unknown, max: number): v is string =>
+	string(v, max) && !!v && v.trim() === v && !/[\x00-\x1f\x7f]/.test(v);
+const pathList = (v: unknown, max: number): v is string[] =>
+	Array.isArray(v) && v.length <= max && v.every((row) => configurationText(row, 8192));
+function directoryView(v: unknown): v is PocketDirectoryView {
+	return (
+		shape(v, ["path", "parent", "roots", "directories", "places", "truncated"]) &&
+		configurationText(v.path, 8192) &&
+		(v.parent === null || configurationText(v.parent, 8192)) &&
+		pathList(v.roots, 64) &&
+		pathList(v.directories, 128) &&
+		pathList(v.places, 32) &&
+		typeof v.truncated === "boolean"
+	);
+}
 function configuration(v: unknown): v is PocketConfiguration {
 	if (
-		!shape(v, ["ref", "choices", "canConfigure", "usage", "session"]) ||
+		!shape(v, ["ref", "choices", "canConfigure", "usage", "session"], ["current"]) ||
+		(v.current !== undefined &&
+			(!shape(v.current, ["model", "cwd"]) ||
+				!configurationText(v.current.model, 256) ||
+				!configurationText(v.current.cwd, 8192))) ||
 		!ref(v.ref) ||
 		typeof v.canConfigure !== "boolean" ||
 		!Array.isArray(v.choices) ||
 		v.choices.length > 64 ||
 		!v.choices.every(
 			(choice) =>
-				shape(choice, ["id", "model"]) &&
+				shape(choice, ["id", "model"], ["cwd"]) &&
+				(choice.cwd === undefined ||
+					(string(choice.cwd, 8192) && !!choice.cwd && !/[\x00-\x1f\x7f]/.test(choice.cwd))) &&
 				identity(choice.id) &&
 				string(choice.model, 256) &&
 				!!choice.model &&
@@ -799,12 +847,29 @@ function command(v: unknown): v is PocketCommand {
 			return shape(v, ["op"]);
 		case "create":
 			return (
-				shape(v, ["op", "requestId", "name", "profile"]) &&
+				shape(v, ["op", "requestId", "name", "profile"], ["inherit"]) &&
+				(v.inherit === undefined || ref(v.inherit)) &&
 				identity(v.requestId) &&
 				identity(v.profile) &&
 				string(v.name, 80) &&
 				!!v.name.trim() &&
 				!/[\x00-\x1f\x7f]/.test(v.name)
+			);
+		case "configure.agent":
+			return (
+				shape(v, ["op", "target", "change"]) &&
+				ref(v.target) &&
+				shape(v.change, [], ["model", "cwd"]) &&
+				Object.keys(v.change).length > 0 &&
+				(v.change.model === undefined || configurationText(v.change.model, 256)) &&
+				(v.change.cwd === undefined || configurationText(v.change.cwd, 8192))
+			);
+		case "directory.list":
+			return (
+				shape(v, ["op", "target"], ["path", "places"]) &&
+				ref(v.target) &&
+				(v.path === undefined || configurationText(v.path, 8192)) &&
+				(v.places === undefined || pathList(v.places, 32))
 			);
 		case "configure":
 			return shape(v, ["op", "target", "profile"]) && ref(v.target) && identity(v.profile);
@@ -990,6 +1055,8 @@ function result(v: unknown): v is PocketResult {
 				integer(v.status.version) &&
 				typeof v.status.configured === "boolean"
 			);
+		case "directories":
+			return shape(v, ["kind", "target", "view"]) && ref(v.target) && directoryView(v.view);
 		case "configuration":
 			return shape(v, ["kind", "configuration"]) && configuration(v.configuration);
 		case "conversation":

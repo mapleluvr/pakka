@@ -128,7 +128,7 @@ test(
 			await page.click("[data-dictate]");
 			await page.wait("globalThis.__voiceTest.instances.length===2");
 			await page.click("[data-action=settings]");
-			await page.wait('document.querySelector("[data-model-choice]")');
+			await page.wait('document.querySelector("[data-cost]")');
 			assert.equal(await page.evaluate("globalThis.__voiceTest.instances[1].aborts"), 1);
 			await page.evaluate('globalThis.__voiceTest.instances[1].emit([["LATE-BEHIND-SETTINGS",true]],true)');
 			assert.equal(await page.evaluate('document.querySelector("textarea[name=message]").value'), "");

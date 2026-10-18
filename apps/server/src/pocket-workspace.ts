@@ -11,13 +11,21 @@ import type {
 	DeliveryReceipt,
 	CatalogMember,
 	JsonObject,
+	ConversationConfigurationChange,
 } from "@pakka/agent";
 import type { PocketAuthority, PocketPeople, PocketPermission, PocketPerson } from "./pocket-people.ts";
+import {
+	listDirectories,
+	resolveDirectory,
+	directoryWithin,
+	type PocketDirectories,
+} from "./pocket-directories.ts";
 
 export interface PocketCreate {
 	readonly requestId: string;
 	readonly name: string;
 	readonly profile: string;
+	readonly inherit?: ConversationRef;
 }
 export interface PocketFork extends PocketCreate {
 	readonly entryId: string;
@@ -55,7 +63,8 @@ export interface PocketInputReceipt {
 }
 export interface PocketConfiguration {
 	readonly ref: ConversationRef;
-	readonly choices: readonly { readonly id: string; readonly model: string }[];
+	readonly current: { readonly model: string; readonly cwd: string };
+	readonly choices: readonly { readonly id: string; readonly model: string; readonly cwd?: string }[];
 	readonly canConfigure: boolean;
 	readonly usage: ConversationSnapshot["usage"];
 	/** Session totals are visible only to a global admin, never inferred from a single visible Conversation. */
@@ -75,6 +84,11 @@ export interface PocketWorkspaceClient {
 	): Promise<ConversationRef | null>;
 	create(input: PocketCreate): Promise<ConversationRef>;
 	configure(ref: ConversationRef, profile: string): Promise<ConversationRef>;
+	configureAgent(ref: ConversationRef, change: ConversationConfigurationChange): Promise<ConversationRef>;
+	directories(
+		ref: ConversationRef,
+		input: { readonly path?: string; readonly places?: readonly string[] },
+	): Promise<PocketDirectories>;
 	fork(ref: ConversationRef, input: PocketFork): Promise<ConversationRef>;
 	read(ref: ConversationRef, page?: ConversationReadOptions): Promise<ConversationSnapshot>;
 	display(
@@ -247,6 +261,13 @@ export function createPocketWorkspace(options: PocketWorkspaceOptions): PocketWo
 				)
 					throw new Error("Pocket profile ceiling denied");
 			};
+			const ceiling = () => {
+				const value = options.profileCeiling(current());
+				if (!Array.isArray(value) || value.length > 64 || !value.every(key))
+					throw new Error("Invalid profile ceiling");
+				return value;
+			};
+			const roots = () => runtime.directoryRoots(ceiling());
 			const create = (
 				input: PocketCreate,
 				source?: ConversationRef,
@@ -257,7 +278,7 @@ export function createPocketWorkspace(options: PocketWorkspaceOptions): PocketWo
 				if (
 					!input ||
 					Object.keys(input).some(
-						(k) => !["requestId", "name", "profile", ...(source ? ["entryId"] : [])].includes(k),
+						(k) => !["requestId", "name", "profile", ...(source ? ["entryId"] : ["inherit"])].includes(k),
 					) ||
 					!key(input.requestId) ||
 					typeof input.name !== "string" ||
@@ -271,15 +292,26 @@ export function createPocketWorkspace(options: PocketWorkspaceOptions): PocketWo
 						requestId: input.requestId,
 						name: input.name.trim(),
 						profile: input.profile,
+						...(input.inherit ? { inherit: structuredClone(input.inherit) } : {}),
 					}),
 					from = source ? structuredClone(source) : undefined,
 					personId = current().id;
 				const fingerprint = hash({ ...saved, source: from ?? null, entryId: entryId ?? null }),
 					id = "human-" + hash([personId, saved.requestId]).slice(0, 40);
+				let inheritedConfiguration: { model: string; cwd: string } | undefined;
 				const authorize = () => {
 					check("create");
 					profileCheck(saved.profile);
 					if (from) check("manage", from);
+					if (saved.inherit) check("manage", saved.inherit);
+					if (
+						inheritedConfiguration &&
+						(!runtime
+							.profileChoices()
+							.some((row) => ceiling().includes(row.id) && row.model === inheritedConfiguration!.model) ||
+							!directoryWithin(inheritedConfiguration.cwd, roots()))
+					)
+						denied();
 				};
 				return serial(async () => {
 					authorize();
@@ -299,6 +331,20 @@ export function createPocketWorkspace(options: PocketWorkspaceOptions): PocketWo
 						return prior.ref;
 					}
 					if (lookupOnly) return null;
+					const inheritedRef = saved.inherit ?? (from?.profile === saved.profile ? from : undefined);
+					if (inheritedRef) {
+						await member(inheritedRef, authorize);
+						const inherited = await runtime.configuration(inheritedRef);
+						inheritedConfiguration = inherited;
+						if (
+							!runtime
+								.profileChoices()
+								.some((row) => ceiling().includes(row.id) && row.model === inherited.model)
+						)
+							denied();
+						await resolveDirectory(inherited.cwd, roots());
+						authorize();
+					}
 					const rows = await catalog.enroll(
 						[
 							{
@@ -314,6 +360,7 @@ export function createPocketWorkspace(options: PocketWorkspaceOptions): PocketWo
 									fingerprint,
 								},
 								...(from ? { fork: { source: from, entryId: entryId! } } : {}),
+								...(saved.inherit ? { inherit: saved.inherit } : {}),
 							},
 						],
 						authorize,
@@ -467,9 +514,11 @@ export function createPocketWorkspace(options: PocketWorkspaceOptions): PocketWo
 						throw new Error("Invalid profile ceiling");
 					const choices = runtime.profileChoices().filter((row) => ceiling.includes(row.id));
 					const view = runtime.view();
+					const configuration = await runtime.configuration(ref);
 					authorize();
 					return frozen({
 						ref,
+						current: configuration,
 						choices,
 						canConfigure: ["admin", "driver"].includes(person.role),
 						usage: snapshot.usage,
@@ -493,6 +542,44 @@ export function createPocketWorkspace(options: PocketWorkspaceOptions): PocketWo
 					input: PocketCreate,
 					fork?: { readonly source: ConversationRef; readonly entryId: string },
 				) => create(input, fork?.source, fork?.entryId, true),
+				directories: async (
+					raw: ConversationRef,
+					input: { readonly path?: string; readonly places?: readonly string[] },
+				) => {
+					const ref = structuredClone(raw),
+						saved = structuredClone(input),
+						authorize = () => check("manage", ref);
+					authorize();
+					await member(ref, authorize);
+					const config = await runtime.configuration(ref);
+					const result = await listDirectories(roots(), config.cwd, saved, authorize);
+					authorize();
+					return result;
+				},
+				configureAgent: (raw: ConversationRef, rawChange: ConversationConfigurationChange) =>
+					serial(async () => {
+						let validatedCwd: string | undefined;
+						const ref = structuredClone(raw),
+							change = structuredClone(rawChange),
+							authorize = () => {
+								check("manage", ref);
+								if (validatedCwd !== undefined && !directoryWithin(validatedCwd, roots())) denied();
+								if (
+									change?.model !== undefined &&
+									!runtime
+										.profileChoices()
+										.some((row) => ceiling().includes(row.id) && row.model === change.model)
+								)
+									denied();
+							};
+						authorize();
+						await member(ref, authorize);
+						if (change?.cwd !== undefined) validatedCwd = await resolveDirectory(change.cwd, roots());
+						authorize();
+						const result = await catalog.configureAgent(ref, change, authorize);
+						authorize();
+						return result.ref;
+					}),
 				configure: (raw: ConversationRef, profile: string) =>
 					serial(async () => {
 						const ref = structuredClone(raw),

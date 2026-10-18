@@ -290,6 +290,8 @@ export interface RuntimeLimits {
 }
 export interface ConversationProfile {
 	readonly id: string;
+	/** Bootstrap-approved project directory; inherits HostOptions.cwd when omitted. */
+	readonly cwd?: string;
 	/** Bootstrap-approved ID on the Runtime provider; inherits the default when omitted. */
 	readonly model?: string;
 	readonly systemPrompt?: string;
@@ -328,7 +330,14 @@ export interface RuntimeContextSource {
 		input: Readonly<{ target: ConversationRef; signal: AbortSignal | undefined }>,
 	): RuntimeContextValue | Promise<RuntimeContextValue>;
 }
+export interface ConversationConfiguration {
+	readonly model: string;
+	readonly cwd: string;
+}
+export type ConversationConfigurationChange = { readonly model?: string; readonly cwd?: string };
 export interface RuntimeOptions extends HostOptions {
+	/** Explicit server directory roots; defaults to the approved profiles' cwd trees. Not an OS sandbox. */
+	readonly cwdRoots?: readonly string[];
 	readonly limits: RuntimeLimits;
 	/** Trusted UUID for create-once storage placement; an existing directory requires explicit reopen. */
 	readonly reservedSessionId?: string;
@@ -481,6 +490,8 @@ export interface CatalogSnapshot {
 	readonly members: readonly CatalogMember[];
 }
 export interface CatalogEnroll extends ConversationSpec {
+	/** Inherit model/cwd only, without changing the approved base profile's tools or instructions. */
+	readonly inherit?: ConversationRef;
 	readonly data: JsonObject;
 	readonly lifetime?: MemberLifetime;
 	readonly source?: ConversationRef;
@@ -518,6 +529,11 @@ export interface RuntimeCatalog {
 		check: () => void,
 	): Promise<CatalogSnapshot>;
 	configure(ref: ConversationRef, profile: string, check: () => void): Promise<CatalogMember>;
+	configureAgent(
+		ref: ConversationRef,
+		change: ConversationConfigurationChange,
+		check: () => void,
+	): Promise<CatalogMember>;
 	deliver(spec: CatalogDeliverySpec, check: () => void): Promise<DeliveryReceipt>;
 	receipt(id: string, check: () => void): Promise<DeliveryReceipt>;
 	wait(id: string, check: () => void, signal?: AbortSignal): Promise<DeliveryReceipt>;
@@ -545,7 +561,9 @@ export interface Runtime {
 	root(): Host;
 	view(): RuntimeView;
 	/** Host-only public metadata; contains no credentials, instructions or tool code. */
-	profileChoices(): readonly { readonly id: string; readonly model: string }[];
+	profileChoices(): readonly { readonly id: string; readonly model: string; readonly cwd: string }[];
+	configuration(ref: ConversationRef): Promise<ConversationConfiguration>;
+	directoryRoots(profiles?: readonly string[]): readonly string[];
 	createConversation(spec: ConversationSpec): Promise<ConversationRef>;
 	catalog(options: CatalogOptions): RuntimeCatalog;
 	store(options: RuntimeStoreOptions): RuntimeStore;

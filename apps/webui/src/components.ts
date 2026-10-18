@@ -2,6 +2,10 @@ import { h, type ComponentChildren, type ButtonHTMLAttributes } from "preact";
 
 const iconPaths = {
 	menu: ["M4 6h16M4 12h16M4 18h16"],
+	check: ["M5 12l4 4L19 6"],
+	star: ["m12 3 2.8 5.7 6.3.9-4.6 4.4 1.1 6.3-5.6-3-5.6 3 1.1-6.3L3 9.6l6.2-.9Z"],
+	up: ["M12 20V4M5 11l7-7 7 7"],
+	chevron: ["m7 10 5 5 5-5"],
 	close: ["M6 6l12 12M18 6 6 18"],
 	plus: ["M12 4v16M4 12h16"],
 	conversation: ["M20 15a2 2 0 0 1-2 2H8l-5 4V6a2 2 0 0 1 2-2h13a2 2 0 0 1 2 2Z"],

@@ -82,6 +82,7 @@ export function configuration(value: unknown): asserts value is WorkerConfigurat
 		"systemPrompt",
 		"limits",
 		"profiles",
+		"cwdRoots",
 		"reservedSessionId",
 		"reopenSessionFile",
 	]);
@@ -94,7 +95,12 @@ export function configuration(value: unknown): asserts value is WorkerConfigurat
 			runtime.apiKey,
 			runtime.reservedSessionId,
 		].every((field) => typeof field === "string" && field.length > 0) ||
-		!object(runtime.limits)
+		!object(runtime.limits) ||
+		(runtime.cwdRoots !== undefined &&
+			(!Array.isArray(runtime.cwdRoots) ||
+				!runtime.cwdRoots.length ||
+				runtime.cwdRoots.length > 64 ||
+				!runtime.cwdRoots.every((path) => typeof path === "string" && path.length > 0)))
 	)
 		throw new Error("Invalid worker runtime preset");
 	if (
@@ -105,13 +111,14 @@ export function configuration(value: unknown): asserts value is WorkerConfigurat
 					!object(profile) ||
 					!identity(profile.id) ||
 					typeof profile.systemPrompt !== "string" ||
+					(profile.cwd !== undefined && (typeof profile.cwd !== "string" || !profile.cwd)) ||
 					(profile.model !== undefined &&
 						(typeof profile.model !== "string" ||
 							!profile.model ||
 							profile.model.length > 256 ||
 							profile.model.trim() !== profile.model ||
 							/[\x00-\x1f\x7f]/.test(profile.model))) ||
-					Object.keys(profile).some((key) => !["id", "systemPrompt", "model"].includes(key)),
+					Object.keys(profile).some((key) => !["id", "systemPrompt", "model", "cwd"].includes(key)),
 			))
 	)
 		throw new Error("Unsupported worker profiles");

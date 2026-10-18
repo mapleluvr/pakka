@@ -10,7 +10,7 @@ type Page = Awaited<ReturnType<Browser["page"]>>;
 async function openSettings(page: Page) {
 	await page.wait('document.querySelector("[data-action=settings]")');
 	await page.click("[data-action=settings]");
-	await page.wait('document.querySelector("[data-model-choice]")');
+	await page.wait('document.querySelector("[data-cost]")');
 }
 async function login(page: Page) {
 	await page.wait('document.querySelector("[data-action=signin]")');
@@ -38,16 +38,22 @@ test(
 			browser = await ownedBrowser(join(m.f.root, "recovery-browser"));
 			const page = await browser.page(app.http.origin + "/#signin=" + app.initialOwner.token);
 			await login(page);
-			await openSettings(page);
+			await page.wait('document.querySelector("[data-action=model]")?.disabled===false');
+			await page.click("[data-action=model]");
+			await page.wait('document.querySelector("[data-pick-model]")');
 			const before = app.runtime.view().conversations.find((ref) => ref.key !== "root")!;
 			await page.evaluate(
-				`(()=>{const original=globalThis.fetch;globalThis.__configureCount=0;globalThis.__restoreFetch=()=>{globalThis.fetch=original;};globalThis.fetch=async(...args)=>{if(typeof args[1]?.body==='string'&&JSON.parse(args[1].body).command?.op==='configure'){globalThis.__configureCount++;const response=await original(...args);await response.arrayBuffer();throw Error('TEST LOST COMMITTED CONFIGURATION RESPONSE');}return original(...args);};const select=document.querySelector('[data-model-choice]');select.value='alternate';select.dispatchEvent(new Event('change',{bubbles:true}));})()`,
+				`(()=>{const original=globalThis.fetch;globalThis.__configureCount=0;globalThis.__restoreFetch=()=>{globalThis.fetch=original;};globalThis.fetch=async(...args)=>{if(typeof args[1]?.body==='string'&&JSON.parse(args[1].body).command?.op==='configure.agent'){globalThis.__configureCount++;const response=await original(...args);await response.arrayBuffer();throw Error('TEST LOST COMMITTED CONFIGURATION RESPONSE');}return original(...args);};})()`,
 			);
-			await page.click("[data-save-configuration]");
+			await page.click("[data-pick-model=alternate-model]");
 			await page.wait('document.querySelector("[data-reload-configuration]")?.disabled===false');
-			assert.equal(await page.evaluate('document.querySelector("[data-save-configuration]").disabled'), true);
+			assert.equal(
+				await page.evaluate('[...document.querySelectorAll("[data-pick-model]")].every(row=>row.disabled)'),
+				true,
+			);
 			const changed = app.runtime.view().conversations.find((ref) => ref.key === before.key)!;
-			assert.equal(changed.profile, "alternate");
+			assert.equal(changed.profile, "default");
+			assert.equal((await app.runtime.configuration(changed)).model, "alternate-model");
 			assert.notEqual(changed.incarnation, before.incarnation);
 			await page.evaluate("globalThis.__restoreFetch()");
 			await page.click("[data-reload-configuration]");
@@ -104,10 +110,16 @@ test(
 			const second = app.runtime.view().conversations.find((ref) => ref.profile === "alternate")!;
 			await page.click('[data-conversation="' + second.conversationId + '"]');
 			await openSettings(page);
-			assert.equal(await page.evaluate('document.querySelector("[data-model-choice]").value'), "alternate");
+			assert.equal(
+				await page.evaluate('document.querySelector("[data-settings-model]").textContent'),
+				"alternate-model",
+			);
 			await page.evaluate("globalThis.__releaseSettings()");
 			await page.evaluate("new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))");
-			assert.equal(await page.evaluate('document.querySelector("[data-model-choice]").value'), "alternate");
+			assert.equal(
+				await page.evaluate('document.querySelector("[data-settings-model]").textContent'),
+				"alternate-model",
+			);
 			assert.equal(await page.evaluate('document.querySelector(".pocket-title").innerText'), "Second");
 			assert.equal(m.f.requests.length, 0);
 		} finally {

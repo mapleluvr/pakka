@@ -19,7 +19,14 @@ test("Model consumers: finite server bootstrap keeps the approved model through 
 				schema: "pakka.server.v1",
 				runtime: {
 					...m.config,
-					profiles: [{ id: "alternate", systemPrompt: "APPROVED-MODEL", model: "alternate-local-model" }],
+					profiles: [
+						{
+							id: "alternate",
+							systemPrompt: "APPROVED-MODEL",
+							model: "alternate-local-model",
+							cwd: process.cwd(),
+						},
+					],
 				},
 				mas: { namespace: "model-consumer", maxDeliveries: 8, maxPending: 2 },
 				members: [{ key: "member", owner: "operator", profile: "alternate" }],
@@ -63,7 +70,14 @@ test(
 							...m.config,
 							dataDir: join(m.f.root, "worker-model"),
 							reservedSessionId: "88888888-8888-4888-8888-888888888888",
-							profiles: [{ id: "alternate", systemPrompt: "WORKER-MODEL", model: "alternate-local-model" }],
+							profiles: [
+								{
+									id: "alternate",
+									systemPrompt: "WORKER-MODEL",
+									model: "alternate-local-model",
+									cwd: process.cwd(),
+								},
+							],
 						},
 						catalog: { namespace: "model-worker", maxDeliveries: 8, maxPending: 2 },
 					},

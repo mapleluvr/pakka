@@ -176,7 +176,7 @@ try {
 	);
 	assert.equal(requests.length, 0);
 	await owner.click("[data-action=settings]");
-	await owner.wait('document.querySelector("[data-model-choice]")');
+	await owner.wait('document.querySelector("[data-cost]")');
 	assert.match(String(await owner.evaluate('document.querySelector("[data-cost]").innerText')), /unknown/i);
 	await owner.wait('document.querySelector("[data-credential-input]")?.disabled===false');
 	await owner.type("[data-credential-input]", "SYNTHETIC-INSTALLED-REPLACEMENT");
@@ -190,12 +190,12 @@ try {
 		),
 		false,
 	);
-	await owner.evaluate(
-		'(()=>{const select=document.querySelector("[data-model-choice]");select.value="alternate";select.dispatchEvent(new Event("change",{bubbles:true}));})()',
-	);
-	await owner.click("[data-save-configuration]");
+	await owner.click('[aria-label="Close settings"]');
+	await owner.click("[data-action=model]");
+	await owner.wait('document.querySelector("[data-pick-model=installed-alternate]")');
+	await owner.click("[data-pick-model=installed-alternate]");
 	await owner.wait(
-		'!document.querySelector("[data-save-configuration]")&&document.querySelector("[data-action=send]")?.disabled===false',
+		'!document.querySelector("[data-pick-model]")&&document.querySelector("[data-action=model]")?.textContent.includes("installed-alternate")&&document.querySelector("[data-action=send]")?.disabled===false',
 	);
 	await owner.type("textarea[name=message]", "INSTALLED-EXPLICIT-WORK");
 	await owner.click("[data-action=send]");
@@ -219,8 +219,9 @@ try {
 	assert.equal(await viewer.evaluate('document.querySelector("[data-action=send]").disabled'), true);
 	assert.equal(await viewer.evaluate("document.documentElement.scrollWidth > innerWidth"), false);
 	await viewer.click("[data-action=settings]");
-	await viewer.wait('document.querySelector("[data-model-choice]")');
-	assert.equal(await viewer.evaluate('document.querySelector("[data-model-choice]").disabled'), true);
+	await viewer.wait('document.querySelector("[data-cost]")');
+	assert.equal(await viewer.evaluate('document.querySelector("[data-action=model]").disabled'), true);
+	assert.equal(await viewer.evaluate('document.querySelector("[data-action=cwd]").disabled'), true);
 	assert.equal(await viewer.evaluate('Boolean(document.querySelector("[data-session-budget]"))'), false);
 	assert.equal(await viewer.evaluate('Boolean(document.querySelector("[data-credential-input]"))'), false);
 	await viewer.click('[aria-label="Close settings"]');
@@ -249,8 +250,11 @@ try {
 	await owner.click("[data-conversation]");
 	await owner.wait('document.querySelector("main").innerText.includes("INSTALLED-POCKET-ANSWER")');
 	await owner.click("[data-action=settings]");
-	await owner.wait('document.querySelector("[data-model-choice]")');
-	assert.equal(await owner.evaluate('document.querySelector("[data-model-choice]").value'), "alternate");
+	await owner.wait('document.querySelector("[data-cost]")');
+	assert.equal(
+		await owner.evaluate('document.querySelector("[data-settings-model]").textContent'),
+		"installed-alternate",
+	);
 	assert.match(
 		String(await owner.evaluate('document.querySelector("[data-session-budget]").innerText')),
 		/1 \/ 3/,

@@ -9,7 +9,7 @@ test("Pocket configuration: passive frozen choices and scoped usage hide secrets
 	const m = await runtimeFixture({
 		apiKey: "PRIVATE-SETTINGS-KEY",
 		profiles: [
-			{ id: "alternate", model: "alternate-model" },
+			{ id: "alternate", model: "alternate-model", cwd: process.cwd() },
 			{ id: "secret-profile", model: "PRIVATE-MODEL-CANARY" },
 		],
 	});
@@ -28,8 +28,8 @@ test("Pocket configuration: passive frozen choices and scoped usage hide secrets
 		const owner = await client.configuration(ref);
 		assert.ok(Object.isFrozen(owner) && Object.isFrozen(owner.choices));
 		assert.deepEqual(owner.choices, [
-			{ id: "default", model: "local-model" },
-			{ id: "alternate", model: "alternate-model" },
+			{ id: "default", model: "local-model", cwd: m.f.cwd },
+			{ id: "alternate", model: "alternate-model", cwd: process.cwd() },
 		]);
 		assert.equal(owner.canConfigure, true);
 		assert.deepEqual(owner.session?.budget, { primaryAttempts: 0, auxiliaryAttempts: 0 });

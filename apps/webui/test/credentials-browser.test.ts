@@ -76,7 +76,7 @@ test(
 			await viewer.click('[aria-label="Toggle conversations"]');
 			await viewer.click("[data-conversation]");
 			await viewer.click("[data-action=settings]");
-			await viewer.wait('document.querySelector("[data-model-choice]")');
+			await viewer.wait('document.querySelector("[data-cost]")');
 			assert.equal(
 				await viewer.evaluate('Boolean(document.querySelector("[data-credential-input]"))'),
 				false,

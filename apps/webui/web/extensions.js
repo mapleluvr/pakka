@@ -6,6 +6,8 @@ import { createExtensionClient } from "@pakka/webui/client";
 import { decodeValue } from "@pakka/webui/extension";
 
 const html = htm.bind(h);
+// Presentation only: bundled tools still use the same public extension slots and permission checks.
+const webuiTools = new Set(["workspace-files", "workspace-schedules", "workspace-memory", "workspace-hooks"]);
 class ContentBoundary extends Component {
 	state = { failed: false };
 	static getDerivedStateFromError() {
@@ -302,6 +304,23 @@ export function useExtensions({ person, target, csrf, notice, error, navigate, o
 		notice: (text) => latest.current.notice(text),
 		navigate: (ref) => latest.current.navigate(ref),
 	};
+	const navigation = (builtIn) =>
+		registrations
+			.filter((row) => row.phase === "ready" && webuiTools.has(row.manifest.id) === builtIn)
+			.flatMap((registration) =>
+				registration.manifest.interfaces
+					.filter((view) => view.navigation)
+					.map(
+						(view) =>
+							html`<button
+								key=${registration.manifest.id + view.id}
+								data-interface=${registration.manifest.id + "-" + view.id}
+								onClick=${() => open(registration, view.id)}
+							>
+								${view.title}
+							</button>`,
+					),
+			);
 	return {
 		page: surface?.view.slot === "page",
 		suggestions: (draft, complete) =>
@@ -336,22 +355,8 @@ export function useExtensions({ person, target, csrf, notice, error, navigate, o
 			setSurface(null);
 			setOverlay(null);
 		},
-		navigation: registrations
-			.filter((row) => row.phase === "ready")
-			.flatMap((registration) =>
-				registration.manifest.interfaces
-					.filter((view) => view.navigation)
-					.map(
-						(view) =>
-							html`<button
-								key=${registration.manifest.id + view.id}
-								data-interface=${registration.manifest.id + "-" + view.id}
-								onClick=${() => open(registration, view.id)}
-							>
-								${view.title}
-							</button>`,
-					),
-			),
+		workspaceNavigation: navigation(true),
+		navigation: navigation(false),
 		button: html`<button
 			data-action="commands"
 			onClick=${() => {

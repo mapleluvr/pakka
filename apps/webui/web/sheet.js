@@ -1,10 +1,32 @@
 import { h } from "preact";
-import { useLayoutEffect, useRef } from "preact/hooks";
+import { useLayoutEffect, useRef, useState } from "preact/hooks";
 import htm from "htm";
 const html = htm.bind(h);
 
 /** Shell-owned focus/back lifecycle. Closing a view never cancels an admitted operation. */
-export function Sheet({ label, close, children }) {
+export function Sheet({ label, close, children, anchor }) {
+	const [position, setPosition] = useState(undefined);
+	useLayoutEffect(() => {
+		if (!anchor) return;
+		const place = () => {
+			const rect = anchor.getBoundingClientRect(),
+				width = Math.min(360, innerWidth - 24),
+				height = Math.min(480, innerHeight - 24);
+			const above = rect.top - 20;
+			const bottom = above >= 200 ? innerHeight - rect.top + 8 : 12;
+			setPosition({
+				position: "fixed",
+				width: width + "px",
+				left: Math.max(12, Math.min(rect.left, innerWidth - width - 12)) + "px",
+				bottom: bottom + "px",
+				maxHeight: Math.min(height, innerHeight - bottom - 12) + "px",
+				margin: 0,
+			});
+		};
+		place();
+		window.addEventListener("resize", place);
+		return () => window.removeEventListener("resize", place);
+	}, [anchor]);
 	const panel = useRef(null),
 		onClose = useRef(close);
 	onClose.current = close;
@@ -63,6 +85,7 @@ export function Sheet({ label, close, children }) {
 		<section
 			ref=${panel}
 			class="pocket-sheet"
+			style=${position}
 			role="dialog"
 			aria-modal="true"
 			aria-label=${label}

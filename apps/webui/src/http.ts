@@ -303,6 +303,8 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 			case "abort":
 			case "conversation.set":
 			case "configure":
+			case "configure.agent":
+			case "directory.list":
 				permission = "manage";
 				resource = command.target.conversationId;
 				break;
@@ -499,8 +501,20 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 						requestId: command.requestId,
 						name: command.name,
 						profile: command.profile,
+						...(command.inherit ? { inherit: command.inherit } : {}),
 					}),
 				};
+			case "directory.list":
+				return {
+					kind: "directories",
+					target: command.target,
+					view: await client.directories(command.target, {
+						...(command.path === undefined ? {} : { path: command.path }),
+						...(command.places === undefined ? {} : { places: command.places }),
+					}),
+				};
+			case "configure.agent":
+				return { kind: "reference", ref: await client.configureAgent(command.target, command.change) };
 			case "configure":
 				return { kind: "reference", ref: await client.configure(command.target, command.profile) };
 			case "fork":

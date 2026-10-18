@@ -108,7 +108,7 @@ function runtimeConfig(value: unknown): value is RuntimeOptions {
 		shape(
 			value,
 			["cwd", "dataDir", "endpoint", "model", "apiKey", "systemPrompt", "limits"],
-			["reopenSessionFile", "reservedSessionId", "maxOutputTokens", "profiles", "inference"],
+			["reopenSessionFile", "reservedSessionId", "maxOutputTokens", "profiles", "inference", "cwdRoots"],
 		) &&
 		["cwd", "dataDir", "endpoint", "model", "apiKey", "systemPrompt"].every((key) => text(value[key])) &&
 		shape(value.limits, ["maxConversations", "maxPrimaryAttempts", "maxAuxiliaryAttempts"]) &&
@@ -117,12 +117,18 @@ function runtimeConfig(value: unknown): value is RuntimeOptions {
 		(value.reservedSessionId === undefined || identity(value.reservedSessionId)) &&
 		(value.maxOutputTokens === undefined || positive(value.maxOutputTokens)) &&
 		(value.inference === undefined || inferenceConfig(value.inference)) &&
+		(value.cwdRoots === undefined ||
+			(Array.isArray(value.cwdRoots) &&
+				value.cwdRoots.length > 0 &&
+				value.cwdRoots.length <= 64 &&
+				value.cwdRoots.every((path) => text(path)))) &&
 		(value.profiles === undefined ||
 			(Array.isArray(value.profiles) &&
 				value.profiles.length <= 128 &&
 				value.profiles.every(
 					(profile) =>
-						shape(profile, ["id", "systemPrompt"], ["model"]) &&
+						shape(profile, ["id", "systemPrompt"], ["model", "cwd"]) &&
+						(profile.cwd === undefined || text(profile.cwd)) &&
 						(profile.model === undefined ||
 							(typeof profile.model === "string" &&
 								profile.model.length > 0 &&

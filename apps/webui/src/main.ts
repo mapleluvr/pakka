@@ -51,6 +51,7 @@ export function decodePocketProduct(value: unknown): PocketProductOptions {
 			"limits",
 			"reopenSessionFile",
 			"profiles",
+			"cwdRoots",
 		]),
 		limits = object(runtime.limits, ["maxConversations", "maxPrimaryAttempts", "maxAuxiliaryAttempts"]);
 	const profiles =
@@ -60,9 +61,10 @@ export function decodePocketProduct(value: unknown): PocketProductOptions {
 					if (!Array.isArray(runtime.profiles) || runtime.profiles.length > 64)
 						throw new Error("Invalid approved profiles");
 					return runtime.profiles.map((item) => {
-						const row = object(item, ["id", "systemPrompt", "model"]);
+						const row = object(item, ["id", "systemPrompt", "model", "cwd"]);
 						return {
 							id: text(row.id, 128),
+							...(row.cwd === undefined ? {} : { cwd: text(row.cwd) }),
 							...(row.model === undefined ? {} : { model: text(row.model, 256) }),
 							...(row.systemPrompt === undefined ? {} : { systemPrompt: text(row.systemPrompt, 65536) }),
 						};
@@ -166,6 +168,16 @@ export function decodePocketProduct(value: unknown): PocketProductOptions {
 		...(notifications ? { notifications } : {}),
 		runtime: {
 			cwd: text(runtime.cwd),
+			...(runtime.cwdRoots === undefined
+				? {}
+				: {
+						cwdRoots: (() => {
+							const roots = strings(runtime.cwdRoots, 64);
+							if (!roots.length || roots.some((path) => !isAbsolute(path) || /[\x00-\x1f\x7f]/.test(path)))
+								throw new Error("Invalid directory root configuration");
+							return roots;
+						})(),
+					}),
 			dataDir: text(runtime.dataDir),
 			endpoint: text(runtime.endpoint),
 			model: text(runtime.model, 256),

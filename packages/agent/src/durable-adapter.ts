@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { readFileSync, realpathSync, existsSync } from "node:fs";
+import { readFileSync, realpathSync, existsSync, statSync } from "node:fs";
 import { mkdir, writeFile, open, readFile, unlink } from "node:fs/promises";
 import { join, resolve, relative, isAbsolute, dirname } from "node:path";
 import { isDeepStrictEqual } from "node:util";
@@ -19,6 +19,7 @@ import {
 	defineEntry,
 	UserEntry,
 	InboxDoc,
+	AgentDoc,
 	defineTask,
 	LiveDoc,
 	configure,
@@ -79,6 +80,8 @@ import type {
 	ToolInvocationScope,
 	ConversationRef,
 	ConversationSpec,
+	ConversationConfiguration,
+	ConversationConfigurationChange,
 	RuntimeOptions,
 	RuntimeView,
 	CatalogOptions,
@@ -255,6 +258,8 @@ const RuntimeDoc = defineDoc<RuntimeRecord>({
 interface ManagedState {
 	profiles: Map<string, HostOptions>;
 	profileHashes: Record<string, string>;
+	cwdRoots: readonly string[];
+	explicitCwdRoots: boolean;
 	contextSources: readonly RuntimeContextSource[];
 	jobTasks: Map<string, { definition: RuntimeJobDefinition; task: ReturnType<typeof backendJobTask> }>;
 	state: Readonly<RuntimeRecord>;
@@ -265,8 +270,11 @@ interface ManagedState {
 /** Internal pure-command seam. Never exports a Harness, Session, registry or Tx. */
 export interface ManagedAdapterPort {
 	view(): RuntimeView;
-	profileChoices(): readonly { readonly id: string; readonly model: string }[];
+	profileChoices(): readonly { readonly id: string; readonly model: string; readonly cwd: string }[];
 	profileOptions(id: string): HostOptions;
+	optionsFor(ref: ConversationRef): Promise<HostOptions>;
+	configuration(ref: ConversationRef): Promise<ConversationConfiguration>;
+	directoryRoots(profiles?: readonly string[]): readonly string[];
 	validateReference(ref: ConversationRef): void;
 	createConversation(spec: ConversationSpec): Promise<ConversationRef>;
 	catalog(options: CatalogOptions): RuntimeCatalog;
@@ -325,6 +333,25 @@ function prepareContextSources(
 		}),
 	);
 }
+function approvedDirectory(value: unknown, roots?: readonly string[]): string {
+	if (typeof value !== "string" || !isAbsolute(value) || value.length > 8192 || /[\x00-\x1f\x7f]/.test(value))
+		throw new MutationDenied("Unapproved working directory");
+	try {
+		const path = realpathSync(value);
+		if (
+			!statSync(path).isDirectory() ||
+			(roots &&
+				!roots.some((root) => {
+					const inside = relative(root, path);
+					return inside === "" || (!inside.startsWith("..") && !isAbsolute(inside));
+				}))
+		)
+			throw new Error("outside");
+		return path;
+	} catch {
+		throw new MutationDenied("Unapproved working directory");
+	}
+}
 function profileHash(
 	options: HostOptions,
 	contextSources: readonly RuntimeContextSource[],
@@ -349,6 +376,23 @@ function profileHash(
 	});
 }
 function profileOptions(options: HostOptions, profile?: ConversationProfile): HostOptions {
+	let cwd = options.cwd;
+	if (profile?.cwd !== undefined) {
+		if (
+			typeof profile.cwd !== "string" ||
+			!profile.cwd ||
+			profile.cwd.length > 8192 ||
+			/[\x00-\x1f\x7f]/.test(profile.cwd) ||
+			!isAbsolute(profile.cwd)
+		)
+			throw new Error("Invalid approved profile cwd");
+		try {
+			cwd = realpathSync(profile.cwd);
+			if (!statSync(cwd).isDirectory()) throw new Error("Not a directory");
+		} catch {
+			throw new Error("Approved profile cwd must be an existing directory");
+		}
+	}
 	const model = profile?.model === undefined ? options.model : profile.model;
 	if (
 		profile?.model !== undefined &&
@@ -361,6 +405,7 @@ function profileOptions(options: HostOptions, profile?: ConversationProfile): Ho
 		throw new Error("Invalid bootstrap profile model identifier");
 	return Object.freeze({
 		...options,
+		cwd,
 		model,
 		systemPrompt: profile?.systemPrompt ?? options.systemPrompt,
 		tools: (profile?.tools ?? options.tools)?.map((tool) =>
@@ -766,7 +811,7 @@ export class DurableAdapter {
 		control: AdapterControl,
 		managedOptions?: Pick<
 			RuntimeOptions,
-			"limits" | "profiles" | "migrateLegacy" | "reservedSessionId" | "jobs" | "contextSources"
+			"limits" | "profiles" | "cwdRoots" | "migrateLegacy" | "reservedSessionId" | "jobs" | "contextSources"
 		>,
 	): Promise<DurableAdapter> {
 		const profiles = new Map<string, HostOptions>([["default", profileOptions(options)]]);
@@ -787,6 +832,25 @@ export class DurableAdapter {
 			}
 		}
 		const contextSources = prepareContextSources(managedOptions?.contextSources, profiles);
+		if (
+			managedOptions?.cwdRoots !== undefined &&
+			(!Array.isArray(managedOptions.cwdRoots) ||
+				!managedOptions.cwdRoots.length ||
+				managedOptions.cwdRoots.length > 64)
+		)
+			throw new Error("Invalid approved directory roots");
+		const cwdRoots = [
+			...new Set(
+				(managedOptions?.cwdRoots ?? [...profiles.values()].map((profile) => profile.cwd)).map((path) =>
+					approvedDirectory(path),
+				),
+			),
+		];
+		for (const profile of profiles.values()) approvedDirectory(profile.cwd, cwdRoots);
+		const approvedHashes = Object.fromEntries(
+			[...profiles].map(([id, profile]) => [id, profileHash(profile, contextSources, id)]),
+		);
+		if (managedOptions?.cwdRoots !== undefined) approvedHashes["@cwdRoots"] = hash(cwdRoots);
 		const modelKeys = new Set<string>();
 		for (const model of options.inference?.models ?? []) {
 			if (
@@ -1049,9 +1113,7 @@ export class DurableAdapter {
 						const state = await tx.doc(RuntimeDoc);
 						state.sessionId = sessionId;
 						state.limits = { ...managedOptions.limits };
-						state.profiles = Object.fromEntries(
-							[...profiles].map(([id, profile]) => [id, profileHash(profile, contextSources, id)]),
-						);
+						state.profiles = { ...approvedHashes };
 						state.conversationCount = 1;
 						state.budget = { primaryAttempts, auxiliaryAttempts: journals.auxiliaryAttempts };
 						state.strategyAttempts = { ...journals.strategyAttempts };
@@ -1089,9 +1151,7 @@ export class DurableAdapter {
 								const state = await tx.doc(RuntimeDoc);
 								state.sessionId = sessionId;
 								state.limits = { ...managedOptions.limits };
-								state.profiles = Object.fromEntries(
-									[...profiles].map(([id, profile]) => [id, profileHash(profile, contextSources, id)]),
-								);
+								state.profiles = { ...approvedHashes };
 								state.conversationCount = 1;
 								state.resources.root = {
 									key: "root",
@@ -1109,9 +1169,7 @@ export class DurableAdapter {
 				? await harness.snapshot(RuntimeDoc, BACKGROUND_CONTEXT)
 				: undefined;
 			if (managedOptions) {
-				const expected = Object.fromEntries(
-					[...profiles].map(([id, profile]) => [id, profileHash(profile, contextSources, id)]),
-				);
+				const expected = { ...approvedHashes };
 				if (
 					!savedRuntime ||
 					savedRuntime.sessionId !== sessionId ||
@@ -1162,12 +1220,12 @@ export class DurableAdapter {
 			adapter.#registry = registry;
 			routes.set(conversation.id, adapter);
 			if (managedOptions) {
-				const hashes = Object.fromEntries(
-					[...profiles].map(([id, profile]) => [id, profileHash(profile, contextSources, id)]),
-				);
+				const hashes = { ...approvedHashes };
 				adapter.#managed = {
 					profiles,
 					profileHashes: hashes,
+					cwdRoots,
+					explicitCwdRoots: managedOptions.cwdRoots !== undefined,
 					contextSources,
 					jobTasks,
 					state: savedRuntime!,
@@ -1222,6 +1280,8 @@ export class DurableAdapter {
 				});
 			}
 
+			if (managedOptions)
+				adapter.#options = await adapter.#conversationOptions(savedRuntime!.resources.root!);
 			await adapter.#initStream();
 			await adapter.refreshCache();
 			return adapter;
@@ -1379,6 +1439,25 @@ export class DurableAdapter {
 		const current = managed.state.resources[ref.key];
 		if (!current || hash(current) !== hash(ref)) throw new Error("Stale or foreign Conversation reference");
 	}
+	async #conversationOptions(ref: ConversationRef): Promise<HostOptions> {
+		this.#validateReference(ref);
+		const managed = this.#managedReady(),
+			profile = managed.profiles.get(ref.profile)!;
+		const conversation = await this.#harness.conversation(
+			conversationId(ref.conversationId),
+			BACKGROUND_CONTEXT,
+		);
+		if (!conversation) throw new Error("Managed Conversation is missing");
+		const agent = await conversation.agent(BACKGROUND_CONTEXT);
+		this.#validateReference(ref);
+		if (
+			!agent.model ||
+			agent.model.provider !== "pakka-provider-" + hash(profile.endpoint).slice(0, 12) ||
+			![...managed.profiles.values()].some((row) => row.model === agent.model!.modelId)
+		)
+			throw new Error("Stored model is not approved");
+		return { ...profile, model: agent.model.modelId, cwd: approvedDirectory(agent.cwd, managed.cwdRoots) };
+	}
 	#managedPort(): ManagedAdapterPort {
 		return Object.freeze({
 			view: () => {
@@ -1399,11 +1478,36 @@ export class DurableAdapter {
 				});
 			},
 			profileChoices: () =>
-				copy([...this.#managedReady().profiles].map(([id, profile]) => ({ id, model: profile.model }))),
+				copy(
+					[...this.#managedReady().profiles].map(([id, profile]) => ({
+						id,
+						model: profile.model,
+						cwd: resolve(profile.cwd),
+					})),
+				),
 			profileOptions: (id: string) => {
 				const profile = this.#managedReady().profiles.get(id);
 				if (!profile) throw new Error("Unapproved runtime profile");
 				return profile;
+			},
+			optionsFor: (ref: ConversationRef) => this.#conversationOptions(ref),
+			configuration: async (ref: ConversationRef) => {
+				const options = await this.#conversationOptions(ref);
+				return copy({ model: options.model, cwd: options.cwd });
+			},
+			directoryRoots: (ids?: readonly string[]) => {
+				const managed = this.#managedReady();
+				return copy(
+					managed.explicitCwdRoots
+						? managed.cwdRoots
+						: [
+								...new Set(
+									[...managed.profiles]
+										.filter(([id]) => !ids || ids.includes(id))
+										.map(([, profile]) => approvedDirectory(profile.cwd)),
+								),
+							],
+				);
 			},
 			validateReference: (ref: ConversationRef) => this.#validateReference(ref),
 			catalog: (options: CatalogOptions) => this.#catalog(options),
@@ -1458,7 +1562,7 @@ export class DurableAdapter {
 				if (this.#routes.has(id)) throw new Error("Conversation already bound");
 				const conversation = await this.#harness.conversation(id, BACKGROUND_CONTEXT);
 				if (!conversation) throw new Error("Managed Conversation is missing");
-				const profile = this.#managed!.profiles.get(ref.profile)!;
+				const profile = await this.#conversationOptions(ref);
 				const adapter = new DurableAdapter(
 					this.#harness,
 					conversation,
@@ -1991,6 +2095,7 @@ export class DurableAdapter {
 						source: s.source,
 						invocation: s.invocation,
 						fork: s.fork ? copy(s.fork) : undefined,
+						inherit: s.inherit ? copy(s.inherit) : undefined,
 					};
 				});
 				const committed = await this.#persist(async (tx) => {
@@ -2009,6 +2114,32 @@ export class DurableAdapter {
 							if (this.#invocation(spec.source!, spec.invocation!) !== spec.taskId)
 								throw new MutationDenied("Native owner changed");
 						}
+					const inherited = new Map<
+						string,
+						{ model?: { provider: string; modelId: string }; cwd?: string }
+					>();
+					for (const spec of specs) {
+						const inheritedRef =
+							spec.inherit ??
+							(spec.fork && spec.fork.source.profile === spec.profile ? spec.fork.source : undefined);
+						if (inheritedRef) {
+							validateRef(inheritedRef);
+							const source = requireMember(state, inheritedRef);
+							if (source.data.phase !== "active") throw new MutationDenied("Inheritance source inactive");
+							const agent = await tx.doc(AgentDoc, conversationId(inheritedRef.conversationId));
+							if (
+								!agent.model ||
+								![...this.#managedReady().profiles.values()].some(
+									(profile) => profile.model === agent.model!.modelId,
+								)
+							)
+								throw new MutationDenied("Unapproved inherited model");
+							inherited.set(spec.key, {
+								model: { provider: agent.model.provider, modelId: agent.model.modelId },
+								cwd: approvedDirectory(agent.cwd, this.#managedReady().cwdRoots),
+							});
+						}
+					}
 					for (const spec of specs)
 						if (spec.fork) {
 							validateRef(spec.fork.source);
@@ -2070,6 +2201,7 @@ export class DurableAdapter {
 							extensions: [extension],
 							instructions: profile.systemPrompt,
 							cwd: profile.cwd,
+							...(inherited.get(spec.key) ?? {}),
 						});
 						const ref = {
 							key: resourceKey,
@@ -2098,6 +2230,73 @@ export class DurableAdapter {
 			},
 			update: (key: string, data: JsonObject, expectedVersion: number, check: () => void) =>
 				updateMany([{ key, data }], expectedVersion, check),
+			configureAgent: async (
+				ref: ConversationRef,
+				raw: ConversationConfigurationChange,
+				check: () => void,
+			) => {
+				checkAuthority(check);
+				validateRef(ref);
+				const change = copy(raw),
+					managed = this.#managedReady();
+				if (
+					!change ||
+					typeof change !== "object" ||
+					Array.isArray(change) ||
+					!Object.keys(change).length ||
+					Object.keys(change).some((key) => !["model", "cwd"].includes(key)) ||
+					(Object.hasOwn(change, "model") &&
+						(typeof change.model !== "string" ||
+							![...managed.profiles.values()].some((profile) => profile.model === change.model)))
+				)
+					throw new MutationDenied("Unapproved configuration change");
+				const cwd = Object.hasOwn(change, "cwd")
+					? approvedDirectory(change.cwd, managed.cwdRoots)
+					: undefined;
+				const route = this.#routes.get(conversationId(ref.conversationId));
+				if (!route || route.#disposed || route.#failedReason) throw new MutationDenied("Member not ready");
+				const configured = await this.#persist(async (tx) => {
+					const state = await tx.doc(CatalogDoc, options.namespace, seed),
+						runtime = await tx.doc(RuntimeDoc);
+					optionsMatch(state);
+					const found = requireMember(state, ref),
+						to = conversationId(ref.conversationId);
+					if (
+						found.data.phase !== "active" ||
+						(await tx.doc(LiveDoc, to)).run ||
+						(await tx.doc(InboxDoc, to)).items.length
+					)
+						throw new MutationDenied("Configure requires active idle member");
+					checkAuthority(check);
+					if (cwd !== undefined && approvedDirectory(cwd, managed.cwdRoots) !== cwd)
+						throw new MutationDenied("Directory changed");
+					await configure(tx, to, {
+						...(change.model !== undefined
+							? {
+									model: {
+										provider: "pakka-provider-" + hash(route.#options.endpoint).slice(0, 12),
+										modelId: change.model,
+									},
+								}
+							: {}),
+						...(cwd !== undefined ? { cwd } : {}),
+					});
+					checkAuthority(check);
+					const next = { ...ref, incarnation: randomUUID() };
+					runtime.resources[ref.key] = next;
+					state.members[found.key]!.ref = next;
+					state.version++;
+					return storedJson<StoredMember>(state.members[found.key]);
+				});
+				route.#options = {
+					...route.#options,
+					...(change.model !== undefined ? { model: change.model } : {}),
+					...(cwd !== undefined ? { cwd } : {}),
+				};
+				route.#control.configurationChanged();
+				await route.refreshCache();
+				return configured;
+			},
 			configure: async (ref: ConversationRef, profileId: string, check: () => void) => {
 				checkAuthority(check);
 				validateRef(ref);

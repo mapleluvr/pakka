@@ -51,6 +51,10 @@ body {
 .pocket-workbench .sidebar {
 	flex-direction: column;
 	width: 284px;
+	min-height: 0;
+	overflow-x: hidden;
+	overflow-y: auto;
+	overscroll-behavior: contain;
 }
 .pocket-side-head {
 	padding: 22px 18px;
@@ -74,6 +78,44 @@ body {
 	overflow-y: auto;
 	align-content: start;
 	flex: 1;
+}
+.pocket-nav[aria-label="Conversations"] {
+	min-height: 120px;
+	flex: 1 1 0;
+	overscroll-behavior: contain;
+}
+.pocket-side-head,
+.pocket-navigation-tools,
+.pocket-new,
+.pocket-side-foot {
+	flex-shrink: 0;
+}
+.pocket-tool-navigation {
+	flex: 0 1 auto;
+	min-height: min(88px, 18dvh);
+	max-height: min(30dvh, 260px);
+	overflow-y: auto;
+	overscroll-behavior: contain;
+	border-top: 1px solid var(--line);
+	scrollbar-gutter: stable;
+}
+.pocket-tool-navigation:focus-visible {
+	outline: 2px solid var(--accent);
+	outline-offset: -2px;
+}
+.pocket-tool-navigation .pocket-nav {
+	flex: none;
+	overflow: visible;
+	padding-block: 8px;
+}
+.pocket-tool-navigation h2 {
+	margin: 4px 10px;
+	font-size: 0.7rem;
+	color: var(--muted);
+	font-weight: 600;
+}
+.pocket-tool-navigation nav + nav {
+	border-top: 1px solid var(--line);
 }
 .pocket-nav button {
 	min-height: 48px;
@@ -457,6 +499,18 @@ body {
 	.pocket-workbench.drawer-open .sidebar {
 		display: flex;
 	}
+	.pocket-side-head {
+		padding: 12px;
+		gap: 4px;
+	}
+	.pocket-navigation-tools {
+		padding: 8px 12px;
+		gap: 4px;
+	}
+	.pocket-new,
+	.pocket-side-foot {
+		padding: 8px 12px;
+	}
 	.pocket-topbar {
 		padding: 10px 14px;
 		gap: 10px;
@@ -609,6 +663,185 @@ body {
 .pocket-configuration dd {
 	margin: 0;
 	overflow-wrap: anywhere;
+}
+.pocket-heading {
+	flex: 1;
+	min-width: 0;
+	overflow: hidden;
+}
+.pocket-heading .pocket-title {
+	display: block;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+.pocket-directory-trigger,
+.pocket-model-trigger {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	min-height: 44px;
+	max-width: 100%;
+	min-width: 0;
+	text-align: left;
+}
+.pocket-directory-trigger {
+	font-size: 0.75rem;
+	padding: 2px 0;
+}
+.pocket-directory-trigger span,
+.pocket-model-trigger span {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	min-width: 0;
+}
+.pocket-model-bar {
+	display: flex;
+	min-width: 0;
+	margin-bottom: 4px;
+}
+.pocket-model-trigger {
+	border: 1px solid var(--line);
+	border-radius: 8px;
+	padding: 4px 10px;
+	font-size: 0.8rem;
+	max-width: min(100%, 360px);
+}
+.pocket-choice-row,
+.pocket-path-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	width: 100%;
+	min-height: 44px;
+	padding: 8px;
+	text-align: left;
+	border-radius: 6px;
+}
+.pocket-choice-row:hover,
+.pocket-path-row:hover,
+.pocket-choice-row[aria-selected="true"] {
+	background: var(--hover);
+}
+.pocket-choice-row > span,
+.pocket-path-row > span {
+	min-width: 0;
+	overflow-wrap: anywhere;
+}
+.pocket-choice-row small {
+	display: block;
+	color: var(--muted);
+	font-size: 0.75rem;
+}
+.pocket-path-row {
+	justify-content: flex-start;
+}
+.pocket-directory-location {
+	display: flex;
+	gap: 8px;
+	align-items: end;
+	min-width: 0;
+}
+.pocket-directory-location label {
+	flex: 1;
+	min-width: 0;
+}
+.pocket-directory-location button {
+	min-height: 44px;
+}
+.pocket-sheet:has(.pocket-directory-picker) {
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+	height: min(680px, calc(100dvh - 24px));
+	max-height: calc(100dvh - 24px);
+	width: min(680px, calc(100vw - 24px));
+}
+.pocket-sheet:has(.pocket-directory-picker) > header {
+	flex-shrink: 0;
+}
+.pocket-directory-picker {
+	min-height: 0;
+	flex: 1;
+	overflow-y: auto;
+	overscroll-behavior: contain;
+	align-content: start;
+}
+.pocket-breadcrumbs {
+	display: flex;
+	flex-wrap: wrap;
+	list-style: none;
+	padding: 0;
+	margin: 0;
+	gap: 4px;
+	min-width: 0;
+}
+.pocket-breadcrumbs li {
+	min-width: 0;
+	max-width: 100%;
+}
+.pocket-breadcrumbs li + li::before {
+	content: "/";
+	color: var(--muted);
+	padding-inline: 4px;
+}
+.pocket-breadcrumbs button {
+	min-height: 44px;
+	max-width: 100%;
+	overflow-wrap: anywhere;
+}
+.pocket-directory-browser {
+	display: grid;
+	gap: 16px;
+	min-width: 0;
+}
+.pocket-directory-browser h3 {
+	font-size: 0.8rem;
+	color: var(--muted);
+	margin-block: 10px 4px;
+}
+.pocket-directory-current {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	min-width: 0;
+}
+[data-favorite-directory][aria-pressed="true"] .pocket-icon {
+	fill: var(--accent);
+	color: var(--accent);
+}
+.pocket-directory-current strong {
+	min-width: 0;
+	overflow-wrap: anywhere;
+	font-size: 0.8rem;
+}
+.pocket-directory-footer {
+	flex: 0 0 auto;
+	padding: 12px 16px;
+	border-top: 1px solid var(--line);
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	align-items: center;
+	justify-content: space-between;
+}
+.pocket-directory-footer p {
+	min-width: 0;
+	flex: 1 1 140px;
+}
+.pocket-directory-footer button {
+	min-height: 44px;
+}
+.pocket-cwd {
+	min-width: 0;
+	overflow-wrap: anywhere;
+	font-family: var(--mono);
+	font-size: 0.8rem;
+}
+.pocket-configuration-preview dt {
+	flex: 0 0 8em;
 }
 @media (prefers-reduced-motion: reduce) {
 	.pocket-workbench *,

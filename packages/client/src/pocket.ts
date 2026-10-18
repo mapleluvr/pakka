@@ -49,6 +49,17 @@ function correlated(command: PocketCommand, result: PocketResult, personId?: str
 			return result.kind === "notification" && sameRef(command.target, result.target);
 		case "configuration":
 			return result.kind === "configuration" && sameRef(command.target, result.configuration.ref);
+		case "directory.list":
+			return result.kind === "directories" && sameRef(command.target, result.target);
+		case "configure.agent":
+			return (
+				result.kind === "reference" &&
+				result.ref.key === command.target.key &&
+				result.ref.sessionId === command.target.sessionId &&
+				result.ref.conversationId === command.target.conversationId &&
+				result.ref.profile === command.target.profile &&
+				result.ref.incarnation !== command.target.incarnation
+			);
 		case "credential.status":
 			return result.kind === "credential";
 		case "credential.replace":
