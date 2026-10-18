@@ -1,9 +1,9 @@
 /* Adapted from the pinned pi-pocket board stylesheet; MIT, see LICENSE.pi-pocket. */
-/* ─── Subagents board ─────────────────────────────────────────── */
+/* ─── MAS member-list presentation ─────────────────────────────── */
 
-/*
- * Every subagent in every session, in the conversation's place: a square each, a row per session, the bar of states
- * that filters by one, what needs you, and the one selected. Phones: one column, and a bar at the bottom.
+/* Cells represent visible MAS members in the bound namespace.
+ * The namespace row is not a Durable Session; availability is a membership observation,
+ * separate from the live model/tool activity planned for the relationship canvas.
  */
 .board {
 	--done-cell: color-mix(in srgb, var(--ok) 40%, var(--bg));
@@ -119,8 +119,8 @@
 	border-color: var(--err);
 }
 
-.board-mark.working,
-.board-cell.working {
+.board-mark.available,
+.board-cell.available {
 	background: var(--accent);
 	border-color: var(--accent);
 }
@@ -271,7 +271,8 @@
 	font-size: 0.85rem;
 }
 
-/* A session: its title and how its subagents are, then a square for each. */
+/* Member-group title and cells. The current Board groups by MAS namespace;
+ * board-session is an inherited layout class, not a Durable Session entity. */
 .board-row {
 	display: grid;
 	grid-template-columns: 200px minmax(0, 1fr);
@@ -343,7 +344,7 @@
 	padding-top: 2px;
 }
 
-/* A session's finished subagents left off the board, counted: "+12". */
+/* Optional overflow-count treatment inherited from the source layout. */
 .board-older {
 	align-self: center;
 	margin-left: 3px;

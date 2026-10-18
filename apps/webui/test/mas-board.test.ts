@@ -81,6 +81,14 @@ test(
 			await page.wait('document.querySelector("[data-interface=mas-devpack-board]")');
 			await page.click("[data-interface=mas-devpack-board]");
 			await page.wait('document.querySelector("[data-member=coordinator]")');
+			assert.equal(m.f.requests.length, 0, "Activating a MAS member does not start model work");
+			assert.deepEqual(
+				await page.evaluate(
+					`(()=>{const row=document.querySelector('[data-member=coordinator]');return {label:row.getAttribute('aria-label'),tone:row.classList.contains('available')};})()`,
+				),
+				{ label: "coordinator, Available, persistent", tone: true },
+				"An idle active member exposes membership availability rather than running activity",
+			);
 			await page.click("[data-member=coordinator]");
 			await page.wait('document.querySelector("textarea[name=masMessage]")');
 			await page.type("textarea[name=masMessage]", "CREATE-BOARD-CHILD");

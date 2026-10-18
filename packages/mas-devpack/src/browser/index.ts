@@ -18,14 +18,28 @@ import {
 	type WorkbenchReceipt,
 } from "./client.ts";
 
-// Adapted from pi-pocket's pinned subagents-board.js: grouped cells, state filter, keyboard navigation and mobile detail.
-// Native subagent stores, global subscriptions, routes and authority are deliberately absent; the host owns each instance.
+// Compact member-list presentation adapted from pi-pocket's pinned subagents-board.js.
+// The row groups a MAS namespace; membership phase is distinct from native live activity.
+const membershipLabel = (phase: WorkbenchMember["phase"] | "all") =>
+	({
+		all: "All",
+		preparing: "Preparing",
+		ready: "Ready to activate",
+		active: "Available",
+		stopping: "Stopping",
+		retired: "Retired",
+		failed: "Unavailable",
+		unknown: "Unknown",
+		ended: "Ended",
+	})[phase];
 const tone = (phase: WorkbenchMember["phase"]) =>
-	phase === "active" || phase === "ready"
-		? "working"
-		: phase === "failed" || phase === "unknown"
+	phase === "active"
+		? "available"
+		: phase === "failed"
 			? "failed"
-			: "stopped";
+			: ["ready", "preparing", "stopping", "unknown"].includes(phase)
+				? "waiting"
+				: "stopped";
 const stylesheet = () => h("link", { rel: "stylesheet", href: new URL("board.css", import.meta.url).href });
 export function Board({ context }: WebInterfaceProps) {
 	const [snapshot, setSnapshot] = useState<WorkbenchView | null>(null),
@@ -86,7 +100,7 @@ export function Board({ context }: WebInterfaceProps) {
 							"aria-pressed": filter === phase,
 							onClick: () => setFilter(phase),
 						},
-						phase,
+						membershipLabel(phase as WorkbenchMember["phase"] | "all"),
 						h(
 							"span",
 							{ class: "board-filter-count" },
@@ -144,8 +158,8 @@ export function Board({ context }: WebInterfaceProps) {
 												key: member.key,
 												"data-member": member.key,
 												class: `board-cell ${tone(member.phase)}`,
-												title: `${member.key} · ${member.phase} · ${member.lifetime}${member.parent ? " · owned by " + member.parent : ""}`,
-												"aria-label": `${member.key}, ${member.phase}, ${member.lifetime}`,
+												title: `${member.key} · Membership: ${membershipLabel(member.phase)}${member.parent ? " · managed by " + member.parent : ""}`,
+												"aria-label": `${member.key}, ${membershipLabel(member.phase)}, ${member.lifetime}`,
 												onClick: () => open(member),
 											},
 											member.key.slice(0, 2).toUpperCase(),
@@ -235,7 +249,7 @@ export function MemberPanel({ context }: WebInterfaceProps) {
 					h(
 						"dl",
 						null,
-						h("dt", null, "Lifecycle"),
+						h("dt", null, "Membership phase"),
 						h("dd", { "data-member-phase": true }, member.phase),
 						h("dt", null, "Lifetime"),
 						h("dd", null, member.lifetime),
