@@ -90,6 +90,12 @@ function httpUrl(raw: string): URL {
 	return url;
 }
 
+class ExpiredInterception extends Error {
+	constructor() {
+		super("Owned browser interception already revoked");
+	}
+}
+
 /** One owned pipe, bounded commands, no debugger listener or public evaluate API. */
 class Pipe {
 	private buffer = "";
@@ -97,7 +103,12 @@ class Pipe {
 	private ended = false;
 	private pending = new Map<
 		number,
-		{ resolve: (v: ObjectValue) => void; reject: (e: Error) => void; timer: ReturnType<typeof setTimeout> }
+		{
+			method: string;
+			resolve: (v: ObjectValue) => void;
+			reject: (e: Error) => void;
+			timer: ReturnType<typeof setTimeout>;
+		}
 	>();
 	onEvent?: (method: string, params: ObjectValue, session?: string) => void;
 	private readonly output: Writable;
@@ -129,9 +140,14 @@ class Pipe {
 					if (!pending) continue;
 					clearTimeout(pending.timer);
 					this.pending.delete(value.id);
-					if (value.error || !record(value.result))
-						pending.reject(Error("Owned browser command unconfirmed"));
-					else pending.resolve(value.result);
+					if (value.error || !record(value.result)) {
+						const expired =
+							(pending.method === "Fetch.failRequest" || pending.method === "Fetch.continueRequest") &&
+							record(value.error) &&
+							value.error.code === -32602 &&
+							value.error.message === "Invalid InterceptionId.";
+						pending.reject(expired ? new ExpiredInterception() : Error("Owned browser command unconfirmed"));
+					} else pending.resolve(value.result);
 				} else if (typeof value.method === "string" && record(value.params))
 					this.onEvent?.(
 						value.method,
@@ -152,7 +168,7 @@ class Pipe {
 					this.pending.delete(id);
 					reject(Error("Owned browser command deadline"));
 				}, 5000);
-			this.pending.set(id, { resolve, reject, timer });
+			this.pending.set(id, { method, resolve, reject, timer });
 			this.output.write(JSON.stringify({ id, method, params, ...(sessionId ? { sessionId } : {}) }) + "\0");
 		});
 	}
@@ -391,7 +407,10 @@ export async function createPocketBrowser(options: PocketBrowserOptions): Promis
 							{ requestId: params.requestId, ...(!allowed ? { errorReason: "BlockedByClient" } : {}) },
 							sessionId,
 						)
-						.catch(() => {
+						.catch((error) => {
+							// A new navigation can revoke the old request before its rejection is acknowledged.
+							// Only that explicit CDP lifecycle response is expected; unknown failures seal the pipe.
+							if (error instanceof ExpiredInterception) return;
 							failed = true;
 							pipe?.close();
 						});

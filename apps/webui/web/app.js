@@ -76,6 +76,9 @@ function Message({ message, onDraft }) {
 								/>`
 							: null,
 		)}
+		${message.role === "assistant" &&
+		message.errorMessage &&
+		html`<p class="pocket-error" data-message-error>${message.errorMessage}</p>`}
 		${message.role === "user" &&
 		onDraft &&
 		html`<button
@@ -141,12 +144,27 @@ function App() {
 		notice: notify,
 		opened: () => setDrawer(false),
 		error: (failure) => error(failure),
-		navigate: (ref) => {
-			if (refs.some((row) => row.key === ref.key && row.incarnation === ref.incarnation)) {
-				extensions.leave();
-				select(ref);
+		navigate: async (ref) => {
+			const binding = resourceContext.current;
+			try {
+				const list = await client.request({ op: "list" });
+				if (!mounted.current || resourceContext.current !== binding) return;
+				const current = list.conversations.find(
+					(row) => row.sessionId === ref.sessionId && row.conversationId === ref.conversationId,
+				);
+				if (!current) {
+					notify("This conversation is unavailable.");
+					return;
+				}
+				setRefs(list.conversations);
+				setTitles(list.titles ?? {});
+				setStates(list.states ?? {});
+				extensions.leave(true);
+				select(current);
 				setDrawer(false);
-			} else notify("This conversation is unavailable.");
+			} catch (failure) {
+				if (mounted.current && resourceContext.current === binding) error(failure);
+			}
 		},
 	});
 	const invalidate = () => {
@@ -659,6 +677,7 @@ function App() {
 						<${Icon} name="folder" /><span>${configuration?.current?.cwd ?? "Loading directory…"}</span>
 					</button>`}
 				</div>
+				${extensions.back}
 				<span class="pocket-status">${view?.live.busy ? "Working" : view ? "Ready" : ""}</span>${selected &&
 				html`<button data-action="conversation" onClick=${() => openSheet("conversation")}>
 						Conversation

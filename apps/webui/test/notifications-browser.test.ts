@@ -59,6 +59,7 @@ test(
 			await page.click("[data-action=notifications]");
 			await page.wait('document.querySelector("[data-notification-test]")?.disabled===false');
 			await page.click("[data-notification-test]");
+			await page.waitNotification("pakka-device-test");
 			await page.wait(
 				'(async()=>{const registration=await navigator.serviceWorker.ready;return (await registration.getNotifications({tag:"pakka-device-test"})).length===1;})()',
 			);
@@ -95,6 +96,7 @@ test(
 				'navigator.serviceWorker.addEventListener("message",event=>{if(event.data?.type==="pakka.notification")globalThis.__notificationCheck=event.data;})',
 			);
 			await page.pushNotification({ eventId: entry.id, deviceId: registered.id });
+			await page.waitNotification("pakka-" + entry.id);
 			await page.wait(
 				'(async()=>{const registration=await navigator.serviceWorker.ready;return (await registration.getNotifications()).some(row=>row.body==="The agent finished this conversation.");})()',
 			);

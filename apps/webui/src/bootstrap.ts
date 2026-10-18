@@ -253,6 +253,12 @@ export async function startPocket(options: PocketProductOptions) {
 					)
 				: options.extensionServices;
 		ready();
+		for (const service of Object.values(services ?? {})) {
+			if (service.conversations) {
+				if (!workspace.registerResources) throw Error("Workspace cannot register Conversation sources");
+				workspace.registerResources(service.conversations);
+			}
+		}
 		const extensions = await createExtensionHost({
 			runtime,
 			people,

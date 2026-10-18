@@ -4,7 +4,7 @@ await writeFile(new URL("../dist/manifest.json", import.meta.url), JSON.stringif
 const publicRoot = new URL("../dist/public/", import.meta.url);
 await rm(publicRoot, { recursive: true, force: true });
 await mkdir(publicRoot, { recursive: true });
-for (const name of ["index.js", "client.js", "contract.js", "dto.js"])
+for (const name of ["index.js", "graph-board.js", "client.js", "contract.js", "dto.js"])
 	await copyFile(new URL("../dist/browser/" + name, import.meta.url), new URL(name, publicRoot));
 await copyFile(new URL("../src/browser/board.css", import.meta.url), new URL("board.css", publicRoot));
 await copyFile(

@@ -79,6 +79,7 @@ function member(value: CatalogMember): Member {
 		ref: value.ref,
 		owner: value.data.owner,
 		lifetime: value.lifetime,
+		...(value.creation ? { creation: value.creation } : {}),
 		phase: value.data.phase as MemberPhase,
 		...(typeof value.data.reason === "string" ? { reason: value.data.reason } : {}),
 	});
@@ -188,7 +189,12 @@ export async function createMas(options: MasOptions): Promise<Mas> {
 				throw new MasRequestDenied("Foreign delivery receipt");
 			return found;
 		}
-		async function sendAs(ref: ConversationRef, input: SendSpec, action: "send" | "reply" = "send") {
+		async function sendAs(
+			ref: ConversationRef,
+			input: SendSpec,
+			action: "send" | "reply" = "send",
+			replyTo?: string,
+		) {
 			await refresh();
 			grant(action);
 			const to = target(ref),
@@ -212,6 +218,12 @@ export async function createMas(options: MasOptions): Promise<Mas> {
 					target: to.ref,
 					text: actual.text,
 					mode: actual.mode ?? "prompt",
+					...(replyTo ? { replyTo } : {}),
+					...(invocation && source
+						? { initiator: { kind: "agent" as const, id: source.conversationId } }
+						: spec.initiator
+							? { initiator: dto(spec.initiator) }
+							: {}),
 				},
 				check,
 			);
@@ -227,10 +239,19 @@ export async function createMas(options: MasOptions): Promise<Mas> {
 			withAuthority: (additional: () => void) => {
 				check();
 				if (typeof additional !== "function") throw new Error("Invalid authority check");
-				return connect({ principal, source, grants: [...allowed] }, invocation, () => {
-					check();
-					additional();
-				});
+				return connect(
+					{
+						principal,
+						source,
+						grants: [...allowed],
+						...(spec.initiator ? { initiator: spec.initiator } : {}),
+					},
+					invocation,
+					() => {
+						check();
+						additional();
+					},
+				);
 			},
 			discover: () => {
 				grant("discover");
@@ -254,7 +275,7 @@ export async function createMas(options: MasOptions): Promise<Mas> {
 				const found = await receipt(id);
 				if (!source || !same(found.target, source) || !found.source)
 					throw new Error("Receipt has no authorized reply target");
-				return sendAs(found.source, input, "reply");
+				return sendAs(found.source, input, "reply", id);
 			},
 			receipt,
 			wait: async (id: string, signal?: AbortSignal) => {
@@ -315,6 +336,16 @@ export async function createMas(options: MasOptions): Promise<Mas> {
 				await refresh();
 				return member(changed);
 			},
+			configureAgent: async (
+				ref: ConversationRef,
+				change: import("@pakka/agent").ConversationConfigurationChange,
+			) => {
+				await refresh();
+				owner(ref, "configure");
+				const changed = await catalog.configureAgent(ref, change, () => owner(ref, "configure"));
+				await refresh();
+				return member(changed);
+			},
 			fork: async (ref: ConversationRef, input: { readonly key: string; readonly entryId: string }) => {
 				await refresh();
 				owner(ref, "fork");
@@ -325,6 +356,7 @@ export async function createMas(options: MasOptions): Promise<Mas> {
 							profile: ref.profile,
 							data: { owner: principal, phase: "preparing" },
 							fork: { source: ref, entryId: input.entryId },
+							...(source ? { source } : {}),
 						},
 					],
 					() => owner(ref, "fork"),
@@ -343,11 +375,22 @@ export async function createMas(options: MasOptions): Promise<Mas> {
 				check();
 				if (!source) throw new Error("Invocation requires source Conversation");
 				catalog.checkInvocation(source, scope);
-				return connect({ principal, source, grants: [...allowed] }, scope, check);
+				return connect(
+					{
+						principal,
+						source,
+						grants: [...allowed],
+						...(spec.initiator ? { initiator: spec.initiator } : {}),
+					},
+					scope,
+					check,
+				);
 			},
 		});
 	}
 	return Object.freeze({
+		history: catalog.history,
+		lookupReceipt: catalog.lookupReceipt,
 		bootstrap: async (specs: readonly MemberSpec[]) => {
 			await refresh();
 			if (!specs.length || specs.some((s) => typeof s.owner !== "string" || !s.owner))
@@ -381,19 +424,20 @@ export async function createMas(options: MasOptions): Promise<Mas> {
 			return view();
 		},
 		activate: async () => {
-			await refresh();
+			const snapshot = await refresh();
+			const eligible = snapshot.members.filter((entry) => entry.data.phase !== "retired");
 			if (
-				cache.members.length === 0 ||
-				cache.members.some((m) => m.data.phase !== "ready" && m.data.phase !== "active")
+				snapshot.members.length === 0 ||
+				eligible.some((entry) => entry.data.phase !== "ready" && entry.data.phase !== "active")
 			)
 				throw new Error("MAS readiness barrier incomplete");
-			for (const entry of cache.members)
+			for (const entry of eligible)
 				if ((await catalog.readiness(entry.ref)).phase !== "ready")
 					throw new Error("MAS actual readiness failed");
-			const updates = cache.members
+			const updates = eligible
 				.filter((entry) => entry.data.phase !== "active")
 				.map((entry) => ({ key: entry.key, data: { ...entry.data, phase: "active" } }));
-			if (updates.length) cache = await catalog.updateMany(updates, cache.version, () => {});
+			if (updates.length) cache = await catalog.updateMany(updates, snapshot.version, () => {});
 			return view();
 		},
 		view,

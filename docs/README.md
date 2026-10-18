@@ -4,17 +4,17 @@
 
 ## 当前入口
 
-| 想做的事情                            | 从这里开始                                                                           |
-| ------------------------------------- | ------------------------------------------------------------------------------------ |
-| 使用 Web 工作台、选择模型和工作目录   | [WebUI 使用与启动](guides/WEBUI-GUIDE.md)                                            |
-| 确认已有能力、用户已确认项和剩余交付  | [当前产品状态](PAKKA-POCKET-STATUS.md)                                               |
-| 装配 headless MAS server、client、CLI | [应用配置](guides/MAS-APPLICATION-API.md)与[支持边界](guides/MAS-PRODUCT-SUPPORT.md) |
-| 使用或实现公开 API                    | [API 参考](reference/README.md)                                                      |
-| 修改代码或编写 Web 扩展               | [开发入口](development/README.md)                                                    |
-| 继续 MAS Board 的关系图设计           | [当前设计第二稿](MAS-BOARD-DESIGN.md)与[图稿导航](design/mas-board/README.md)        |
-| 阅读当前实施范围和阶段通过条件        | [当前计划](plans/README.md)                                                          |
-| 核对验证方式、固定产物及其证据范围    | [验证入口](verification/README.md)                                                   |
-| 查阅早期计划、阶段验收和第一次试写    | [Deprecated 历史资料](archive/README.md)                                             |
+| 想做的事情                            | 从这里开始                                                                                                   |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| 使用 Web 工作台、选择模型和工作目录   | [WebUI 使用与启动](guides/WEBUI-GUIDE.md)                                                                    |
+| 确认已有能力、用户已确认项和剩余交付  | [当前产品状态](PAKKA-POCKET-STATUS.md)                                                                       |
+| 装配 headless MAS server、client、CLI | [应用配置](guides/MAS-APPLICATION-API.md)与[支持边界](guides/MAS-PRODUCT-SUPPORT.md)                         |
+| 使用或实现公开 API                    | [API 参考](reference/README.md)                                                                              |
+| 修改代码或编写 Web 扩展               | [开发入口](development/README.md)                                                                            |
+| 使用 MAS Board 并查阅关系图设计       | [MAS Board 使用](guides/MAS-BOARD.md)、[设计第二稿](MAS-BOARD-DESIGN.md)与[图稿](design/mas-board/README.md) |
+| 阅读当前实施范围和阶段通过条件        | [当前计划](plans/README.md)                                                                                  |
+| 核对验证方式、固定产物及其证据范围    | [验证入口](verification/README.md)                                                                           |
+| 查阅早期计划、阶段验收和第一次试写    | [Deprecated 历史资料](archive/README.md)                                                                     |
 
 ## 文档分区
 

@@ -8,8 +8,14 @@ import { createPocketPeople } from "../src/pocket-people.ts";
 import { createPocketWorkspace } from "../src/pocket-workspace.ts";
 import { createPocketBrowser } from "../src/pocket-browser.ts";
 import { browserExecutable } from "../../webui/test/browser.ts";
+import { interceptionExecutable } from "./cdp-fixture.ts";
 
-async function setup(options: { readonly effectDelayMs?: number } = {}) {
+async function setup(
+	options: {
+		readonly effectDelayMs?: number;
+		readonly interceptionError?: { readonly code: number; readonly message: string };
+	} = {},
+) {
 	let actions = 0,
 		forbidden = 0;
 	const outsidePaths: string[] = [];
@@ -69,7 +75,9 @@ async function setup(options: { readonly effectDelayMs?: number } = {}) {
 			runtime: m.runtime,
 			people,
 			namespace: "owned.browser",
-			executable: await browserExecutable(),
+			executable: options.interceptionError
+				? await interceptionExecutable(m.f.root, origin, outsideOrigin, options.interceptionError)
+				: await browserExecutable(),
 			origins: [origin],
 			resources,
 		});
@@ -247,6 +255,67 @@ test(
 			assert.equal(f.m.f.requests.length, 0);
 		} finally {
 			await f.close();
+		}
+	},
+);
+
+test(
+	"Pocket owned browser: an already-revoked interception does not seal subsequent authorized reads",
+	{
+		skip:
+			process.platform === "win32"
+				? "Controlled POSIX CDP executable; real Chromium isolation remains required on Windows"
+				: false,
+	},
+	async () => {
+		const f = await setup({ interceptionError: { code: -32602, message: "Invalid InterceptionId." } });
+		try {
+			const client = f.browser.bind(f.owner);
+			assert.equal(
+				(await client.navigate(f.ref, { requestId: "cancelled-resource", url: f.origin })).state,
+				"done",
+			);
+			assert.match((await client.snapshot(f.ref)).text, /APPROVED-PAGE-AFTER-CANCEL/);
+			await assert.rejects(
+				client.navigate(f.ref, { requestId: "still-denied", url: f.outsideOrigin }),
+				/denied/i,
+			);
+			assert.equal(f.actions(), 0);
+			assert.equal(f.forbidden(), 0);
+			assert.equal(f.m.f.requests.length, 0);
+		} finally {
+			await f.close();
+		}
+	},
+);
+
+test(
+	"Pocket owned browser: unknown interception rejection still seals the service",
+	{
+		skip:
+			process.platform === "win32"
+				? "Controlled POSIX CDP executable; real Chromium isolation remains required on Windows"
+				: false,
+	},
+	async () => {
+		for (const interceptionError of [
+			{ code: -32000, message: "Invalid InterceptionId." },
+			{ code: -32602, message: "Unexpected interception failure" },
+		]) {
+			const f = await setup({ interceptionError });
+			try {
+				const client = f.browser.bind(f.owner);
+				await assert.rejects(
+					client.navigate(f.ref, { requestId: "unconfirmed", url: f.origin }),
+					/closed|unavailable/i,
+				);
+				await assert.rejects(client.snapshot(f.ref), /closed|unavailable/i);
+				assert.equal(f.actions(), 0);
+				assert.equal(f.forbidden(), 0);
+				assert.equal(f.m.f.requests.length, 0);
+			} finally {
+				await f.close();
+			}
 		}
 	},
 );

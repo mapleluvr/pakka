@@ -35,8 +35,12 @@ export function useExtensions({ person, target, csrf, notice, error, navigate, o
 	const [registrations, setRegistrations] = useState([]),
 		[surface, setSurface] = useState(null),
 		[overlay, setOverlay] = useState(null),
+		[returnInterface, setReturnInterface] = useState(null),
 		[palette, setPalette] = useState(false),
 		[query, setQuery] = useState("");
+	useEffect(() => {
+		setReturnInterface(null);
+	}, [person?.id]);
 	const latest = useRef({});
 	latest.current = { person, target, notice, error, navigate, opened };
 	const pending = useRef(new Map());
@@ -347,14 +351,43 @@ export function useExtensions({ person, target, csrf, notice, error, navigate, o
 			</div>`,
 		slash,
 		clear: () => {
+			setReturnInterface(null);
 			setSurface(null);
 			setOverlay(null);
 			setPalette(false);
 		},
-		leave: () => {
+		leave: (remember = false) => {
+			setReturnInterface(remember && surface ? surface : null);
 			setSurface(null);
 			setOverlay(null);
 		},
+		back:
+			!surface &&
+			returnInterface &&
+			html`<button
+				data-return-extension
+				onClick=${async () => {
+					const origin = returnInterface,
+						personId = latest.current.person?.id;
+					try {
+						const rows = await client.list(origin.target);
+						if (latest.current.person?.id !== personId) return;
+						const registration = rows.find(
+							(row) => row.manifest.id === origin.registration.manifest.id && row.phase === "ready",
+						);
+						if (!registration) {
+							setReturnInterface(null);
+							notice("This extension is unavailable.");
+							return;
+						}
+						open(registration, origin.view.id, origin.target);
+					} catch (failure) {
+						if (latest.current.person?.id === personId) error(failure);
+					}
+				}}
+			>
+				Back to ${returnInterface.view.title}
+			</button>`,
 		workspaceNavigation: navigation(true),
 		navigation: navigation(false),
 		button: html`<button

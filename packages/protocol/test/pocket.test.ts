@@ -78,6 +78,49 @@ test("Pocket protocol: complete sanitized Conversation DTOs are bounded and stri
 	);
 });
 
+// Native failed assistant turns must remain readable over RPC and SSE after a service restart.
+test("Pocket protocol: bounded assistant error history survives both response and event decoding", () => {
+	const failed = {
+		role: "assistant",
+		content: [],
+		stopReason: "error",
+		errorMessage: "Configured provider credential unavailable",
+	};
+	const snapshot = {
+		...page,
+		entries: [{ id: "error-2", conversationId: "c1", kind: "pi.assistant", messages: [failed] }],
+	};
+	const result = { ...response, result: { kind: "conversation", snapshot } };
+	const event = {
+		version: 2,
+		serverId: "server-a",
+		streamId: "stream-a",
+		sequence: 1,
+		kind: "conversation",
+		snapshot,
+	};
+	assert.deepEqual(decodePocketResponse(result, "read-1"), result);
+	assert.deepEqual(decodePocketEvent(event), event);
+	const live = { ...snapshot, live: { busy: true, tools: [], message: failed } };
+	assert.deepEqual(decodePocketEvent({ ...event, snapshot: live }), { ...event, snapshot: live });
+	for (const errorMessage of [null, {}, 429, "x".repeat(65537)]) {
+		const invalid = {
+			...snapshot,
+			entries: [{ ...snapshot.entries[0], messages: [{ ...failed, errorMessage }] }],
+		};
+		assert.throws(() => decodePocketEvent({ ...event, snapshot: invalid }));
+	}
+	assert.throws(() =>
+		decodePocketEvent({
+			...event,
+			snapshot: {
+				...snapshot,
+				entries: [{ ...snapshot.entries[0], messages: [{ ...failed, role: "user" }] }],
+			},
+		}),
+	);
+});
+
 // A slash text cannot bypass the human dispatcher by entering the raw model-input endpoint.
 test("Pocket protocol: human display, explicit model work and person administration use finite separate commands", () => {
 	const commands = [

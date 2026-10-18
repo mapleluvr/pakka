@@ -76,11 +76,14 @@ test(
 			await page.click("[data-interface=mas-devpack-board]");
 			await page.wait('document.querySelector("[data-member=coordinator]")');
 			await page.click("[data-member=coordinator]");
+			await page.click("[data-agent-details]");
+			await page.click("[data-agent-controls=coordinator]");
 			await page.wait('document.querySelector("textarea[name=masMessage]")');
 			await page.type("textarea[name=masMessage]", "CREATE-CLI-CHILD");
 			await page.click("[data-mas-send]");
 			await page.wait('/done/.test(document.querySelector("[data-mas-receipt]")?.textContent)');
-			await page.click("[data-interface=mas-devpack-board]");
+			await page.click('[aria-label="Close Agent controls"]');
+			await page.wait('!document.querySelector("textarea[name=masMessage]")');
 			await page.wait('document.querySelector("[data-member=cli-child]")');
 			assert.equal(m.f.requests.length, 2);
 			assert.match(JSON.stringify(m.f.requests[1]!), /cli-child/);

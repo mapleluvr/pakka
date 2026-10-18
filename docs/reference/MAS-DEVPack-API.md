@@ -4,7 +4,9 @@ M4 阶段固定配对为 `@pakka/agent@0.5.0`、`@pakka/mas@0.3.0`、`@pakka/mas
 
 ## 可选 Web 产品 facets
 
-Pakka-Pocket P4 已通过公开 Backend/Client/WebUI 子入口提供 MAS Board 和 member panel，保留原 Agent-only 入口及其 headless 依赖图。实际组装、独立 profile 选择、人类权限、原生 reply、facet 移除与恢复的契约和验证见 [P4 记录](../archive/webui/PAKKA-POCKET-P4.md)。Runtime 的固定批准 profile 集保持原契约；关闭 Agent contribution 使用已批准的无工具 profile 和真实 owner configure，不通过改写重开配置放宽身份校验。
+公开 Backend/Client/WebUI 子入口提供 MAS Board 关系画布、实时活动、分页交流日志和 member panel，保留 Agent-only 入口及其 headless 依赖图。操作见 [MAS Board](../guides/MAS-BOARD.md)，本轮源码和门禁范围见 [实施记录](../verification/MAS-BOARD-R1.md)。实际组装、独立 profile 选择、人类权限、原生 reply、facet 移除与恢复的契约和验证见 [P4 记录](../archive/webui/PAKKA-POCKET-P4.md)。Runtime 的固定批准 profile 集保持原契约；关闭 Agent contribution 使用已批准的无工具 profile 和真实 owner configure，不通过改写重开配置放宽身份校验。
+
+Board 的只读 `WorkbenchView` 包含宿主绑定的 `sessionId`；浏览器据此保存个人视图，身份不依赖宿主此刻是否选中了某个 Conversation。`member` 界面使用公开 `sheet` 插槽承载 Agent controls，关闭仅结束观察。退役节点的个人隐藏与恢复不写入 MAS catalog。
 
 ## 安装边界
 
@@ -54,7 +56,7 @@ const profile = { id: "researcher", tools: pack.tools, systemPrompt: pack.instru
 - 同一 service 串行提交 reservation 写入，但不串行整个 provisioning；每次排队后和提交时重新验权。其他 service 实例仍靠 CAS，冲突最多重试 32 次，耗尽时拒绝继续，不覆盖或释放未知 slot。40 个 distinct template 在一/两个实例上的真实 storage 争用已验证；这不是无限并发或公平性保证。
 - 没有跨 Session 原子事务或原子撤权保证。发出的远端 prepare/admission 可能已经生效；late rejection 不声称 rollback，不释放 reservation。
 
-`MasClient.reply()` 使用原 receipt 验证并选定回复目标；当前 `DeliveryReceipt` 不保存 replyTo、正文或时间。这里的 receipt-linked reply 描述路由与权限依据，完整问答日志的持久关联仍需新增记录。人类经成员面板代发也可使用成员 source，不能仅凭 source 判断为模型自主发言。关系图与日志的数据接续见 [MAS Board 设计](../MAS-BOARD-DESIGN.md)。
+`MasClient.reply()` 使用原 receipt 验证并选定回复目标；持久 delivery observation 现保留 `replyTo`、正文、时间与实际发起者，`DeliveryReceipt` 继续承载原生 generation 状态。人类经成员面板代发保留通信端点并标记 `human`。创建来源与 fork 来源记录在 catalog 成员中；旧字段缺失时保持未知。宿主 `Mas.history()` 提供有界观测，业务 Agent 的 `MasClient` 不因 Board 增加全局正文权限。Board 另按当前人员过滤两端、搜索、游标和计数，读取独立于发送权限。
 
 当前 membership `view()` 是持久 phase snapshot。原生 owner task 已结束时 `inspect()` 才给出 native readiness；`deliver` 在 commit line 仍会拒绝 ended owner，不因旧 snapshot 显示 active 而放行。
 

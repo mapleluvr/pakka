@@ -49,6 +49,75 @@ test("M2 MAS: readiness barrier activates the entire roster on one durable commi
 	}
 });
 
+test("M2 MAS: retired history survives activation and reopen without resurrecting authority", async () => {
+	const m = await runtimeFixture();
+	let reopened: Awaited<ReturnType<typeof createRuntime>> | undefined;
+	try {
+		let mas = await boot(m.runtime);
+		await mas.bootstrap([
+			{ key: "a", owner: "operator" },
+			{ key: "b", owner: "operator" },
+		]);
+		await mas.activate();
+		const [a, b] = (await mas.view()).members;
+		let admin = mas.connect({ principal: "operator", source: null, grants: ["send", "retire"] });
+		const first = await admin.send(b!.ref, { requestId: "before-retirement", text: "RETAINED-HISTORY" });
+		await admin.wait(first.id);
+		await admin.retire(b!.ref);
+		const before = await mas.view();
+		const path = m.runtime.view().sessionFile;
+		await m.runtime.close();
+		reopened = await createRuntime({ ...m.config, reopenSessionFile: path });
+		mas = await boot(reopened);
+		const activated = await mas.activate();
+		assert.equal(activated.version, before.version, "retained history must not be reactivated or rewritten");
+		assert.deepEqual(
+			activated.members.map((entry) => entry.phase),
+			["active", "retired"],
+		);
+		admin = mas.connect({ principal: "operator", source: null, grants: ["send", "retire"] });
+		assert.equal((await admin.receipt(first.id)).status, "done");
+		await assert.rejects(
+			admin.send(b!.ref, { requestId: "retired-input", text: "MUST-NOT-RUN" }),
+			/retired|admission/,
+		);
+		await admin.retire(a!.ref);
+		const retired = await mas.view();
+		const allRetired = await mas.activate();
+		assert.equal(allRetired.phase, "retired");
+		assert.equal(allRetired.version, retired.version);
+		assert.ok(allRetired.members.every((entry) => entry.phase === "retired"));
+		assert.equal(m.f.requests.length, 1, "reopen and activation must not replay work");
+	} finally {
+		await reopened?.close();
+		await m.close();
+	}
+});
+
+test("M2 MAS: activation keeps unfinished and uncertain members behind the readiness barrier", async () => {
+	const m = await runtimeFixture();
+	try {
+		const mas = await boot(m.runtime);
+		await mas.bootstrap([{ key: "a", owner: "operator" }]);
+		const catalog = m.runtime.catalog({ namespace: "crew", maxDeliveries: 16, maxPending: 3 });
+		for (const phase of ["preparing", "stopping", "failed", "unknown"]) {
+			const before = await catalog.snapshot();
+			const changed = await catalog.update(
+				"a",
+				{ ...before.members[0]!.data, phase },
+				before.version,
+				() => {},
+			);
+			await assert.rejects(mas.activate(), /MAS readiness barrier incomplete/);
+			assert.equal((await catalog.snapshot()).version, changed.version, phase);
+			assert.equal((await mas.view()).members[0]!.phase, phase);
+		}
+		assert.equal(m.f.requests.length, 0);
+	} finally {
+		await m.close();
+	}
+});
+
 test("M2 MAS: readiness, source binding, broad send and narrow owner administration", async () => {
 	const m = await runtimeFixture();
 	try {

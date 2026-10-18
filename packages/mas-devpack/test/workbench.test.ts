@@ -102,6 +102,11 @@ test("MAS human workbench: scoped readers see only approved members and cannot d
 		const viewerActor = await people.authenticate((await people.redeem(invitation.token, "Viewer")).token),
 			viewer = workbench.bind(authority(viewerActor));
 		const result = await viewer.view();
+		assert.equal(
+			result.sessionId,
+			m.runtime.view().sessionId,
+			"Board view identity comes from its bound Session",
+		);
 		assert.equal(result.members.length, 1);
 		assert.equal(result.members[0]!.key, "visible");
 		assert.equal(JSON.stringify(result).includes("PRIVATE-TEAM-CANARY"), false);

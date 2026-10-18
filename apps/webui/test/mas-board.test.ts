@@ -81,15 +81,18 @@ test(
 			await page.wait('document.querySelector("[data-interface=mas-devpack-board]")');
 			await page.click("[data-interface=mas-devpack-board]");
 			await page.wait('document.querySelector("[data-member=coordinator]")');
+			await page.wait('document.querySelector("[data-agent=coordinator] [data-activity-state=idle]")');
 			assert.equal(m.f.requests.length, 0, "Activating a MAS member does not start model work");
 			assert.deepEqual(
 				await page.evaluate(
-					`(()=>{const row=document.querySelector('[data-member=coordinator]');return {label:row.getAttribute('aria-label'),tone:row.classList.contains('available')};})()`,
+					`(()=>{const row=document.querySelector('[data-member=coordinator]');return {label:row.getAttribute('aria-label'),tone:row.closest('.graph-agent').classList.contains('available')};})()`,
 				),
-				{ label: "coordinator, Available, persistent", tone: true },
+				{ label: "coordinator, Available, No activity yet", tone: true },
 				"An idle active member exposes membership availability rather than running activity",
 			);
 			await page.click("[data-member=coordinator]");
+			await page.click("[data-agent-details]");
+			await page.click('[data-agent-controls="coordinator"]');
 			await page.wait('document.querySelector("textarea[name=masMessage]")');
 			await page.type("textarea[name=masMessage]", "CREATE-BOARD-CHILD");
 			await page.click("[data-mas-send]");
@@ -120,9 +123,53 @@ test(
 			);
 			await app.runtime.waitForIdle();
 			assert.equal(m.f.requests.length, 5);
-			await page.click("[data-interface=mas-devpack-board]");
+			await page.click('[aria-label="Close Agent controls"]');
+			await page.wait(
+				'!document.querySelector("textarea[name=masMessage]") && document.activeElement?.getAttribute("data-agent-controls") === "coordinator"',
+			);
 			await page.wait('document.querySelector("[data-member=board-child]")');
+			await page.wait(
+				'document.querySelector(".graph-edge.creation") && document.querySelector(".graph-edge.communication")',
+			);
+			assert.deepEqual(
+				await page.evaluate(
+					'({creation:document.querySelectorAll(".graph-edge.creation").length,communication:document.querySelectorAll(".graph-edge.communication").length})',
+				),
+				{ creation: 1, communication: 1 },
+			);
+			await page.click("[data-board-options]");
+			await page.click('[data-board-layer="creation"]');
+			await page.wait('document.querySelector(".graph-edge.creation") === null');
+			await page.click('[data-board-layer="creation"]');
+			await page.click(".graph-edge.communication .edge-count-button");
+			await page.wait(
+				'document.querySelector(".graph-history")?.textContent.includes("REAL-INCOMING-FOR-REPLY")',
+			);
+			await page.click("[data-hide-connection]");
+			await page.click('[data-board-tab="relationships"]');
+			await page.wait('document.querySelector(".graph-edge.communication") === null');
+			await page.click("[data-board-options]");
+			await page.click("[data-show-hidden-links]");
+			await page.wait('document.querySelector(".graph-edge.communication") !== null');
+			await page.click('[data-board-tab="history"]');
+			await page.wait(
+				'document.querySelector(".graph-history")?.textContent.includes("REAL-INCOMING-FOR-REPLY")',
+			);
+			await page.click('[data-board-tab="relationships"]');
 			await page.click("[data-member=board-child]");
+			await page.click("[data-agent-details]");
+			await page.click('[data-hide-member-links="board-child"]');
+			assert.equal(await page.evaluate('document.querySelectorAll(".graph-edge.communication").length'), 0);
+			assert.equal(
+				await page.evaluate('document.querySelectorAll(".graph-edge.creation").length'),
+				1,
+				"Hiding Agent communications retains proven creation lineage",
+			);
+			await page.click("[data-board-options]");
+			await page.click("[data-show-hidden-links]");
+			await page.wait('document.querySelector(".graph-edge.communication")');
+			await page.click("[data-board-options]");
+			await page.click('[data-agent-controls="board-child"]');
 			await page.wait('document.querySelector("[data-mas-reply]")');
 			await page.type("textarea[name=masMessage]", "HUMAN-BOARD-REPLY");
 			await page.click("[data-mas-reply]");
@@ -143,6 +190,86 @@ test(
 			assert.equal((await mas.view()).members.find((row) => row.key === "board-child")!.phase, "retired");
 			assert.equal((await mas.view()).members.find((row) => row.key === "coordinator")!.phase, "active");
 			assert.equal(m.f.requests.length, 6);
+			await page.click('[aria-label="Close Agent controls"]');
+			await page.wait(
+				'!document.querySelector("textarea[name=masMessage]") && document.activeElement?.getAttribute("data-agent-controls") === "board-child"',
+			);
+			await page.wait('document.querySelector("[data-member=board-child]")');
+			await page.click("[data-member=board-child]");
+			await page.click('[data-open-conversation="board-child"]');
+			const childConversation = JSON.stringify(child.ref.conversationId);
+			await page.wait(
+				`Array.from(document.querySelectorAll("[data-conversation]")).some(row => row.dataset.conversation === ${childConversation} && row.classList.contains("selected"))`,
+			);
+			await page.wait('document.querySelector("textarea[name=message]")');
+			assert.equal(m.f.requests.length, 6, "Opening a MAS Conversation does not replay model work");
+			await page.click("[data-return-extension]");
+			await page.wait('document.querySelector("[data-member=board-child][aria-pressed=true]")');
+			const beforeMove = await page.evaluate(
+				'parseFloat(document.querySelector("[data-agent=board-child]").style.left)',
+			);
+			await page.evaluate('document.querySelector("[data-agent-move=board-child]").focus()');
+			await page.key("ArrowRight");
+			assert.equal(
+				await page.evaluate('parseFloat(document.querySelector("[data-agent=board-child]").style.left)'),
+				Number(beforeMove) + 20,
+			);
+			await page.click("[data-board-mode=list]");
+			await page.wait(
+				'document.querySelector(".graph-agent-list [data-member=board-child][aria-pressed=true]")',
+			);
+			await page.click("[data-board-mode=canvas]");
+			assert.equal(
+				await page.evaluate('parseFloat(document.querySelector("[data-agent=board-child]").style.left)'),
+				Number(beforeMove) + 20,
+			);
+			assert.equal(m.f.requests.length, 6, "Adjusting presentation does not replay model work");
+			for (const viewport of [
+				{ width: 360, height: 600 },
+				{ width: 390, height: 650 },
+			]) {
+				const mobile = page;
+				await mobile.resize(viewport);
+				await mobile.click("[data-board-mode=canvas]");
+				await mobile.wait('document.querySelector("[data-member=coordinator]")');
+				await mobile.evaluate("document.documentElement.style.setProperty('--text-size','24px')");
+				await mobile.evaluate(
+					"document.fonts.ready.then(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))))",
+				);
+				await mobile.click("[data-member=coordinator]");
+				await mobile.evaluate(
+					'document.querySelector("[data-open-conversation=coordinator]").scrollIntoView({block:"nearest"})',
+				);
+				const geometry: unknown = await mobile.evaluate(
+					`(()=>{const canvas=document.querySelector('.graph-scroll'),open=document.querySelector('[data-open-conversation=coordinator]').getBoundingClientRect(),text=document.querySelector('.graph-agent-activity');return {overflow:document.documentElement.scrollWidth>innerWidth,canvasHeight:canvas.clientHeight,openVisible:open.top>=0&&open.bottom<=innerHeight,font:parseFloat(getComputedStyle(text).fontSize)};})()`,
+				);
+				assert.ok(
+					geometry &&
+						typeof geometry === "object" &&
+						"canvasHeight" in geometry &&
+						"overflow" in geometry &&
+						"openVisible" in geometry &&
+						"font" in geometry,
+				);
+				assert.equal(geometry.overflow, false);
+				assert.equal(geometry.openVisible, true);
+				assert.ok(Number(geometry.font) >= 21, "Activity preview inherits the large Appearance font");
+				assert.ok(Number(geometry.canvasHeight) >= 100, "Short-screen controls preserve usable canvas space");
+				try {
+					await mobile.click("[data-board-mode=list]");
+				} catch (failure) {
+					await writeFile(join(evidence, `mobile-${viewport.width}-blocked.png`), await mobile.screenshot());
+					console.error(
+						"MOBILE HIT",
+						await mobile.evaluate(
+							`(()=>{const selectors=['.graph-board','.board-head','.board-tabs','.graph-view-mode','.graph-scroll','.graph-selection','[data-board-mode=list]'];return selectors.map(selector=>{const e=document.querySelector(selector),r=e.getBoundingClientRect(),hit=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return {selector,rect:{x:r.x,y:r.y,width:r.width,height:r.height},hit:hit?.outerHTML.slice(0,500)};});})()`,
+						),
+					);
+					throw failure;
+				}
+				await mobile.wait('document.querySelector(".graph-agent-list [data-member=coordinator]")');
+			}
+			assert.equal(m.f.requests.length, 6, "Mobile observation never starts a model request");
 			assert.deepEqual(m.f.errors, []);
 		} finally {
 			await browser?.close();

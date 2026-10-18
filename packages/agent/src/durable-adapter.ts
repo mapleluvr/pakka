@@ -179,7 +179,12 @@ function transcriptMessage(message: Message): TranscriptMessage | undefined {
 	return storedJson<TranscriptMessage>({
 		role: message.role,
 		content,
-		...(message.role === "assistant" ? { stopReason: message.stopReason } : {}),
+		...(message.role === "assistant"
+			? {
+					stopReason: message.stopReason,
+					...(typeof message.errorMessage === "string" ? { errorMessage: message.errorMessage } : {}),
+				}
+			: {}),
 		...(message.role === "toolResult"
 			? { toolCallId: message.toolCallId, toolName: message.toolName, isError: message.isError }
 			: {}),
@@ -458,6 +463,8 @@ type StoredDelivery = {
 	spec: JsonRepresentation<CatalogDeliverySpec>;
 	fingerprint: string;
 	submissionId: number;
+	/** Optional on legacy v1 records; observation must not invent a time. */
+	at?: number;
 };
 type CatalogRecord = {
 	version: number;
@@ -2044,6 +2051,71 @@ export class DurableAdapter {
 		};
 		return Object.freeze({
 			snapshot: view,
+			lookupReceipt: async (id: string, check: () => void) => {
+				checkAuthority(check);
+				if (!validKey(id)) throw new MutationDenied("Invalid delivery receipt identity");
+				const stored = (await read())?.deliveries[id];
+				checkAuthority(check);
+				if (!stored) return null;
+				const value = await status(stored);
+				checkAuthority(check);
+				return value;
+			},
+			history: async (
+				query: import("./types.ts").CatalogHistoryQuery,
+				check: () => void,
+				accepts?: (spec: CatalogDeliverySpec) => boolean,
+			) => {
+				checkAuthority(check);
+				if (
+					!query ||
+					Object.keys(query).some((key) => !["limit", "cursor"].includes(key)) ||
+					!Number.isSafeInteger(query.limit ?? 32) ||
+					(query.limit ?? 32) < 1 ||
+					(query.limit ?? 32) > 64 ||
+					(query.cursor !== undefined && !validKey(query.cursor))
+				)
+					throw new MutationDenied("Invalid bounded history query/limit");
+				const state = await read();
+				checkAuthority(check);
+				const rows = Object.values(state?.deliveries ?? {})
+					.reverse()
+					.filter((row) => {
+						checkAuthority(check);
+						if (!accepts) return true;
+						const allowed = accepts(copy(row.spec));
+						if (typeof allowed !== "boolean") throw new MutationDenied("History scope must be synchronous");
+						return allowed;
+					});
+				const boundary = query.cursor === undefined ? -1 : rows.findIndex((row) => row.id === query.cursor);
+				if (query.cursor !== undefined && boundary < 0)
+					throw new MutationDenied("Invalid history cursor for current scope");
+				const limit = query.limit ?? 32,
+					selected = rows.slice(boundary + 1, boundary + 1 + limit);
+				const items: import("./types.ts").CatalogDeliveryObservation[] = [];
+				for (const row of selected) {
+					checkAuthority(check);
+					if (row.at !== undefined && (!Number.isSafeInteger(row.at) || row.at < 0))
+						throw new Error("Invalid persisted delivery observation time");
+					const receipt = await status(row);
+					checkAuthority(check);
+					items.push({
+						receipt,
+						text: row.spec.text,
+						mode: row.spec.mode,
+						...(row.at !== undefined ? { at: row.at } : {}),
+						...(row.spec.initiator ? { initiator: row.spec.initiator } : {}),
+						...(row.spec.replyTo ? { replyTo: row.spec.replyTo } : {}),
+					});
+				}
+				checkAuthority(check);
+				return copy({
+					items,
+					...(rows.length > boundary + 1 + limit && selected.length
+						? { nextCursor: selected.at(-1)!.id }
+						: {}),
+				});
+			},
 			received: async (ref: ConversationRef, check: () => void) => {
 				checkAuthority(check);
 				const state = await read();
@@ -2092,7 +2164,7 @@ export class DurableAdapter {
 						data: storedJson<JsonObject>(s.data),
 						lifetime,
 						taskId,
-						source: s.source,
+						source: s.source ? copy(s.source) : undefined,
 						invocation: s.invocation,
 						fork: s.fork ? copy(s.fork) : undefined,
 						inherit: s.inherit ? copy(s.inherit) : undefined,
@@ -2106,6 +2178,7 @@ export class DurableAdapter {
 						throw new MutationDenied("Member already exists");
 					if (runtime.conversationCount + specs.length > runtime.limits.maxConversations)
 						throw new MutationDenied("Session Conversation limit exhausted");
+					for (const spec of specs) if (spec.source) validateRef(spec.source);
 					for (const spec of specs)
 						if (spec.taskId !== undefined) {
 							const native = await tx.task(spec.taskId);
@@ -2213,6 +2286,12 @@ export class DurableAdapter {
 						runtime.resources[resourceKey] = ref;
 						runtime.conversationCount++;
 						const member: StoredMember = {
+							creation: storedJson({
+								source: spec.source ?? null,
+								kind: spec.fork ? "fork" : "create",
+								at: Date.now(),
+								...(spec.fork ? { fork: spec.fork } : {}),
+							}),
 							key: spec.key,
 							ref,
 							lifetime: spec.lifetime,
@@ -2346,6 +2425,12 @@ export class DurableAdapter {
 				if (
 					!validKey(original.requestId) ||
 					!validKey(original.principal) ||
+					(original.replyTo !== undefined && !validKey(original.replyTo)) ||
+					(original.initiator !== undefined &&
+						(!original.initiator ||
+							Object.keys(original.initiator).some((k) => !["kind", "id"].includes(k)) ||
+							!["agent", "human", "service"].includes(original.initiator.kind) ||
+							!validKey(original.initiator.id))) ||
 					typeof original.text !== "string" ||
 					!original.text.trim() ||
 					original.text.length > 65536 ||
@@ -2379,10 +2464,30 @@ export class DurableAdapter {
 						}
 						const old = state.deliveries[id];
 						if (old) {
-							if (old.fingerprint !== fingerprint)
+							if (old.fingerprint !== hash(old.spec))
+								throw new Error("Invalid retained delivery fingerprint");
+							const admission = (value: CatalogDeliverySpec) => {
+								const payload = { ...value };
+								delete payload.initiator;
+								if (old.at === undefined && old.spec.replyTo === undefined) delete payload.replyTo;
+								return payload;
+							};
+							if (hash(admission(old.spec)) !== hash(admission(spec)))
 								throw new MutationDenied("Delivery payload/mode/target conflict");
 							checkAuthority(check);
 							return storedJson<StoredDelivery>(old);
+						}
+						if (spec.replyTo) {
+							const original = state.deliveries[spec.replyTo]?.spec;
+							const logical = (a: ConversationRef, b: ConversationRef) =>
+								a.sessionId === b.sessionId && a.conversationId === b.conversationId;
+							if (
+								!original?.source ||
+								!spec.source ||
+								!logical(original.target, spec.source) ||
+								!logical(original.source, spec.target)
+							)
+								throw new MutationDenied("Reply association does not match original endpoints");
 						}
 						if (target.data.phase !== "active") throw new MutationDenied("Recipient admission inactive");
 						if (target.ownerTaskId !== undefined) {
@@ -2455,7 +2560,7 @@ export class DurableAdapter {
 							live.run = { taskId, inputs: [sub.id] };
 						}
 						checkAuthority(check);
-						const record: StoredDelivery = { id, spec, fingerprint, submissionId };
+						const record: StoredDelivery = { id, spec, fingerprint, submissionId, at: Date.now() };
 						state.deliveries[id] = record;
 						state.version++;
 						return copy(record);

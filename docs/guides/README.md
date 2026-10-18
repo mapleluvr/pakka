@@ -3,6 +3,7 @@
 | 使用场景                                               | 文档                                                  |
 | ------------------------------------------------------ | ----------------------------------------------------- |
 | 浏览器里的 Conversation、模型、工作目录与常用面板      | [WebUI 使用与启动](WEBUI-GUIDE.md)                    |
+| Agent 关系画布、活动预览和交流日志                     | [MAS Board](MAS-BOARD.md)                             |
 | 显式 server 配置、连接文件、Node/browser client 和 CLI | [MAS 应用配置](MAS-APPLICATION-API.md)                |
 | Headless MAS 的产品范围、权限和正常重开                | [MAS 产品支持边界](MAS-PRODUCT-SUPPORT.md)            |
 | 受控 Webhook 的认证、投递及去重                        | [Webhooks](WEBHOOKS.md)                               |

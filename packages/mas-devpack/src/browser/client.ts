@@ -1,7 +1,36 @@
 import { decodeValue } from "@pakka/webui/extension";
-import { inboxSchema, memberSchema, receiptSchema, viewSchema } from "./contract.ts";
-import type { WorkbenchMember, WorkbenchReceipt, WorkbenchView } from "./dto.ts";
-export type { MemberRef, WorkbenchMember, WorkbenchReceipt, WorkbenchView } from "./dto.ts";
+import {
+	inboxSchema,
+	memberSchema,
+	receiptSchema,
+	viewSchema,
+	activitiesSchema,
+	historyPageSchema,
+} from "./contract.ts";
+import type {
+	WorkbenchMember,
+	WorkbenchReceipt,
+	WorkbenchView,
+	WorkbenchActivity,
+	WorkbenchHistoryPage,
+} from "./dto.ts";
+export type {
+	MemberRef,
+	WorkbenchMember,
+	WorkbenchReceipt,
+	WorkbenchView,
+	WorkbenchActivity,
+	WorkbenchHistoryPage,
+	WorkbenchHistoryItem,
+	WorkbenchHistoryQuery,
+	WorkbenchConnection,
+} from "./dto.ts";
+export function readHistory(value: unknown): WorkbenchHistoryPage {
+	return decodeValue(historyPageSchema, value) as unknown as WorkbenchHistoryPage;
+}
+export function readActivities(value: unknown): readonly WorkbenchActivity[] {
+	return decodeValue(activitiesSchema, value) as unknown as readonly WorkbenchActivity[];
+}
 export function readBoard(value: unknown): WorkbenchView {
 	// SAFETY: the closed schema checks every member/reference, enum and nullable owner field before publishing a DTO.
 	return decodeValue(viewSchema, value) as unknown as WorkbenchView;

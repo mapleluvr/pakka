@@ -44,8 +44,15 @@ function secretKey(token: string) {
 	return createHash("sha256").update(token).digest("hex");
 }
 function visibleMember(value: Member): Member {
-	const { reason, ...member } = value;
-	return reason === undefined ? member : { ...member, reason: "Resource state unavailable" };
+	const { key, ref, owner, lifetime, phase, reason } = value;
+	return {
+		key,
+		ref,
+		owner,
+		lifetime,
+		phase,
+		...(reason === undefined ? {} : { reason: "Resource state unavailable" }),
+	};
 }
 function visibleReceipt(value: Receipt): Receipt {
 	const { reason, ...receipt } = value;

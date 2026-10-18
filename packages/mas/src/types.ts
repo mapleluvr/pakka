@@ -6,6 +6,11 @@ import type {
 	MemberLifetime,
 	Runtime,
 	ToolInvocationScope,
+	ConversationCreation,
+	ConversationConfigurationChange,
+	CatalogDeliverySpec,
+	CatalogHistoryQuery,
+	CatalogHistoryPage,
 } from "@pakka/agent";
 export type { ConversationRef as AgentRef, DeliveryReceipt, MemberLifetime } from "@pakka/agent";
 
@@ -30,6 +35,7 @@ export type MemberPhase =
 	| "unknown"
 	| "ended";
 export interface Member {
+	readonly creation?: ConversationCreation;
 	readonly key: string;
 	readonly ref: ConversationRef;
 	readonly owner: string;
@@ -73,6 +79,7 @@ export interface MasClient {
 	abort(ref: ConversationRef): Promise<Member>;
 	retire(ref: ConversationRef): Promise<Member>;
 	configure(ref: ConversationRef, profile: string): Promise<Member>;
+	configureAgent(ref: ConversationRef, change: ConversationConfigurationChange): Promise<Member>;
 	fork(ref: ConversationRef, spec: { readonly key: string; readonly entryId: string }): Promise<Member>;
 	/** Exact live native invocation; copying/serialization or a peer scope never grants authority. */
 	forInvocation(scope: ToolInvocationScope): MasClient;
@@ -91,10 +98,19 @@ export interface Mas {
 	bootstrap(members: readonly MemberSpec[]): Promise<MasView>;
 	activate(): Promise<MasView>;
 	view(): Promise<MasView>;
+	/** Trusted read port, separate from model-side observe grants. */
+	history(
+		query: CatalogHistoryQuery,
+		check: () => void,
+		accepts?: (spec: CatalogDeliverySpec) => boolean,
+	): Promise<CatalogHistoryPage>;
+	lookupReceipt(id: string, check: () => void): Promise<DeliveryReceipt | null>;
 	connect(spec: {
 		readonly principal: string;
 		readonly source: ConversationRef | null;
 		readonly grants: readonly MasGrant[];
+		/** Trusted human/service attribution. Native tool invocations derive agent attribution internally. */
+		readonly initiator?: { readonly kind: "human" | "service"; readonly id: string };
 	}): MasClient;
 	revoke(principal: string): void;
 	setAdmission(policy: (request: Admission) => boolean | Promise<boolean>): void;

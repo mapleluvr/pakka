@@ -1,4 +1,5 @@
 import { fileURLToPath } from "node:url";
+import type { ConversationRef } from "@pakka/agent";
 import type { Mas } from "@pakka/mas";
 import type {
 	BackendContext,
@@ -7,8 +8,18 @@ import type {
 	PocketServiceContext,
 } from "@pakka/webui/backend";
 import { decodeValue, isRecord } from "@pakka/webui/extension";
-import { createMasWorkbench, type MasWorkbenchClient } from "./workbench.ts";
-import { inboxSchema, memberSchema, receiptSchema, viewSchema } from "./browser/contract.ts";
+import { createMasWorkbench, type MasWorkbenchClient, type WorkbenchHistoryQuery } from "./workbench.ts";
+import { masConversations } from "./resources.ts";
+import {
+	activitiesInput,
+	activitiesSchema,
+	historyPageSchema,
+	historyQuerySchema,
+	inboxSchema,
+	memberSchema,
+	receiptSchema,
+	viewSchema,
+} from "./browser/contract.ts";
 
 /** Optional trusted facet root. The default Agent entry does not import this module or WebUI. */
 export const masExtensionRoot = fileURLToPath(new URL(".", import.meta.url));
@@ -17,6 +28,7 @@ export function masWorkbenchService(
 ): ExtensionService<MasWorkbenchClient> {
 	const board = createMasWorkbench(options);
 	return Object.freeze({
+		conversations: masConversations({ ...options, board }),
 		permission: "read" as const,
 		bind(
 			actor: Parameters<ExtensionService["bind"]>[0],
@@ -100,6 +112,17 @@ function string(input: unknown, key: string) {
 }
 export const actions: BackendModule["actions"] = Object.freeze({
 	view: async (context) => decodeValue(viewSchema, await board(context).view()),
+	history: async (context, input) =>
+		decodeValue(
+			historyPageSchema,
+			await board(context).history(decodeValue(historyQuerySchema, input) as WorkbenchHistoryQuery),
+		),
+	activities: async (context, input) => {
+		const request = decodeValue(activitiesInput, input) as unknown as {
+			readonly refs: readonly ConversationRef[];
+		};
+		return decodeValue(activitiesSchema, await board(context).activities(request.refs));
+	},
 	inspect: async (context) => decodeValue(memberSchema, await board(context).inspect(target(context))),
 	send: async (context, input) =>
 		decodeValue(

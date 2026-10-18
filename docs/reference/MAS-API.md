@@ -54,6 +54,12 @@ identity 为 namespace + principal + source incarnation + requestId，payload fi
 
 关闭、重开和相同 requestId 重试会沿用持久 catalog/native admission，inspection 本身不发送 HTTP。Host 的进程内 C2 ledger 仍独立；MAS 去重依赖目标 Session 的 durable catalog。
 
+## 宿主持久观测
+
+`Mas.history(query?, check?, accepts?)` 向受信任宿主返回最近优先的有界 delivery 页；每页最多 64 条，游标是原持久回执 ID。正文、实际发起者、时间与显式 `replyTo` 属于独立 observation；`DeliveryReceipt.status` 保持原生含义。原请求核对继续匹配原生输入身份及有效载荷，复用同一 admission 并保留首次提交的实际发起记录；新记录的显式回复关联也须一致。成员的 `creation` 保存真实创建来源和可选 fork 历史来源。旧记录缺少的信息保持缺失。
+
+此接口位于宿主 `Mas` 服务。业务 `MasClient` 的 grants 与既有 own-inbox 范围保持原边界；人类 Board 由受控服务先执行双端 read 过滤，再分页与搜索，完成异步读取后重新验权。操作方式见 [MAS Board](../guides/MAS-BOARD.md)。
+
 ## 生命周期、配置与失败
 
 | lifetime                   | 原生归属与历史                                                                                                                         |

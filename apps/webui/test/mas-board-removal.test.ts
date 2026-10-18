@@ -86,6 +86,8 @@ test(
 			assert.equal(await viewer.evaluate('document.querySelectorAll("[data-member]").length'), 1);
 			assert.equal(await viewer.evaluate("document.documentElement.scrollWidth > innerWidth"), false);
 			await viewer.click("[data-member=visible]");
+			await viewer.click("[data-agent-details]");
+			await viewer.click("[data-agent-controls=visible]");
 			await viewer.wait('document.querySelector("[data-member-phase]")');
 			assert.equal(
 				await viewer.evaluate(
@@ -94,6 +96,8 @@ test(
 				false,
 			);
 			await owner.click("[data-member=visible]");
+			await owner.click("[data-agent-details]");
+			await owner.click("[data-agent-controls=visible]");
 			await owner.wait('document.querySelector("textarea[name=masMessage]")');
 			await owner.type("textarea[name=masMessage]", "HOLD-WHILE-BOARD-REMOVED");
 			await owner.click("[data-mas-send]");
@@ -112,6 +116,10 @@ test(
 			const wire = String(await viewer.evaluate("JSON.stringify(globalThis.boardResponses)"));
 			assert.equal(wire.includes("PRIVATE-TEAM-CANARY"), false);
 			assert.equal(wire.includes('"conversationId":"' + hidden.ref.conversationId + '"'), false);
+			await owner.click('[aria-label="Close Agent controls"]');
+			await owner.wait(
+				'!document.querySelector("textarea[name=masMessage]") && document.activeElement?.getAttribute("data-agent-controls") === "visible"',
+			);
 			await owner.click("[data-action=commands]");
 			await owner.wait('document.querySelector(".pocket-extension-registration button")');
 			await owner.click(".pocket-extension-registration button");

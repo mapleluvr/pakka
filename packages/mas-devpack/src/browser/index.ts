@@ -1,177 +1,39 @@
-import {
-	h,
-	type TargetedKeyboardEvent,
-	type TargetedSubmitEvent,
-	type TargetedInputEvent,
-	type TargetedEvent,
-} from "preact";
+import { h, type TargetedSubmitEvent, type TargetedInputEvent, type TargetedEvent } from "preact";
 import { useEffect, useState } from "preact/hooks";
 import { Button, Field, Icon, Notice, Stack } from "@pakka/webui/components";
 import type { WebInterfaceProps } from "@pakka/webui/ui";
-import {
-	readBoard,
-	readMember,
-	readReceipt,
-	readInbox,
-	type WorkbenchMember,
-	type WorkbenchView,
-	type WorkbenchReceipt,
-} from "./client.ts";
+import { readMember, readReceipt, readInbox, type WorkbenchMember, type WorkbenchReceipt } from "./client.ts";
+import type { ExtensionOperation } from "@pakka/webui/extension";
+import { GraphBoard } from "./graph-board.ts";
 
-// Compact member-list presentation adapted from pi-pocket's pinned subagents-board.js.
-// The row groups a MAS namespace; membership phase is distinct from native live activity.
-const membershipLabel = (phase: WorkbenchMember["phase"] | "all") =>
-	({
-		all: "All",
-		preparing: "Preparing",
-		ready: "Ready to activate",
-		active: "Available",
-		stopping: "Stopping",
-		retired: "Retired",
-		failed: "Unavailable",
-		unknown: "Unknown",
-		ended: "Ended",
-	})[phase];
-const tone = (phase: WorkbenchMember["phase"]) =>
-	phase === "active"
-		? "available"
-		: phase === "failed"
-			? "failed"
-			: ["ready", "preparing", "stopping", "unknown"].includes(phase)
-				? "waiting"
-				: "stopped";
 const stylesheet = () => h("link", { rel: "stylesheet", href: new URL("board.css", import.meta.url).href });
-export function Board({ context }: WebInterfaceProps) {
-	const [snapshot, setSnapshot] = useState<WorkbenchView | null>(null),
-		[filter, setFilter] = useState("all"),
-		[query, setQuery] = useState("");
-	useEffect(
-		() => context.subscribe("view", {}, (value) => setSnapshot(readBoard(value)), { intervalMs: 500 }),
-		[context],
-	);
-	const members = snapshot?.members ?? [],
-		phases = [...new Set(members.map((row) => row.phase))];
-	const matching = members.filter(
-		(row) =>
-			(filter === "all" || row.phase === filter) &&
-			[row.key, row.parent, row.lifetime, row.phase].join(" ").toLowerCase().includes(query.toLowerCase()),
-	);
-	const open = (member: WorkbenchMember) => context.open("member", { target: member.ref });
-	return h(
-		"section",
-		{ class: "board mas-board", "aria-label": "MAS team members" },
-		stylesheet(),
-		h(
-			"header",
-			{ class: "board-head" },
-			h(
-				"div",
-				{ class: "board-title" },
-				h("h2", null, h(Icon, { name: "board" }), "Team"),
-				h(
-					"div",
-					{ class: "board-sub" },
-					`${members.length} visible members · ${snapshot?.namespace ?? "Loading"}`,
-				),
-			),
-			h(
-				"label",
-				{ class: "board-search" },
-				h("input", {
-					"aria-label": "Find a member",
-					value: query,
-					onInput: (event) => setQuery(event.currentTarget.value),
-					placeholder: "Find a member",
-				}),
-			),
-		),
-		h(
-			"div",
-			{ class: "board-summary-bar" },
-			h(
-				"div",
-				{ class: "board-legend", role: "group", "aria-label": "Member lifecycle filter" },
-				["all", ...phases].map((phase) =>
-					h(
-						"button",
-						{
-							key: phase,
-							class: `board-filter ${filter === phase ? "on" : ""}`,
-							"aria-pressed": filter === phase,
-							onClick: () => setFilter(phase),
-						},
-						membershipLabel(phase as WorkbenchMember["phase"] | "all"),
-						h(
-							"span",
-							{ class: "board-filter-count" },
-							phase === "all" ? members.length : members.filter((row) => row.phase === phase).length,
-						),
-					),
-				),
-			),
-		),
-		h(
-			"div",
-			{ class: "board-body" },
-			h(
-				"div",
-				{ class: "board-main" },
-				!snapshot
-					? h("p", { class: "board-empty" }, "Loading members…")
-					: matching.length === 0
-						? h("p", { class: "board-empty" }, "No visible members match this filter.")
-						: h(
-								"div",
-								{ class: "board-row" },
-								h(
-									"div",
-									{ class: "board-session" },
-									h("span", { class: "board-session-name" }, snapshot.namespace),
-								),
-								h(
-									"div",
-									{
-										class: "board-cells",
-										onKeyDown: (event: TargetedKeyboardEvent<HTMLDivElement>) => {
-											if (!["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)) return;
-											const buttons = Array.from(
-													event.currentTarget.querySelectorAll<HTMLButtonElement>("button"),
-												),
-												index = buttons.indexOf(document.activeElement as HTMLButtonElement);
-											if (index < 0) return;
-											event.preventDefault();
-											buttons[
-												Math.max(
-													0,
-													Math.min(
-														buttons.length - 1,
-														index + (["ArrowLeft", "ArrowUp"].includes(event.key) ? -1 : 1),
-													),
-												)
-											]?.focus();
-										},
-									},
-									matching.map((member) =>
-										h(
-											"button",
-											{
-												key: member.key,
-												"data-member": member.key,
-												class: `board-cell ${tone(member.phase)}`,
-												title: `${member.key} · Membership: ${membershipLabel(member.phase)}${member.parent ? " · managed by " + member.parent : ""}`,
-												"aria-label": `${member.key}, ${membershipLabel(member.phase)}, ${member.lifetime}`,
-												onClick: () => open(member),
-											},
-											member.key.slice(0, 2).toUpperCase(),
-										),
-									),
-								),
-							),
-			),
-		),
-	);
+export const Board = GraphBoard;
+type Pending = { readonly requestId: string; readonly action: string };
+function savedPending(key: string): Pending | null {
+	try {
+		const value = JSON.parse(sessionStorage.getItem(key) ?? "null");
+		return value &&
+			typeof value.requestId === "string" &&
+			["send", "steer", "reply", "abort", "retire"].includes(value.action)
+			? value
+			: null;
+	} catch {
+		return null;
+	}
 }
 export function MemberPanel({ context }: WebInterfaceProps) {
+	const pendingKey = `pakka.mas.pending:${JSON.stringify([context.extension, context.person.id, context.target])}`;
+	const [pending, setPending] = useState<Pending | null>(() => savedPending(pendingKey));
+	const remember = (value: Pending | null) => {
+		setPending(value);
+		try {
+			value
+				? sessionStorage.setItem(pendingKey, JSON.stringify(value))
+				: sessionStorage.removeItem(pendingKey);
+		} catch {
+			/* The current panel still retains the original identity. */
+		}
+	};
 	const [member, setMember] = useState<WorkbenchMember | null>(null),
 		[text, setText] = useState(""),
 		[mode, setMode] = useState("prompt"),
@@ -206,8 +68,44 @@ export function MemberPanel({ context }: WebInterfaceProps) {
 		}, 350);
 		return () => clearTimeout(timer);
 	}, [context, receipt]);
+	const finish = async (operation: ExtensionOperation) => {
+		if (operation.state !== "done") {
+			setNotice("Result unconfirmed. Check the original operation.");
+			return;
+		}
+		if (["send", "steer", "reply"].includes(operation.action)) {
+			let value = readReceipt(operation.value);
+			if (value.status === "unknown") {
+				const read = await context.call("receipt", { id: value.id });
+				if (context.signal.aborted) return;
+				if (read.state === "done") value = readReceipt(read.value);
+			}
+			setReceipt(value);
+			if (value.status === "unknown") {
+				setNotice("The native delivery result is unknown. Check the original operation again.");
+				return;
+			}
+			setText("");
+		} else setMember(readMember(operation.value));
+		remember(null);
+		setNotice("");
+	};
+	const reconcile = async () => {
+		if (!pending || busy || context.signal.aborted) return;
+		setBusy(true);
+		try {
+			const result = await context.operationByRequest(pending.requestId);
+			if (!context.signal.aborted) await finish(result);
+		} catch {
+			if (!context.signal.aborted) setNotice("The original operation is unavailable or remains unconfirmed.");
+		} finally {
+			if (!context.signal.aborted) setBusy(false);
+		}
+	};
 	const perform = async (action: string, receivedId?: string) => {
-		if (busy || !member) return;
+		if (busy || pending || !member || context.signal.aborted) return;
+		const requestId = crypto.randomUUID();
+		remember({ requestId, action });
 		setBusy(true);
 		setNotice("");
 		try {
@@ -220,16 +118,10 @@ export function MemberPanel({ context }: WebInterfaceProps) {
 						: action === "reply" && receivedId
 							? { id: receivedId, text }
 							: {},
+				{ requestId },
 			);
 			if (context.signal.aborted) return;
-			if (operation.state !== "done") {
-				setNotice("Result unconfirmed. Check the original receipt before retrying.");
-				return;
-			}
-			if (action === "send" || action === "steer" || action === "reply") {
-				setReceipt(readReceipt(operation.value));
-				setText("");
-			} else setMember(readMember(operation.value));
+			await finish(operation);
 		} catch {
 			if (!context.signal.aborted) setNotice("Operation unavailable or unconfirmed. No retry was sent.");
 		} finally {
@@ -251,8 +143,7 @@ export function MemberPanel({ context }: WebInterfaceProps) {
 						null,
 						h("dt", null, "Membership phase"),
 						h("dd", { "data-member-phase": true }, member.phase),
-						h("dt", null, "Lifetime"),
-						h("dd", null, member.lifetime),
+
 						h("dt", null, "Owned by"),
 						h("dd", null, member.parent ?? (member.owner ? "You" : "Another owner")),
 						h("dt", null, "Conversation"),
@@ -300,7 +191,10 @@ export function MemberPanel({ context }: WebInterfaceProps) {
 								{
 									type: "submit",
 									disabled:
-										busy || !text.trim() || ["ended", "retired", "failed", "unknown"].includes(member.phase),
+										busy ||
+										!!pending ||
+										!text.trim() ||
+										["ended", "retired", "failed", "unknown"].includes(member.phase),
 									"data-mas-send": true,
 								},
 								"Send",
@@ -324,7 +218,7 @@ export function MemberPanel({ context }: WebInterfaceProps) {
 											Button,
 											{
 												"data-mas-reply": incoming.id,
-												disabled: busy || !text.trim(),
+												disabled: busy || !!pending || !text.trim(),
 												onClick: () => {
 													void perform("reply", incoming.id);
 												},
@@ -341,6 +235,17 @@ export function MemberPanel({ context }: WebInterfaceProps) {
 							{ "data-mas-receipt": receipt.id, role: "status" },
 							`${receipt.status}${receipt.reason ? " (" + receipt.reason + ")" : ""} · ${receipt.id}`,
 						),
+					pending &&
+						h(
+							"div",
+							{ "data-mas-pending": pending.requestId, role: "status" },
+							h("p", null, "An operation is awaiting confirmation. New controls are locked."),
+							h(
+								Button,
+								{ "data-mas-reconcile": true, disabled: busy, onClick: () => void reconcile() },
+								"Check original operation",
+							),
+						),
 					notice && h(Notice, null, notice),
 					member.reason && h(Notice, null, member.reason),
 					member.permissions.includes("manage") &&
@@ -350,8 +255,8 @@ export function MemberPanel({ context }: WebInterfaceProps) {
 							h(
 								Button,
 								{
-									disabled: busy || member.phase === "retired",
 									"data-mas-abort": true,
+									disabled: busy || !!pending || member.phase === "retired",
 									onClick: () => {
 										void perform("abort");
 									},
@@ -361,8 +266,8 @@ export function MemberPanel({ context }: WebInterfaceProps) {
 							h(
 								Button,
 								{
-									disabled: busy || member.phase === "retired",
 									"data-mas-retire": true,
+									disabled: busy || !!pending || member.phase === "retired",
 									onClick: () => {
 										void perform("retire");
 									},

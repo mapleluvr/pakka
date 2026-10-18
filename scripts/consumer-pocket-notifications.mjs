@@ -270,6 +270,7 @@ try {
 	await owner.wait('document.querySelector("[data-notification-test]")?.disabled===false');
 	await settled(owner);
 	await owner.click("[data-notification-test]");
+	await owner.waitNotification("pakka-device-test");
 	await owner.wait(
 		'(async()=>{const r=await navigator.serviceWorker.ready;return(await r.getNotifications({tag:"pakka-device-test"})).length===1;})()',
 	);
@@ -294,6 +295,7 @@ try {
 	await until(() => pushes.length === 1);
 	const wake = decrypt(0, registered.status.publicKey);
 	await owner.pushNotification(wake);
+	await owner.waitNotification("pakka-" + wake.eventId);
 	await owner.wait(
 		'(async()=>{const r=await navigator.serviceWorker.ready;return(await r.getNotifications()).some(row=>row.body==="The agent finished this conversation.");})()',
 	);

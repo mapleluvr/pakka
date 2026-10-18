@@ -97,9 +97,41 @@ export async function ownedBrowser(dir: string, options: { readonly push?: boole
 		ws.addEventListener("error", () => reject(new Error("Owned Chrome CDP failed")), { once: true });
 	});
 	const workers = new Map<string, { registrationId: string; scopeURL: string }>();
+	const notifications = new Map<string, { origin: string; tag: string }[]>();
 	ws.addEventListener("message", (event) => {
 		try {
 			const v: unknown = JSON.parse(String(event.data));
+			if (
+				v &&
+				typeof v === "object" &&
+				"method" in v &&
+				v.method === "BackgroundService.backgroundServiceEventReceived" &&
+				"sessionId" in v &&
+				typeof v.sessionId === "string" &&
+				"params" in v &&
+				v.params &&
+				typeof v.params === "object" &&
+				"backgroundServiceEvent" in v.params
+			) {
+				const displayed = v.params.backgroundServiceEvent;
+				if (
+					displayed &&
+					typeof displayed === "object" &&
+					"service" in displayed &&
+					displayed.service === "notifications" &&
+					"eventName" in displayed &&
+					displayed.eventName === "Notification displayed" &&
+					"origin" in displayed &&
+					typeof displayed.origin === "string" &&
+					"instanceId" in displayed &&
+					typeof displayed.instanceId === "string"
+				) {
+					const rows = notifications.get(v.sessionId) ?? [];
+					rows.push({ origin: displayed.origin, tag: displayed.instanceId });
+					if (rows.length > 256) rows.shift();
+					notifications.set(v.sessionId, rows);
+				}
+			}
 			if (
 				v &&
 				typeof v === "object" &&
@@ -173,6 +205,13 @@ export async function ownedBrowser(dir: string, options: { readonly push?: boole
 			await call("Page.navigate", { url }, id);
 			return {
 				evaluate,
+				resize: async (size: { readonly width: number; readonly height: number }) => {
+					await call(
+						"Emulation.setDeviceMetricsOverride",
+						{ ...size, deviceScaleFactor: 1, mobile: size.width < 600 },
+						id,
+					);
+				},
 				allowNotifications: async () => {
 					const origin = await evaluate("location.origin");
 					if (typeof origin !== "string" || !/^https?:\/\/127\.0\.0\.1:\d+$/.test(origin))
@@ -182,6 +221,24 @@ export async function ownedBrowser(dir: string, options: { readonly push?: boole
 						browserContextId: context.browserContextId,
 						permissions: ["notifications"],
 					});
+					await call("BackgroundService.startObserving", { service: "notifications" }, id);
+					await call("BackgroundService.setRecording", { service: "notifications", shouldRecord: true }, id);
+				},
+				// Wait for the native display event before getNotifications(): an early read can race
+				// Chromium's asynchronous display bookkeeping. This does not synthesize a notification.
+				waitNotification: async (tag: string) => {
+					const origin = await evaluate("location.origin"),
+						deadline = Date.now() + 8000;
+					while (Date.now() < deadline) {
+						const rows = notifications.get(id) ?? [];
+						const index = rows.findIndex((row) => row.origin === origin + "/" && row.tag === tag);
+						if (index !== -1) {
+							rows.splice(index, 1);
+							return;
+						}
+						await new Promise((resolve) => setTimeout(resolve, 40));
+					}
+					throw Error("Native notification display deadline: " + tag);
 				},
 				pushNotification: async (wake: { eventId: string; deviceId: string }) => {
 					const origin = await evaluate("location.origin");
@@ -227,8 +284,19 @@ export async function ownedBrowser(dir: string, options: { readonly push?: boole
 					}
 					if (text) await call("Input.insertText", { text }, id);
 				},
-				key: async (key: "Escape" | "Tab" | "Enter", shift = false) => {
-					const code = { Escape: 27, Tab: 9, Enter: 13 }[key];
+				key: async (
+					key: "Escape" | "Tab" | "Enter" | "ArrowLeft" | "ArrowRight" | "ArrowUp" | "ArrowDown",
+					shift = false,
+				) => {
+					const code = {
+						Escape: 27,
+						Tab: 9,
+						Enter: 13,
+						ArrowLeft: 37,
+						ArrowRight: 39,
+						ArrowUp: 38,
+						ArrowDown: 40,
+					}[key];
 					for (const type of ["keyDown", "keyUp"])
 						await call(
 							"Input.dispatchKeyEvent",
@@ -286,6 +354,7 @@ export async function ownedBrowser(dir: string, options: { readonly push?: boole
 					return Buffer.from(String(result.data), "base64");
 				},
 				close: async () => {
+					notifications.delete(id);
 					if (typeof context.browserContextId === "string")
 						await call("Target.disposeBrowserContext", { browserContextId: context.browserContextId });
 					else await call("Target.closeTarget", { targetId: target.targetId });

@@ -421,6 +421,8 @@ export interface TranscriptMessage {
 	readonly toolName?: string;
 	readonly isError?: boolean;
 	readonly stopReason?: string;
+	/** Provider-reported error, retained verbatim rather than inferred from reply text. */
+	readonly errorMessage?: string;
 }
 export interface ConversationReadOptions {
 	readonly limit?: number;
@@ -478,7 +480,20 @@ export interface CatalogOptions {
 	readonly maxPending: number;
 }
 export type MemberLifetime = "persistent" | "temporary" | "task-bound" | "background";
+export interface ConversationCreation {
+	readonly source: ConversationRef | null;
+	readonly kind: "create" | "fork";
+	readonly at: number;
+	/** A fork's history source is separate from its requesting Conversation. */
+	readonly fork?: { readonly source: ConversationRef; readonly entryId: string };
+}
+export interface DeliveryInitiator {
+	readonly kind: "agent" | "human" | "service";
+	readonly id: string;
+}
 export interface CatalogMember {
+	/** Absent for legacy records whose creation was not observed. */
+	readonly creation?: ConversationCreation;
 	readonly key: string;
 	readonly ref: ConversationRef;
 	readonly lifetime: MemberLifetime;
@@ -505,6 +520,26 @@ export interface CatalogDeliverySpec {
 	readonly target: ConversationRef;
 	readonly text: string;
 	readonly mode: InputMode;
+	/** Supplied by trusted composition, never accepted from a model's SendSpec. */
+	readonly initiator?: DeliveryInitiator;
+	readonly replyTo?: string;
+}
+export interface CatalogDeliveryObservation {
+	readonly receipt: DeliveryReceipt;
+	readonly text: string;
+	readonly mode: InputMode;
+	/** Missing on legacy records; never replaced by the read time. */
+	readonly at?: number;
+	readonly initiator?: DeliveryInitiator;
+	readonly replyTo?: string;
+}
+export interface CatalogHistoryQuery {
+	readonly limit?: number;
+	readonly cursor?: string;
+}
+export interface CatalogHistoryPage {
+	readonly items: readonly CatalogDeliveryObservation[];
+	readonly nextCursor?: string;
 }
 export interface DeliveryReceipt {
 	readonly id: string;
@@ -517,6 +552,14 @@ export interface DeliveryReceipt {
 	readonly reason?: string;
 }
 export interface RuntimeCatalog {
+	/** Read-only observation. The trusted synchronous predicate is evaluated before body/status publication. */
+	history(
+		query: CatalogHistoryQuery,
+		check: () => void,
+		accepts?: (spec: CatalogDeliverySpec) => boolean,
+	): Promise<CatalogHistoryPage>;
+	/** Missing originals are returned as null; this never enters admission. */
+	lookupReceipt(id: string, check: () => void): Promise<DeliveryReceipt | null>;
 	/** Recipient-only delivery metadata; no peer transcript or payload body. */
 	received(ref: ConversationRef, check: () => void): Promise<readonly DeliveryReceipt[]>;
 	checkInvocation(ref: ConversationRef, scope: ToolInvocationScope): void;

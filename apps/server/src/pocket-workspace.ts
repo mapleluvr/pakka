@@ -101,7 +101,28 @@ export interface PocketWorkspaceClient {
 	withdraw(id: string): Promise<PocketInputReceipt>;
 	abort(ref: ConversationRef): Promise<void>;
 }
+export interface PocketConversationSource {
+	/** Trusted service port. It supplies currently authorized resources, never wire authority. */
+	bind(actor: PocketAuthority): {
+		navigation(): Promise<readonly PocketNavigation[]>;
+		canManage(ref: ConversationRef): boolean;
+		ownsReceipt(id: string): Promise<boolean>;
+		configure(ref: ConversationRef, profile: string, check: () => void): Promise<ConversationRef>;
+		configureAgent(
+			ref: ConversationRef,
+			change: ConversationConfigurationChange,
+			check: () => void,
+		): Promise<ConversationRef>;
+		submit(ref: ConversationRef, input: PocketInput, check: () => void): Promise<PocketInputReceipt>;
+		receipt: PocketWorkspaceClient["receipt"];
+		wait: PocketWorkspaceClient["wait"];
+		withdraw: PocketWorkspaceClient["withdraw"];
+		abort(ref: ConversationRef, check: () => void): Promise<void>;
+	};
+}
 export interface PocketWorkspace {
+	/** Trusted composition only. Unregistering a source never cancels admitted work. */
+	registerResources?(source: PocketConversationSource): () => void;
 	bind(actor: PocketAuthority): PocketWorkspaceClient;
 	/** Trusted backend programs only; no session or browser authority is minted from a persisted person ID. */
 	checkScheduledInput(actorId: string, ref: ConversationRef): void;
@@ -172,6 +193,7 @@ export function createPocketWorkspace(options: PocketWorkspaceOptions): PocketWo
 	const { runtime, people } = options,
 		catalogOptions = Object.freeze({ ...options.catalog }),
 		catalog = runtime.catalog(catalogOptions);
+	const sources = new Set<PocketConversationSource>();
 	let tail: Promise<unknown> = Promise.resolve();
 	const serial = <T>(operation: () => Promise<T>): Promise<T> => {
 		const running = tail.then(operation);
@@ -198,6 +220,13 @@ export function createPocketWorkspace(options: PocketWorkspaceOptions): PocketWo
 		options.beforeScheduledInput?.(actorId, ref);
 	};
 	return Object.freeze({
+		registerResources(source: PocketConversationSource) {
+			if (sources.has(source)) throw Error("Conversation source already registered");
+			sources.add(source);
+			return () => {
+				sources.delete(source);
+			};
+		},
 		checkScheduledInput,
 		submitScheduled: async (
 			actorId: string,
@@ -246,6 +275,30 @@ export function createPocketWorkspace(options: PocketWorkspaceOptions): PocketWo
 		bind: (actor: PocketAuthority): PocketWorkspaceClient => {
 			people.current(actor);
 			const current = () => people.current(actor);
+			const providers = () => [...sources].map((source) => source.bind(actor));
+			const resource = async (ref: ConversationRef, authorize: () => void) => {
+				authorize();
+				const snapshot = await catalog.snapshot();
+				authorize();
+				if (snapshot.members.some((row) => row.data.kind === "pocket-workspace" && sameRef(row.ref, ref)))
+					return undefined;
+				for (const provider of providers()) {
+					const rows = await provider.navigation();
+					authorize();
+					if (rows.some((row) => sameRef(row.ref, ref))) return provider;
+				}
+				return denied();
+			};
+			const receiptProvider = async (id: string) => {
+				current();
+				for (const provider of providers())
+					if (await provider.ownsReceipt(id)) {
+						current();
+						return provider;
+					}
+				current();
+				return undefined;
+			};
 			const check = (permission: PocketPermission, ref?: ConversationRef) =>
 				people.check(actor, permission, ref?.conversationId);
 			const profileCheck = (profile: string) => {
@@ -315,7 +368,10 @@ export function createPocketWorkspace(options: PocketWorkspaceOptions): PocketWo
 				};
 				return serial(async () => {
 					authorize();
-					if (from) await member(from, authorize);
+					if (from) {
+						const provider = await resource(from, authorize);
+						if (provider && !provider.canManage(from)) denied();
+					}
 					const before = await catalog.snapshot();
 					authorize();
 					const prior = before.members.find((m) => m.key === id);
@@ -333,7 +389,8 @@ export function createPocketWorkspace(options: PocketWorkspaceOptions): PocketWo
 					if (lookupOnly) return null;
 					const inheritedRef = saved.inherit ?? (from?.profile === saved.profile ? from : undefined);
 					if (inheritedRef) {
-						await member(inheritedRef, authorize);
+						const provider = await resource(inheritedRef, authorize);
+						if (provider && !provider.canManage(inheritedRef)) denied();
 						const inherited = await runtime.configuration(inheritedRef);
 						inheritedConfiguration = inherited;
 						if (
@@ -404,8 +461,11 @@ export function createPocketWorkspace(options: PocketWorkspaceOptions): PocketWo
 						(person.resources === "*" || person.resources.includes(row.ref.conversationId)),
 				);
 				for (const row of rows) check("read", row.ref);
+				const external: PocketNavigation[] = [];
+				for (const provider of providers()) external.push(...(await provider.navigation()));
+				for (const row of external) check("read", row.ref);
 				current();
-				return frozen(rows.map(metadata));
+				return frozen([...rows.map(metadata), ...external]);
 			};
 			const changeMetadata = (
 				raw: ConversationRef,
@@ -506,7 +566,7 @@ export function createPocketWorkspace(options: PocketWorkspaceOptions): PocketWo
 					const ref = structuredClone(raw),
 						authorize = () => check("read", ref);
 					authorize();
-					await member(ref, authorize);
+					const provider = await resource(ref, authorize);
 					const snapshot = await runtime.readConversation(ref, authorize, { limit: 1 });
 					const person = current(),
 						ceiling = options.profileCeiling(person);
@@ -520,7 +580,7 @@ export function createPocketWorkspace(options: PocketWorkspaceOptions): PocketWo
 						ref,
 						current: configuration,
 						choices,
-						canConfigure: ["admin", "driver"].includes(person.role),
+						canConfigure: ["admin", "driver"].includes(person.role) && (!provider || provider.canManage(ref)),
 						usage: snapshot.usage,
 						session:
 							person.role === "admin" && person.resources === "*"
@@ -550,7 +610,8 @@ export function createPocketWorkspace(options: PocketWorkspaceOptions): PocketWo
 						saved = structuredClone(input),
 						authorize = () => check("manage", ref);
 					authorize();
-					await member(ref, authorize);
+					const provider = await resource(ref, authorize);
+					if (provider && !provider.canManage(ref)) denied();
 					const config = await runtime.configuration(ref);
 					const result = await listDirectories(roots(), config.cwd, saved, authorize);
 					authorize();
@@ -573,9 +634,10 @@ export function createPocketWorkspace(options: PocketWorkspaceOptions): PocketWo
 									denied();
 							};
 						authorize();
-						await member(ref, authorize);
+						const provider = await resource(ref, authorize);
 						if (change?.cwd !== undefined) validatedCwd = await resolveDirectory(change.cwd, roots());
 						authorize();
+						if (provider) return provider.configureAgent(ref, change, authorize);
 						const result = await catalog.configureAgent(ref, change, authorize);
 						authorize();
 						return result.ref;
@@ -588,7 +650,8 @@ export function createPocketWorkspace(options: PocketWorkspaceOptions): PocketWo
 								profileCheck(profile);
 							};
 						authorize();
-						await member(ref, authorize);
+						const provider = await resource(ref, authorize);
+						if (provider) return provider.configure(ref, profile, authorize);
 						const changed = await catalog.configure(ref, profile, authorize);
 						authorize();
 						return changed.ref;
@@ -643,9 +706,10 @@ export function createPocketWorkspace(options: PocketWorkspaceOptions): PocketWo
 							options.beforeInput?.(actor, saved);
 						};
 					authorize();
-					await member(saved, authorize);
+					const provider = await resource(saved, authorize);
 					if (!data || Object.keys(data).some((k) => !["requestId", "text", "mode"].includes(k)))
 						throw new Error("Invalid Pocket input fields");
+					if (provider) return provider.submit(saved, data, authorize);
 					return receiptCheck(
 						await catalog.deliver(
 							{
@@ -660,8 +724,13 @@ export function createPocketWorkspace(options: PocketWorkspaceOptions): PocketWo
 						),
 					);
 				},
-				receipt: async (id: string) => receiptCheck(await ownedReceipt(id)),
+				receipt: async (id: string) => {
+					const provider = await receiptProvider(id);
+					return provider ? provider.receipt(id) : receiptCheck(await ownedReceipt(id));
+				},
 				wait: async (id: string, signal?: AbortSignal) => {
+					const provider = await receiptProvider(id);
+					if (provider) return provider.wait(id, signal);
 					const value = await ownedReceipt(id);
 					const authorize = () => {
 						current();
@@ -670,6 +739,8 @@ export function createPocketWorkspace(options: PocketWorkspaceOptions): PocketWo
 					return receiptCheck(await catalog.wait(id, authorize, signal));
 				},
 				withdraw: async (id: string) => {
+					const provider = await receiptProvider(id);
+					if (provider) return provider.withdraw(id);
 					const value = await ownedReceipt(id, "send");
 					const authorize = () => {
 						current();
@@ -681,7 +752,8 @@ export function createPocketWorkspace(options: PocketWorkspaceOptions): PocketWo
 					const saved = structuredClone(ref),
 						authorize = () => check("manage", saved);
 					authorize();
-					await member(saved, authorize);
+					const provider = await resource(saved, authorize);
+					if (provider) return provider.abort(saved, authorize);
 					await catalog.stop(saved, authorize);
 				},
 			});

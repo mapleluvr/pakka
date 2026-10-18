@@ -41,6 +41,8 @@ export interface PocketMessage {
 	readonly toolName?: string;
 	readonly isError?: boolean;
 	readonly stopReason?: string;
+	/** Original assistant error reason, bounded like transcript text; no native provider object. */
+	readonly errorMessage?: string;
 }
 export interface PocketDisplay {
 	readonly namespace: string;
@@ -500,7 +502,8 @@ const message = (v: unknown): v is PocketMessage => {
 	if (v.role === "user") return shape(v, ["role", "content"]);
 	if (v.role === "assistant")
 		return (
-			shape(v, ["role", "content"], ["stopReason"]) &&
+			shape(v, ["role", "content"], ["stopReason", "errorMessage"]) &&
+			(v.errorMessage === undefined || string(v.errorMessage)) &&
 			(v.stopReason === undefined ||
 				["stop", "length", "toolUse", "error", "aborted"].includes(v.stopReason as string))
 		);

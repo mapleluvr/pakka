@@ -127,6 +127,8 @@ export interface ExtensionHost {
 	): Promise<{ readonly type: string; readonly body: Uint8Array }>;
 }
 export interface ExtensionService<T extends object = object> {
+	/** Trusted resource registration, independent of UI mounting. */
+	readonly conversations?: import("@pakka/server/pocket").PocketConversationSource;
 	/** Opt-in route under this service's manifest-declared backend extension. */
 	readonly ingress?: ExtensionIngress;
 	/** Optional host-resource cleanup; invoked once on product close or failed registration. No member/work cancellation is implied. */

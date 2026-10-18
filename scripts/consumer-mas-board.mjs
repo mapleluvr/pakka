@@ -178,8 +178,28 @@ try {
 	await owner.wait('document.querySelector("[data-interface=mas-devpack-board]")');
 	await owner.click("[data-interface=mas-devpack-board]");
 	await owner.wait('document.querySelector("[data-member=coordinator]")');
+	await owner.wait('[...document.querySelectorAll("link[rel=stylesheet]")].every((link) => link.sheet)');
+	await owner.evaluate("document.fonts.ready.then(() => true)");
+	await owner.wait(
+		'document.getAnimations().filter((animation) => animation.effect?.getComputedTiming().iterations !== Infinity).every((animation) => animation.playState !== "running")',
+	);
 	await owner.click("[data-member=coordinator]");
+	await owner.click("[data-agent-details]");
+	await owner.click('[data-agent-controls="coordinator"]');
 	await owner.wait('document.querySelector("textarea[name=masMessage]")');
+	assert.equal(
+		await owner.evaluate(
+			'document.querySelector("textarea[name=masMessage]").closest("[role=dialog]")?.getAttribute("aria-modal")',
+		),
+		"true",
+	);
+	assert.equal(
+		await owner.evaluate(
+			'!!document.querySelector("[data-member=coordinator][aria-pressed=true]") && !document.querySelector(".pocket-composer")',
+		),
+		true,
+		"Installed controls preserve the Board instead of embedding another composer",
+	);
 	await owner.type("textarea[name=masMessage]", "CREATE-INSTALLED-CHILD");
 	await owner.click("[data-mas-send]");
 	await owner.wait('/done/.test(document.querySelector("[data-mas-receipt]")?.textContent)');
@@ -193,7 +213,10 @@ try {
 		coordinator = members.find((row) => row.key === "coordinator"),
 		member = members.find((row) => row.key === "installed-child");
 	assert.ok(member);
+	assert.equal(firstView.operation.value.sessionId, member.ref.sessionId);
 	assert.equal(member.parent, "coordinator");
+	assert.equal(member.creator, "coordinator");
+	assert.equal(member.creationKnown, true);
 	assert.equal(member.lifetime, "persistent");
 	peer = member.ref;
 	const firstReceipt = (await call(owner, "receipt", { id: firstReceiptId }, coordinator.ref)).operation
@@ -205,7 +228,10 @@ try {
 	await owner.wait(
 		`document.querySelector("[data-mas-receipt]")?.textContent!==${JSON.stringify(previous)}&&/done/.test(document.querySelector("[data-mas-receipt]")?.textContent)`,
 	);
-	await owner.click("[data-interface=mas-devpack-board]");
+	await owner.click('[aria-label="Close Agent controls"]');
+	await owner.wait(
+		'!document.querySelector("textarea[name=masMessage]") && document.activeElement?.getAttribute("data-agent-controls") === "coordinator"',
+	);
 	await owner.wait('document.querySelector("[data-member=installed-child]")');
 	const invitation = await owner.evaluate(
 		`(async()=>{const {createPocketClient}=await import('@pakka/client/pocket');const client=createPocketClient({endpoint:location.origin+'/pocket/rpc',csrf:()=>/pakka_csrf=([^;]+)/.exec(document.cookie)?.[1]??null});return client.request({op:'invite',requestId:'installed-child-reader',role:'viewer',resources:[${JSON.stringify(member.ref.conversationId)}],ttlMs:60000});})()`,
@@ -227,6 +253,9 @@ try {
 	assert.equal(filtered.operation.value.members[0].parent, null);
 	assert.equal(filtered.operation.value.members[0].owner, null);
 	assert.equal(JSON.stringify(filtered.operation.value).includes('"key":"coordinator"'), false);
+	const readerHistory = await call(viewer, "history");
+	assert.deepEqual(readerHistory.operation.value.items, []);
+	assert.deepEqual(filtered.operation.value.connections, []);
 	assert.equal(await viewer.evaluate("document.documentElement.scrollWidth > innerWidth"), false);
 	await owner.wait(
 		'document.getAnimations().filter(a=>a.effect?.getComputedTiming().iterations!==Infinity).every(a=>a.playState!=="running")',
@@ -239,13 +268,51 @@ try {
 	await writeFile(join(evidence, "desktop.png"), await owner.screenshot());
 	await writeFile(join(evidence, "mobile.png"), await viewer.screenshot());
 	await owner.click("[data-member=installed-child]");
+	if (await owner.evaluate('!document.querySelector("[data-agent-details]").parentElement.open'))
+		await owner.click("[data-agent-details]");
+	await owner.click('[data-agent-controls="installed-child"]');
 	await owner.wait('document.querySelector("[data-mas-reply]")');
 	assert.equal(requests.length, 5);
 	await owner.type("textarea[name=masMessage]", "HUMAN-INSTALLED-REPLY");
 	await owner.click("[data-mas-reply]");
 	await owner.wait('/done/.test(document.querySelector("[data-mas-receipt]")?.textContent)');
 	assert.equal(requests.length, 6);
-	await writeFile(join(evidence, "members-before.json"), JSON.stringify(members, null, 2));
+	const deliveredHistory = (await call(owner, "history")).operation.value;
+	assert.ok(
+		deliveredHistory.items.some(
+			(row) => row.text === "HUMAN-INSTALLED-REPLY" && row.initiator === "human" && row.replyTo,
+		),
+	);
+	await writeFile(join(evidence, "exchanges.json"), JSON.stringify(deliveredHistory, null, 2));
+	await owner.click("[data-mas-retire]");
+	await owner.wait('document.querySelector("[data-member-phase]")?.textContent === "retired"');
+	await owner.click('[aria-label="Close Agent controls"]');
+	await owner.wait(
+		'!document.querySelector("textarea[name=masMessage]") && document.activeElement?.getAttribute("data-agent-controls") === "installed-child"',
+	);
+	await owner.wait('document.querySelector("[data-member=installed-child]")');
+	await owner.click("[data-member=installed-child]");
+	await owner.click('[data-open-conversation="installed-child"]');
+	await owner.wait(
+		`Array.from(document.querySelectorAll('[data-conversation]')).some(row=>row.dataset.conversation===${JSON.stringify(member.ref.conversationId)}&&row.classList.contains('selected'))`,
+	);
+	await owner.click("[data-return-extension]");
+	await owner.wait('document.querySelector("[data-member=installed-child][aria-pressed=true]")');
+	assert.equal(requests.length, 6, "Installed Conversation navigation never replays work");
+	await owner.click("[data-hide-agent=installed-child]");
+	await owner.wait('!document.querySelector("[data-member=installed-child]")');
+	await owner.click("[data-board-tab=history]");
+	await owner.wait(
+		'document.querySelector(".graph-history")?.textContent.includes("REAL-INSTALLED-INCOMING")',
+	);
+	await owner.click("[data-board-tab=relationships]");
+	await owner.click("[data-board-options]");
+	await owner.click("[data-show-hidden-agents]");
+	await owner.wait('document.querySelector("[data-member=installed-child]")');
+	const afterPresentation = (await call(owner, "view")).operation.value.members;
+	assert.equal(afterPresentation.find((row) => row.key === "installed-child").phase, "retired");
+	assert.equal(requests.length, 6, "Retiring, hiding and restoring do not replay model work");
+	await writeFile(join(evidence, "members-before.json"), JSON.stringify(afterPresentation, null, 2));
 	await writeFile(join(evidence, "viewer.json"), JSON.stringify(filtered.operation.value, null, 2));
 	const firstGeneration = firstView.registration.generation;
 	await stop();
@@ -270,6 +337,7 @@ try {
 	assert.equal(currentCoordinator.profile, "plain");
 	assert.notEqual(currentCoordinator.incarnation, coordinator.ref.incarnation);
 	assert.deepEqual(retained.find((row) => row.key === "installed-child").ref, member.ref);
+	assert.equal(retained.find((row) => row.key === "installed-child").phase, "retired");
 	assert.deepEqual((await call(owner, "view", {}, undefined, "stale", firstGeneration)).error, {
 		code: "FORBIDDEN",
 		outcome: "denied",

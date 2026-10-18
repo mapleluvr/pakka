@@ -117,6 +117,7 @@ export type {
 	PocketWorkspace,
 	PocketWorkspaceOptions,
 	PocketWorkspaceClient,
+	PocketConversationSource,
 	PocketConfiguration,
 	PocketCreate,
 	PocketNavigation,

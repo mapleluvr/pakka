@@ -1,6 +1,10 @@
 import type { ExtensionManifest, ExtensionAction } from "@pakka/webui/extension";
 import {
 	empty,
+	activitiesInput,
+	activitiesSchema,
+	historyQuerySchema,
+	historyPageSchema,
 	inboxSchema,
 	replyInput,
 	memberSchema,
@@ -22,7 +26,7 @@ const action = (
 export const manifest: ExtensionManifest = {
 	api: 1,
 	id: "mas-devpack",
-	version: "0.2.0",
+	version: "0.3.0",
 	title: "MAS team",
 	facets: {
 		agent: "profiles.js",
@@ -33,6 +37,8 @@ export const manifest: ExtensionManifest = {
 	services: ["mas"],
 	actions: [
 		action("view", "read", "read", empty, viewSchema, "app"),
+		action("history", "read", "read", historyQuerySchema, historyPageSchema, "app"),
+		action("activities", "read", "read", activitiesInput, activitiesSchema, "app"),
 		action("inspect", "read", "read", empty, memberSchema),
 		action("send", "send", "model", textInput, receiptSchema),
 		action("steer", "steer", "model", steerInput, receiptSchema),
@@ -48,8 +54,8 @@ export const manifest: ExtensionManifest = {
 		{ id: "board", title: "MAS team", slot: "page", scope: "app", export: "Board", navigation: true },
 		{
 			id: "member",
-			title: "MAS member",
-			slot: "panel",
+			title: "Agent controls",
+			slot: "sheet",
 			scope: "conversation",
 			export: "MemberPanel",
 			navigation: false,

@@ -57,6 +57,8 @@ test(
 			await page.click("[data-interface=mas-devpack-board]");
 			await page.wait('document.querySelector("[data-member=busy-member]")');
 			await page.click("[data-member=busy-member]");
+			await page.click("[data-agent-details]");
+			await page.click("[data-agent-controls=busy-member]");
 			await page.wait('document.querySelector("textarea[name=masMessage]")');
 			await page.type("textarea[name=masMessage]", "BOARD-BLOCKED");
 			await page.click("[data-mas-send]");
