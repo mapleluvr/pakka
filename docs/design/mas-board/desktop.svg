@@ -1,0 +1,143 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="980" viewBox="0 0 1440 980" role="img">
+<title>MAS Board 静态设计草图（构造示例）</title><desc>A、B、C、D、E、F 是示例别名，状态、工具、文本与时间是排版示例；这些图不作为实际运行或验收记录。</desc>
+
+  <title>MAS Board 关系图静态设计草图</title>
+  <desc>示例数据。Agent卡片、创建骨架、双向通信、选中详情与交流日志。</desc>
+  <rect x="0" y="0" width="1440" height="980" rx="0" fill="#10151d" />
+  <text x="28" y="48" fill="#edf2f7" font-family="Noto Sans CJK SC, sans-serif" font-size="29" font-weight="600" text-anchor="start">MAS Board</text>
+  <text x="28" y="79" fill="#a4b2c4" font-family="Noto Sans CJK SC, sans-serif" font-size="15" font-weight="400" text-anchor="start">项目协作 · 4 Agents · 示例数据</text>
+  <rect x="960" y="28" width="174" height="36" rx="0" fill="#171e28" stroke="#293544" stroke-width="1" />
+  <text x="1047.0" y="52" fill="#a4b2c4" font-family="Noto Sans CJK SC, sans-serif" font-size="14" font-weight="500" text-anchor="middle">静态设计草图</text>
+  <rect x="1152" y="22" width="116" height="46" rx="0" fill="#1e2835" stroke="#293544" stroke-width="1" />
+  <path d="M1167 41 L1167 36 L1172 36" fill="none" stroke="#edf2f7" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M1180 36 L1185 36 L1185 41" fill="none" stroke="#edf2f7" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M1185 49 L1185 54 L1180 54" fill="none" stroke="#edf2f7" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M1172 54 L1167 54 L1167 49" fill="none" stroke="#edf2f7" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+  <text x="1220.0" y="51" fill="#edf2f7" font-family="Noto Sans CJK SC, sans-serif" font-size="16" font-weight="600" text-anchor="middle">居中</text>
+  <rect x="1280" y="22" width="116" height="46" rx="0" fill="#1e2835" stroke="#293544" stroke-width="1" />
+  <path d="M1296 45 L1310 45" fill="none" stroke="#edf2f7" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+  <text x="1340" y="52" fill="#a4b2c4" font-family="Noto Sans CJK SC, sans-serif" font-size="14" font-weight="400" text-anchor="middle">100%</text>
+  <path d="M1371 45 L1385 45" fill="none" stroke="#edf2f7" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M1378 38 L1378 52" fill="none" stroke="#edf2f7" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+  <rect x="28" y="105" width="106" height="36" rx="0" fill="#243d58" stroke="#79b5fc" stroke-width="1" />
+  <text x="81.0" y="129" fill="#79b5fc" font-family="Noto Sans CJK SC, sans-serif" font-size="14" font-weight="500" text-anchor="middle">创建关系</text>
+  <rect x="145" y="105" width="106" height="36" rx="0" fill="#243d58" stroke="#79b5fc" stroke-width="1" />
+  <text x="198.0" y="129" fill="#79b5fc" font-family="Noto Sans CJK SC, sans-serif" font-size="14" font-weight="500" text-anchor="middle">Agent 交流</text>
+  <rect x="263" y="105" width="120" height="36" rx="0" fill="#171e28" stroke="#293544" stroke-width="1" />
+  <text x="323.0" y="129" fill="#a4b2c4" font-family="Noto Sans CJK SC, sans-serif" font-size="14" font-weight="500" text-anchor="middle">聚焦选中</text>
+  <text x="1016" y="130" fill="#a4b2c4" font-family="Noto Sans CJK SC, sans-serif" font-size="14" font-weight="400" text-anchor="end">单击节点选中，点击交流线查看往来</text>
+  <rect x="24" y="160" width="1000" height="540" rx="0" fill="#171e28" stroke="#293544" stroke-width="1" />
+  <path d="M506 302 L506 341 L242 341 L242 386" fill="none" stroke="#526176" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M237 379 L242 386 L247 379" fill="none" stroke="#526176" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M506 341 L826 341 L826 386" fill="none" stroke="#526176" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M821 379 L826 386 L831 379" fill="none" stroke="#526176" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M242 498 L242 554" fill="none" stroke="#526176" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M237 547 L242 554 L247 547" fill="none" stroke="#526176" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M368 420 C460 395 604 395 696 420" fill="none" stroke="#79b5fc" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="7 6" />
+  <path d="M689 415 L696 420 L689 425" fill="none" stroke="#79b5fc" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M700 463 C608 490 460 490 372 463" fill="none" stroke="#79b5fc" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="7 6" />
+  <path d="M379 458 L372 463 L379 468" fill="none" stroke="#79b5fc" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M368 612 C690 635 826 598 826 502" fill="none" stroke="#44586f" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="7 6" />
+  <path d="M821 509 L826 502 L831 509" fill="none" stroke="#44586f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+  <rect x="492" y="378" width="78" height="36" rx="0" fill="#243d58" stroke="#79b5fc" stroke-width="1" />
+  <text x="531.0" y="402" fill="#79b5fc" font-family="Noto Sans CJK SC, sans-serif" font-size="14" font-weight="500" text-anchor="middle">3 条</text>
+  <rect x="492" y="481" width="78" height="36" rx="0" fill="#243d58" stroke="#79b5fc" stroke-width="1" />
+  <text x="531.0" y="505" fill="#79b5fc" font-family="Noto Sans CJK SC, sans-serif" font-size="14" font-weight="500" text-anchor="middle">2 条</text>
+  <rect x="380" y="194" width="252" height="108" rx="0" fill="#1e2835" stroke="#526176" stroke-width="1" />
+  <path d="M399 214 L417 214 L417 228 L406 228 L399 233 Z" fill="none" stroke="#a4b2c4" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+  <text x="431" y="229" fill="#edf2f7" font-family="Noto Sans CJK SC, sans-serif" font-size="18" font-weight="600" text-anchor="start">A  方案协调</text>
+  <path d="M603 224 L603.1 224" fill="none" stroke="#a4b2c4" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M610 224 L610.1 224" fill="none" stroke="#a4b2c4" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M617 224 L617.1 224" fill="none" stroke="#a4b2c4" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+  <rect x="398" y="251" width="8" height="8" rx="0" fill="#a4b2c4" />
+  <text x="416" y="261" fill="#a4b2c4" font-family="Noto Sans CJK SC, sans-serif" font-size="14" font-weight="400" text-anchor="start">Waiting for Model Response</text>
+  <rect x="116" y="390" width="252" height="108" rx="0" fill="#243d58" stroke="#79b5fc" stroke-width="2" />
+  <path d="M135 410 L153 410 L153 424 L142 424 L135 429 Z" fill="none" stroke="#79b5fc" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+  <text x="167" y="425" fill="#edf2f7" font-family="Noto Sans CJK SC, sans-serif" font-size="18" font-weight="600" text-anchor="start">B  方案实现</text>
+  <path d="M339 420 L339.1 420" fill="none" stroke="#a4b2c4" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M346 420 L346.1 420" fill="none" stroke="#a4b2c4" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M353 420 L353.1 420" fill="none" stroke="#a4b2c4" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+  <rect x="134" y="447" width="8" height="8" rx="0" fill="#79b5fc" />
+  <text x="152" y="457" fill="#79b5fc" font-family="Noto Sans CJK SC, sans-serif" font-size="14" font-weight="400" text-anchor="start">Thinking...</text>
+  <text x="132" y="481" fill="#a4b2c4" font-family="Noto Sans CJK SC, sans-serif" font-size="14" font-weight="400" text-anchor="start">先检查 cwd 的批准范围，再核对…</text>
+  <rect x="700" y="390" width="252" height="108" rx="0" fill="#1e2835" stroke="#526176" stroke-width="1" />
+  <path d="M719 410 L737 410 L737 424 L726 424 L719 429 Z" fill="none" stroke="#a4b2c4" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+  <text x="751" y="425" fill="#edf2f7" font-family="Noto Sans CJK SC, sans-serif" font-size="18" font-weight="600" text-anchor="start">C  边界审阅</text>
+  <path d="M923 420 L923.1 420" fill="none" stroke="#a4b2c4" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M930 420 L930.1 420" fill="none" stroke="#a4b2c4" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M937 420 L937.1 420" fill="none" stroke="#a4b2c4" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+  <rect x="718" y="447" width="8" height="8" rx="0" fill="#e1bc7c" />
+  <text x="736" y="457" fill="#e1bc7c" font-family="Noto Sans CJK SC, sans-serif" font-size="14" font-weight="400" text-anchor="start">Tool using</text>
+  <text x="716" y="481" fill="#a4b2c4" font-family="Noto Sans CJK SC, sans-serif" font-size="14" font-weight="400" text-anchor="start">read {"path":"src/config.ts"}</text>
+  <rect x="116" y="558" width="252" height="108" rx="0" fill="#1e2835" stroke="#526176" stroke-width="1" />
+  <path d="M135 578 L153 578 L153 592 L142 592 L135 597 Z" fill="none" stroke="#a4b2c4" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+  <text x="167" y="593" fill="#edf2f7" font-family="Noto Sans CJK SC, sans-serif" font-size="18" font-weight="600" text-anchor="start">D  回归验证</text>
+  <path d="M339 588 L339.1 588" fill="none" stroke="#a4b2c4" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M346 588 L346.1 588" fill="none" stroke="#a4b2c4" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M353 588 L353.1 588" fill="none" stroke="#a4b2c4" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+  <rect x="134" y="615" width="8" height="8" rx="0" fill="#f29696" />
+  <text x="152" y="625" fill="#f29696" font-family="Noto Sans CJK SC, sans-serif" font-size="14" font-weight="400" text-anchor="start">Error</text>
+  <text x="132" y="649" fill="#f29696" font-family="Noto Sans CJK SC, sans-serif" font-size="14" font-weight="400" text-anchor="start">HTTP 429 · Too Many Requests</text>
+  <text x="472" y="664" fill="#a4b2c4" font-family="Noto Sans CJK SC, sans-serif" font-size="14" font-weight="400" text-anchor="start">选中 B 后，突出它的创建关系与通信</text>
+  <rect x="1040" y="160" width="376" height="540" rx="0" fill="#171e28" stroke="#293544" stroke-width="1" />
+  <text x="1064" y="193" fill="#a4b2c4" font-family="Noto Sans CJK SC, sans-serif" font-size="14" font-weight="400" text-anchor="start">当前选中</text>
+  <path d="M1373 185 L1373.1 185" fill="none" stroke="#a4b2c4" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M1380 185 L1380.1 185" fill="none" stroke="#a4b2c4" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M1387 185 L1387.1 185" fill="none" stroke="#a4b2c4" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+  <text x="1064" y="231" fill="#edf2f7" font-family="Noto Sans CJK SC, sans-serif" font-size="24" font-weight="600" text-anchor="start">B  方案实现</text>
+  <rect x="1065" y="254" width="8" height="8" rx="0" fill="#79b5fc" />
+  <text x="1084" y="264" fill="#79b5fc" font-family="Noto Sans CJK SC, sans-serif" font-size="15" font-weight="400" text-anchor="start">Thinking...</text>
+  <rect x="1064" y="284" width="328" height="46" rx="0" fill="#79b5fc" stroke="#79b5fc" stroke-width="1" />
+  <path d="M1081 307 L1095 307" fill="none" stroke="#10151d" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M1089 301 L1095 307 L1089 313" fill="none" stroke="#10151d" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+  <text x="1238.0" y="313" fill="#10151d" font-family="Noto Sans CJK SC, sans-serif" font-size="16" font-weight="600" text-anchor="middle">打开 Conversation</text>
+  <text x="1064" y="367" fill="#a4b2c4" font-family="Noto Sans CJK SC, sans-serif" font-size="14" font-weight="400" text-anchor="start">Thinking text</text>
+  <text x="1064" y="391" fill="#edf2f7" font-family="Noto Sans CJK SC, sans-serif" font-size="16" font-weight="400" text-anchor="start">先检查 cwd 的批准范围，</text>
+  <text x="1064" y="413" fill="#edf2f7" font-family="Noto Sans CJK SC, sans-serif" font-size="16" font-weight="400" text-anchor="start">再核对真实路径。</text>
+  <path d="M1064 429 L1392 429" fill="none" stroke="#293544" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" />
+  <text x="1064" y="450" fill="#a4b2c4" font-family="Noto Sans CJK SC, sans-serif" font-size="14" font-weight="400" text-anchor="start">模型</text>
+  <text x="1160" y="450" fill="#edf2f7" font-family="Noto Sans CJK SC, sans-serif" font-size="16" font-weight="400" text-anchor="start">模型 A</text>
+  <text x="1064" y="489" fill="#a4b2c4" font-family="Noto Sans CJK SC, sans-serif" font-size="14" font-weight="400" text-anchor="start">工作目录</text>
+  <text x="1064" y="518" fill="#edf2f7" font-family="Noto Sans CJK SC, sans-serif" font-size="16" font-weight="400" text-anchor="start">~/Projects/pakka</text>
+  <rect x="1064" y="544" width="158" height="46" rx="0" fill="#1e2835" stroke="#293544" stroke-width="1" />
+  <text x="1143.0" y="573" fill="#edf2f7" font-family="Noto Sans CJK SC, sans-serif" font-size="16" font-weight="600" text-anchor="middle">查看交流</text>
+  <rect x="1234" y="544" width="158" height="46" rx="0" fill="#1e2835" stroke="#293544" stroke-width="1" />
+  <text x="1313.0" y="573" fill="#edf2f7" font-family="Noto Sans CJK SC, sans-serif" font-size="16" font-weight="600" text-anchor="middle">聚焦此 Agent</text>
+  <text x="1064" y="628" fill="#a4b2c4" font-family="Noto Sans CJK SC, sans-serif" font-size="14" font-weight="400" text-anchor="start">显示设置</text>
+  <text x="1064" y="659" fill="#edf2f7" font-family="Noto Sans CJK SC, sans-serif" font-size="16" font-weight="400" text-anchor="start">显示创建关系与通信线</text>
+  <path d="M28 727 L64 727" fill="none" stroke="#526176" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+  <text x="76" y="732" fill="#a4b2c4" font-family="Noto Sans CJK SC, sans-serif" font-size="14" font-weight="400" text-anchor="start">创建</text>
+  <path d="M140 727 L180 727" fill="none" stroke="#79b5fc" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="7 6" />
+  <path d="M173 722 L180 727 L173 732" fill="none" stroke="#79b5fc" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+  <text x="193" y="732" fill="#a4b2c4" font-family="Noto Sans CJK SC, sans-serif" font-size="14" font-weight="400" text-anchor="start">通信方向</text>
+  <text x="1412" y="732" fill="#a4b2c4" font-family="Noto Sans CJK SC, sans-serif" font-size="14" font-weight="400" text-anchor="end">4 个 Agent · 共 5 条示例投递</text>
+  <rect x="24" y="752" width="1392" height="204" rx="0" fill="#171e28" stroke="#293544" stroke-width="1" />
+  <text x="48" y="787" fill="#edf2f7" font-family="Noto Sans CJK SC, sans-serif" font-size="19" font-weight="600" text-anchor="start">Agent 间交流</text>
+  <rect x="208" y="763" width="130" height="36" rx="0" fill="#243d58" stroke="#79b5fc" stroke-width="1" />
+  <text x="273.0" y="787" fill="#79b5fc" font-family="Noto Sans CJK SC, sans-serif" font-size="14" font-weight="500" text-anchor="middle">与 B 有关 · 已展示 3 / 5 条</text>
+  <text x="1392" y="786" fill="#79b5fc" font-family="Noto Sans CJK SC, sans-serif" font-size="15" font-weight="500" text-anchor="end">查看全部</text>
+  <text x="48" y="826" fill="#a4b2c4" font-family="Noto Sans CJK SC, sans-serif" font-size="14" font-weight="400" text-anchor="start">14:32:18</text>
+  <text x="157" y="826" fill="#edf2f7" font-family="Noto Sans CJK SC, sans-serif" font-size="16" font-weight="600" text-anchor="start">B</text>
+  <path d="M188 819 L202 819" fill="none" stroke="#79b5fc" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M196 813 L202 819 L196 825" fill="none" stroke="#79b5fc" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+  <text x="223" y="826" fill="#edf2f7" font-family="Noto Sans CJK SC, sans-serif" font-size="16" font-weight="600" text-anchor="start">C</text>
+  <text x="272" y="826" fill="#edf2f7" font-family="Noto Sans CJK SC, sans-serif" font-size="16" font-weight="400" text-anchor="start">请核对目录切换时的权限边界。</text>
+  <text x="1388" y="826" fill="#a4b2c4" font-family="Noto Sans CJK SC, sans-serif" font-size="14" font-weight="400" text-anchor="end">输入已放置</text>
+  <path d="M48 848 L1392 848" fill="none" stroke="#293544" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" />
+  <text x="48" y="875" fill="#a4b2c4" font-family="Noto Sans CJK SC, sans-serif" font-size="14" font-weight="400" text-anchor="start">14:32:26</text>
+  <text x="157" y="875" fill="#edf2f7" font-family="Noto Sans CJK SC, sans-serif" font-size="16" font-weight="600" text-anchor="start">C</text>
+  <path d="M188 868 L202 868" fill="none" stroke="#79b5fc" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M196 862 L202 868 L196 874" fill="none" stroke="#79b5fc" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+  <text x="223" y="875" fill="#edf2f7" font-family="Noto Sans CJK SC, sans-serif" font-size="16" font-weight="600" text-anchor="start">B</text>
+  <text x="272" y="875" fill="#edf2f7" font-family="Noto Sans CJK SC, sans-serif" font-size="16" font-weight="400" text-anchor="start">校验应覆盖提交前的授权变化。</text>
+  <text x="1388" y="875" fill="#a4b2c4" font-family="Noto Sans CJK SC, sans-serif" font-size="14" font-weight="400" text-anchor="end">输入已放置</text>
+  <path d="M48 897 L1392 897" fill="none" stroke="#293544" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" />
+  <text x="48" y="924" fill="#a4b2c4" font-family="Noto Sans CJK SC, sans-serif" font-size="14" font-weight="400" text-anchor="start">14:33:02</text>
+  <text x="157" y="924" fill="#edf2f7" font-family="Noto Sans CJK SC, sans-serif" font-size="16" font-weight="600" text-anchor="start">B</text>
+  <path d="M188 917 L202 917" fill="none" stroke="#79b5fc" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M196 911 L202 917 L196 923" fill="none" stroke="#79b5fc" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+  <text x="223" y="924" fill="#edf2f7" font-family="Noto Sans CJK SC, sans-serif" font-size="16" font-weight="600" text-anchor="start">C</text>
+  <text x="272" y="924" fill="#edf2f7" font-family="Noto Sans CJK SC, sans-serif" font-size="16" font-weight="400" text-anchor="start">已补齐检查，正在运行定向回归。</text>
+  <text x="1388" y="924" fill="#a4b2c4" font-family="Noto Sans CJK SC, sans-serif" font-size="14" font-weight="400" text-anchor="end">排队中</text>
+</svg>

@@ -1,6 +1,6 @@
 # Pakka-Pocket source and native feasibility
 
-This is the executable P0 evidence path, not an installed WebUI or a claim that the migration is finished. Product scope and sequencing remain in [the Pocket plan](../../docs/PAKKA-POCKET-PLAN.md).
+This is the executable P0 evidence path, not an installed WebUI or a claim that the migration is finished. Product scope and sequencing remain in [the Pocket plan](../../docs/plans/PAKKA-POCKET-PLAN.md).
 
 ## Immutable sources
 
@@ -45,7 +45,7 @@ The inventory uses Git blob bytes, not a raw copy of a dirty checkout. The AST p
 
 [The original baseline](upstream-baseline.json) records **548 = 378 passed + 40 failed + 130 skipped**, no cancelled/todo, on Windows/Node 24.18.0. Install and check passed. Failures and skips are preserved, not fixed or counted as acceptance. Raw logs are under `artifacts/pakka-pocket/p0/`. Faux-provider upstream results do not substitute for the real pinned-Durable production path.
 
-`source.mjs` emits per-file modes/blob IDs/SHA-256/lengths and AST call/route/old-authority candidate locations. The initial primary inventory contains **259 files, 364 call locations, 113 route conditions, 880 candidate authority references**. These are lexical/AST inventory counts, not counts of distinct user features or confirmed vulnerabilities. [The adoption map](adoption-map.json) assigns all **61** upstream Web modules exactly one owner, scope, effect policy and real acceptance path. The generated action locations stay associated with those module owners; generic store/API endpoints are mapped by the service ledger in [the P0 record](../../docs/PAKKA-POCKET-P0.md).
+`source.mjs` emits per-file modes/blob IDs/SHA-256/lengths and AST call/route/old-authority candidate locations. The initial primary inventory contains **259 files, 364 call locations, 113 route conditions, 880 candidate authority references**. These are lexical/AST inventory counts, not counts of distinct user features or confirmed vulnerabilities. [The adoption map](adoption-map.json) assigns all **61** upstream Web modules exactly one owner, scope, effect policy and real acceptance path. The generated action locations stay associated with those module owners; generic store/API endpoints are mapped by the service ledger in [the P0 record](../../docs/archive/webui/PAKKA-POCKET-P0.md).
 
 The committed adapter tests exercise actual `createRuntime`/Harness, real local provider HTTP, real live tool execution and native storage:
 

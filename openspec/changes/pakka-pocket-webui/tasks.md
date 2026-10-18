@@ -51,6 +51,8 @@ P4 intermediate evidence: `docs/PAKKA-POCKET-P4.md`, full 343/343 plus the added
 
 ## 6. P5 — Complete adopted UI and deployment workflows
 
+User-confirmed local checks are complete: Webhook removal, clean branch switching, Sender Memory proposal/Owner approval, panel close/reopen, and mobile/keyboard use. Native desktop notification click has also passed its later scoped run. Remaining unchecked aggregate tasks include external deployment, the full screen inventory or final delivery; they do not ask the user to repeat those five checks. [Current status](../../../docs/PAKKA-POCKET-STATUS.md) separates these results from subsequent UI/configuration work. The checkpoint paragraphs below retain their original versions and then-current limitations.
+
 - [x] 6.1 Port side chat/presence/notes/pins/reactions and turn-taking with conflict/attribution tests and captured proof that human-side content is not implicit model input.
 - [x] 6.2 Port files/changes/branches/worktrees/uploads/exports/artifact views to approved services, testing real isolated files, scope/path bounds and safe rendering.
 - [x] 6.3 Port approval and browser panels to real controlled pending-call/browser services, including unauthorized/late decisions and actual action results.

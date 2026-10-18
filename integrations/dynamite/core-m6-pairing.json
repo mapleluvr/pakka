@@ -38,7 +38,7 @@
 		"identityOmissionFixed": true,
 		"positiveProductBudgetRefusalObserved": false,
 		"scope": "explicit initial persistent members only; no default activation, worker or dynamic-child provisioning",
-		"acceptance": "../../docs/DYNAMITE-PRODUCT-ACCEPTANCE.md"
+		"acceptance": "../../docs/verification/DYNAMITE-PRODUCT-ACCEPTANCE.md"
 	},
 	"historicalFailedPairing": "pairing.json",
 	"libraryBaseline": {

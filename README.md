@@ -1,12 +1,28 @@
 # Pakka — integrated Pi host
 
-基于 Pi **1.0.3 发布包**和可重建的 Pi Durable 下游补丁 **1.0.3-pakka.1** 的 headless 整合宿主。默认生产路径为 Durable；AgentSession 仅用于测试对照。当前搭配为 `@pakka/agent@0.5.0`、`@pakka/mas@0.4.0`、可选 `@pakka/mas-devpack@0.2.0`、`@pakka/protocol@0.1.0`、`@pakka/client@0.1.0`、`@pakka/cli@0.1.0` 和 private `@pakka/server@0.5.0`（显式可选 Dynamite 装配已在限定范围验收）；暂不发布。M1–M6 核心迁移已在受支持范围内验收，带明确限制；实际 loopback server/client/browser/CLI 入口见 [应用 API](docs/MAS-APPLICATION-API.md) 和 [M5 验收](docs/MIGRATION-M5-ACCEPTANCE.md)。M6 可选产品装配已验收，见 [支持矩阵](docs/MAS-PRODUCT-SUPPORT.md) 和 [M6 验收](docs/MIGRATION-M6-ACCEPTANCE.md)；该验收不包含 GUI。后续 [Pakka-Pocket 迁移计划](docs/PAKKA-POCKET-PLAN.md) 与 [WebUI/扩展开发规范](docs/WEBUI-DEVELOPMENT.md) 已进入实施，目标为单一产品包 `@pakka/webui`；[P0 来源与原生端口](docs/PAKKA-POCKET-P0.md) 和 [P1 人类身份/工作区/任务/协议服务](docs/PAKKA-POCKET-P1.md) 已验证；[P2 实际 Web 工作台](docs/PAKKA-POCKET-P2.md)已贯通可执行入口、多人邀请、浏览器和 TLS 代理。[P3 公共扩展宿主](docs/PAKKA-POCKET-P3.md)已接入版本化声明、公开组件/界面、人工命令、私有设置及原操作核对；[P4 MAS DevPack facets](docs/PAKKA-POCKET-P4.md)已贯通公开 Board/member panel、真实 Agent 组装、人类通信与移除/恢复。[P5 阶段](docs/PAKKA-POCKET-P5.md)已接通协作、文件/Git、审批与浏览器，并验证模型/用量设置及私密 provider replace/clear；通知已接通真实 Web Push/worker、偏好过滤和丢响应恢复，计划输入已通过原生 Durable job 的实际 CLI、取消/重开与未知准入门禁；memory 已贯通项目范围、待审批原生工具提议、当前上下文来源、冲突草稿和独立 WebUI 移除恢复；可选 [Webhook](docs/WEBHOOKS.md) 已接通签名、轮换、创建人权限与原生队列，实际 CLI 验证了重开和独立 WebUI 移除；原生通知点击、其余可选界面和部署工作流继续验收，完整产品验收与独立复审在 P6。DevPack 公开接口和支持范围见 [API](docs/MAS-DEVPack-API.md)，M3 跨 Session broker/worker 的残余项见 [验收记录](docs/MIGRATION-M3-ACCEPTANCE.md)。
+基于 Pi **1.0.3 发布包**和可重建的 Pi Durable 下游补丁 **1.0.3-pakka.1** 的 headless 整合宿主，并提供可选 Pakka-Pocket Web 工作台。默认生产路径为 Durable；AgentSession 用于测试对照。当前配对是 `@pakka/agent@0.5.0`、`@pakka/mas@0.4.0`、可选 `@pakka/mas-devpack@0.2.0`、`@pakka/protocol@0.1.0`、`@pakka/client@0.1.0`、`@pakka/cli@0.1.0` 和 private `@pakka/server@0.5.0`；暂不发布。
+
+Web 工作台已接通普通 Conversation、多人邀请、文件／Git、审批、受控浏览器、Memory、Webhook、定时输入和通知。模型从输入区选择，cwd 从 Conversation 标题下独立选择；字体、字号和配色由 Appearance 调整。用户已确认本机五项功能／交互验收；远程部署、跨平台与 P6 指定审查和最终交付分别跟踪，见 **[当前状态与使用入口](docs/PAKKA-POCKET-STATUS.md)**。
+
+MAS DevPack 作为普通插件提供成员列表与操作面板。后续关系图、运行片段和交流日志的对象对应与交互见 [MAS Board 设计草案](docs/MAS-BOARD-DESIGN.md)。安装 WebUI 与装配模型工具相互独立。
+
+M1–M6 核心迁移和可选产品配对按明确范围验收，见 [应用 API](docs/guides/MAS-APPLICATION-API.md)、[支持矩阵](docs/guides/MAS-PRODUCT-SUPPORT.md)与 [M6 验收](docs/archive/acceptance/MIGRATION-M6-ACCEPTANCE.md)；这些历史验收不包括后续 GUI。Web 迁移的来源、分阶段依赖与开发契约见 [迁移计划](docs/plans/PAKKA-POCKET-PLAN.md)和 [开发规范](docs/development/WEBUI-DEVELOPMENT.md)。DevPack 公共工具与 M3 残余项分别见 [API](docs/reference/MAS-DEVPack-API.md)和 [M3 记录](docs/archive/acceptance/MIGRATION-M3-ACCEPTANCE.md)。
 
 它把会话封装、写权、生命周期和一部分 C2 放进同一个运行时，并用真实 Pi + 本地 HTTP provider + JSONL 做交叉测试。**不是完整 Kappa 迁移，也不是 stock Pi TUI/CLI 的替代品。**
 
-## 开始
+## 文档
 
-需要 Node 24+、npm 11；M2 验证环境为 Windows / Node 24.15.0 / npm 11.12.1；当前 M3–M6 门禁使用 Windows / Node 24.18.0 / npm 11.16.0。
+**[文档总导航](docs/README.md)** 按当前用途分区：
+
+- 使用：[WebUI 启动与操作](docs/guides/WEBUI-GUIDE.md) · [当前产品状态](docs/PAKKA-POCKET-STATUS.md) · [MAS 应用装配](docs/guides/MAS-APPLICATION-API.md)
+- 接口：[公开 API 参考](docs/reference/README.md) · [Headless 产品支持](docs/guides/MAS-PRODUCT-SUPPORT.md)
+- 开发：[架构、仓库与扩展规范](docs/development/README.md) · [验证工作方式](docs/development/VERIFICATION.md)
+- 设计与计划：[MAS Board 当前草案](docs/MAS-BOARD-DESIGN.md) · [当前实施计划](docs/plans/README.md)
+- 证据：[验证导航](docs/verification/README.md) · [Deprecated 历史资料](docs/archive/README.md)
+
+## 开发与验证
+
+需要 Node 24+、npm 11。历史 M1–M6 门禁的 Windows 环境和固定产物见[阶段归档](docs/archive/README.md)；后续 Linux 与本机验收范围见[当前状态](docs/PAKKA-POCKET-STATUS.md)。
 
 ```sh
 npm ci --ignore-scripts
@@ -20,11 +36,10 @@ npm run smoke:package
 - 测试不读取真实凭据、不调用付费模型；使用独立临时 profile 与 127.0.0.1 provider。
 - 浏览器门禁必须有真实 Chrome/Chromium，不会因缺少浏览器跳过。默认搜索系统 Chrome（Windows/macOS）及 `PATH`；Linux 或非标准安装可显式设置绝对路径，例如 `PAKKA_TEST_CHROME=/opt/chrome/chrome npm test`，打包门禁同样使用 `PAKKA_TEST_CHROME=/opt/chrome/chrome npm run smoke:package`。无效的显式路径直接失败，不退回另一浏览器；选择可执行文件不读取已有 profile，也不放宽产品受控浏览器的宿主批准规则。
 - `smoke:package` 会打包 `@pakka/agent`、`@pakka/mas`、`@pakka/mas-devpack`、`@pakka/protocol`、`@pakka/client`、`@pakka/cli`、private `@pakka/server` 与 `@pakka/webui`，在 Git 仓库之外建立消费者、**不携带根 overrides** 安装 tarball，再编译公开声明，实际验证 legacy host、Conversation runtime、同 Session MAS 的 activation、native delivery、owner policy、retirement 和 reopen dedup，并验证跨 Session broker、真实 worker PID 与丢回执后的全进程重开去重；DevPack consumer 执行真实模型 tool call、撤权零投递与原生临时成员；apps consumer 启动实际 server/CLI 子进程、编译 DOM-only client 声明并验证 native A2A/reply、拒绝和重连；product consumer 从实际启动入口执行模型工具、owner grant 交集、四种 lifetime、动态成员 reopen 和已消费 quota，并独立保存 HTTP、工具结果及原始存储。Pocket consumers 另验证人类身份/任务/协议服务，以及真实产品可执行入口、静态资产、桌面/手机 Chrome、邀请、撤权与正常重开。需要访问 npm registry。浏览器回归使用本机 Chrome/Edge 的全新隔离 profile；不读取用户浏览器会话。
-- `npm run test:dynamite` 运行 [固定 Durable × Dynamite 配对门禁](integrations/dynamite/README.md)，需要 GitHub/npm 网络，模型仅使用本地 HTTP。历史固定配对失败，按用户授权 **deferred** 后完成了核心迁移；[问题与功能目标仍留档](docs/DEFERRED-DYNAMITE-COMPATIBILITY.md)。迁移后的 `dynamite@0.2.1 × agent@0.5.0` 显式可选产品配对已带 notes 验收，见 [固定身份与证据](docs/DYNAMITE-PRODUCT-ACCEPTANCE.md) 和 [产品 API](docs/DYNAMITE-PRODUCT-API.md)；不改写历史配对为 passed。
+- `npm run test:dynamite` 运行 [固定 Durable × Dynamite 配对门禁](integrations/dynamite/README.md)，需要 GitHub/npm 网络，模型仅使用本地 HTTP。历史固定配对失败，按用户授权 **deferred** 后完成了核心迁移；[问题与功能目标仍留档](docs/archive/investigations/DEFERRED-DYNAMITE-COMPATIBILITY.md)。迁移后的 `dynamite@0.2.1 × agent@0.5.0` 显式可选产品配对已带 notes 验收，见 [固定身份与证据](docs/verification/DYNAMITE-PRODUCT-ACCEPTANCE.md) 和 [产品 API](docs/reference/DYNAMITE-PRODUCT-API.md)；不改写历史配对为 passed。
 - `npm run test:dynamite:product -- <accepted-agent.tgz> <accepted-dynamite.tgz>` 运行新的固定 SHA 产品消费者，不以历史 M0 命令或库测试替代实际 server/CLI、撤权、摘要 adoption 和 reopen 的验收。
 - `artifacts/integration/manifest.jsonl` 索引每个测试的 HTTP payload、宿主快照与原始 JSONL 副本。生成物被 Git 忽略，每次运行重建当前 manifest、保留旧目录。
 - `artifacts/package-smoke/` 保存外部安装和执行日志。
-- [设计与约束](docs/ARCHITECTURE.md) · [多 Conversation runtime API](docs/RUNTIME-API.md) · [同 Session MAS API](docs/MAS-API.md) · [跨 Session broker/worker API](docs/BROKER-API.md) · [MAS DevPack API](docs/MAS-DEVPack-API.md) · [server/client/CLI API](docs/MAS-APPLICATION-API.md) · [M5 验收](docs/MIGRATION-M5-ACCEPTANCE.md) · [M6 产品支持](docs/MAS-PRODUCT-SUPPORT.md) · [M6 验收](docs/MIGRATION-M6-ACCEPTANCE.md) · [策略控制 API 与精确接口](docs/STRATEGY-API.md) · [验证记录](docs/VERIFICATION.md) · [M1 验收](docs/MIGRATION-M1-ACCEPTANCE.md) · [M2 验收](docs/MIGRATION-M2-ACCEPTANCE.md) · [M3 验收](docs/MIGRATION-M3-ACCEPTANCE.md) · [M4 验收](docs/MIGRATION-M4-ACCEPTANCE.md) · [仓库规范](docs/MONOREPO-CONVENTIONS.md) · [迁移计划](docs/MONOREPO-MIGRATION-PLAN.md)
 
 ## 目录
 
@@ -139,7 +154,7 @@ try {
 
 ## 策略控制
 
-`Client.bindStrategy(id)` 返回冻结的策略 binding：一次性 provenance frame、lease-bound projector、scoped artifact journal，以及显式 `model.infer` grant 下的辅助 source job。它不包含 Pi session/registry、endpoint 或 credentials。详见 [精确接口与最小示例](docs/STRATEGY-API.md)。
+`Client.bindStrategy(id)` 返回冻结的策略 binding：一次性 provenance frame、lease-bound projector、scoped artifact journal，以及显式 `model.infer` grant 下的辅助 source job。它不包含 Pi session/registry、endpoint 或 credentials。详见 [精确接口与最小示例](docs/reference/STRATEGY-API.md)。
 
 活动 projector 返回 entry-message patches 或 summary-range replacements；宿主保留 system/loadout checkpoints、excluded messages 和 native call/result IDs/names/arguments，在 Durable `beforeRequest` 与 provider `onPayload` 边界核验后才发送 HTTP。也可以明确返回 `{ status: "blocked", basis, reason }`：输入仍 committed，`receipt.generation` 标记 blocked，Host 保持 ready；非法协议或存储不确定仍失败关闭。普通 tail growth 不撤销 source job，源/前文 edit、导航 ABA、reload/newSession/lease 变化会撤权。journal 未知状态阻断调用，不能作为重新推理的理由。
 
@@ -147,7 +162,7 @@ try {
 
 ## 暂未实现
 
-已实现受信任 bootstrap 的单 Session 多 Conversation runtime 和同 Session MAS 服务，接口和限制见 [RUNTIME-API.md](docs/RUNTIME-API.md) 与 [MAS-API.md](docs/MAS-API.md)。M3 的多 Session enrollment、持久 A2A/outbox 与独立 worker 已验收（带明确限制），见 [BROKER-API.md](docs/BROKER-API.md)。MAS DevPack 的可选受控 contribution 已验收（不是 stock Pi CLI 插件）；以下仍未实现：完整 Pi input/skill/template/image/extension-command 兼容（slash 输入显式拒绝）；任意原生 Pi 插件；任意运行期 boundary context 提案；完整 AgentSubject/claim receipt 与通用 host RPC（有限 MAS RPC 已在 M5 验收）；按次工具权限和 C2 tool-result 准入；legacy Host C2 的跨重启 claim 重建、完整 forced-crash 恢复、共享 storage 的多 writer、sandbox；全 provider 兼容、Dynamite 默认装配及 worker/动态子成员自动策略；TUI 和完整 stock CLI 兼容。
+已实现受信任 bootstrap 的单 Session 多 Conversation runtime 和同 Session MAS 服务，接口和限制见 [RUNTIME-API.md](docs/reference/RUNTIME-API.md) 与 [MAS-API.md](docs/reference/MAS-API.md)。M3 的多 Session enrollment、持久 A2A/outbox 与独立 worker 已验收（带明确限制），见 [BROKER-API.md](docs/reference/BROKER-API.md)。MAS DevPack 的可选受控 contribution 已验收（不是 stock Pi CLI 插件）；以下仍未实现：完整原生 Pi input/skill/template/image/extension-command 兼容（原生 Pi slash 不作透传；WebUI 已注册的扩展命令走自身 dispatcher）；任意原生 Pi 插件；任意运行期 boundary context 提案；完整 AgentSubject/claim receipt 与通用 host RPC（有限 MAS RPC 已在 M5 验收）；按次工具权限和 C2 tool-result 准入；legacy Host C2 的跨重启 claim 重建、完整 forced-crash 恢复、共享 storage 的多 writer、sandbox；全 provider 兼容、Dynamite 默认装配及 worker/动态子成员自动策略；TUI 和完整 stock CLI 兼容。
 
 当前仅接入显式配置的工具；工具允许执行不等于其副作用可回滚。context_edit 的 author intent 与 mutation 仍是两次写入，不是原子事务。
 

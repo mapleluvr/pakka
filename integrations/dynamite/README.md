@@ -26,7 +26,7 @@ npm run test:dynamite
 
 `summary.status` 为 `passed`、`blocked` 或运行中的 `running`；任何安装、声明、host smoke 或行为断言失败都返回非零 exit。门禁自身有 8 项失败先行回归，要求完整 6 项行为检查全部通过，拒绝 missing/duplicate TAP counts、减少用例、todo/skip/cancelled 或不一致的 pass 总数。**不能通过删除失败断言、标记 todo/skip 或把已知失败改成 expected success 来放行 M0。**
 
-当前第一组回归覆盖编号、reduce/flush、64/128 cap 的压缩候选与 wire adoption、reload/reopen 和缺失权限的零 dispatch。源 edit/ABA、unknown-storage 及其他组合回归仍是 [M0 退出条件](../../docs/MONOREPO-MIGRATION-PLAN.md)，本目录初始回归不代表完整 M0 已通过。
+当前第一组回归覆盖编号、reduce/flush、64/128 cap 的压缩候选与 wire adoption、reload/reopen 和缺失权限的零 dispatch。源 edit/ABA、unknown-storage 及其他组合回归仍是 [M0 退出条件](../../docs/archive/plans/MONOREPO-MIGRATION-PLAN.md)，本目录初始回归不代表完整 M0 已通过。
 
 ## 核心迁移后的可选产品配对（独立候选）
 
@@ -38,7 +38,7 @@ npm run test:dynamite:product -- <accepted-agent-archive.tgz> <candidate-dynamit
 
 这个独立 runner 在执行 build、pack 或安装前核验双方精确 SHA；两种 archive-byte 污染反例均返回 blocked、零子命令。它打包当前真实 server/client/CLI 并在仓库外安装，运行完整 5 项产品场景，拒绝缺项、skip/todo/cancelled；正常路径为 107 次本地 HTTP、8 个 native tool-call/result，另有一个明确的丢失摘要响应。它不从 sibling checkout 或 workspace overrides 取代已固定的 runtime archives。
 
-此显式限定配对已完成执行门禁、完整指定产品复审和身份遗漏修正；两方意见及剩余观测限制见 [验收记录](../../docs/DYNAMITE-PRODUCT-ACCEPTANCE.md)。不将历史 M0 改为 passed，不默认启用或推广到未验证组合。可用组合、显式安装、撤权与 reopen 语义见 [Dynamite 产品 API](../../docs/DYNAMITE-PRODUCT-API.md)。
+此显式限定配对已完成执行门禁、完整指定产品复审和身份遗漏修正；两方意见及剩余观测限制见 [验收记录](../../docs/verification/DYNAMITE-PRODUCT-ACCEPTANCE.md)。不将历史 M0 改为 passed，不默认启用或推广到未验证组合。可用组合、显式安装、撤权与 reopen 语义见 [Dynamite 产品 API](../../docs/reference/DYNAMITE-PRODUCT-API.md)。
 
 ## 历史固定配对：blocked
 
@@ -50,4 +50,4 @@ npm run test:dynamite:product -- <accepted-agent-archive.tgz> <candidate-dynamit
 
 具体外部 seam 是该 commit 的 `src/pakka-adapter.ts:31–51`：`toRuntimeFrame()` 将 Durable `pi.*` raw records 原样作为旧 `EntryLike`，并只从 `message/custom_message` 提取 raw messages。Durable frame 的 `pi.user`、`pi.assistant` 和 `model[]` 因而不能形成算法所需的 numbering/step/source inputs。编译和相同的 `0.1.0` peer version 不足以证明行为兼容。
 
-修复应在明确的、版本化的 producer DTO 或外部 adapter 映射契约中完成；本目录不伪造旧 raw records、不直接解析 Pi storage、不内嵌外部算法修补。用户已明确授权此专项延期、不阻塞 M1–M6 核心迁移；[未处理问题、兼容性功能目标和恢复条件](../../docs/DEFERRED-DYNAMITE-COMPATIBILITY.md) 已单独留档。迁移期间不装配或宣称 Dynamite 兼容，保留本门禁的失败语义；核心迁移完成后再修复外部组件、更新固定配对并补齐 M0 矩阵。
+修复应在明确的、版本化的 producer DTO 或外部 adapter 映射契约中完成；本目录不伪造旧 raw records、不直接解析 Pi storage、不内嵌外部算法修补。用户已明确授权此专项延期、不阻塞 M1–M6 核心迁移；[未处理问题、兼容性功能目标和恢复条件](../../docs/archive/investigations/DEFERRED-DYNAMITE-COMPATIBILITY.md) 已单独留档。迁移期间不装配或宣称 Dynamite 兼容，保留本门禁的失败语义；核心迁移完成后再修复外部组件、更新固定配对并补齐 M0 矩阵。
