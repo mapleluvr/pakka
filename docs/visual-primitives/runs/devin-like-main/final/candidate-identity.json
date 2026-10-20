@@ -1,0 +1,378 @@
+{
+  "sourceCommit": "fe02dd23d6a0af4989ccb8e793cfc81730ae8ea2",
+  "sourceTree": "01aeda941038e8bd2890e87341f8aa0a0d8530a8",
+  "referenceCommit": "ed20cec0aef82daa22aa50da19597b7ba1607e02",
+  "capturedBy": "apps/webui/test/devin-shell-browser.test.ts",
+  "environment": {
+    "platform": "win32",
+    "node": "v24.15.0",
+    "deviceScaleFactor": 1,
+    "mobileModeBelow": 600
+  },
+  "validationStatus": "NOT_FULLY_ACCEPTED",
+  "exits": {
+    "fullExit": 1,
+    "scopedExit": 1,
+    "packageExit": 1,
+    "finishedAt": "2026-10-20T12:05:17.2614133+00:00"
+  },
+  "installedConsumer": "C:\\Users\\mapleland\\AppData\\Local\\Temp\\pakka-packed-consumer-AeEbH0",
+  "installedArchives": [
+    {
+      "file": "pakka-agent-0.5.0.tgz",
+      "bytes": 17465028,
+      "sha256": "9bfd240e56b3b9ffd56ffd73d236b5f74474969511b960095922b693a1bf0df5"
+    },
+    {
+      "file": "pakka-cli-0.1.0.tgz",
+      "bytes": 1406,
+      "sha256": "9ceffdafe3e966c75c2210549530fb642bf585a789145dfaab57dfa99df70ed1"
+    },
+    {
+      "file": "pakka-client-0.1.0.tgz",
+      "bytes": 4280,
+      "sha256": "41574c598b84f5625dbfa4f19cdb2496abbd9ab0839d2a49fc189e989852e54e"
+    },
+    {
+      "file": "pakka-mas-0.4.0.tgz",
+      "bytes": 13570,
+      "sha256": "81d49e8e56a6a8cf05a719813188cc3cd7bed14d75ae9b843b034743164c3823"
+    },
+    {
+      "file": "pakka-mas-devpack-0.2.0.tgz",
+      "bytes": 40314,
+      "sha256": "ab3b676cd38daf443258f23491a57442684cf6b11ab93ebc9da15def39924732"
+    },
+    {
+      "file": "pakka-protocol-0.1.0.tgz",
+      "bytes": 10733,
+      "sha256": "761c05454ddc179951b4779f5823ad4f5359f6023d4777556e10cebb623425c5"
+    },
+    {
+      "file": "pakka-server-0.5.0.tgz",
+      "bytes": 80936,
+      "sha256": "de42090206305358865c03d72f333a8783fec3f72f5d721e1b4297771cce1c32"
+    },
+    {
+      "file": "pakka-webui-0.1.0.tgz",
+      "bytes": 618211,
+      "sha256": "7b6820b44dc792f046e0f6f01db3f670d39aaa95525234c667bafb332c6013b1"
+    }
+  ],
+  "screenshots": [
+    {
+      "file": "candidate-desktop.png",
+      "scenario": "home, dark",
+      "width": 1440,
+      "height": 900,
+      "bytes": 37919,
+      "sha256": "b00f7ea7aed489814a6d6df1ab7813bc4a2b72d96e0d56959a7c30a3544b3641"
+    },
+    {
+      "file": "candidate-conversation.png",
+      "scenario": "real Conversation after explicit Send",
+      "width": 1440,
+      "height": 900,
+      "bytes": 51456,
+      "sha256": "e049e0e447507aa4218282e42b7a4ca7229872e14eec5b8e04983ec00da86325"
+    },
+    {
+      "file": "candidate-light.png",
+      "scenario": "home, light",
+      "width": 1440,
+      "height": 900,
+      "bytes": 38774,
+      "sha256": "98c75ccc7d3433e321ddae506651fe869f664ada386299e06cb46c04c7bd9fff"
+    },
+    {
+      "file": "candidate-search.png",
+      "scenario": "conversation search, light",
+      "width": 1440,
+      "height": 900,
+      "bytes": 71122,
+      "sha256": "b56d3fe9e123047f7bc29bd333d61ce6ec74d166ebdcc26659d6a670f7471979"
+    },
+    {
+      "file": "candidate-mobile.png",
+      "scenario": "home, 390x844",
+      "width": 390,
+      "height": 844,
+      "bytes": 20171,
+      "sha256": "fbd7c477ed871fb485e5493d8402aafe808219e0d3f02d22f99a238631c597d3"
+    },
+    {
+      "file": "candidate-short.png",
+      "scenario": "home, 360x600",
+      "width": 360,
+      "height": 600,
+      "bytes": 18994,
+      "sha256": "4c49f6ff36e0ba0a0a5e06c17dec679257fd2175474cdbadcf3c3603d19ad548"
+    },
+    {
+      "file": "accepted-render.png",
+      "scenario": "accepted for user review, not release",
+      "width": 1440,
+      "height": 900,
+      "bytes": 37919,
+      "sha256": "b00f7ea7aed489814a6d6df1ab7813bc4a2b72d96e0d56959a7c30a3544b3641"
+    },
+    {
+      "file": "reference-desktop.png",
+      "scenario": "independently rendered static reference",
+      "width": 1440,
+      "height": 900,
+      "bytes": 79109,
+      "sha256": "baa097000667c283166e65f141aaeb5cda8937c7a6c25deabe9f4b8a670e9826"
+    }
+  ],
+  "logs": [
+    {
+      "file": "check-r5.log",
+      "original": "artifacts/devin-check-r5.log",
+      "bytes": 216,
+      "sha256": "4ca3577a130221638ebacfc196a3bd26ca80e6f166a2344833caee47b1443d5f"
+    },
+    {
+      "file": "build-r5.log",
+      "original": "artifacts/devin-build-r5.log",
+      "bytes": 913,
+      "sha256": "6595599be950f98dc7df47d444391504d0122349f8ebbf2c984ff18a212db0b9"
+    },
+    {
+      "file": "full-test-r5.log",
+      "original": "artifacts/full-test-devin-r5.log",
+      "bytes": 67402,
+      "sha256": "cce138be304966c40ac104f329df47fbeca3b3e0ccc6d879a2ca12a3c22911f6"
+    },
+    {
+      "file": "webui-r5.log",
+      "original": "artifacts/devin-webui-r5.log",
+      "bytes": 7063,
+      "sha256": "3a1cfb3c7ce4dbfc606f485a41754b775fbcf9124edea9e326d5b4e21ac316ab"
+    },
+    {
+      "file": "package-r5.log",
+      "original": "artifacts/devin-package-r5.log",
+      "bytes": 5860,
+      "sha256": "49422199f878b4cca0d3ce5b6e493a3260bb28ff3f29738768d5ae7d6b113d8a"
+    },
+    {
+      "file": "package-controlled-r5.log",
+      "original": "artifacts/package-smoke/pocket-controlled.log",
+      "bytes": 1316,
+      "sha256": "11ab2cc0a7afaac04d437e6fa9eae1b700003094d0b1e46e5fb774a2ce7df939"
+    },
+    {
+      "file": "package-product-r5.log",
+      "original": "artifacts/package-smoke/pocket-product.log",
+      "bytes": 422,
+      "sha256": "1688f56429c892ff380f27264482063bf6910807d07d329d143c3b3df2a9db99"
+    },
+    {
+      "file": "package-mas-board-r5.log",
+      "original": "artifacts/package-smoke/mas-board.log",
+      "bytes": 326,
+      "sha256": "5a6c5c536e6b7c344c9935533618d245a92cd943421e20990ef7503c8d875f96"
+    },
+    {
+      "file": "main-baseline.log",
+      "original": "artifacts/full-test-main-baseline.log",
+      "bytes": 67672,
+      "sha256": "82f6481edf11fb40453684d7596c8c0cbe015651c7e668d80e1f1f49b3768324"
+    },
+    {
+      "file": "main-package-controlled.log",
+      "original": "artifacts/devin-main-comparison/main-pocket-controlled.log",
+      "bytes": 1305,
+      "sha256": "ae8cf41a3b0586b39bfde68759c4bc005d3fd1797289d2c242314691a9941a33"
+    },
+    {
+      "file": "candidate-native-diagnostic.log",
+      "original": "artifacts/devin-workspace-diagnostic.log",
+      "bytes": 1661,
+      "sha256": "c15ba08b4be2e821752e70bae6eecb0231351de15c2681fde148fa4211290fda"
+    },
+    {
+      "file": "main-native-diagnostic.log",
+      "original": "artifacts/devin-main-comparison/main-native-diagnostic.log",
+      "bytes": 1663,
+      "sha256": "41ed89abc4ff347d17517eb4ed382201836af8bfe005a47b386638b57bc7963d"
+    },
+    {
+      "file": "home-hint-red.log",
+      "original": "artifacts/hint-visible-red.log",
+      "bytes": 908,
+      "sha256": "094efe99d8dc916712254970199c3e1e1514152f59007b0e0d787fe047a3ea57"
+    },
+    {
+      "file": "home-hint-green.log",
+      "original": "artifacts/hint-visible-green.log",
+      "bytes": 218,
+      "sha256": "7992c87e44c1356f652f25178b907fb28e4f21e25fded60189cb8e18adfbc3a6"
+    }
+  ],
+  "derivedEvidence": [
+    {
+      "file": "candidate-layout.png",
+      "bytes": 60885,
+      "sha256": "63c4137579bad45e215e9b0e98c5adc569d95be71983234aa3b6cd96b2d9df8d"
+    },
+    {
+      "file": "reference-layout.png",
+      "bytes": 70509,
+      "sha256": "dbceeb8b402c59f760ac792d487fb416d761dedf48b947c0bfe0c8fbbb600aff"
+    },
+    {
+      "file": "candidate-home-crop.png",
+      "bytes": 10562,
+      "sha256": "7de247cc81029ad3776c7ee48524b3d3fff6b58fc4a02945bc7aef6746acd066"
+    },
+    {
+      "file": "reference-home-crop.png",
+      "bytes": 17113,
+      "sha256": "d20a3e735b0b7eeeb2c7781a3117df967bd96e538f1a4398f12774f7dba4799e"
+    },
+    {
+      "file": "candidate-layout.json",
+      "bytes": 1212,
+      "sha256": "e35f6366b357d7841417a20b03b68399226ee4ee083f5470c1f52032b1e091c4"
+    },
+    {
+      "file": "reference-layout.json",
+      "bytes": 1221,
+      "sha256": "eb053d0d93ae483d22bd0b204400b984274b6616e62ef878dfdbca40935255fb"
+    },
+    {
+      "file": "candidate-home-crop.json",
+      "bytes": 887,
+      "sha256": "6fc152256f6cc486b58967aeefe90575edba44c46328a42c6dfc10a9b2418c9e"
+    },
+    {
+      "file": "reference-home-crop.json",
+      "bytes": 896,
+      "sha256": "9b924ac5c6f084f924bccacd7602974c21193917aac7a023c027f1c709913bc7"
+    },
+    {
+      "file": "candidate-colors.json",
+      "bytes": 1970,
+      "sha256": "f8d86987d401f08b349f6e839056dc1661fffb1101e757bf879fed70f17acaae"
+    },
+    {
+      "file": "reference-colors.json",
+      "bytes": 1979,
+      "sha256": "5ceb89cfb7196f430c858a7c0737e46c221104bd23d001daa25a6b7a9aba5972"
+    },
+    {
+      "file": "candidate-measurements.json",
+      "bytes": 656,
+      "sha256": "9f3b48e672c487ef7537395656e93a62d17711f77e0fd9aee75deab1db1feed0"
+    },
+    {
+      "file": "test-files.json",
+      "bytes": 1629,
+      "sha256": "bd2303d969fa9f65ef0d565cd9701da59b791bdcc6ce9beb5d0d56723a8bd269"
+    },
+    {
+      "file": "reference-archive-check.json",
+      "bytes": 301,
+      "sha256": "152a61e514092155ec62d6bdb04ff7e8aa19906e28afb8a13d2c353b273ba01a"
+    },
+    {
+      "file": "reference-runtime-check.json",
+      "bytes": 14958,
+      "sha256": "8d98528fe33e842de2173abe1cb9c59eb239f4c8e62815cbb329ec2ec93f4cf7"
+    }
+  ],
+  "changedSourceWorkingBytes": [
+    {
+      "path": "apps/webui/NOTICE.md",
+      "bytes": 1726,
+      "sha256": "731aa8bb16de775d044846393522a5f9045094d0bd7afcef0b0f29e4b940cfa2"
+    },
+    {
+      "path": "apps/webui/src/components.ts",
+      "bytes": 2649,
+      "sha256": "fb8ccf09babf8ac13b1232a34ddf5906894a8c109ea5aefc6603b75b599a54ee"
+    },
+    {
+      "path": "apps/webui/src/http.ts",
+      "bytes": 35836,
+      "sha256": "4f5eff541a1c97974ef1b510ab8cf11a7f680c3bd944257b519904f5d74f84fc"
+    },
+    {
+      "path": "apps/webui/test/appearance-browser.test.ts",
+      "bytes": 6808,
+      "sha256": "4cff91c8d49eab961dd40e9ea3ac30c610ef839d372fdffacf0f4c7ac7db59ac"
+    },
+    {
+      "path": "apps/webui/test/creation-recovery-browser.test.ts",
+      "bytes": 3431,
+      "sha256": "e06e51d055340ba10f8df7769c377233aa4e5b54e96a42ca469c5bdaf1473a1f"
+    },
+    {
+      "path": "apps/webui/test/devin-shell-browser.test.ts",
+      "bytes": 8907,
+      "sha256": "12c983b1a0ed19a0ca704ed46b52b68b57b4e0210a5b45ee0ae1baf01cf1ca24"
+    },
+    {
+      "path": "apps/webui/test/extension-instance.test.ts",
+      "bytes": 4977,
+      "sha256": "297faebe2fd2b44c51a6667c789e47051ad99d8fc6f212ac4cb18f3e9b59fe2e"
+    },
+    {
+      "path": "apps/webui/test/importmap-browser.test.ts",
+      "bytes": 1944,
+      "sha256": "0c5ef32c0016a8d0ed7332eb360be6c613655578358e1f865f0d0c61fd53e5e0"
+    },
+    {
+      "path": "apps/webui/test/independent-configuration-browser.test.ts",
+      "bytes": 7266,
+      "sha256": "779ddeead5f684c3ee1bb300b5ea228f8a25d3b2bc4cf8890d98c478a9247cca"
+    },
+    {
+      "path": "apps/webui/test/mas-board-busy.test.ts",
+      "bytes": 6521,
+      "sha256": "3437bb09e37d2fc0580517d55b7a53e428669c38ae31a78e5f020252dbf2853a"
+    },
+    {
+      "path": "apps/webui/web/app.js",
+      "bytes": 40383,
+      "sha256": "7e4431871c2ea5cdb1274f09eca5b36daa47204cd9c41c07039da9ef71d1f98c"
+    },
+    {
+      "path": "apps/webui/web/appearance.js",
+      "bytes": 4087,
+      "sha256": "74ef780e57a01a6da108ecea22eb1a5a06b5c8043abccf2a9d0e4efefb461486"
+    },
+    {
+      "path": "apps/webui/web/devin.css",
+      "bytes": 11490,
+      "sha256": "8cf625e97467fc7f1574708b746fc9ac4ccce32885359a236a3b486bcb94299a"
+    },
+    {
+      "path": "apps/webui/web/fonts/Inter-OFL.txt",
+      "bytes": 4472,
+      "sha256": "b3195af0fb14368d1b3b10fb9d3fe503b7163ea083859d2ee553bc74da07c320"
+    },
+    {
+      "path": "apps/webui/web/fonts/InterVariable.woff2",
+      "bytes": 352240,
+      "sha256": "693b77d4f32ee9b8bfc995589b5fad5e99adf2832738661f5402f9978429a8e3"
+    },
+    {
+      "path": "apps/webui/web/index.html",
+      "bytes": 1419,
+      "sha256": "bbd53de41154436c11f0959b7a5f0c50c9f9085cc8d1423ea28a8675c81f931a"
+    },
+    {
+      "path": "apps/webui/web/sheet.js",
+      "bytes": 3075,
+      "sha256": "dc1e6b4c86d351707675dd850200afe30e9cf452c2a3d59e999d35d1ddbe6fcf"
+    }
+  ],
+  "limitations": [
+    "Image identity binds bytes and scenario, not independent GUI acceptance.",
+    "Raw pixel-equivalence is not an acceptance criterion for this product migration.",
+    "Environment paths and native process failures remain as observed."
+  ]
+}

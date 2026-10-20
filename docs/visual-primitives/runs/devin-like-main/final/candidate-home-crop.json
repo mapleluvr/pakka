@@ -1,0 +1,39 @@
+{
+  "imagePath": "D:\\Projects\\kappa\\migration-worktrees\\pakka-devin-ui\\artifacts\\hint-repro\\devin-shell\\baseline-or-home-desktop.png",
+  "outputPath": "D:\\Projects\\kappa\\migration-worktrees\\pakka-devin-ui\\docs\\visual-primitives\\runs\\devin-like-main\\final\\candidate-home-crop.png",
+  "source": {
+    "width": 1440,
+    "height": 900,
+    "format": "png"
+  },
+  "input": {
+    "box": [
+      520,
+      320,
+      1220,
+      540
+    ],
+    "coordinateSpace": "pixel",
+    "origin": "top-left",
+    "boxOrder": "left-top-right-bottom",
+    "padding": 0,
+    "clamp": true
+  },
+  "resolvedPixelBox": {
+    "left": 520,
+    "top": 320,
+    "right": 1220,
+    "bottom": 540,
+    "width": 700,
+    "height": 220
+  },
+  "unclampedPixelBox": {
+    "left": 520,
+    "top": 320,
+    "right": 1220,
+    "bottom": 540,
+    "width": 700,
+    "height": 220
+  },
+  "clamped": false
+}

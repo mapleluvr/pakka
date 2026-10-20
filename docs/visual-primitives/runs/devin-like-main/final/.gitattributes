@@ -1,0 +1,6 @@
+# Preserve the exact evidence bytes referenced by candidate-identity.json.
+*.png -text
+*.json -text whitespace=cr-at-eol
+# Captured logs may contain CRLF and intentional trailing spaces; never rewrite them.
+*.log -text -whitespace
+*.md text eol=lf
