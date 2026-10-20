@@ -563,11 +563,6 @@ body {
 	.pocket-home-toolbar {
 		padding-inline: 10px;
 	}
-	.pocket-home-hint {
-		white-space: nowrap;
-		text-overflow: ellipsis;
-		overflow: hidden;
-	}
 	.pocket-workbench .transcript {
 		padding: 16px 18px 24px;
 	}

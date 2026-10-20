@@ -112,11 +112,22 @@ test(
 				await page.click('[aria-label="Toggle conversations"]');
 				await page.click('[data-action="home"]');
 				const home = (await page.evaluate(
-					`(()=>{const e=document.querySelector('.pocket-home-card').getBoundingClientRect();return {w:e.width,x:e.x,overflow:document.documentElement.scrollWidth>innerWidth}})()`,
-				)) as { w: number; x: number; overflow: boolean };
+					`(()=>{const card=document.querySelector('.pocket-home-card').getBoundingClientRect();const hint=document.querySelector('.pocket-home-hint');const box=hint.getBoundingClientRect(),style=getComputedStyle(hint);const range=document.createRange();range.selectNodeContents(hint);return {w:card.width,x:card.x,overflow:document.documentElement.scrollWidth>innerWidth,hint:{scroll:hint.scrollWidth,visible:hint.clientWidth,textVisible:[...range.getClientRects()].every(r=>r.left>=box.left+parseFloat(style.paddingLeft)-1&&r.right<=box.right-parseFloat(style.paddingRight)+1&&r.top>=box.top&&r.bottom<=box.bottom)}}})()`,
+				)) as {
+					w: number;
+					x: number;
+					overflow: boolean;
+					hint: { scroll: number; visible: number; textVisible: boolean };
+				};
+				await writeFile(
+					join(evidence, `home-${size.width}x${size.height}.json`),
+					JSON.stringify(home, null, 2),
+				);
 				assert.equal(home.x, 22);
 				assert.equal(home.w, size.width - 44);
 				assert.equal(home.overflow, false);
+				assert.ok(home.hint.scroll <= home.hint.visible, "home guidance must not overflow");
+				assert.equal(home.hint.textVisible, true, `${size.width}px home guidance must be fully visible`);
 				await page.click('[data-action="commands"]');
 				await page.wait('document.querySelector("[role=dialog]")?.contains(document.activeElement)');
 				await page.key("Escape");
