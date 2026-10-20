@@ -4,7 +4,7 @@ import htm from "htm";
 const html = htm.bind(h);
 
 /** Shell-owned focus/back lifecycle. Closing a view never cancels an admitted operation. */
-export function Sheet({ label, close, children, anchor }) {
+export function Sheet({ label, close, children, anchor, initialFocus }) {
 	const [position, setPosition] = useState(undefined);
 	useLayoutEffect(() => {
 		if (!anchor) return;
@@ -39,8 +39,9 @@ export function Sheet({ label, close, children, anchor }) {
 		};
 		window.addEventListener("popstate", back);
 		(
-			panel.current?.querySelector("button:not(:disabled),input:not(:disabled),select:not(:disabled)") ??
-			panel.current
+			panel.current?.querySelector(
+				initialFocus ?? "button:not(:disabled),input:not(:disabled),select:not(:disabled)",
+			) ?? panel.current
 		)?.focus();
 		return () => {
 			window.removeEventListener("popstate", back);

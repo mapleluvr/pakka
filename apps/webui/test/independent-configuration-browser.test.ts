@@ -45,7 +45,9 @@ test(
 				'document.querySelector(".sidebar").getAnimations().every(a=>a.playState==="finished"||a.playState==="idle")',
 			);
 			await page.click("[data-conversation]");
-			await page.wait('document.querySelector("[data-action=cwd]")?.textContent.includes("' + m.f.cwd + '")');
+			await page.wait(
+				'document.querySelector("[data-action=cwd]")?.textContent.includes(' + JSON.stringify(m.f.cwd) + ")",
+			);
 			await page.type("textarea[name=message]", "DRAFT-KEEP");
 			await page.click("[data-action=settings]");
 			await page.wait('document.querySelector("[data-cost]")');

@@ -124,7 +124,12 @@ function App() {
 	const [receipt, setReceipt] = useState(null),
 		[retry, setRetry] = useState(null),
 		[drawer, setDrawer] = useState(false),
+		[collapsed, setCollapsed] = useState(false),
+		[searchQuery, setSearchQuery] = useState(""),
+		[creationSource, setCreationSource] = useState(null),
+		[creationAttempt, setCreationAttempt] = useState(null),
 		[newName, setNewName] = useState("");
+	const creationCommand = useRef(null);
 	const drawerToggle = useRef(null);
 	const dismissDrawer = () => {
 		setDrawer(false);
@@ -187,6 +192,10 @@ function App() {
 		setReceipt(null);
 		setRetry(null);
 		setDraft("");
+		creationCommand.current = null;
+		setCreationAttempt(null);
+		setCreationSource(null);
+		setNewName("");
 	};
 	const error = (failure) => {
 		if (failure.code === "UNAUTHORIZED" || failure.code === "FORBIDDEN") {
@@ -240,6 +249,24 @@ function App() {
 			mounted.current = false;
 		};
 	}, []);
+	useEffect(() => {
+		if (!person) return;
+		const shortcut = (event) => {
+			if (event.defaultPrevented || event.altKey || !(event.ctrlKey || event.metaKey)) return;
+			if (event.key.toLowerCase() === "k") {
+				event.preventDefault();
+				searchConversations();
+			} else if (event.key.toLowerCase() === "b") {
+				event.preventDefault();
+				if (matchMedia("(max-width: 959px)").matches) {
+					if (drawer) dismissDrawer();
+					else setDrawer(true);
+				} else setCollapsed(!collapsed);
+			}
+		};
+		window.addEventListener("keydown", shortcut);
+		return () => window.removeEventListener("keydown", shortcut);
+	}, [person?.id, collapsed, drawer]);
 	useLayoutEffect(() => {
 		setView(null);
 		setShared(null);
@@ -414,6 +441,66 @@ function App() {
 		select(archived ? null : ref);
 		if (archived) notify("Archive hides navigation only; it does not cancel admitted work.");
 	}
+	function home() {
+		setCreationSource(selected ?? creationSource);
+		extensions.leave();
+		select(null);
+		setDrawer(false);
+	}
+	async function createdConversation(ref, command, binding) {
+		if (creationCommand.current !== command) return;
+		creationCommand.current = null;
+		setCreationAttempt(null);
+		setNewName("");
+		await refresh();
+		if (!mounted.current || resourceContext.current !== binding) return;
+		extensions.leave();
+		select(ref);
+		setDrawer(false);
+	}
+	async function createConversation(event) {
+		event.preventDefault();
+		if (working || creationCommand.current || !newName.trim()) return;
+		const source = selected ?? creationSource,
+			binding = resourceContext.current,
+			command = {
+				op: "create",
+				requestId: crypto.randomUUID(),
+				name: newName,
+				profile: source?.profile ?? "default",
+				...(source ? { inherit: source } : {}),
+			};
+		creationCommand.current = command;
+		setCreationAttempt({ command });
+		await run(async () => {
+			try {
+				const created = await client.request(command);
+				await createdConversation(created.ref, command, binding);
+			} catch (failure) {
+				if (failure.outcome === "denied" && creationCommand.current === command) {
+					creationCommand.current = null;
+					setCreationAttempt(null);
+				}
+				throw failure;
+			}
+		});
+	}
+	async function checkCreation() {
+		const command = creationCommand.current,
+			binding = resourceContext.current;
+		if (!command || working) return;
+		await run(async () => {
+			const result = await client.request({ op: "conversation.lookup", original: command });
+			if (creationCommand.current !== command) return;
+			if (result.result) await createdConversation(result.result, command, binding);
+			else setCreationAttempt({ command, missing: true });
+		});
+	}
+	function searchConversations() {
+		setSearchQuery("");
+		setDrawer(false);
+		openSheet("search");
+	}
 	async function earlier() {
 		const binding = resourceContext.current,
 			cursor = historyCursor === undefined ? view?.olderBeforeId : historyCursor;
@@ -515,7 +602,10 @@ function App() {
 			</section>
 		</main>`;
 	return html`<div
-		class=${"layout pocket-workbench" + (drawer ? " drawer-open" : "")}
+		class=${"layout pocket-workbench" +
+		(drawer ? " drawer-open" : "") +
+		(collapsed ? " sidebar-collapsed" : "") +
+		(!selected ? " workspace-home" : "")}
 		onKeyDown=${(event) => {
 			if (drawer && event.key === "Escape" && !event.defaultPrevented) {
 				event.preventDefault();
@@ -532,8 +622,32 @@ function App() {
 		/>`}
 		<aside class="sidebar window" id="pocket-sidebar">
 			<div class="pocket-side-head">
-				<strong>Pakka-Pocket</strong><span class="pocket-person">${person.name} · ${person.role}</span>
+				<div class="pocket-side-brand">
+					<strong>Pakka</strong>
+					<button
+						class="pocket-icon-button"
+						data-action="search-conversations"
+						aria-label="Search conversations"
+						title="Search conversations (Ctrl/⌘ K)"
+						onClick=${searchConversations}
+					>
+						<${Icon} name="search" />
+					</button>
+					<button
+						class="pocket-icon-button pocket-collapse"
+						data-action="collapse-sidebar"
+						aria-label="Collapse sidebar"
+						title="Collapse sidebar (Ctrl/⌘ B)"
+						onClick=${() => setCollapsed(true)}
+					>
+						<${Icon} name="panel" />
+					</button>
+				</div>
+				<span class="pocket-person">${person.name} · ${person.role}</span>
 			</div>
+			<button class="pocket-home-link" data-action="home" onClick=${home}>
+				<${Icon} name="plus" /><span>New conversation</span>
+			</button>
 			<div class="pocket-navigation-tools">
 				<input
 					aria-label="Find conversations"
@@ -591,28 +705,10 @@ function App() {
 				</nav>`}
 			</div>`}
 			${canDrive &&
-			html`<form
-				class="pocket-new"
-				onSubmit=${(event) => {
-					event.preventDefault();
-					void run(async () => {
-						const created = await client.request({
-							op: "create",
-							requestId: crypto.randomUUID(),
-							name: newName,
-							profile: selected?.profile ?? "default",
-							...(selected ? { inherit: selected } : {}),
-						});
-						setNewName("");
-						extensions.leave();
-						await refresh();
-						select(created.ref);
-						setDrawer(false);
-					});
-				}}
-			>
+			html`<form class="pocket-new" onSubmit=${createConversation}>
 				<input
 					aria-label="New conversation name"
+					disabled=${working || Boolean(creationAttempt)}
 					value=${newName}
 					placeholder="New conversation"
 					onInput=${(event) => setNewName(event.currentTarget.value)}
@@ -622,7 +718,7 @@ function App() {
 					type="submit"
 					aria-label="Create conversation"
 					title="Create conversation"
-					disabled=${working}
+					disabled=${working || Boolean(creationAttempt)}
 				>
 					<${Icon} name="plus" />
 				</button>
@@ -652,6 +748,15 @@ function App() {
 		</aside>
 		<main class="pane window">
 			<header class="topbar pocket-topbar">
+				${collapsed &&
+				html`<button
+					class="pocket-icon-button pocket-expand"
+					data-action="expand-sidebar"
+					aria-label="Expand sidebar"
+					onClick=${() => setCollapsed(false)}
+				>
+					<${Icon} name="panel" />
+				</button>`}
 				<button
 					class="pocket-menu pocket-icon-button"
 					aria-label="Toggle conversations"
@@ -678,18 +783,20 @@ function App() {
 					</button>`}
 				</div>
 				${extensions.back}
-				<span class="pocket-status">${view?.live.busy ? "Working" : view ? "Ready" : ""}</span>${selected &&
-				html`<button data-action="conversation" onClick=${() => openSheet("conversation")}>
-						Conversation
-					</button>
-					<button data-action="settings" onClick=${() => openSheet("configuration")}>Settings</button>
-					<button data-action="notifications" onClick=${() => openSheet("notifications")}>
-						Notifications
-					</button>
-					<button data-action="collaboration" onClick=${showCollaboration}>
-						Team
-					</button>`}${extensions.button}${person.role === "admin" &&
-				html`<button data-action="people" onClick=${showPeople}>People & invites</button>`}
+				<div class="pocket-header-actions">
+					<span class="pocket-status">${view?.live.busy ? "Working" : view ? "Ready" : ""}</span>${selected &&
+					html`<button data-action="conversation" onClick=${() => openSheet("conversation")}>
+							Conversation
+						</button>
+						<button data-action="settings" onClick=${() => openSheet("configuration")}>Settings</button>
+						<button data-action="notifications" onClick=${() => openSheet("notifications")}>
+							Notifications
+						</button>
+						<button data-action="collaboration" onClick=${showCollaboration}>
+							Team
+						</button>`}${extensions.button}${person.role === "admin" &&
+					html`<button data-action="people" onClick=${showPeople}>People & invites</button>`}
+				</div>
 			</header>
 			${extensions.page && extensions.surface}
 			<div
@@ -751,27 +858,49 @@ function App() {
 							)}
 						</div>`
 					: html`<div class="pocket-welcome">
-							<div class="pocket-brand">P</div>
-							<h1>Your agents, together.</h1>
-							<p>Select a conversation or start a new one.</p>
+							<div class="pocket-home-content">
+								<div class="pocket-home-heading">
+									<h1><${Icon} name="board" />Pakka</h1>
+									<span>Workspace</span>
+								</div>
+								${canDrive
+									? html`<form class="pocket-home-card" onSubmit=${createConversation}>
+											<p class="pocket-home-hint">Start with a conversation. Send work after opening it.</p>
+											<input
+												aria-label="Conversation name"
+												maxlength="80"
+												placeholder="What are you working on?"
+												value=${newName}
+												disabled=${working || Boolean(creationAttempt)}
+												onInput=${(event) => setNewName(event.currentTarget.value)}
+												required
+											/>
+											<div class="pocket-home-toolbar">
+												<span
+													><${Icon} name="conversation" />${creationSource
+														? "Inherits model & directory"
+														: "New conversation · default profile"}</span
+												><button
+													class="button primary pocket-icon-button"
+													data-home-create
+													aria-label="Start conversation"
+													disabled=${working || Boolean(creationAttempt) || !newName.trim()}
+												>
+													<${Icon} name="up" />
+												</button>
+											</div>
+										</form>`
+									: html`<section class="pocket-home-card pocket-home-readonly">
+											<p>Select an available conversation from the sidebar.</p>
+											<p class="pocket-secondary">Your current role does not create conversations.</p>
+										</section>`}
+							</div>
 						</div>`}
 				${!extensions.page && extensions.surface}
 			</div>
 			${selected &&
 			!extensions.page &&
 			html`<div class="composer-wrap pocket-composer">
-				<div class="pocket-model-bar">
-					<button
-						type="button"
-						class="pocket-model-trigger"
-						data-action="model"
-						aria-haspopup="dialog"
-						disabled=${!configuration?.canConfigure}
-						onClick=${() => openSheet("model")}
-					>
-						<span>${configuration?.current?.model ?? "Loading model…"}</span><${Icon} name="chevron" />
-					</button>
-				</div>
 				<form class="composer" onSubmit=${send}>
 					<textarea
 						ref=${composer}
@@ -783,6 +912,18 @@ function App() {
 						placeholder=${canSend ? "Message your agent…" : "Read-only commands…"}
 						onInput=${(event) => setDraft(event.currentTarget.value)}
 					/>
+					<div class="pocket-model-bar">
+						<button
+							type="button"
+							class="pocket-model-trigger"
+							data-action="model"
+							aria-haspopup="dialog"
+							disabled=${!configuration?.canConfigure}
+							onClick=${() => openSheet("model")}
+						>
+							<span>${configuration?.current?.model ?? "Loading model…"}</span><${Icon} name="chevron" />
+						</button>
+					</div>
 					${dictation.available &&
 					html`<p id="pocket-dictation-help" class="pocket-dictation-help" data-dictation-help>
 						Browser speech recognition is provided by this browser. Review the draft before sending.
@@ -815,7 +956,7 @@ function App() {
 							!view ||
 							(mode === "prompt" && view?.live.busy && !draft.trimStart().startsWith("/"))}
 						>
-							Send
+							<${Icon} name="up" /><span>Send</span>
 						</button>
 					</div>
 					<div class="pocket-composer-meta">
@@ -844,6 +985,16 @@ function App() {
 				</div>`}${retry &&
 				html`<button onClick=${() => void run(() => submit(retry))}>Retry original request</button>`}
 			</div>`}
+			${creationAttempt &&
+			html`<div class="pocket-notice pocket-create-recovery" role="status">
+				<span
+					>${creationAttempt.missing
+						? "No committed result is visible. Nothing was replayed; new creation stays blocked in this page."
+						: "New conversation result is unconfirmed. Check the original request before creating another."}</span
+				><button class="button" data-action="check-creation" disabled=${working} onClick=${checkCreation}>
+					Check original creation
+				</button>
+			</div>`}
 			${notice &&
 			html`<div class="pocket-notice" role="alert">
 				${notice}<button class="pocket-icon-button" aria-label="Dismiss notice" onClick=${() => notify("")}>
@@ -852,6 +1003,34 @@ function App() {
 			</div>`}
 		</main>
 		${extensions.overlay} ${sheet === "appearance" && html`<${Appearance} close=${() => openSheet(null)} />`}
+		${sheet === "search" &&
+		html`<${Sheet} label="Search conversations" initialFocus='input[type="search"]' close=${() => openSheet(null)}>
+			<header><h2>Search conversations</h2><button class="pocket-icon-button" aria-label="Close search" onClick=${() => openSheet(null)}><${Icon} name="close" /></button></header>
+			<div class="pocket-sheet-body pocket-search-results">
+				<input type="search" aria-label="Search conversations" placeholder="Find a conversation…" value=${searchQuery} onInput=${(event) => setSearchQuery(event.currentTarget.value)} />
+				${refs
+					.filter(
+						(ref) =>
+							(showArchived || !states[ref.conversationId]?.archived) &&
+							title(ref).toLocaleLowerCase().includes(searchQuery.toLocaleLowerCase()),
+					)
+					.map(
+						(ref) =>
+							html`<button
+								class="pocket-choice-row"
+								data-search-conversation=${ref.conversationId}
+								onClick=${() => {
+									extensions.leave();
+									select(ref);
+									openSheet(null);
+								}}
+							>
+								<${Icon} name="conversation" /><span>${title(ref)}</span>
+							</button>`,
+					)}
+				<p class="pocket-secondary">Only conversations available to your current identity are listed.</p>
+			</div>
+		</${Sheet}>`}
 		${sheet === "conversation" &&
 		selected &&
 		html`<${ConversationSettings}

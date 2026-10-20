@@ -101,7 +101,7 @@ test(
 			assert.match(String(await page.evaluate("getComputedStyle(document.body).fontFamily")), /ui-serif/);
 			await page.click("[data-action=reset-appearance]");
 			assert.equal(await page.evaluate("getComputedStyle(document.body).fontSize"), "14px");
-			assert.match(String(await page.evaluate("getComputedStyle(document.body).fontFamily")), /Pocket Mono/);
+			assert.match(String(await page.evaluate("getComputedStyle(document.body).fontFamily")), /Inter/);
 			assert.equal(await page.evaluate("document.documentElement.dataset.mode"), "dark");
 			await page.evaluate(
 				'localStorage.setItem("pakka-typography",JSON.stringify({font:"invalid",size:-100}))',
@@ -110,7 +110,7 @@ test(
 			await page.wait('document.querySelector("[data-action=appearance]")');
 			await page.wait('[...document.querySelectorAll("link[rel=stylesheet]")].every(e=>e.sheet)');
 			assert.equal(await page.evaluate("getComputedStyle(document.body).fontSize"), "14px");
-			assert.match(String(await page.evaluate("getComputedStyle(document.body).fontFamily")), /Pocket Mono/);
+			assert.match(String(await page.evaluate("getComputedStyle(document.body).fontFamily")), /Inter/);
 			assert.equal(m.f.requests.length, 0);
 			assert.equal(m.f.errors.length, 0);
 		} finally {

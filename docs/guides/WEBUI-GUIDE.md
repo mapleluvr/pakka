@@ -48,7 +48,9 @@ node apps/webui/dist/main.js --config /absolute/private/pakka.json --owner-file 
 
 ## 2. Conversation、模型与工作目录
 
-侧栏选择或新建 Conversation。输入模式按目的选择：
+侧栏选择 Conversation，或点击 **New conversation** 返回 Workspace 首页。首页输入 Conversation 名称后点向上箭头，只创建并打开会话；**不会调用模型**，工作需在进入会话后显式 Send。已选会话的模型／cwd 作为新建的继承来源；首次进入时使用 default profile。侧栏底部仍可直接创建并继承当前会话。
+
+输入模式按目的选择：
 
 - **Prompt**：启动普通模型工作。
 - **Steer**：工作进行中提交原生 steering。
@@ -67,7 +69,9 @@ Settings 提供用量和凭据；cwd 从标题路径进入。工作或队列尚�
 
 手机默认最短测试比例为宽∶高 **3∶5**，例如 360×600 或 390×650。侧栏将 Conversation 列表与工具区分别滚动，工具区区分 **WebUI** 与 **Extensions**；点击侧栏右侧暗区或按 Escape 返回会话。
 
-侧栏底部的 **Appearance** 可选择 Pocket Mono、系统无衬线或衬线字体，以及 14–24px 字号；选择即时应用并保存到当前浏览器，代码块维持等宽显示。模型选择与 Send 同行，窄屏中的辅助控件按可用空间排布。
+当前壳层使用 Devin-like 的平整侧栏、中性深浅配色与圆角输入卡片，不包括参考原型中没有后端的 Ask、PR、额度或仓库连接演示。桌面侧栏可通过右上角面板图标或 Ctrl/⌘ B 收起；手机该快捷键开关抽屉。搜索图标或 Ctrl/⌘ K 打开当前身份可见的 Conversation 搜索，归档是否参与由侧栏 Show archived 控制。
+
+侧栏底部的 **Appearance** 可选择默认 Inter、Pocket Mono、系统无衬线或衬线字体，以及 14–24px 字号；原有已保存偏好继续生效。选择即时应用并保存到当前浏览器，代码块维持等宽显示。模型按钮在输入卡片内，Input mode 与 Send 同行，窄屏中的辅助控件按可用空间排布。
 
 ## 4. 人员、服务和插件
 

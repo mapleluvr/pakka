@@ -43,7 +43,7 @@ MAS Board 必须通过右侧的通用贡献方式实现。不为 MAS 增加特�
 
 ## 4. 组件、交互和样式
 
-- 沿用被采用 pi-pocket 的 Preact/htm、主题、移动布局和基本交互；固定依赖及复制代码/字体的许可证来源。
+- 保留被采用 pi-pocket 的 Preact/htm、基础主题 tokens 与组件交互；当前壳层的中性配色、Inter、平整侧栏与圆角卡片由 `web/devin.css` 覆盖，不改写上游 `pocket.css`。参考与产品映射见 [迁移计划](../plans/DEVIN-LIKE-FRONTEND.md)，复制字体各自保留许可证。
 - 组件默认消费 DTO 和 host-owned context，不把整个应用状态注入扩展。
 - 状态分别处理 loading、empty、denied、conflict、unknown、stale/disconnected 和 terminal；不要把它们合成同一个红/绿点。
 - 显示已持久 membership 与 native live readiness 的区别；generation done 不等于业务目标或工具副作用已完成。

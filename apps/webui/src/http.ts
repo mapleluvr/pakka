@@ -191,7 +191,8 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 		?.body.toString()
 		.match(/<script type="importmap">([^<]+)<\/script>/)?.[1];
 	const mapPolicy = importMap
-		? " 'sha256-" + createHash("sha256").update(importMap).digest("base64") + "'"
+		? // HTML parsing normalizes CRLF and CR before CSP hashes the script text.
+			" 'sha256-" + createHash("sha256").update(importMap.replace(/\r\n?/g, "\n")).digest("base64") + "'"
 		: "";
 	const serverId = randomUUID(),
 		notificationWork = new Set<Promise<unknown>>(),

@@ -5,8 +5,12 @@ import { Icon } from "@pakka/webui/components";
 import { Sheet } from "./sheet.js";
 
 const html = htm.bind(h);
-const defaults = { mode: "dark", font: "mono", size: 14 };
+const defaults = { mode: "dark", font: "inter", size: 14 };
 const fonts = {
+	inter: {
+		label: "Inter",
+		family: '"Inter", system-ui, -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif',
+	},
 	mono: { label: "Pocket Mono", family: "var(--mono)" },
 	system: {
 		label: "System sans-serif",
@@ -42,6 +46,9 @@ export function applyAppearance(preferences) {
 	currentAppearance = preferences;
 	const root = document.documentElement;
 	root.dataset.mode = preferences.mode;
+	root
+		.querySelector('meta[name="theme-color"]')
+		?.setAttribute("content", preferences.mode === "light" ? "#fcfcfc" : "#141414");
 	root.style.setProperty("--pocket-font-family", fonts[preferences.font].family);
 	root.style.setProperty("--text-size", preferences.size + "px");
 }
