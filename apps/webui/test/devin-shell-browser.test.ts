@@ -117,6 +117,14 @@ test(
 				assert.equal(home.x, 22);
 				assert.equal(home.w, size.width - 44);
 				assert.equal(home.overflow, false);
+				await page.click('[data-action="commands"]');
+				await page.wait('document.querySelector("[role=dialog]")?.contains(document.activeElement)');
+				await page.key("Escape");
+				await page.wait('!document.querySelector("[role=dialog]")');
+				await page.click('[data-action="people"]');
+				await page.wait('document.querySelector("[role=dialog]")?.contains(document.activeElement)');
+				await page.key("Escape");
+				await page.wait('!document.querySelector("[role=dialog]")');
 				await writeFile(join(evidence, `home-${size.width}x${size.height}.png`), await page.screenshot());
 				await page.click('[aria-label="Toggle conversations"]');
 				await page.key("Escape");

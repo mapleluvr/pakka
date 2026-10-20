@@ -605,7 +605,7 @@ function App() {
 		class=${"layout pocket-workbench" +
 		(drawer ? " drawer-open" : "") +
 		(collapsed ? " sidebar-collapsed" : "") +
-		(!selected ? " workspace-home" : "")}
+		(!selected && !extensions.page ? " workspace-home" : "")}
 		onKeyDown=${(event) => {
 			if (drawer && event.key === "Escape" && !event.defaultPrevented) {
 				event.preventDefault();

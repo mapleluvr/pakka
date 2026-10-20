@@ -54,6 +54,11 @@ test(
 			await page.click('[aria-label="Toggle conversations"]');
 			await page.click("[data-interface=late-home]");
 			await page.wait('document.querySelector("[data-instance]")');
+			assert.equal(
+				await page.evaluate('Boolean(document.querySelector(".workspace-home"))'),
+				false,
+				"A full-page extension opened from home must restore the regular accessible header",
+			);
 			await page.wait('!document.querySelector(".drawer-open")');
 			const previous = await page.evaluate('document.querySelector("[data-instance]").textContent');
 			await page.click("[data-late]");

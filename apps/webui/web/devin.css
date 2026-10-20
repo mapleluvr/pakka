@@ -542,9 +542,13 @@ body {
 		z-index: 1;
 	}
 	.workspace-home .pocket-heading {
-		visibility: hidden;
+		display: none;
 	}
 	.workspace-home .pocket-header-actions {
+		flex: 1;
+		justify-content: flex-end;
+	}
+	.workspace-home .pocket-status {
 		display: none;
 	}
 	.pocket-home-content {
