@@ -153,7 +153,7 @@ body {
 	gap: 2px;
 }
 .pocket-nav[aria-label="Conversations"] {
-	min-height: 88px;
+	min-height: 120px;
 }
 .pocket-nav button {
 	min-height: 44px;
