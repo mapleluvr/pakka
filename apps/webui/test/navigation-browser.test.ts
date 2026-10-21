@@ -4,6 +4,13 @@ import { join } from "node:path";
 import { runtimeFixture } from "../../../packages/agent/test/runtime-fixture.ts";
 import { startPocket } from "../src/bootstrap.ts";
 import { ownedBrowser } from "./browser.ts";
+import {
+	conversationAction,
+	organizationAction,
+	openConversationMenu,
+	findInConversation,
+	openAppearance,
+} from "./frontend-controls.ts";
 
 test(
 	"Pocket navigation browser: rename/archive/search/restore, reviewed resend, real fork and keyboard history have actual subsequent effects",
@@ -26,27 +33,37 @@ test(
 			await page.click("[data-action=signin]");
 			await page.wait('document.querySelector("[data-conversation]")');
 			await page.click("[data-conversation]");
-			await page.wait('document.querySelector("[data-action=conversation]")');
-			await page.click("[data-action=conversation]");
+			await openConversationMenu(page);
+			await conversationAction(page, "conversation");
 			await page.wait('document.querySelector("input[name=conversationName]")');
 			await page.type("input[name=conversationName]", "Renamed through UI", { replace: true });
 			await page.click("[data-action=rename]");
 			await page.wait('document.querySelector(".pocket-title").textContent.includes("Renamed through UI")');
-			await page.click("[data-action=conversation]");
+			await conversationAction(page, "conversation");
 			await page.click("[data-action=archive]");
 			await page.wait('!document.querySelector("[data-conversation]")');
 			assert.match(String(await page.evaluate("document.body.innerText")), /Archive.*not.*cancel/i);
+			await page.click("[data-action=search-conversations]");
+			await page.wait('document.querySelector("[data-action=show-archived]")');
 			await page.click("[data-action=show-archived]");
-			await page.wait('document.querySelector("[data-conversation]")');
-			await page.type("[aria-label='Find conversations']", "does-not-exist");
-			await page.wait('!document.querySelector("[data-conversation]")');
-			await page.type("[aria-label='Find conversations']", "Renamed", { replace: true });
-			await page.wait('document.querySelector("[data-conversation]")');
-			await page.click("[data-conversation]");
-			await page.click("[data-action=conversation]");
+			assert.equal(
+				await page.evaluate('document.querySelector("[data-action=show-archived]").checked'),
+				true,
+				"Archived sessions checkbox is selected by the real pointer",
+			);
+			await page.wait('document.querySelector("[data-search-conversation]")');
+			await page.type('input[aria-label="Search conversations"]', "does-not-exist");
+			await page.wait('!document.querySelector("[data-search-conversation]")');
+			await page.type('input[aria-label="Search conversations"]', "Renamed", { replace: true });
+			await page.wait('document.querySelector("[data-search-conversation]")');
+			await page.click("[data-search-conversation]");
+			await conversationAction(page, "conversation");
 			await page.click("[data-action=restore]");
 			await page.wait('!document.querySelector("[role=dialog]")');
+			await page.click("[data-action=search-conversations]");
+			await page.wait('document.querySelector("[data-action=show-archived]")');
 			await page.click("[data-action=show-archived]");
+			await page.key("Escape");
 			await page.type("textarea[name=message]", "REVIEWED-EXPLICIT-INPUT");
 			await page.click("[data-action=send]");
 			await page.wait('document.querySelectorAll("[data-role=assistant]").length===1');
@@ -60,10 +77,10 @@ test(
 			await page.type("textarea[name=message]", "SECOND-REVIEWED-INPUT", { replace: true });
 			await page.click("[data-action=send]");
 			await page.wait('document.querySelectorAll("[data-role=assistant]").length===2');
-			await page.type("[aria-label='Find loaded history']", "REVIEWED-EXPLICIT");
+			await findInConversation(page, "REVIEWED-EXPLICIT");
 			await page.wait('document.querySelectorAll("[data-entry]").length===1');
-			await page.type("[aria-label='Find loaded history']", "", { replace: true });
-			await page.click("[data-action=conversation]");
+			await findInConversation(page, "");
+			await conversationAction(page, "conversation");
 			await page.type("input[name=forkName]", "Real fork");
 			await page.click("[data-action=fork]");
 			await page.wait('document.querySelector(".pocket-title").textContent.includes("Real fork")');
@@ -73,20 +90,24 @@ test(
 			await page.wait('document.querySelector(".pocket-receipt")?.textContent.includes("done")');
 			assert.equal(m.f.requests.length, 3);
 			assert.match(JSON.stringify(m.f.requests[2]), /REVIEWED-EXPLICIT-INPUT|SECOND-REVIEWED-INPUT/);
-			await page.click("[data-action=people]");
+			await organizationAction(page, "people");
 			await page.wait('document.querySelector("[role=dialog]")?.contains(document.activeElement)');
 			await page.key("Escape");
 			await page.wait('!document.querySelector("[role=dialog]")');
 			assert.equal(
-				await page.evaluate('document.activeElement===document.querySelector("[data-action=people]")'),
+				await page.evaluate('document.activeElement===document.querySelector(".org-trigger")'),
 				true,
 			);
-			await page.click("[data-action=people]");
+			await organizationAction(page, "people");
 			await page.wait('document.querySelector("[role=dialog]")?.contains(document.activeElement)');
 			await page.evaluate("history.back()");
 			await page.wait('!document.querySelector("[role=dialog]")');
 			assert.equal(m.f.requests.length, 3);
-			await page.click(".pocket-side-foot button");
+			await openAppearance(page);
+			await page.evaluate(
+				`(()=>{const theme=document.querySelector("[aria-label=Theme]");theme.value="light";theme.dispatchEvent(new Event("change",{bubbles:true}));})()`,
+			);
+			await page.click('[aria-label="Close appearance"]');
 			const appearance = await page.evaluate("document.documentElement.dataset.mode");
 			await page.reload();
 			await page.wait('document.querySelectorAll("[data-conversation]").length===2');

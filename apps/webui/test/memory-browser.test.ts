@@ -7,6 +7,7 @@ import { createPocketMemory } from "../../server/src/pocket-memory.ts";
 import { startPocket } from "../src/bootstrap.ts";
 import { workspaceMemoryExtensionRoot, workspaceMemoryService } from "../src/workflows.ts";
 import { ownedBrowser } from "./browser.ts";
+import { toggleConversations } from "./frontend-controls.ts";
 
 test(
 	"Pocket memory browser: real sender proposal, owner approval, preserved conflict draft, current provider context and mobile read-only view",
@@ -63,7 +64,7 @@ test(
 				await page.wait('document.querySelector("[data-action=signin]")');
 				await page.click("[data-action=signin]");
 				await page.wait('document.querySelector("[data-conversation]")');
-				if (page === viewer) await page.click('[aria-label="Toggle conversations"]');
+				if (page === viewer) await toggleConversations(page);
 				await page.click("[data-conversation]");
 				await page.wait('document.querySelector("[data-interface=workspace-memory-memory]")');
 			}
@@ -77,7 +78,7 @@ test(
 			await sender.wait('document.querySelector("[data-memory-pending]")');
 			await owner.wait('document.querySelector("[data-memory-approve]")?.disabled===false');
 			assert.equal(m.f.requests.length, 0);
-			await viewer.click('[aria-label="Toggle conversations"]');
+			await toggleConversations(viewer);
 			await viewer.click("[data-interface=workspace-memory-memory]");
 			await viewer.wait('document.querySelector("[data-workspace-memory]")');
 			assert.equal(

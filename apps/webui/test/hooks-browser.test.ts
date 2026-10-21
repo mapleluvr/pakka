@@ -7,6 +7,7 @@ import { runtimeFixture } from "../../../packages/agent/test/runtime-fixture.ts"
 import { startPocket } from "../src/bootstrap.ts";
 import { workspaceHooksExtensionRoot, workspaceHooksService } from "../src/workflows.ts";
 import { ownedBrowser } from "./browser.ts";
+import { toggleConversations } from "./frontend-controls.ts";
 
 test(
 	"Pocket hooks browser: human setup, signed real HTTP, key rotation, private mobile viewer and removal use ordinary extension slots",
@@ -50,10 +51,10 @@ test(
 				await page.wait('document.querySelector("[data-action=signin]")');
 				await page.click("[data-action=signin]");
 				await page.wait('document.querySelector("[data-conversation]")');
-				if (page === viewer) await page.click('[aria-label="Toggle conversations"]');
+				if (page === viewer) await toggleConversations(page);
 				await page.click("[data-conversation]");
 				await page.wait('document.querySelector("[data-interface=workspace-hooks-hooks]")');
-				if (page === viewer) await page.click('[aria-label="Toggle conversations"]');
+				if (page === viewer) await toggleConversations(page);
 				await page.click("[data-interface=workspace-hooks-hooks]");
 				await page.wait('document.querySelector("[data-workspace-hooks]")');
 			}

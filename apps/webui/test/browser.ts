@@ -311,11 +311,24 @@ export async function ownedBrowser(dir: string, options: { readonly push?: boole
 							id,
 						);
 				},
-				click: async (selector: string, options: { readonly beforePress?: () => Promise<void> } = {}) => {
+				click: async (
+					selector: string,
+					options: {
+						readonly beforePress?: () => Promise<void>;
+						readonly offset?: { readonly x: number; readonly y: number };
+					} = {},
+				) => {
+					const offset = options.offset ?? { x: 0.5, y: 0.5 };
+					if ([offset.x, offset.y].some((value) => !Number.isFinite(value) || value < 0 || value > 1))
+						throw Error("Invalid pointer offset");
 					const point = await evaluate(
 						"(()=>{const e=document.querySelector(" +
 							JSON.stringify(selector) +
-							");if(!e||e.disabled)return null;e.scrollIntoView({block:'center',inline:'nearest',behavior:'instant'});const r=e.getBoundingClientRect(),x=r.x+r.width/2,y=r.y+r.height/2,p=document.elementFromPoint(x,y);return r.width&&r.height&&p&&e.contains(p)?{x,y}:null})()",
+							");if(!e||e.disabled)return null;e.scrollIntoView({block:'center',inline:'nearest',behavior:'instant'});const r=e.getBoundingClientRect(),x=r.x+r.width*" +
+							offset.x +
+							",y=r.y+r.height*" +
+							offset.y +
+							",p=document.elementFromPoint(x,y);return r.width&&r.height&&p&&e.contains(p)?{x,y}:null})()",
 					);
 					if (
 						!point ||

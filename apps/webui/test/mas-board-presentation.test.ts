@@ -7,6 +7,7 @@ import { runtimeFixture } from "../../../packages/agent/test/runtime-fixture.ts"
 import { masWorkbenchService } from "../../../packages/mas-devpack/src/backend.ts";
 import { startPocket } from "../src/bootstrap.ts";
 import { ownedBrowser } from "./browser.ts";
+import { toggleConversations, settleFrontend } from "./frontend-controls.ts";
 
 type Browser = Awaited<ReturnType<typeof ownedBrowser>>;
 type Page = Awaited<ReturnType<Browser["page"]>>;
@@ -110,6 +111,7 @@ for (const viewport of [
 				},
 			);
 			await page.type("textarea[name=masMessage]", "UNSENT-CONTROLS-DRAFT");
+			await page.click("[data-member-management]");
 			await page.evaluate('document.querySelector("[data-mas-retire]").scrollIntoView({block:"end"})');
 			assert.deepEqual(
 				await page.evaluate(
@@ -143,7 +145,9 @@ for (const viewport of [
 			await page.wait(
 				'!document.querySelector("textarea[name=masMessage]") && document.activeElement?.getAttribute("data-agent-controls") === "coordinator"',
 			);
-			await page.click('[aria-label="Close MAS team"]');
+			if (await page.evaluate("innerWidth<768")) await toggleConversations(page);
+			await page.click('[data-conversation][aria-current="true"]');
+			await settleFrontend(page);
 			await page.wait('document.querySelector("textarea[name=message]")');
 			assert.equal(
 				await page.evaluate('document.querySelector("textarea[name=message]").value'),
@@ -187,6 +191,7 @@ test(
 			true,
 			"Retired Agent selection needs an explicit hide-from-Board action",
 		);
+		await page.click("[data-agent-details]");
 		await page.click("[data-hide-agent=retired-child]");
 		await page.wait('!document.querySelector("[data-member=retired-child]")');
 		assert.equal(
@@ -217,7 +222,7 @@ test(
 		);
 		await page.click(".graph-history-actions button:last-child");
 		await page.wait(
-			'document.querySelector(".transcript")?.textContent.includes("HIDDEN-AGENT-HISTORY-RETAINED")',
+			'document.querySelector(".conversation-scroll")?.textContent.includes("HIDDEN-AGENT-HISTORY-RETAINED")',
 		);
 		await page.click("[data-return-extension]");
 		await page.wait('document.querySelector("[data-board-tab=relationships]")');
@@ -234,6 +239,7 @@ test(
 		await page.evaluate("document.documentElement.style.setProperty('--text-size','24px')");
 		await readyStyles(page);
 		await page.click("[data-member=retired-child]");
+		await page.click("[data-agent-details]");
 		await page.click("[data-hide-agent=retired-child]");
 		await page.wait('!document.querySelector("[data-member=retired-child]")');
 		await page.click("[data-board-options]");

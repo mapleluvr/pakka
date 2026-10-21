@@ -5,6 +5,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { runtimeFixture } from "../../../packages/agent/test/runtime-fixture.ts";
 import { startPocket } from "../src/bootstrap.ts";
 import { ownedBrowser } from "./browser.ts";
+import { conversationAction, organizationAction, toggleConversations } from "./frontend-controls.ts";
 
 test(
 	"Pocket private settings browser: explicit replacement and clear affect actual provider auth without round-tripping or browser persistence",
@@ -28,7 +29,7 @@ test(
 			await owner.click("[data-action=signin]");
 			await owner.wait('document.querySelector("[data-conversation]")');
 			await owner.click("[data-conversation]");
-			await owner.click("[data-action=settings]");
+			await conversationAction(owner, "settings");
 			await owner.wait('document.querySelector("[data-credential-input]")');
 			assert.equal(await owner.evaluate('document.querySelector("[data-credential-input]").value'), "");
 			await owner.type("[data-credential-input]", replacement);
@@ -48,7 +49,7 @@ test(
 			await owner.click("[data-action=send]");
 			await owner.wait('document.querySelector("main").innerText.includes("LOCAL-ANSWER")');
 			assert.equal(m.f.authorization[0], "Bearer " + replacement);
-			await owner.click("[data-action=settings]");
+			await conversationAction(owner, "settings");
 			await owner.wait('document.querySelector("[data-credential-clear]")?.disabled===false');
 			await owner.click("[data-credential-clear]");
 			await owner.wait(
@@ -61,7 +62,7 @@ test(
 			await owner.wait('document.querySelector(".pocket-receipt")?.innerText.includes("unanswered")');
 			assert.equal(m.f.requests.length, 1);
 			assert.equal(app.runtime.view().budget.primaryAttempts, 2);
-			await owner.click("[data-action=people]");
+			await organizationAction(owner, "people");
 			await owner.wait('document.querySelector("[data-action=invite]")');
 			await owner.click("[data-action=invite]");
 			await owner.wait('document.querySelector("input[name=inviteLink]")?.value.includes("#invite=")');
@@ -73,9 +74,9 @@ test(
 			await viewer.type("input[name=person]", "Viewer");
 			await viewer.click("[data-action=signin]");
 			await viewer.wait('document.querySelector("[data-conversation]")');
-			await viewer.click('[aria-label="Toggle conversations"]');
+			await toggleConversations(viewer);
 			await viewer.click("[data-conversation]");
-			await viewer.click("[data-action=settings]");
+			await conversationAction(viewer, "settings");
 			await viewer.wait('document.querySelector("[data-cost]")');
 			assert.equal(
 				await viewer.evaluate('Boolean(document.querySelector("[data-credential-input]"))'),
@@ -86,7 +87,7 @@ test(
 				false,
 			);
 			await owner.click('[aria-label="Close people"]');
-			await owner.click("[data-action=settings]");
+			await conversationAction(owner, "settings");
 			await owner.wait('document.querySelector("[data-credential-status]")?.dataset.configured==="false"');
 			for (const page of [owner, viewer])
 				await page.wait(
@@ -132,7 +133,7 @@ test(
 			await page.click("[data-action=signin]");
 			await page.wait('document.querySelector("[data-conversation]")');
 			await page.click("[data-conversation]");
-			await page.click("[data-action=settings]");
+			await conversationAction(page, "settings");
 			await page.wait('document.querySelector("[data-credential-input]")?.disabled===false');
 			await page.evaluate(
 				`(()=>{const original=globalThis.fetch;globalThis.__credentialWrites=0;globalThis.__restorePrivateFetch=()=>{globalThis.fetch=original;};globalThis.fetch=async(...args)=>{if(typeof args[1]?.body==='string'&&JSON.parse(args[1].body).command?.op==='credential.replace'){globalThis.__credentialWrites++;const response=await original(...args);await response.arrayBuffer();throw Error('TEST LOST COMMITTED PRIVATE RESPONSE');}return original(...args);};})()`,
@@ -157,7 +158,7 @@ test(
 			assert.equal(await page.evaluate("globalThis.__credentialWrites"), 1);
 			assert.equal(app.runtime.view().budget.primaryAttempts, 0);
 			await page.click('[aria-label="Close settings"]');
-			await page.click("[data-action=settings]");
+			await conversationAction(page, "settings");
 			await page.wait('document.querySelector("[data-credential-input]")?.disabled===false');
 			assert.equal(await page.evaluate('document.querySelector("[data-credential-input]").value'), "");
 			await page.click('[aria-label="Close settings"]');

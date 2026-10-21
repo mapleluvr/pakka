@@ -1,9 +1,8 @@
 import { h } from "preact";
 import { useEffect, useState } from "preact/hooks";
 import htm from "htm";
-import { Icon } from "@pakka/webui/components";
 import { PrivateCredentials } from "./credentials.js";
-import { Sheet } from "./sheet.js";
+import { SettingsPage } from "./settings-page.js";
 const html = htm.bind(h);
 
 /** Settings contains usage and private credentials; model/cwd controls live in the conversation. */
@@ -23,14 +22,14 @@ export function Configuration({ target, client, close, error }) {
 			live = false;
 		};
 	}, [target.key, target.incarnation]);
-	return html`<${Sheet} label="Conversation settings" close=${close}><header><h2>Conversation settings</h2><button type="button" class="pocket-icon-button" aria-label="Close settings" onClick=${close}><${Icon} name="close"/></button></header><div class="pocket-sheet-body pocket-configuration">
+	return html`<${SettingsPage} title="Conversation settings" category="Workspace" closeLabel="Close settings" close=${close} description="Usage, session limits and your private credentials. Model and directory choices stay in the conversation."><div class="pocket-configuration settings-native">
  ${
 		!value
 			? html`<p role="status">Loading settings…</p>`
 			: html`<p data-settings-model>
 						${value.current?.model ?? value.choices.find((row) => row.id === value.ref.profile)?.model}
 					</p>
-					<section aria-label="Conversation usage">
+					<section class="settings-card settings-data" aria-label="Conversation usage">
 						<h3>Conversation usage</h3>
 						<dl>
 							<div>
@@ -58,7 +57,11 @@ export function Configuration({ target, client, close, error }) {
 						</dl>
 					</section>
 					${value.session &&
-					html`<section data-session-budget aria-label="Session attempt limits">
+					html`<section
+						class="settings-card settings-data"
+						data-session-budget
+						aria-label="Session attempt limits"
+					>
 						<h3>Session attempt limits</h3>
 						<dl>
 							<div>
@@ -82,5 +85,5 @@ export function Configuration({ target, client, close, error }) {
 					</section>`}
 					${value.session && html`<${PrivateCredentials} client=${client} error=${error} />`}`
  }
- </div></${Sheet}>`;
+ </div></${SettingsPage}>`;
 }

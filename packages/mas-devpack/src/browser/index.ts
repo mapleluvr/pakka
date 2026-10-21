@@ -1,6 +1,6 @@
 import { h, type TargetedSubmitEvent, type TargetedInputEvent, type TargetedEvent } from "preact";
-import { useEffect, useState } from "preact/hooks";
-import { Button, Field, Icon, Notice, Stack } from "@pakka/webui/components";
+import { useEffect, useLayoutEffect, useRef, useState } from "preact/hooks";
+import { Button, Icon, Notice, Stack } from "@pakka/webui/components";
 import type { WebInterfaceProps } from "@pakka/webui/ui";
 import { readMember, readReceipt, readInbox, type WorkbenchMember, type WorkbenchReceipt } from "./client.ts";
 import type { ExtensionOperation } from "@pakka/webui/extension";
@@ -21,15 +21,85 @@ function savedPending(key: string): Pending | null {
 		return null;
 	}
 }
+const inputModes = [
+	["prompt", "Prompt"],
+	["steer", "Steer"],
+	["followUp", "Follow up"],
+] as const;
+function MemberModeMenu({
+	trigger,
+	mode,
+	select,
+	close,
+}: {
+	trigger: HTMLButtonElement;
+	mode: string;
+	select: (value: string) => void;
+	close: () => void;
+}) {
+	const root = useRef<HTMLDivElement>(null);
+	useLayoutEffect(() => {
+		root.current?.querySelector<HTMLButtonElement>("button")?.focus();
+		const outside = (event: PointerEvent) => {
+			if (!root.current?.contains(event.target as Node) && !trigger.contains(event.target as Node)) close();
+		};
+		const escape = (event: KeyboardEvent) => {
+			if (event.key === "Escape") {
+				event.preventDefault();
+				event.stopPropagation();
+				close();
+			}
+		};
+		window.addEventListener("pointerdown", outside, true);
+		window.addEventListener("keydown", escape, true);
+		window.addEventListener("resize", close);
+		return () => {
+			window.removeEventListener("pointerdown", outside, true);
+			window.removeEventListener("keydown", escape, true);
+			window.removeEventListener("resize", close);
+			if (trigger.isConnected) trigger.focus();
+		};
+	}, [trigger]);
+	const rect = trigger.getBoundingClientRect();
+	return h(
+		"div",
+		{
+			ref: root,
+			class: "member-mode-options",
+			role: "menu",
+			style: {
+				position: "fixed",
+				bottom: "auto",
+				left: `${Math.max(8, Math.min(rect.right - 180, innerWidth - 188))}px`,
+				top: `${Math.max(8, rect.top - 118)}px`,
+			},
+		},
+		inputModes.map(([value, label]) =>
+			h(
+				"button",
+				{
+					type: "button",
+					role: "menuitemradio",
+					"aria-checked": mode === value,
+					"data-mas-mode": value,
+					onClick: () => {
+						select(value);
+						close();
+					},
+				},
+				label,
+			),
+		),
+	);
+}
 export function MemberPanel({ context }: WebInterfaceProps) {
 	const pendingKey = `pakka.mas.pending:${JSON.stringify([context.extension, context.person.id, context.target])}`;
 	const [pending, setPending] = useState<Pending | null>(() => savedPending(pendingKey));
 	const remember = (value: Pending | null) => {
 		setPending(value);
 		try {
-			value
-				? sessionStorage.setItem(pendingKey, JSON.stringify(value))
-				: sessionStorage.removeItem(pendingKey);
+			if (value) sessionStorage.setItem(pendingKey, JSON.stringify(value));
+			else sessionStorage.removeItem(pendingKey);
 		} catch {
 			/* The current panel still retains the original identity. */
 		}
@@ -37,6 +107,8 @@ export function MemberPanel({ context }: WebInterfaceProps) {
 	const [member, setMember] = useState<WorkbenchMember | null>(null),
 		[text, setText] = useState(""),
 		[mode, setMode] = useState("prompt"),
+		[retiring, setRetiring] = useState(false),
+		[modeAnchor, setModeAnchor] = useState<HTMLButtonElement | null>(null),
 		[receipt, setReceipt] = useState<WorkbenchReceipt | null>(null),
 		[inbox, setInbox] = useState<readonly WorkbenchReceipt[]>([]),
 		[busy, setBusy] = useState(false),
@@ -153,53 +225,87 @@ export function MemberPanel({ context }: WebInterfaceProps) {
 						h(
 							"form",
 							{
+								class: "composer-card compact member-composer",
 								onSubmit: (event: TargetedSubmitEvent<HTMLFormElement>) => {
 									event.preventDefault();
 									void perform(mode === "prompt" ? "send" : "steer");
 								},
 							},
 							h(
-								Field,
-								{ label: "Message" },
-								h("textarea", {
-									name: "masMessage",
-									value: text,
-									required: true,
-									maxLength: 16384,
-									onInput: (event: TargetedInputEvent<HTMLTextAreaElement>) =>
-										setText(event.currentTarget.value),
-								}),
-							),
-							member.permissions.includes("steer") &&
+								"div",
+								{ class: "composer-surface" },
 								h(
-									Field,
-									{ label: "Input mode" },
+									"div",
+									{ class: "composer-body" },
 									h(
-										"select",
-										{
-											value: mode,
-											onChange: (event: TargetedEvent<HTMLSelectElement, Event>) =>
-												setMode(event.currentTarget.value),
-										},
-										h("option", { value: "prompt" }, "Prompt"),
-										h("option", { value: "steer" }, "Steer current work"),
-										h("option", { value: "followUp" }, "Queue follow-up"),
+										"div",
+										{ class: "composer-editor" },
+										h("textarea", {
+											name: "masMessage",
+											value: text,
+											required: true,
+											maxLength: 16384,
+											rows: 2,
+											"aria-label": `Message to ${member.key}`,
+											placeholder: "Reply to this Agent…",
+											onInput: (event: TargetedInputEvent<HTMLTextAreaElement>) =>
+												setText(event.currentTarget.value),
+										}),
+									),
+									h(
+										"div",
+										{ class: "composer-toolbar" },
+										h(
+											"span",
+											{ class: "native-mode-label" },
+											mode === "prompt" ? "Prompt" : mode === "steer" ? "Steer" : "Follow up",
+										),
+										h(
+											"div",
+											{ class: "send-group", "data-empty": !text.trim() || busy || Boolean(pending) },
+
+											h(
+												"button",
+												{
+													class: "send-btn",
+													type: "submit",
+													"aria-label": "Send",
+													"data-mas-send": true,
+													disabled:
+														busy ||
+														Boolean(pending) ||
+														!text.trim() ||
+														["ended", "retired", "failed", "unknown"].includes(member.phase),
+												},
+												h(Icon, { name: "up" }),
+											),
+
+											member.permissions.includes("steer") &&
+												h(
+													"button",
+													{
+														class: "send-caret member-mode-trigger",
+														type: "button",
+														"aria-label": "Member input mode",
+														"aria-haspopup": "menu",
+														"aria-expanded": Boolean(modeAnchor),
+														onClick: (event: TargetedEvent<HTMLButtonElement, MouseEvent>) =>
+															setModeAnchor(modeAnchor ? null : event.currentTarget),
+													},
+													h(Icon, { name: "chevron" }),
+												),
+										),
 									),
 								),
-							h(
-								Button,
-								{
-									type: "submit",
-									disabled:
-										busy ||
-										!!pending ||
-										!text.trim() ||
-										["ended", "retired", "failed", "unknown"].includes(member.phase),
-									"data-mas-send": true,
-								},
-								"Send",
 							),
 						),
+					modeAnchor &&
+						h(MemberModeMenu, {
+							trigger: modeAnchor,
+							mode,
+							select: setMode,
+							close: () => setModeAnchor(null),
+						}),
 					canReply &&
 						inbox.length > 0 &&
 						h(
@@ -218,7 +324,8 @@ export function MemberPanel({ context }: WebInterfaceProps) {
 											Button,
 											{
 												"data-mas-reply": incoming.id,
-												disabled: busy || !!pending || !text.trim(),
+												disabled: busy || Boolean(pending) || !text.trim(),
+
 												onClick: () => {
 													void perform("reply", incoming.id);
 												},
@@ -250,30 +357,56 @@ export function MemberPanel({ context }: WebInterfaceProps) {
 					member.reason && h(Notice, null, member.reason),
 					member.permissions.includes("manage") &&
 						h(
-							"div",
-							{ class: "mas-controls" },
+							"details",
+							{ class: "member-management" },
+							h("summary", { "data-member-management": true }, "Management"),
 							h(
-								Button,
-								{
-									"data-mas-abort": true,
-									disabled: busy || !!pending || member.phase === "retired",
-									onClick: () => {
-										void perform("abort");
+								"div",
+								{ class: "mas-controls" },
+								h(
+									Button,
+									{
+										"data-mas-abort": true,
+										disabled: busy || Boolean(pending) || member.phase === "retired",
+										onClick: () => void perform("abort"),
 									},
-								},
-								"Stop work",
-							),
-							h(
-								Button,
-								{
-									"data-mas-retire": true,
-									disabled: busy || !!pending || member.phase === "retired",
-									onClick: () => {
-										void perform("retire");
+									"Stop work",
+								),
+
+								h(
+									Button,
+									{
+										"data-mas-retire": true,
+										disabled: busy || Boolean(pending) || member.phase === "retired",
+										onClick: () => setRetiring(true),
 									},
-								},
-								"Retire member",
+									"Retire member…",
+								),
 							),
+							retiring &&
+								h(
+									"section",
+									{ role: "group", "aria-label": "Confirm retirement", class: "member-retirement" },
+									h(
+										"p",
+										null,
+										`Retire ${member.key}? This changes membership; already admitted work may still need receipt verification.`,
+									),
+									h(
+										Button,
+										{
+											"data-mas-confirm-retire": true,
+											disabled: busy || Boolean(pending),
+											onClick: () => {
+												setRetiring(false);
+												void perform("retire");
+											},
+										},
+										"Confirm retirement",
+									),
+
+									h(Button, { "data-mas-cancel-retire": true, onClick: () => setRetiring(false) }, "Cancel"),
+								),
 						),
 				),
 	);

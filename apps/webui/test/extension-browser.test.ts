@@ -5,6 +5,7 @@ import { join, resolve } from "node:path";
 import { runtimeFixture } from "../../../packages/agent/test/runtime-fixture.ts";
 import { startPocket } from "../src/bootstrap.ts";
 import { ownedBrowser } from "./browser.ts";
+import { newConversation } from "./frontend-controls.ts";
 
 // Removing generic slots/command dispatch or accidentally prompting on slash must fail this real-browser consumer.
 test(
@@ -60,8 +61,7 @@ test(
 			await page.wait(
 				'document.querySelector("[role=alert]")?.textContent.includes("PRIVATE-PREFERENCE-CANARY")',
 			);
-			await page.type('input[aria-label="New conversation name"]', "Commands work");
-			await page.click(".pocket-new button");
+			await newConversation(page, "Commands work");
 			await page.wait(
 				'document.querySelector("textarea[name=message]") && document.querySelector("[data-action=send]")?.disabled === false',
 			);
@@ -83,9 +83,7 @@ test(
 			);
 			await page.type("textarea[name=message]", '/preferences-card {"text":"DISPLAY-CARD-CANARY"}');
 			await page.click("[data-action=send]");
-			await page.wait(
-				'document.querySelector(".pocket-display")?.textContent.includes("DISPLAY-CARD-CANARY")',
-			);
+			await page.wait('document.querySelector(".tool-card")?.textContent.includes("DISPLAY-CARD-CANARY")');
 			assert.equal(m.f.requests.length, 0);
 			await page.type("textarea[name=message]", "ORDINARY-MODEL-INPUT");
 			await page.click("[data-action=send]");

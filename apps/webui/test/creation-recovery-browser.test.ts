@@ -48,7 +48,7 @@ for (const lost of ["before-send", "after-commit"]) {
 					assert.equal(await page.evaluate('document.querySelectorAll("[data-conversation]").length'), 2);
 				} else {
 					await page.wait(
-						'document.querySelector(".pocket-create-recovery")?.textContent.includes("Nothing was replayed")',
+						'document.querySelector(".creation-recovery")?.textContent.includes("Nothing was replayed")',
 					);
 					assert.equal(await page.evaluate('document.querySelector("[data-home-create]").disabled'), true);
 					assert.equal(await page.evaluate('document.querySelectorAll("[data-conversation]").length'), 1);

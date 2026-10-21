@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { runtimeFixture } from "../../../packages/agent/test/runtime-fixture.ts";
 import { startPocket } from "../src/bootstrap.ts";
 import { ownedBrowser } from "./browser.ts";
+import { conversationAction, organizationAction } from "./frontend-controls.ts";
 
 test(
 	"Pocket notification links select visible conversation history in an already open document without replaying input",
@@ -44,7 +45,7 @@ test(
 			);
 			await page.click('[data-conversation="' + other.conversationId + '"]');
 			await page.wait('document.querySelector(".pocket-title")?.textContent==="Other conversation"');
-			await page.click("[data-action=settings]");
+			await conversationAction(page, "settings");
 			await page.wait('document.querySelector("[role=dialog]")');
 			await page.evaluate('globalThis.__notificationDocument="original-document"');
 			await page.navigate(app.http.origin + "/#conversation=" + target.conversationId);
@@ -66,7 +67,7 @@ test(
 			);
 			assert.equal(m.f.requests.length, 1);
 
-			await page.click("[data-action=logout]");
+			await organizationAction(page, "logout");
 			await page.wait('document.querySelector("[data-action=signin]")');
 			await page.navigate(app.http.origin + "/#conversation=" + target.conversationId);
 			await page.wait('location.hash===""');

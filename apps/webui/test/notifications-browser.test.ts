@@ -7,6 +7,12 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { runtimeFixture } from "../../../packages/agent/test/runtime-fixture.ts";
 import { startPocket } from "../src/bootstrap.ts";
 import { ownedBrowser } from "./browser.ts";
+import {
+	conversationAction,
+	organizationAction,
+	toggleConversations,
+	openConversationMenu,
+} from "./frontend-controls.ts";
 
 test(
 	"Pocket notification worker: real native display resolves only current cookie/device/resource metadata and closes after logout",
@@ -54,9 +60,9 @@ test(
 			await page.click("[data-action=signin]");
 			await page.wait('document.querySelector("[data-conversation]")');
 			await page.click("[data-conversation]");
-			await page.wait('document.querySelector("[data-action=notifications]")');
+			await openConversationMenu(page);
 			await page.allowNotifications();
-			await page.click("[data-action=notifications]");
+			await conversationAction(page, "notifications");
 			await page.wait('document.querySelector("[data-notification-test]")?.disabled===false');
 			await page.click("[data-notification-test]");
 			await page.waitNotification("pakka-device-test");
@@ -121,9 +127,9 @@ test(
 			await viewer.type("input[name=person]", "Mobile viewer");
 			await viewer.click("[data-action=signin]");
 			await viewer.wait('document.querySelector("[data-conversation]")');
-			await viewer.click('[aria-label="Toggle conversations"]');
+			await toggleConversations(viewer);
 			await viewer.click("[data-conversation]");
-			await viewer.click("[data-action=notifications]");
+			await conversationAction(viewer, "notifications");
 			await viewer.wait('document.querySelector("[data-notification-kind=done]")');
 			await viewer.click("[data-notification-kind=done]");
 			await viewer.wait(
@@ -136,7 +142,7 @@ test(
 				true,
 			);
 			assert.equal(await viewer.evaluate("document.documentElement.scrollWidth>innerWidth"), false);
-			await page.click("[data-action=notifications]");
+			await conversationAction(page, "notifications");
 			await page.wait('document.querySelector("[data-notification-kind=done]")');
 			for (const current of [page, viewer])
 				await current.wait(
@@ -148,7 +154,7 @@ test(
 			await writeFile(join(output, "mobile.png"), await viewer.screenshot());
 			t.diagnostic(output);
 			await page.click('[aria-label="Close notifications"]');
-			await page.click("[data-action=logout]");
+			await organizationAction(page, "logout");
 			await page.wait('document.querySelector("[data-action=signin]")');
 			await page.wait(
 				"(async()=>{const registration=await navigator.serviceWorker.ready;return (await registration.getNotifications()).length===0;})()",

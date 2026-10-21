@@ -1,5 +1,7 @@
 # Devin-like 前端迁移
 
+> **R1 产品映射已被否定。** 本轮做成了旧 WebUI 换皮，不符合用户要求；以下保留为历史记录。当前实施以 [R2 前端接入与 MAS 交互设计](DEVIN-FRONTEND-ADOPTION-R2.md)为准，不能继续用本页的旧布局取舍指导前端。
+
 本轮从 `origin/main@df76ea4` 开始，分支 `feat/devin-like-frontend`，独立 worktree `pakka-devin-ui`。用户要求确认参考仓库的复刻结果并迁移真实前端，不是替换为静态演示。
 
 ## 参考核对

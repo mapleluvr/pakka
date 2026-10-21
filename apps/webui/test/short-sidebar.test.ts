@@ -6,6 +6,7 @@ import { createPocketSchedules } from "@pakka/server/pocket";
 import { runtimeFixture } from "../../../packages/agent/test/runtime-fixture.ts";
 import { startPocket } from "../src/bootstrap.ts";
 import { ownedBrowser } from "./browser.ts";
+import { settleFrontend, toggleConversations, openAppearance } from "./frontend-controls.ts";
 import {
 	workspaceFilesExtensionRoot,
 	workspaceFilesService,
@@ -13,9 +14,10 @@ import {
 	workspaceSchedulesService,
 } from "../src/workflows.ts";
 
-// Unbounded tool navigation must not consume the conversation list on a short phone screen.
+// Extensions use the reference palette rather than an expanding legacy rail.
+// A short screen must still reach sessions, settings and actual extension UI.
 test(
-	"Pocket short sidebar: built-in tools and extensions scroll independently while conversations remain usable",
+	"Pocket short sidebar: sessions remain usable and extensions stay reachable through the palette",
 	{ timeout: 45000 },
 	async () => {
 		const m = await runtimeFixture(
@@ -57,82 +59,72 @@ test(
 			await page.wait('document.querySelector("[data-action=signin]")');
 			await page.click("[data-action=signin]");
 			await page.wait('document.querySelectorAll("[data-conversation]").length===12');
-			await page.wait('[...document.querySelectorAll("link[rel=stylesheet]")].every(e=>e.sheet)');
-			await page.click('[aria-label="Toggle conversations"]');
-			await page.click("[data-conversation]");
-			await page.wait(
-				'document.querySelector("[data-interface=workspace-schedules-schedules]") && document.querySelector("[data-interface=preferences-settings]")',
-			);
-			await page.click('[aria-label="Toggle conversations"]');
-			await page.wait('document.querySelector(".sidebar").getAnimations().every(a=>a.playState!=="running")');
-			const sizes = (await page.evaluate(
-				`(()=>{const tools=document.querySelector('[aria-label="Tools and extensions"]'),conversations=document.querySelector('[aria-label="Conversations"]');return tools?{toolsHeight:tools.clientHeight,toolsScroll:tools.scrollHeight,conversationHeight:conversations.clientHeight,viewport:innerHeight,overflow:document.documentElement.scrollWidth>innerWidth}:null;})()`,
-			)) as null | {
-				toolsHeight: number;
-				toolsScroll: number;
-				conversationHeight: number;
-				viewport: number;
-				overflow: boolean;
-			};
-			assert.ok(sizes, "Navigation tools need their own bounded scrolling region");
-			assert.ok(sizes.toolsHeight <= sizes.viewport * 0.36, JSON.stringify(sizes));
-			assert.ok(
-				sizes.toolsScroll > sizes.toolsHeight,
-				"Tools should scroll rather than shrink the conversation list",
-			);
-			assert.ok(sizes.conversationHeight >= 100, JSON.stringify(sizes));
-			assert.equal(sizes.overflow, false);
+			await toggleConversations(page);
 			assert.equal(
 				await page.evaluate(
-					'document.querySelector("[data-interface=workspace-files-files]").closest("nav").getAttribute("aria-label")',
+					`(()=>{const n=document.querySelector(".session-list");return n.clientHeight>=100&&n.scrollHeight>n.clientHeight&&document.documentElement.scrollWidth<=innerWidth;})()`,
 				),
-				"WebUI",
+				true,
+				"Sessions retain their own usable scroll region",
 			);
 			assert.equal(
 				await page.evaluate(
-					'document.querySelector("[data-interface=workspace-schedules-schedules]").closest("nav").getAttribute("aria-label")',
+					`(()=>{const n=document.querySelector('[data-action="appearance"]'),r=n.getBoundingClientRect();return r.bottom<=innerHeight&&n.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2));})()`,
 				),
-				"WebUI",
+				true,
+				"Settings remains visible and hit-testable",
 			);
-			assert.equal(
-				await page.evaluate(
-					'document.querySelector("[data-interface=hello-home]").closest("nav").getAttribute("aria-label")',
-				),
-				"Extensions",
-			);
-			const evidence = join(process.env.PAKKA_TEST_ARTIFACTS ?? m.f.root, "short-sidebar");
-			await mkdir(evidence, { recursive: true });
-			await writeFile(join(evidence, "short-phone.png"), await page.screenshot());
-			await page.click("[data-interface=preferences-settings]");
-			await page.wait('document.querySelector("input[name=exampleLabel]")');
-			await page.click('[aria-label="Close Example preferences"]');
-			await page.click('[aria-label="Toggle conversations"]');
 			await page.click("[data-conversation]:last-child");
 			await page.wait('document.querySelector(".pocket-status")?.textContent==="Ready"');
+			await settleFrontend(page);
+			await toggleConversations(page);
+			await page.click("[data-action=commands]");
+			await page.wait('document.querySelector(".palette [data-interface=preferences-settings]")');
+			for (const id of [
+				"workspace-files-files",
+				"workspace-schedules-schedules",
+				"hello-home",
+				"preferences-settings",
+			])
+				assert.equal(
+					await page.evaluate(`Boolean(document.querySelector('.palette [data-interface="${id}"]'))`),
+					true,
+				);
+			await page.click(".palette [data-interface=preferences-settings]");
+			await page.wait('document.querySelector("input[name=exampleLabel]")');
+			await settleFrontend(page);
+			await page.click('[aria-label="Close Example preferences"]');
+			await settleFrontend(page);
+			await toggleConversations(page);
+			await page.click("[data-conversation]:last-child");
+			await page.wait('document.querySelector(".pocket-status")?.textContent==="Ready"');
+			await settleFrontend(page);
 			await page.type("textarea[name=message]", "KEEP-SIDEBAR-DRAFT");
-			await page.click('[aria-label="Toggle conversations"]');
-			await page.click('[aria-label="Close conversations"]');
+			await toggleConversations(page);
+			await page.click('[aria-label="Close conversations"]', { offset: { x: 0.95, y: 0.5 } });
+			await settleFrontend(page);
 			assert.equal(
 				await page.evaluate('document.querySelector("textarea[name=message]").value'),
 				"KEEP-SIDEBAR-DRAFT",
 			);
-			await page.click('[aria-label="Toggle conversations"]');
-			await page.click('[data-action="appearance"]');
-			await page.wait("document.querySelector('[aria-label=\"Text size\"]')");
+			await openAppearance(page);
+			await page.wait(`document.querySelector('[aria-label="Text size"]')`);
 			await page.evaluate(
-				`(()=>{const size=document.querySelector('[aria-label="Text size"]');size.value='24';size.dispatchEvent(new Event('change',{bubbles:true}));})()`,
+				`(()=>{const n=document.querySelector('[aria-label="Text size"]');n.value='24';n.dispatchEvent(new Event('change',{bubbles:true}));})()`,
 			);
 			await page.click('[aria-label="Close appearance"]');
-			await page.click('[aria-label="Toggle conversations"]');
-			const large = (await page.evaluate(
-				`(()=>{const tools=document.querySelector('[aria-label="Tools and extensions"]'),sidebar=document.querySelector('.sidebar');return {tools:tools.clientHeight,overflow:getComputedStyle(sidebar).overflowY,tall:sidebar.scrollHeight>sidebar.clientHeight};})()`,
-			)) as { tools: number; overflow: string; tall: boolean };
-			assert.ok(
-				large.tools >= 44,
-				"Large text must not collapse tools to an unusable strip: " + JSON.stringify(large),
+			await settleFrontend(page);
+			if (!(await page.evaluate('document.body.classList.contains("drawer-open")')))
+				await toggleConversations(page);
+			assert.equal(await page.evaluate("getComputedStyle(document.body).fontSize"), "24px");
+			assert.equal(
+				await page.evaluate(
+					`(()=>{const n=document.querySelector('[data-action="appearance"]'),r=n.getBoundingClientRect();return document.documentElement.scrollWidth<=innerWidth&&r.bottom<=innerHeight&&n.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2));})()`,
+				),
+				true,
 			);
-			if (large.tall)
-				assert.match(large.overflow, /auto|scroll/, "Extra-short screens must still reach the footer");
+			const evidence = join(process.env.PAKKA_TEST_ARTIFACTS ?? m.f.root, "short-sidebar");
+			await mkdir(evidence, { recursive: true });
 			await writeFile(join(evidence, "short-phone-large-text.png"), await page.screenshot());
 			assert.equal(m.f.requests.length, 0);
 			assert.equal(m.f.errors.length, 0);

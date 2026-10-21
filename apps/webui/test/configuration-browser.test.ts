@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { runtimeFixture } from "../../../packages/agent/test/runtime-fixture.ts";
 import { startPocket } from "../src/bootstrap.ts";
 import { ownedBrowser } from "./browser.ts";
+import { conversationAction, organizationAction, toggleConversations } from "./frontend-controls.ts";
 
 test(
 	"Pocket configuration browser: compact model choice changes provider input while mobile viewer cannot configure or read Session totals",
@@ -34,7 +35,7 @@ test(
 			await owner.wait('document.querySelector("[data-conversation]")');
 			await owner.click("[data-conversation]");
 			await owner.wait('document.querySelector("[data-action=model]")?.disabled===false');
-			await owner.click("[data-action=settings]");
+			await conversationAction(owner, "settings");
 			await owner.wait('document.querySelector("[data-cost]")');
 			assert.match(
 				String(await owner.evaluate('document.querySelector("[data-cost]").innerText')),
@@ -69,7 +70,7 @@ test(
 			assert.equal(m.f.requests[0]?.model, "alternate-model");
 			assert.doesNotMatch(JSON.stringify(m.f.requests[0]), /ALT-INSTRUCTION/);
 			assert.equal(app.runtime.view().budget.primaryAttempts, 1);
-			await owner.click("[data-action=people]");
+			await organizationAction(owner, "people");
 			await owner.wait('document.querySelector("[data-action=invite]")');
 			await owner.click("[data-action=invite]");
 			await owner.wait('document.querySelector("input[name=inviteLink]")?.value.includes("#invite=")');
@@ -81,9 +82,9 @@ test(
 			await viewer.type("input[name=person]", "Viewer");
 			await viewer.click("[data-action=signin]");
 			await viewer.wait('document.querySelector("[data-conversation]")');
-			await viewer.click('[aria-label="Toggle conversations"]');
+			await toggleConversations(viewer);
 			await viewer.click("[data-conversation]");
-			await viewer.click("[data-action=settings]", {
+			await conversationAction(viewer, "settings", {
 				beforePress: () => viewer.wait('document.querySelector(".pocket-status")?.textContent==="Ready"'),
 			});
 			await viewer.wait('document.querySelector("[data-cost]")');
@@ -97,7 +98,7 @@ test(
 			);
 			assert.equal(await viewer.evaluate("document.documentElement.scrollWidth>innerWidth"), false);
 			await owner.click('[aria-label="Close people"]');
-			await owner.click("[data-action=settings]");
+			await conversationAction(owner, "settings");
 			await owner.wait('document.querySelector("[data-cost]")');
 			const output = join(process.env.PAKKA_TEST_ARTIFACTS ?? m.f.root, "settings-screenshots");
 			await mkdir(output, { recursive: true });

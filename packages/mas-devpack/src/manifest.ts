@@ -51,7 +51,7 @@ export const manifest: ExtensionManifest = {
 	],
 	commands: [{ id: "team", title: "Open MAS team", slash: "team", interface: "board" }],
 	interfaces: [
-		{ id: "board", title: "MAS team", slot: "page", scope: "app", export: "Board", navigation: true },
+		{ id: "board", title: "Team", slot: "page", scope: "app", export: "Board", navigation: true },
 		{
 			id: "member",
 			title: "Agent controls",

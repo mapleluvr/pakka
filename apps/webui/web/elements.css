@@ -1,0 +1,593 @@
+/* Pakka-only elements. The adopted shell/composer/menu geometry lives unchanged in reference.css. */
+@font-face {
+	font-family: "JetBrains Mono";
+	src: url("/fonts/JetBrainsMono.woff2") format("woff2");
+	font-weight: 100 800;
+	font-display: swap;
+}
+#app {
+	height: 100%;
+}
+body {
+	font-size: var(--text-size, 14px);
+}
+code {
+	font-family: var(--mono);
+}
+:root {
+	--danger: #f18b88;
+	--line: var(--border);
+	--fg: var(--text);
+	--bg0: var(--bg);
+	--bg1: var(--card);
+	--bg2: var(--hover-strong);
+	--pocket-accent: var(--accent);
+}
+.org-name {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.org-trigger {
+	max-width: 160px;
+}
+.session-list {
+	overflow-y: auto;
+	min-height: 0;
+}
+.pocket-icon {
+	width: 16px;
+	height: 16px;
+	flex: none;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 1.6;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}
+button:disabled {
+	opacity: 0.45;
+}
+.native-mode-label,
+.composer-annotation {
+	color: var(--muted);
+	font-size: 12px;
+}
+.composer-annotation {
+	max-width: 700px;
+	margin: 6px auto 0;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	flex-wrap: wrap;
+}
+.creation-recovery {
+	position: absolute;
+	bottom: 16px;
+	left: 24px;
+	right: 24px;
+	max-width: 700px;
+	margin: auto;
+	padding: 12px;
+	border: 1px solid var(--border);
+	border-radius: 10px;
+	background: var(--menu);
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+.toast {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+.message-content {
+	overflow-wrap: anywhere;
+	font-size: calc(var(--text-size, 14px) * 0.93);
+	line-height: 1.55;
+}
+.message-content pre {
+	max-width: 100%;
+	overflow-x: auto;
+	font-family: var(--mono);
+}
+.message-content .pocket-image {
+	display: block;
+	max-width: 100%;
+	max-height: 60dvh;
+	object-fit: contain;
+}
+.message-content details {
+	margin: 8px 0;
+}
+.message-content summary {
+	cursor: pointer;
+	color: var(--muted);
+	font-size: 12px;
+	padding: 8px 10px;
+}
+.message-content > button {
+	color: var(--muted);
+	font-size: 11px;
+}
+.pocket-error {
+	color: var(--danger);
+}
+.native-model-name {
+	max-width: 160px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+@media (max-width: 380px) {
+	.native-model-picker.model-chip {
+		display: inline-flex;
+		width: 28px;
+		padding: 0;
+		justify-content: center;
+	}
+	.native-model-picker .native-model-name,
+	.native-model-picker .native-model-arrow {
+		display: none;
+	}
+	.native-model-picker .model-compact-icon {
+		display: inline-flex;
+	}
+}
+.pocket-scrim {
+	position: fixed;
+	inset: 0;
+	z-index: 120;
+	padding: 8vh 12px 24px;
+	display: flex;
+	align-items: flex-start;
+	justify-content: center;
+	background: transparent;
+	backdrop-filter: blur(8px);
+}
+.pocket-sheet {
+	width: 680px;
+	max-width: 100%;
+	max-height: 84dvh;
+	overflow: auto;
+	background: var(--menu);
+	color: var(--text);
+	border: 1px solid var(--menu-border);
+	border-radius: 16px;
+	box-shadow: 0 28px 80px rgba(0, 0, 0, 0.45);
+}
+.pocket-sheet > header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 12px;
+	min-height: 56px;
+	padding: 8px 16px;
+	border-bottom: 1px solid var(--border);
+}
+.pocket-sheet > header .icon-btn {
+	min-width: 44px;
+	min-height: 44px;
+}
+.pocket-sheet > header h2 {
+	font-size: 14px;
+	font-weight: 500;
+	margin: 0;
+}
+.pocket-sheet-body {
+	padding: 16px;
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+/* Directory browsing scrolls independently; explicit confirmation stays in view. */
+.pocket-sheet:has(> .pocket-directory-picker) {
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+}
+.pocket-sheet:has(> .pocket-directory-picker) > header {
+	flex: none;
+}
+.pocket-directory-picker {
+	min-height: 0;
+	overflow: auto;
+}
+.pocket-directory-location {
+	display: flex;
+	align-items: end;
+	gap: 8px;
+}
+.pocket-directory-location label {
+	flex: 1;
+	min-width: 0;
+}
+.pocket-directory-location button,
+.pocket-directory-footer button {
+	flex: none;
+}
+.pocket-breadcrumbs {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+.pocket-breadcrumbs li {
+	max-width: 100%;
+}
+.pocket-breadcrumbs button,
+.pocket-directory-current strong {
+	display: block;
+	max-width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.pocket-directory-browser {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+.pocket-directory-browser h3 {
+	font-size: 12px;
+	color: var(--muted);
+}
+.pocket-directory-current,
+.pocket-path-row {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	min-width: 0;
+}
+.pocket-directory-current strong,
+.pocket-path-row span {
+	min-width: 0;
+	flex: 1;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.pocket-path-row {
+	width: 100%;
+	padding: 8px;
+	border-radius: 6px;
+	text-align: left;
+	font-size: 13px;
+}
+.pocket-path-row:hover {
+	background: var(--hover);
+}
+.pocket-directory-footer {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	flex: none;
+	padding: 12px 16px;
+	border-top: 1px solid var(--border);
+}
+.pocket-directory-footer .pocket-cwd {
+	min-width: 0;
+	margin: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-size: 12px;
+	color: var(--muted);
+}
+.pocket-sheet :is(input:not([type="checkbox"]), select, textarea) {
+	max-width: 100%;
+	min-width: 0;
+	background: var(--hover);
+	border: 1px solid var(--border);
+	border-radius: 6px;
+	padding: 8px 10px;
+	font: inherit;
+	color: var(--text);
+}
+.pocket-sheet :is(input:not([type="checkbox"]), select) {
+	min-height: 36px;
+}
+.pocket-sheet textarea {
+	resize: vertical;
+}
+.pocket-sheet label {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	color: var(--muted);
+	font-size: 13px;
+}
+.pocket-sheet :is(.button, .pocket-choice-row, .pocket-command) {
+	min-height: 36px;
+	padding: 6px 10px;
+	border-radius: 6px;
+	text-align: left;
+}
+.pocket-sheet :is(.button, .pocket-choice-row, .pocket-command):hover {
+	background: var(--menu-hover);
+}
+.pocket-sheet .primary {
+	background: var(--send-bg);
+	color: var(--send-fg);
+}
+.pocket-icon-button {
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+	width: 36px;
+	height: 36px;
+	border-radius: 6px;
+	flex: none;
+}
+.pocket-icon-button:hover {
+	background: var(--hover);
+}
+.pocket-person-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	padding: 10px 0;
+	border-bottom: 1px solid var(--border);
+}
+.pocket-person-row > span:last-of-type,
+.pocket-secondary {
+	color: var(--muted);
+	font-size: 12px;
+}
+.pocket-font-preview {
+	padding: 12px;
+	border: 1px solid var(--border);
+	border-radius: 10px;
+	font-size: var(--text-size, 14px);
+}
+.appearance-fields select {
+	margin-left: auto;
+	min-width: 160px;
+	min-height: 32px;
+	padding: 4px 8px;
+	border: 1px solid var(--border);
+	border-radius: 6px;
+	color: var(--text);
+	background: var(--card);
+}
+.settings-layer {
+	position: fixed;
+	inset: 0;
+	z-index: 120;
+}
+.pocket-qr {
+	max-width: 100%;
+	background: white;
+	align-self: center;
+}
+.pocket-choice-row {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+.pocket-command {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+.pocket-command span {
+	color: var(--muted);
+}
+.pocket-signin {
+	min-height: 100dvh;
+	padding: 24px;
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	place-items: center;
+	background: var(--bg);
+}
+.signin {
+	width: 360px;
+	max-width: 100%;
+}
+.signin h1 {
+	font-size: 21px;
+	font-weight: 600;
+}
+.signin p {
+	color: var(--muted);
+}
+.signin form,
+.signin label {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+.signin form {
+	gap: 16px;
+}
+.signin input {
+	min-width: 0;
+	padding: 10px 12px;
+	background: var(--card);
+	border: 1px solid var(--border);
+	border-radius: 8px;
+}
+.signin button {
+	min-height: 40px;
+	padding: 8px 12px;
+	border-radius: 8px;
+	background: var(--send-bg);
+	color: var(--send-fg);
+}
+.pocket-brand {
+	width: 40px;
+	height: 40px;
+	border: 1px solid var(--border);
+	border-radius: 12px;
+	display: grid;
+	place-items: center;
+}
+.boot {
+	height: 100dvh;
+	display: grid;
+	align-content: center;
+	justify-items: center;
+	gap: 12px;
+	background: var(--bg);
+	color: var(--muted);
+}
+.extension-page {
+	flex: 1;
+	min-width: 0;
+	min-height: 0;
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+}
+.pocket-extension-surface {
+	flex: 1;
+	min-height: 0;
+	display: flex;
+	flex-direction: column;
+	overflow: auto;
+}
+.pocket-extension-surface > header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	min-height: 56px;
+	padding: 10px 16px;
+	border-bottom: 1px solid var(--border);
+}
+.pocket-extension-surface > header h2 {
+	margin: 0;
+	font-size: 14px;
+	font-weight: 500;
+}
+.pocket-extension-surface > .pocket-sheet-body {
+	flex: 1;
+	min-height: 0;
+}
+.settings-native,
+.settings-native-fields {
+	display: grid;
+	gap: 16px;
+}
+.settings-data,
+.settings-native-fields,
+.settings-native .pocket-credentials {
+	padding: 16px;
+}
+.settings-native h3 {
+	margin: 0 0 12px;
+	font-size: 14px;
+	font-weight: 500;
+}
+.settings-data dl {
+	margin: 0;
+	display: grid;
+	gap: 10px;
+	font-size: 13px;
+}
+.settings-data dl > div {
+	display: flex;
+	justify-content: space-between;
+	gap: 16px;
+}
+.settings-data dt {
+	color: var(--muted);
+}
+.settings-data dd {
+	margin: 0;
+}
+.settings-data .pocket-secondary {
+	margin: 12px 0 0;
+	color: var(--muted);
+	font-size: 12px;
+}
+.settings-native-fields > p {
+	margin: 0;
+	font-size: 13px;
+	line-height: 1.6;
+}
+.settings-native-fields > button {
+	justify-self: start;
+}
+.settings-native-fields .pocket-person-row {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	font-size: 13px;
+}
+.settings-native-fields .pocket-person-row > :first-child {
+	flex: 1;
+}
+.settings-native-fields .pocket-person-row > :nth-child(2) {
+	color: var(--muted);
+}
+.settings-native-fields label {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 12px;
+	font-size: 13px;
+}
+.settings-native-fields fieldset {
+	display: grid;
+	gap: 12px;
+	border: 1px solid var(--border);
+	border-radius: 8px;
+	padding: 16px;
+}
+:is(.settings-native, .settings-native-fields) :is(input:not([type="checkbox"]), select, textarea) {
+	min-width: 0;
+	max-width: 100%;
+	border: 1px solid var(--border);
+	border-radius: 6px;
+	background: var(--input-bg);
+	color: var(--text);
+	padding: 7px 10px;
+	font: inherit;
+	font-size: 13px;
+}
+:is(.settings-native, .settings-native-fields) button {
+	min-height: 30px;
+	padding: 6px 12px;
+	border: 1px solid var(--border);
+	border-radius: 6px;
+	background: var(--hover);
+	color: var(--text);
+	font: inherit;
+	font-size: 12px;
+}
+.pocket-command-suggestions {
+	display: flex;
+	flex-direction: column;
+	border: 1px solid var(--border);
+	border-radius: 8px;
+	padding: 6px;
+}
+.pocket-command-suggestions button {
+	text-align: left;
+	padding: 8px;
+	font-size: 12px;
+}
+.pocket-command-suggestions button:hover {
+	background: var(--hover);
+}
+@media (max-width: 767px) {
+	.extension-page {
+		padding-top: 44px;
+	}
+	.pocket-scrim {
+		padding-top: 8px;
+		padding-bottom: 8px;
+	}
+	.pocket-sheet {
+		max-height: calc(100dvh - 16px);
+	}
+	.creation-recovery {
+		left: 12px;
+		right: 12px;
+		flex-wrap: wrap;
+	}
+}

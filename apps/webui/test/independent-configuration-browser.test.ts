@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { runtimeFixture } from "../../../packages/agent/test/runtime-fixture.ts";
 import { startPocket } from "../src/bootstrap.ts";
 import { ownedBrowser } from "./browser.ts";
+import { conversationAction, toggleConversations, newConversation } from "./frontend-controls.ts";
 
 // Real UI choices must independently reach the provider/current cwd, preserve drafts, and survive page reload.
 test(
@@ -38,9 +39,14 @@ test(
 				height: 600,
 			});
 			await page.wait('document.querySelector("[data-action=signin]")');
+			assert.equal(
+				await page.evaluate("innerWidth === 360 && document.documentElement.scrollWidth <= 360"),
+				true,
+				"Sign-in must fit a 360px viewport without changing pointer coordinates",
+			);
 			await page.click("[data-action=signin]");
 			await page.wait('document.querySelector("[data-conversation]")');
-			await page.click('[aria-label="Toggle conversations"]');
+			await toggleConversations(page);
 			await page.wait(
 				'document.querySelector(".sidebar").getAnimations().every(a=>a.playState==="finished"||a.playState==="idle")',
 			);
@@ -49,7 +55,7 @@ test(
 				'document.querySelector("[data-action=cwd]")?.textContent.includes(' + JSON.stringify(m.f.cwd) + ")",
 			);
 			await page.type("textarea[name=message]", "DRAFT-KEEP");
-			await page.click("[data-action=settings]");
+			await conversationAction(page, "settings");
 			await page.wait('document.querySelector("[data-cost]")');
 			assert.equal(
 				await page.evaluate(
@@ -76,6 +82,19 @@ test(
 			await page.wait(
 				'document.querySelector("[data-favorite-directory]")?.getAttribute("aria-pressed")==="true"',
 			);
+			const shots = join(process.env.PAKKA_TEST_ARTIFACTS ?? m.f.root, "independent-configuration");
+			await mkdir(shots, { recursive: true });
+			await writeFile(join(shots, "directory-360x600-24px.png"), await page.screenshot());
+			await writeFile(
+				join(shots, "directory-geometry.json"),
+				JSON.stringify(
+					await page.evaluate(
+						`(()=>{const r=document.querySelector("[data-use-directory]").getBoundingClientRect();return {x:r.x,y:r.y,w:r.width,h:r.height,viewport:{width:innerWidth,height:innerHeight},scroll:document.documentElement.scrollWidth};})()`,
+					),
+					null,
+					2,
+				),
+			);
 			assert.equal(
 				await page.evaluate(
 					'(()=>{const r=document.querySelector("[data-use-directory]").getBoundingClientRect();return r.top>=0&&r.bottom<=innerHeight&&r.left>=0&&r.right<=innerWidth&&document.documentElement.scrollWidth<=innerWidth})()',
@@ -83,9 +102,6 @@ test(
 				true,
 				"Directory confirmation remains visible at 360×600 with 24px text",
 			);
-			const shots = join(process.env.PAKKA_TEST_ARTIFACTS ?? m.f.root, "independent-configuration");
-			await mkdir(shots, { recursive: true });
-			await writeFile(join(shots, "directory-360x600-24px.png"), await page.screenshot());
 			await page.click("[data-use-directory]");
 			await page.wait(
 				'!document.querySelector("[data-use-directory]")&&document.querySelector("[data-action=cwd]")?.textContent.includes(' +
@@ -126,12 +142,11 @@ test(
 			await page.wait('document.querySelector("main").textContent.includes("LOCAL-ANSWER")');
 			assert.equal(m.f.requests[0]?.model, "alternate-model");
 			assert.doesNotMatch(JSON.stringify(m.f.requests[0]), /MUST-NOT-APPLY/);
-			await page.click('[aria-label="Toggle conversations"]');
+			await toggleConversations(page);
 			await page.wait(
 				'document.querySelector(".sidebar").getAnimations().every(a=>a.playState==="finished"||a.playState==="idle")',
 			);
-			await page.type('[aria-label="New conversation name"]', "Inherited");
-			await page.click('[aria-label="Create conversation"]');
+			await newConversation(page, "Inherited");
 			await page.wait(
 				'document.querySelector(".pocket-title")?.textContent.includes("Inherited")&&document.querySelector("[data-action=model]")?.textContent.includes("alternate-model")',
 			);
@@ -140,7 +155,7 @@ test(
 				/child/,
 			);
 			const reload = await page.evaluate(
-				'(()=>{const ref=document.querySelector("[data-conversation].selected").dataset.conversation;return location.origin+"/#conversation="+encodeURIComponent(ref)})()',
+				'(()=>{const ref=document.querySelector("[data-conversation][aria-current=true]").dataset.conversation;return location.origin+"/#conversation="+encodeURIComponent(ref)})()',
 			);
 			await page.navigate(String(reload));
 			await page.wait(

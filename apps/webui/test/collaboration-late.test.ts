@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { runtimeFixture } from "../../../packages/agent/test/runtime-fixture.ts";
 import { startPocket } from "../src/bootstrap.ts";
 import { ownedBrowser } from "./browser.ts";
+import { conversationAction } from "./frontend-controls.ts";
 
 // Only response delivery is delayed: the real authorized HTTP request completes. A closure capturing
 // an earlier resource must not reopen its sheet or publish its contents into the newly selected view.
@@ -43,7 +44,7 @@ test(
 			await page.evaluate(
 				`(()=>{const send=window.fetch;window.fetch=async(...args)=>{const response=await send(...args);let input;try{input=JSON.parse(args[1]?.body??'{}');}catch{return response;}if(input.command?.op==='collaboration.read'&&!window.__held){window.__held=true;await new Promise(resolve=>{window.__release=resolve;});window.__settled=true;}return response;};})()`,
 			);
-			await page.click("[data-action=collaboration]");
+			await conversationAction(page, "collaboration");
 			await page.wait("window.__held===true");
 			await page.click("[data-conversation]:nth-child(2)");
 			await page.wait(

@@ -5,6 +5,12 @@ import { join } from "node:path";
 import { runtimeFixture } from "../../../packages/agent/test/runtime-fixture.ts";
 import { startPocket } from "../src/bootstrap.ts";
 import { ownedBrowser } from "./browser.ts";
+import {
+	toggleConversations,
+	settleFrontend,
+	openExtensionManager,
+	openConversations,
+} from "./frontend-controls.ts";
 
 test(
 	"Extension interface: old callbacks cannot close/notify/reopen a replacement; disable removes only its public UI",
@@ -51,7 +57,7 @@ test(
 			await page.wait('document.querySelector("[data-action=signin]")');
 			await page.click("[data-action=signin]");
 			await page.wait('document.querySelector("[data-interface=late-home]")');
-			await page.click('[aria-label="Toggle conversations"]');
+			await toggleConversations(page);
 			await page.click("[data-interface=late-home]");
 			await page.wait('document.querySelector("[data-instance]")');
 			assert.equal(
@@ -59,13 +65,13 @@ test(
 				false,
 				"A full-page extension opened from home must restore the regular accessible header",
 			);
-			await page.wait('!document.querySelector(".drawer-open")');
+			await settleFrontend(page);
 			const previous = await page.evaluate('document.querySelector("[data-instance]").textContent');
 			await page.click("[data-late]");
 			await page.wait('!document.querySelector("[data-instance]")');
-			await page.click('[aria-label="Toggle conversations"]');
+			await toggleConversations(page);
 			await page.click("[data-interface=late-home]");
-			await page.wait('!document.querySelector(".drawer-open")');
+			await settleFrontend(page);
 			await page.wait('document.querySelector("[data-instance]")');
 			const replacement = await page.evaluate('document.querySelector("[data-instance]").textContent');
 			assert.notEqual(replacement, previous);
@@ -73,22 +79,22 @@ test(
 			assert.equal(await page.evaluate('document.querySelector("[data-instance]").textContent'), replacement);
 			assert.equal(await page.evaluate('document.body.innerText.includes("STALE-INTERFACE-NOTICE")'), false);
 			assert.equal(await page.evaluate("document.documentElement.scrollWidth > innerWidth"), false);
-			await page.click("[data-action=commands]");
+			await openExtensionManager(page);
 			await page.wait('document.querySelector(".pocket-extension-registration button")');
 			await page.click(".pocket-extension-registration button");
 			await page.wait(
 				'!document.querySelector("[data-interface=late-home]") && !document.querySelector("[data-instance]")',
 			);
-			await page.evaluate(
-				'document.querySelector("[role=dialog]").dispatchEvent(new KeyboardEvent("keydown",{key:"Escape",bubbles:true}))',
-			);
+			await page.key("Escape");
+			await page.wait('!document.querySelector(".palette")');
+			await settleFrontend(page);
 			assert.equal(
 				app.runtime.view().conversations.length,
 				2,
 				"runtime root and initial workspace Conversation are both retained",
 			);
 			assert.equal(m.f.requests.length, 0);
-			await page.click('[aria-label="Toggle conversations"]');
+			await openConversations(page);
 			await page.click("[data-conversation]");
 			await page.wait('document.querySelector("[data-action=send]")?.disabled === false');
 			await page.type("textarea[name=message]", "WORK-AFTER-UI-DISABLE");

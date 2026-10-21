@@ -5,3 +5,5 @@ patches/pi-durable/**/artifact.json text eol=lf
 packages/agent/vendor/*.tgz binary
 # Preserve adopted upstream license bytes, including original whitespace.
 integrations/pocket/licenses/*.txt -text -whitespace
+# Preserve the pinned Devin frontend Git-blob bytes on every platform.
+apps/webui/web/reference.css text eol=lf

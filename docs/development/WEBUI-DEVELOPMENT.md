@@ -43,14 +43,14 @@ MAS Board 必须通过右侧的通用贡献方式实现。不为 MAS 增加特�
 
 ## 4. 组件、交互和样式
 
-- 保留被采用 pi-pocket 的 Preact/htm、基础主题 tokens 与组件交互；当前壳层的中性配色、Inter、平整侧栏与圆角卡片由 `web/devin.css` 覆盖，不改写上游 `pocket.css`。参考与产品映射见 [迁移计划](../plans/DEVIN-LIKE-FRONTEND.md)，复制字体各自保留许可证。
+- 以 Devin-like 参考的 DOM、`web/reference.css` 和交互为前端基座；真实状态、权限和动作由 Pakka 的接口接入。生产页不加载旧 `pocket.css`／`workbench.css`／`devin.css` 叠层换皮。仅在 `web/elements.css` 中补充原型没有的原生能力与必要的元素级适配；MAS 等新页面按同套界面语言设计。当前映射见 [R2 接入计划](../plans/DEVIN-FRONTEND-ADOPTION-R2.md)，旧 R1 映射只作历史记录。保留 Preact/htm、公开组件交互及字体许可证。
 - 组件默认消费 DTO 和 host-owned context，不把整个应用状态注入扩展。
 - 状态分别处理 loading、empty、denied、conflict、unknown、stale/disconnected 和 terminal；不要把它们合成同一个红/绿点。
 - 显示已持久 membership 与 native live readiness 的区别；generation done 不等于业务目标或工具副作用已完成。
 - 表单写入前展示 scope；危险操作需要明确目标和动作反馈，重复点击复用同一 pending operation，不能静默分配新请求。
 - 使用公开 tokens/classes，CSS 作用于自身内容，不覆盖全局登录/权限/别的插件。图标使用 SVG 路径，不用字符符号或 emoji 充当图标。公共 `@pakka/webui/components` 的 `Icon` 提供菜单、关闭、新建、会话、文件、文件夹、点赞和 Board 图形；普通图标为 24px，独立图标按钮至少 44×44px，并由按钮提供清楚的可访问名称。自定义图标遵循同样尺寸和无障碍规则。
 - 键盘可操作、focus trap/return、Escape、屏幕阅读标签、窄屏可滚动和触摸交互是组件要求，不是最后加的桌面补丁。
-- 侧栏优先保留 Conversation 列表；下方工具区限制高度并独立滚动。随 WebUI 提供的 Files、Schedules、Memory、Webhooks 入口归入 **WebUI**，其他插件归入 **Extensions**。这只是导航分组，内置贡献仍走同一公共扩展插槽，不增加权限或隐式启用 Agent facet。
+- 侧栏沿用参考的主要导航与 Sessions 区域，列表独立滚动；不恢复旧版长工具列表。Commands & extensions 使用参考 palette，按当前身份与目标发现真实命令和页面；扩展管理使用独立 Settings 页面。Files、Schedules、Memory、Webhooks 与其他插件仍消费同一公共扩展插槽，不增加权限或隐式启用 Agent facet。
 - 页面和面板卸载时释放 host subscriptions、listeners、timers 和 abortable reads；关闭界面不表示已接受的服务端工作取消或回滚。
 
 ## 5. Command contract

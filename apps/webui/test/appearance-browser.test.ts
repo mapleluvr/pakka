@@ -5,6 +5,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { runtimeFixture } from "../../../packages/agent/test/runtime-fixture.ts";
 import { startPocket } from "../src/bootstrap.ts";
 import { ownedBrowser } from "./browser.ts";
+import { toggleConversations, openAppearance } from "./frontend-controls.ts";
 
 // Losing persisted typography, failing to apply it, or hiding Send at a larger size must fail this real consumer.
 test(
@@ -31,17 +32,17 @@ test(
 			await page.click("[data-action=signin]");
 			await page.wait('document.querySelector("[data-conversation]")');
 			await page.wait('[...document.querySelectorAll("link[rel=stylesheet]")].every(e=>e.sheet)');
-			await page.click('[aria-label="Toggle conversations"]');
+			await toggleConversations(page);
 			await page.click("[data-conversation]");
 			await page.wait('document.querySelector(".pocket-status")?.textContent === "Ready"');
 			await page.type("textarea[name=message]", "KEEP-TYPOGRAPHY-DRAFT");
-			await page.click('[aria-label="Toggle conversations"]');
+			await toggleConversations(page);
 			assert.equal(
 				await page.evaluate('Boolean(document.querySelector("[data-action=appearance]"))'),
 				true,
 				"Appearance must expose font and size preferences",
 			);
-			await page.click("[data-action=appearance]");
+			await openAppearance(page);
 			await page.wait('document.querySelector("[aria-label=Font]")');
 			const choose = (selector: string, value: string) =>
 				page.evaluate(
@@ -59,7 +60,7 @@ test(
 						'getComputedStyle(document.querySelector(".pocket-font-preview code")).fontFamily',
 					),
 				),
-				/Pocket Mono/,
+				/JetBrains Mono/,
 			);
 			await page.click('[aria-label="Close appearance"]');
 			assert.equal(
@@ -74,7 +75,7 @@ test(
 				viewport: number;
 				overflow: boolean;
 			};
-			assert.ok(controls.mode.right <= controls.send.left, "Input mode and Send must fit beside each other");
+			assert.ok(controls.send.right <= controls.mode.left, "Input mode and Send must fit beside each other");
 			assert.ok(
 				Math.max(controls.mode.top, controls.send.top) < Math.min(controls.mode.bottom, controls.send.bottom),
 				"Input mode and Send must share a row",
@@ -92,8 +93,8 @@ test(
 			assert.equal(await page.evaluate("getComputedStyle(document.body).fontSize"), "20px");
 			assert.match(String(await page.evaluate("getComputedStyle(document.body).fontFamily")), /system-ui/);
 			assert.equal(await page.evaluate("document.documentElement.dataset.mode"), "light");
-			await page.click('[aria-label="Toggle conversations"]');
-			await page.click("[data-action=appearance]");
+			await toggleConversations(page);
+			await openAppearance(page);
 			await page.wait('document.querySelector("[aria-label=Font]")');
 			assert.equal(await page.evaluate('document.querySelector("[aria-label=Font]").value'), "system");
 			assert.equal(await page.evaluate(`document.querySelector('[aria-label="Text size"]').value`), "20");
