@@ -1,0 +1,12 @@
+✔ Conversation configuration browser: compact model picker and title-only directory navigation remain independent on 3:5 mobile (2994.4902ms)
+✔ MAS frontend adoption: one workspace header, Graph/Activity/Agents and contextual inspector (2248.0861ms)
+✔ Team waits for its stylesheet and fails closed when it is loaded (1741.8417ms)
+✔ Team waits for its stylesheet and fails closed when it is failed (1379.9781ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 11188.7847

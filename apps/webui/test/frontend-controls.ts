@@ -88,6 +88,7 @@ export async function newConversation(page: FrontendPage, name: string) {
 	await sidebarReady(page);
 	await page.click('[data-action="home"]');
 	await page.wait('document.querySelector("#composerInput")');
+	await settleFrontend(page);
 	await page.type("#composerInput", name, { replace: true });
 	await page.click("[data-home-create]");
 	await page.wait('document.querySelector(".conversation-view")');

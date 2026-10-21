@@ -7,3 +7,5 @@ packages/agent/vendor/*.tgz binary
 integrations/pocket/licenses/*.txt -text -whitespace
 # Preserve the pinned Devin frontend Git-blob bytes on every platform.
 apps/webui/web/reference.css text eol=lf
+# Archived verification records keep their measured bytes (including CRLF).
+docs/verification/evidence/** -text -whitespace

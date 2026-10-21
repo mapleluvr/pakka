@@ -1,0 +1,25 @@
+{
+  "dirty": [
+    " M apps/webui/test/frontend-controls.ts",
+    " M packages/mas-devpack/src/browser/graph-board.ts",
+    "?? apps/webui/test/mas-stylesheet-browser.test.ts"
+  ],
+  "tests": [
+    "D:\\Projects\\kappa\\migration-worktrees\\pakka-devin-ui\\apps\\webui\\test\\mas-agent-removal.test.ts",
+    "D:\\Projects\\kappa\\migration-worktrees\\pakka-devin-ui\\apps\\webui\\test\\mas-board-busy.test.ts",
+    "D:\\Projects\\kappa\\migration-worktrees\\pakka-devin-ui\\apps\\webui\\test\\mas-board-presentation.test.ts",
+    "D:\\Projects\\kappa\\migration-worktrees\\pakka-devin-ui\\apps\\webui\\test\\mas-board-recovery.test.ts",
+    "D:\\Projects\\kappa\\migration-worktrees\\pakka-devin-ui\\apps\\webui\\test\\mas-board-removal.test.ts",
+    "D:\\Projects\\kappa\\migration-worktrees\\pakka-devin-ui\\apps\\webui\\test\\mas-board.test.ts",
+    "D:\\Projects\\kappa\\migration-worktrees\\pakka-devin-ui\\apps\\webui\\test\\mas-devin-adoption.test.ts",
+    "D:\\Projects\\kappa\\migration-worktrees\\pakka-devin-ui\\apps\\webui\\test\\mas-resource-navigation.test.ts",
+    "D:\\Projects\\kappa\\migration-worktrees\\pakka-devin-ui\\apps\\webui\\test\\mas-stylesheet-browser.test.ts",
+    "apps/webui/test/independent-configuration-browser.test.ts",
+    "apps/webui/test/creation-recovery-browser.test.ts",
+    "apps/webui/test/hooks-recovery.test.ts",
+    "apps/webui/test/hooks-busy.test.ts"
+  ],
+  "head": "623ae6be57691f714a5ce641ea4c6da20388eef2",
+  "startedAt": "2026-10-21T07:19:43.6401520Z",
+  "node": "v24.15.0"
+}

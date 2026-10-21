@@ -1,4 +1,4 @@
-import { h, type TargetedKeyboardEvent, type TargetedPointerEvent } from "preact";
+import { Fragment, h, type TargetedKeyboardEvent, type TargetedPointerEvent } from "preact";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import { Icon } from "@pakka/webui/components";
 import type { WebInterfaceProps } from "@pakka/webui/ui";
@@ -23,7 +23,8 @@ const moveOffsets: Readonly<Record<string, readonly [number, number]>> = {
 };
 const viewPrefix = "pakka.mas-board.view.v2";
 const resourceKey = (ref: WorkbenchMember["ref"]) => JSON.stringify([ref.sessionId, ref.conversationId]);
-const stylesheet = () => h("link", { rel: "stylesheet", href: new URL("board.css", import.meta.url).href });
+const stylesheet = (handlers: { onLoad: () => void; onError: () => void }) =>
+	h("link", { rel: "stylesheet", href: new URL("board.css", import.meta.url).href, ...handlers });
 const storedString = (key: string, fallback: string) => {
 	try {
 		return localStorage.getItem(key) ?? fallback;
@@ -201,19 +202,29 @@ function AgentCard({
 /** Relationship and exchange projections are read-only; member controls remain in MemberPanel. */
 export function GraphBoard({ context }: WebInterfaceProps) {
 	const [snapshot, setSnapshot] = useState<WorkbenchView | null>(null);
+	const [styleState, setStyleState] = useState<"loading" | "ready" | "failed">("loading");
 	useEffect(
 		() => context.subscribe("view", {}, (value) => setSnapshot(readBoard(value)), { intervalMs: 700 }),
 		[context],
 	);
-	if (!snapshot)
+	// Keep the same link mounted across snapshot/loading transitions. Mounting
+	// controls first can move them between pointer measurement and native press.
+	const styleLink = stylesheet({
+		onLoad: () => setStyleState("ready"),
+		onError: () => setStyleState("failed"),
+	});
+	if (styleState === "failed")
 		return h(
-			"section",
-			{ class: "board mas-board graph-board" },
-			stylesheet(),
-			h("p", null, "Loading team…"),
+			Fragment,
+			null,
+			styleLink,
+			h("p", { role: "alert" }, "Team appearance could not load. Refresh to try again."),
 		);
+	if (styleState !== "ready")
+		return h(Fragment, null, styleLink, h("p", { role: "status" }, "Loading team appearance…"));
+	if (!snapshot) return h(Fragment, null, styleLink, h("p", { role: "status" }, "Loading team…"));
 	const viewKey = `${viewPrefix}:${JSON.stringify([context.extension, context.person.id, snapshot.sessionId])}`;
-	return h(GraphView, { key: viewKey, viewKey, context, snapshot });
+	return h(Fragment, null, styleLink, h(GraphView, { key: viewKey, viewKey, context, snapshot }));
 }
 
 function GraphView({
@@ -1164,7 +1175,6 @@ function GraphView({
 	return h(
 		"section",
 		{ class: "board mas-board graph-board", "aria-label": "MAS team" },
-		stylesheet(),
 		h("header", { class: "board-head" }, heading, tabs, viewOptions),
 		screen === "relationships" ? relationshipScreen : historyScreen,
 	);

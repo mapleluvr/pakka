@@ -1,0 +1,8 @@
+
+> @pakka/mas-devpack@0.2.0 build
+> tsc -p tsconfig.json
+
+
+> @pakka/mas-devpack@0.2.0 build:webui
+> tsc -p tsconfig.webui.json && node scripts/write-manifest.mjs
+

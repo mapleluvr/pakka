@@ -1,0 +1,29 @@
+✔ MAS facet removal: the fixed approved profile set reopens, explicit owner configuration removes current tools and preserves original history/receipt (400.9964ms)
+✔ MAS Board: busy native steer/follow-up and confirmed abort keep the persistent member (2316.5443ms)
+✔ MAS Agent controls are a separate dismissible sheet at 1440x900 (1946.6557ms)
+✔ MAS Agent controls are a separate dismissible sheet at 360x600 (2444.5145ms)
+✔ MAS Agent controls are a separate dismissible sheet at 390x650 (2450.4746ms)
+✔ MAS retired Agents can be hidden and restored across reload without losing exchanges or history (2328.2082ms)
+✔ MAS controls preserve a lost-response operation across panel reopen and reconcile without resending (1697.5253ms)
+✔ MAS Board: server-filtered mobile reader; removing UI preserves admitted work, members, history and normal reopen (3721.0758ms)
+✔ MAS Board: public plugin observes real model-created child and human controls retain its native lifetime/owner (3391.8898ms)
+✔ MAS frontend adoption: one workspace header, Graph/Activity/Agents and contextual inspector (2234.598ms)
+✔ MAS resources: common Conversation navigation preserves MAS ownership, model admission and current read scope (314.5944ms)
+✔ Team waits for its stylesheet and fails closed when it is loaded (1692.0724ms)
+✔ Team waits for its stylesheet and fails closed when it is failed (1313.6363ms)
+✔ Home create lost before-send: navigation and reconciliation never replace an uncertain admission (1370.424ms)
+✔ Home create lost after-commit: navigation and reconciliation never replace an uncertain admission (1597.5428ms)
+✔ Pocket hooks busy product: native queued input survives completed HTTP and extension disable while new ingress is refused (419.6756ms)
+✔ Pocket hooks recovery: lost response is checked read-only after panel reopen without creating another hook (1877.772ms)
+✔ Pocket hooks recovery: lost handler is checked read-only after panel reopen without creating another hook (1646.8133ms)
+✔ Pocket hooks mobile operator: generic setup fits the real phone view without persisting its secret address or triggering a model (2766.6573ms)
+ℹ D:\Projects\kappa\migration-worktrees\pakka-devin-ui\artifacts\devin-r2\styles-impact-001\hook-screenshots
+✔ Conversation configuration browser: compact model picker and title-only directory navigation remain independent on 3:5 mobile (2948.5804ms)
+ℹ tests 20
+ℹ suites 0
+ℹ pass 20
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 51670.2547
