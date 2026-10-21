@@ -1,0 +1,35 @@
+{
+  "roundTripVerified": true,
+  "linksNotFollowed": true,
+  "overwriteRefused": true,
+  "runs": [
+    {
+      "prefix": "docs/plans",
+      "status": 0,
+      "expectedStatus": 0,
+      "stdout": "{\r\n  \"staging\": \"D:\\\\Projects\\\\kappa\\\\backups\\\\pakka-1021\\\\restore-proof-20261021\",\r\n  \"restoredFiles\": 4,\r\n  \"linksNotRecreated\": []\r\n}\r\n",
+      "stderr": ""
+    },
+    {
+      "prefix": "artifacts/devin-adoption-green-1.log",
+      "status": 0,
+      "expectedStatus": 0,
+      "stdout": "{\r\n  \"staging\": \"D:\\\\Projects\\\\kappa\\\\backups\\\\pakka-1021\\\\restore-proof-20261021\",\r\n  \"restoredFiles\": 1,\r\n  \"linksNotRecreated\": []\r\n}\r\n",
+      "stderr": ""
+    },
+    {
+      "prefix": "artifacts/devin-r2/adapted-001/pocket-browser-xxDfPL/profile/AppData/Local/Microsoft/Windows/INetCache/Content.IE5",
+      "status": 0,
+      "expectedStatus": 0,
+      "stdout": "{\r\n  \"staging\": \"D:\\\\Projects\\\\kappa\\\\backups\\\\pakka-1021\\\\restore-proof-20261021\",\r\n  \"restoredFiles\": 0,\r\n  \"linksNotRecreated\": [\r\n    {\r\n      \"path\": \"artifacts/devin-r2/adapted-001/pocket-browser-xxDfPL/profile/AppData/Local/Microsoft/Windows/INetCache/Content.IE5\",\r\n      \"type\": \"link\",\r\n      \"target\": \"\\\\\\\\?\\\\D:\\\\Projects\\\\kappa\\\\migration-worktrees\\\\pakka-devin-ui\\\\artifacts\\\\devin-r2\\\\adapted-001\\\\pocket-browser-xxDfPL\\\\profile\\\\AppData\\\\Local\\\\Microsoft\\\\Windows\\\\INetCache\\\\IE\"\r\n    }\r\n  ]\r\n}\r\n",
+      "stderr": ""
+    },
+    {
+      "prefix": "docs/plans",
+      "status": 1,
+      "expectedStatus": 1,
+      "stdout": "",
+      "stderr": "Traceback (most recent call last):\r\n  File \"D:\\Projects\\kappa\\backups\\pakka-1021\\cleanup-20261021-212301\\operations\\restore.py\", line 48, in <module>\r\n    with (base/'before'/record['path']).open('rb') as stream: verify_and_write(stream, record)\r\n                                                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\r\n  File \"D:\\Projects\\kappa\\backups\\pakka-1021\\cleanup-20261021-212301\\operations\\restore.py\", line 32, in verify_and_write\r\n    dest = output_path(record['path'])\r\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\r\n  File \"D:\\Projects\\kappa\\backups\\pakka-1021\\cleanup-20261021-212301\\operations\\restore.py\", line 27, in output_path\r\n    if dest.exists() or dest.is_symlink(): raise RuntimeError('Refusing to overwrite: ' + str(dest))\r\n                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\r\nRuntimeError: Refusing to overwrite: D:\\Projects\\kappa\\backups\\pakka-1021\\restore-proof-20261021\\docs\\plans\\DEVIN-FRONTEND-ADOPTION-R2.md\r\n"
+    }
+  ]
+}

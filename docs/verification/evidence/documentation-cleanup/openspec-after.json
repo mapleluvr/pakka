@@ -1,0 +1,123 @@
+{
+  "items": [
+    {
+      "id": "adopt-devin-frontend",
+      "type": "change",
+      "valid": true,
+      "issues": [],
+      "durationMs": 43
+    },
+    {
+      "id": "authenticated-mas-apps",
+      "type": "spec",
+      "valid": false,
+      "issues": [
+        {
+          "level": "WARNING",
+          "path": "requirements[3]",
+          "message": "Requirement text is very long (>500 characters). Move examples and edge cases into scenarios, or split it into separate requirements that each state one behavior."
+        }
+      ],
+      "durationMs": 5
+    },
+    {
+      "id": "conversation-runtime",
+      "type": "spec",
+      "valid": true,
+      "issues": [],
+      "durationMs": 1
+    },
+    {
+      "id": "integrated-mas-product",
+      "type": "spec",
+      "valid": false,
+      "issues": [
+        {
+          "level": "WARNING",
+          "path": "requirements[2]",
+          "message": "Requirement text is very long (>500 characters). Move examples and edge cases into scenarios, or split it into separate requirements that each state one behavior."
+        }
+      ],
+      "durationMs": 0
+    },
+    {
+      "id": "mas-board-relationship-workbench",
+      "type": "change",
+      "valid": true,
+      "issues": [],
+      "durationMs": 46
+    },
+    {
+      "id": "mas-devpack",
+      "type": "spec",
+      "valid": true,
+      "issues": [],
+      "durationMs": 0
+    },
+    {
+      "id": "optional-dynamite-product",
+      "type": "spec",
+      "valid": true,
+      "issues": [],
+      "durationMs": 1
+    },
+    {
+      "id": "organize-project-documentation",
+      "type": "change",
+      "valid": true,
+      "issues": [],
+      "durationMs": 40
+    },
+    {
+      "id": "pakka-pocket-webui",
+      "type": "change",
+      "valid": true,
+      "issues": [],
+      "durationMs": 68
+    },
+    {
+      "id": "recoverable-multi-session",
+      "type": "spec",
+      "valid": false,
+      "issues": [
+        {
+          "level": "WARNING",
+          "path": "requirements[2]",
+          "message": "Requirement text is very long (>500 characters). Move examples and edge cases into scenarios, or split it into separate requirements that each state one behavior."
+        }
+      ],
+      "durationMs": 0
+    },
+    {
+      "id": "same-session-mas",
+      "type": "spec",
+      "valid": true,
+      "issues": [],
+      "durationMs": 0
+    }
+  ],
+  "summary": {
+    "totals": {
+      "items": 11,
+      "passed": 8,
+      "failed": 3
+    },
+    "byType": {
+      "change": {
+        "items": 4,
+        "passed": 4,
+        "failed": 0
+      },
+      "spec": {
+        "items": 7,
+        "passed": 4,
+        "failed": 3
+      }
+    }
+  },
+  "version": "1.0",
+  "root": {
+    "path": "D:\\Projects\\kappa\\migration-worktrees\\pakka-devin-ui",
+    "source": "nearest"
+  }
+}

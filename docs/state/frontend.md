@@ -1,5 +1,7 @@
 # 前端交互
 
+详细场景见 [devin-frontend spec](../../openspec/changes/adopt-devin-frontend/specs/devin-frontend/spec.md)，形成记录及全部关联变更见[采用摘要](../changes/devin-frontend-adoption.md)。本页维护跨页面关系与细则映射，不记录验收进度。
+
 ## 基座与真实状态
 
 Pakka-Pocket 以 [Devin 参考](https://github.com/mapleluvr/devin-ui-comparison/tree/ed20cec0aef82daa22aa50da19597b7ba1607e02/clean-room/current)的页面结构、尺寸、留白、层级和交互为主体，把 Pakka 的 API、权限与真实状态绑定到事件和状态中。适配限于必要的产品字符串、元素和真实能力接入，不以保留另一套控件堆叠为前提改造参考壳层。

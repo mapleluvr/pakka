@@ -1,0 +1,10 @@
+{
+  "archive": "D:\\Projects\\kappa\\backups\\pakka-1021\\cleanup-20261021-212301\\stale-worktree.tar",
+  "archiveSha256": "7fc5f3b8d13a371d1e92dd99ac368ca86ad77d55279856d3b27b8a8a38b6b6aa",
+  "verifiedEntries": 95187,
+  "regularFiles": 76578,
+  "links": 12,
+  "sourceBytes": 845412440,
+  "removedRoots": 174,
+  "exceptions": []
+}

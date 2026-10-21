@@ -2,7 +2,7 @@
 
 > **Deprecated — 历史资料。** 本文保留当时的计划、试写或验证结论，供追溯其条件、版本和产物；现行使用与实施入口见 [当前产品状态](../../PAKKA-POCKET-STATUS.md) 与 [文档导航](../../README.md)。deprecated 指本页作为当前指引的地位，历史事实、验收结果及尚有效的约束仍按原范围保留。分类与迁移说明见 [历史资料索引](../README.md)。
 
-本页保存 Linux 各轮候选、诊断和验收记录，包含当时仍待完成而后来已补齐的项目。用户已确认本机五项验收；当前产品、远程／跨平台和 P6 交付范围统一见 [状态入口](../../PAKKA-POCKET-STATUS.md)。后台 GUI 验收仍暂停。历史通过／失败与相应版本保留，Windows、真实设备公网 FCM 等测量独立记录。计划和操作协议见 [迁移计划](../../plans/PAKKA-POCKET-PLAN.md)、[P0 action ledger](../webui/PAKKA-POCKET-P0.md#3-页面与-action-ledger) 及 [分阶段协议](../../development/WEBUI-DEVELOPMENT.md#10-分阶段-computer-use-实操验收)。
+本页保存 Linux 各轮候选、诊断和验收记录，包含当时仍待完成而后来已补齐的项目。用户已确认本机五项验收；当前产品、远程／跨平台和 P6 交付范围统一见 [状态入口](../../PAKKA-POCKET-STATUS.md)。后台 GUI 验收仍暂停。历史通过／失败与相应版本保留，Windows、真实设备公网 FCM 等测量独立记录。计划和操作协议见 [迁移计划（外置备份）](../../verification/DOCUMENTATION-CLEANUP.md#备份与恢复)、[P0 action ledger](../webui/PAKKA-POCKET-P0.md#3-页面与-action-ledger) 及 [分阶段协议](../../development/WEBUI-DEVELOPMENT.md#10-分阶段-computer-use-实操验收)。
 
 ## 用户授权的 main 同步
 

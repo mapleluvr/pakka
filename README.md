@@ -17,7 +17,7 @@ M1–M6 核心迁移与可选配对保留各自范围，见[应用 API](docs/gui
 - 使用：[WebUI 启动与操作](docs/guides/WEBUI-GUIDE.md) · [当前产品状态](docs/PAKKA-POCKET-STATUS.md) · [MAS 应用装配](docs/guides/MAS-APPLICATION-API.md)
 - 接口：[公开 API 参考](docs/reference/README.md) · [Headless 产品支持](docs/guides/MAS-PRODUCT-SUPPORT.md)
 - 开发：[架构、仓库与扩展规范](docs/development/README.md) · [验证工作方式](docs/development/VERIFICATION.md)
-- 预期与来路：[state](docs/state/README.md) · [changes](docs/changes/README.md) · [旧计划索引](docs/plans/README.md)
+- 预期与来路：[state](docs/state/README.md) · [changes](docs/changes/README.md) · [完整 OpenSpec 变更](openspec/changes/)
 - 证据：[验证导航](docs/verification/README.md) · [Deprecated 历史资料](docs/archive/README.md)
 
 ## 开发与验证

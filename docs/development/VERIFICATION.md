@@ -43,7 +43,7 @@ openspec validate mas-board-relationship-workbench --strict --no-interactive --j
 openspec validate --all --strict --no-interactive --json
 ```
 
-CLI 不可用则记录 BLOCKED，不临时改依赖或把旧通过结果当本轮输出。旧整理报告中的基础规范告警见[历史记录](../verification/DOCUMENTATION-REORGANIZATION-R0.md)，它不是今天的检查结果。
+CLI 不可用则记录 BLOCKED，不临时改依赖或把旧通过结果当本轮输出。OpenSpec 已安装；当前 strict 结果及保留的历史长度告警见[整理验证](../verification/DOCUMENTATION-CLEANUP.md)。原整理报告已备份，不以旧数字代替当前执行结果。
 
 ## 独立实操与审查
 

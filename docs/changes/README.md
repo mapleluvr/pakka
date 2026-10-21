@@ -1,17 +1,16 @@
-# 预期形成与变更记录
+# 变更摘要与完整 OpenSpec 引用
 
-这里保存采用某项预期的条件、依据和实际考虑过的选择；当前声明见 [state](../state/README.md)，实施进度见[状态](../PAKKA-POCKET-STATUS.md)。
+完整的形成条件、选择、设计、任务与场景由 [OpenSpec](../../openspec/changes/)维护；本目录只提供摘要和完整引用，不复制第二套变更正文。当前预期见 [state](../state/README.md)，实际差距见[实施状态](../PAKKA-POCKET-STATUS.md)。
 
-## 当前记录
+- [文档系统](2026-10-21-documentation-system.md)：state-evo、OpenSpec 主记录和备份后清理。
+- [Devin 前端](devin-frontend-adoption.md)：原型为主体、真实接口、Team 和加载边界；完整验收未通过。
+- [WebUI 与 MAS](webui-and-mas.md)：既有两项活动 change 的完整 artifacts/spec 入口。
+- [核心集成](core-integration-lineage.md)：七项归档 change、所有 delta 和主 spec。
 
-- [文档分工与初始 state 的形成](2026-10-21-documentation-system.md)：用户要求、现有材料映射、本轮取舍和维护关系。
-- [Devin 前端采用](devin-frontend-adoption.md)：R1/R2 主从关系调整、真实接口接入和 Team 新设计的来路。
-- [核心集成阶段入口](core-integration-lineage.md)：从架构页分离的 M1–M6、配对和支持边界背景。
+## 维护约定
 
-## 沿用的记录位置
+每项摘要必须链接确切 change 目录、proposal、已有 design、tasks、全部 delta spec 和有关主 spec；尚无主 spec 时写明，不虚构已归档状态。多 change 摘要逐项列全。归档/改名同时更新摘要及 state 映射。
 
-- [OpenSpec 活动 changes](../../openspec/changes/)保存已有领域提案、设计、场景 delta 和任务；[归档 changes](../../openspec/changes/archive/)保留完成的核心变更。按原生命周期继续使用，不复制成第二份记录。
-- [MAS 设计旧稿](../MAS-BOARD-DESIGN.md)和[复核记录](../archive/reviews/MAS-BOARD-REVISION.md)保存试写、实体推演和构造示例，不作为当前前端规格。
-- [历史归档](../archive/README.md)与[固定验证](../verification/README.md)分别保存来源/旧阶段与实际候选结果；兼容性账本保持追加式。
+初始形成、采用补充/替换/撤销的详细理由写入相应 OpenSpec change，并同步 state 与工作安排。实现顺序、局部修复和测试进度留在 tasks/active-plan/实施状态，不为每次活动另造预期调整。
 
-一次有意义的预期形成、补充、替换或撤销应记录来源、涉及的声明、当时条件和采用理由，区分用户要求、既有约定、设计推导和观察。普通实现顺序、修复及测试进度由 active-plan/实施状态承接，不为每次活动制造决定。
+旧草稿和探针已按[清理记录](../verification/DOCUMENTATION-CLEANUP.md)外置备份；固定阶段验收、当前候选与兼容性账本保持各自证据角色。

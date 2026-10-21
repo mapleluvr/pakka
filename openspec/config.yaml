@@ -1,32 +1,29 @@
 schema: spec-driven
 
-# Project context (optional)
-# This is shown to AI when creating artifacts.
-# Add your tech stack, conventions, style guides, domain knowledge, etc.
-# Example:
-#   context: |
-#     Tech stack: TypeScript, React, Node.js
-#     We use conventional commits
-#     Domain: e-commerce platform
+context: |
+  Pakka is a TypeScript/Node headless Pi integration with an optional WebUI.
+  Start at docs/OVERVIEW.md and the relevant docs/state mappings.
+  OpenSpec owns complete proposal/design/tasks/specs and archive lifecycle.
+  docs/changes only summarizes and fully cites every related change and spec.
+  State describes expectations; status and fixed evidence describe actual results.
+  Public Pi SDK only; mutable native objects stay inside the durable adapter.
+  Preserve original request identity, native steering and fail-closed unknown effects.
+  Tests use real Pi and deterministic local providers, never user credentials.
 
-# Per-artifact rules (optional)
-# Add custom rules for specific artifacts.
-# Example:
-#   rules:
-#     proposal:
-#       - Keep proposals under 500 words
-#       - Always include a "Non-goals" section
-#     tasks:
-#       - Break tasks into chunks of max 2 hours
+rules:
+  proposal:
+    - Separate operator requirements, prior agreements, design reasoning and observations.
+    - Do not infer acceptance or supported scope from implementation progress.
+  design:
+    - Preserve actual decision conditions and source/evidence references; do not invent earlier reasoning.
+  specs:
+    - Follow docs/state ownership mappings and retain exact authority and unknown-effect contracts.
+    - Never trim or split existing normative text solely to eliminate validation warnings.
+  tasks:
+    - Keep missing, failing, cancelled and BLOCKED gates visible with candidate identity.
 
-# Per-operation guidance (optional)
-# Add advisory guidance for how apply and archive work should be conducted.
-# This is separate from artifact rules above.
-# Example:
-#   operations:
-#     apply:
-#       guidance:
-#         - Keep test summaries concise
-#     archive:
-#       guidance:
-#         - Summarize the archive outcome before finishing
+operations:
+  archive:
+    guidance:
+      - Update docs/changes summaries to cite the archived change and every delta/resulting main spec.
+      - Do not archive incomplete product acceptance just because implementation tasks are checked.

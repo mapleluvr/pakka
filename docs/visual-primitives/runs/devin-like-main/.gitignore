@@ -1,9 +1,0 @@
-*
-!.gitignore
-!final/
-final/*
-!final/*.md
-!final/*.png
-!final/*.json
-!final/*.log
-!final/.gitattributes

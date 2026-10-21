@@ -2,7 +2,7 @@
 
 ## Purpose
 
-TBD - created by archiving change optional-dynamite-product. Update Purpose after archive.
+Define explicit host-selected Dynamite support for the accepted optional product pairing, retaining native invocation, authority, identity and budgets without enabling the strategy by default or implying worker provisioning.
 
 ## Requirements
 

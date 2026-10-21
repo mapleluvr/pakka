@@ -38,4 +38,4 @@ Exchange filters 支持方向、模式、发起者和状态，Search 筛选可�
 
 使用 [DevPack API](../reference/MAS-DEVPack-API.md)的可选 facets 和 `masWorkbenchService`；模型工具由批准 profile 单独启用。只停用 WebUI 不删除 members、history 或已接纳工作。
 
-普通 Conversation 归档/恢复与 MAS retirement 不是物理删除。[MAS state](../state/mas.md)维护资源和观测关系；[设计旧稿](../MAS-BOARD-DESIGN.md)只作来路，[既有实施记录](../verification/MAS-BOARD-R1.md)保留其版本证据，不能代替 R2 的结果。
+普通 Conversation 归档/恢复与 MAS retirement 不是物理删除。[MAS state](../state/mas.md)维护资源和观测关系；[OpenSpec 设计](../../openspec/changes/mas-board-relationship-workbench/design.md)只作来路，[既有实施记录](../verification/MAS-BOARD-R1.md)保留其版本证据，不能代替 R2 的结果。

@@ -1,25 +1,47 @@
-# 核心集成的阶段记录入口
+# 核心集成：归档变更完整索引
 
-本页将文档分工接入前 `ARCHITECTURE.md` 的阶段说明移出当前技术契约。来源为 `e7b7d7c:docs/development/ARCHITECTURE.md`；其中 accepted/failed/M1–M6 等词保留原来配对和范围，不构成新验收。
+M1–M6 与后来可选 Dynamite 配对保留各自 headless/产物范围；不表示当前 WebUI 已验收。完整形成记录由下列 OpenSpec 归档维护，本页不再复制原架构页正文。当前契约见[架构](../development/ARCHITECTURE.md)，固定事实见[历史验收](../archive/README.md)。
 
-运行契约见[架构](../development/ARCHITECTURE.md)，当前工作见[OVERVIEW](../OVERVIEW.md)，阶段原始记录仍在原位置。
+## M1：Conversation 资源与 authority
 
-## 原架构页的集成背景
+- [change 目录](../../openspec/changes/archive/2026-10-12-conversation-scoped-runtime/)、[proposal](../../openspec/changes/archive/2026-10-12-conversation-scoped-runtime/proposal.md)、[design](../../openspec/changes/archive/2026-10-12-conversation-scoped-runtime/design.md)、[tasks](../../openspec/changes/archive/2026-10-12-conversation-scoped-runtime/tasks.md)。
+- 全部 delta：[conversation-runtime](../../openspec/changes/archive/2026-10-12-conversation-scoped-runtime/specs/conversation-runtime/spec.md)。
+- 相关主 spec：[conversation-runtime](../../openspec/specs/conversation-runtime/spec.md)。
 
-Architecture / core contracts
+## M2：同 Session MAS
 
-This document describes the single-Conversation compatibility host and the managed multi-Conversation runtime contract. Current package boundaries are in [MONOREPO-CONVENTIONS.md](../development/MONOREPO-CONVENTIONS.md); application usage starts at the [documentation index](../README.md) and [WebUI guide](../guides/WEBUI-GUIDE.md). The core migration plan is [historical background](../archive/plans/MONOREPO-MIGRATION-PLAN.md). The managed bootstrap API is described in [RUNTIME-API.md](../reference/RUNTIME-API.md); Same-Session A2A is accepted in M2. M3's controlled [cross-Session broker and worker app](../reference/BROKER-API.md) are accepted with explicit [support limits and review notes](../archive/acceptance/MIGRATION-M3-ACCEPTANCE.md); agent-facing [DevPack](../reference/MAS-DEVPack-API.md) is accepted with [explicit notes](../archive/acceptance/MIGRATION-M4-ACCEPTANCE.md); M5's [authenticated loopback applications](../guides/MAS-APPLICATION-API.md) are accepted with [explicit notes](../archive/acceptance/MIGRATION-M5-ACCEPTANCE.md). M6's [integrated optional product](../guides/MAS-PRODUCT-SUPPORT.md) is accepted with [explicit notes and fixed artifacts](../archive/acceptance/MIGRATION-M6-ACCEPTANCE.md). The package remains `@pakka/agent`.
+- [change 目录](../../openspec/changes/archive/2026-10-13-same-session-mas/)、[proposal](../../openspec/changes/archive/2026-10-13-same-session-mas/proposal.md)、[design](../../openspec/changes/archive/2026-10-13-same-session-mas/design.md)、[tasks](../../openspec/changes/archive/2026-10-13-same-session-mas/tasks.md)。
+- 全部 delta：[same-session-mas](../../openspec/changes/archive/2026-10-13-same-session-mas/specs/same-session-mas/spec.md)。
+- 相关主 spec：[same-session-mas](../../openspec/specs/same-session-mas/spec.md)。
 
-## Core M1–M6 integration background
+## M3：跨 Session／worker
 
-The following records the accepted headless migration slices and their limits. Current WebUI capabilities and outstanding work are tracked in the [product status](../PAKKA-POCKET-STATUS.md).
+- [change 目录](../../openspec/changes/archive/2026-10-13-recoverable-multi-session/)、[proposal](../../openspec/changes/archive/2026-10-13-recoverable-multi-session/proposal.md)、[design](../../openspec/changes/archive/2026-10-13-recoverable-multi-session/design.md)、[tasks](../../openspec/changes/archive/2026-10-13-recoverable-multi-session/tasks.md)。
+- 全部 delta：[recoverable-multi-session](../../openspec/changes/archive/2026-10-13-recoverable-multi-session/specs/recoverable-multi-session/spec.md)。
+- 相关主 spec：[recoverable-multi-session](../../openspec/specs/recoverable-multi-session/spec.md)。
 
-- The historical fixed-artifact Durable × Dynamite pairing remains failed; [functional targets and resumption conditions](../archive/investigations/DEFERRED-DYNAMITE-COMPATIBILITY.md) are retained. After accepted M6, the explicit `dynamite@0.2.1 × agent@0.5.0` optional static-member product pair is [accepted with notes and fixed identity](../verification/DYNAMITE-PRODUCT-ACCEPTANCE.md), after complete selected review and the source-manifest omission correction. [Host-selected installation](../reference/DYNAMITE-PRODUCT-API.md) stays in the server composition root; the agent/MAS do not depend on the strategy, and default activation remains off.
-- M1 provides Conversation-scoped authority, projections, artifacts, aggregate Session budgets, one-writer claims and declared failure handling in `@pakka/agent@0.2.0`. Managed reopen does not adopt legacy journal data implicitly; explicit `migrateLegacy` maps only an exact closed unique ownerless root with an audited prefix/namespace receipt and retained spent budgets. Terminal generation sidecars are reclaimed, so historical primary spending is conservatively reserved per generation marker, not reconstructed as exact HTTP counts. A writer claim surviving a crash is never silently stolen in M1.
-- M2 provides same-Session MAS membership, owner/capability policy, native A2A delivery, task lifetimes and unknown persistence through `@pakka/mas@0.1.0`; see [M2 acceptance](../archive/acceptance/MIGRATION-M2-ACCEPTANCE.md). M2 remains the native target admission path for cross-Session routing.
-- M3 adds a bounded durable coordinator store, recoverable enrollment/outbox, existing-Session transport and an actual private worker app with distinct processes. Worker presets and storage addresses are trusted bootstrap inputs; one storage still has one writer. Terminal receipt outcomes are monotonic; admission dedup does not imply exactly-once external effects. M3 is accepted with notes, not evidence for remote RPC, sandboxing or crash-claim theft; see [M3 acceptance](../archive/acceptance/MIGRATION-M3-ACCEPTANCE.md).
-- M4 adds optional MAS DevPack tools/instructions via public native extension registration: each call composes live client and invocation checks. Approved existing/new Session requests reserve fixed durable slots, never arbitrary endpoint/storage/configuration; private workers only enable approved local profiles with descendant grant ceilings. M4 is accepted with [documented notes](../archive/acceptance/MIGRATION-M4-ACCEPTANCE.md); see [DevPack API](../reference/MAS-DEVPack-API.md). M5 provides the authenticated loopback protocol/client and server/CLI. The Web workbench has its own [extension and transport contracts](../development/WEBUI-DEVELOPMENT.md).
+## M4：DevPack
 
-- M5 extracts browser-safe protocol/client and adds a real loopback server bootstrap and operator CLI. Authority stays at the server/adapter boundary; four confirmed local pre-effect refusals are typed, opaque callback/persistence/late authority failures stay unknown. Reconnect uses scoped snapshot/receipts, not global revision or automatic mutation replay. Two bounded reviews converge BLOCK → fixed → OK with notes; retained correlation/provenance/config-validation limits are in [M5 acceptance](../archive/acceptance/MIGRATION-M5-ACCEPTANCE.md). M6 now verifies the optional product executable, four native lifetimes and retained model descendants on normal reopen. Product/private-worker wiring shares invocation binding and ancestor grant ceilings; unselected profiles advertise no inherited DevPack tools. Fixed installed-product evidence and remaining trusted-config hardening notes are in [M6 acceptance](../archive/acceptance/MIGRATION-M6-ACCEPTANCE.md); [support limits](../guides/MAS-PRODUCT-SUPPORT.md) distinguish RPC from trusted multi-Session/worker composition. GUI was outside that M6 gate; the later Web workbench is documented separately. Deferred Dynamite resumed against this accepted core baseline.
+- [change 目录](../../openspec/changes/archive/2026-10-13-mas-devpack/)、[proposal](../../openspec/changes/archive/2026-10-13-mas-devpack/proposal.md)、[design](../../openspec/changes/archive/2026-10-13-mas-devpack/design.md)、[tasks](../../openspec/changes/archive/2026-10-13-mas-devpack/tasks.md)。
+- 全部 delta：[mas-devpack](../../openspec/changes/archive/2026-10-13-mas-devpack/specs/mas-devpack/spec.md)、[same-session-mas](../../openspec/changes/archive/2026-10-13-mas-devpack/specs/same-session-mas/spec.md)。
+- 相关主 spec：[mas-devpack](../../openspec/specs/mas-devpack/spec.md)、[same-session-mas](../../openspec/specs/same-session-mas/spec.md)。
 
-Full preprocessing, bulk legacy import and additional per-tool/result contracts remain separately scoped product work. These are unresolved boundaries, not features implied by this host component; the monorepo migration does not authorize shared-storage multi-process writers.
+## M5：认证应用
+
+- [change 目录](../../openspec/changes/archive/2026-10-14-authenticated-mas-apps/)、[proposal](../../openspec/changes/archive/2026-10-14-authenticated-mas-apps/proposal.md)、[design](../../openspec/changes/archive/2026-10-14-authenticated-mas-apps/design.md)、[tasks](../../openspec/changes/archive/2026-10-14-authenticated-mas-apps/tasks.md)。
+- 全部 delta：[authenticated-mas-apps](../../openspec/changes/archive/2026-10-14-authenticated-mas-apps/specs/authenticated-mas-apps/spec.md)、[recoverable-multi-session](../../openspec/changes/archive/2026-10-14-authenticated-mas-apps/specs/recoverable-multi-session/spec.md)。
+- 相关主 spec：[authenticated-mas-apps](../../openspec/specs/authenticated-mas-apps/spec.md)、[recoverable-multi-session](../../openspec/specs/recoverable-multi-session/spec.md)。
+
+## M6：集成产品
+
+- [change 目录](../../openspec/changes/archive/2026-10-14-integrated-mas-product/)、[proposal](../../openspec/changes/archive/2026-10-14-integrated-mas-product/proposal.md)、[design](../../openspec/changes/archive/2026-10-14-integrated-mas-product/design.md)、[tasks](../../openspec/changes/archive/2026-10-14-integrated-mas-product/tasks.md)。
+- 全部 delta：[authenticated-mas-apps](../../openspec/changes/archive/2026-10-14-integrated-mas-product/specs/authenticated-mas-apps/spec.md)、[integrated-mas-product](../../openspec/changes/archive/2026-10-14-integrated-mas-product/specs/integrated-mas-product/spec.md)。
+- 相关主 spec：[authenticated-mas-apps](../../openspec/specs/authenticated-mas-apps/spec.md)、[integrated-mas-product](../../openspec/specs/integrated-mas-product/spec.md)。
+
+## 显式可选 Dynamite 配对
+
+- [change 目录](../../openspec/changes/archive/2026-10-15-optional-dynamite-product/)、[proposal](../../openspec/changes/archive/2026-10-15-optional-dynamite-product/proposal.md)、[design](../../openspec/changes/archive/2026-10-15-optional-dynamite-product/design.md)、[tasks](../../openspec/changes/archive/2026-10-15-optional-dynamite-product/tasks.md)。
+- 全部 delta：[integrated-mas-product](../../openspec/changes/archive/2026-10-15-optional-dynamite-product/specs/integrated-mas-product/spec.md)、[optional-dynamite-product](../../openspec/changes/archive/2026-10-15-optional-dynamite-product/specs/optional-dynamite-product/spec.md)。
+- 相关主 spec：[integrated-mas-product](../../openspec/specs/integrated-mas-product/spec.md)、[optional-dynamite-product](../../openspec/specs/optional-dynamite-product/spec.md)。
+
+历史失败 Dynamite 配对仍见[延期与失败记录](../archive/investigations/DEFERRED-DYNAMITE-COMPATIBILITY.md)，后来有界支持见[固定配对验收](../verification/DYNAMITE-PRODUCT-ACCEPTANCE.md)；两者不相互覆盖。

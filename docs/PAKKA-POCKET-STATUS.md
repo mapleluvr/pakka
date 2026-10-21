@@ -1,6 +1,6 @@
 # Pakka-Pocket 实施状态与阅读入口
 
-本页记录实现与验证，不定义产品目标。目标从 [state](state/README.md)读取，当前工作从 [OVERVIEW](OVERVIEW.md)进入。文档分工前的完整状态已保存在[历史快照](archive/status/PAKKA-POCKET-PRE-STATE-EVO.md)，原阶段和用户确认仍保留各自身份。
+本页记录实现与验证，不定义产品目标。目标从 [state](state/README.md)读取，当前工作从 [OVERVIEW](OVERVIEW.md)进入。文档分工前的完整状态已按[清理记录](verification/DOCUMENTATION-CLEANUP.md#备份与恢复)外置备份，原阶段和用户确认仍保留各自身份。
 
 ## 1. 当前产品候选
 
@@ -8,7 +8,7 @@
 | ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 产品源码     | `6d359b1`，Devin 原型接口接入、真实 Conversation、Settings/palette、Team 三视图和样式就绪门禁                                                                          |
 | 产品证据     | `e7b7d7c` 归档；[R2 验证记录](verification/DEVIN-FRONTEND-R2.md)及[候选 004 交付复核](visual-primitives/runs/devin-frontend-r2-candidate-004/final/delivery-review.md) |
-| 本轮文档整理 | 只改变文档组织/使用指引；不是新产品候选，检查结果单列于[文档验证](verification/DOCUMENTATION-SYSTEM.md)                                                                |
+| 本轮文档整理 | 只改变文档组织/使用指引；不是新产品候选，检查结果单列于[整理验证](verification/DOCUMENTATION-CLEANUP.md)                                                               |
 | 使用         | [WebUI 指南](guides/WEBUI-GUIDE.md)、[Team 指南](guides/MAS-BOARD.md)                                                                                                  |
 | 完整交付     | **未通过**；未据本轮文档变化合并 main                                                                                                                                  |
 
@@ -30,7 +30,7 @@
 
 文档分工前保留的五项人工确认是：Webhook 创建/删除、干净项目分支创建/切换、Memory 提议/审批、面板关闭/刷新/重开，以及手机/键盘操作。用户还在 2026-10-18 的 r8 原数据恢复实例确认了独立控制弹层与退役节点隐藏/恢复。
 
-这些确认继续保留**当时版本与环境**的结论；详细来路见[原状态快照](archive/status/PAKKA-POCKET-PRE-STATE-EVO.md#2-用户已经确认的本机验收)和 [MAS 实施记录](verification/MAS-BOARD-R1.md)。它们不是用户已确认新 R2 界面的证据，也不替代当前独立 GUI 门禁。
+这些确认继续保留**当时版本与环境**的结论；详细来路见[原状态备份](verification/DOCUMENTATION-CLEANUP.md#备份与恢复)和 [MAS 实施记录](verification/MAS-BOARD-R1.md)。它们不是用户已确认新 R2 界面的证据，也不替代当前独立 GUI 门禁。
 
 独立模型/cwd、通知 r4、导航 r3、MAS r1–r8 等历史工程数字和外置证据位置保留在同一快照及原报告，不与候选 004 相加。
 
@@ -46,16 +46,16 @@
 
 ## 4. 仍有的工程与环境工作
 
-| 项目                   | 差距/条件                                                                                                                     |
-| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| 远程与跨设备           | LAN 第二设备、tailnet、真实公网通知、tunnel 全路径与跨平台测量仍按原记录补齐；本轮未复测                                      |
-| 普通 Conversation 删除 | 有归档/恢复和 MAS 退休；删除契约、保留策略及实现需单列，不以按钮改名完成                                                      |
-| 原范围闭合             | 多人、所有已采用服务和公共扩展仍在目标内；不因 R2 布局删除未核销能力                                                          |
-| OpenSpec 维护          | 旧基础规范告警有[历史记录](verification/DOCUMENTATION-REORGANIZATION-R0.md)；本轮工具可用性与检查结果见文档验证，不沿用旧通过 |
-| 最终交付               | 当前候选失败/阻塞需处理；所需证据、规范生命周期和同一交付身份仍须完成                                                         |
+| 项目                   | 差距/条件                                                                                                                                            |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 远程与跨设备           | LAN 第二设备、tailnet、真实公网通知、tunnel 全路径与跨平台测量仍按原记录补齐；本轮未复测                                                             |
+| 普通 Conversation 删除 | 有归档/恢复和 MAS 退休；删除契约、保留策略及实现需单列，不以按钮改名完成                                                                             |
+| 原范围闭合             | 多人、所有已采用服务和公共扩展仍在目标内；不因 R2 布局删除未核销能力                                                                                 |
+| OpenSpec 维护          | OpenSpec 1.14.3 已可运行；新变更与全量 strict 分别记录，旧长 requirement 原文不为消除警告被裁剪，见[整理验证](verification/DOCUMENTATION-CLEANUP.md) |
+| 最终交付               | 当前候选失败/阻塞需处理；所需证据、规范生命周期和同一交付身份仍须完成                                                                                |
 
 ## 5. 阅读与形成记录
 
 - [当前预期](state/README.md)、[采用来路](changes/README.md)。
-- [R2 接入记录](changes/devin-frontend-adoption.md)与 [MAS 设计旧稿](MAS-BOARD-DESIGN.md)。
+- [R2 接入记录](changes/devin-frontend-adoption.md)与 [MAS OpenSpec 设计](../openspec/changes/mas-board-relationship-workbench/design.md)。
 - [验证方法](development/VERIFICATION.md)、[固定证据导航](verification/README.md)。

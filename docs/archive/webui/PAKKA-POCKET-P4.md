@@ -2,7 +2,7 @@
 
 > **Deprecated — 历史资料。** 本文保留当时的计划、试写或验证结论，供追溯其条件、版本和产物；现行使用与实施入口见 [当前产品状态](../../PAKKA-POCKET-STATUS.md) 与 [文档导航](../../README.md)。deprecated 指本页作为当前指引的地位，历史事实、验收结果及尚有效的约束仍按原范围保留。分类与迁移说明见 [历史资料索引](../README.md)。
 
-本页记录 P4 的真实 MAS 插件消费和阶段门禁。Board 在 [P3 公共扩展宿主](PAKKA-POCKET-P3.md)中提供成员格子和操作面板；[当前状态](../../PAKKA-POCKET-STATUS.md)区分既有能力与验收范围。新的关系画布和交流记录见 [MAS Board 设计草案](../../MAS-BOARD-DESIGN.md)，属于后续实现。
+本页记录 P4 的真实 MAS 插件消费和阶段门禁。Board 在 [P3 公共扩展宿主](PAKKA-POCKET-P3.md)中提供成员格子和操作面板；[当前状态](../../PAKKA-POCKET-STATUS.md)区分既有能力与验收范围。新的关系画布和交流记录见 [MAS Board 原设计](../../../openspec/changes/mas-board-relationship-workbench/design.md)，属于后续实现。
 
 ## 包入口与独立选择
 
@@ -79,7 +79,7 @@ export default {
 
 ## 真实 Board 与权限
 
-Board 用公共导航页、`/team` 人工命令和资源 member panel，展示成员、管理来源、内部寿命、成员阶段及原投递回执。`WorkbenchMember.parent` 是 owner 匹配出的管理来源，不是创建事件；`view()` 的持久成员阶段与 `inspect()` 核对的原生 readiness 也分别保留。当前格子的 Available 表达成员可用性，实时 thinking／tool／reply 活动需要另一份观测，见 [设计稿的数据对应](../../MAS-BOARD-DESIGN.md#6-活动观测怎样得到)。布局采用固定来源 `pi-pocket@de612d5622cd` 的状态筛选、tile/detail 和窄屏交互，保留 MIT attribution；原 `SubagentsDoc`、courier/reporter/anchor、PiP authority 均未迁入。
+Board 用公共导航页、`/team` 人工命令和资源 member panel，展示成员、管理来源、内部寿命、成员阶段及原投递回执。`WorkbenchMember.parent` 是 owner 匹配出的管理来源，不是创建事件；`view()` 的持久成员阶段与 `inspect()` 核对的原生 readiness 也分别保留。当前格子的 Available 表达成员可用性，实时 thinking／tool／reply 活动需要另一份观测，见 [设计稿的数据对应](../../../openspec/changes/mas-board-relationship-workbench/design.md#6-活动观测怎样得到)。布局采用固定来源 `pi-pocket@de612d5622cd` 的状态筛选、tile/detail 和窄屏交互，保留 MIT attribution；原 `SubagentsDoc`、courier/reporter/anchor、PiP authority 均未迁入。
 
 读取先经过当前人类资源过滤，parent 不可见时也不回传其关系标识。查看、send、steer 和 manage 分开：viewer 无写控件且服务拒绝写操作；manage 还必须在可信 root-owner 归属链内。等待期间和实际受控效果时重新检查，不把 human admin 映射为任意 native owner。
 

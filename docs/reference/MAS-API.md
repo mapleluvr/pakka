@@ -1,6 +1,6 @@
 # Same-Session MAS API（`@pakka/mas@0.4.0`）
 
-当前服务消费 `@pakka/agent@0.5.0` 公开控制端口；同 Session 契约在 M2 已验收，M3 复用它作为跨 Session 的原生准入路径。调用方向为 composition root → MAS service → gate → Durable adapter。业务 agent 只接收冻结的 `MasClient`；`Mas`、`Runtime`、catalog、model endpoint、凭据和原始 Pi handles 留在受信任装配层。当前实现与验收范围见[产品状态](../PAKKA-POCKET-STATUS.md)；[历史迁移计划](../archive/plans/MONOREPO-MIGRATION-PLAN.md)保留阶段依赖及其来路。
+当前服务消费 `@pakka/agent@0.5.0` 公开控制端口；同 Session 契约在 M2 已验收，M3 复用它作为跨 Session 的原生准入路径。调用方向为 composition root → MAS service → gate → Durable adapter。业务 agent 只接收冻结的 `MasClient`；`Mas`、`Runtime`、catalog、model endpoint、凭据和原始 Pi handles 留在受信任装配层。当前实现与验收范围见[产品状态](../PAKKA-POCKET-STATUS.md)；[核心阶段摘要](../changes/core-integration-lineage.md)完整引用各次 OpenSpec change 和 spec。
 
 ## 使用
 

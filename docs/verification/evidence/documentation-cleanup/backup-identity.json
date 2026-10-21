@@ -1,0 +1,40 @@
+{
+  "baselineCommit": "dde60124ffd1b8dd900adb04283f725a6c6e6cf8",
+  "backupRoot": "D:\\Projects\\kappa\\backups\\pakka-1021\\cleanup-20261021-212301",
+  "verifiedAt": "2026-10-21T14:00:42.321Z",
+  "files": [
+    {
+      "path": "before-manifest.json",
+      "bytes": 143334,
+      "sha256": "5b65e2977aa276d9a09680fb76db30b27ddeed8df4ca00b0367c6defeee18a78"
+    },
+    {
+      "path": "supplemental-manifest.json",
+      "bytes": 3421,
+      "sha256": "2fb780f21e47322a7aaff78e14608b781811ae58f17e0872fdce566ec95e0334"
+    },
+    {
+      "path": "removed-documents.json",
+      "bytes": 17280,
+      "sha256": "680fe1ae868c8f87ce2225f31bfdbe40f0fd23d29b51a6747f88e7b571066bf0"
+    },
+    {
+      "path": "selection.json",
+      "bytes": 8443,
+      "sha256": "0f070e1adb5d673fef00d96e5e703faddca399a1ec7118b32019b0af5cac10f0"
+    },
+    {
+      "path": "stale-manifest.json",
+      "bytes": 22713552,
+      "sha256": "32fcfa152700805ad4168c2f5c4802a3528a2bc821ca2cd5958cf50983180fb3"
+    },
+    {
+      "path": "stale-worktree.tar",
+      "bytes": 1015480320,
+      "sha256": "7fc5f3b8d13a371d1e92dd99ac368ca86ad77d55279856d3b27b8a8a38b6b6aa"
+    }
+  ],
+  "restoreMethod": "operations/restore.py --path <original prefix> --target <separate staging directory>",
+  "normativeSources": "OpenSpec changes/specs; docs/changes summaries cite all relevant artifacts",
+  "originalCommandFailure": "reference-test.log used absent tsx; native Node 24 run is reference-test-native.log; no dependency was added"
+}

@@ -1,9 +1,0 @@
-{
-  "referenceCommit": "ed20cec0aef82daa22aa50da19597b7ba1607e02",
-  "files": 2090,
-  "rawExact": 1646,
-  "normalizedLF": 444,
-  "bytes": 94264162,
-  "failures": [],
-  "limitation": "Canonical LF verifies the exported file bytes; it is not an authorship, isolation, credential or functional audit."
-}

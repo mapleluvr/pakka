@@ -1,0 +1,72 @@
+[
+  {
+    "path": ".gitignore",
+    "bytes": 83,
+    "sha256": "55e9f27548ea7320f262cdb1e34fbe8581c90eb8ba930cf42e9428d95635f987"
+  },
+  {
+    "path": "audit.json",
+    "bytes": 3157,
+    "sha256": "0fad47530646d4fbf4493afe57cb42c31bc0540e2669fc29dbd4063608389d21"
+  },
+  {
+    "path": "backup-identity.json",
+    "bytes": 1502,
+    "sha256": "a6589f5357558bdd8ce9125ad65bfc0cce336984941a04a754ef84a5577d4f0a"
+  },
+  {
+    "path": "check.log",
+    "bytes": 216,
+    "sha256": "4ca3577a130221638ebacfc196a3bd26ca80e6f166a2344833caee47b1443d5f"
+  },
+  {
+    "path": "format.log",
+    "bytes": 68,
+    "sha256": "f20510a9da4717c51c4cffee6d0dd88d6c9a723d0a83711d01216f5b48961283"
+  },
+  {
+    "path": "openspec-after.json",
+    "bytes": 2920,
+    "sha256": "90a8f8778b52f7ca51bd06171440120cff2ce8ec48efb49d5faf5545010a85c6"
+  },
+  {
+    "path": "openspec-before.json",
+    "bytes": 3611,
+    "sha256": "8fd730856f0e1d1660a55f45874e001ba13c23ad51a611a1c286459b5a353035"
+  },
+  {
+    "path": "openspec-documentation.json",
+    "bytes": 537,
+    "sha256": "1bf38550e32d3e540c48b98115ee73fa0dda075bc442164366d9d56f1b31a0c1"
+  },
+  {
+    "path": "openspec-frontend.json",
+    "bytes": 527,
+    "sha256": "407802a77fe98a5b1d5bc3cf43aef68b6d22e8ba45c275a8fc2864757852d478"
+  },
+  {
+    "path": "reference-test-native.log",
+    "bytes": 241,
+    "sha256": "99cf9eda1c97fe1f8dc6327c92fd6e0071977f6b23321ab2d843b334e12e7b1e"
+  },
+  {
+    "path": "reference-test.log",
+    "bytes": 1349,
+    "sha256": "cc33b330cb2812b19f2f9126138400626b31b5fb185636e3f3ae47b4dc8a9f82"
+  },
+  {
+    "path": "removed-documents.json",
+    "bytes": 17280,
+    "sha256": "680fe1ae868c8f87ce2225f31bfdbe40f0fd23d29b51a6747f88e7b571066bf0"
+  },
+  {
+    "path": "restore-proof.json",
+    "bytes": 2741,
+    "sha256": "d5fe3ad22edd943292622cae98073e6858a7379b055b505e02fc5aee337d78a3"
+  },
+  {
+    "path": "stale-summary.json",
+    "bytes": 339,
+    "sha256": "c6416af2e0feaad90666890f3b7816304b0a09a640b2765bdb83bcb6ea05f169"
+  }
+]
