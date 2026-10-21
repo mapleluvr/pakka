@@ -2,9 +2,13 @@
 
 这里保存已由当前指南、契约或新版设计接替的材料。**Deprecated 指作为当前使用／实施指引的地位**；各版本的验收、失败、来源和约束仍按其原范围保留。
 
-日常使用从[文档导航](../README.md)或[当前产品状态](../PAKKA-POCKET-STATUS.md)开始；继续设计使用[MAS Board 第二稿](../MAS-BOARD-DESIGN.md)，当前范围见[实施计划](../plans/README.md)。
+日常接续从[工作入口](../OVERVIEW.md)和[实施状态](../PAKKA-POCKET-STATUS.md)开始；当前目标由 [state](../state/README.md)维护，采用来路见 [changes](../changes/README.md)。设计旧稿仅作推演来源。
 
 ## 分类索引
+
+### 历史状态快照
+
+- [文档分工接入前的产品状态](status/PAKKA-POCKET-PRE-STATE-EVO.md)：保留 P0–P6、r8 和旧用户确认的原范围。
 
 ### 早期迁移计划
 
@@ -52,7 +56,7 @@
 
 本轮迁移 35 份文档：21 份历史资料进入本目录，其余 14 份按当前用途进入 guides、reference、development、plans 或 verification。历史页增加 Deprecated 状态和现行入口，正文保留；相对链接随位置修正。早期试写的冻结哈希对应迁移前原始副本，带归档标识的阅读版本另有自己的文件身份。
 
-Pi Durable 兼容性账本保持追加式正文原样；正在阅读／编辑的 MAS Board 第二稿保持原路径和字节内容。下列旧路径只保留简短迁移指引，以维持两份稳定文档中的既有引用：
+上述早期整理保持了 Pi Durable 兼容性账本正文，以及当时正在阅读/编辑的 MAS 第二稿字节。后续文档分工只在设计页补身份说明，原始依据仍可按提交恢复；当前映射见[文档分工记录](../changes/2026-10-21-documentation-system.md)。下列旧路径继续作为稳定入口：
 
 - [`docs/MIGRATION-M3-ACCEPTANCE.md`](../../docs/MIGRATION-M3-ACCEPTANCE.md) → [MIGRATION-M3-ACCEPTANCE.md](acceptance/MIGRATION-M3-ACCEPTANCE.md)。
 - [`docs/MIGRATION-M4-ACCEPTANCE.md`](../../docs/MIGRATION-M4-ACCEPTANCE.md) → [MIGRATION-M4-ACCEPTANCE.md](acceptance/MIGRATION-M4-ACCEPTANCE.md)。

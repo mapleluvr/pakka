@@ -1,6 +1,6 @@
 # Pakka-Pocket WebUI 与扩展开发规范
 
-状态：`@pakka/webui` 的**目标开发契约**，与 [迁移计划](../plans/PAKKA-POCKET-PLAN.md) 和 [OpenSpec 设计](../../openspec/changes/pakka-pocket-webui/design.md) 一起使用。[P3 公共扩展宿主](../archive/webui/PAKKA-POCKET-P3.md)已实现 `extension`、`ui`、`components`、`client`、`backend` 子路径与非 MAS 示例；[P4 MAS DevPack facets](../archive/webui/PAKKA-POCKET-P4.md)已用真实 Agent 组装和 Board/member panel 消费同一公共接口。当前本机能力、用户确认与尚待完成的部署／交付项目见 [产品状态](../PAKKA-POCKET-STATUS.md)。下面的开发契约继续有效，具体已实现 API 以源码 public exports 和独立消费者为准。
+本文件维护 `@pakka/webui` 的服务、扩展、组件、配置与验证方法细则。整体预期见 [WebUI state](../state/webui.md)，页面结构与交互由[前端声明](../state/frontend.md)维护；实现及未完成门禁见[实施状态](../PAKKA-POCKET-STATUS.md)。公共 API 通过明确 exports 和独立消费者核对，实际实现较窄不自动缩减目标。
 
 ## 1. 产品核心与扩展的分工
 
@@ -43,14 +43,14 @@ MAS Board 必须通过右侧的通用贡献方式实现。不为 MAS 增加特�
 
 ## 4. 组件、交互和样式
 
-- 以 Devin-like 参考的 DOM、`web/reference.css` 和交互为前端基座；真实状态、权限和动作由 Pakka 的接口接入。生产页不加载旧 `pocket.css`／`workbench.css`／`devin.css` 叠层换皮。仅在 `web/elements.css` 中补充原型没有的原生能力与必要的元素级适配；MAS 等新页面按同套界面语言设计。当前映射见 [R2 接入计划](../plans/DEVIN-FRONTEND-ADOPTION-R2.md)，旧 R1 映射只作历史记录。保留 Preact/htm、公开组件交互及字体许可证。
+- 前端基座、CSS 身份、页面布局、响应式和 Team 交互统一由[前端声明](../state/frontend.md)维护。扩展采用宿主 Preact/htm、公开组件和同套界面语言，保留代码与字体许可证，不另建应用壳层。
 - 组件默认消费 DTO 和 host-owned context，不把整个应用状态注入扩展。
 - 状态分别处理 loading、empty、denied、conflict、unknown、stale/disconnected 和 terminal；不要把它们合成同一个红/绿点。
 - 显示已持久 membership 与 native live readiness 的区别；generation done 不等于业务目标或工具副作用已完成。
 - 表单写入前展示 scope；危险操作需要明确目标和动作反馈，重复点击复用同一 pending operation，不能静默分配新请求。
-- 使用公开 tokens/classes，CSS 作用于自身内容，不覆盖全局登录/权限/别的插件。图标使用 SVG 路径，不用字符符号或 emoji 充当图标。公共 `@pakka/webui/components` 的 `Icon` 提供菜单、关闭、新建、会话、文件、文件夹、点赞和 Board 图形；普通图标为 24px，独立图标按钮至少 44×44px，并由按钮提供清楚的可访问名称。自定义图标遵循同样尺寸和无障碍规则。
+- 使用公开 tokens/classes，CSS 作用于自身内容，不覆盖全局登录/权限/别的插件。公共 `@pakka/webui/components` 的 `Icon` 提供共享 SVG 图标；可访问名称、尺寸及触达条件由[前端声明](../state/frontend.md#响应式与可访问性)维护。
 - 键盘可操作、focus trap/return、Escape、屏幕阅读标签、窄屏可滚动和触摸交互是组件要求，不是最后加的桌面补丁。
-- 侧栏沿用参考的主要导航与 Sessions 区域，列表独立滚动；不恢复旧版长工具列表。Commands & extensions 使用参考 palette，按当前身份与目标发现真实命令和页面；扩展管理使用独立 Settings 页面。Files、Schedules、Memory、Webhooks 与其他插件仍消费同一公共扩展插槽，不增加权限或隐式启用 Agent facet。
+- Files、Schedules、Memory、Webhooks、MAS 与其他插件消费同一公共扩展插槽，不增加权限或隐式启用 Agent facet。宿主页面/命令入口与实例语义见前端声明和下面的 command/lifecycle 契约。
 - 页面和面板卸载时释放 host subscriptions、listeners、timers 和 abortable reads；关闭界面不表示已接受的服务端工作取消或回滚。
 
 ## 5. Command contract

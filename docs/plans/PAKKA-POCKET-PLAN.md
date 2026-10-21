@@ -1,10 +1,8 @@
-# Pakka-Pocket 准备与迁移计划
+# Pakka-Pocket 范围与 P0–P6 阶段计划（形成记录）
 
-本页保留迁移范围、P0–P6 依赖和退出条件。P1 受控服务、P2 产品传输、P3 通用扩展、P4 MAS facets 及 P5 本机工作台已实现；用户确认的本机五项验收已核销。远程／跨平台测量和 P6 指定审查、最终交付分别跟踪，详见 [当前状态](../PAKKA-POCKET-STATUS.md)。
+本页保留范围、来源映射、阶段顺序及当时的退出条件，不再承担当前规格或待办。当前目标见[产品 state](../state/product.md)与[领域入口](../state/README.md)，当前差距见[实施状态](../PAKKA-POCKET-STATUS.md)；具体下一步在本地 `docs/.temp/active-plan.md`。
 
-当前 MAS Board 是普通插件中的成员格子和操作面板；新的 [关系画布与交流日志设计](../MAS-BOARD-DESIGN.md)作为后续工作，不改写 P4 当时的阶段结论。原生通知点击有后续局部通过证据，公网 FCM 与其他部署测量有各自范围。
-
-实施入口为 [pakka-pocket-webui](../../openspec/changes/pakka-pocket-webui/proposal.md)，技术决策见 [design](../../openspec/changes/pakka-pocket-webui/design.md)，开发契约见 [WEBUI-DEVELOPMENT.md](../development/WEBUI-DEVELOPMENT.md)。没有迁移旧用户数据。
+下面的“当前”“已实现”按原计划版本阅读，不推定今天的完成情况；其中旧 UI 映射由[前端声明](../state/frontend.md)承接。既有 OpenSpec [提案](../../openspec/changes/pakka-pocket-webui/proposal.md)、[设计](../../openspec/changes/pakka-pocket-webui/design.md)和场景保持原位，不能从目录或 checkbox 推断验收。
 
 ## 1. 已确定的产品目标
 

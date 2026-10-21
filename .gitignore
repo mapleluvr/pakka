@@ -67,3 +67,5 @@ desktop.ini
 tmp/
 .tmp/
 *.tmp
+# Local plans, drafts and experiments; durable decisions/evidence live outside.
+/docs/.temp/

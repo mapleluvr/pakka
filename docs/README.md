@@ -1,37 +1,37 @@
 # Pakka 文档导航
 
-从正在做的事情进入文档：使用工作台、装配应用、开发扩展、讨论设计，或查阅某个版本的历史证据。
+日常接续从 [OVERVIEW](OVERVIEW.md)进入：先读相关预期，再结合实际实现和验证安排工作。
 
-## 当前入口
+## 按用途查找
 
-| 想做的事情                            | 从这里开始                                                                                                   |
-| ------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| 使用 Web 工作台、选择模型和工作目录   | [WebUI 使用与启动](guides/WEBUI-GUIDE.md)                                                                    |
-| 确认已有能力、用户已确认项和剩余交付  | [当前产品状态](PAKKA-POCKET-STATUS.md)                                                                       |
-| 装配 headless MAS server、client、CLI | [应用配置](guides/MAS-APPLICATION-API.md)与[支持边界](guides/MAS-PRODUCT-SUPPORT.md)                         |
-| 使用或实现公开 API                    | [API 参考](reference/README.md)                                                                              |
-| 修改代码或编写 Web 扩展               | [开发入口](development/README.md)                                                                            |
-| 使用 MAS Board 并查阅关系图设计       | [MAS Board 使用](guides/MAS-BOARD.md)、[设计第二稿](MAS-BOARD-DESIGN.md)与[图稿](design/mas-board/README.md) |
-| 阅读当前实施范围和阶段通过条件        | [当前计划](plans/README.md)                                                                                  |
-| 核对验证方式、固定产物及其证据范围    | [验证入口](verification/README.md)                                                                           |
-| 查阅早期计划、阶段验收和第一次试写    | [Deprecated 历史资料](archive/README.md)                                                                     |
+| 需要                           | 入口                                                                                         |
+| ------------------------------ | -------------------------------------------------------------------------------------------- |
+| 理解应当形成的产品与有效约定   | [state 目录](state/README.md)                                                                |
+| 确认实现差距和下一步           | [实施状态](PAKKA-POCKET-STATUS.md)；本地 `docs/.temp/active-plan.md`                         |
+| 理解要求怎样形成/调整          | [changes 目录](changes/README.md)与原 OpenSpec change                                        |
+| 使用实际工作台或 Team          | [WebUI 指南](guides/WEBUI-GUIDE.md)、[Team 指南](guides/MAS-BOARD.md)                        |
+| 装配 headless 应用             | [应用配置](guides/MAS-APPLICATION-API.md)、[支持边界](guides/MAS-PRODUCT-SUPPORT.md)         |
+| 查字段、权限和运行 API         | [reference](reference/README.md)                                                             |
+| 修改代码、扩展或包边界         | [development](development/README.md)                                                         |
+| 核对候选身份、结果和未执行门禁 | [verification](verification/README.md)                                                       |
+| 追查旧计划、构造图稿与阶段证据 | [plans](plans/README.md)、[design](design/mas-board/README.md)、[archive](archive/README.md) |
 
-## 文档分区
+## 文档分工
 
-- **guides/**：启动、配置和操作方式，面向当前使用。
-- **reference/**：公开接口、权限及运行契约。
-- **development/**：架构、仓库规范、扩展开发和验证工作方式。
-- **plans/**：仍在执行的范围、依赖和通过条件。
-- **design/**：用于讨论和实施准备的设计材料；稿件明确区分现有能力、拟实现能力和构造示例。
-- **verification/**：验证导航及仍被固定产品配对引用的证据。
-- **archive/**：已被当前文档接替的计划、调查、阶段记录和旧稿，统一标记 **Deprecated**。
+- **OVERVIEW.md**：一句话定位和当前工作入口。
+- **state/**：当前采用的预期；详细 API、场景、开发契约已有明确位置时，在领域页映射，不复制第二套。
+- **changes/**：初始形成和采用调整的来路；原 OpenSpec 变更继续沿用原目录和生命周期。
+- **.temp/**：本地计划、调查、草稿和实验，默认不提交。正式依据/未完成工作须在可交接位置可见。
+- **artifacts/**（仓库根）：既有自动化 runner 的临时输出继续沿用，不为目录统一改测试路径；长期依据再封存到 verification 等正式位置。
+- **guides/**：针对实际入口的使用方式；不将未实现目标写成可执行操作。
+- **reference/** 与 **development/**：公开接口/技术细则，以及开发和验证方法。
+- **verification/** 与 **visual-primitives/**：固定候选的事实证据，不承担当前规格。
+- **plans/**、**design/** 与 **archive/**：形成材料、旧阶段和历史依据，明确各页的身份。
 
-根目录保留三个稳定入口：[当前状态](PAKKA-POCKET-STATUS.md)、[MAS Board 当前草案](MAS-BOARD-DESIGN.md)和追加式 [Pi Durable 兼容性账本](PI-DURABLE-COMPATIBILITY.md)。图稿与设计索引位于 `design/mas-board/`。少量带 deprecated 标记的旧路径只承担迁移指引，服务于账本和已打开稿件中的既有引用。
+[产品状态](PAKKA-POCKET-STATUS.md)、[MAS 设计旧稿](MAS-BOARD-DESIGN.md)、旧 R2 计划和既有 API 保留稳定路径；[Pi Durable 兼容性账本](PI-DURABLE-COMPATIBILITY.md)保持追加式。目录映射与本轮取舍见[文档分工记录](changes/2026-10-21-documentation-system.md)。
 
-## 怎样阅读状态
+## 阅读边界
 
-当前使用文档说明操作及边界；设计稿描述准备实现的交互；验收记录只证明其指定源码、归档、环境和观察范围。用户确认和自动测试分别记录，各自保留有效结论。
+state 说明目标，不表示已经实现。计划/设计/checkbox 不证明完成；代码也不自动缩小要求。候选报告和用户确认只证明其身份、环境与所测范围，不能沿用为新版本全通过。
 
-Deprecated 表示该页已退出当前指引位置。历史结果、失败、来源和当时适用的约束保留，当前范围由对应指南、契约和[状态页](PAKKA-POCKET-STATUS.md)说明。OpenSpec 的 specs 与活动 change 继续使用原目录和生命周期。
-
-新增、修订和归档方式见[文档维护约定](development/README.md#文档维护)。
+需要理解选择再查 changes；需要继续推进则把差距放进 active-plan 和实施状态。详细写作、更新与归档方法见[文档维护](development/README.md#文档维护)。

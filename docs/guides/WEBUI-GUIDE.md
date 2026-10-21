@@ -88,11 +88,11 @@ node apps/webui/dist/main.js --config /absolute/private/pakka.json --owner-file 
 | Scheduled inputs | 显式创建、取消定时输入并核对原操作                      |
 | Webhooks         | 创建、轮换凭据和确认 Remove webhook 删除                |
 | Notifications    | 设备授权、订阅及点击进入目标 Conversation               |
-| Team（MAS）      | Graph / Activity / Agents、成员会话、通信和管理           |
+| Team（MAS）      | Graph / Activity / Agents、成员会话、通信和管理         |
 
 **Commands & extensions** 打开可筛选 palette，Commands 区列出命令，Pages 区列出当前身份可见的页面。方向键导航、Enter 执行、Escape 关闭；命令参数由插件声明，缺少必填参数时显示具体用法。**Manage extensions…** 进入独立 Settings 页，执行 Disable / Reload / Enable；停用 UI 不会自动取消已提交工作或删除历史。
 
-Team 使用单层页头与 **Graph / Activity / Agents** 三视图。选择成员显示右侧 inspector；手机改为底部面板。**Open Conversation** 进入真实成员会话并可返回原选择；More 内提供成员输入，Management 中提供按权限开放的创建／通信／退休操作。个人视图切换不启动模型工作。此实现与独立验收边界见 [R2 验证记录](../verification/DEVIN-FRONTEND-R2.md)，设计背景见 [MAS Board 设计](../MAS-BOARD-DESIGN.md)。
+Team 使用单层页头与 **Graph / Activity / Agents** 三视图。选择成员显示右侧 inspector；手机改为底部面板。**Open Conversation** 进入真实成员会话并可返回原选择；**More → Member controls…** 提供输入及获准回复，控制界面的 **Management** 提供 Stop work 与退休确认，不是创建表单。个人视图切换不启动模型工作。操作见[Team 指南](MAS-BOARD.md)，目标见[前端声明](../state/frontend.md#team)，验证边界见 [R2 记录](../verification/DEVIN-FRONTEND-R2.md)。
 
 ## 5. 正常关闭与重开
 

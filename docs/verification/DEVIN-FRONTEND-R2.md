@@ -15,17 +15,17 @@
 
 [原始 run.json](evidence/devin-r2/candidate-004/run.json)记录运行前后同一提交、两端工作区干净、Node v24.15.0、`fixedSnapshot: true`。运行时间为 2026-10-21 07:24:16–07:56:57 UTC。每轮规范化 TEMP/TMP，并隔离 HOME / USERPROFILE / PI_CODING_AGENT_DIR；本地确定性 HTTP provider，`PI_OFFLINE=1`，不读取用户凭据、不调用付费模型。
 
-| 门禁 | 实际结果 | 原始记录 |
-| --- | --- | --- |
-| 类型／durable patch 检查 | PASS | [check.log](evidence/devin-r2/candidate-004/check.log) |
-| JS 语法 | PASS | [syntax.log](evidence/devin-r2/candidate-004/syntax.log) |
-| workspace + MAS 浏览器构建 | PASS | [build.log](evidence/devin-r2/candidate-004/build.log) |
-| WebUI／MAS 扩大回归（82 文件） | **FAIL：125 项，121 通过、3 失败、1 超时取消、零跳过** | [wide/test.log](evidence/devin-r2/candidate-004/wide/test.log) |
-| 全量 | **FAIL：555 项，542 通过、5 失败、6 超时取消、2 跳过** | [full.log](evidence/devin-r2/candidate-004/full.log) |
-| 安装消费者串行检查 | **FAIL：pocket-controlled 的 exit=null** | [package.log](evidence/devin-r2/candidate-004/package.log)、[停点日志](evidence/devin-r2/candidate-004/package-logs/pocket-controlled.log) |
-| 同一安装副本的后续五项补测 | 5/5 PASS，**不改变整套失败结果** | [补测身份与结果](evidence/devin-r2/candidate-004/installed-supplement/run.json) |
-| 本机视觉直接检查／无排除框差图 | 已执行；自动差图仍为 feedback-required，非独立验收 | [本机判读](../visual-primitives/runs/devin-frontend-r2-candidate-004/verdict/inline-verdict-003.md) |
-| 指定独立 GUI／双边审查 | **BLOCKED** | 见第 5 节 |
+| 门禁                           | 实际结果                                               | 原始记录                                                                                                                                   |
+| ------------------------------ | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| 类型／durable patch 检查       | PASS                                                   | [check.log](evidence/devin-r2/candidate-004/check.log)                                                                                     |
+| JS 语法                        | PASS                                                   | [syntax.log](evidence/devin-r2/candidate-004/syntax.log)                                                                                   |
+| workspace + MAS 浏览器构建     | PASS                                                   | [build.log](evidence/devin-r2/candidate-004/build.log)                                                                                     |
+| WebUI／MAS 扩大回归（82 文件） | **FAIL：125 项，121 通过、3 失败、1 超时取消、零跳过** | [wide/test.log](evidence/devin-r2/candidate-004/wide/test.log)                                                                             |
+| 全量                           | **FAIL：555 项，542 通过、5 失败、6 超时取消、2 跳过** | [full.log](evidence/devin-r2/candidate-004/full.log)                                                                                       |
+| 安装消费者串行检查             | **FAIL：pocket-controlled 的 exit=null**               | [package.log](evidence/devin-r2/candidate-004/package.log)、[停点日志](evidence/devin-r2/candidate-004/package-logs/pocket-controlled.log) |
+| 同一安装副本的后续五项补测     | 5/5 PASS，**不改变整套失败结果**                       | [补测身份与结果](evidence/devin-r2/candidate-004/installed-supplement/run.json)                                                            |
+| 本机视觉直接检查／无排除框差图 | 已执行；自动差图仍为 feedback-required，非独立验收     | [本机判读](../visual-primitives/runs/devin-frontend-r2-candidate-004/verdict/inline-verdict-003.md)                                        |
+| 指定独立 GUI／双边审查         | **BLOCKED**                                            | 见第 5 节                                                                                                                                  |
 
 ## 2. 失败、取消与基线对照
 
