@@ -1,0 +1,22 @@
+{
+  "oracleImage": "D:\\Projects\\kappa\\migration-worktrees\\pakka-devin-ui\\artifacts\\devin-r2\\candidate-004\\visual\\oracles\\home-desktop.png",
+  "renderedImage": "D:\\Projects\\kappa\\migration-worktrees\\pakka-devin-ui\\artifacts\\devin-r2\\candidate-004\\visual\\rendered\\home-desktop.png",
+  "outputDir": "D:\\Projects\\kappa\\migration-worktrees\\pakka-devin-ui\\artifacts\\devin-r2\\candidate-004\\visual\\diffs\\home-desktop",
+  "coordinateSpace": "pixel",
+  "dimensions": {
+    "width": 1440,
+    "height": 900
+  },
+  "exclusionBoxes": [],
+  "options": {
+    "gridSize": 25,
+    "localWindow": 11,
+    "maskPadding": 0,
+    "diffColorSpace": "oklab",
+    "blurSigma": 0,
+    "highlightThreshold": 0.18,
+    "stripeThreshold": 0.1,
+    "minCellCoverage": 0.2,
+    "minComponentArea": 4
+  }
+}

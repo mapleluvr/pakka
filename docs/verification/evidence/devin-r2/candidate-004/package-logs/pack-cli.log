@@ -1,0 +1,20 @@
+cwd=D:\Projects\kappa\migration-worktrees\pakka-devin-ui\apps\cli
+pakka-cli-0.1.0.tgz
+npm notice
+npm notice package: @pakka/cli@0.1.0
+npm notice Tarball Contents
+npm notice 187B dist/main.d.ts
+npm notice 2.8kB dist/main.js
+npm notice 333B package.json
+npm notice Tarball Details
+npm notice name: @pakka/cli
+npm notice version: 0.1.0
+npm notice filename: pakka-cli-0.1.0.tgz
+npm notice package size: 1.4 kB
+npm notice unpacked size: 3.3 kB
+npm notice shasum: d0ddbe88a0a137483f9382c741f2443cb3742645
+npm notice integrity: sha512-wnykerTxTda24[...]zzkBxAr/9p3YA==
+npm notice total files: 3
+npm notice
+
+exit=0

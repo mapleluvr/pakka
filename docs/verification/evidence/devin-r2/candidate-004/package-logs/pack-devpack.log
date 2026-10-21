@@ -1,0 +1,53 @@
+cwd=D:\Projects\kappa\migration-worktrees\pakka-devin-ui\packages\mas-devpack
+pakka-mas-devpack-0.2.0.tgz
+npm notice
+npm notice package: @pakka/mas-devpack@0.2.0
+npm notice Tarball Contents
+npm notice 1.1kB LICENSE.pi-pocket
+npm notice 1.3kB dist/activity.d.ts
+npm notice 5.0kB dist/activity.js
+npm notice 540B dist/backend.d.ts
+npm notice 5.4kB dist/backend.js
+npm notice 771B dist/browser/client.d.ts
+npm notice 1.2kB dist/browser/client.js
+npm notice 837B dist/browser/contract.d.ts
+npm notice 5.6kB dist/browser/contract.js
+npm notice 3.0kB dist/browser/dto.d.ts
+npm notice 237B dist/browser/dto.js
+npm notice 278B dist/browser/graph-board.d.ts
+npm notice 36.5kB dist/browser/graph-board.js
+npm notice 340B dist/browser/index.d.ts
+npm notice 12.2kB dist/browser/index.js
+npm notice 913B dist/index.d.ts
+npm notice 13.8kB dist/index.js
+npm notice 1.1kB dist/LICENSE.pi-pocket
+npm notice 222B dist/manifest.d.ts
+npm notice 2.1kB dist/manifest.js
+npm notice 49.8kB dist/manifest.json
+npm notice 214B dist/ownership.d.ts
+npm notice 360B dist/ownership.js
+npm notice 813B dist/profiles.d.ts
+npm notice 3.8kB dist/profiles.js
+npm notice 14.2kB dist/public/board.css
+npm notice 1.2kB dist/public/client.js
+npm notice 5.6kB dist/public/contract.js
+npm notice 237B dist/public/dto.js
+npm notice 36.5kB dist/public/graph-board.js
+npm notice 12.2kB dist/public/index.js
+npm notice 502B dist/resources.d.ts
+npm notice 3.2kB dist/resources.js
+npm notice 2.2kB dist/workbench.d.ts
+npm notice 21.4kB dist/workbench.js
+npm notice 1.1kB package.json
+npm notice Tarball Details
+npm notice name: @pakka/mas-devpack
+npm notice version: 0.2.0
+npm notice filename: pakka-mas-devpack-0.2.0.tgz
+npm notice package size: 42.9 kB
+npm notice unpacked size: 245.7 kB
+npm notice shasum: f3fd965c9e18b7aae975f4d5c447ac48afce1da3
+npm notice integrity: sha512-G4tlQdhejDUvM[...]DDD3XcbwkBwog==
+npm notice total files: 36
+npm notice
+
+exit=0

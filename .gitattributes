@@ -9,3 +9,5 @@ integrations/pocket/licenses/*.txt -text -whitespace
 apps/webui/web/reference.css text eol=lf
 # Archived verification records keep their measured bytes (including CRLF).
 docs/verification/evidence/** -text -whitespace
+# Candidate captures/diffs and their digest inventory are immutable evidence.
+docs/visual-primitives/runs/devin-frontend-r2-candidate-004/** -text -whitespace

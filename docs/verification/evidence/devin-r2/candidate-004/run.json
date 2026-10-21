@@ -1,0 +1,39 @@
+{
+  "sourceCommit": "6d359b13d1b81c29f47495d303c1ed6afe4d0bb2",
+  "dirtyBefore": [],
+  "node": "v24.15.0",
+  "startedAt": "2026-10-21T07:24:16.1559469Z",
+  "environment": "Canonical TEMP/TMP; isolated parent HOME/USERPROFILE/PI_CODING_AGENT_DIR; PI_OFFLINE=1; deterministic local providers. Test/package runners additionally own their child environments.",
+  "results": {
+    "check": {
+      "exitCode": 0,
+      "log": "check.log"
+    },
+    "syntax": {
+      "exitCode": 0,
+      "log": "syntax.log"
+    },
+    "build": {
+      "exitCode": 0,
+      "log": "build.log"
+    },
+    "wide": {
+      "rawLog": "wide/test.log",
+      "files": 82,
+      "log": "wide.log",
+      "exitCode": 1
+    },
+    "full": {
+      "exitCode": 1,
+      "log": "full.log"
+    },
+    "package": {
+      "exitCode": 1,
+      "log": "package.log"
+    }
+  },
+  "finishedAt": "2026-10-21T07:56:57.9390056Z",
+  "sourceCommitAfter": "6d359b13d1b81c29f47495d303c1ed6afe4d0bb2",
+  "dirtyAfter": [],
+  "fixedSnapshot": true
+}

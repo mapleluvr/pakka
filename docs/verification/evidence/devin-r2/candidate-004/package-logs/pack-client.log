@@ -1,0 +1,22 @@
+cwd=D:\Projects\kappa\migration-worktrees\pakka-devin-ui\packages\client
+pakka-client-0.1.0.tgz
+npm notice
+npm notice package: @pakka/client@0.1.0
+npm notice Tarball Contents
+npm notice 1.3kB dist/index.d.ts
+npm notice 5.3kB dist/index.js
+npm notice 1.4kB dist/pocket.d.ts
+npm notice 11.1kB dist/pocket.js
+npm notice 423B package.json
+npm notice Tarball Details
+npm notice name: @pakka/client
+npm notice version: 0.1.0
+npm notice filename: pakka-client-0.1.0.tgz
+npm notice package size: 4.3 kB
+npm notice unpacked size: 19.5 kB
+npm notice shasum: 17e10a5340ad3c7541ff0c979156cedceb09b6ad
+npm notice integrity: sha512-XHAamynm4r1zD[...]VcdqOR1dmVaqA==
+npm notice total files: 5
+npm notice
+
+exit=0

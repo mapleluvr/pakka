@@ -1,0 +1,4 @@
+cwd=C:\Users\mapleland\AppData\Local\Temp\pakka-packed-consumer-IU9AtF
+{"status":"passed","consumer":"C:\\Users\\mapleland\\AppData\\Local\\Temp\\pakka-packed-consumer-IU9AtF","httpRequests":3,"session":"shared","contexts":"independent","journals":"independent","quotas":"persistent","reopen":"zero-dispatch","profileModel":"exact-approved-id-persisted","observation":"scoped-frozen-passive","display":"reopen-dedup-zero-model-contribution"}
+
+exit=0

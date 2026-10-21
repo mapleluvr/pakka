@@ -1,0 +1,36 @@
+cwd=D:\Projects\kappa\migration-worktrees\pakka-devin-ui\packages\mas
+pakka-mas-0.4.0.tgz
+npm notice
+npm notice package: @pakka/mas@0.4.0
+npm notice Tarball Contents
+npm notice 1.7kB dist/approved-sessions.d.ts
+npm notice 11.2kB dist/approved-sessions.js
+npm notice 664B dist/broker-codec.d.ts
+npm notice 2.0kB dist/broker-codec.js
+npm notice 144B dist/broker-entry.d.ts
+npm notice 104B dist/broker-entry.js
+npm notice 3.1kB dist/broker-types.d.ts
+npm notice 11B dist/broker-types.js
+npm notice 233B dist/broker.d.ts
+npm notice 19.7kB dist/broker.js
+npm notice 185B dist/errors.d.ts
+npm notice 240B dist/errors.js
+npm notice 625B dist/index.d.ts
+npm notice 16.3kB dist/index.js
+npm notice 286B dist/session-endpoint.d.ts
+npm notice 3.9kB dist/session-endpoint.js
+npm notice 4.2kB dist/types.d.ts
+npm notice 11B dist/types.js
+npm notice 433B package.json
+npm notice Tarball Details
+npm notice name: @pakka/mas
+npm notice version: 0.4.0
+npm notice filename: pakka-mas-0.4.0.tgz
+npm notice package size: 13.6 kB
+npm notice unpacked size: 65.1 kB
+npm notice shasum: 077b33f31cb5a7c61afafc030218169aa6151d2c
+npm notice integrity: sha512-uxCjoloUvkKnS[...]DGPSc8vwp+1iQ==
+npm notice total files: 19
+npm notice
+
+exit=0

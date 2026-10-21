@@ -1,0 +1,22 @@
+cwd=D:\Projects\kappa\migration-worktrees\pakka-devin-ui\packages\protocol
+pakka-protocol-0.1.0.tgz
+npm notice
+npm notice package: @pakka/protocol@0.1.0
+npm notice Tarball Contents
+npm notice 3.3kB dist/index.d.ts
+npm notice 8.4kB dist/index.js
+npm notice 14.6kB dist/pocket.d.ts
+npm notice 29.4kB dist/pocket.js
+npm notice 370B package.json
+npm notice Tarball Details
+npm notice name: @pakka/protocol
+npm notice version: 0.1.0
+npm notice filename: pakka-protocol-0.1.0.tgz
+npm notice package size: 10.7 kB
+npm notice unpacked size: 56.2 kB
+npm notice shasum: b3e62b8c9fe8afda9415c0a2814036a7064e0798
+npm notice integrity: sha512-KuxNhDGwU4Zfr[...]sJnPplpGlMBLQ==
+npm notice total files: 5
+npm notice
+
+exit=0

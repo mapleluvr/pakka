@@ -2,6 +2,8 @@
 
 ## 决策与当前状态
 
+当前固定源码候选为 `6d359b1`；R2 主体接入与 Team 重建已实现，但完整验收仍失败／受阻，不等于可合并 main。具体数字、原始日志、安装补测和独立 GUI 边界见 [R2 验证记录](../verification/DEVIN-FRONTEND-R2.md)与[候选 004 交付复核](../visual-primitives/runs/devin-frontend-r2-candidate-004/final/delivery-review.md)。
+
 用户再次明确迁移方向：以 `mapleluvr/devin-ui-comparison@ed20cec/clean-room/current` 为前端主体，Pakka WebUI 提供接口、权限和真实状态；对前端只做必要的字符串、元素及事件／状态绑定适配。不把原型改造成旧 Pakka WebUI 的形状。
 
 `32d0d5f` 及其产品源码 `fe02dd2` **不符合这个迁移目标**。它的真实功能测试可证明相应调用路径存在，但不能证明界面采用正确；旧记录里的 NOT_FULLY_ACCEPTED 也不能解释为“只差几项测试就完成迁移”。旧 MAS 演示在新外壳中嵌入旧 Board，是此次方向错误的直接例子。
