@@ -6,6 +6,7 @@ import { startPocket } from "../src/bootstrap.ts";
 import { ownedBrowser } from "./browser.ts";
 import { runtimeFixture } from "../../../packages/agent/test/runtime-fixture.ts";
 import { controlledSpeech } from "./voice-fixture.ts";
+import { conversationAction, organizationAction, settleFrontend } from "./frontend-controls.ts";
 
 type Browser = Awaited<ReturnType<typeof ownedBrowser>>;
 
@@ -127,8 +128,9 @@ test(
 			assert.equal(await page.evaluate('document.querySelector("textarea[name=message]").value'), "");
 			await page.click("[data-dictate]");
 			await page.wait("globalThis.__voiceTest.instances.length===2");
-			await page.click("[data-action=settings]");
+			await conversationAction(page, "settings");
 			await page.wait('document.querySelector("[data-cost]")');
+			await settleFrontend(page);
 			assert.equal(await page.evaluate("globalThis.__voiceTest.instances[1].aborts"), 1);
 			await page.evaluate('globalThis.__voiceTest.instances[1].emit([["LATE-BEHIND-SETTINGS",true]],true)');
 			assert.equal(await page.evaluate('document.querySelector("textarea[name=message]").value'), "");
@@ -172,7 +174,7 @@ test(
 			await page.click('[aria-label="Dismiss notice"]');
 			await page.click("[data-dictate]");
 			await page.wait("globalThis.__voiceTest.instances.length===5");
-			await page.click("[data-action=logout]");
+			await organizationAction(page, "logout");
 			await page.wait('document.querySelector("[data-action=signin]")');
 			assert.equal(await page.evaluate("globalThis.__voiceTest.instances[4].aborts"), 1);
 			await page.evaluate('globalThis.__voiceTest.instances[4].emit([["AFTER-LOGOUT-RESULT",true]],true)');
@@ -245,6 +247,7 @@ test(
 			await viewer.click("[data-action=signin]");
 			await viewer.wait('document.querySelector("[data-conversation]")');
 			await viewer.click('[aria-label="Toggle conversations"]');
+			await settleFrontend(viewer);
 			await viewer.click('[data-conversation="' + target.conversationId + '"]');
 			await viewer.wait('document.querySelector("main").innerText.includes("LOCAL-ANSWER")');
 			assert.equal(await viewer.evaluate('Boolean(document.querySelector("[data-dictate]"))'), false);
@@ -266,6 +269,7 @@ test(
 			await writer.click("[data-action=signin]");
 			await writer.wait('document.querySelector("[data-conversation]")');
 			await writer.click('[aria-label="Toggle conversations"]');
+			await settleFrontend(writer);
 			await writer.click('[data-conversation="' + target.conversationId + '"]');
 			await writer.wait('document.querySelector("[data-dictate]")');
 			await writer.wait(

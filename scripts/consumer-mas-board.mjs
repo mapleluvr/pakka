@@ -285,6 +285,7 @@ try {
 		),
 	);
 	await writeFile(join(evidence, "exchanges.json"), JSON.stringify(deliveredHistory, null, 2));
+	await owner.click("[data-member-management]");
 	await owner.click("[data-mas-retire]");
 	await owner.wait('document.querySelector("[data-mas-confirm-retire]")');
 	await owner.click("[data-mas-confirm-retire]");

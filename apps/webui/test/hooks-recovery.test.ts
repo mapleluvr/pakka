@@ -87,6 +87,8 @@ for (const loss of ["response", "handler"] as const)
 				await page.click("[data-conversation]");
 				await page.click("[data-interface=workspace-hooks-hooks]");
 				await page.wait('document.querySelector("[data-hook-reconcile]")?.disabled===false');
+				await page.wait('document.querySelectorAll("[data-hook-row]").length===1');
+				await settleFrontend(page);
 				await page.click("[data-hook-reconcile]");
 				await page.wait(
 					'!document.querySelector("[data-hook-reconcile]")&&document.querySelectorAll("[data-hook-row]").length===1',
