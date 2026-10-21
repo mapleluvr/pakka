@@ -7,6 +7,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createRuntime } from "@pakka/agent";
 import { ownedBrowser } from "./pocket-browser.ts";
+import { openConversations } from "./frontend-controls.ts";
 
 // Outside-repository installed CLI; every model request goes to this deterministic local provider.
 const root = dirname(fileURLToPath(import.meta.url)),
@@ -158,7 +159,7 @@ async function reloadProduct(page, target) {
 	);
 	// The application consumes a conversation fragment after selecting the authorized target.
 	await page.navigate(origin + "/#conversation=" + encodeURIComponent(target.conversationId));
-	const selected = '[data-conversation="' + target.conversationId + '"].selected';
+	const selected = `[data-conversation="${target.conversationId}"][aria-current=true]`;
 	await page.wait(
 		"!!document.querySelector(" +
 			JSON.stringify(selected) +
@@ -311,10 +312,10 @@ try {
 	await viewer.type("input[name=person]", "Viewer");
 	await viewer.click("[data-action=signin]");
 	await viewer.wait('document.querySelector("[data-conversation]")');
-	await viewer.click('[aria-label="Toggle conversations"]');
+	await openConversations(viewer);
 	await viewer.click("[data-conversation]");
 	await viewer.wait('document.querySelector("[data-interface=workspace-hooks-hooks]")');
-	await viewer.click('[aria-label="Toggle conversations"]');
+	await openConversations(viewer);
 	await viewer.click("[data-interface=workspace-hooks-hooks]");
 	await viewer.wait('document.querySelector("[data-hook-readonly]")');
 	assert.equal(

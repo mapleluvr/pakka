@@ -194,7 +194,7 @@ async function reloadProduct(page, target) {
 	);
 	// The application consumes a conversation fragment after selecting the authorized target.
 	await page.navigate(origin + "/#conversation=" + encodeURIComponent(target.conversationId));
-	const selected = '[data-conversation="' + target.conversationId + '"].selected';
+	const selected = `[data-conversation="${target.conversationId}"][aria-current=true]`;
 	await page.wait(
 		"!!document.querySelector(" +
 			JSON.stringify(selected) +

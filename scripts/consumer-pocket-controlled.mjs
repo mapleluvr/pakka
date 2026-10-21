@@ -6,6 +6,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { createRuntime } from "@pakka/agent";
 import { browserExecutable, ownedBrowser } from "./pocket-browser.ts";
+import { openConversations } from "./frontend-controls.ts";
 
 const root = dirname(fileURLToPath(import.meta.url)),
 	requests = [],
@@ -299,9 +300,9 @@ try {
 	await viewer.type("input[name=person]", "Viewer");
 	await click(viewer, "[data-action=signin]");
 	await viewer.wait('document.querySelector("[data-conversation]")');
-	await click(viewer, '[aria-label="Toggle conversations"]');
+	await openConversations(viewer);
 	await click(viewer, "[data-conversation]");
-	await click(viewer, '[aria-label="Toggle conversations"]');
+	await openConversations(viewer);
 	await click(viewer, "[data-interface=workspace-browser-browser]");
 	await viewer.wait('document.querySelector("[data-browser-frame]")?.naturalWidth>0');
 	assert.equal(

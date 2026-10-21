@@ -274,13 +274,14 @@ export function useExtensions({ person, target, csrf, notice, error, navigate, o
 	};
 	const controls = registrations.map(
 		(registration) =>
-			html`<section key=${registration.manifest.id} class="setting-row pocket-extension-registration">
-				<div class="setting-label">
+			html`<section key=${registration.manifest.id} class="settings-card-row pocket-extension-registration">
+				<div class="extension-identity">
 					<strong>${registration.manifest.title}</strong>
-					<div class="setting-desc">${registration.phase}</div>
+					<div class="extension-phase">${registration.phase}</div>
 				</div>
 				${person?.role === "admin" &&
-				html`<button
+				html`<div class="extension-actions">
+					<button
 						onClick=${async () => {
 							try {
 								await client.control(
@@ -303,7 +304,8 @@ export function useExtensions({ person, target, csrf, notice, error, navigate, o
 						}}
 					>
 						Reload
-					</button>`}
+					</button>
+				</div>`}
 			</section>`,
 	);
 	const props = {
@@ -415,7 +417,7 @@ export function useExtensions({ person, target, csrf, notice, error, navigate, o
 			? html`<${HostInterface} key=${overlay.id} instance=${overlay} ...${props} />`
 			: palette
 				? palette === "manage"
-					? html`<${SettingsPage} title="Extensions" category="Workspace" description="Installed extensions available to your current identity. Disabling a UI does not cancel accepted work or delete its history." close=${() => setPalette(false)}><section class="settings-section">${controls}</section></${SettingsPage}>`
+					? html`<${SettingsPage} title="Extensions" category="Workspace" description="Installed extensions available to your current identity. Disabling a UI does not cancel accepted work or delete its history." close=${() => setPalette(false)}><section class="settings-section settings-native"><div class="settings-card extension-manager-list">${controls}</div></section></${SettingsPage}>`
 					: html`<${Sheet} variant="palette" label="Commands & extensions" initialFocus='input[aria-label="Find command"]' close=${() => setPalette(false)}>
 						<div class="palette-search"><${Glyph} name="search" /><input aria-label="Find command" value=${query} onInput=${(event) => setQuery(event.currentTarget.value)} placeholder="Find a command or page…" /></div>
 						<div class="palette-body">

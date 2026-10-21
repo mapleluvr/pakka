@@ -477,6 +477,25 @@ button:disabled {
 .settings-native .pocket-credentials {
 	padding: 16px;
 }
+.extension-manager-list .settings-card-row {
+	flex-wrap: wrap;
+}
+.extension-identity {
+	display: grid;
+	flex: 1;
+	min-width: 0;
+	gap: 4px;
+	overflow-wrap: anywhere;
+}
+.extension-phase {
+	color: var(--muted);
+	font-size: 12px;
+}
+.extension-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
 .settings-native h3 {
 	margin: 0 0 12px;
 	font-size: 14px;

@@ -82,6 +82,13 @@ test(
 					2,
 				);
 				assert.equal(await page.evaluate("document.documentElement.scrollWidth<=innerWidth"), true);
+				assert.equal(
+					await page.evaluate(
+						`[...document.querySelectorAll(".pocket-extension-registration")].every(row => {const buttons=[...row.querySelectorAll("button")],rects=buttons.map(button=>button.getBoundingClientRect());return row.closest(".settings-card") && getComputedStyle(row).display==="flex" && rects.every(rect=>rect.height>=28) && rects.every((rect,index)=>index===0 || rect.left-rects[index-1].right>=8 || rect.top-rects[index-1].bottom>=8);})`,
+					),
+					true,
+					"Extension registrations use reference Settings cards and separated native action targets",
+				);
 				await page.key("Escape");
 				await page.wait('!document.querySelector(".settings-view")');
 				await settleFrontend(page);

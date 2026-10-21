@@ -121,6 +121,9 @@ mkdirSync(join(consumer, "tls"));
 for (const asset of ["key.pem", "cert.pem"])
 	copyFileSync(join(root, "apps", "webui", "test", "tls", asset), join(consumer, "tls", asset));
 copyFileSync(join(root, "apps/webui/test/browser.ts"), join(consumer, "pocket-browser.ts"));
+// Reuse the source regression entry points: native clicks through reference menus,
+// never a hidden old toolbar or a backend shortcut. Its browser import is type-only.
+copyFileSync(join(root, "apps/webui/test/frontend-controls.ts"), join(consumer, "frontend-controls.ts"));
 copyFileSync(join(root, "scripts", "consumer-browser.ts"), join(consumer, "consumer-browser.ts"));
 writeFileSync(
 	join(consumer, "tsconfig.browser.json"),
