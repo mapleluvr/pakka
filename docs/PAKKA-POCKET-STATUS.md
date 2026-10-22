@@ -4,13 +4,13 @@
 
 ## 1. 当前产品候选
 
-| 对象         | 状态与范围                                                                                                                                                             |
-| ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 产品源码     | `6d359b1`，Devin 原型接口接入、真实 Conversation、Settings/palette、Team 三视图和样式就绪门禁                                                                          |
-| 产品证据     | `e7b7d7c` 归档；[R2 验证记录](verification/DEVIN-FRONTEND-R2.md)及[候选 004 交付复核](visual-primitives/runs/devin-frontend-r2-candidate-004/final/delivery-review.md) |
-| 本轮文档整理 | 只改变文档组织/使用指引；不是新产品候选，检查结果单列于[整理验证](verification/DOCUMENTATION-CLEANUP.md)                                                               |
-| 使用         | [WebUI 指南](guides/WEBUI-GUIDE.md)、[Team 指南](guides/MAS-BOARD.md)                                                                                                  |
-| 完整交付     | **未通过**；未据本轮文档变化合并 main                                                                                                                                  |
+| 对象           | 状态与范围                                                                                                                                                                                     |
+| -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 产品源码       | `6d359b1`，Devin 原型接口接入、真实 Conversation、Settings/palette、Team 三视图和样式就绪门禁                                                                                                  |
+| 产品证据       | `e7b7d7c` 归档；[R2 验证记录](verification/DEVIN-FRONTEND-R2.md)及[候选 004 交付复核](visual-primitives/runs/devin-frontend-r2-candidate-004/final/delivery-review.md)                         |
+| 文档整理与修订 | 既有清理见[整理验证](verification/DOCUMENTATION-CLEANUP.md)；state 与 Devin 细则的表达修订按用户要求发布，来路见[文档分工记录](changes/2026-10-21-documentation-system.md)；产品候选保持原身份 |
+| 使用           | [WebUI 指南](guides/WEBUI-GUIDE.md)、[Team 指南](guides/MAS-BOARD.md)                                                                                                                          |
+| 完整交付       | **未通过**；未据本轮文档变化合并 main                                                                                                                                                          |
 
 固定候选 004 的实际结果：
 

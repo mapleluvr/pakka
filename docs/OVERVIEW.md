@@ -4,7 +4,7 @@ Pakka 将 Pi 的 Conversation、权限、持久化和 MAS 服务接到可选的 
 
 ## 当前工作
 
-Devin 前端已有固定候选，完整交付仍未通过。下一项是补足安装消费者进程诊断，分别核对 Browser 停点、Windows 文件系统与独立验收环境；不归并成界面时序问题。
+Devin 前端的固定产品候选仍未通过完整交付。下一项是补足安装消费者进程诊断，分别核对 Browser 停点、Windows 文件系统与独立验收环境。
 
 - **预期**：[state](state/README.md)。
 - **差距与交接**：[实施状态](PAKKA-POCKET-STATUS.md)；本地 `docs/.temp/active-plan.md`，缺失时从实施状态恢复。

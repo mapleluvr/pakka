@@ -44,6 +44,16 @@ Existing scratch/artifacts/CU/dependency rules remain in place. The final index-
 
 OpenSpec 1.14.3 initially reports 4 strict failures across 9 items: two Purpose placeholders and three long requirement descriptions (one item contains both). Fill only the Purpose placeholders. Keep existing normative text intact; record the three remaining legacy length warnings rather than truncate conditions to obtain a passing score.
 
+## 2026-10-22 state-evo review and publication
+
+The operator requested a fresh state-evo review, authorized a trial revision, and subsequently requested publication. The review used negative wording as a search signal and then checked each passage against its role and source: some passages still depended on rejected layouts or earlier implementations, while others expressed active failure, authority or scheduling conditions.
+
+The adopted revision describes the current product composition, supported conditions and behavior directly in domain state and the mapped Devin delta. Historical comparisons remain in their existing designs. Evidence-taking instructions live in development/VERIFICATION.md, and product scope links point to the WebUI/MAS, core and frontend formation records rather than to the documentation cleanup as their origin.
+
+Contract rereading retained native prompt/steer/followUp scheduling, authority checks, original-request unknown reconciliation, stylesheet readiness and separate acceptance gates. It also corrected two trial ambiguities: reserved admissions can release on scope change before transfer, separately from exact withdrawal of queued input; explicit reply association is required for reply edges, rather than for every relationship. Current runtime/API contracts remain the detailed owners. This is a documentation expression and ownership revision; product scope, implementation and the fixed candidate retain their identities.
+
+Publication restores the work entry to the outstanding installed-consumer diagnostics. Document validation remains separate from the product FAIL/BLOCKED results; inherited strict requirement-length warnings retain their failure status.
+
 ## Verification and handoff
 
 Run the installed CLI on all specs/changes and individually on new changes, check local links/anchors and all change-summary references, format changed Markdown, and compare runtime files/current evidence to their before hashes. A CLI schema result is not product acceptance. Cleanup totals, exceptions and restore paths belong in the cleanup report.
