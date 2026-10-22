@@ -1,6 +1,6 @@
 # Pakka-Pocket P0 — 来源固定与原生端口证明
 
-> **Deprecated — 历史资料。** 本文保留当时的计划、试写或验证结论，供追溯其条件、版本和产物；现行使用与实施入口见 [当前产品状态](../../PAKKA-POCKET-STATUS.md) 与 [文档导航](../../README.md)。deprecated 指本页作为当前指引的地位，历史事实、验收结果及尚有效的约束仍按原范围保留。分类与迁移说明见 [历史资料索引](../README.md)。
+> **Deprecated — 历史资料。** 本文保留当时的计划、试写或验证结论，供追溯其条件、版本和产物；现行使用与实施入口见 [当前工作](../../OVERVIEW.md) 与 [文档导航](../../README.md)。deprecated 指本页作为当前指引的地位，历史事实、验收结果及尚有效的约束仍按原范围保留。分类与迁移说明见 [历史资料索引](../README.md)。
 
 状态：**实施中的阶段记录，不是 WebUI 产品验收**。范围与后续条件仍以 [迁移计划（外置备份）](../../verification/DOCUMENTATION-CLEANUP.md#备份与恢复)、[开发规范](../../development/WEBUI-DEVELOPMENT.md) 和 active OpenSpec change 为准。没有引入 `@pakka/webui` 空包，没有扩大旧 headless v1 的网络或权限默认值。
 

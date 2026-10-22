@@ -1,6 +1,6 @@
 # M6 Acceptance — Integrated MAS product
 
-> **Deprecated — 历史资料。** 本文保留当时的计划、试写或验证结论，供追溯其条件、版本和产物；现行使用与实施入口见 [当前产品状态](../../PAKKA-POCKET-STATUS.md) 与 [文档导航](../../README.md)。deprecated 指本页作为当前指引的地位，历史事实、验收结果及尚有效的约束仍按原范围保留。分类与迁移说明见 [历史资料索引](../README.md)。
+> **Deprecated — 历史资料。** 本文保留当时的计划、试写或验证结论，供追溯其条件、版本和产物；现行使用与实施入口见 [当前工作](../../OVERVIEW.md) 与 [文档导航](../../README.md)。deprecated 指本页作为当前指引的地位，历史事实、验收结果及尚有效的约束仍按原范围保留。分类与迁移说明见 [历史资料索引](../README.md)。
 
 状态：**M6 accepted with documented notes**。基线为已验收 M5 `bd6781f5701d1b4c4f794f609c09d30b6c751708`，分支 `feat/monorepo-mas-migration`；最终提交以本文件所在 Git commit 为准。第一轮完整指定对抗复审的两份结构化 opinion 与 closing verdict 均为 **OK with notes**，A 的候选 P2 经 B 反驳后撤回，没有造成实际影响的 P0/P1/P2 或未解析 verdict。复审后未修改生产实现、测试、消费者或 package manifests；不为凑满两轮重复复审。
 

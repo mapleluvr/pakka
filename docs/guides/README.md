@@ -11,4 +11,4 @@
 
 Web 工作台与 headless server 各有启动与网络边界。模型工具、插件 facets 和策略由宿主分别装配；一个界面入口的存在不授予模型或用户额外能力。
 
-当前验收范围见[产品状态](../PAKKA-POCKET-STATUS.md)，公开类型与接口见[API 参考](../reference/README.md)，历史阶段材料见[归档](../archive/README.md)。
+当前验收范围见[固定验证记录](../verification/README.md)，公开类型与接口见[API 参考](../reference/README.md)，历史阶段材料见[归档](../archive/README.md)。

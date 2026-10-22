@@ -1,6 +1,6 @@
 # M3 Acceptance — Multi-Session Broker and Workers
 
-> **Deprecated — 历史资料。** 本文保留当时的计划、试写或验证结论，供追溯其条件、版本和产物；现行使用与实施入口见 [当前产品状态](../../PAKKA-POCKET-STATUS.md) 与 [文档导航](../../README.md)。deprecated 指本页作为当前指引的地位，历史事实、验收结果及尚有效的约束仍按原范围保留。分类与迁移说明见 [历史资料索引](../README.md)。
+> **Deprecated — 历史资料。** 本文保留当时的计划、试写或验证结论，供追溯其条件、版本和产物；现行使用与实施入口见 [当前工作](../../OVERVIEW.md) 与 [文档导航](../../README.md)。deprecated 指本页作为当前指引的地位，历史事实、验收结果及尚有效的约束仍按原范围保留。分类与迁移说明见 [历史资料索引](../README.md)。
 
 状态：**已验收，带明确限制与 report-only notes**。分支 `feat/monorepo-mas-migration`，实现基线为 M2 commit `3656b308561bb6aa9c9b35cb6bd12a7111c8287d`；最终提交以本文件所在 Git commit 为准。Dynamite 继续 deferred，M4–M6 不因本阶段通过而视为完成。
 

@@ -1,8 +1,8 @@
 # Pakka-Pocket P4 — MAS DevPack 的公共 Web facets
 
-> **Deprecated — 历史资料。** 本文保留当时的计划、试写或验证结论，供追溯其条件、版本和产物；现行使用与实施入口见 [当前产品状态](../../PAKKA-POCKET-STATUS.md) 与 [文档导航](../../README.md)。deprecated 指本页作为当前指引的地位，历史事实、验收结果及尚有效的约束仍按原范围保留。分类与迁移说明见 [历史资料索引](../README.md)。
+> **Deprecated — 历史资料。** 本文保留当时的计划、试写或验证结论，供追溯其条件、版本和产物；现行使用与实施入口见 [当前工作](../../OVERVIEW.md) 与 [文档导航](../../README.md)。deprecated 指本页作为当前指引的地位，历史事实、验收结果及尚有效的约束仍按原范围保留。分类与迁移说明见 [历史资料索引](../README.md)。
 
-本页记录 P4 的真实 MAS 插件消费和阶段门禁。Board 在 [P3 公共扩展宿主](PAKKA-POCKET-P3.md)中提供成员格子和操作面板；[当前状态](../../PAKKA-POCKET-STATUS.md)区分既有能力与验收范围。新的关系画布和交流记录见 [MAS Board 原设计](../../../openspec/changes/mas-board-relationship-workbench/design.md)，属于后续实现。
+本页记录 P4 的真实 MAS 插件消费和阶段门禁。Board 在 [P3 公共扩展宿主](PAKKA-POCKET-P3.md)中提供成员格子和操作面板；[移除前状态快照](https://github.com/mapleluvr/pakka/blob/200af506913ee38d7a357e5da96ea5e2afc03d67/docs/PAKKA-POCKET-STATUS.md)区分既有能力与验收范围。新的关系画布和交流记录见 [MAS Board 原设计](../../../openspec/changes/mas-board-relationship-workbench/design.md)，属于后续实现。
 
 ## 包入口与独立选择
 

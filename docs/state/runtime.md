@@ -4,7 +4,7 @@
 
 受信任 bootstrap 持有 Host/Runtime 控制权，配置批准 profile、有限预算和存储。调用者接收冻结 DTO 与身份绑定命令；生产 Pi mutable handles 和凭据仅由 `packages/agent/src/durable-adapter.ts` 持有。生产依赖图、dist 和安装产物使用 Durable adapter；AgentSession adapter 位于测试目录，作为 oracle 使用。
 
-Pi 集成使用公开 API。下游 Durable patch 采用版本固定的源补丁、明确基线和可复现构建，通过真实回归并在兼容性账本追加记录；安装产物来自经核验的构建。
+Pi 集成使用公开 API。下游 [Durable 源补丁](durable-patch.md)为 generation 提供明确拒绝与请求级检查，包含版本固定的源补丁、基线、构建锁及安装归档；真实回归与兼容性变化分别由构建/集成测试和追加式账本承接。
 
 本页描述跨模块关系；核心语义与 API 条件由[架构契约](../development/ARCHITECTURE.md)及下表所列领域细则维护。
 

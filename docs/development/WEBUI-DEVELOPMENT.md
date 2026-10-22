@@ -1,6 +1,6 @@
 # Pakka-Pocket WebUI 与扩展开发规范
 
-本文件维护 `@pakka/webui` 的服务、扩展、组件、配置与验证方法细则。整体预期见 [WebUI state](../state/webui.md)，页面结构与交互由[前端声明](../state/frontend.md)维护；实现及未完成门禁见[实施状态](../PAKKA-POCKET-STATUS.md)。公共 API 通过明确 exports 和独立消费者核对，实际实现较窄不自动缩减目标。
+本文件维护 `@pakka/webui` 的服务、扩展、组件、配置与验证方法细则。整体预期见 [WebUI state](../state/webui.md)，页面结构与交互由[前端声明](../state/frontend.md)维护；当前工作及未完成门禁见[工作入口](../OVERVIEW.md)和所指 OpenSpec tasks。公共 API 通过明确 exports 和独立消费者核对，实际实现较窄不自动缩减目标。
 
 ## 1. 产品核心与扩展的分工
 

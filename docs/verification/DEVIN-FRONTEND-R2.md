@@ -15,17 +15,17 @@
 
 [原始 run.json](evidence/devin-r2/candidate-004/run.json)记录运行前后同一提交、两端工作区干净、Node v24.15.0、`fixedSnapshot: true`。运行时间为 2026-10-21 07:24:16–07:56:57 UTC。每轮规范化 TEMP/TMP，并隔离 HOME / USERPROFILE / PI_CODING_AGENT_DIR；本地确定性 HTTP provider，`PI_OFFLINE=1`，不读取用户凭据、不调用付费模型。
 
-| 门禁                           | 实际结果                                               | 原始记录                                                                                                                                   |
-| ------------------------------ | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| 类型／durable patch 检查       | PASS                                                   | [check.log](evidence/devin-r2/candidate-004/check.log)                                                                                     |
-| JS 语法                        | PASS                                                   | [syntax.log](evidence/devin-r2/candidate-004/syntax.log)                                                                                   |
-| workspace + MAS 浏览器构建     | PASS                                                   | [build.log](evidence/devin-r2/candidate-004/build.log)                                                                                     |
-| WebUI／MAS 扩大回归（82 文件） | **FAIL：125 项，121 通过、3 失败、1 超时取消、零跳过** | [wide/test.log](evidence/devin-r2/candidate-004/wide/test.log)                                                                             |
-| 全量                           | **FAIL：555 项，542 通过、5 失败、6 超时取消、2 跳过** | [full.log](evidence/devin-r2/candidate-004/full.log)                                                                                       |
-| 安装消费者串行检查             | **FAIL：pocket-controlled 的 exit=null**               | [package.log](evidence/devin-r2/candidate-004/package.log)、[停点日志](evidence/devin-r2/candidate-004/package-logs/pocket-controlled.log) |
-| 同一安装副本的后续五项补测     | 5/5 PASS，**不改变整套失败结果**                       | [补测身份与结果](evidence/devin-r2/candidate-004/installed-supplement/run.json)                                                            |
-| 本机视觉直接检查／无排除框差图 | 已执行；自动差图仍为 feedback-required，非独立验收     | [本机判读](../visual-primitives/runs/devin-frontend-r2-candidate-004/verdict/inline-verdict-003.md)                                        |
-| 指定独立 GUI／双边审查         | **BLOCKED**                                            | 见第 5 节                                                                                                                                  |
+| 门禁                           | 实际结果                                               | 原始记录                                                                                                                                                                               |
+| ------------------------------ | ------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 类型／durable patch 检查       | PASS                                                   | [check.log](evidence/devin-r2/candidate-004/check.log)                                                                                                                                 |
+| JS 语法                        | PASS                                                   | [syntax.log](evidence/devin-r2/candidate-004/syntax.log)                                                                                                                               |
+| workspace + MAS 浏览器构建     | PASS                                                   | [build.log](evidence/devin-r2/candidate-004/build.log)                                                                                                                                 |
+| WebUI／MAS 扩大回归（82 文件） | **FAIL：125 项，121 通过、3 失败、1 超时取消、零跳过** | [wide/test.log](evidence/devin-r2/candidate-004/wide/test.log)                                                                                                                         |
+| 全量                           | **FAIL：555 项，542 通过、5 失败、6 超时取消、2 跳过** | [full.log](evidence/devin-r2/candidate-004/full.log)                                                                                                                                   |
+| 安装消费者串行检查             | **FAIL：pocket-controlled 的 exit=null**               | [package.log](evidence/devin-r2/candidate-004/package.log)、[停点日志](evidence/devin-r2/candidate-004/package-logs/pocket-controlled.log)                                             |
+| 同一安装副本的后续五项补测     | 5/5 PASS，**不改变整套失败结果**                       | [补测身份与结果](evidence/devin-r2/candidate-004/installed-supplement/run.json)                                                                                                        |
+| 本机视觉直接检查／无排除框差图 | 已执行；自动差图仍为 feedback-required，非独立验收     | [本机判读](https://github.com/mapleluvr/pakka/blob/200af506913ee38d7a357e5da96ea5e2afc03d67/docs/visual-primitives/runs/devin-frontend-r2-candidate-004/verdict/inline-verdict-003.md) |
+| 指定独立 GUI／双边审查         | **BLOCKED**                                            | 见第 5 节                                                                                                                                                                              |
 
 ## 2. 失败、取消与基线对照
 
@@ -60,7 +60,7 @@
 
 ## 5. 视觉与独立验收
 
-[候选专用视觉工作区](../visual-primitives/runs/devin-frontend-r2-candidate-004/final/delivery-review.md)保留当前截图、卡片裁剪、注释图、差图和直接检查笔记。首页 oracle/rendered 均为 1440×900、DPR 1，未缩放；全部 1296000 像素计分，排除 0，mean 0.007233。自动状态仍为 `feedback-required`，不换算“还原率”，不改自动结论。
+[候选专用视觉工作区](https://github.com/mapleluvr/pakka/blob/200af506913ee38d7a357e5da96ea5e2afc03d67/docs/visual-primitives/runs/devin-frontend-r2-candidate-004/final/delivery-review.md)保留当前截图、卡片裁剪、注释图、差图和直接检查笔记。首页 oracle/rendered 均为 1440×900、DPR 1，未缩放；全部 1296000 像素计分，排除 0，mean 0.007233。自动状态仍为 `feedback-required`，不换算“还原率”，不改自动结论。
 
 逐点检查面积前五的 highlight 以及全图热图：真实账号、Sessions／Commands 导航、命名 Conversation 提示、真实 Sessions 入口与移除无后端推广控件解释了主要差异。主侧栏 300px、卡片 688×154 和 toolbar 几何由本轮 DOM 测量核对。此判断不等于所有差异已获用户确认；Team 没有上游 oracle，不做伪像素等价比较。
 

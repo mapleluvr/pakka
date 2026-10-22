@@ -8,4 +8,4 @@ apps/webui/web/pocket.css
 apps/webui/web/reference.css
 # Digest-anchored raw verification records.
 docs/verification/evidence/
-docs/visual-primitives/runs/devin-frontend-r2-candidate-004/
+docs/visual-primitives/

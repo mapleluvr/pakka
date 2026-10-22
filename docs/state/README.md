@@ -1,6 +1,6 @@
 # 预期状态
 
-这些文档描述 Pakka 应当形成的产物、条件和边界。实现是否达到预期另见[实施状态](../PAKKA-POCKET-STATUS.md)，采用经过另见[变更记录](../changes/README.md)。
+这些文档描述 Pakka 应当形成的产物、条件和边界。当前工作由 [OVERVIEW](../OVERVIEW.md)及所指 OpenSpec tasks 承接，采用经过另见[变更记录](../changes/README.md)。
 
 ## 按产物关系阅读
 
@@ -8,6 +8,7 @@
 | ---------------------------------- | -------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
 | [产品与范围](product.md)           | 产品组成、用户目标、使用与支持条件           | 本页所链接的领域契约                                                                                             |
 | [Runtime 与 authority](runtime.md) | 模块依赖、身份、调度、持久化关系             | [架构契约](../development/ARCHITECTURE.md)、[公开 API](../reference/README.md)、OpenSpec 领域场景                |
+| [Durable 源补丁](durable-patch.md) | 下游补丁行为、基线、构建与安装产物           | 源补丁、机器身份清单、构建脚本及追加式兼容性账本                                                                 |
 | [MAS](mas.md)                      | 成员、通信、观测及界面贡献的关系             | MAS/Broker/DevPack API 与映射的 OpenSpec 场景                                                                    |
 | [WebUI 服务与扩展](webui.md)       | 人类权限、协作、受控服务、可选 facets        | [WebUI 开发契约](../development/WEBUI-DEVELOPMENT.md)及其领域场景                                                |
 | [前端交互](frontend.md)            | Devin 主体、页面结构、Team、响应式和加载条件 | [Devin 场景](../../openspec/changes/adopt-devin-frontend/specs/devin-frontend/spec.md)；公开接口仍在开发契约/API |
@@ -22,4 +23,4 @@
 
 ## 继续工作
 
-读取[工作入口](../OVERVIEW.md)、相关领域页及本地 active-plan。进行实现和验证后更新实施状态；只有预期形成或调整时才增加变更记录。具体维护方法见[文档维护](../development/README.md#文档维护)。
+读取[工作入口](../OVERVIEW.md)、相关领域页及本地 active-plan。进行实现和验证后更新所属 tasks 与候选记录；只有预期形成或调整时才增加变更记录。具体维护方法见[文档维护](../development/README.md#文档维护)。

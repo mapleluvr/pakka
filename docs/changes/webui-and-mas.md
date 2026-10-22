@@ -1,6 +1,6 @@
 # WebUI 与 MAS：既有活动变更
 
-这两项变更沿用原 OpenSpec 组织。活动目录不等于全部完成；当前有效范围由 [state](../state/README.md)映射，候选事实由[实施状态](../PAKKA-POCKET-STATUS.md)记录。
+这两项变更沿用原 OpenSpec 组织。活动目录不等于全部完成；当前有效范围由 [state](../state/README.md)映射，候选事实由[固定验证记录](../verification/README.md)记录。
 
 ## Pakka-Pocket
 

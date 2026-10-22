@@ -1,6 +1,6 @@
 # 验证工作方式
 
-验证目标与门禁关系见[交付声明](../state/delivery.md)；候选结果见[实施状态](../PAKKA-POCKET-STATUS.md)及[证据导航](../verification/README.md)。本页只维护执行方法，不累计历次通过数字。
+验证目标与门禁关系见[交付声明](../state/delivery.md)；候选结果见[证据导航](../verification/README.md)，当前工作见 [OVERVIEW](../OVERVIEW.md)。本页只维护执行方法，不累计历次通过数字。
 
 ## 源码门禁
 
@@ -51,7 +51,7 @@ CLI 不可用则记录 BLOCKED，不临时改依赖或把旧通过结果当本�
 
 本地确定性浏览器与独立实操是分开的流程，按 [WebUI 开发契约第 9/10 节](WEBUI-DEVELOPMENT.md#10-分阶段-computer-use-实操验收)和 AGENTS 的指定模型/工作流执行。固定候选、独立 worktree、唯一桌面、真实操作和 A/B 证据分别记录；缺环境保持 BLOCKED。
 
-用户确认的历史本机项目保留[其版本范围](../PAKKA-POCKET-STATUS.md#2-用户已经确认的本机验收)，不替代新候选。通知的 HTTP 接受、原生系统显示/点击和不同部署设备各自留证。
+通知的 HTTP 接受、原生系统显示/点击和不同部署设备各自留证。
 
 ## 文档修改
 

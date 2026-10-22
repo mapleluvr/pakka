@@ -1,8 +1,8 @@
 # Pakka-Pocket — Linux closeout（进行中）
 
-> **Deprecated — 历史资料。** 本文保留当时的计划、试写或验证结论，供追溯其条件、版本和产物；现行使用与实施入口见 [当前产品状态](../../PAKKA-POCKET-STATUS.md) 与 [文档导航](../../README.md)。deprecated 指本页作为当前指引的地位，历史事实、验收结果及尚有效的约束仍按原范围保留。分类与迁移说明见 [历史资料索引](../README.md)。
+> **Deprecated — 历史资料。** 本文保留当时的计划、试写或验证结论，供追溯其条件、版本和产物；现行使用与实施入口见 [当前工作](../../OVERVIEW.md) 与 [文档导航](../../README.md)。deprecated 指本页作为当前指引的地位，历史事实、验收结果及尚有效的约束仍按原范围保留。分类与迁移说明见 [历史资料索引](../README.md)。
 
-本页保存 Linux 各轮候选、诊断和验收记录，包含当时仍待完成而后来已补齐的项目。用户已确认本机五项验收；当前产品、远程／跨平台和 P6 交付范围统一见 [状态入口](../../PAKKA-POCKET-STATUS.md)。后台 GUI 验收仍暂停。历史通过／失败与相应版本保留，Windows、真实设备公网 FCM 等测量独立记录。计划和操作协议见 [迁移计划（外置备份）](../../verification/DOCUMENTATION-CLEANUP.md#备份与恢复)、[P0 action ledger](../webui/PAKKA-POCKET-P0.md#3-页面与-action-ledger) 及 [分阶段协议](../../development/WEBUI-DEVELOPMENT.md#10-分阶段-computer-use-实操验收)。
+本页保存 Linux 各轮候选、诊断和验收记录，包含当时仍待完成而后来已补齐的项目。用户已确认本机五项验收；当前产品、远程／跨平台和 P6 交付范围统一见 [移除前状态快照](https://github.com/mapleluvr/pakka/blob/200af506913ee38d7a357e5da96ea5e2afc03d67/docs/PAKKA-POCKET-STATUS.md)。后台 GUI 验收仍暂停。历史通过／失败与相应版本保留，Windows、真实设备公网 FCM 等测量独立记录。计划和操作协议见 [迁移计划（外置备份）](../../verification/DOCUMENTATION-CLEANUP.md#备份与恢复)、[P0 action ledger](../webui/PAKKA-POCKET-P0.md#3-页面与-action-ledger) 及 [分阶段协议](../../development/WEBUI-DEVELOPMENT.md#10-分阶段-computer-use-实操验收)。
 
 ## 用户授权的 main 同步
 
@@ -241,7 +241,7 @@ GUI 报告 `p5-deployment/r1/report.md` 已返回：真实公网登录、一次�
 
 ## 7. Linux 初始轮次收尾时的待办
 
-以下保留当时的待办，后续报告、r10 安装门禁与用户手测已有补充。当前尚待项目以 [状态入口第 4 节](../../PAKKA-POCKET-STATUS.md#4-仍有的工程与环境工作) 为准。
+以下保留当时的待办，后续报告、r10 安装门禁与用户手测已有补充。当前尚待项目以 [移除前状态快照](https://github.com/mapleluvr/pakka/blob/200af506913ee38d7a357e5da96ea5e2afc03d67/docs/PAKKA-POCKET-STATUS.md#4-仍有的工程与环境工作) 为准。
 
 1. 审核第二轮各条 GUI 的真实报告与证据；普通问题待该轮完成后处置，严重问题按 interrupt/确认暂停/新快照/resume/完整重验处理，保存最新 run id。
 2. 新产品候选Linux **512/512**及构建、类型、格式通过；新导航GUI正在实际安装后干净环境复验。r9完整安装在定时输入样式加载期间的点击观测失败；相同归档A/B/A已确认并修正驱动，须新source/helper身份重跑完整安装。r8通过仍只属于旧产品候选，不推广到之后修复。

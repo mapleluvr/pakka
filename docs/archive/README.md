@@ -13,4 +13,4 @@
 
 已重归类的旧计划、MAS 草稿/复核/示意、旧状态和过时整理报告不再在工作树重复保存；备份身份和恢复入口见[清理记录](../verification/DOCUMENTATION-CLEANUP.md#备份与恢复)。
 
-[M3](../MIGRATION-M3-ACCEPTANCE.md)、[M4](../MIGRATION-M4-ACCEPTANCE.md)、[M5](../MIGRATION-M5-ACCEPTANCE.md) 三个旧验收路径仍被不可改写的追加账本链接，因此仅保留这些有实际依赖的跳转，不批量保留无用旧路径。
+根目录的三个迁移跳转已删除；追加式账本在末尾提供相应归档路径映射，历史正文从本页的阶段链接进入。

@@ -1,6 +1,6 @@
 # M1 acceptance — Conversation-scoped runtime
 
-> **Deprecated — 历史资料。** 本文保留当时的计划、试写或验证结论，供追溯其条件、版本和产物；现行使用与实施入口见 [当前产品状态](../../PAKKA-POCKET-STATUS.md) 与 [文档导航](../../README.md)。deprecated 指本页作为当前指引的地位，历史事实、验收结果及尚有效的约束仍按原范围保留。分类与迁移说明见 [历史资料索引](../README.md)。
+> **Deprecated — 历史资料。** 本文保留当时的计划、试写或验证结论，供追溯其条件、版本和产物；现行使用与实施入口见 [当前工作](../../OVERVIEW.md) 与 [文档导航](../../README.md)。deprecated 指本页作为当前指引的地位，历史事实、验收结果及尚有效的约束仍按原范围保留。分类与迁移说明见 [历史资料索引](../README.md)。
 
 M1 已完成并经两轮独立只读复审收敛，`@pakka/agent@0.2.0`。实现提交以本文件的 Git history 为准；验证输入为 `feat/monorepo-mas-migration` 上 `cfcb10f` 后的 M1 diff。Dynamite 专项仍 **deferred / 未处理**，完整 DC-01–DC-12 目标和恢复条件保留在 [延期记录](../investigations/DEFERRED-DYNAMITE-COMPATIBILITY.md)。本记录不代表 M2–M6 完成。
 

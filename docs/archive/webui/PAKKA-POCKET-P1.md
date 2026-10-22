@@ -1,8 +1,8 @@
 # Pakka-Pocket P1 — 受控服务与独立协议
 
-> **Deprecated — 历史资料。** 本文保留当时的计划、试写或验证结论，供追溯其条件、版本和产物；现行使用与实施入口见 [当前产品状态](../../PAKKA-POCKET-STATUS.md) 与 [文档导航](../../README.md)。deprecated 指本页作为当前指引的地位，历史事实、验收结果及尚有效的约束仍按原范围保留。分类与迁移说明见 [历史资料索引](../README.md)。
+> **Deprecated — 历史资料。** 本文保留当时的计划、试写或验证结论，供追溯其条件、版本和产物；现行使用与实施入口见 [当前工作](../../OVERVIEW.md) 与 [文档导航](../../README.md)。deprecated 指本页作为当前指引的地位，历史事实、验收结果及尚有效的约束仍按原范围保留。分类与迁移说明见 [历史资料索引](../README.md)。
 
-本页记录 P1 的受控服务实现与当时的阶段门禁：在 P0 来源／原生证明之上增加人类身份、工作区、有限分页与原生后台任务；HTTP、Cookie 登录、SSE 和浏览器界面随后由 [P2](PAKKA-POCKET-P2.md) 接入。当前能力和验收范围见 [产品状态](../../PAKKA-POCKET-STATUS.md)；下文测试总数属于该阶段版本。[当时范围计划（外置备份）](../../verification/DOCUMENTATION-CLEANUP.md#备份与恢复)与 [WebUI 开发规范](../../development/WEBUI-DEVELOPMENT.md)继续有效。
+本页记录 P1 的受控服务实现与当时的阶段门禁：在 P0 来源／原生证明之上增加人类身份、工作区、有限分页与原生后台任务；HTTP、Cookie 登录、SSE 和浏览器界面随后由 [P2](PAKKA-POCKET-P2.md) 接入。当前能力和验收范围见 [移除前状态快照](https://github.com/mapleluvr/pakka/blob/200af506913ee38d7a357e5da96ea5e2afc03d67/docs/PAKKA-POCKET-STATUS.md)；下文测试总数属于该阶段版本。[当时范围计划（外置备份）](../../verification/DOCUMENTATION-CLEANUP.md#备份与恢复)与 [WebUI 开发规范](../../development/WEBUI-DEVELOPMENT.md)继续有效。
 
 ## 公开入口
 

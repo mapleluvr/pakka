@@ -61,4 +61,4 @@ python "$backup/operations/restore.py" --path docs/plans --target D:/Projects/ka
 
 OpenSpec 1.14.3 初始 strict 为 5/9 通过、4 项未通过：两个 Purpose 占位和三个过长 requirement（其中一项两者都有）。Purpose 已填写；原 requirement/scenario 全文保持，不为降低警告数裁剪或拆分规范。
 
-本轮没有重跑浏览器/付费模型/完整产品矩阵，不更新旧产品候选通过数。下一项实际工作仍见[实施状态](../PAKKA-POCKET-STATUS.md)。
+本轮没有重跑浏览器/付费模型/完整产品矩阵，不更新旧产品候选通过数。本轮交接时的工作见[状态快照](https://github.com/mapleluvr/pakka/blob/200af506913ee38d7a357e5da96ea5e2afc03d67/docs/PAKKA-POCKET-STATUS.md)。

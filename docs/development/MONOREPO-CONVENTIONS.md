@@ -2,7 +2,7 @@
 
 状态：当前采用的仓库规范。`@pakka/agent` 保留现名；agent、MAS、DevPack、protocol/client、server/CLI 和 WebUI 均已有实际消费者。
 
-当前契约见 [ARCHITECTURE.md](ARCHITECTURE.md)、[API 参考](../reference/README.md)和源码；实施范围见[工作入口](../OVERVIEW.md)，实际完成情况见[产品状态](../PAKKA-POCKET-STATUS.md)。历史迁移和验收保存在[归档](../archive/README.md)，各自只覆盖记录的 commit、产物和范围。
+当前契约见 [ARCHITECTURE.md](ARCHITECTURE.md)、[API 参考](../reference/README.md)和源码；实施范围见[工作入口](../OVERVIEW.md)，实际完成情况见[固定验证记录](../verification/README.md)。历史迁移和验收保存在[归档](../archive/README.md)，各自只覆盖记录的 commit、产物和范围。
 
 ## 1. 目录与命名
 
@@ -121,7 +121,7 @@ Durable ownership 是生命周期关系，不是 ACL。应用 ownership 变更�
 
 ## 6. 协议与客户端的抽取条件
 
-`@pakka/protocol` 与 `@pakka/client` 已有实际浏览器／CLI 消费。Headless v1 保留显式 loopback token 边界；Pakka-Pocket 使用独立 version-2 schema/client 入口、person-scoped read model 与 SSE。产品范围与证据见[当前状态](../PAKKA-POCKET-STATUS.md)，对应开发接口见 [WebUI 规范](WEBUI-DEVELOPMENT.md)。
+`@pakka/protocol` 与 `@pakka/client` 已有实际浏览器／CLI 消费。Headless v1 保留显式 loopback token 边界；Pakka-Pocket 使用独立 version-2 schema/client 入口、person-scoped read model 与 SSE。产品范围见[产品声明](../state/product.md)，候选证据见[验证记录](../verification/README.md)，对应开发接口见 [WebUI 规范](WEBUI-DEVELOPMENT.md)。
 
 协议层只包含可序列化引用、命令、事件、错误、receipt、runtime schema 和版本协商；不能依赖 Node 文件系统、Pi runtime、server 启动或进程内 capability。TypeScript interface 不能替代消息 runtime validation。
 

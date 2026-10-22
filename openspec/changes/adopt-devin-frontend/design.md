@@ -8,7 +8,7 @@ This is a retrospective relocation of adopted decisions, not a claim that this O
 
 本文件接入已有 R2 决策记录，来源是 `e7b7d7c:docs/plans/DEVIN-FRONTEND-ADOPTION-R2.md`，不是本轮重新征求的产品决定。用户明确的主从关系、代理形成的页面映射，以及 MAS 新页面的设计推导在原文中分别保留。
 
-当前前端预期由 [frontend state](../../../docs/state/frontend.md)维护；当前验收由[实施状态](../../../docs/PAKKA-POCKET-STATUS.md)维护。下面“当前候选”和实施顺序是来源文件的当时记录，不作为今天的待办。
+当前前端预期由 [frontend state](../../../docs/state/frontend.md)维护；当前工作由[本 change 的 tasks](tasks.md)承接，候选结果见 [R2 记录](../../../docs/verification/DEVIN-FRONTEND-R2.md)。下面“当前候选”和实施顺序是来源文件的当时记录，不作为今天的待办。
 
 ## 选择与依据
 
@@ -23,7 +23,7 @@ This is a retrospective relocation of adopted decisions, not a claim that this O
 
 ### 决策与当前状态
 
-当前固定源码候选为 `6d359b1`；R2 主体接入与 Team 重建已实现，但完整验收仍失败／受阻，不等于可合并 main。具体数字、原始日志、安装补测和独立 GUI 边界见 [R2 验证记录](../../../docs/verification/DEVIN-FRONTEND-R2.md)与[候选 004 交付复核](../../../docs/visual-primitives/runs/devin-frontend-r2-candidate-004/final/delivery-review.md)。
+当前固定源码候选为 `6d359b1`；R2 主体接入与 Team 重建已实现，但完整验收仍失败／受阻，不等于可合并 main。具体数字、原始日志、安装补测和独立 GUI 边界见 [R2 验证记录](../../../docs/verification/DEVIN-FRONTEND-R2.md)与[候选 004 交付复核](https://github.com/mapleluvr/pakka/blob/200af506913ee38d7a357e5da96ea5e2afc03d67/docs/visual-primitives/runs/devin-frontend-r2-candidate-004/final/delivery-review.md)。
 
 用户再次明确迁移方向：以 `mapleluvr/devin-ui-comparison@ed20cec/clean-room/current` 为前端主体，Pakka WebUI 提供接口、权限和真实状态；对前端只做必要的字符串、元素及事件／状态绑定适配。不把原型改造成旧 Pakka WebUI 的形状。
 

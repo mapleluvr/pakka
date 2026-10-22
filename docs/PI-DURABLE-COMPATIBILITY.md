@@ -664,3 +664,11 @@ store: (options: RuntimeStoreOptions) => port.store(options),
 验证：最终离线 clean staging install/build/check/format、完整 242/242、focused 26/26、guard/effect 控制 13/13、实际 browser 和 tarball server/client/CLI；独立 consumers HTTP 7/3/3/3/8/2。第一轮指定 adversarial-review BLOCK 后修复四类确定本地拒绝，第二轮 A/B/closing 均 OK with notes。callback 实际产生 HTTP 后的拒绝、物理 native write failure、迟到 revoke/expiry 和丢回执仍 unknown；未以 HTTP status 放宽响应关联。完整 SHA、原始失败和 report-only P2 见 [MIGRATION-M5-ACCEPTANCE.md](MIGRATION-M5-ACCEPTANCE.md)。SDK 输入不变，历史 patch 105/105 未重跑，不算本轮结果。
 
 失效条件：public admission/withdraw/invocation/commit/callback 契约或 SDK cohort/patch/hash/build lock 变化、deny producer 变化、不可信 broker restore/外部传输、hostile config 或新的 isolation/cancellation 组合，应重跑受影响真实矩阵并追加记录。本条只授权已验收 loopback/MAS 应用；不授权公网多租户、任意 host RPC、完整 crash claim恢复、M6 默认产品装配或 Dynamite兼容。
+
+## 引用映射 DOCS-2026-10-22
+
+- supersedes：仅替换旧条目的文档引用解析位置；原兼容性行为、版本和验证结论按各条目保留。
+- 旧 `MIGRATION-M3-ACCEPTANCE.md` 对应 [M3 历史原文](archive/acceptance/MIGRATION-M3-ACCEPTANCE.md)。
+- 旧 `MIGRATION-M4-ACCEPTANCE.md` 对应 [M4 历史原文](archive/acceptance/MIGRATION-M4-ACCEPTANCE.md)。
+- 旧 `MIGRATION-M5-ACCEPTANCE.md` 对应 [M5 历史原文](archive/acceptance/MIGRATION-M5-ACCEPTANCE.md)。
+- 当前补丁产物、行为与构建/回归入口见 [Durable state](state/durable-patch.md)；本次文档归属调整见[摘要](changes/verification-and-patch-state.md)。

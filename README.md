@@ -2,7 +2,7 @@
 
 基于 Pi **1.0.3 发布包**和可重建的 Pi Durable 下游补丁 **1.0.3-pakka.1** 的 headless 整合宿主，并提供可选 Pakka-Pocket Web 工作台。默认生产路径为 Durable；AgentSession 用于测试对照。当前配对是 `@pakka/agent@0.5.0`、`@pakka/mas@0.4.0`、可选 `@pakka/mas-devpack@0.2.0`、`@pakka/protocol@0.1.0`、`@pakka/client@0.1.0`、`@pakka/cli@0.1.0` 和 private `@pakka/server@0.5.0`；暂不发布。
 
-Web 工作台接入普通 Conversation、多人邀请、文件／Git、审批、受控浏览器、Memory、Webhook、定时输入和通知。前端以 Devin 原型结构/交互为主体接入真实服务；模型在输入区选择，cwd 从 Conversation 标题下独立选择，外观在 Settings 调整。当前固定候选仍有失败和独立验收阻塞，不据旧本机确认宣称 R2 完整通过。接续工作从 **[OVERVIEW](docs/OVERVIEW.md)** 和[实施状态](docs/PAKKA-POCKET-STATUS.md)开始。
+Web 工作台接入普通 Conversation、多人邀请、文件／Git、审批、受控浏览器、Memory、Webhook、定时输入和通知。前端以 Devin 原型结构/交互为主体接入真实服务；模型在输入区选择，cwd 从 Conversation 标题下独立选择，外观在 Settings 调整。接续工作从 **[OVERVIEW](docs/OVERVIEW.md)** 和[前端任务](openspec/changes/adopt-devin-frontend/tasks.md)开始。
 
 MAS DevPack 作为普通扩展提供 **Team：Graph / Activity / Agents**、成员 inspector、真实 Conversation 导航与获准控制。安装 WebUI 与装配模型工具相互独立。操作见[Team 指南](docs/guides/MAS-BOARD.md)，目标见[前端声明](docs/state/frontend.md#team)；旧 MAS 设计保留为形成材料。
 
@@ -14,7 +14,7 @@ M1–M6 核心迁移与可选配对保留各自范围，见[应用 API](docs/gui
 
 **[工作入口](docs/OVERVIEW.md)** · **[完整文档导航](docs/README.md)**。
 
-- 使用：[WebUI 启动与操作](docs/guides/WEBUI-GUIDE.md) · [当前产品状态](docs/PAKKA-POCKET-STATUS.md) · [MAS 应用装配](docs/guides/MAS-APPLICATION-API.md)
+- 使用：[WebUI 启动与操作](docs/guides/WEBUI-GUIDE.md) · [产品契约](docs/state/product.md) · [MAS 应用装配](docs/guides/MAS-APPLICATION-API.md)
 - 接口：[公开 API 参考](docs/reference/README.md) · [Headless 产品支持](docs/guides/MAS-PRODUCT-SUPPORT.md)
 - 开发：[架构、仓库与扩展规范](docs/development/README.md) · [验证工作方式](docs/development/VERIFICATION.md)
 - 预期与来路：[state](docs/state/README.md) · [changes](docs/changes/README.md) · [完整 OpenSpec 变更](openspec/changes/)
@@ -22,7 +22,7 @@ M1–M6 核心迁移与可选配对保留各自范围，见[应用 API](docs/gui
 
 ## 开发与验证
 
-需要 Node 24+、npm 11。历史 M1–M6 门禁的 Windows 环境和固定产物见[阶段归档](docs/archive/README.md)；后续 Linux 与本机验收范围见[当前状态](docs/PAKKA-POCKET-STATUS.md)。
+需要 Node 24+、npm 11。历史 M1–M6 门禁的 Windows 环境和固定产物见[阶段归档](docs/archive/README.md)；后续 Linux 与本机验收范围见[固定验证记录](docs/verification/README.md)。
 
 ```sh
 npm ci --ignore-scripts

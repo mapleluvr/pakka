@@ -1,8 +1,8 @@
 # Pakka-Pocket P2 — 实际工作台与多人传输
 
-> **Deprecated — 历史资料。** 本文保留当时的计划、试写或验证结论，供追溯其条件、版本和产物；现行使用与实施入口见 [当前产品状态](../../PAKKA-POCKET-STATUS.md) 与 [文档导航](../../README.md)。deprecated 指本页作为当前指引的地位，历史事实、验收结果及尚有效的约束仍按原范围保留。分类与迁移说明见 [历史资料索引](../README.md)。
+> **Deprecated — 历史资料。** 本文保留当时的计划、试写或验证结论，供追溯其条件、版本和产物；现行使用与实施入口见 [当前工作](../../OVERVIEW.md) 与 [文档导航](../../README.md)。deprecated 指本页作为当前指引的地位，历史事实、验收结果及尚有效的约束仍按原范围保留。分类与迁移说明见 [历史资料索引](../README.md)。
 
-本页记录 P2 建立的可启动 Web 产品及当时的传输／浏览器门禁。产品在 [P1 受控服务](PAKKA-POCKET-P1.md) 上运行，主题、字体和交互来源固定于 [P0](PAKKA-POCKET-P0.md)。公共扩展随后在 [P3](PAKKA-POCKET-P3.md) 接入，完整本机工作台已沿 P5 演进。当前能力、用户确认和远程测量范围见 [产品状态](../../PAKKA-POCKET-STATUS.md)；下文保留 P2 版本条件。
+本页记录 P2 建立的可启动 Web 产品及当时的传输／浏览器门禁。产品在 [P1 受控服务](PAKKA-POCKET-P1.md) 上运行，主题、字体和交互来源固定于 [P0](PAKKA-POCKET-P0.md)。公共扩展随后在 [P3](PAKKA-POCKET-P3.md) 接入，完整本机工作台已沿 P5 演进。当前能力、用户确认和远程测量范围见 [移除前状态快照](https://github.com/mapleluvr/pakka/blob/200af506913ee38d7a357e5da96ea5e2afc03d67/docs/PAKKA-POCKET-STATUS.md)；下文保留 P2 版本条件。
 
 ## 启动与使用
 

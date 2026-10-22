@@ -4,7 +4,7 @@ This file rehomes the historical second MAS design draft. Its then-current obser
 
 # MAS Board 设计草案 · 第二次试写（形成材料）
 
-本页保留实体、界面与观测需求的试写来路。正文中的“当前”“拟实现”、直角卡片、旧视图/控件和暂停状态属于当时材料，不是现行状态或验收策略。当前资源/观测声明见 [MAS state](../../../docs/state/mas.md)，现行界面结构见[前端声明](../../../docs/state/frontend.md#team)，操作见[Team 指南](../../../docs/guides/MAS-BOARD.md)，实现差距见[实施状态](../../../docs/PAKKA-POCKET-STATUS.md)。
+本页保留实体、界面与观测需求的试写来路。正文中的“当前”“拟实现”、直角卡片、旧视图/控件和暂停状态属于当时材料，不是现行状态或验收策略。当前资源/观测声明见 [MAS state](../../../docs/state/mas.md)，现行界面结构见[前端声明](../../../docs/state/frontend.md#team)，操作见[Team 指南](../../../docs/guides/MAS-BOARD.md)，实现差距见[工作入口与领域任务](../../../docs/OVERVIEW.md)。
 
 [第一次试写](../../../docs/verification/DOCUMENTATION-CLEANUP.md#备份与恢复)和[两轮复核记录](../../../docs/verification/DOCUMENTATION-CLEANUP.md#备份与恢复)保留。下文正文及构造示意作为历史设计输入继续可查；不能从示例推定运行事实，也不能从旧实现描述反向缩减已采用的目标。
 

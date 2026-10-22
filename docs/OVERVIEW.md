@@ -4,16 +4,16 @@ Pakka 将 Pi 的 Conversation、权限、持久化和 MAS 服务接到可选的 
 
 ## 当前工作
 
-Devin 前端的固定产品候选仍未通过完整交付。下一项是补足安装消费者进程诊断，分别核对 Browser 停点、Windows 文件系统与独立验收环境。
+下一项文档工作是确定通用测试方法补全与 verification 历史瘦身的采用方案，见[本轮评估](../openspec/changes/streamline-verification-and-patch-state/design.md#验证方法与进一步瘦身)和[待决定任务](../openspec/changes/streamline-verification-and-patch-state/tasks.md#4-待决定的后续方案)。入口精简、视觉生成物本地化与 Durable 源补丁声明已经完成。
 
-- **预期**：[state](state/README.md)。
-- **差距与交接**：[实施状态](PAKKA-POCKET-STATUS.md)；本地 `docs/.temp/active-plan.md`，缺失时从实施状态恢复。
-- **变更摘要**：[changes](changes/README.md)。
-- **使用与技术文档**：[完整导航](README.md)。
-- **本轮整理与恢复**：[清理记录](verification/DOCUMENTATION-CLEANUP.md)；不是产品验收。
+- **预期**：[state](state/README.md)，包括 [Durable 源补丁](state/durable-patch.md)。
+- **产品后续工作**：[前端交付任务](../openspec/changes/adopt-devin-frontend/tasks.md)、[服务与生命周期任务](../openspec/changes/pakka-pocket-webui/tasks.md)。
+- **本地执行安排**：`docs/.temp/active-plan.md`；文件缺失时从上述 tracked 任务接续。
+- **方法与记录**：[验证方法](development/VERIFICATION.md)、[固定验证记录](verification/README.md)。
+- **完整导航与变更**：[文档导航](README.md)、[changes](changes/README.md)。
 
 ## 保留 OpenSpec 组织方式
 
-完整变更继续在 [OpenSpec changes](../openspec/changes/)维护 proposal、design、tasks 与 `specs/**/spec.md`，完成后按其生命周期归档并合入 [主 specs](../openspec/specs/)。
+完整变更在 [OpenSpec changes](../openspec/changes/)维护 proposal、design、tasks 与 `specs/**/spec.md`，完成后按其生命周期归档并合入 [主 specs](../openspec/specs/)。
 
-**docs/changes 只作总结，不另建完整变更正文。每条总结必须完整引用所涉及的 OpenSpec change 目录、proposal、存在的 design、tasks、全部 delta spec，以及有关主 spec；跨多次变更就逐项列全。** 归档时一并更新这些引用。state 负责当前预期和细则映射，未完成/失败状态不能因归档或文档整理消失。
+每条 docs/changes 摘要完整引用相关 change、proposal、已有 design、tasks、全部 delta 及有关主 spec；归档时同步引用。state 维护预期与细则映射，OpenSpec tasks 承接实际差距和具体工作。

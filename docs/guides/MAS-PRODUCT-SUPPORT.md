@@ -1,6 +1,6 @@
 # Headless MAS product — support boundary
 
-M6 已在本文范围内验收（带 notes），证据、固定产物和复审结论见 [MIGRATION-M6-ACCEPTANCE.md](../archive/acceptance/MIGRATION-M6-ACCEPTANCE.md)。核心产品使用真实 `pakka-server`/`pakka` executable、共享 client 和可选模型侧 DevPack。Dynamite 的历史失败仍 [留档](../archive/investigations/DEFERRED-DYNAMITE-COMPATIBILITY.md)，核心迁移后的显式可选产品配对已带 notes 验收，见 [固定身份与限制](../verification/DYNAMITE-PRODUCT-ACCEPTANCE.md) 和 [配置 API](../reference/DYNAMITE-PRODUCT-API.md)；默认策略仍是 native context。本页对应 headless server/CLI 的支持边界；Web 工作台另见[使用指南](WEBUI-GUIDE.md)与[当前状态](../PAKKA-POCKET-STATUS.md)。
+M6 已在本文范围内验收（带 notes），证据、固定产物和复审结论见 [MIGRATION-M6-ACCEPTANCE.md](../archive/acceptance/MIGRATION-M6-ACCEPTANCE.md)。核心产品使用真实 `pakka-server`/`pakka` executable、共享 client 和可选模型侧 DevPack。Dynamite 的历史失败仍 [留档](../archive/investigations/DEFERRED-DYNAMITE-COMPATIBILITY.md)，核心迁移后的显式可选产品配对已带 notes 验收，见 [固定身份与限制](../verification/DYNAMITE-PRODUCT-ACCEPTANCE.md) 和 [配置 API](../reference/DYNAMITE-PRODUCT-API.md)；默认策略仍是 native context。本页对应 headless server/CLI 的支持边界；Web 工作台另见[使用指南](WEBUI-GUIDE.md)与[产品范围](../state/product.md)。
 
 ## 1. Operator startup and model authority
 
@@ -66,4 +66,4 @@ M6 已在本文范围内验收（带 notes），证据、固定产物和复审�
 
 M6 完整 gate 和第一轮完整指定有界对抗复审已通过，核心 package/artifact identities 已固定，见验收记录。后续独立 Dynamite 仓库的 `0.2.0` 库兼容复审已收敛；产品验收暴露的无 inference receipt 修订为 `0.2.1`，其 345 项源码、47 项安装与 5 项实际产品消费者已通过执行门禁，完整指定产品复审已收敛，遗漏门禁脚本的身份链已 red/green 修正；产品预算正向拒绝观测缺口按 [验收记录](../verification/DYNAMITE-PRODUCT-ACCEPTANCE.md) 保留。默认策略改变不是兼容验收的隐含结果。
 
-M6 的固定门禁面向 headless 产品。随后加入的 `@pakka/webui` 提供独立工作台，其公开插槽与受控服务见 [WebUI 开发规范](../development/WEBUI-DEVELOPMENT.md)；当前功能和专项实操按[产品状态](../PAKKA-POCKET-STATUS.md)记录。仓库拆分继续按 [monorepo 规范](../development/MONOREPO-CONVENTIONS.md) 中的实际发布／团队边界判断。
+M6 的固定门禁面向 headless 产品。随后加入的 `@pakka/webui` 提供独立工作台，其公开插槽与受控服务见 [WebUI 开发规范](../development/WEBUI-DEVELOPMENT.md)；当前功能和专项实操按[固定验证记录](../verification/README.md)记录。仓库拆分继续按 [monorepo 规范](../development/MONOREPO-CONVENTIONS.md) 中的实际发布／团队边界判断。

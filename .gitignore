@@ -15,6 +15,8 @@ dist/
 artifacts/
 # Local desktop observations may include unrelated windows; never publish.
 .cu/
+# Local visual analysis runs, screenshots, annotations and generated verdicts.
+/docs/visual-primitives/
 
 # --- Packed packages ---------------------------------------------------------
 # npm pack output, e.g. pakka-agent-0.1.0.tgz from a manual pack.

@@ -1,17 +1,13 @@
-# 验证入口与固定证据
+# 固定版本验证记录
 
-预期门禁见[交付声明](../state/delivery.md)，本轮文档系统检查见[整理验证与恢复](DOCUMENTATION-CLEANUP.md)。下面的记录按各自候选身份成立，不承担当前规格。
+本目录保存按版本和环境限定的结果及必要证据。通用方法在[验证工作方式](../development/VERIFICATION.md)，当前工作由 [OVERVIEW](../OVERVIEW.md)和所指 OpenSpec tasks 承接。
 
-| 要核对的内容                           | 入口                                                                                                         |
-| -------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| 验证命令、环境、安装身份及留证方式     | [验证工作方式](../development/VERIFICATION.md)                                                               |
-| 当前候选结果、用户已确认项及剩余交付   | [当前产品状态](../PAKKA-POCKET-STATUS.md)                                                                    |
-| MAS Board 关系工作台实现与候选门禁     | [r1 实施记录](MAS-BOARD-R1.md)                                                                               |
-| Devin 原型前端接入 R2 的结果与剩余门禁 | [R2 验证记录](DEVIN-FRONTEND-R2.md)                                                                          |
-| 显式可选 Dynamite 的已接受固定配对     | [有界验收记录](DYNAMITE-PRODUCT-ACCEPTANCE.md)与[精确配对](../../integrations/dynamite/core-m6-pairing.json) |
-| Pi Durable 补丁基线、构建锁和追加记录  | [兼容性账本](../PI-DURABLE-COMPATIBILITY.md)与[补丁说明](../../patches/pi-durable/1.0.3-pakka.1/README.md)   |
-| M1–M6、P0–P5 和 Linux 各轮结果         | [历史资料索引](../archive/README.md)                                                                         |
+| 核对对象                      | 记录                                                                                                         |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| Devin 接入 R2、固定候选 004   | [R2 记录](DEVIN-FRONTEND-R2.md)                                                                              |
+| MAS Board r1 实现和后续专项   | [MAS 记录](MAS-BOARD-R1.md)                                                                                  |
+| Dynamite 已接受的有界配对     | [配对记录](DYNAMITE-PRODUCT-ACCEPTANCE.md)、[机器配对身份](../../integrations/dynamite/core-m6-pairing.json) |
+| 2026-10-21 文档清理与外置恢复 | [清理记录](DOCUMENTATION-CLEANUP.md)                                                                         |
+| 更早阶段                      | [历史资料索引](../archive/README.md)                                                                         |
 
-Dynamite 的固定配对记录仍是当前显式可选支持的依据，因此保留在此处。历史失败配对和后来有界通过的配对各有身份，不能用一个结果覆盖另一个。
-
-其余阶段记录退出当前实施指南后进入 archive 并标记 Deprecated；对应版本的证据地位保持原范围。新交付选定一个确切候选，再组织其门禁、安装身份、实操、审查和归档记录。
+当前补丁的产物与行为见 [Durable state](../state/durable-patch.md)，兼容性变化查[追加式账本](../PI-DURABLE-COMPATIBILITY.md)。视觉运行目录 `docs/visual-primitives/` 是本机工作材料；保留报告对其原版本的引用使用固定 Git 链接。

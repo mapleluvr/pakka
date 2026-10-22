@@ -2,7 +2,7 @@
 
 M1 增加 `createRuntime(options)`：受信任 bootstrap 在一个 Durable Harness/storage 中管理多个 Conversation。M2 的同 Session MAS 服务通过该 runtime 的受控 catalog port 装配；MAS 的 client、membership 和 A2A 语义见 [MAS-API.md](MAS-API.md)。`createHost()` 继续提供单 Conversation 兼容入口，使用原有 strategy journal namespace。两者不是可互换的 storage 开启方式：legacy host 不得重开 managed runtime storage，managed runtime 也不隐式采用旧 host storage/journal。
 
-当前实现与证据范围见[产品状态](../PAKKA-POCKET-STATUS.md)，验证工作方式见[开发指南](../development/VERIFICATION.md)；[历史迁移及记录](../archive/README.md)保留对应版本的形成过程。Runtime API 本身不授予 agent 创建/控制资源的权限。M3 的跨 Session A2A、worker 与真实进程隔离通过上层 [BROKER-API.md](BROKER-API.md) 装配，已验收（[范围与残余项](../archive/acceptance/MIGRATION-M3-ACCEPTANCE.md)）；可选 [DevPack](MAS-DEVPack-API.md) 已在 M4 验收（[范围与 notes](../archive/acceptance/MIGRATION-M4-ACCEPTANCE.md)）；有限 loopback MAS RPC 已在 M5 验收，见 [应用 API](../guides/MAS-APPLICATION-API.md) 与 [范围和 notes](../archive/acceptance/MIGRATION-M5-ACCEPTANCE.md)；remote refs 不能转交 Runtime authority。
+当前实现与证据范围见[固定验证记录](../verification/README.md)，验证工作方式见[开发指南](../development/VERIFICATION.md)；[历史迁移及记录](../archive/README.md)保留对应版本的形成过程。Runtime API 本身不授予 agent 创建/控制资源的权限。M3 的跨 Session A2A、worker 与真实进程隔离通过上层 [BROKER-API.md](BROKER-API.md) 装配，已验收（[范围与残余项](../archive/acceptance/MIGRATION-M3-ACCEPTANCE.md)）；可选 [DevPack](MAS-DEVPack-API.md) 已在 M4 验收（[范围与 notes](../archive/acceptance/MIGRATION-M4-ACCEPTANCE.md)）；有限 loopback MAS RPC 已在 M5 验收，见 [应用 API](../guides/MAS-APPLICATION-API.md) 与 [范围和 notes](../archive/acceptance/MIGRATION-M5-ACCEPTANCE.md)；remote refs 不能转交 Runtime authority。
 
 ## 创建与访问
 

@@ -5,6 +5,7 @@
 Pakka 提供受控 Pi 运行时、MAS 服务与可选 Pakka-Pocket Web 工作台。
 
 - `@pakka/agent` 承担 Conversation、authority、admission、策略和原生持久化端口。
+- [Pi Durable 源补丁](durable-patch.md)提供 generation 的策略拒绝与请求级检查，包含固定基线、源补丁、构建输入及生产安装归档。
 - `@pakka/mas` 提供成员、通信、资源控制及有界多 Session 协调。
 - `@pakka/mas-devpack` 提供可选 Agent/Backend/WebUI/Client facets。
 - `@pakka/protocol` 与 `@pakka/client` 提供有限、可验证、browser-safe 的协议和客户端。

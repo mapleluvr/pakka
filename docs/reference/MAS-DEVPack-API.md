@@ -1,6 +1,6 @@
 # MAS DevPack API（M4，accepted with notes）
 
-M4 阶段固定配对为 `@pakka/agent@0.5.0`、`@pakka/mas@0.3.0`、`@pakka/mas-devpack@0.1.0`、private `@pakka/server@0.2.0`，使用 `pi-durable 1.0.3-pakka.1`。本页的 M4 验收数字保留当时条件；后续已有 M5 transport／CLI、M6 可选配对和 Pakka-Pocket P1–P5，当前版本与范围见 [仓库入口](../../README.md)和 [Web 产品状态](../PAKKA-POCKET-STATUS.md)。
+M4 阶段固定配对为 `@pakka/agent@0.5.0`、`@pakka/mas@0.3.0`、`@pakka/mas-devpack@0.1.0`、private `@pakka/server@0.2.0`，使用 `pi-durable 1.0.3-pakka.1`。本页的 M4 验收数字保留当时条件；后续已有 M5 transport／CLI、M6 可选配对和 Pakka-Pocket P1–P5，当前版本与范围见 [仓库入口](../../README.md)和 [Web 产品范围](../state/product.md)。
 
 ## 可选 Web 产品 facets
 

@@ -1,6 +1,6 @@
 # Dynamite 兼容性：延期记录与功能目标
 
-> **Deprecated — 历史资料。** 本文保留当时的计划、试写或验证结论，供追溯其条件、版本和产物；现行使用与实施入口见 [当前产品状态](../../PAKKA-POCKET-STATUS.md) 与 [文档导航](../../README.md)。deprecated 指本页作为当前指引的地位，历史事实、验收结果及尚有效的约束仍按原范围保留。分类与迁移说明见 [历史资料索引](../README.md)。
+> **Deprecated — 历史资料。** 本文保留当时的计划、试写或验证结论，供追溯其条件、版本和产物；现行使用与实施入口见 [当前工作](../../OVERVIEW.md) 与 [文档导航](../../README.md)。deprecated 指本页作为当前指引的地位，历史事实、验收结果及尚有效的约束仍按原范围保留。分类与迁移说明见 [历史资料索引](../README.md)。
 
 历史配对状态：**deferred / failed，不是 passed**。M6 核心已完成；后续 `agent@0.5.0 × dynamite@0.2.1` 的显式可选产品配对已在 [限定范围](../../verification/DYNAMITE-PRODUCT-ACCEPTANCE.md) 带 notes 验收，不覆盖本文件的历史失败身份，也不默认启用或承诺未验证组合。用户明确要求先完成 Pakka monorepo / MAS 迁移，再回到 Dynamite。该决定只解除 Dynamite 作为 M1–M6 核心迁移的前置门禁；不解除 agent、权限、持久化、恢复、native protocol 或隔离安装的其他验收条件。Dynamite 不作为迁移期间的默认策略或已支持功能。
 

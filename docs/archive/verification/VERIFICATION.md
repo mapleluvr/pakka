@@ -1,6 +1,6 @@
 # Verification — accepted headless strategy integration
 
-> **Deprecated — 历史资料。** 本文保留当时的计划、试写或验证结论，供追溯其条件、版本和产物；现行使用与实施入口见 [当前产品状态](../../PAKKA-POCKET-STATUS.md) 与 [文档导航](../../README.md)。deprecated 指本页作为当前指引的地位，历史事实、验收结果及尚有效的约束仍按原范围保留。分类与迁移说明见 [历史资料索引](../README.md)。
+> **Deprecated — 历史资料。** 本文保留当时的计划、试写或验证结论，供追溯其条件、版本和产物；现行使用与实施入口见 [当前工作](../../OVERVIEW.md) 与 [文档导航](../../README.md)。deprecated 指本页作为当前指引的地位，历史事实、验收结果及尚有效的约束仍按原范围保留。分类与迁移说明见 [历史资料索引](../README.md)。
 
 The integrated Pakka/Dynamite migration passed independent review on 2026-10-09: `ok_with_notes`, no remaining findings. Runtime heads reviewed were Pakka `f9578776a46c2c07ae783dd97ee75adcb3b5d3af` and Dynamite `bd45756f272cd2d4af3c0b9e55fc2587e8bf4678`. Later delivery commits update documentation and formatting configuration only.
 

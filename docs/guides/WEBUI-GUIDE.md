@@ -2,7 +2,7 @@
 
 本分支的前端以 Devin 原型为页面与交互基座，接入 Pakka 的真实 API，不使用原型演示数据。当前候选的通过、失败及独立验收阻塞见 [R2 验证记录](../verification/DEVIN-FRONTEND-R2.md)。
 
-Pakka-Pocket 是可选的 Web 工作台。它提供普通 Conversation、原生输入、多人协作和宿主装配的服务／插件；模型工具与界面按各自权限启用。[当前产品状态](../PAKKA-POCKET-STATUS.md)区分已有能力、用户确认及远程、跨平台和最终交付工作。
+Pakka-Pocket 是可选的 Web 工作台。它提供普通 Conversation、原生输入、多人协作和宿主装配的服务／插件；模型工具与界面按各自权限启用。产品组成见[产品声明](../state/product.md)，后续工作见[领域任务](../../openspec/changes/adopt-devin-frontend/tasks.md)。
 
 ## 1. 从源码启动
 
@@ -98,7 +98,7 @@ Team 使用单层页头与 **Graph / Activity / Agents** 三视图。选择成�
 
 正常停止 CLI 后，在原启动配置的 `runtime.reopenSessionFile` 填入 stdout 曾输出的确切 sessionFile，并保留原 dataDir、profile、limits 和批准根声明，再用同一入口启动。已有身份、资源、回执、实际模型／cwd 和已花额度按持久记录恢复，不重新签发 owner。
 
-归档／恢复用于当前界面的 Conversation 整理。MAS 退役具有另外的成员语义；实际删除契约仍在[工程待办](../PAKKA-POCKET-STATUS.md#4-仍有的工程与环境工作)中。
+归档／恢复用于当前界面的 Conversation 整理。MAS 退役具有另外的成员语义；实际删除契约仍在[工程待办](../../openspec/changes/pakka-pocket-webui/tasks.md)中。
 
 未知结果先通过原请求与当前状态只读核对；刷新、关闭面板或退出浏览器都不自动重放输入，也不退还已消费额度。强制终止后的 claim 或未知存储需要另行恢复判断，正常重开说明不承诺 crash recovery。
 
@@ -106,4 +106,4 @@ Team 使用单层页头与 **Graph / Activity / Agents** 三视图。选择成�
 
 默认 loopback HTTP。远程部署需明确 `transport.publicOrigin`、受信反向代理 peer、TLS 终止及 SSE 传输；未经配置的新域名会被拒绝。Cloudflare Quick Tunnel 声明不支持 SSE，不能用作这套实时界面的正向验收环境。
 
-真实 OS 通知、本地 TLS、真实设备公网推送、LAN、tailnet 和不同平台分别验证，范围见[当前状态](../PAKKA-POCKET-STATUS.md)。传输与扩展装配契约见[开发规范](../development/WEBUI-DEVELOPMENT.md)，验证方式见[验证入口](../verification/README.md)。
+真实 OS 通知、本地 TLS、真实设备公网推送、LAN、tailnet 和不同平台分别验证，范围见[领域任务](../../openspec/changes/adopt-devin-frontend/tasks.md)。传输与扩展装配契约见[开发规范](../development/WEBUI-DEVELOPMENT.md)，验证方式见[验证入口](../verification/README.md)。

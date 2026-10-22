@@ -1,6 +1,6 @@
 # M4 Acceptance — Optional MAS DevPack
 
-> **Deprecated — 历史资料。** 本文保留当时的计划、试写或验证结论，供追溯其条件、版本和产物；现行使用与实施入口见 [当前产品状态](../../PAKKA-POCKET-STATUS.md) 与 [文档导航](../../README.md)。deprecated 指本页作为当前指引的地位，历史事实、验收结果及尚有效的约束仍按原范围保留。分类与迁移说明见 [历史资料索引](../README.md)。
+> **Deprecated — 历史资料。** 本文保留当时的计划、试写或验证结论，供追溯其条件、版本和产物；现行使用与实施入口见 [当前工作](../../OVERVIEW.md) 与 [文档导航](../../README.md)。deprecated 指本页作为当前指引的地位，历史事实、验收结果及尚有效的约束仍按原范围保留。分类与迁移说明见 [历史资料索引](../README.md)。
 
 状态：**M4 accepted with documented notes；两轮指定对抗复审完成**。分支 `feat/monorepo-mas-migration`，基线为已验收 M3 `2af55a5`；最终提交以本文件所在 Git commit 为准。Dynamite 仍 deferred，不装配；M5–M6 不由本阶段推定完成。
 

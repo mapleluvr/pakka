@@ -1,6 +1,6 @@
 # Architecture / core contracts
 
-This document defines the single-Conversation host and managed multi-Conversation runtime contracts. Read [runtime state](../state/runtime.md) for module relationships, [monorepo conventions](MONOREPO-CONVENTIONS.md) for package boundaries, and [public APIs](../reference/README.md) for precise declarations. Candidate implementation and verification belong in [product status](../PAKKA-POCKET-STATUS.md), not this contract.
+This document defines the single-Conversation host and managed multi-Conversation runtime contracts. Read [runtime state](../state/runtime.md) for module relationships, [monorepo conventions](MONOREPO-CONVENTIONS.md) for package boundaries, and [public APIs](../reference/README.md) for precise declarations. Current work belongs in [OVERVIEW](../OVERVIEW.md) and its owning tasks; candidate results are indexed by [verification records](../verification/README.md).
 
 ## Authority and ownership
 
