@@ -5,3 +5,9 @@ patches/pi-durable/**/artifact.json text eol=lf
 packages/agent/vendor/*.tgz binary
 # Preserve adopted upstream license bytes, including original whitespace.
 integrations/pocket/licenses/*.txt -text -whitespace
+# Preserve the pinned Devin frontend Git-blob bytes on every platform.
+apps/webui/web/reference.css text eol=lf
+# Archived verification records keep their measured bytes (including CRLF).
+docs/verification/evidence/** -text -whitespace
+# Candidate captures/diffs and their digest inventory are immutable evidence.
+docs/visual-primitives/runs/devin-frontend-r2-candidate-004/** -text -whitespace

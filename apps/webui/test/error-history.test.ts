@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { runtimeFixture } from "../../../packages/agent/test/runtime-fixture.ts";
 import { startPocket } from "../src/bootstrap.ts";
 import { ownedBrowser } from "./browser.ts";
+import { conversationAction } from "./frontend-controls.ts";
 
 // Dropping errorMessage at the wire boundary must not strand a reopened Conversation in Connecting.
 test(
@@ -25,7 +26,7 @@ test(
 			await page.click("[data-action=signin]");
 			await page.wait('document.querySelector("[data-conversation]")');
 			await page.click("[data-conversation]");
-			await page.click("[data-action=settings]");
+			await conversationAction(page, "settings");
 			await page.wait('document.querySelector("[data-credential-clear]")?.disabled===false');
 			await page.click("[data-credential-clear]");
 			await page.wait('document.querySelector("[data-credential-status]")?.dataset.configured==="false"');

@@ -4,7 +4,7 @@
 
 历史配对状态：**deferred / failed，不是 passed**。M6 核心已完成；后续 `agent@0.5.0 × dynamite@0.2.1` 的显式可选产品配对已在 [限定范围](../../verification/DYNAMITE-PRODUCT-ACCEPTANCE.md) 带 notes 验收，不覆盖本文件的历史失败身份，也不默认启用或承诺未验证组合。用户明确要求先完成 Pakka monorepo / MAS 迁移，再回到 Dynamite。该决定只解除 Dynamite 作为 M1–M6 核心迁移的前置门禁；不解除 agent、权限、持久化、恢复、native protocol 或隔离安装的其他验收条件。Dynamite 不作为迁移期间的默认策略或已支持功能。
 
-入口：[迁移计划](../plans/MONOREPO-MIGRATION-PLAN.md)、[固定配对门禁](../../../integrations/dynamite/README.md)、[仓库规范](../../development/MONOREPO-CONVENTIONS.md)。保留外部仓库 `mapleluvr/pakka-dynamite`，不更名 `@pakka/agent`。
+入口：[迁移计划（外置备份）](../../verification/DOCUMENTATION-CLEANUP.md#备份与恢复)、[固定配对门禁](../../../integrations/dynamite/README.md)、[仓库规范](../../development/MONOREPO-CONVENTIONS.md)。保留外部仓库 `mapleluvr/pakka-dynamite`，不更名 `@pakka/agent`。
 
 ## 1. 已确认问题与证据
 

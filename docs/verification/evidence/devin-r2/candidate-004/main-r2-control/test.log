@@ -1,0 +1,94 @@
+✔ Pocket owned browser: approved resource configuration is detached from later caller mutation (547.6572ms)
+✖ Pocket owned browser: completed click survives writer reopen without another page effect (20002.3924ms)
+✖ Pocket owned browser: restored running intent survives writer reopen without another page effect (20015.5813ms)
+✖ Pocket owned browser: real isolated page controls, actual screenshot decode and viewer/resource checks (20002.3593ms)
+✖ Pocket owned browser: disallowed direct navigation redirects subresources and popup never reach another origin (20009.6848ms)
+﹣ Pocket owned browser: an already-revoked interception does not seal subsequent authorized reads (2.5322ms) # Controlled POSIX CDP executable; real Chromium isolation remains required on Windows
+﹣ Pocket owned browser: unknown interception rejection still seals the service (0.3913ms) # Controlled POSIX CDP executable; real Chromium isolation remains required on Windows
+✖ Pocket owned browser: invalidated interfaces and service shutdown seal old clients (20010.5443ms)
+✖ Pocket directories: authorized browsing, independent changes and revocation use current resource authority (211.6759ms)
+▶ Pocket browser contribution: actual UI controls owned page, real frame renders, mobile viewer cannot act
+  ✔ recorded wrapper cannot resolve an unconfirmed native browser action (241.2642ms)
+✖ Pocket browser contribution: actual UI controls owned page, real frame renders, mobile viewer cannot act (30010.5441ms)
+✖ Browser discovery: explicit executable is canonical and a broken override never falls back (18.397ms)
+✖ Browser discovery: PATH finds a real executable and rejects a nonexecutable candidate (24.6856ms)
+✔ Pocket hooks recovery: lost response is checked read-only after panel reopen without creating another hook (2665.7388ms)
+✔ Pocket hooks recovery: lost handler is checked read-only after panel reopen without creating another hook (2439.4947ms)
+✔ Pocket hooks mobile operator: generic setup fits the real phone view without persisting its secret address or triggering a model (2687.1021ms)
+ℹ D:\Projects\kappa\migration-worktrees\pakka-devin-ui\artifacts\devin-r2\main-r2-control\hook-screenshots
+ℹ tests 16
+ℹ suites 0
+ℹ pass 5
+ℹ fail 3
+ℹ cancelled 6
+ℹ skipped 2
+ℹ todo 0
+ℹ duration_ms 468999.1149
+
+✖ failing tests:
+
+test at apps\server\test\pocket-browser.test.ts:141:2
+✖ Pocket owned browser: completed click survives writer reopen without another page effect (20002.3924ms)
+  'test timed out after 20000ms'
+
+test at apps\server\test\pocket-browser.test.ts:141:2
+✖ Pocket owned browser: restored running intent survives writer reopen without another page effect (20015.5813ms)
+  'test timed out after 20000ms'
+
+test at apps\server\test\pocket-browser.test.ts:199:1
+✖ Pocket owned browser: real isolated page controls, actual screenshot decode and viewer/resource checks (20002.3593ms)
+  'test timed out after 20000ms'
+
+test at apps\server\test\pocket-browser.test.ts:240:1
+✖ Pocket owned browser: disallowed direct navigation redirects subresources and popup never reach another origin (20009.6848ms)
+  'test timed out after 20000ms'
+
+test at apps\server\test\pocket-browser.test.ts:323:1
+✖ Pocket owned browser: invalidated interfaces and service shutdown seal old clients (20010.5443ms)
+  'test timed out after 20000ms'
+
+test at apps\server\test\pocket-directories.test.ts:10:1
+✖ Pocket directories: authorized browsing, independent changes and revocation use current resource authority (211.6759ms)
+  Error: EPERM: operation not permitted, symlink 'C:\Users\mapleland\AppData\Local\Temp\pakka-integration-3TfWxI\outside' -> 'C:\Users\mapleland\AppData\Local\Temp\pakka-integration-3TfWxI\workspace\escape'
+      at async symlink (node:internal/fs/promises:1002:10)
+      at async TestContext.<anonymous> (file:///D:/Projects/kappa/migration-worktrees/pakka-devin-r2-control/apps/server/test/pocket-directories.test.ts:19:3)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    errno: -4048,
+    code: 'EPERM',
+    syscall: 'symlink',
+    path: 'C:\\Users\\mapleland\\AppData\\Local\\Temp\\pakka-integration-3TfWxI\\outside',
+    dest: 'C:\\Users\\mapleland\\AppData\\Local\\Temp\\pakka-integration-3TfWxI\\workspace\\escape'
+  }
+
+test at apps\webui\test\browser-contribution.test.ts:11:1
+✖ Pocket browser contribution: actual UI controls owned page, real frame renders, mobile viewer cannot act (30010.5441ms)
+  'test timed out after 30000ms'
+
+test at apps\webui\test\browser-launch.test.ts:9:1
+✖ Browser discovery: explicit executable is canonical and a broken override never falls back (18.397ms)
+  Error: EPERM: operation not permitted, symlink 'C:\Program Files\nodejs\node.exe' -> 'C:\Users\mapleland\AppData\Local\Temp\pakka-browser-discovery-6lETrk\chromium'
+      at async symlink (node:internal/fs/promises:1002:10)
+      at async TestContext.<anonymous> (file:///D:/Projects/kappa/migration-worktrees/pakka-devin-r2-control/apps/webui/test/browser-launch.test.ts:12:3)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    errno: -4048,
+    code: 'EPERM',
+    syscall: 'symlink',
+    path: 'C:\\Program Files\\nodejs\\node.exe',
+    dest: 'C:\\Users\\mapleland\\AppData\\Local\\Temp\\pakka-browser-discovery-6lETrk\\chromium'
+  }
+
+test at apps\webui\test\browser-launch.test.ts:27:1
+✖ Browser discovery: PATH finds a real executable and rejects a nonexecutable candidate (24.6856ms)
+  Error: EPERM: operation not permitted, symlink 'C:\Program Files\nodejs\node.exe' -> 'C:\Users\mapleland\AppData\Local\Temp\pakka-browser-discovery-LymcwX\google-chrome'
+      at async symlink (node:internal/fs/promises:1002:10)
+      at async TestContext.<anonymous> (file:///D:/Projects/kappa/migration-worktrees/pakka-devin-r2-control/apps/webui/test/browser-launch.test.ts:31:3)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    errno: -4048,
+    code: 'EPERM',
+    syscall: 'symlink',
+    path: 'C:\\Program Files\\nodejs\\node.exe',
+    dest: 'C:\\Users\\mapleland\\AppData\\Local\\Temp\\pakka-browser-discovery-LymcwX\\google-chrome'
+  }

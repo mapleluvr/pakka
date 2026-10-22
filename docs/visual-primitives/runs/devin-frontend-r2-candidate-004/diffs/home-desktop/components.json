@@ -1,0 +1,8116 @@
+{
+  "components": [
+    {
+      "id": 1,
+      "bbox": [
+        239,
+        16,
+        245,
+        18
+      ],
+      "center": [
+        242,
+        17
+      ],
+      "area": 8,
+      "meanDiff": 0.255012,
+      "maxDiff": 0.331727,
+      "matrixRows": [
+        0,
+        0
+      ],
+      "matrixCols": [
+        4,
+        4
+      ]
+    },
+    {
+      "id": 2,
+      "bbox": [
+        44,
+        17,
+        86,
+        30
+      ],
+      "center": [
+        65,
+        23.5
+      ],
+      "area": 262,
+      "meanDiff": 0.654429,
+      "maxDiff": 0.98633,
+      "matrixRows": [
+        0,
+        0
+      ],
+      "matrixCols": [
+        0,
+        1
+      ]
+    },
+    {
+      "id": 3,
+      "bbox": [
+        237,
+        18,
+        247,
+        25
+      ],
+      "center": [
+        242,
+        21.5
+      ],
+      "area": 32,
+      "meanDiff": 0.246447,
+      "maxDiff": 0.359434,
+      "matrixRows": [
+        0,
+        0
+      ],
+      "matrixCols": [
+        4,
+        4
+      ]
+    },
+    {
+      "id": 4,
+      "bbox": [
+        41,
+        20,
+        42,
+        25
+      ],
+      "center": [
+        41.5,
+        22.5
+      ],
+      "area": 5,
+      "meanDiff": 0.441935,
+      "maxDiff": 0.613956,
+      "matrixRows": [
+        0,
+        0
+      ],
+      "matrixCols": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": 5,
+      "bbox": [
+        87,
+        20,
+        97,
+        27
+      ],
+      "center": [
+        92,
+        23.5
+      ],
+      "area": 48,
+      "meanDiff": 0.659638,
+      "maxDiff": 0.98633,
+      "matrixRows": [
+        0,
+        0
+      ],
+      "matrixCols": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": 6,
+      "bbox": [
+        42,
+        23,
+        47,
+        28
+      ],
+      "center": [
+        44.5,
+        25.5
+      ],
+      "area": 10,
+      "meanDiff": 0.568203,
+      "maxDiff": 0.952016,
+      "matrixRows": [
+        0,
+        0
+      ],
+      "matrixCols": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": 7,
+      "bbox": [
+        47,
+        54,
+        49,
+        64
+      ],
+      "center": [
+        48,
+        59
+      ],
+      "area": 12,
+      "meanDiff": 0.238098,
+      "maxDiff": 0.535308,
+      "matrixRows": [
+        1,
+        1
+      ],
+      "matrixCols": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": 8,
+      "bbox": [
+        40,
+        55,
+        41,
+        64
+      ],
+      "center": [
+        40.5,
+        59.5
+      ],
+      "area": 9,
+      "meanDiff": 0.20542,
+      "maxDiff": 0.20542,
+      "matrixRows": [
+        1,
+        1
+      ],
+      "matrixCols": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": 9,
+      "bbox": [
+        43,
+        55,
+        45,
+        58
+      ],
+      "center": [
+        44,
+        56.5
+      ],
+      "area": 4,
+      "meanDiff": 0.392866,
+      "maxDiff": 0.506883,
+      "matrixRows": [
+        1,
+        1
+      ],
+      "matrixCols": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": 10,
+      "bbox": [
+        42,
+        57,
+        44,
+        64
+      ],
+      "center": [
+        43,
+        60.5
+      ],
+      "area": 8,
+      "meanDiff": 0.303737,
+      "maxDiff": 0.33008,
+      "matrixRows": [
+        1,
+        1
+      ],
+      "matrixCols": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": 11,
+      "bbox": [
+        64,
+        57,
+        67,
+        63
+      ],
+      "center": [
+        65.5,
+        60
+      ],
+      "area": 10,
+      "meanDiff": 0.292683,
+      "maxDiff": 0.432671,
+      "matrixRows": [
+        1,
+        1
+      ],
+      "matrixCols": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": 12,
+      "bbox": [
+        72,
+        57,
+        74,
+        60
+      ],
+      "center": [
+        73,
+        58.5
+      ],
+      "area": 4,
+      "meanDiff": 0.254954,
+      "maxDiff": 0.293424,
+      "matrixRows": [
+        1,
+        1
+      ],
+      "matrixCols": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": 13,
+      "bbox": [
+        83,
+        57,
+        87,
+        61
+      ],
+      "center": [
+        85,
+        59
+      ],
+      "area": 8,
+      "meanDiff": 0.366695,
+      "maxDiff": 0.464575,
+      "matrixRows": [
+        1,
+        1
+      ],
+      "matrixCols": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": 14,
+      "bbox": [
+        99,
+        57,
+        102,
+        64
+      ],
+      "center": [
+        100.5,
+        60.5
+      ],
+      "area": 16,
+      "meanDiff": 0.220392,
+      "maxDiff": 0.35939,
+      "matrixRows": [
+        1,
+        1
+      ],
+      "matrixCols": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": 15,
+      "bbox": [
+        110,
+        57,
+        114,
+        64
+      ],
+      "center": [
+        112,
+        60.5
+      ],
+      "area": 17,
+      "meanDiff": 0.219389,
+      "maxDiff": 0.35939,
+      "matrixRows": [
+        1,
+        1
+      ],
+      "matrixCols": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": 16,
+      "bbox": [
+        50,
+        58,
+        55,
+        60
+      ],
+      "center": [
+        52.5,
+        59
+      ],
+      "area": 7,
+      "meanDiff": 0.259671,
+      "maxDiff": 0.35308,
+      "matrixRows": [
+        1,
+        1
+      ],
+      "matrixCols": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": 17,
+      "bbox": [
+        56,
+        58,
+        59,
+        62
+      ],
+      "center": [
+        57.5,
+        60
+      ],
+      "area": 6,
+      "meanDiff": 0.259329,
+      "maxDiff": 0.461123,
+      "matrixRows": [
+        1,
+        1
+      ],
+      "matrixCols": [
+        0,
+        1
+      ]
+    },
+    {
+      "id": 18,
+      "bbox": [
+        115,
+        58,
+        116,
+        64
+      ],
+      "center": [
+        115.5,
+        61
+      ],
+      "area": 6,
+      "meanDiff": 0.277698,
+      "maxDiff": 0.298216,
+      "matrixRows": [
+        1,
+        1
+      ],
+      "matrixCols": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": 19,
+      "bbox": [
+        117,
+        58,
+        118,
+        64
+      ],
+      "center": [
+        117.5,
+        61
+      ],
+      "area": 6,
+      "meanDiff": 0.356855,
+      "maxDiff": 0.384256,
+      "matrixRows": [
+        1,
+        1
+      ],
+      "matrixCols": [
+        2,
+        2
+      ]
+    },
+    {
+      "id": 20,
+      "bbox": [
+        76,
+        59,
+        79,
+        64
+      ],
+      "center": [
+        77.5,
+        61.5
+      ],
+      "area": 9,
+      "meanDiff": 0.261325,
+      "maxDiff": 0.32964,
+      "matrixRows": [
+        1,
+        1
+      ],
+      "matrixCols": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": 21,
+      "bbox": [
+        80,
+        59,
+        84,
+        60
+      ],
+      "center": [
+        82,
+        59.5
+      ],
+      "area": 4,
+      "meanDiff": 0.340345,
+      "maxDiff": 0.438848,
+      "matrixRows": [
+        1,
+        1
+      ],
+      "matrixCols": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": 22,
+      "bbox": [
+        92,
+        61,
+        95,
+        64
+      ],
+      "center": [
+        93.5,
+        62.5
+      ],
+      "area": 5,
+      "meanDiff": 0.247252,
+      "maxDiff": 0.276646,
+      "matrixRows": [
+        1,
+        1
+      ],
+      "matrixCols": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": 23,
+      "bbox": [
+        85,
+        62,
+        88,
+        64
+      ],
+      "center": [
+        86.5,
+        63
+      ],
+      "area": 4,
+      "meanDiff": 0.36588,
+      "maxDiff": 0.470705,
+      "matrixRows": [
+        1,
+        1
+      ],
+      "matrixCols": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": 24,
+      "bbox": [
+        18,
+        84,
+        30,
+        96
+      ],
+      "center": [
+        24,
+        90
+      ],
+      "area": 76,
+      "meanDiff": 0.413855,
+      "maxDiff": 0.659962,
+      "matrixRows": [
+        2,
+        2
+      ],
+      "matrixCols": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": 25,
+      "bbox": [
+        40,
+        85,
+        49,
+        96
+      ],
+      "center": [
+        44.5,
+        90.5
+      ],
+      "area": 66,
+      "meanDiff": 0.633502,
+      "maxDiff": 0.98633,
+      "matrixRows": [
+        2,
+        2
+      ],
+      "matrixCols": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": 26,
+      "bbox": [
+        91,
+        85,
+        94,
+        89
+      ],
+      "center": [
+        92.5,
+        87
+      ],
+      "area": 8,
+      "meanDiff": 0.457332,
+      "maxDiff": 0.87964,
+      "matrixRows": [
+        2,
+        2
+      ],
+      "matrixCols": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": 27,
+      "bbox": [
+        98,
+        85,
+        109,
+        96
+      ],
+      "center": [
+        103.5,
+        90.5
+      ],
+      "area": 58,
+      "meanDiff": 0.484895,
+      "maxDiff": 0.974206,
+      "matrixRows": [
+        2,
+        2
+      ],
+      "matrixCols": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": 28,
+      "bbox": [
+        111,
+        85,
+        122,
+        96
+      ],
+      "center": [
+        116.5,
+        90.5
+      ],
+      "area": 76,
+      "meanDiff": 0.638856,
+      "maxDiff": 0.957994,
+      "matrixRows": [
+        2,
+        2
+      ],
+      "matrixCols": [
+        1,
+        2
+      ]
+    },
+    {
+      "id": 29,
+      "bbox": [
+        167,
+        85,
+        169,
+        87
+      ],
+      "center": [
+        168,
+        86
+      ],
+      "area": 4,
+      "meanDiff": 0.742302,
+      "maxDiff": 0.81101,
+      "matrixRows": [
+        2,
+        2
+      ],
+      "matrixCols": [
+        2,
+        2
+      ]
+    },
+    {
+      "id": 30,
+      "bbox": [
+        57,
+        86,
+        63,
+        95
+      ],
+      "center": [
+        60,
+        90.5
+      ],
+      "area": 24,
+      "meanDiff": 0.464301,
+      "maxDiff": 0.98633,
+      "matrixRows": [
+        2,
+        2
+      ],
+      "matrixCols": [
+        0,
+        1
+      ]
+    },
+    {
+      "id": 31,
+      "bbox": [
+        87,
+        86,
+        91,
+        95
+      ],
+      "center": [
+        89,
+        90.5
+      ],
+      "area": 17,
+      "meanDiff": 0.341592,
+      "maxDiff": 0.674085,
+      "matrixRows": [
+        2,
+        2
+      ],
+      "matrixCols": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": 32,
+      "bbox": [
+        125,
+        86,
+        159,
+        96
+      ],
+      "center": [
+        142,
+        91
+      ],
+      "area": 188,
+      "meanDiff": 0.68346,
+      "maxDiff": 0.957994,
+      "matrixRows": [
+        2,
+        2
+      ],
+      "matrixCols": [
+        2,
+        2
+      ]
+    },
+    {
+      "id": 33,
+      "bbox": [
+        23,
+        87,
+        26,
+        89
+      ],
+      "center": [
+        24.5,
+        88
+      ],
+      "area": 5,
+      "meanDiff": 0.34734,
+      "maxDiff": 0.476501,
+      "matrixRows": [
+        2,
+        2
+      ],
+      "matrixCols": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": 34,
+      "bbox": [
+        50,
+        87,
+        57,
+        96
+      ],
+      "center": [
+        53.5,
+        91.5
+      ],
+      "area": 34,
+      "meanDiff": 0.487008,
+      "maxDiff": 0.957994,
+      "matrixRows": [
+        2,
+        2
+      ],
+      "matrixCols": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": 35,
+      "bbox": [
+        62,
+        87,
+        68,
+        95
+      ],
+      "center": [
+        65,
+        91
+      ],
+      "area": 26,
+      "meanDiff": 0.460321,
+      "maxDiff": 0.953933,
+      "matrixRows": [
+        2,
+        2
+      ],
+      "matrixCols": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": 36,
+      "bbox": [
+        72,
+        87,
+        75,
+        95
+      ],
+      "center": [
+        73.5,
+        91
+      ],
+      "area": 10,
+      "meanDiff": 0.334816,
+      "maxDiff": 0.527891,
+      "matrixRows": [
+        2,
+        2
+      ],
+      "matrixCols": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": 37,
+      "bbox": [
+        160,
+        87,
+        166,
+        96
+      ],
+      "center": [
+        163,
+        91.5
+      ],
+      "area": 35,
+      "meanDiff": 0.70896,
+      "maxDiff": 0.957994,
+      "matrixRows": [
+        2,
+        2
+      ],
+      "matrixCols": [
+        2,
+        2
+      ]
+    },
+    {
+      "id": 38,
+      "bbox": [
+        167,
+        87,
+        177,
+        96
+      ],
+      "center": [
+        172,
+        91.5
+      ],
+      "area": 54,
+      "meanDiff": 0.720581,
+      "maxDiff": 0.957994,
+      "matrixRows": [
+        2,
+        2
+      ],
+      "matrixCols": [
+        2,
+        3
+      ]
+    },
+    {
+      "id": 39,
+      "bbox": [
+        178,
+        87,
+        192,
+        96
+      ],
+      "center": [
+        185,
+        91.5
+      ],
+      "area": 79,
+      "meanDiff": 0.666575,
+      "maxDiff": 0.957994,
+      "matrixRows": [
+        2,
+        2
+      ],
+      "matrixCols": [
+        3,
+        3
+      ]
+    },
+    {
+      "id": 40,
+      "bbox": [
+        69,
+        88,
+        72,
+        95
+      ],
+      "center": [
+        70.5,
+        91.5
+      ],
+      "area": 20,
+      "meanDiff": 0.284602,
+      "maxDiff": 0.501902,
+      "matrixRows": [
+        2,
+        2
+      ],
+      "matrixCols": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": 41,
+      "bbox": [
+        77,
+        88,
+        82,
+        95
+      ],
+      "center": [
+        79.5,
+        91.5
+      ],
+      "area": 21,
+      "meanDiff": 0.367575,
+      "maxDiff": 0.650017,
+      "matrixRows": [
+        2,
+        2
+      ],
+      "matrixCols": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": 42,
+      "bbox": [
+        75,
+        89,
+        76,
+        95
+      ],
+      "center": [
+        75.5,
+        92
+      ],
+      "area": 6,
+      "meanDiff": 0.547025,
+      "maxDiff": 0.55698,
+      "matrixRows": [
+        2,
+        2
+      ],
+      "matrixCols": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": 43,
+      "bbox": [
+        83,
+        89,
+        85,
+        93
+      ],
+      "center": [
+        84,
+        91
+      ],
+      "area": 5,
+      "meanDiff": 0.216782,
+      "maxDiff": 0.247272,
+      "matrixRows": [
+        2,
+        2
+      ],
+      "matrixCols": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": 44,
+      "bbox": [
+        86,
+        89,
+        87,
+        95
+      ],
+      "center": [
+        86.5,
+        92
+      ],
+      "area": 6,
+      "meanDiff": 0.402478,
+      "maxDiff": 0.438401,
+      "matrixRows": [
+        2,
+        2
+      ],
+      "matrixCols": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": 45,
+      "bbox": [
+        92,
+        89,
+        96,
+        95
+      ],
+      "center": [
+        94,
+        92
+      ],
+      "area": 19,
+      "meanDiff": 0.284196,
+      "maxDiff": 0.394441,
+      "matrixRows": [
+        2,
+        2
+      ],
+      "matrixCols": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": 46,
+      "bbox": [
+        96,
+        89,
+        98,
+        94
+      ],
+      "center": [
+        97,
+        91.5
+      ],
+      "area": 6,
+      "meanDiff": 0.320882,
+      "maxDiff": 0.381537,
+      "matrixRows": [
+        2,
+        2
+      ],
+      "matrixCols": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": 47,
+      "bbox": [
+        22,
+        90,
+        27,
+        93
+      ],
+      "center": [
+        24.5,
+        91.5
+      ],
+      "area": 9,
+      "meanDiff": 0.407473,
+      "maxDiff": 0.629338,
+      "matrixRows": [
+        2,
+        2
+      ],
+      "matrixCols": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": 48,
+      "bbox": [
+        16,
+        114,
+        64,
+        135
+      ],
+      "center": [
+        40,
+        124.5
+      ],
+      "area": 428,
+      "meanDiff": 0.663011,
+      "maxDiff": 0.98633,
+      "matrixRows": [
+        3,
+        3
+      ],
+      "matrixCols": [
+        0,
+        1
+      ]
+    },
+    {
+      "id": 49,
+      "bbox": [
+        79,
+        117,
+        83,
+        126
+      ],
+      "center": [
+        81,
+        121.5
+      ],
+      "area": 20,
+      "meanDiff": 0.666225,
+      "maxDiff": 0.98633,
+      "matrixRows": [
+        3,
+        3
+      ],
+      "matrixCols": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": 50,
+      "bbox": [
+        64,
+        119,
+        72,
+        135
+      ],
+      "center": [
+        68,
+        127
+      ],
+      "area": 71,
+      "meanDiff": 0.665075,
+      "maxDiff": 0.957994,
+      "matrixRows": [
+        3,
+        3
+      ],
+      "matrixCols": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": 51,
+      "bbox": [
+        72,
+        119,
+        76,
+        126
+      ],
+      "center": [
+        74,
+        122.5
+      ],
+      "area": 12,
+      "meanDiff": 0.820732,
+      "maxDiff": 0.98633,
+      "matrixRows": [
+        3,
+        3
+      ],
+      "matrixCols": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": 52,
+      "bbox": [
+        77,
+        119,
+        78,
+        126
+      ],
+      "center": [
+        77.5,
+        122.5
+      ],
+      "area": 7,
+      "meanDiff": 0.98633,
+      "maxDiff": 0.98633,
+      "matrixRows": [
+        3,
+        3
+      ],
+      "matrixCols": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": 53,
+      "bbox": [
+        84,
+        119,
+        91,
+        129
+      ],
+      "center": [
+        87.5,
+        124
+      ],
+      "area": 31,
+      "meanDiff": 0.654176,
+      "maxDiff": 0.98633,
+      "matrixRows": [
+        3,
+        3
+      ],
+      "matrixCols": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": 54,
+      "bbox": [
+        217,
+        124,
+        223,
+        126
+      ],
+      "center": [
+        220,
+        125
+      ],
+      "area": 10,
+      "meanDiff": 0.366848,
+      "maxDiff": 0.58957,
+      "matrixRows": [
+        3,
+        3
+      ],
+      "matrixCols": [
+        3,
+        3
+      ]
+    },
+    {
+      "id": 55,
+      "bbox": [
+        240,
+        124,
+        250,
+        134
+      ],
+      "center": [
+        245,
+        129
+      ],
+      "area": 19,
+      "meanDiff": 0.57653,
+      "maxDiff": 0.859539,
+      "matrixRows": [
+        3,
+        3
+      ],
+      "matrixCols": [
+        4,
+        4
+      ]
+    },
+    {
+      "id": 56,
+      "bbox": [
+        215,
+        126,
+        217,
+        132
+      ],
+      "center": [
+        216,
+        129
+      ],
+      "area": 10,
+      "meanDiff": 0.367292,
+      "maxDiff": 0.594012,
+      "matrixRows": [
+        3,
+        3
+      ],
+      "matrixCols": [
+        3,
+        3
+      ]
+    },
+    {
+      "id": 57,
+      "bbox": [
+        217,
+        126,
+        225,
+        134
+      ],
+      "center": [
+        221,
+        130
+      ],
+      "area": 18,
+      "meanDiff": 0.402427,
+      "maxDiff": 0.607301,
+      "matrixRows": [
+        3,
+        3
+      ],
+      "matrixCols": [
+        3,
+        3
+      ]
+    },
+    {
+      "id": 58,
+      "bbox": [
+        265,
+        128,
+        267,
+        131
+      ],
+      "center": [
+        266,
+        129.5
+      ],
+      "area": 4,
+      "meanDiff": 0.389764,
+      "maxDiff": 0.602877,
+      "matrixRows": [
+        3,
+        3
+      ],
+      "matrixCols": [
+        4,
+        4
+      ]
+    },
+    {
+      "id": 59,
+      "bbox": [
+        269,
+        128,
+        272,
+        131
+      ],
+      "center": [
+        270.5,
+        129.5
+      ],
+      "area": 5,
+      "meanDiff": 0.337911,
+      "maxDiff": 0.607301,
+      "matrixRows": [
+        3,
+        3
+      ],
+      "matrixCols": [
+        4,
+        4
+      ]
+    },
+    {
+      "id": 60,
+      "bbox": [
+        274,
+        128,
+        276,
+        131
+      ],
+      "center": [
+        275,
+        129.5
+      ],
+      "area": 4,
+      "meanDiff": 0.389764,
+      "maxDiff": 0.602877,
+      "matrixRows": [
+        3,
+        3
+      ],
+      "matrixCols": [
+        4,
+        4
+      ]
+    },
+    {
+      "id": 61,
+      "bbox": [
+        18,
+        145,
+        29,
+        159
+      ],
+      "center": [
+        23.5,
+        152
+      ],
+      "area": 62,
+      "meanDiff": 0.484057,
+      "maxDiff": 0.763099,
+      "matrixRows": [
+        4,
+        4
+      ],
+      "matrixCols": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": 62,
+      "bbox": [
+        41,
+        148,
+        48,
+        157
+      ],
+      "center": [
+        44.5,
+        152.5
+      ],
+      "area": 43,
+      "meanDiff": 0.686673,
+      "maxDiff": 0.98633,
+      "matrixRows": [
+        4,
+        4
+      ],
+      "matrixCols": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": 63,
+      "bbox": [
+        49,
+        150,
+        56,
+        157
+      ],
+      "center": [
+        52.5,
+        153.5
+      ],
+      "area": 29,
+      "meanDiff": 0.730886,
+      "maxDiff": 0.98633,
+      "matrixRows": [
+        4,
+        4
+      ],
+      "matrixCols": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": 64,
+      "bbox": [
+        56,
+        150,
+        65,
+        157
+      ],
+      "center": [
+        60.5,
+        153.5
+      ],
+      "area": 38,
+      "meanDiff": 0.629894,
+      "maxDiff": 0.98633,
+      "matrixRows": [
+        4,
+        4
+      ],
+      "matrixCols": [
+        0,
+        1
+      ]
+    },
+    {
+      "id": 65,
+      "bbox": [
+        66,
+        150,
+        73,
+        157
+      ],
+      "center": [
+        69.5,
+        153.5
+      ],
+      "area": 29,
+      "meanDiff": 0.735992,
+      "maxDiff": 0.98633,
+      "matrixRows": [
+        4,
+        4
+      ],
+      "matrixCols": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": 66,
+      "bbox": [
+        73,
+        150,
+        84,
+        157
+      ],
+      "center": [
+        78.5,
+        153.5
+      ],
+      "area": 43,
+      "meanDiff": 0.644004,
+      "maxDiff": 0.98633,
+      "matrixRows": [
+        4,
+        4
+      ],
+      "matrixCols": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": 67,
+      "bbox": [
+        30,
+        159,
+        53,
+        170
+      ],
+      "center": [
+        41.5,
+        164.5
+      ],
+      "area": 155,
+      "meanDiff": 0.664791,
+      "maxDiff": 0.957994,
+      "matrixRows": [
+        4,
+        4
+      ],
+      "matrixCols": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": 68,
+      "bbox": [
+        54,
+        159,
+        56,
+        169
+      ],
+      "center": [
+        55,
+        164
+      ],
+      "area": 20,
+      "meanDiff": 0.774074,
+      "maxDiff": 0.814413,
+      "matrixRows": [
+        4,
+        4
+      ],
+      "matrixCols": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": 69,
+      "bbox": [
+        81,
+        159,
+        83,
+        161
+      ],
+      "center": [
+        82,
+        160
+      ],
+      "area": 4,
+      "meanDiff": 0.742302,
+      "maxDiff": 0.81101,
+      "matrixRows": [
+        4,
+        4
+      ],
+      "matrixCols": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": 70,
+      "bbox": [
+        80,
+        160,
+        103,
+        172
+      ],
+      "center": [
+        91.5,
+        166
+      ],
+      "area": 134,
+      "meanDiff": 0.670345,
+      "maxDiff": 0.957994,
+      "matrixRows": [
+        4,
+        4
+      ],
+      "matrixCols": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": 71,
+      "bbox": [
+        16,
+        161,
+        22,
+        167
+      ],
+      "center": [
+        19,
+        164
+      ],
+      "area": 32,
+      "meanDiff": 0.411676,
+      "maxDiff": 0.458014,
+      "matrixRows": [
+        4,
+        4
+      ],
+      "matrixCols": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": 72,
+      "bbox": [
+        60,
+        161,
+        73,
+        172
+      ],
+      "center": [
+        66.5,
+        166.5
+      ],
+      "area": 84,
+      "meanDiff": 0.623339,
+      "maxDiff": 0.957994,
+      "matrixRows": [
+        4,
+        4
+      ],
+      "matrixCols": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": 73,
+      "bbox": [
+        72,
+        161,
+        80,
+        170
+      ],
+      "center": [
+        76,
+        165.5
+      ],
+      "area": 40,
+      "meanDiff": 0.695814,
+      "maxDiff": 0.957994,
+      "matrixRows": [
+        4,
+        4
+      ],
+      "matrixCols": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": 74,
+      "bbox": [
+        18,
+        176,
+        30,
+        201
+      ],
+      "center": [
+        24,
+        188.5
+      ],
+      "area": 140,
+      "meanDiff": 0.47607,
+      "maxDiff": 0.664315,
+      "matrixRows": [
+        4,
+        5
+      ],
+      "matrixCols": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": 75,
+      "bbox": [
+        40,
+        178,
+        55,
+        188
+      ],
+      "center": [
+        47.5,
+        183
+      ],
+      "area": 64,
+      "meanDiff": 0.642812,
+      "maxDiff": 0.98633,
+      "matrixRows": [
+        4,
+        5
+      ],
+      "matrixCols": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": 76,
+      "bbox": [
+        57,
+        179,
+        63,
+        188
+      ],
+      "center": [
+        60,
+        183.5
+      ],
+      "area": 28,
+      "meanDiff": 0.725183,
+      "maxDiff": 0.98633,
+      "matrixRows": [
+        4,
+        5
+      ],
+      "matrixCols": [
+        0,
+        1
+      ]
+    },
+    {
+      "id": 77,
+      "bbox": [
+        53,
+        181,
+        55,
+        188
+      ],
+      "center": [
+        54,
+        184.5
+      ],
+      "area": 14,
+      "meanDiff": 0.587,
+      "maxDiff": 0.888472,
+      "matrixRows": [
+        5,
+        5
+      ],
+      "matrixCols": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": 78,
+      "bbox": [
+        64,
+        181,
+        65,
+        188
+      ],
+      "center": [
+        64.5,
+        184.5
+      ],
+      "area": 7,
+      "meanDiff": 0.98633,
+      "maxDiff": 0.98633,
+      "matrixRows": [
+        5,
+        5
+      ],
+      "matrixCols": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": 79,
+      "bbox": [
+        40,
+        190,
+        63,
+        201
+      ],
+      "center": [
+        51.5,
+        195.5
+      ],
+      "area": 147,
+      "meanDiff": 0.652901,
+      "maxDiff": 0.957994,
+      "matrixRows": [
+        5,
+        5
+      ],
+      "matrixCols": [
+        0,
+        1
+      ]
+    },
+    {
+      "id": 80,
+      "bbox": [
+        63,
+        191,
+        83,
+        201
+      ],
+      "center": [
+        73,
+        196
+      ],
+      "area": 117,
+      "meanDiff": 0.658425,
+      "maxDiff": 0.957994,
+      "matrixRows": [
+        5,
+        5
+      ],
+      "matrixCols": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": 81,
+      "bbox": [
+        23,
+        192,
+        27,
+        197
+      ],
+      "center": [
+        25,
+        194.5
+      ],
+      "area": 11,
+      "meanDiff": 0.407142,
+      "maxDiff": 0.677346,
+      "matrixRows": [
+        5,
+        5
+      ],
+      "matrixCols": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": 82,
+      "bbox": [
+        18,
+        208,
+        23,
+        220
+      ],
+      "center": [
+        20.5,
+        214
+      ],
+      "area": 42,
+      "meanDiff": 0.475976,
+      "maxDiff": 0.681679,
+      "matrixRows": [
+        5,
+        6
+      ],
+      "matrixCols": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": 83,
+      "bbox": [
+        25,
+        208,
+        30,
+        220
+      ],
+      "center": [
+        27.5,
+        214
+      ],
+      "area": 42,
+      "meanDiff": 0.475712,
+      "maxDiff": 0.690331,
+      "matrixRows": [
+        5,
+        6
+      ],
+      "matrixCols": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": 84,
+      "bbox": [
+        40,
+        210,
+        49,
+        219
+      ],
+      "center": [
+        44.5,
+        214.5
+      ],
+      "area": 38,
+      "meanDiff": 0.606826,
+      "maxDiff": 0.98633,
+      "matrixRows": [
+        5,
+        6
+      ],
+      "matrixCols": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": 85,
+      "bbox": [
+        64,
+        210,
+        68,
+        219
+      ],
+      "center": [
+        66,
+        214.5
+      ],
+      "area": 21,
+      "meanDiff": 0.646539,
+      "maxDiff": 0.98633,
+      "matrixRows": [
+        5,
+        6
+      ],
+      "matrixCols": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": 86,
+      "bbox": [
+        50,
+        212,
+        57,
+        219
+      ],
+      "center": [
+        53.5,
+        215.5
+      ],
+      "area": 32,
+      "meanDiff": 0.602523,
+      "maxDiff": 0.98633,
+      "matrixRows": [
+        5,
+        6
+      ],
+      "matrixCols": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": 87,
+      "bbox": [
+        58,
+        212,
+        64,
+        219
+      ],
+      "center": [
+        61,
+        215.5
+      ],
+      "area": 25,
+      "meanDiff": 0.67689,
+      "maxDiff": 0.941727,
+      "matrixRows": [
+        5,
+        6
+      ],
+      "matrixCols": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": 88,
+      "bbox": [
+        69,
+        212,
+        76,
+        219
+      ],
+      "center": [
+        72.5,
+        215.5
+      ],
+      "area": 27,
+      "meanDiff": 0.715301,
+      "maxDiff": 0.98633,
+      "matrixRows": [
+        5,
+        6
+      ],
+      "matrixCols": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": 89,
+      "bbox": [
+        77,
+        212,
+        87,
+        219
+      ],
+      "center": [
+        82,
+        215.5
+      ],
+      "area": 42,
+      "meanDiff": 0.662918,
+      "maxDiff": 0.98633,
+      "matrixRows": [
+        5,
+        6
+      ],
+      "matrixCols": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": 90,
+      "bbox": [
+        88,
+        212,
+        90,
+        219
+      ],
+      "center": [
+        89,
+        215.5
+      ],
+      "area": 14,
+      "meanDiff": 0.596354,
+      "maxDiff": 0.767339,
+      "matrixRows": [
+        5,
+        6
+      ],
+      "matrixCols": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": 91,
+      "bbox": [
+        91,
+        212,
+        97,
+        219
+      ],
+      "center": [
+        94,
+        215.5
+      ],
+      "area": 24,
+      "meanDiff": 0.74692,
+      "maxDiff": 0.98633,
+      "matrixRows": [
+        5,
+        6
+      ],
+      "matrixCols": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": 92,
+      "bbox": [
+        98,
+        212,
+        105,
+        219
+      ],
+      "center": [
+        101.5,
+        215.5
+      ],
+      "area": 33,
+      "meanDiff": 0.666289,
+      "maxDiff": 0.98633,
+      "matrixRows": [
+        5,
+        6
+      ],
+      "matrixCols": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": 93,
+      "bbox": [
+        41,
+        241,
+        51,
+        250
+      ],
+      "center": [
+        46,
+        245.5
+      ],
+      "area": 61,
+      "meanDiff": 0.669858,
+      "maxDiff": 0.98633,
+      "matrixRows": [
+        6,
+        6
+      ],
+      "matrixCols": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": 94,
+      "bbox": [
+        52,
+        243,
+        59,
+        250
+      ],
+      "center": [
+        55.5,
+        246.5
+      ],
+      "area": 32,
+      "meanDiff": 0.631452,
+      "maxDiff": 0.953933,
+      "matrixRows": [
+        6,
+        6
+      ],
+      "matrixCols": [
+        0,
+        1
+      ]
+    },
+    {
+      "id": 95,
+      "bbox": [
+        60,
+        243,
+        64,
+        250
+      ],
+      "center": [
+        62,
+        246.5
+      ],
+      "area": 17,
+      "meanDiff": 0.634313,
+      "maxDiff": 0.962052,
+      "matrixRows": [
+        6,
+        6
+      ],
+      "matrixCols": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": 96,
+      "bbox": [
+        65,
+        243,
+        72,
+        250
+      ],
+      "center": [
+        68.5,
+        246.5
+      ],
+      "area": 29,
+      "meanDiff": 0.730886,
+      "maxDiff": 0.98633,
+      "matrixRows": [
+        6,
+        6
+      ],
+      "matrixCols": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": 97,
+      "bbox": [
+        18,
+        244,
+        20,
+        246
+      ],
+      "center": [
+        19,
+        245
+      ],
+      "area": 4,
+      "meanDiff": 0.542389,
+      "maxDiff": 0.694649,
+      "matrixRows": [
+        6,
+        6
+      ],
+      "matrixCols": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": 98,
+      "bbox": [
+        23,
+        244,
+        25,
+        246
+      ],
+      "center": [
+        24,
+        245
+      ],
+      "area": 4,
+      "meanDiff": 0.61391,
+      "maxDiff": 0.624942,
+      "matrixRows": [
+        6,
+        6
+      ],
+      "matrixCols": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": 99,
+      "bbox": [
+        27,
+        244,
+        30,
+        246
+      ],
+      "center": [
+        28.5,
+        245
+      ],
+      "area": 5,
+      "meanDiff": 0.470636,
+      "maxDiff": 0.694649,
+      "matrixRows": [
+        6,
+        6
+      ],
+      "matrixCols": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": 100,
+      "bbox": [
+        240,
+        278,
+        251,
+        291
+      ],
+      "center": [
+        245.5,
+        284.5
+      ],
+      "area": 48,
+      "meanDiff": 0.460408,
+      "maxDiff": 0.82206,
+      "matrixRows": [
+        7,
+        8
+      ],
+      "matrixCols": [
+        4,
+        4
+      ]
+    },
+    {
+      "id": 101,
+      "bbox": [
+        46,
+        279,
+        49,
+        281
+      ],
+      "center": [
+        47.5,
+        280
+      ],
+      "area": 4,
+      "meanDiff": 0.491071,
+      "maxDiff": 0.900816,
+      "matrixRows": [
+        7,
+        7
+      ],
+      "matrixCols": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": 102,
+      "bbox": [
+        16,
+        280,
+        24,
+        289
+      ],
+      "center": [
+        20,
+        284.5
+      ],
+      "area": 44,
+      "meanDiff": 0.651505,
+      "maxDiff": 0.98633,
+      "matrixRows": [
+        7,
+        8
+      ],
+      "matrixCols": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": 103,
+      "bbox": [
+        216,
+        280,
+        225,
+        290
+      ],
+      "center": [
+        220.5,
+        285
+      ],
+      "area": 18,
+      "meanDiff": 0.58844,
+      "maxDiff": 0.607301,
+      "matrixRows": [
+        7,
+        8
+      ],
+      "matrixCols": [
+        3,
+        3
+      ]
+    },
+    {
+      "id": 104,
+      "bbox": [
+        25,
+        282,
+        32,
+        289
+      ],
+      "center": [
+        28.5,
+        285.5
+      ],
+      "area": 35,
+      "meanDiff": 0.690238,
+      "maxDiff": 0.98633,
+      "matrixRows": [
+        7,
+        8
+      ],
+      "matrixCols": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": 105,
+      "bbox": [
+        32,
+        282,
+        45,
+        289
+      ],
+      "center": [
+        38.5,
+        285.5
+      ],
+      "area": 60,
+      "meanDiff": 0.670146,
+      "maxDiff": 0.98633,
+      "matrixRows": [
+        7,
+        8
+      ],
+      "matrixCols": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": 106,
+      "bbox": [
+        46,
+        282,
+        48,
+        289
+      ],
+      "center": [
+        47,
+        285.5
+      ],
+      "area": 14,
+      "meanDiff": 0.667772,
+      "maxDiff": 0.98633,
+      "matrixRows": [
+        7,
+        8
+      ],
+      "matrixCols": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": 107,
+      "bbox": [
+        49,
+        282,
+        64,
+        289
+      ],
+      "center": [
+        56.5,
+        285.5
+      ],
+      "area": 69,
+      "meanDiff": 0.654296,
+      "maxDiff": 0.98633,
+      "matrixRows": [
+        7,
+        8
+      ],
+      "matrixCols": [
+        0,
+        1
+      ]
+    },
+    {
+      "id": 108,
+      "bbox": [
+        65,
+        282,
+        71,
+        289
+      ],
+      "center": [
+        68,
+        285.5
+      ],
+      "area": 30,
+      "meanDiff": 0.670687,
+      "maxDiff": 0.970158,
+      "matrixRows": [
+        7,
+        8
+      ],
+      "matrixCols": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": 109,
+      "bbox": [
+        265,
+        283,
+        267,
+        286
+      ],
+      "center": [
+        266,
+        284.5
+      ],
+      "area": 6,
+      "meanDiff": 0.334629,
+      "maxDiff": 0.607301,
+      "matrixRows": [
+        7,
+        7
+      ],
+      "matrixCols": [
+        4,
+        4
+      ]
+    },
+    {
+      "id": 110,
+      "bbox": [
+        269,
+        283,
+        272,
+        286
+      ],
+      "center": [
+        270.5,
+        284.5
+      ],
+      "area": 5,
+      "meanDiff": 0.369643,
+      "maxDiff": 0.607301,
+      "matrixRows": [
+        7,
+        7
+      ],
+      "matrixCols": [
+        4,
+        4
+      ]
+    },
+    {
+      "id": 111,
+      "bbox": [
+        274,
+        283,
+        276,
+        286
+      ],
+      "center": [
+        275,
+        284.5
+      ],
+      "area": 6,
+      "meanDiff": 0.334629,
+      "maxDiff": 0.607301,
+      "matrixRows": [
+        7,
+        7
+      ],
+      "matrixCols": [
+        4,
+        4
+      ]
+    },
+    {
+      "id": 112,
+      "bbox": [
+        18,
+        314,
+        30,
+        325
+      ],
+      "center": [
+        24,
+        319.5
+      ],
+      "area": 54,
+      "meanDiff": 0.468518,
+      "maxDiff": 0.673007,
+      "matrixRows": [
+        8,
+        9
+      ],
+      "matrixCols": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": 113,
+      "bbox": [
+        40,
+        316,
+        48,
+        325
+      ],
+      "center": [
+        44,
+        320.5
+      ],
+      "area": 24,
+      "meanDiff": 0.719967,
+      "maxDiff": 0.98633,
+      "matrixRows": [
+        8,
+        9
+      ],
+      "matrixCols": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": 114,
+      "bbox": [
+        62,
+        316,
+        66,
+        325
+      ],
+      "center": [
+        64,
+        320.5
+      ],
+      "area": 15,
+      "meanDiff": 0.819285,
+      "maxDiff": 0.98633,
+      "matrixRows": [
+        8,
+        9
+      ],
+      "matrixCols": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": 115,
+      "bbox": [
+        70,
+        316,
+        77,
+        325
+      ],
+      "center": [
+        73.5,
+        320.5
+      ],
+      "area": 35,
+      "meanDiff": 0.6742,
+      "maxDiff": 0.98633,
+      "matrixRows": [
+        8,
+        9
+      ],
+      "matrixCols": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": 116,
+      "bbox": [
+        48,
+        318,
+        55,
+        325
+      ],
+      "center": [
+        51.5,
+        321.5
+      ],
+      "area": 33,
+      "meanDiff": 0.666289,
+      "maxDiff": 0.98633,
+      "matrixRows": [
+        8,
+        9
+      ],
+      "matrixCols": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": 117,
+      "bbox": [
+        56,
+        318,
+        61,
+        325
+      ],
+      "center": [
+        58.5,
+        321.5
+      ],
+      "area": 27,
+      "meanDiff": 0.639196,
+      "maxDiff": 0.974206,
+      "matrixRows": [
+        8,
+        9
+      ],
+      "matrixCols": [
+        0,
+        1
+      ]
+    },
+    {
+      "id": 118,
+      "bbox": [
+        565,
+        333,
+        573,
+        350
+      ],
+      "center": [
+        569,
+        341.5
+      ],
+      "area": 36,
+      "meanDiff": 0.349341,
+      "maxDiff": 1,
+      "matrixRows": [
+        9,
+        9
+      ],
+      "matrixCols": [
+        9,
+        9
+      ]
+    },
+    {
+      "id": 119,
+      "bbox": [
+        595,
+        333,
+        607,
+        350
+      ],
+      "center": [
+        601,
+        341.5
+      ],
+      "area": 63,
+      "meanDiff": 0.437919,
+      "maxDiff": 1,
+      "matrixRows": [
+        9,
+        9
+      ],
+      "matrixCols": [
+        10,
+        10
+      ]
+    },
+    {
+      "id": 120,
+      "bbox": [
+        592,
+        334,
+        594,
+        343
+      ],
+      "center": [
+        593,
+        338.5
+      ],
+      "area": 11,
+      "meanDiff": 0.456484,
+      "maxDiff": 0.64405,
+      "matrixRows": [
+        9,
+        9
+      ],
+      "matrixCols": [
+        10,
+        10
+      ]
+    },
+    {
+      "id": 121,
+      "bbox": [
+        568,
+        336,
+        574,
+        342
+      ],
+      "center": [
+        571,
+        339
+      ],
+      "area": 18,
+      "meanDiff": 0.503022,
+      "maxDiff": 0.929491,
+      "matrixRows": [
+        9,
+        9
+      ],
+      "matrixCols": [
+        9,
+        9
+      ]
+    },
+    {
+      "id": 122,
+      "bbox": [
+        576,
+        336,
+        578,
+        342
+      ],
+      "center": [
+        577,
+        339
+      ],
+      "area": 7,
+      "meanDiff": 0.358255,
+      "maxDiff": 0.591419,
+      "matrixRows": [
+        9,
+        9
+      ],
+      "matrixCols": [
+        10,
+        10
+      ]
+    },
+    {
+      "id": 123,
+      "bbox": [
+        579,
+        337,
+        588,
+        350
+      ],
+      "center": [
+        583.5,
+        343.5
+      ],
+      "area": 31,
+      "meanDiff": 0.533956,
+      "maxDiff": 1,
+      "matrixRows": [
+        9,
+        9
+      ],
+      "matrixCols": [
+        10,
+        10
+      ]
+    },
+    {
+      "id": 124,
+      "bbox": [
+        607,
+        337,
+        611,
+        339
+      ],
+      "center": [
+        609,
+        338
+      ],
+      "area": 5,
+      "meanDiff": 0.348638,
+      "maxDiff": 0.415971,
+      "matrixRows": [
+        9,
+        9
+      ],
+      "matrixCols": [
+        10,
+        10
+      ]
+    },
+    {
+      "id": 125,
+      "bbox": [
+        611,
+        337,
+        622,
+        349
+      ],
+      "center": [
+        616.5,
+        343
+      ],
+      "area": 39,
+      "meanDiff": 0.479529,
+      "maxDiff": 0.908662,
+      "matrixRows": [
+        9,
+        9
+      ],
+      "matrixCols": [
+        10,
+        10
+      ]
+    },
+    {
+      "id": 126,
+      "bbox": [
+        1157,
+        337,
+        1194,
+        350
+      ],
+      "center": [
+        1175.5,
+        343.5
+      ],
+      "area": 229,
+      "meanDiff": 0.579889,
+      "maxDiff": 0.924937,
+      "matrixRows": [
+        9,
+        9
+      ],
+      "matrixCols": [
+        20,
+        20
+      ]
+    },
+    {
+      "id": 127,
+      "bbox": [
+        1108,
+        338,
+        1116,
+        347
+      ],
+      "center": [
+        1112,
+        342.5
+      ],
+      "area": 41,
+      "meanDiff": 0.654627,
+      "maxDiff": 0.990365,
+      "matrixRows": [
+        9,
+        9
+      ],
+      "matrixCols": [
+        19,
+        19
+      ]
+    },
+    {
+      "id": 128,
+      "bbox": [
+        1139,
+        338,
+        1144,
+        347
+      ],
+      "center": [
+        1141.5,
+        342.5
+      ],
+      "area": 21,
+      "meanDiff": 0.657387,
+      "maxDiff": 0.990365,
+      "matrixRows": [
+        9,
+        9
+      ],
+      "matrixCols": [
+        19,
+        19
+      ]
+    },
+    {
+      "id": 129,
+      "bbox": [
+        577,
+        340,
+        585,
+        348
+      ],
+      "center": [
+        581,
+        344
+      ],
+      "area": 22,
+      "meanDiff": 0.426124,
+      "maxDiff": 0.859497,
+      "matrixRows": [
+        9,
+        9
+      ],
+      "matrixCols": [
+        10,
+        10
+      ]
+    },
+    {
+      "id": 130,
+      "bbox": [
+        614,
+        340,
+        618,
+        341
+      ],
+      "center": [
+        616,
+        340.5
+      ],
+      "area": 4,
+      "meanDiff": 0.298345,
+      "maxDiff": 0.401435,
+      "matrixRows": [
+        9,
+        9
+      ],
+      "matrixCols": [
+        10,
+        10
+      ]
+    },
+    {
+      "id": 131,
+      "bbox": [
+        1117,
+        340,
+        1124,
+        350
+      ],
+      "center": [
+        1120.5,
+        345
+      ],
+      "area": 49,
+      "meanDiff": 0.663289,
+      "maxDiff": 0.970158,
+      "matrixRows": [
+        9,
+        9
+      ],
+      "matrixCols": [
+        19,
+        19
+      ]
+    },
+    {
+      "id": 132,
+      "bbox": [
+        1125,
+        340,
+        1132,
+        347
+      ],
+      "center": [
+        1128.5,
+        343.5
+      ],
+      "area": 34,
+      "meanDiff": 0.685174,
+      "maxDiff": 0.990365,
+      "matrixRows": [
+        9,
+        9
+      ],
+      "matrixCols": [
+        19,
+        19
+      ]
+    },
+    {
+      "id": 133,
+      "bbox": [
+        1133,
+        340,
+        1139,
+        347
+      ],
+      "center": [
+        1136,
+        343.5
+      ],
+      "area": 29,
+      "meanDiff": 0.68069,
+      "maxDiff": 0.990365,
+      "matrixRows": [
+        9,
+        9
+      ],
+      "matrixCols": [
+        19,
+        19
+      ]
+    },
+    {
+      "id": 134,
+      "bbox": [
+        606,
+        343,
+        611,
+        350
+      ],
+      "center": [
+        608.5,
+        346.5
+      ],
+      "area": 19,
+      "meanDiff": 0.568817,
+      "maxDiff": 1,
+      "matrixRows": [
+        9,
+        9
+      ],
+      "matrixCols": [
+        10,
+        10
+      ]
+    },
+    {
+      "id": 135,
+      "bbox": [
+        580,
+        344,
+        585,
+        348
+      ],
+      "center": [
+        582.5,
+        346
+      ],
+      "area": 13,
+      "meanDiff": 0.472905,
+      "maxDiff": 0.905301,
+      "matrixRows": [
+        9,
+        9
+      ],
+      "matrixCols": [
+        10,
+        10
+      ]
+    },
+    {
+      "id": 136,
+      "bbox": [
+        592,
+        345,
+        594,
+        349
+      ],
+      "center": [
+        593,
+        347
+      ],
+      "area": 5,
+      "meanDiff": 0.391247,
+      "maxDiff": 0.434355,
+      "matrixRows": [
+        9,
+        9
+      ],
+      "matrixCols": [
+        10,
+        10
+      ]
+    },
+    {
+      "id": 137,
+      "bbox": [
+        612,
+        345,
+        621,
+        350
+      ],
+      "center": [
+        616.5,
+        347.5
+      ],
+      "area": 18,
+      "meanDiff": 0.575652,
+      "maxDiff": 1,
+      "matrixRows": [
+        9,
+        9
+      ],
+      "matrixCols": [
+        10,
+        10
+      ]
+    },
+    {
+      "id": 138,
+      "bbox": [
+        594,
+        346,
+        596,
+        349
+      ],
+      "center": [
+        595,
+        347.5
+      ],
+      "area": 4,
+      "meanDiff": 0.337649,
+      "maxDiff": 0.489312,
+      "matrixRows": [
+        9,
+        9
+      ],
+      "matrixCols": [
+        10,
+        10
+      ]
+    },
+    {
+      "id": 139,
+      "bbox": [
+        41,
+        347,
+        43,
+        356
+      ],
+      "center": [
+        42,
+        351.5
+      ],
+      "area": 11,
+      "meanDiff": 0.417051,
+      "maxDiff": 0.434736,
+      "matrixRows": [
+        9,
+        9
+      ],
+      "matrixCols": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": 140,
+      "bbox": [
+        43,
+        347,
+        48,
+        356
+      ],
+      "center": [
+        45.5,
+        351.5
+      ],
+      "area": 19,
+      "meanDiff": 0.380257,
+      "maxDiff": 0.458014,
+      "matrixRows": [
+        9,
+        9
+      ],
+      "matrixCols": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": 141,
+      "bbox": [
+        50,
+        349,
+        54,
+        356
+      ],
+      "center": [
+        52,
+        352.5
+      ],
+      "area": 13,
+      "meanDiff": 0.366417,
+      "maxDiff": 0.439407,
+      "matrixRows": [
+        9,
+        9
+      ],
+      "matrixCols": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": 142,
+      "bbox": [
+        60,
+        349,
+        65,
+        356
+      ],
+      "center": [
+        62.5,
+        352.5
+      ],
+      "area": 19,
+      "meanDiff": 0.334805,
+      "maxDiff": 0.44407,
+      "matrixRows": [
+        9,
+        9
+      ],
+      "matrixCols": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": 143,
+      "bbox": [
+        66,
+        349,
+        72,
+        355
+      ],
+      "center": [
+        69,
+        352
+      ],
+      "area": 18,
+      "meanDiff": 0.366948,
+      "maxDiff": 0.458014,
+      "matrixRows": [
+        9,
+        9
+      ],
+      "matrixCols": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": 144,
+      "bbox": [
+        73,
+        349,
+        78,
+        356
+      ],
+      "center": [
+        75.5,
+        352.5
+      ],
+      "area": 19,
+      "meanDiff": 0.334805,
+      "maxDiff": 0.44407,
+      "matrixRows": [
+        9,
+        9
+      ],
+      "matrixCols": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": 145,
+      "bbox": [
+        81,
+        349,
+        84,
+        351
+      ],
+      "center": [
+        82.5,
+        350
+      ],
+      "area": 4,
+      "meanDiff": 0.349739,
+      "maxDiff": 0.420674,
+      "matrixRows": [
+        9,
+        9
+      ],
+      "matrixCols": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": 146,
+      "bbox": [
+        86,
+        349,
+        87,
+        356
+      ],
+      "center": [
+        86.5,
+        352.5
+      ],
+      "area": 7,
+      "meanDiff": 0.38281,
+      "maxDiff": 0.38281,
+      "matrixRows": [
+        9,
+        9
+      ],
+      "matrixCols": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": 147,
+      "bbox": [
+        89,
+        349,
+        93,
+        356
+      ],
+      "center": [
+        91,
+        352.5
+      ],
+      "area": 13,
+      "meanDiff": 0.366417,
+      "maxDiff": 0.439407,
+      "matrixRows": [
+        9,
+        9
+      ],
+      "matrixCols": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": 148,
+      "bbox": [
+        96,
+        349,
+        100,
+        356
+      ],
+      "center": [
+        98,
+        352.5
+      ],
+      "area": 11,
+      "meanDiff": 0.401111,
+      "maxDiff": 0.458014,
+      "matrixRows": [
+        9,
+        9
+      ],
+      "matrixCols": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": 149,
+      "bbox": [
+        103,
+        349,
+        108,
+        356
+      ],
+      "center": [
+        105.5,
+        352.5
+      ],
+      "area": 19,
+      "meanDiff": 0.332592,
+      "maxDiff": 0.434736,
+      "matrixRows": [
+        9,
+        9
+      ],
+      "matrixCols": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": 150,
+      "bbox": [
+        54,
+        350,
+        56,
+        355
+      ],
+      "center": [
+        55,
+        352.5
+      ],
+      "area": 8,
+      "meanDiff": 0.309486,
+      "maxDiff": 0.434736,
+      "matrixRows": [
+        9,
+        9
+      ],
+      "matrixCols": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": 151,
+      "bbox": [
+        93,
+        350,
+        95,
+        355
+      ],
+      "center": [
+        94,
+        352.5
+      ],
+      "area": 8,
+      "meanDiff": 0.309486,
+      "maxDiff": 0.434736,
+      "matrixRows": [
+        9,
+        9
+      ],
+      "matrixCols": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": 152,
+      "bbox": [
+        100,
+        350,
+        101,
+        356
+      ],
+      "center": [
+        100.5,
+        353
+      ],
+      "area": 6,
+      "meanDiff": 0.418302,
+      "maxDiff": 0.439407,
+      "matrixRows": [
+        9,
+        9
+      ],
+      "matrixCols": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": 153,
+      "bbox": [
+        80,
+        352,
+        85,
+        356
+      ],
+      "center": [
+        82.5,
+        354
+      ],
+      "area": 12,
+      "meanDiff": 0.341586,
+      "maxDiff": 0.434736,
+      "matrixRows": [
+        9,
+        9
+      ],
+      "matrixCols": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": 154,
+      "bbox": [
+        18,
+        386,
+        30,
+        398
+      ],
+      "center": [
+        24,
+        392
+      ],
+      "area": 56,
+      "meanDiff": 0.428823,
+      "maxDiff": 0.664315,
+      "matrixRows": [
+        10,
+        11
+      ],
+      "matrixCols": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": 155,
+      "bbox": [
+        41,
+        388,
+        48,
+        397
+      ],
+      "center": [
+        44.5,
+        392.5
+      ],
+      "area": 43,
+      "meanDiff": 0.686673,
+      "maxDiff": 0.98633,
+      "matrixRows": [
+        10,
+        11
+      ],
+      "matrixCols": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": 156,
+      "bbox": [
+        78,
+        388,
+        83,
+        397
+      ],
+      "center": [
+        80.5,
+        392.5
+      ],
+      "area": 22,
+      "meanDiff": 0.614215,
+      "maxDiff": 0.98633,
+      "matrixRows": [
+        10,
+        11
+      ],
+      "matrixCols": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": 157,
+      "bbox": [
+        23,
+        389,
+        27,
+        394
+      ],
+      "center": [
+        25,
+        391.5
+      ],
+      "area": 11,
+      "meanDiff": 0.407099,
+      "maxDiff": 0.677346,
+      "matrixRows": [
+        10,
+        10
+      ],
+      "matrixCols": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": 158,
+      "bbox": [
+        539,
+        389,
+        562,
+        399
+      ],
+      "center": [
+        550.5,
+        394
+      ],
+      "area": 141,
+      "meanDiff": 0.513696,
+      "maxDiff": 0.858908,
+      "matrixRows": [
+        10,
+        11
+      ],
+      "matrixCols": [
+        9,
+        9
+      ]
+    },
+    {
+      "id": 159,
+      "bbox": [
+        628,
+        389,
+        652,
+        399
+      ],
+      "center": [
+        640,
+        394
+      ],
+      "area": 129,
+      "meanDiff": 0.538571,
+      "maxDiff": 0.858908,
+      "matrixRows": [
+        10,
+        11
+      ],
+      "matrixCols": [
+        10,
+        11
+      ]
+    },
+    {
+      "id": 160,
+      "bbox": [
+        665,
+        389,
+        678,
+        402
+      ],
+      "center": [
+        671.5,
+        395.5
+      ],
+      "area": 86,
+      "meanDiff": 0.541895,
+      "maxDiff": 0.883134,
+      "matrixRows": [
+        10,
+        11
+      ],
+      "matrixCols": [
+        11,
+        11
+      ]
+    },
+    {
+      "id": 161,
+      "bbox": [
+        680,
+        389,
+        718,
+        401
+      ],
+      "center": [
+        699,
+        395
+      ],
+      "area": 250,
+      "meanDiff": 0.537008,
+      "maxDiff": 0.883134,
+      "matrixRows": [
+        10,
+        11
+      ],
+      "matrixCols": [
+        11,
+        12
+      ]
+    },
+    {
+      "id": 162,
+      "bbox": [
+        855,
+        389,
+        857,
+        391
+      ],
+      "center": [
+        856,
+        390
+      ],
+      "area": 4,
+      "meanDiff": 0.362524,
+      "maxDiff": 0.555643,
+      "matrixRows": [
+        10,
+        10
+      ],
+      "matrixCols": [
+        14,
+        14
+      ]
+    },
+    {
+      "id": 163,
+      "bbox": [
+        1141,
+        389,
+        1186,
+        402
+      ],
+      "center": [
+        1163.5,
+        395.5
+      ],
+      "area": 239,
+      "meanDiff": 0.419239,
+      "maxDiff": 0.631882,
+      "matrixRows": [
+        10,
+        11
+      ],
+      "matrixCols": [
+        19,
+        20
+      ]
+    },
+    {
+      "id": 164,
+      "bbox": [
+        1178,
+        389,
+        1180,
+        393
+      ],
+      "center": [
+        1179,
+        391
+      ],
+      "area": 6,
+      "meanDiff": 0.377513,
+      "maxDiff": 0.573001,
+      "matrixRows": [
+        10,
+        10
+      ],
+      "matrixCols": [
+        20,
+        20
+      ]
+    },
+    {
+      "id": 165,
+      "bbox": [
+        49,
+        390,
+        63,
+        397
+      ],
+      "center": [
+        56,
+        393.5
+      ],
+      "area": 55,
+      "meanDiff": 0.67921,
+      "maxDiff": 0.98633,
+      "matrixRows": [
+        10,
+        11
+      ],
+      "matrixCols": [
+        0,
+        1
+      ]
+    },
+    {
+      "id": 166,
+      "bbox": [
+        64,
+        390,
+        78,
+        397
+      ],
+      "center": [
+        71,
+        393.5
+      ],
+      "area": 61,
+      "meanDiff": 0.659745,
+      "maxDiff": 0.98633,
+      "matrixRows": [
+        10,
+        11
+      ],
+      "matrixCols": [
+        1,
+        1
+      ]
+    },
+    {
+      "id": 167,
+      "bbox": [
+        560,
+        390,
+        577,
+        399
+      ],
+      "center": [
+        568.5,
+        394.5
+      ],
+      "area": 88,
+      "meanDiff": 0.527524,
+      "maxDiff": 0.858908,
+      "matrixRows": [
+        10,
+        11
+      ],
+      "matrixCols": [
+        9,
+        10
+      ]
+    },
+    {
+      "id": 168,
+      "bbox": [
+        619,
+        390,
+        629,
+        399
+      ],
+      "center": [
+        624,
+        394.5
+      ],
+      "area": 39,
+      "meanDiff": 0.542458,
+      "maxDiff": 0.871036,
+      "matrixRows": [
+        10,
+        11
+      ],
+      "matrixCols": [
+        10,
+        10
+      ]
+    },
+    {
+      "id": 169,
+      "bbox": [
+        649,
+        390,
+        664,
+        402
+      ],
+      "center": [
+        656.5,
+        396
+      ],
+      "area": 83,
+      "meanDiff": 0.577467,
+      "maxDiff": 0.883134,
+      "matrixRows": [
+        10,
+        11
+      ],
+      "matrixCols": [
+        11,
+        11
+      ]
+    },
+    {
+      "id": 170,
+      "bbox": [
+        726,
+        390,
+        732,
+        399
+      ],
+      "center": [
+        729,
+        394.5
+      ],
+      "area": 32,
+      "meanDiff": 0.552098,
+      "maxDiff": 0.883134,
+      "matrixRows": [
+        10,
+        11
+      ],
+      "matrixCols": [
+        12,
+        12
+      ]
+    },
+    {
+      "id": 171,
+      "bbox": [
+        746,
+        390,
+        753,
+        399
+      ],
+      "center": [
+        749.5,
+        394.5
+      ],
+      "area": 38,
+      "meanDiff": 0.546671,
+      "maxDiff": 0.858908,
+      "matrixRows": [
+        10,
+        11
+      ],
+      "matrixCols": [
+        12,
+        13
+      ]
+    },
+    {
+      "id": 172,
+      "bbox": [
+        801,
+        390,
+        805,
+        399
+      ],
+      "center": [
+        803,
+        394.5
+      ],
+      "area": 21,
+      "meanDiff": 0.53127,
+      "maxDiff": 0.883134,
+      "matrixRows": [
+        10,
+        11
+      ],
+      "matrixCols": [
+        13,
+        13
+      ]
+    },
+    {
+      "id": 173,
+      "bbox": [
+        827,
+        390,
+        833,
+        399
+      ],
+      "center": [
+        830,
+        394.5
+      ],
+      "area": 31,
+      "meanDiff": 0.61544,
+      "maxDiff": 0.879105,
+      "matrixRows": [
+        10,
+        11
+      ],
+      "matrixCols": [
+        14,
+        14
+      ]
+    },
+    {
+      "id": 174,
+      "bbox": [
+        841,
+        390,
+        851,
+        399
+      ],
+      "center": [
+        846,
+        394.5
+      ],
+      "area": 45,
+      "meanDiff": 0.603861,
+      "maxDiff": 0.883134,
+      "matrixRows": [
+        10,
+        11
+      ],
+      "matrixCols": [
+        14,
+        14
+      ]
+    },
+    {
+      "id": 175,
+      "bbox": [
+        909,
+        390,
+        913,
+        399
+      ],
+      "center": [
+        911,
+        394.5
+      ],
+      "area": 14,
+      "meanDiff": 0.706195,
+      "maxDiff": 0.883134,
+      "matrixRows": [
+        10,
+        11
+      ],
+      "matrixCols": [
+        15,
+        15
+      ]
+    },
+    {
+      "id": 176,
+      "bbox": [
+        920,
+        390,
+        926,
+        399
+      ],
+      "center": [
+        923,
+        394.5
+      ],
+      "area": 33,
+      "meanDiff": 0.610229,
+      "maxDiff": 0.871036,
+      "matrixRows": [
+        10,
+        11
+      ],
+      "matrixCols": [
+        15,
+        16
+      ]
+    },
+    {
+      "id": 177,
+      "bbox": [
+        1112,
+        390,
+        1118,
+        399
+      ],
+      "center": [
+        1115,
+        394.5
+      ],
+      "area": 25,
+      "meanDiff": 0.516971,
+      "maxDiff": 0.631882,
+      "matrixRows": [
+        10,
+        11
+      ],
+      "matrixCols": [
+        19,
+        19
+      ]
+    },
+    {
+      "id": 178,
+      "bbox": [
+        1130,
+        390,
+        1134,
+        399
+      ],
+      "center": [
+        1132,
+        394.5
+      ],
+      "area": 15,
+      "meanDiff": 0.480992,
+      "maxDiff": 0.631882,
+      "matrixRows": [
+        10,
+        11
+      ],
+      "matrixCols": [
+        19,
+        19
+      ]
+    },
+    {
+      "id": 179,
+      "bbox": [
+        579,
+        391,
+        586,
+        399
+      ],
+      "center": [
+        582.5,
+        395
+      ],
+      "area": 39,
+      "meanDiff": 0.567174,
+      "maxDiff": 0.822669,
+      "matrixRows": [
+        10,
+        11
+      ],
+      "matrixCols": [
+        10,
+        10
+      ]
+    },
+    {
+      "id": 180,
+      "bbox": [
+        589,
+        391,
+        620,
+        399
+      ],
+      "center": [
+        604.5,
+        395
+      ],
+      "area": 173,
+      "meanDiff": 0.542973,
+      "maxDiff": 0.883134,
+      "matrixRows": [
+        10,
+        11
+      ],
+      "matrixCols": [
+        10,
+        10
+      ]
+    },
+    {
+      "id": 181,
+      "bbox": [
+        630,
+        391,
+        635,
+        394
+      ],
+      "center": [
+        632.5,
+        392.5
+      ],
+      "area": 10,
+      "meanDiff": 0.543904,
+      "maxDiff": 0.748809,
+      "matrixRows": [
+        10,
+        10
+      ],
+      "matrixCols": [
+        10,
+        11
+      ]
+    },
+    {
+      "id": 182,
+      "bbox": [
+        1188,
+        391,
+        1193,
+        395
+      ],
+      "center": [
+        1190.5,
+        393
+      ],
+      "area": 10,
+      "meanDiff": 0.361172,
+      "maxDiff": 0.515746,
+      "matrixRows": [
+        10,
+        10
+      ],
+      "matrixCols": [
+        20,
+        20
+      ]
+    },
+    {
+      "id": 183,
+      "bbox": [
+        1195,
+        391,
+        1201,
+        397
+      ],
+      "center": [
+        1198,
+        394
+      ],
+      "area": 22,
+      "meanDiff": 0.343359,
+      "maxDiff": 0.55286,
+      "matrixRows": [
+        10,
+        11
+      ],
+      "matrixCols": [
+        20,
+        20
+      ]
+    },
+    {
+      "id": 184,
+      "bbox": [
+        719,
+        392,
+        725,
+        399
+      ],
+      "center": [
+        722,
+        395.5
+      ],
+      "area": 22,
+      "meanDiff": 0.58424,
+      "maxDiff": 0.854858,
+      "matrixRows": [
+        10,
+        11
+      ],
+      "matrixCols": [
+        12,
+        12
+      ]
+    },
+    {
+      "id": 185,
+      "bbox": [
+        732,
+        392,
+        745,
+        399
+      ],
+      "center": [
+        738.5,
+        395.5
+      ],
+      "area": 55,
+      "meanDiff": 0.593676,
+      "maxDiff": 0.883134,
+      "matrixRows": [
+        10,
+        11
+      ],
+      "matrixCols": [
+        12,
+        12
+      ]
+    },
+    {
+      "id": 186,
+      "bbox": [
+        760,
+        392,
+        766,
+        399
+      ],
+      "center": [
+        763,
+        395.5
+      ],
+      "area": 29,
+      "meanDiff": 0.594266,
+      "maxDiff": 0.843017,
+      "matrixRows": [
+        10,
+        11
+      ],
+      "matrixCols": [
+        13,
+        13
+      ]
+    },
+    {
+      "id": 187,
+      "bbox": [
+        767,
+        392,
+        773,
+        399
+      ],
+      "center": [
+        770,
+        395.5
+      ],
+      "area": 22,
+      "meanDiff": 0.592526,
+      "maxDiff": 0.837576,
+      "matrixRows": [
+        10,
+        11
+      ],
+      "matrixCols": [
+        13,
+        13
+      ]
+    },
+    {
+      "id": 188,
+      "bbox": [
+        774,
+        392,
+        780,
+        399
+      ],
+      "center": [
+        777,
+        395.5
+      ],
+      "area": 19,
+      "meanDiff": 0.655568,
+      "maxDiff": 0.86328,
+      "matrixRows": [
+        10,
+        11
+      ],
+      "matrixCols": [
+        13,
+        13
+      ]
+    },
+    {
+      "id": 189,
+      "bbox": [
+        780,
+        392,
+        787,
+        399
+      ],
+      "center": [
+        783.5,
+        395.5
+      ],
+      "area": 28,
+      "meanDiff": 0.575067,
+      "maxDiff": 0.854858,
+      "matrixRows": [
+        10,
+        11
+      ],
+      "matrixCols": [
+        13,
+        13
+      ]
+    },
+    {
+      "id": 190,
+      "bbox": [
+        788,
+        392,
+        794,
+        399
+      ],
+      "center": [
+        791,
+        395.5
+      ],
+      "area": 30,
+      "meanDiff": 0.527683,
+      "maxDiff": 0.854858,
+      "matrixRows": [
+        10,
+        11
+      ],
+      "matrixCols": [
+        13,
+        13
+      ]
+    },
+    {
+      "id": 191,
+      "bbox": [
+        795,
+        392,
+        801,
+        399
+      ],
+      "center": [
+        798,
+        395.5
+      ],
+      "area": 29,
+      "meanDiff": 0.540054,
+      "maxDiff": 0.838954,
+      "matrixRows": [
+        10,
+        11
+      ],
+      "matrixCols": [
+        13,
+        13
+      ]
+    },
+    {
+      "id": 192,
+      "bbox": [
+        812,
+        392,
+        819,
+        399
+      ],
+      "center": [
+        815.5,
+        395.5
+      ],
+      "area": 28,
+      "meanDiff": 0.573781,
+      "maxDiff": 0.851132,
+      "matrixRows": [
+        10,
+        11
+      ],
+      "matrixCols": [
+        14,
+        14
+      ]
+    },
+    {
+      "id": 193,
+      "bbox": [
+        820,
+        392,
+        824,
+        399
+      ],
+      "center": [
+        822,
+        395.5
+      ],
+      "area": 11,
+      "meanDiff": 0.739525,
+      "maxDiff": 0.883134,
+      "matrixRows": [
+        10,
+        11
+      ],
+      "matrixCols": [
+        14,
+        14
+      ]
+    },
+    {
+      "id": 194,
+      "bbox": [
+        834,
+        392,
+        840,
+        399
+      ],
+      "center": [
+        837,
+        395.5
+      ],
+      "area": 28,
+      "meanDiff": 0.613772,
+      "maxDiff": 0.851132,
+      "matrixRows": [
+        10,
+        11
+      ],
+      "matrixCols": [
+        14,
+        14
+      ]
+    },
+    {
+      "id": 195,
+      "bbox": [
+        855,
+        392,
+        857,
+        399
+      ],
+      "center": [
+        856,
+        395.5
+      ],
+      "area": 14,
+      "meanDiff": 0.498854,
+      "maxDiff": 0.538221,
+      "matrixRows": [
+        10,
+        11
+      ],
+      "matrixCols": [
+        14,
+        14
+      ]
+    },
+    {
+      "id": 196,
+      "bbox": [
+        858,
+        392,
+        863,
+        399
+      ],
+      "center": [
+        860.5,
+        395.5
+      ],
+      "area": 24,
+      "meanDiff": 0.580214,
+      "maxDiff": 0.858908,
+      "matrixRows": [
+        10,
+        11
+      ],
+      "matrixCols": [
+        14,
+        14
+      ]
+    },
+    {
+      "id": 197,
+      "bbox": [
+        867,
+        392,
+        873,
+        399
+      ],
+      "center": [
+        870,
+        395.5
+      ],
+      "area": 22,
+      "meanDiff": 0.58424,
+      "maxDiff": 0.854858,
+      "matrixRows": [
+        10,
+        11
+      ],
+      "matrixCols": [
+        15,
+        15
+      ]
+    },
+    {
+      "id": 198,
+      "bbox": [
+        874,
+        392,
+        881,
+        399
+      ],
+      "center": [
+        877.5,
+        395.5
+      ],
+      "area": 28,
+      "meanDiff": 0.573781,
+      "maxDiff": 0.851132,
+      "matrixRows": [
+        10,
+        11
+      ],
+      "matrixCols": [
+        15,
+        15
+      ]
+    },
+    {
+      "id": 199,
+      "bbox": [
+        882,
+        392,
+        887,
+        399
+      ],
+      "center": [
+        884.5,
+        395.5
+      ],
+      "area": 19,
+      "meanDiff": 0.738272,
+      "maxDiff": 0.883134,
+      "matrixRows": [
+        10,
+        11
+      ],
+      "matrixCols": [
+        15,
+        15
+      ]
+    },
+    {
+      "id": 200,
+      "bbox": [
+        889,
+        392,
+        894,
+        399
+      ],
+      "center": [
+        891.5,
+        395.5
+      ],
+      "area": 19,
+      "meanDiff": 0.738272,
+      "maxDiff": 0.883134,
+      "matrixRows": [
+        10,
+        11
+      ],
+      "matrixCols": [
+        15,
+        15
+      ]
+    },
+    {
+      "id": 201,
+      "bbox": [
+        895,
+        392,
+        908,
+        399
+      ],
+      "center": [
+        901.5,
+        395.5
+      ],
+      "area": 51,
+      "meanDiff": 0.59775,
+      "maxDiff": 0.883134,
+      "matrixRows": [
+        10,
+        11
+      ],
+      "matrixCols": [
+        15,
+        15
+      ]
+    },
+    {
+      "id": 202,
+      "bbox": [
+        913,
+        392,
+        919,
+        399
+      ],
+      "center": [
+        916,
+        395.5
+      ],
+      "area": 28,
+      "meanDiff": 0.639315,
+      "maxDiff": 0.883134,
+      "matrixRows": [
+        10,
+        11
+      ],
+      "matrixCols": [
+        15,
+        15
+      ]
+    },
+    {
+      "id": 203,
+      "bbox": [
+        1119,
+        392,
+        1123,
+        399
+      ],
+      "center": [
+        1121,
+        395.5
+      ],
+      "area": 16,
+      "meanDiff": 0.390009,
+      "maxDiff": 0.552187,
+      "matrixRows": [
+        10,
+        11
+      ],
+      "matrixCols": [
+        19,
+        19
+      ]
+    },
+    {
+      "id": 204,
+      "bbox": [
+        1123,
+        392,
+        1130,
+        399
+      ],
+      "center": [
+        1126.5,
+        395.5
+      ],
+      "area": 24,
+      "meanDiff": 0.447977,
+      "maxDiff": 0.608471,
+      "matrixRows": [
+        10,
+        11
+      ],
+      "matrixCols": [
+        19,
+        19
+      ]
+    },
+    {
+      "id": 205,
+      "bbox": [
+        1134,
+        392,
+        1141,
+        399
+      ],
+      "center": [
+        1137.5,
+        395.5
+      ],
+      "area": 24,
+      "meanDiff": 0.447977,
+      "maxDiff": 0.608471,
+      "matrixRows": [
+        10,
+        11
+      ],
+      "matrixCols": [
+        19,
+        19
+      ]
+    },
+    {
+      "id": 206,
+      "bbox": [
+        1185,
+        392,
+        1187,
+        397
+      ],
+      "center": [
+        1186,
+        394.5
+      ],
+      "area": 8,
+      "meanDiff": 0.456923,
+      "maxDiff": 0.609157,
+      "matrixRows": [
+        10,
+        11
+      ],
+      "matrixCols": [
+        20,
+        20
+      ]
+    },
+    {
+      "id": 207,
+      "bbox": [
+        1188,
+        394,
+        1194,
+        399
+      ],
+      "center": [
+        1191,
+        396.5
+      ],
+      "area": 14,
+      "meanDiff": 0.404143,
+      "maxDiff": 0.607414,
+      "matrixRows": [
+        10,
+        11
+      ],
+      "matrixCols": [
+        20,
+        20
+      ]
+    },
+    {
+      "id": 208,
+      "bbox": [
+        625,
+        396,
+        630,
+        402
+      ],
+      "center": [
+        627.5,
+        399
+      ],
+      "area": 13,
+      "meanDiff": 0.548849,
+      "maxDiff": 0.843017,
+      "matrixRows": [
+        11,
+        11
+      ],
+      "matrixCols": [
+        10,
+        10
+      ]
+    },
+    {
+      "id": 209,
+      "bbox": [
+        754,
+        397,
+        756,
+        401
+      ],
+      "center": [
+        755,
+        399
+      ],
+      "area": 7,
+      "meanDiff": 0.466956,
+      "maxDiff": 0.772408,
+      "matrixRows": [
+        11,
+        11
+      ],
+      "matrixCols": [
+        13,
+        13
+      ]
+    },
+    {
+      "id": 210,
+      "bbox": [
+        806,
+        397,
+        808,
+        401
+      ],
+      "center": [
+        807,
+        399
+      ],
+      "area": 7,
+      "meanDiff": 0.466956,
+      "maxDiff": 0.772408,
+      "matrixRows": [
+        11,
+        11
+      ],
+      "matrixCols": [
+        13,
+        14
+      ]
+    },
+    {
+      "id": 211,
+      "bbox": [
+        1196,
+        397,
+        1200,
+        399
+      ],
+      "center": [
+        1198,
+        398
+      ],
+      "area": 6,
+      "meanDiff": 0.48039,
+      "maxDiff": 0.581468,
+      "matrixRows": [
+        11,
+        11
+      ],
+      "matrixCols": [
+        20,
+        20
+      ]
+    },
+    {
+      "id": 212,
+      "bbox": [
+        544,
+        426,
+        589,
+        438
+      ],
+      "center": [
+        566.5,
+        432
+      ],
+      "area": 277,
+      "meanDiff": 0.414542,
+      "maxDiff": 0.565283,
+      "matrixRows": [
+        11,
+        12
+      ],
+      "matrixCols": [
+        9,
+        10
+      ]
+    },
+    {
+      "id": 213,
+      "bbox": [
+        663,
+        426,
+        665,
+        428
+      ],
+      "center": [
+        664,
+        427
+      ],
+      "area": 4,
+      "meanDiff": 0.383407,
+      "maxDiff": 0.547665,
+      "matrixRows": [
+        11,
+        11
+      ],
+      "matrixCols": [
+        11,
+        11
+      ]
+    },
+    {
+      "id": 214,
+      "bbox": [
+        589,
+        427,
+        595,
+        433
+      ],
+      "center": [
+        592,
+        430
+      ],
+      "area": 15,
+      "meanDiff": 0.354374,
+      "maxDiff": 0.541234,
+      "matrixRows": [
+        11,
+        12
+      ],
+      "matrixCols": [
+        10,
+        10
+      ]
+    },
+    {
+      "id": 215,
+      "bbox": [
+        597,
+        427,
+        613,
+        438
+      ],
+      "center": [
+        605,
+        432.5
+      ],
+      "area": 94,
+      "meanDiff": 0.413591,
+      "maxDiff": 0.565283,
+      "matrixRows": [
+        11,
+        12
+      ],
+      "matrixCols": [
+        10,
+        10
+      ]
+    },
+    {
+      "id": 216,
+      "bbox": [
+        627,
+        427,
+        638,
+        438
+      ],
+      "center": [
+        632.5,
+        432.5
+      ],
+      "area": 60,
+      "meanDiff": 0.386709,
+      "maxDiff": 0.553449,
+      "matrixRows": [
+        11,
+        12
+      ],
+      "matrixCols": [
+        10,
+        11
+      ]
+    },
+    {
+      "id": 217,
+      "bbox": [
+        649,
+        427,
+        651,
+        429
+      ],
+      "center": [
+        650,
+        428
+      ],
+      "area": 4,
+      "meanDiff": 0.30205,
+      "maxDiff": 0.398592,
+      "matrixRows": [
+        11,
+        11
+      ],
+      "matrixCols": [
+        11,
+        11
+      ]
+    },
+    {
+      "id": 218,
+      "bbox": [
+        641,
+        427,
+        654,
+        438
+      ],
+      "center": [
+        647.5,
+        432.5
+      ],
+      "area": 70,
+      "meanDiff": 0.391805,
+      "maxDiff": 0.565283,
+      "matrixRows": [
+        11,
+        12
+      ],
+      "matrixCols": [
+        11,
+        11
+      ]
+    },
+    {
+      "id": 219,
+      "bbox": [
+        657,
+        427,
+        661,
+        430
+      ],
+      "center": [
+        659,
+        428.5
+      ],
+      "area": 8,
+      "meanDiff": 0.408286,
+      "maxDiff": 0.545026,
+      "matrixRows": [
+        11,
+        11
+      ],
+      "matrixCols": [
+        11,
+        11
+      ]
+    },
+    {
+      "id": 220,
+      "bbox": [
+        669,
+        427,
+        672,
+        430
+      ],
+      "center": [
+        670.5,
+        428.5
+      ],
+      "area": 6,
+      "meanDiff": 0.404089,
+      "maxDiff": 0.547665,
+      "matrixRows": [
+        11,
+        11
+      ],
+      "matrixCols": [
+        11,
+        11
+      ]
+    },
+    {
+      "id": 221,
+      "bbox": [
+        729,
+        427,
+        734,
+        438
+      ],
+      "center": [
+        731.5,
+        432.5
+      ],
+      "area": 26,
+      "meanDiff": 0.402876,
+      "maxDiff": 0.565283,
+      "matrixRows": [
+        11,
+        12
+      ],
+      "matrixCols": [
+        12,
+        12
+      ]
+    },
+    {
+      "id": 222,
+      "bbox": [
+        750,
+        427,
+        752,
+        438
+      ],
+      "center": [
+        751,
+        432.5
+      ],
+      "area": 15,
+      "meanDiff": 0.503131,
+      "maxDiff": 0.565283,
+      "matrixRows": [
+        11,
+        12
+      ],
+      "matrixCols": [
+        13,
+        13
+      ]
+    },
+    {
+      "id": 223,
+      "bbox": [
+        832,
+        427,
+        839,
+        438
+      ],
+      "center": [
+        835.5,
+        432.5
+      ],
+      "area": 39,
+      "meanDiff": 0.39034,
+      "maxDiff": 0.565283,
+      "matrixRows": [
+        11,
+        12
+      ],
+      "matrixCols": [
+        14,
+        14
+      ]
+    },
+    {
+      "id": 224,
+      "bbox": [
+        918,
+        427,
+        920,
+        438
+      ],
+      "center": [
+        919,
+        432.5
+      ],
+      "area": 13,
+      "meanDiff": 0.54298,
+      "maxDiff": 0.565283,
+      "matrixRows": [
+        11,
+        12
+      ],
+      "matrixCols": [
+        15,
+        15
+      ]
+    },
+    {
+      "id": 225,
+      "bbox": [
+        614,
+        428,
+        626,
+        438
+      ],
+      "center": [
+        620,
+        433
+      ],
+      "area": 76,
+      "meanDiff": 0.391768,
+      "maxDiff": 0.556485,
+      "matrixRows": [
+        11,
+        12
+      ],
+      "matrixCols": [
+        10,
+        10
+      ]
+    },
+    {
+      "id": 226,
+      "bbox": [
+        669,
+        428,
+        700,
+        438
+      ],
+      "center": [
+        684.5,
+        433
+      ],
+      "area": 165,
+      "meanDiff": 0.4149,
+      "maxDiff": 0.565283,
+      "matrixRows": [
+        11,
+        12
+      ],
+      "matrixCols": [
+        11,
+        12
+      ]
+    },
+    {
+      "id": 227,
+      "bbox": [
+        636,
+        429,
+        642,
+        437
+      ],
+      "center": [
+        639,
+        433
+      ],
+      "area": 16,
+      "meanDiff": 0.405645,
+      "maxDiff": 0.545026,
+      "matrixRows": [
+        11,
+        12
+      ],
+      "matrixCols": [
+        11,
+        11
+      ]
+    },
+    {
+      "id": 228,
+      "bbox": [
+        651,
+        429,
+        657,
+        437
+      ],
+      "center": [
+        654,
+        433
+      ],
+      "area": 28,
+      "meanDiff": 0.397428,
+      "maxDiff": 0.547665,
+      "matrixRows": [
+        11,
+        12
+      ],
+      "matrixCols": [
+        11,
+        11
+      ]
+    },
+    {
+      "id": 229,
+      "bbox": [
+        663,
+        429,
+        669,
+        437
+      ],
+      "center": [
+        666,
+        433
+      ],
+      "area": 35,
+      "meanDiff": 0.39962,
+      "maxDiff": 0.542886,
+      "matrixRows": [
+        11,
+        12
+      ],
+      "matrixCols": [
+        11,
+        11
+      ]
+    },
+    {
+      "id": 230,
+      "bbox": [
+        702,
+        430,
+        706,
+        438
+      ],
+      "center": [
+        704,
+        434
+      ],
+      "area": 12,
+      "meanDiff": 0.507465,
+      "maxDiff": 0.565283,
+      "matrixRows": [
+        11,
+        12
+      ],
+      "matrixCols": [
+        12,
+        12
+      ]
+    },
+    {
+      "id": 231,
+      "bbox": [
+        706,
+        430,
+        713,
+        438
+      ],
+      "center": [
+        709.5,
+        434
+      ],
+      "area": 30,
+      "meanDiff": 0.44932,
+      "maxDiff": 0.565283,
+      "matrixRows": [
+        11,
+        12
+      ],
+      "matrixCols": [
+        12,
+        12
+      ]
+    },
+    {
+      "id": 232,
+      "bbox": [
+        715,
+        430,
+        721,
+        438
+      ],
+      "center": [
+        718,
+        434
+      ],
+      "area": 28,
+      "meanDiff": 0.401535,
+      "maxDiff": 0.565283,
+      "matrixRows": [
+        11,
+        12
+      ],
+      "matrixCols": [
+        12,
+        12
+      ]
+    },
+    {
+      "id": 233,
+      "bbox": [
+        735,
+        430,
+        737,
+        438
+      ],
+      "center": [
+        736,
+        434
+      ],
+      "area": 16,
+      "meanDiff": 0.360703,
+      "maxDiff": 0.529957,
+      "matrixRows": [
+        11,
+        12
+      ],
+      "matrixCols": [
+        12,
+        12
+      ]
+    },
+    {
+      "id": 234,
+      "bbox": [
+        738,
+        430,
+        745,
+        438
+      ],
+      "center": [
+        741.5,
+        434
+      ],
+      "area": 27,
+      "meanDiff": 0.409966,
+      "maxDiff": 0.565283,
+      "matrixRows": [
+        11,
+        12
+      ],
+      "matrixCols": [
+        12,
+        12
+      ]
+    },
+    {
+      "id": 235,
+      "bbox": [
+        752,
+        430,
+        757,
+        438
+      ],
+      "center": [
+        754.5,
+        434
+      ],
+      "area": 18,
+      "meanDiff": 0.433294,
+      "maxDiff": 0.547665,
+      "matrixRows": [
+        11,
+        12
+      ],
+      "matrixCols": [
+        13,
+        13
+      ]
+    },
+    {
+      "id": 236,
+      "bbox": [
+        758,
+        430,
+        765,
+        438
+      ],
+      "center": [
+        761.5,
+        434
+      ],
+      "area": 36,
+      "meanDiff": 0.370264,
+      "maxDiff": 0.552078,
+      "matrixRows": [
+        11,
+        12
+      ],
+      "matrixCols": [
+        13,
+        13
+      ]
+    },
+    {
+      "id": 237,
+      "bbox": [
+        766,
+        430,
+        773,
+        441
+      ],
+      "center": [
+        769.5,
+        435.5
+      ],
+      "area": 45,
+      "meanDiff": 0.42512,
+      "maxDiff": 0.565283,
+      "matrixRows": [
+        11,
+        12
+      ],
+      "matrixCols": [
+        13,
+        13
+      ]
+    },
+    {
+      "id": 238,
+      "bbox": [
+        775,
+        430,
+        781,
+        438
+      ],
+      "center": [
+        778,
+        434
+      ],
+      "area": 27,
+      "meanDiff": 0.413056,
+      "maxDiff": 0.552078,
+      "matrixRows": [
+        11,
+        12
+      ],
+      "matrixCols": [
+        13,
+        13
+      ]
+    },
+    {
+      "id": 239,
+      "bbox": [
+        790,
+        430,
+        797,
+        438
+      ],
+      "center": [
+        793.5,
+        434
+      ],
+      "area": 36,
+      "meanDiff": 0.374368,
+      "maxDiff": 0.556485,
+      "matrixRows": [
+        11,
+        12
+      ],
+      "matrixCols": [
+        13,
+        13
+      ]
+    },
+    {
+      "id": 240,
+      "bbox": [
+        798,
+        430,
+        803,
+        438
+      ],
+      "center": [
+        800.5,
+        434
+      ],
+      "area": 20,
+      "meanDiff": 0.369783,
+      "maxDiff": 0.547665,
+      "matrixRows": [
+        11,
+        12
+      ],
+      "matrixCols": [
+        13,
+        13
+      ]
+    },
+    {
+      "id": 241,
+      "bbox": [
+        807,
+        430,
+        818,
+        438
+      ],
+      "center": [
+        812.5,
+        434
+      ],
+      "area": 45,
+      "meanDiff": 0.408858,
+      "maxDiff": 0.565283,
+      "matrixRows": [
+        11,
+        12
+      ],
+      "matrixCols": [
+        14,
+        14
+      ]
+    },
+    {
+      "id": 242,
+      "bbox": [
+        818,
+        430,
+        826,
+        438
+      ],
+      "center": [
+        822,
+        434
+      ],
+      "area": 30,
+      "meanDiff": 0.425413,
+      "maxDiff": 0.565283,
+      "matrixRows": [
+        11,
+        12
+      ],
+      "matrixCols": [
+        14,
+        14
+      ]
+    },
+    {
+      "id": 243,
+      "bbox": [
+        827,
+        430,
+        831,
+        438
+      ],
+      "center": [
+        829,
+        434
+      ],
+      "area": 19,
+      "meanDiff": 0.390495,
+      "maxDiff": 0.538822,
+      "matrixRows": [
+        11,
+        12
+      ],
+      "matrixCols": [
+        14,
+        14
+      ]
+    },
+    {
+      "id": 244,
+      "bbox": [
+        844,
+        430,
+        851,
+        438
+      ],
+      "center": [
+        847.5,
+        434
+      ],
+      "area": 28,
+      "meanDiff": 0.440239,
+      "maxDiff": 0.565283,
+      "matrixRows": [
+        11,
+        12
+      ],
+      "matrixCols": [
+        14,
+        14
+      ]
+    },
+    {
+      "id": 245,
+      "bbox": [
+        852,
+        430,
+        859,
+        438
+      ],
+      "center": [
+        855.5,
+        434
+      ],
+      "area": 35,
+      "meanDiff": 0.375002,
+      "maxDiff": 0.565283,
+      "matrixRows": [
+        11,
+        12
+      ],
+      "matrixCols": [
+        14,
+        14
+      ]
+    },
+    {
+      "id": 246,
+      "bbox": [
+        864,
+        430,
+        871,
+        441
+      ],
+      "center": [
+        867.5,
+        435.5
+      ],
+      "area": 33,
+      "meanDiff": 0.400428,
+      "maxDiff": 0.565283,
+      "matrixRows": [
+        11,
+        12
+      ],
+      "matrixCols": [
+        15,
+        15
+      ]
+    },
+    {
+      "id": 247,
+      "bbox": [
+        872,
+        430,
+        879,
+        438
+      ],
+      "center": [
+        875.5,
+        434
+      ],
+      "area": 28,
+      "meanDiff": 0.440239,
+      "maxDiff": 0.565283,
+      "matrixRows": [
+        11,
+        12
+      ],
+      "matrixCols": [
+        15,
+        15
+      ]
+    },
+    {
+      "id": 248,
+      "bbox": [
+        880,
+        430,
+        887,
+        438
+      ],
+      "center": [
+        883.5,
+        434
+      ],
+      "area": 36,
+      "meanDiff": 0.370264,
+      "maxDiff": 0.552078,
+      "matrixRows": [
+        11,
+        12
+      ],
+      "matrixCols": [
+        15,
+        15
+      ]
+    },
+    {
+      "id": 249,
+      "bbox": [
+        888,
+        430,
+        893,
+        438
+      ],
+      "center": [
+        890.5,
+        434
+      ],
+      "area": 20,
+      "meanDiff": 0.369783,
+      "maxDiff": 0.547665,
+      "matrixRows": [
+        11,
+        12
+      ],
+      "matrixCols": [
+        15,
+        15
+      ]
+    },
+    {
+      "id": 250,
+      "bbox": [
+        897,
+        430,
+        904,
+        438
+      ],
+      "center": [
+        900.5,
+        434
+      ],
+      "area": 26,
+      "meanDiff": 0.396607,
+      "maxDiff": 0.547665,
+      "matrixRows": [
+        11,
+        12
+      ],
+      "matrixCols": [
+        15,
+        15
+      ]
+    },
+    {
+      "id": 251,
+      "bbox": [
+        905,
+        430,
+        912,
+        438
+      ],
+      "center": [
+        908.5,
+        434
+      ],
+      "area": 32,
+      "meanDiff": 0.405743,
+      "maxDiff": 0.565283,
+      "matrixRows": [
+        11,
+        12
+      ],
+      "matrixCols": [
+        15,
+        15
+      ]
+    },
+    {
+      "id": 252,
+      "bbox": [
+        913,
+        430,
+        918,
+        438
+      ],
+      "center": [
+        915.5,
+        434
+      ],
+      "area": 18,
+      "meanDiff": 0.430951,
+      "maxDiff": 0.547665,
+      "matrixRows": [
+        11,
+        12
+      ],
+      "matrixCols": [
+        15,
+        15
+      ]
+    },
+    {
+      "id": 253,
+      "bbox": [
+        922,
+        430,
+        929,
+        438
+      ],
+      "center": [
+        925.5,
+        434
+      ],
+      "area": 34,
+      "meanDiff": 0.412549,
+      "maxDiff": 0.565283,
+      "matrixRows": [
+        11,
+        12
+      ],
+      "matrixCols": [
+        16,
+        16
+      ]
+    },
+    {
+      "id": 254,
+      "bbox": [
+        657,
+        431,
+        663,
+        438
+      ],
+      "center": [
+        660,
+        434.5
+      ],
+      "area": 25,
+      "meanDiff": 0.425397,
+      "maxDiff": 0.547665,
+      "matrixRows": [
+        11,
+        12
+      ],
+      "matrixCols": [
+        11,
+        11
+      ]
+    },
+    {
+      "id": 255,
+      "bbox": [
+        589,
+        434,
+        595,
+        438
+      ],
+      "center": [
+        592,
+        436
+      ],
+      "area": 16,
+      "meanDiff": 0.373049,
+      "maxDiff": 0.560887,
+      "matrixRows": [
+        12,
+        12
+      ],
+      "matrixCols": [
+        10,
+        10
+      ]
+    },
+    {
+      "id": 256,
+      "bbox": [
+        722,
+        437,
+        724,
+        441
+      ],
+      "center": [
+        723,
+        439
+      ],
+      "area": 6,
+      "meanDiff": 0.426543,
+      "maxDiff": 0.529957,
+      "matrixRows": [
+        12,
+        12
+      ],
+      "matrixCols": [
+        12,
+        12
+      ]
+    },
+    {
+      "id": 257,
+      "bbox": [
+        782,
+        437,
+        784,
+        441
+      ],
+      "center": [
+        783,
+        439
+      ],
+      "area": 6,
+      "meanDiff": 0.393477,
+      "maxDiff": 0.565283,
+      "matrixRows": [
+        12,
+        12
+      ],
+      "matrixCols": [
+        13,
+        13
+      ]
+    },
+    {
+      "id": 258,
+      "bbox": [
+        606,
+        493,
+        616,
+        507
+      ],
+      "center": [
+        611,
+        500
+      ],
+      "area": 60,
+      "meanDiff": 0.460465,
+      "maxDiff": 0.715976,
+      "matrixRows": [
+        13,
+        14
+      ],
+      "matrixCols": [
+        10,
+        10
+      ]
+    },
+    {
+      "id": 259,
+      "bbox": [
+        547,
+        494,
+        559,
+        506
+      ],
+      "center": [
+        553,
+        500
+      ],
+      "area": 86,
+      "meanDiff": 0.452921,
+      "maxDiff": 0.660688,
+      "matrixRows": [
+        13,
+        14
+      ],
+      "matrixCols": [
+        9,
+        9
+      ]
+    },
+    {
+      "id": 260,
+      "bbox": [
+        576,
+        494,
+        588,
+        506
+      ],
+      "center": [
+        582,
+        500
+      ],
+      "area": 50,
+      "meanDiff": 0.54143,
+      "maxDiff": 0.660688,
+      "matrixRows": [
+        13,
+        14
+      ],
+      "matrixCols": [
+        10,
+        10
+      ]
+    },
+    {
+      "id": 261,
+      "bbox": [
+        1095,
+        494,
+        1105,
+        506
+      ],
+      "center": [
+        1100,
+        500
+      ],
+      "area": 56,
+      "meanDiff": 0.410964,
+      "maxDiff": 0.626276,
+      "matrixRows": [
+        13,
+        14
+      ],
+      "matrixCols": [
+        19,
+        19
+      ]
+    },
+    {
+      "id": 262,
+      "bbox": [
+        1128,
+        495,
+        1129,
+        505
+      ],
+      "center": [
+        1128.5,
+        500
+      ],
+      "area": 10,
+      "meanDiff": 0.5446,
+      "maxDiff": 0.582814,
+      "matrixRows": [
+        13,
+        14
+      ],
+      "matrixCols": [
+        19,
+        19
+      ]
+    },
+    {
+      "id": 263,
+      "bbox": [
+        1157,
+        495,
+        1165,
+        505
+      ],
+      "center": [
+        1161,
+        500
+      ],
+      "area": 32,
+      "meanDiff": 0.242971,
+      "maxDiff": 0.332087,
+      "matrixRows": [
+        13,
+        14
+      ],
+      "matrixCols": [
+        20,
+        20
+      ]
+    },
+    {
+      "id": 264,
+      "bbox": [
+        1004,
+        496,
+        1011,
+        505
+      ],
+      "center": [
+        1007.5,
+        500.5
+      ],
+      "area": 24,
+      "meanDiff": 0.508946,
+      "maxDiff": 0.565283,
+      "matrixRows": [
+        13,
+        14
+      ],
+      "matrixCols": [
+        17,
+        17
+      ]
+    },
+    {
+      "id": 265,
+      "bbox": [
+        1019,
+        496,
+        1025,
+        505
+      ],
+      "center": [
+        1022,
+        500.5
+      ],
+      "area": 31,
+      "meanDiff": 0.381102,
+      "maxDiff": 0.565283,
+      "matrixRows": [
+        13,
+        14
+      ],
+      "matrixCols": [
+        17,
+        17
+      ]
+    },
+    {
+      "id": 266,
+      "bbox": [
+        1026,
+        496,
+        1032,
+        505
+      ],
+      "center": [
+        1029,
+        500.5
+      ],
+      "area": 31,
+      "meanDiff": 0.381801,
+      "maxDiff": 0.565283,
+      "matrixRows": [
+        13,
+        14
+      ],
+      "matrixCols": [
+        17,
+        17
+      ]
+    },
+    {
+      "id": 267,
+      "bbox": [
+        1044,
+        496,
+        1052,
+        505
+      ],
+      "center": [
+        1048,
+        500.5
+      ],
+      "area": 32,
+      "meanDiff": 0.443208,
+      "maxDiff": 0.565283,
+      "matrixRows": [
+        13,
+        14
+      ],
+      "matrixCols": [
+        18,
+        18
+      ]
+    },
+    {
+      "id": 268,
+      "bbox": [
+        1065,
+        496,
+        1071,
+        505
+      ],
+      "center": [
+        1068,
+        500.5
+      ],
+      "area": 28,
+      "meanDiff": 0.404314,
+      "maxDiff": 0.547665,
+      "matrixRows": [
+        13,
+        14
+      ],
+      "matrixCols": [
+        18,
+        18
+      ]
+    },
+    {
+      "id": 269,
+      "bbox": [
+        580,
+        497,
+        584,
+        503
+      ],
+      "center": [
+        582,
+        500
+      ],
+      "area": 12,
+      "meanDiff": 0.395125,
+      "maxDiff": 0.587184,
+      "matrixRows": [
+        13,
+        13
+      ],
+      "matrixCols": [
+        10,
+        10
+      ]
+    },
+    {
+      "id": 270,
+      "bbox": [
+        1123,
+        497,
+        1126,
+        503
+      ],
+      "center": [
+        1124.5,
+        500
+      ],
+      "area": 10,
+      "meanDiff": 0.405885,
+      "maxDiff": 0.582814,
+      "matrixRows": [
+        13,
+        13
+      ],
+      "matrixCols": [
+        19,
+        19
+      ]
+    },
+    {
+      "id": 271,
+      "bbox": [
+        1130,
+        497,
+        1132,
+        503
+      ],
+      "center": [
+        1131,
+        500
+      ],
+      "area": 12,
+      "meanDiff": 0.368731,
+      "maxDiff": 0.370681,
+      "matrixRows": [
+        13,
+        13
+      ],
+      "matrixCols": [
+        19,
+        19
+      ]
+    },
+    {
+      "id": 272,
+      "bbox": [
+        1011,
+        498,
+        1018,
+        505
+      ],
+      "center": [
+        1014.5,
+        501.5
+      ],
+      "area": 29,
+      "meanDiff": 0.391619,
+      "maxDiff": 0.560887,
+      "matrixRows": [
+        13,
+        14
+      ],
+      "matrixCols": [
+        17,
+        17
+      ]
+    },
+    {
+      "id": 273,
+      "bbox": [
+        1033,
+        498,
+        1039,
+        505
+      ],
+      "center": [
+        1036,
+        501.5
+      ],
+      "area": 28,
+      "meanDiff": 0.417178,
+      "maxDiff": 0.543247,
+      "matrixRows": [
+        13,
+        14
+      ],
+      "matrixCols": [
+        17,
+        18
+      ]
+    },
+    {
+      "id": 274,
+      "bbox": [
+        1054,
+        498,
+        1056,
+        505
+      ],
+      "center": [
+        1055,
+        501.5
+      ],
+      "area": 14,
+      "meanDiff": 0.335861,
+      "maxDiff": 0.435392,
+      "matrixRows": [
+        13,
+        14
+      ],
+      "matrixCols": [
+        18,
+        18
+      ]
+    },
+    {
+      "id": 275,
+      "bbox": [
+        1057,
+        498,
+        1063,
+        508
+      ],
+      "center": [
+        1060,
+        503
+      ],
+      "area": 33,
+      "meanDiff": 0.457136,
+      "maxDiff": 0.565283,
+      "matrixRows": [
+        13,
+        14
+      ],
+      "matrixCols": [
+        18,
+        18
+      ]
+    },
+    {
+      "id": 276,
+      "bbox": [
+        1133,
+        498,
+        1137,
+        502
+      ],
+      "center": [
+        1135,
+        500
+      ],
+      "area": 9,
+      "meanDiff": 0.371722,
+      "maxDiff": 0.582814,
+      "matrixRows": [
+        13,
+        13
+      ],
+      "matrixCols": [
+        19,
+        19
+      ]
+    },
+    {
+      "id": 277,
+      "bbox": [
+        1123,
+        806,
+        1135,
+        818
+      ],
+      "center": [
+        1129,
+        812
+      ],
+      "area": 64,
+      "meanDiff": 0.499991,
+      "maxDiff": 0.78003,
+      "matrixRows": [
+        22,
+        22
+      ],
+      "matrixCols": [
+        19,
+        19
+      ]
+    },
+    {
+      "id": 278,
+      "bbox": [
+        1220,
+        807,
+        1222,
+        809
+      ],
+      "center": [
+        1221,
+        808
+      ],
+      "area": 4,
+      "meanDiff": 0.568736,
+      "maxDiff": 0.796892,
+      "matrixRows": [
+        22,
+        22
+      ],
+      "matrixCols": [
+        21,
+        21
+      ]
+    },
+    {
+      "id": 279,
+      "bbox": [
+        1145,
+        808,
+        1155,
+        817
+      ],
+      "center": [
+        1150,
+        812.5
+      ],
+      "area": 54,
+      "meanDiff": 0.632451,
+      "maxDiff": 0.990365,
+      "matrixRows": [
+        22,
+        22
+      ],
+      "matrixCols": [
+        19,
+        20
+      ]
+    },
+    {
+      "id": 280,
+      "bbox": [
+        1182,
+        808,
+        1198,
+        817
+      ],
+      "center": [
+        1190,
+        812.5
+      ],
+      "area": 100,
+      "meanDiff": 0.659233,
+      "maxDiff": 0.990365,
+      "matrixRows": [
+        22,
+        22
+      ],
+      "matrixCols": [
+        20,
+        20
+      ]
+    },
+    {
+      "id": 281,
+      "bbox": [
+        1220,
+        808,
+        1234,
+        817
+      ],
+      "center": [
+        1227,
+        812.5
+      ],
+      "area": 76,
+      "meanDiff": 0.691057,
+      "maxDiff": 0.990365,
+      "matrixRows": [
+        22,
+        22
+      ],
+      "matrixCols": [
+        21,
+        21
+      ]
+    },
+    {
+      "id": 282,
+      "bbox": [
+        1239,
+        808,
+        1246,
+        817
+      ],
+      "center": [
+        1242.5,
+        812.5
+      ],
+      "area": 40,
+      "meanDiff": 0.745293,
+      "maxDiff": 0.990365,
+      "matrixRows": [
+        22,
+        22
+      ],
+      "matrixCols": [
+        21,
+        21
+      ]
+    },
+    {
+      "id": 283,
+      "bbox": [
+        1254,
+        808,
+        1268,
+        817
+      ],
+      "center": [
+        1261,
+        812.5
+      ],
+      "area": 75,
+      "meanDiff": 0.696382,
+      "maxDiff": 0.990365,
+      "matrixRows": [
+        22,
+        22
+      ],
+      "matrixCols": [
+        21,
+        21
+      ]
+    },
+    {
+      "id": 284,
+      "bbox": [
+        1156,
+        810,
+        1170,
+        820
+      ],
+      "center": [
+        1163,
+        815
+      ],
+      "area": 81,
+      "meanDiff": 0.689492,
+      "maxDiff": 0.990365,
+      "matrixRows": [
+        22,
+        22
+      ],
+      "matrixCols": [
+        20,
+        20
+      ]
+    },
+    {
+      "id": 285,
+      "bbox": [
+        1171,
+        810,
+        1178,
+        817
+      ],
+      "center": [
+        1174.5,
+        813.5
+      ],
+      "area": 33,
+      "meanDiff": 0.703285,
+      "maxDiff": 0.990365,
+      "matrixRows": [
+        22,
+        22
+      ],
+      "matrixCols": [
+        20,
+        20
+      ]
+    },
+    {
+      "id": 286,
+      "bbox": [
+        1199,
+        810,
+        1205,
+        817
+      ],
+      "center": [
+        1202,
+        813.5
+      ],
+      "area": 33,
+      "meanDiff": 0.649203,
+      "maxDiff": 0.957994,
+      "matrixRows": [
+        22,
+        22
+      ],
+      "matrixCols": [
+        20,
+        20
+      ]
+    },
+    {
+      "id": 287,
+      "bbox": [
+        1209,
+        810,
+        1219,
+        817
+      ],
+      "center": [
+        1214,
+        813.5
+      ],
+      "area": 49,
+      "meanDiff": 0.689985,
+      "maxDiff": 0.990365,
+      "matrixRows": [
+        22,
+        22
+      ],
+      "matrixCols": [
+        20,
+        21
+      ]
+    },
+    {
+      "id": 288,
+      "bbox": [
+        1246,
+        810,
+        1253,
+        817
+      ],
+      "center": [
+        1249.5,
+        813.5
+      ],
+      "area": 38,
+      "meanDiff": 0.665869,
+      "maxDiff": 0.990365,
+      "matrixRows": [
+        22,
+        22
+      ],
+      "matrixCols": [
+        21,
+        21
+      ]
+    },
+    {
+      "id": 289,
+      "bbox": [
+        1268,
+        810,
+        1275,
+        817
+      ],
+      "center": [
+        1271.5,
+        813.5
+      ],
+      "area": 38,
+      "meanDiff": 0.662384,
+      "maxDiff": 0.990365,
+      "matrixRows": [
+        22,
+        22
+      ],
+      "matrixCols": [
+        22,
+        22
+      ]
+    },
+    {
+      "id": 290,
+      "bbox": [
+        1409,
+        811,
+        1411,
+        813
+      ],
+      "center": [
+        1410,
+        812
+      ],
+      "area": 4,
+      "meanDiff": 0.404175,
+      "maxDiff": 0.406539,
+      "matrixRows": [
+        22,
+        22
+      ],
+      "matrixCols": [
+        24,
+        24
+      ]
+    },
+    {
+      "id": 291,
+      "bbox": [
+        1122,
+        828,
+        1130,
+        837
+      ],
+      "center": [
+        1126,
+        832.5
+      ],
+      "area": 31,
+      "meanDiff": 0.459915,
+      "maxDiff": 0.629338,
+      "matrixRows": [
+        23,
+        23
+      ],
+      "matrixCols": [
+        19,
+        19
+      ]
+    },
+    {
+      "id": 292,
+      "bbox": [
+        1168,
+        828,
+        1172,
+        837
+      ],
+      "center": [
+        1170,
+        832.5
+      ],
+      "area": 20,
+      "meanDiff": 0.441032,
+      "maxDiff": 0.629338,
+      "matrixRows": [
+        23,
+        23
+      ],
+      "matrixCols": [
+        20,
+        20
+      ]
+    },
+    {
+      "id": 293,
+      "bbox": [
+        1218,
+        828,
+        1222,
+        837
+      ],
+      "center": [
+        1220,
+        832.5
+      ],
+      "area": 20,
+      "meanDiff": 0.441032,
+      "maxDiff": 0.629338,
+      "matrixRows": [
+        23,
+        23
+      ],
+      "matrixCols": [
+        21,
+        21
+      ]
+    },
+    {
+      "id": 294,
+      "bbox": [
+        1233,
+        828,
+        1250,
+        840
+      ],
+      "center": [
+        1241.5,
+        834
+      ],
+      "area": 70,
+      "meanDiff": 0.422571,
+      "maxDiff": 0.629338,
+      "matrixRows": [
+        23,
+        23
+      ],
+      "matrixCols": [
+        21,
+        21
+      ]
+    },
+    {
+      "id": 295,
+      "bbox": [
+        1255,
+        828,
+        1268,
+        837
+      ],
+      "center": [
+        1261.5,
+        832.5
+      ],
+      "area": 56,
+      "meanDiff": 0.500038,
+      "maxDiff": 0.629338,
+      "matrixRows": [
+        23,
+        23
+      ],
+      "matrixCols": [
+        21,
+        21
+      ]
+    },
+    {
+      "id": 296,
+      "bbox": [
+        1270,
+        828,
+        1276,
+        837
+      ],
+      "center": [
+        1273,
+        832.5
+      ],
+      "area": 27,
+      "meanDiff": 0.487582,
+      "maxDiff": 0.629338,
+      "matrixRows": [
+        23,
+        23
+      ],
+      "matrixCols": [
+        22,
+        22
+      ]
+    },
+    {
+      "id": 297,
+      "bbox": [
+        1277,
+        828,
+        1283,
+        837
+      ],
+      "center": [
+        1280,
+        832.5
+      ],
+      "area": 33,
+      "meanDiff": 0.431344,
+      "maxDiff": 0.629338,
+      "matrixRows": [
+        23,
+        23
+      ],
+      "matrixCols": [
+        22,
+        22
+      ]
+    },
+    {
+      "id": 298,
+      "bbox": [
+        1294,
+        828,
+        1299,
+        837
+      ],
+      "center": [
+        1296.5,
+        832.5
+      ],
+      "area": 22,
+      "meanDiff": 0.443081,
+      "maxDiff": 0.629338,
+      "matrixRows": [
+        23,
+        23
+      ],
+      "matrixCols": [
+        22,
+        22
+      ]
+    },
+    {
+      "id": 299,
+      "bbox": [
+        1314,
+        828,
+        1319,
+        837
+      ],
+      "center": [
+        1316.5,
+        832.5
+      ],
+      "area": 16,
+      "meanDiff": 0.542788,
+      "maxDiff": 0.629338,
+      "matrixRows": [
+        23,
+        23
+      ],
+      "matrixCols": [
+        22,
+        22
+      ]
+    },
+    {
+      "id": 300,
+      "bbox": [
+        1131,
+        830,
+        1138,
+        837
+      ],
+      "center": [
+        1134.5,
+        833.5
+      ],
+      "area": 32,
+      "meanDiff": 0.42108,
+      "maxDiff": 0.61172,
+      "matrixRows": [
+        23,
+        23
+      ],
+      "matrixCols": [
+        19,
+        19
+      ]
+    },
+    {
+      "id": 301,
+      "bbox": [
+        1139,
+        830,
+        1145,
+        837
+      ],
+      "center": [
+        1142,
+        833.5
+      ],
+      "area": 29,
+      "meanDiff": 0.429157,
+      "maxDiff": 0.594012,
+      "matrixRows": [
+        23,
+        23
+      ],
+      "matrixCols": [
+        19,
+        19
+      ]
+    },
+    {
+      "id": 302,
+      "bbox": [
+        1146,
+        830,
+        1153,
+        837
+      ],
+      "center": [
+        1149.5,
+        833.5
+      ],
+      "area": 31,
+      "meanDiff": 0.40796,
+      "maxDiff": 0.624942,
+      "matrixRows": [
+        23,
+        23
+      ],
+      "matrixCols": [
+        19,
+        20
+      ]
+    },
+    {
+      "id": 303,
+      "bbox": [
+        1154,
+        830,
+        1168,
+        837
+      ],
+      "center": [
+        1161,
+        833.5
+      ],
+      "area": 54,
+      "meanDiff": 0.45657,
+      "maxDiff": 0.629338,
+      "matrixRows": [
+        23,
+        23
+      ],
+      "matrixCols": [
+        20,
+        20
+      ]
+    },
+    {
+      "id": 304,
+      "bbox": [
+        1176,
+        830,
+        1183,
+        837
+      ],
+      "center": [
+        1179.5,
+        833.5
+      ],
+      "area": 33,
+      "meanDiff": 0.427239,
+      "maxDiff": 0.624942,
+      "matrixRows": [
+        23,
+        23
+      ],
+      "matrixCols": [
+        20,
+        20
+      ]
+    },
+    {
+      "id": 305,
+      "bbox": [
+        1187,
+        830,
+        1192,
+        837
+      ],
+      "center": [
+        1189.5,
+        833.5
+      ],
+      "area": 18,
+      "meanDiff": 0.401286,
+      "maxDiff": 0.629338,
+      "matrixRows": [
+        23,
+        23
+      ],
+      "matrixCols": [
+        20,
+        20
+      ]
+    },
+    {
+      "id": 306,
+      "bbox": [
+        1192,
+        830,
+        1199,
+        837
+      ],
+      "center": [
+        1195.5,
+        833.5
+      ],
+      "area": 32,
+      "meanDiff": 0.450057,
+      "maxDiff": 0.629338,
+      "matrixRows": [
+        23,
+        23
+      ],
+      "matrixCols": [
+        20,
+        20
+      ]
+    },
+    {
+      "id": 307,
+      "bbox": [
+        1200,
+        830,
+        1214,
+        840
+      ],
+      "center": [
+        1207,
+        835
+      ],
+      "area": 57,
+      "meanDiff": 0.496991,
+      "maxDiff": 0.629338,
+      "matrixRows": [
+        23,
+        23
+      ],
+      "matrixCols": [
+        20,
+        21
+      ]
+    },
+    {
+      "id": 308,
+      "bbox": [
+        1223,
+        830,
+        1230,
+        837
+      ],
+      "center": [
+        1226.5,
+        833.5
+      ],
+      "area": 27,
+      "meanDiff": 0.470026,
+      "maxDiff": 0.629338,
+      "matrixRows": [
+        23,
+        23
+      ],
+      "matrixCols": [
+        21,
+        21
+      ]
+    },
+    {
+      "id": 309,
+      "bbox": [
+        1284,
+        830,
+        1290,
+        837
+      ],
+      "center": [
+        1287,
+        833.5
+      ],
+      "area": 31,
+      "meanDiff": 0.448112,
+      "maxDiff": 0.624942,
+      "matrixRows": [
+        23,
+        23
+      ],
+      "matrixCols": [
+        22,
+        22
+      ]
+    },
+    {
+      "id": 310,
+      "bbox": [
+        1299,
+        830,
+        1306,
+        837
+      ],
+      "center": [
+        1302.5,
+        833.5
+      ],
+      "area": 32,
+      "meanDiff": 0.42108,
+      "maxDiff": 0.61172,
+      "matrixRows": [
+        23,
+        23
+      ],
+      "matrixCols": [
+        22,
+        22
+      ]
+    },
+    {
+      "id": 311,
+      "bbox": [
+        1307,
+        830,
+        1311,
+        837
+      ],
+      "center": [
+        1309,
+        833.5
+      ],
+      "area": 16,
+      "meanDiff": 0.440876,
+      "maxDiff": 0.549328,
+      "matrixRows": [
+        23,
+        23
+      ],
+      "matrixCols": [
+        22,
+        22
+      ]
+    },
+    {
+      "id": 312,
+      "bbox": [
+        1320,
+        830,
+        1324,
+        837
+      ],
+      "center": [
+        1322,
+        833.5
+      ],
+      "area": 16,
+      "meanDiff": 0.440876,
+      "maxDiff": 0.549328,
+      "matrixRows": [
+        23,
+        23
+      ],
+      "matrixCols": [
+        22,
+        22
+      ]
+    },
+    {
+      "id": 313,
+      "bbox": [
+        1324,
+        830,
+        1331,
+        837
+      ],
+      "center": [
+        1327.5,
+        833.5
+      ],
+      "area": 29,
+      "meanDiff": 0.482295,
+      "maxDiff": 0.629338,
+      "matrixRows": [
+        23,
+        23
+      ],
+      "matrixCols": [
+        22,
+        23
+      ]
+    },
+    {
+      "id": 314,
+      "bbox": [
+        1332,
+        830,
+        1339,
+        837
+      ],
+      "center": [
+        1335.5,
+        833.5
+      ],
+      "area": 32,
+      "meanDiff": 0.450057,
+      "maxDiff": 0.629338,
+      "matrixRows": [
+        23,
+        23
+      ],
+      "matrixCols": [
+        23,
+        23
+      ]
+    },
+    {
+      "id": 315,
+      "bbox": [
+        1352,
+        851,
+        1411,
+        852
+      ],
+      "center": [
+        1381.5,
+        851.5
+      ],
+      "area": 59,
+      "meanDiff": 0.208907,
+      "maxDiff": 0.209611,
+      "matrixRows": [
+        23,
+        23
+      ],
+      "matrixCols": [
+        23,
+        24
+      ]
+    },
+    {
+      "id": 316,
+      "bbox": [
+        1348,
+        856,
+        1349,
+        870
+      ],
+      "center": [
+        1348.5,
+        863
+      ],
+      "area": 14,
+      "meanDiff": 0.208133,
+      "maxDiff": 0.209611,
+      "matrixRows": [
+        23,
+        24
+      ],
+      "matrixCols": [
+        23,
+        23
+      ]
+    },
+    {
+      "id": 317,
+      "bbox": [
+        1414,
+        856,
+        1415,
+        870
+      ],
+      "center": [
+        1414.5,
+        863
+      ],
+      "area": 14,
+      "meanDiff": 0.208133,
+      "maxDiff": 0.209611,
+      "matrixRows": [
+        23,
+        24
+      ],
+      "matrixCols": [
+        24,
+        24
+      ]
+    },
+    {
+      "id": 318,
+      "bbox": [
+        1358,
+        859,
+        1373,
+        868
+      ],
+      "center": [
+        1365.5,
+        863.5
+      ],
+      "area": 79,
+      "meanDiff": 0.650484,
+      "maxDiff": 0.994397,
+      "matrixRows": [
+        23,
+        24
+      ],
+      "matrixCols": [
+        23,
+        23
+      ]
+    },
+    {
+      "id": 319,
+      "bbox": [
+        1381,
+        859,
+        1406,
+        868
+      ],
+      "center": [
+        1393.5,
+        863.5
+      ],
+      "area": 132,
+      "meanDiff": 0.632327,
+      "maxDiff": 0.994397,
+      "matrixRows": [
+        23,
+        24
+      ],
+      "matrixCols": [
+        23,
+        24
+      ]
+    },
+    {
+      "id": 320,
+      "bbox": [
+        1374,
+        861,
+        1380,
+        868
+      ],
+      "center": [
+        1377,
+        864.5
+      ],
+      "area": 32,
+      "meanDiff": 0.701495,
+      "maxDiff": 0.962052,
+      "matrixRows": [
+        23,
+        24
+      ],
+      "matrixCols": [
+        23,
+        23
+      ]
+    },
+    {
+      "id": 321,
+      "bbox": [
+        24,
+        873,
+        28,
+        875
+      ],
+      "center": [
+        26,
+        874
+      ],
+      "area": 6,
+      "meanDiff": 0.356511,
+      "maxDiff": 0.41889,
+      "matrixRows": [
+        24,
+        24
+      ],
+      "matrixCols": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": 322,
+      "bbox": [
+        49,
+        873,
+        63,
+        887
+      ],
+      "center": [
+        56,
+        880
+      ],
+      "area": 76,
+      "meanDiff": 0.449077,
+      "maxDiff": 0.690331,
+      "matrixRows": [
+        24,
+        24
+      ],
+      "matrixCols": [
+        0,
+        1
+      ]
+    },
+    {
+      "id": 323,
+      "bbox": [
+        1352,
+        874,
+        1411,
+        875
+      ],
+      "center": [
+        1381.5,
+        874.5
+      ],
+      "area": 59,
+      "meanDiff": 0.208907,
+      "maxDiff": 0.209611,
+      "matrixRows": [
+        24,
+        24
+      ],
+      "matrixCols": [
+        23,
+        24
+      ]
+    },
+    {
+      "id": 324,
+      "bbox": [
+        213,
+        876,
+        217,
+        884
+      ],
+      "center": [
+        215,
+        880
+      ],
+      "area": 14,
+      "meanDiff": 0.409846,
+      "maxDiff": 0.458014,
+      "matrixRows": [
+        24,
+        24
+      ],
+      "matrixCols": [
+        3,
+        3
+      ]
+    },
+    {
+      "id": 325,
+      "bbox": [
+        220,
+        876,
+        225,
+        884
+      ],
+      "center": [
+        222.5,
+        880
+      ],
+      "area": 20,
+      "meanDiff": 0.343744,
+      "maxDiff": 0.458014,
+      "matrixRows": [
+        24,
+        24
+      ],
+      "matrixCols": [
+        3,
+        3
+      ]
+    },
+    {
+      "id": 326,
+      "bbox": [
+        235,
+        876,
+        241,
+        884
+      ],
+      "center": [
+        238,
+        880
+      ],
+      "area": 20,
+      "meanDiff": 0.271178,
+      "maxDiff": 0.430057,
+      "matrixRows": [
+        24,
+        24
+      ],
+      "matrixCols": [
+        4,
+        4
+      ]
+    },
+    {
+      "id": 327,
+      "bbox": [
+        242,
+        876,
+        249,
+        882
+      ],
+      "center": [
+        245.5,
+        879
+      ],
+      "area": 30,
+      "meanDiff": 0.314225,
+      "maxDiff": 0.45034,
+      "matrixRows": [
+        24,
+        24
+      ],
+      "matrixCols": [
+        4,
+        4
+      ]
+    },
+    {
+      "id": 328,
+      "bbox": [
+        250,
+        876,
+        256,
+        884
+      ],
+      "center": [
+        253,
+        880
+      ],
+      "area": 35,
+      "meanDiff": 0.344562,
+      "maxDiff": 0.432222,
+      "matrixRows": [
+        24,
+        24
+      ],
+      "matrixCols": [
+        4,
+        4
+      ]
+    },
+    {
+      "id": 329,
+      "bbox": [
+        258,
+        876,
+        278,
+        884
+      ],
+      "center": [
+        268,
+        880
+      ],
+      "area": 99,
+      "meanDiff": 0.339654,
+      "maxDiff": 0.458014,
+      "matrixRows": [
+        24,
+        24
+      ],
+      "matrixCols": [
+        4,
+        4
+      ]
+    },
+    {
+      "id": 330,
+      "bbox": [
+        23,
+        877,
+        29,
+        884
+      ],
+      "center": [
+        26,
+        880.5
+      ],
+      "area": 24,
+      "meanDiff": 0.393726,
+      "maxDiff": 0.707575,
+      "matrixRows": [
+        24,
+        24
+      ],
+      "matrixCols": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": 331,
+      "bbox": [
+        53,
+        877,
+        59,
+        883
+      ],
+      "center": [
+        56,
+        880
+      ],
+      "area": 22,
+      "meanDiff": 0.448438,
+      "maxDiff": 0.707575,
+      "matrixRows": [
+        24,
+        24
+      ],
+      "matrixCols": [
+        0,
+        1
+      ]
+    },
+    {
+      "id": 332,
+      "bbox": [
+        227,
+        877,
+        229,
+        883
+      ],
+      "center": [
+        228,
+        880
+      ],
+      "area": 8,
+      "meanDiff": 0.290536,
+      "maxDiff": 0.406539,
+      "matrixRows": [
+        24,
+        24
+      ],
+      "matrixCols": [
+        3,
+        3
+      ]
+    },
+    {
+      "id": 333,
+      "bbox": [
+        232,
+        877,
+        234,
+        883
+      ],
+      "center": [
+        233,
+        880
+      ],
+      "area": 8,
+      "meanDiff": 0.303839,
+      "maxDiff": 0.401811,
+      "matrixRows": [
+        24,
+        24
+      ],
+      "matrixCols": [
+        4,
+        4
+      ]
+    },
+    {
+      "id": 334,
+      "bbox": [
+        19,
+        878,
+        21,
+        882
+      ],
+      "center": [
+        20,
+        880
+      ],
+      "area": 6,
+      "meanDiff": 0.339679,
+      "maxDiff": 0.404749,
+      "matrixRows": [
+        24,
+        24
+      ],
+      "matrixCols": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": 335,
+      "bbox": [
+        31,
+        878,
+        33,
+        882
+      ],
+      "center": [
+        32,
+        880
+      ],
+      "area": 6,
+      "meanDiff": 0.344241,
+      "maxDiff": 0.404749,
+      "matrixRows": [
+        24,
+        24
+      ],
+      "matrixCols": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": 336,
+      "bbox": [
+        268,
+        881,
+        270,
+        884
+      ],
+      "center": [
+        269,
+        882.5
+      ],
+      "area": 6,
+      "meanDiff": 0.326386,
+      "maxDiff": 0.400857,
+      "matrixRows": [
+        24,
+        24
+      ],
+      "matrixCols": [
+        4,
+        4
+      ]
+    },
+    {
+      "id": 337,
+      "bbox": [
+        242,
+        882,
+        249,
+        884
+      ],
+      "center": [
+        245.5,
+        883
+      ],
+      "area": 8,
+      "meanDiff": 0.316066,
+      "maxDiff": 0.425369,
+      "matrixRows": [
+        24,
+        24
+      ],
+      "matrixCols": [
+        4,
+        4
+      ]
+    },
+    {
+      "id": 338,
+      "bbox": [
+        24,
+        885,
+        28,
+        887
+      ],
+      "center": [
+        26,
+        886
+      ],
+      "area": 6,
+      "meanDiff": 0.360649,
+      "maxDiff": 0.462647,
+      "matrixRows": [
+        24,
+        24
+      ],
+      "matrixCols": [
+        0,
+        0
+      ]
+    }
+  ]
+}

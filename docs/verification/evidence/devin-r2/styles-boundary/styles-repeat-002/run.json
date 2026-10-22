@@ -1,0 +1,15 @@
+{
+  "dirty": [
+    " M apps/webui/test/frontend-controls.ts",
+    " M packages/mas-devpack/src/browser/graph-board.ts",
+    "?? apps/webui/test/mas-stylesheet-browser.test.ts"
+  ],
+  "tests": [
+    "apps/webui/test/mas-stylesheet-browser.test.ts",
+    "apps/webui/test/mas-devin-adoption.test.ts",
+    "apps/webui/test/independent-configuration-browser.test.ts"
+  ],
+  "head": "623ae6be57691f714a5ce641ea4c6da20388eef2",
+  "startedAt": "2026-10-21T07:20:47.0692513Z",
+  "node": "v24.15.0"
+}

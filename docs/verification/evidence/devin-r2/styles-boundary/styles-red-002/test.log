@@ -1,0 +1,67 @@
+✖ Team waits for its stylesheet and fails closed when it is loaded (1323.4624ms)
+✖ Team waits for its stylesheet and fails closed when it is failed (9481.273ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 0
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 12131.1831
+
+✖ failing tests:
+
+test at apps\webui\test\mas-stylesheet-browser.test.ts:17:2
+✖ Team waits for its stylesheet and fails closed when it is loaded (1323.4624ms)
+  AssertionError [ERR_ASSERTION]: Team must not expose clickable controls before board.css loads
+  + actual - expected
+  
+  + [
+  +   'Graph',
+  +   'Activity',
+  +   'Agents',
+  +   'All 1',
+  +   'Available 1',
+  +   'Creation links',
+  +   'Communication links',
+  +   '',
+  +   '',
+  +   'Reset zoom',
+  +   'Reset layout',
+  +   'coordinatorAvailableNo activity yet',
+  +   ''
+  + ]
+  - []
+  
+      at TestContext.<anonymous> (file:///D:/Projects/kappa/migration-worktrees/pakka-devin-ui/apps/webui/test/mas-stylesheet-browser.test.ts:82:12)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ 'Graph', 'Activity', 'Agents', 'All 1', 'Available 1', 'Creation links', 'Communication links', '', '', 'Reset zoom', 'Reset layout', 'coordinatorAvailableNo activity yet', '' ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at apps\webui\test\mas-stylesheet-browser.test.ts:17:2
+✖ Team waits for its stylesheet and fails closed when it is failed (9481.273ms)
+  Error: Browser condition deadline: document.querySelector("[role=alert]")?.textContent.includes("Team appearance could not load"): Owner
+  New session
+  Ctrl ⇧ O
+  Team
+  Commands & extensions
+  Sessions
+  coordinator
+  Recent
+  ADMIN
+  Team
+  stylesheet.team
+  Graph
+  Activity
+  Agents
+  coordinatorAvailableNo activity yet
+      at Object.wait (file:///D:/Projects/kappa/migration-worktrees/pakka-devin-ui/apps/webui/test/browser.ts:361:12)
+      at async TestContext.<anonymous> (file:///D:/Projects/kappa/migration-worktrees/pakka-devin-ui/apps/webui/test/mas-stylesheet-browser.test.ts:85:5)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7)

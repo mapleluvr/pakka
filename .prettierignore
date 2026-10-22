@@ -4,3 +4,8 @@ artifacts/
 package-lock.json
 # Immutable adopted upstream theme, checked against its pinned source and license.
 apps/webui/web/pocket.css
+# Pinned Devin frontend Git blob; validated by devin-reference.test.ts.
+apps/webui/web/reference.css
+# Digest-anchored raw verification records.
+docs/verification/evidence/
+docs/visual-primitives/runs/devin-frontend-r2-candidate-004/

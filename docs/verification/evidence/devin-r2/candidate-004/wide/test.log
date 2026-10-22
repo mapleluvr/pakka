@@ -1,0 +1,179 @@
+✔ Pocket appearance: font and size survive reload without sending the draft, with mobile Send beside input mode (2446.2218ms)
+✔ Pocket approval panel: actual browser decisions release or deny original native effects and viewer cannot decide (3626.4655ms)
+▶ Pocket browser contribution: actual UI controls owned page, real frame renders, mobile viewer cannot act
+  ✔ recorded wrapper cannot resolve an unconfirmed native browser action (180.5109ms)
+✖ Pocket browser contribution: actual UI controls owned page, real frame renders, mobile viewer cannot act (30011.4135ms)
+✖ Browser input driver: Enter activates a plain native button, not only synthetic key handlers (886.3799ms)
+✖ Browser discovery: explicit executable is canonical and a broken override never falls back (5.6326ms)
+✖ Browser discovery: PATH finds a real executable and rejects a nonexecutable candidate (5.267ms)
+✔ Pocket browser: actual adopted workbench, invitation and two isolated users respect live server visibility (2649.2105ms)
+✔ Pocket busy browser: after native admission the user can steer and follow up while original inference is blocked (1686.3699ms)
+✔ Pocket collaboration browser: attributed human work, driver handoff and scoped mobile live updates (3341.9931ms)
+✔ Pocket collaboration HTTP: scoped attributed events, viewer participation and definite note conflict (298.1809ms)
+✔ Pocket collaboration: a real late read cannot reopen or populate another Conversation (1360.6317ms)
+✔ Pocket executable: trusted ESM root composes the real optional Agent and WebUI facets (2563.7567ms)
+✔ Pocket ESM configuration: finite source selection, malformed exports, opaque failures and redacted output (2647.6237ms)
+✔ Pocket configuration browser: compact model choice changes provider input while mobile viewer cannot configure or read Session totals (2563.6244ms)
+ℹ D:\Projects\kappa\migration-worktrees\pakka-devin-ui\artifacts\devin-r2\candidate-004\wide\settings-screenshots
+✔ Pocket settings recovery: lost configure response locks mutations and explicit workspace reload only reads the new incarnation (1692.8375ms)
+✔ Pocket settings recovery: a real delayed response from the old resource cannot populate the replacement sheet (1442.9607ms)
+✔ Home create lost before-send: navigation and reconciliation never replace an uncertain admission (1524.8396ms)
+✔ Home create lost after-commit: navigation and reconciliation never replace an uncertain admission (1569.8018ms)
+✔ Pocket private settings browser: explicit replacement and clear affect actual provider auth without round-tripping or browser persistence (3139.0038ms)
+ℹ D:\Projects\kappa\migration-worktrees\pakka-devin-ui\artifacts\devin-r2\candidate-004\wide\private-settings-screenshots
+✔ Pocket private settings recovery: a lost committed response clears the input and only reads state before another explicit change (1696.9221ms)
+✔ Pocket private HTTP: real product preserves the host resolver, scopes replace/clear, never returns secrets and reopens cleared (404.2054ms)
+✔ reference frontend adoption: original home anatomy, palette, real conversation (3028.8172ms)
+✔ Devin palette: keyboard/search and extension settings preserve the dialog handoff on desktop and phone (1881.9343ms)
+✔ Devin reference: exact pinned LF CSS, protected from checkout/formatting and no legacy stylesheet chain (4.1041ms)
+✔ Devin frontend: home inherits the selected model; responsive navigation preserves explicit native input (4334.6409ms)
+✔ Pocket error history: a cleared-credential failure stays readable after restart without replay (1585.2999ms)
+✔ Pocket SSE: normal large frame handles backpressure and remains subscribed for the next real commit (214.2515ms)
+✔ Pocket SSE: initial scoped snapshot and subsequent committed update cross the same real authorization boundary (246.8276ms)
+✔ Pocket SSE: reconnect with stale cursor explicitly resnapshots current authorized state (91.6503ms)
+✔ Pocket executable starts through the symlinked npm bin path without exposing the owner token (626.6676ms)
+✔ Importing the Pocket executable does not start it (394.3101ms)
+✔ Extension browser: unchanged GUI-only and settings packages use public slots, one Preact, shared slash/button dispatch and private state (2039.7323ms)
+✔ Extension client: original-result reads reject a different extension, request or actor without replay (49.0137ms)
+✔ Extension client: lost/malformed or mismatched response stays unknown and does not replay a write (9.3396ms)
+✔ Extension product config: explicit trusted roots/facets survive finite decoding; arbitrary runtime/service injection is refused (1.2435ms)
+✔ Extension contract: GUI-only registration is inert, closed and frozen without backend/model requirements (1.2381ms)
+✔ Extension contract: unsafe paths, unbounded schemas and missing command handlers cannot become registrations (0.545ms)
+✔ Extension contract: per-action finite input rejects unknown fields and oversized/nested non-JSON values (1.4401ms)
+✔ Extension backend: actual scoped CAS setting and display-only card are reconciled; private user setting never becomes model input (203.6626ms)
+✔ Extension backend: a real native effect then failure remains unknown and identical retry never re-enters the handler (141.2866ms)
+✔ Extension backend: viewer cannot mutate and stale generations or modified assets are refused (103.4385ms)
+✔ Extension backend: normal writer reopen reconciles done/unknown records and user settings without re-executing native effects (175.5282ms)
+✔ Extension backend: revocation while a declared service awaits prevents the later controlled display effect (82.8112ms)
+✔ Extension backend: user settings and operation receipts cannot be read using another authorized person's session (90.2482ms)
+✔ Extension HTTP: current person/resource/CSRF bind calls and accepted assets; viewer and private paths have no effect (213.4791ms)
+✔ Extension HTTP: real effect with lost handler result stays unknown through public client; disable seals old generation (160.3539ms)
+✔ Extension ingress: an approved non-MAS service verifies exact raw bytes without Cookie authority or model dispatch (138.0586ms)
+✔ Extension ingress: finite bodies, declared service, transport Origin and signatures fail before any target write (81.3261ms)
+✔ Extension ingress: closing a backend generation blocks a waiting real disk effect and prevents a later invocation (153.2195ms)
+✔ Extension ingress: a finite deadline returns unknown and a late handler cannot write after its live check expires (153.585ms)
+✔ Extension ingress: mutating the host's original route cannot expand its approved bound or replace its handler (89.6772ms)
+✔ Extension initialization: failed import stays unavailable across native writer reopen until explicit reload (136.3094ms)
+✔ Extension initialization: writer closes after a real HTTP effect while import is pending; reopen does not re-enter or await it (77.2016ms)
+✔ Extension interface: old callbacks cannot close/notify/reopen a replacement; disable removes only its public UI (3374.5867ms)
+✔ Pocket service assembly: trusted factory receives the existing writer/identity and original owner on normal reopen (212.087ms)
+✔ Extension staging: a batch identity/command collision is rejected before any backend module effect (131.2439ms)
+✔ Extension staging: a failed backend import seals the registration as unknown until explicit successful reload (119.1468ms)
+✔ Extension staging: repeated enable/disable retains a finite discoverable generation and refuses public junctions (118.3998ms)
+✔ Extension facets: a client-only entry is served without loading backend or requiring a Web interface (74.8369ms)
+✔ Extension facets: persisted disable does not execute its backend on host reopen (88.0816ms)
+✔ Pocket files browser: real edit conflicts keep drafts while a mobile viewer decodes an image without write authority (2732.7678ms)
+✔ Pocket files browser: public extension performs actual edits upload diff branch/worktree effects without hidden model input (6619.5078ms)
+✔ Pocket file contribution: disable after real intent commit prevents a late disk effect (202.8949ms)
+✔ Pocket file contribution: abort after real intent commit prevents a late disk effect (136.7471ms)
+✔ Pocket history browser: explicit earlier pages remain searchable across live updates without implicit inference (2067.2346ms)
+✔ Pocket hooks browser: human setup, signed real HTTP, key rotation, private mobile viewer and removal use ordinary extension slots (3013.087ms)
+ℹ D:\Projects\kappa\migration-worktrees\pakka-devin-ui\artifacts\devin-r2\candidate-004\wide\hook-screenshots
+✔ Pocket hooks busy product: native queued input survives completed HTTP and extension disable while new ingress is refused (322.1374ms)
+✔ Pocket hooks private read: a real setup response delayed across panel replacement cannot reveal a key in the new instance (1544.7762ms)
+✔ Pocket hooks recovery: lost response is checked read-only after panel reopen without creating another hook (1668.1201ms)
+✔ Pocket hooks recovery: lost handler is checked read-only after panel reopen without creating another hook (1746.1615ms)
+✔ Pocket hooks mobile operator: generic setup fits the real phone view without persisting its secret address or triggering a model (2782.1742ms)
+ℹ D:\Projects\kappa\migration-worktrees\pakka-devin-ui\artifacts\devin-r2\candidate-004\wide\hook-screenshots
+✔ Pocket HTTP: real cookie workbench negotiates v2, records human card, admits native work and recovers its receipt (243.3432ms)
+✔ Pocket HTTP: authentication, host/origin/CSRF and finite envelopes fence the real native effects (73.5825ms)
+✔ Pocket HTTP: one-time invited viewer receives only its authorized resource and cannot drive or retain revoked access (122.889ms)
+✔ Pocket CSP: import maps execute with LF, CRLF and CR source newlines (1658.5837ms)
+✔ Conversation configuration browser: compact model picker and title-only directory navigation remain independent on 3:5 mobile (2980.2839ms)
+✔ Pocket failed input: an unavailable recipient refuses new admission while its original receipt and spent attempts remain (252.6917ms)
+✔ Pocket failed input browser: a known refusal explains how to continue without offering a meaningless retry or replaying the original (1835.1155ms)
+✔ Pocket executable: explicit config starts real product and writes its owner link only to the designated private file (651.53ms)
+✔ Pocket executable: unknown configuration, unsafe proxy shortcut and existing owner file fail before storage or provider effects (1771.5947ms)
+✔ MAS facet removal: the fixed approved profile set reopens, explicit owner configuration removes current tools and preserves original history/receipt (431.7271ms)
+✔ MAS Board: busy native steer/follow-up and confirmed abort keep the persistent member (2281.4373ms)
+✔ MAS Agent controls are a separate dismissible sheet at 1440x900 (1894.4021ms)
+✔ MAS Agent controls are a separate dismissible sheet at 360x600 (2670.7426ms)
+✔ MAS Agent controls are a separate dismissible sheet at 390x650 (2697.5019ms)
+✔ MAS retired Agents can be hidden and restored across reload without losing exchanges or history (2467.7537ms)
+✔ MAS controls preserve a lost-response operation across panel reopen and reconcile without resending (1955.7748ms)
+✔ MAS Board: server-filtered mobile reader; removing UI preserves admitted work, members, history and normal reopen (3894.0424ms)
+✔ MAS Board: public plugin observes real model-created child and human controls retain its native lifetime/owner (3612.2607ms)
+✔ MAS frontend adoption: one workspace header, Graph/Activity/Agents and contextual inspector (2272.843ms)
+✔ MAS resources: common Conversation navigation preserves MAS ownership, model admission and current read scope (325.1894ms)
+✔ Team waits for its stylesheet and fails closed when it is loaded (1776.2755ms)
+✔ Team waits for its stylesheet and fails closed when it is failed (1323.474ms)
+✔ Pocket memory browser: real sender proposal, owner approval, preserved conflict draft, current provider context and mobile read-only view (5032.8354ms)
+ℹ D:\Projects\kappa\migration-worktrees\pakka-devin-ui\artifacts\devin-r2\candidate-004\wide\memory-screenshots
+✔ Pocket memory recovery: a lost browser-response is resolved from the original committed mutation without another write (1627.8799ms)
+✔ Pocket memory recovery: a lost backend-response is resolved from the original committed mutation without another write (1597.6991ms)
+✔ Pocket mobile sidebar: outside click and Escape return to the same conversation without sending the draft (2961.3549ms)
+✔ Approved directory roots: host JSON admits project trees without combination profiles and refuses changed recovery authority (186.9288ms)
+✔ Pocket model configuration: approved JSON profiles reach the real product provider; extra credential/endpoint fields stay rejected (161.2942ms)
+✔ Model picker: larger approved catalog is searchable and keyboard selection changes neither cwd nor provider budget (1359.7439ms)
+✔ Pocket navigation browser: rename/archive/search/restore, reviewed resend, real fork and keyboard history have actual subsequent effects (2313.9259ms)
+✔ Pocket metadata single writer: competing CAS admits one; finite capacity preserves original receipts and never prunes/replays (1056.7651ms)
+✔ Pocket navigation metadata: real HTTP CAS, original receipts, archive/restore and current role/resource boundaries (261.9326ms)
+✔ Pocket navigation metadata: malformed fields, stale incarnation and revoked actors cannot mutate state (99.9969ms)
+✔ Pocket original-operation lookup is read-only: absent and committed metadata/create/fork never re-enter a mutation (191.981ms)
+✔ Pocket metadata browser lost before-send: closed/reopened sheet only reads original result, never repeats or replaces the mutation (1207.0663ms)
+✔ Pocket metadata browser lost after-commit: closed/reopened sheet only reads original result, never repeats or replaces the mutation (1394.9514ms)
+✔ Pocket navigation normal reopen: metadata and original receipt persist without rewriting history, effects or spent attempts (232.1015ms)
+✔ Pocket notification links select visible conversation history in an already open document without replaying input (1648.2792ms)
+✔ Pocket notification worker: real native display resolves only current cookie/device/resource metadata and closes after logout (2905.0149ms)
+ℹ D:\Projects\kappa\migration-worktrees\pakka-devin-ui\artifacts\devin-r2\candidate-004\wide\notification-screenshots
+✔ Pocket notifications HTTP: real product native completion, device registration, current cookie metadata and resource revocation (505.2164ms)
+✔ Pocket executable notification bounds: malformed push authority is rejected before storage or provider effects (942.7115ms)
+✔ Pocket product: actual assets and approved workspace run without MAS, then reopen the same identity and admission (257.5183ms)
+✔ Pocket invitation: independently decoded actual QR opens the same one-use local invitation (170.0009ms)
+✔ Pocket remote: actual TLS proxy uses exact trusted peer/origin and secure cookies; direct/plain/spoofed access is rejected (216.6771ms)
+✔ Pocket automation panel: actual human schedules native work, leaving the interface keeps it alive, a viewer is read-only and cancel fences delivery (4659.8124ms)
+ℹ D:\Projects\kappa\migration-worktrees\pakka-devin-ui\artifacts\devin-r2\candidate-004\wide\schedules-screenshots
+✔ Pocket schedule panel recovery: losing an admitted response survives interface replacement and read-only reconciliation never schedules twice (3404.3544ms)
+✔ Pocket services: normal product close releases host-owned listeners (176.1283ms)
+✔ Pocket services: failed registration releases host-owned listeners (121.6571ms)
+✔ Pocket short sidebar: sessions remain usable and extensions stay reachable through the palette (3666.8983ms)
+✔ Pocket browser dictation: caret and final text reach only the draft until a real explicit Send (1533.4161ms)
+✔ Pocket browser dictation: resource and sheet replacement, errors and logout discard old callbacks without dispatch (1481.5469ms)
+✔ Pocket browser dictation: absent speech support retains real typed input and a mobile viewer has no model dictation (3340.408ms)
+✔ Pocket HTTP workspace: human create/configure/fork preserve approved config and real inherited model history (337.1743ms)
+ℹ tests 125
+ℹ suites 0
+ℹ pass 121
+ℹ fail 3
+ℹ cancelled 1
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 419675.079
+
+✖ failing tests:
+
+test at apps\webui\test\browser-contribution.test.ts:12:1
+✖ Pocket browser contribution: actual UI controls owned page, real frame renders, mobile viewer cannot act (30011.4135ms)
+  'test timed out after 30000ms'
+
+test at apps\webui\test\browser-input.test.ts:8:1
+✖ Browser input driver: Enter activates a plain native button, not only synthetic key handlers (886.3799ms)
+  [Error: EBUSY: resource busy or locked, unlink 'C:\Users\mapleland\AppData\Local\Temp\pakka-browser-input-U89D4a\lockfile'] { errno: -4082, code: 'EBUSY', syscall: 'unlink', path: 'C:\\Users\\mapleland\\AppData\\Local\\Temp\\pakka-browser-input-U89D4a\\lockfile' }
+
+test at apps\webui\test\browser-launch.test.ts:9:1
+✖ Browser discovery: explicit executable is canonical and a broken override never falls back (5.6326ms)
+  Error: EPERM: operation not permitted, symlink 'C:\Program Files\nodejs\node.exe' -> 'C:\Users\mapleland\AppData\Local\Temp\pakka-browser-discovery-0e6VBK\chromium'
+      at async symlink (node:internal/fs/promises:1002:10)
+      at async TestContext.<anonymous> (file:///D:/Projects/kappa/migration-worktrees/pakka-devin-ui/apps/webui/test/browser-launch.test.ts:12:3)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    errno: -4048,
+    code: 'EPERM',
+    syscall: 'symlink',
+    path: 'C:\\Program Files\\nodejs\\node.exe',
+    dest: 'C:\\Users\\mapleland\\AppData\\Local\\Temp\\pakka-browser-discovery-0e6VBK\\chromium'
+  }
+
+test at apps\webui\test\browser-launch.test.ts:27:1
+✖ Browser discovery: PATH finds a real executable and rejects a nonexecutable candidate (5.267ms)
+  Error: EPERM: operation not permitted, symlink 'C:\Program Files\nodejs\node.exe' -> 'C:\Users\mapleland\AppData\Local\Temp\pakka-browser-discovery-0EiMjv\google-chrome'
+      at async symlink (node:internal/fs/promises:1002:10)
+      at async TestContext.<anonymous> (file:///D:/Projects/kappa/migration-worktrees/pakka-devin-ui/apps/webui/test/browser-launch.test.ts:31:3)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    errno: -4048,
+    code: 'EPERM',
+    syscall: 'symlink',
+    path: 'C:\\Program Files\\nodejs\\node.exe',
+    dest: 'C:\\Users\\mapleland\\AppData\\Local\\Temp\\pakka-browser-discovery-0EiMjv\\google-chrome'
+  }

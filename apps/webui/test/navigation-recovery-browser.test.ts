@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { runtimeFixture } from "../../../packages/agent/test/runtime-fixture.ts";
 import { startPocket } from "../src/bootstrap.ts";
 import { ownedBrowser } from "./browser.ts";
+import { conversationAction, openConversationMenu } from "./frontend-controls.ts";
 
 for (const lost of ["before-send", "after-commit"])
 	test(
@@ -33,7 +34,7 @@ for (const lost of ["before-send", "after-commit"])
 				await page.click("[data-action=signin]");
 				await page.wait('document.querySelector("[data-conversation]")');
 				await page.click("[data-conversation]");
-				await page.wait('document.querySelector("[data-action=conversation]")');
+				await openConversationMenu(page);
 				// Transport-fault injection only. The actual product server and persistent writes remain unchanged.
 				await page.evaluate(`(()=>{const real=window.fetch;let lose=true;window.qaRequests=[];window.fetch=async(input,init)=>{
 				let command;try{command=JSON.parse(init?.body).command;}catch{}
@@ -45,7 +46,7 @@ for (const lost of ["before-send", "after-commit"])
 				}
 				return real(input,init);
 			};})()`);
-				await page.click("[data-action=conversation]");
+				await conversationAction(page, "conversation");
 				await page.wait('document.querySelector("input[name=conversationName]")');
 				await page.type("input[name=conversationName]", "Recovered title", { replace: true });
 				await page.click("[data-action=rename]");
@@ -53,7 +54,7 @@ for (const lost of ["before-send", "after-commit"])
 				assert.equal(await page.evaluate('document.querySelector("[data-action=rename]").disabled'), true);
 				await page.click("[aria-label='Close conversation details']");
 				await page.wait('!document.querySelector("[role=dialog]")');
-				await page.click("[data-action=conversation]");
+				await conversationAction(page, "conversation");
 				await page.wait('document.querySelector("[data-action=reconcile-original]")?.disabled===false');
 				await page.click("[data-action=reconcile-original]");
 				if (lost === "after-commit") {

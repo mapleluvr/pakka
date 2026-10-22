@@ -2,7 +2,7 @@
 
 ## Purpose
 
-TBD - created by archiving change integrated-mas-product. Update Purpose after archive.
+Define the executable optional MAS product, trusted contribution composition, retained native authority and identity, supported configuration boundaries, and fixed-artifact acceptance without changing default activation.
 
 ## Requirements
 

@@ -4,12 +4,13 @@ import { join } from "node:path";
 import { runtimeFixture } from "../../../packages/agent/test/runtime-fixture.ts";
 import { startPocket } from "../src/bootstrap.ts";
 import { ownedBrowser } from "./browser.ts";
+import { conversationAction, openConversationMenu } from "./frontend-controls.ts";
 
 type Browser = Awaited<ReturnType<typeof ownedBrowser>>;
 type Page = Awaited<ReturnType<Browser["page"]>>;
 async function openSettings(page: Page) {
-	await page.wait('document.querySelector("[data-action=settings]")');
-	await page.click("[data-action=settings]");
+	await openConversationMenu(page);
+	await conversationAction(page, "settings");
 	await page.wait('document.querySelector("[data-cost]")');
 }
 async function login(page: Page) {
@@ -104,7 +105,7 @@ test(
 			await page.evaluate(
 				`(()=>{const original=globalThis.fetch;let first=true;globalThis.__settingsHeld=false;globalThis.fetch=async(...args)=>{const response=await original(...args);if(first&&typeof args[1]?.body==='string'&&JSON.parse(args[1].body).command?.op==='configuration'){first=false;globalThis.__settingsHeld=true;await new Promise(resolve=>{globalThis.__releaseSettings=resolve;});}return response;};})()`,
 			);
-			await page.click("[data-action=settings]");
+			await conversationAction(page, "settings");
 			await page.wait("globalThis.__settingsHeld");
 			await page.click('[aria-label="Close settings"]');
 			const second = app.runtime.view().conversations.find((ref) => ref.profile === "alternate")!;

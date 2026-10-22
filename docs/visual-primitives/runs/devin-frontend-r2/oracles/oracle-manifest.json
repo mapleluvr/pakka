@@ -1,0 +1,34 @@
+{
+	"runId": "devin-frontend-r2",
+	"viewport": {
+		"width": 1440,
+		"height": 900,
+		"deviceScaleFactor": 1
+	},
+	"oraclePairs": [
+		{
+			"id": "reference-home",
+			"oraclePicture": "oracles/home-desktop.png",
+			"description": "oracles/reference.md",
+			"descriptionSource": "user-provided-and-derived",
+			"evidence": ["annots/reference-layout.png", "cropped/reference-hero.png"]
+		}
+	],
+	"constraints": {
+		"stack": "Adopt clean-room/current frontend anatomy and CSS; bind real Pakka APIs",
+		"allowedAssets": ["Self-hosted Inter and JetBrains Mono with existing OFL notices"],
+		"allowedLibraries": ["Existing Preact/htm"],
+		"implementationScope": "R2 adoption; no legacy layout stylesheet chain, no demo data as product state"
+	},
+	"reference": {
+		"repository": "https://github.com/mapleluvr/devin-ui-comparison",
+		"commit": "ed20cec0aef82daa22aa50da19597b7ba1607e02",
+		"css": "clean-room/current/styles.css",
+		"cssSha256": "084adce8bc6e1feab314b301f57ddac0bab5081cfa08d1c911addece9bdb9974",
+		"cssByteRepresentation": "Exact UTF-8 LF Git blob; the CRLF-expanded Windows reference checkout hashes to d9ded302ee396f5d3d46a5332690128eb9358d2f5470bccde31c73bcdaff8bcf"
+	},
+	"limitations": [
+		"The Team page has no upstream oracle; it is a new design in the same visual language.",
+		"A screenshot or CSS identity check does not establish independent GUI, authorization or installation acceptance."
+	]
+}

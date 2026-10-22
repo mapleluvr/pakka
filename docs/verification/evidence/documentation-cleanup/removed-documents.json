@@ -1,0 +1,445 @@
+{
+  "root": "D:/Projects/kappa/migration-worktrees/pakka-devin-ui",
+  "backup": "D:\\Projects\\kappa\\backups\\pakka-1021\\cleanup-20261021-212301",
+  "verifiedBeforeRemoval": true,
+  "files": [
+    {
+      "path": "docs/plans/DEVIN-FRONTEND-ADOPTION-R2.md",
+      "bytes": 674,
+      "sha256": "460b1fef29780eaf9a8a8a49a2d47313acf80cbbf590e40cd978d646b963d948"
+    },
+    {
+      "path": "docs/plans/DEVIN-LIKE-FRONTEND.md",
+      "bytes": 3998,
+      "sha256": "3c44c2dd69e479995f16a6a59a207a34952c2f0847221ad5a28312937a0aec31"
+    },
+    {
+      "path": "docs/plans/PAKKA-POCKET-PLAN.md",
+      "bytes": 20467,
+      "sha256": "11e4235c8767dd326f440215328cee4d4a2cb1c002f795ffe1048a68ccb3978c"
+    },
+    {
+      "path": "docs/plans/README.md",
+      "bytes": 1284,
+      "sha256": "c73c389d9a9bc210e8bd55c4ad3b0feaa3a78178a0adbaa2db36f68f48d0ea2d"
+    },
+    {
+      "path": "docs/archive/plans/MONOREPO-MIGRATION-PLAN.md",
+      "bytes": 25530,
+      "sha256": "2aa5b440b74c7755a95881ae3f1ffe73a0c7582b819359d50cb19d76c5134740"
+    },
+    {
+      "path": "docs/archive/plans/PI-DURABLE-MIGRATION-PLAN.md",
+      "bytes": 30348,
+      "sha256": "416b04232e5de9715c3cff5d5eaf2310db01f52174869947224bc264c2da9f58"
+    },
+    {
+      "path": "docs/archive/plans/PLAN.md",
+      "bytes": 2062,
+      "sha256": "a324da8566d72d39c46094e144aa8a9274764de6e576c562137446a2017a443f"
+    },
+    {
+      "path": "docs/archive/design/MAS-BOARD-DESIGN.v1.md",
+      "bytes": 11809,
+      "sha256": "b8269d6a9d51cf73467b2b891cc9976e67bdd279b00bdf05e7ae2e2c7c063d92"
+    },
+    {
+      "path": "docs/archive/reviews/MAS-BOARD-REVISION.md",
+      "bytes": 15598,
+      "sha256": "66f5787026381f0b6329ac5c1d1bec7ae680d9c6422c677e154b8833334eb6c9"
+    },
+    {
+      "path": "docs/archive/status/PAKKA-POCKET-PRE-STATE-EVO.md",
+      "bytes": 9699,
+      "sha256": "bc07a4ea17a6c0c95ef149a090eb44fa445d719a9945a6f4766bea72bf422e97"
+    },
+    {
+      "path": "docs/design/mas-board/desktop.svg",
+      "bytes": 19634,
+      "sha256": "76cf1e6e69cfeb2c3ea1b4615602fb61ee962322a36ba5315fcde860a2424a9c"
+    },
+    {
+      "path": "docs/design/mas-board/mobile.svg",
+      "bytes": 8161,
+      "sha256": "c60fd6df48ebd227b1c6020798b002fef277d43007f0b80216a7d9bda153e137"
+    },
+    {
+      "path": "docs/design/mas-board/README.md",
+      "bytes": 1034,
+      "sha256": "eaa23149808936c4b7a61d38166037820c91511132d311f70ade0be2705e967a"
+    },
+    {
+      "path": "docs/design/mas-board/states.svg",
+      "bytes": 9214,
+      "sha256": "0d291707fa25d6ee5e9bcac767d1babc130755b9c86cf83714d21afa45546f8f"
+    },
+    {
+      "path": "docs/MAS-BOARD-DESIGN.md",
+      "bytes": 22939,
+      "sha256": "a83fc5de1b3374fbf58d2ff4c85e199297c3cd45735f2b29c490ba90782bbade"
+    },
+    {
+      "path": "docs/MAS-BOARD-DESIGN.v1.md",
+      "bytes": 422,
+      "sha256": "b7d0202393afa80fe4add7cdbddd06d07a168977e866df1438a0526cd21a9470"
+    },
+    {
+      "path": "docs/MAS-BOARD-REVISION.md",
+      "bytes": 421,
+      "sha256": "9b715663943f6a1f7f99bbc125f7160448e50f58713afe015c524a47637fbcc3"
+    },
+    {
+      "path": "docs/verification/DOCUMENTATION-SYSTEM.md",
+      "bytes": 3741,
+      "sha256": "119d00b84ee7f1c104a2b1e22d722ac74e9b5e445b59c3672a1e2daae6b28b2b"
+    },
+    {
+      "path": "docs/verification/DOCUMENTATION-REORGANIZATION-R0.md",
+      "bytes": 1102,
+      "sha256": "7f8c1d6fb09842af658a4ffc0124bb417582c8dfe308a87b540b1405069b865b"
+    },
+    {
+      "path": "docs/verification/DEVIN-LIKE-FRONTEND-R1.md",
+      "bytes": 14936,
+      "sha256": "b8d69385a8e388296a49d76c7c71f8af8041cdb47b16272a20bf5f2339f7b202"
+    },
+    {
+      "path": "docs/visual-primitives/runs/devin-like-main/.gitignore",
+      "bytes": 104,
+      "sha256": "7edd3d9e26b0a4e7a053b43da5bb9c2ce5380f6e442e38e4e0ef0bd32f9403be"
+    },
+    {
+      "path": "docs/visual-primitives/runs/devin-like-main/annots/final-layout.json",
+      "bytes": 1224,
+      "sha256": "197b7ad4a7e2ce269cadc990d29c568d1656f2672a4ae63dccbe3821753b4a5b",
+      "previouslyUntracked": true
+    },
+    {
+      "path": "docs/visual-primitives/runs/devin-like-main/annots/final-layout.png",
+      "bytes": 60000,
+      "sha256": "b42b294086df347663a7143eb33b8fe1a5422c7fddd9a032609ce30d4d12d93a",
+      "previouslyUntracked": true
+    },
+    {
+      "path": "docs/visual-primitives/runs/devin-like-main/annots/oracle-layout.png",
+      "bytes": 70337,
+      "sha256": "7ade6a17c7be6842130e5e3151e5590df8a300be5a2b9b350e6db8fc01c22ff0",
+      "previouslyUntracked": true
+    },
+    {
+      "path": "docs/visual-primitives/runs/devin-like-main/cropped/final-home-card.json",
+      "bytes": 895,
+      "sha256": "60ec10a2223ba6f0e098e1fb718a1a708e56584243211b939c4d5051c061c422",
+      "previouslyUntracked": true
+    },
+    {
+      "path": "docs/visual-primitives/runs/devin-like-main/cropped/final-home-card.png",
+      "bytes": 10562,
+      "sha256": "7de247cc81029ad3776c7ee48524b3d3fff6b58fc4a02945bc7aef6746acd066",
+      "previouslyUntracked": true
+    },
+    {
+      "path": "docs/visual-primitives/runs/devin-like-main/cropped/oracle-home-card.json",
+      "bytes": 895,
+      "sha256": "e85dc212541d57987f82513a8d69c3a74b173dfc42fec9fb4ad1a43f35e38348",
+      "previouslyUntracked": true
+    },
+    {
+      "path": "docs/visual-primitives/runs/devin-like-main/cropped/oracle-home-card.png",
+      "bytes": 17113,
+      "sha256": "d20a3e735b0b7eeeb2c7781a3117df967bd96e538f1a4398f12774f7dba4799e",
+      "previouslyUntracked": true
+    },
+    {
+      "path": "docs/visual-primitives/runs/devin-like-main/drafts/initial-draft.md",
+      "bytes": 1566,
+      "sha256": "657c93eaf5bcf79c20ab67765733f6f0edfedceee450f3f05cbff80fe1047c13",
+      "previouslyUntracked": true
+    },
+    {
+      "path": "docs/visual-primitives/runs/devin-like-main/final/.gitattributes",
+      "bytes": 248,
+      "sha256": "9f01db17506c9dcef1bcded1f2dd6adcff37e17310c38dc5d3d2fe92e18c3e72"
+    },
+    {
+      "path": "docs/visual-primitives/runs/devin-like-main/final/accepted-render.png",
+      "bytes": 37919,
+      "sha256": "b00f7ea7aed489814a6d6df1ab7813bc4a2b72d96e0d56959a7c30a3544b3641"
+    },
+    {
+      "path": "docs/visual-primitives/runs/devin-like-main/final/build-r5.log",
+      "bytes": 913,
+      "sha256": "6595599be950f98dc7df47d444391504d0122349f8ebbf2c984ff18a212db0b9"
+    },
+    {
+      "path": "docs/visual-primitives/runs/devin-like-main/final/candidate-colors.json",
+      "bytes": 1970,
+      "sha256": "f8d86987d401f08b349f6e839056dc1661fffb1101e757bf879fed70f17acaae"
+    },
+    {
+      "path": "docs/visual-primitives/runs/devin-like-main/final/candidate-colors.log",
+      "bytes": 42,
+      "sha256": "395ad3d64d536d7f1dd042d26353a72df8008e0aa8d3e146e373ceddf85afd21"
+    },
+    {
+      "path": "docs/visual-primitives/runs/devin-like-main/final/candidate-conversation.png",
+      "bytes": 51456,
+      "sha256": "e049e0e447507aa4218282e42b7a4ca7229872e14eec5b8e04983ec00da86325"
+    },
+    {
+      "path": "docs/visual-primitives/runs/devin-like-main/final/candidate-desktop.png",
+      "bytes": 37919,
+      "sha256": "b00f7ea7aed489814a6d6df1ab7813bc4a2b72d96e0d56959a7c30a3544b3641"
+    },
+    {
+      "path": "docs/visual-primitives/runs/devin-like-main/final/candidate-home-crop.json",
+      "bytes": 887,
+      "sha256": "6fc152256f6cc486b58967aeefe90575edba44c46328a42c6dfc10a9b2418c9e"
+    },
+    {
+      "path": "docs/visual-primitives/runs/devin-like-main/final/candidate-home-crop.log",
+      "bytes": 258,
+      "sha256": "777519fbf543b68abd5555c2e6daa3b8813a2e0a034d798fe47c7f785766fe50"
+    },
+    {
+      "path": "docs/visual-primitives/runs/devin-like-main/final/candidate-home-crop.png",
+      "bytes": 10562,
+      "sha256": "7de247cc81029ad3776c7ee48524b3d3fff6b58fc4a02945bc7aef6746acd066"
+    },
+    {
+      "path": "docs/visual-primitives/runs/devin-like-main/final/candidate-identity.json",
+      "bytes": 12345,
+      "sha256": "2d525f4679dd6b2c813e082f810c4820bde6fc79292e163376b8dc40bcc44eec"
+    },
+    {
+      "path": "docs/visual-primitives/runs/devin-like-main/final/candidate-layout.json",
+      "bytes": 1212,
+      "sha256": "e35f6366b357d7841417a20b03b68399226ee4ee083f5470c1f52032b1e091c4"
+    },
+    {
+      "path": "docs/visual-primitives/runs/devin-like-main/final/candidate-layout.log",
+      "bytes": 249,
+      "sha256": "73ddacee5814a07f4048a39695c1331afefbd2af37754aa359ca91cb1820dd09"
+    },
+    {
+      "path": "docs/visual-primitives/runs/devin-like-main/final/candidate-layout.png",
+      "bytes": 60885,
+      "sha256": "63c4137579bad45e215e9b0e98c5adc569d95be71983234aa3b6cd96b2d9df8d"
+    },
+    {
+      "path": "docs/visual-primitives/runs/devin-like-main/final/candidate-light.png",
+      "bytes": 38774,
+      "sha256": "98c75ccc7d3433e321ddae506651fe869f664ada386299e06cb46c04c7bd9fff"
+    },
+    {
+      "path": "docs/visual-primitives/runs/devin-like-main/final/candidate-measurements.json",
+      "bytes": 656,
+      "sha256": "9f3b48e672c487ef7537395656e93a62d17711f77e0fd9aee75deab1db1feed0"
+    },
+    {
+      "path": "docs/visual-primitives/runs/devin-like-main/final/candidate-mobile.png",
+      "bytes": 20171,
+      "sha256": "fbd7c477ed871fb485e5493d8402aafe808219e0d3f02d22f99a238631c597d3"
+    },
+    {
+      "path": "docs/visual-primitives/runs/devin-like-main/final/candidate-native-diagnostic.log",
+      "bytes": 1661,
+      "sha256": "c15ba08b4be2e821752e70bae6eecb0231351de15c2681fde148fa4211290fda"
+    },
+    {
+      "path": "docs/visual-primitives/runs/devin-like-main/final/candidate-search.png",
+      "bytes": 71122,
+      "sha256": "b56d3fe9e123047f7bc29bd333d61ce6ec74d166ebdcc26659d6a670f7471979"
+    },
+    {
+      "path": "docs/visual-primitives/runs/devin-like-main/final/candidate-short.png",
+      "bytes": 18994,
+      "sha256": "4c49f6ff36e0ba0a0a5e06c17dec679257fd2175474cdbadcf3c3603d19ad548"
+    },
+    {
+      "path": "docs/visual-primitives/runs/devin-like-main/final/check-r5.log",
+      "bytes": 216,
+      "sha256": "4ca3577a130221638ebacfc196a3bd26ca80e6f166a2344833caee47b1443d5f"
+    },
+    {
+      "path": "docs/visual-primitives/runs/devin-like-main/final/delivery-review.md",
+      "bytes": 2340,
+      "sha256": "e0e3585fecc12fef26ebacfba90e3c6afacd076021f8c7016ced847a4ea2982f"
+    },
+    {
+      "path": "docs/visual-primitives/runs/devin-like-main/final/final-inspection.md",
+      "bytes": 3653,
+      "sha256": "0c04ca807b9d8a34cae10a3d68b9ae3c403baec26ec1ae9282ab44dd8d1d4a1c"
+    },
+    {
+      "path": "docs/visual-primitives/runs/devin-like-main/final/full-test-r5.log",
+      "bytes": 67402,
+      "sha256": "cce138be304966c40ac104f329df47fbeca3b3e0ccc6d879a2ca12a3c22911f6"
+    },
+    {
+      "path": "docs/visual-primitives/runs/devin-like-main/final/home-hint-green.log",
+      "bytes": 218,
+      "sha256": "7992c87e44c1356f652f25178b907fb28e4f21e25fded60189cb8e18adfbc3a6"
+    },
+    {
+      "path": "docs/visual-primitives/runs/devin-like-main/final/home-hint-red.log",
+      "bytes": 908,
+      "sha256": "094efe99d8dc916712254970199c3e1e1514152f59007b0e0d787fe047a3ea57"
+    },
+    {
+      "path": "docs/visual-primitives/runs/devin-like-main/final/main-baseline.log",
+      "bytes": 67672,
+      "sha256": "82f6481edf11fb40453684d7596c8c0cbe015651c7e668d80e1f1f49b3768324"
+    },
+    {
+      "path": "docs/visual-primitives/runs/devin-like-main/final/main-native-diagnostic.log",
+      "bytes": 1663,
+      "sha256": "41ed89abc4ff347d17517eb4ed382201836af8bfe005a47b386638b57bc7963d"
+    },
+    {
+      "path": "docs/visual-primitives/runs/devin-like-main/final/main-package-controlled.log",
+      "bytes": 1305,
+      "sha256": "ae8cf41a3b0586b39bfde68759c4bc005d3fd1797289d2c242314691a9941a33"
+    },
+    {
+      "path": "docs/visual-primitives/runs/devin-like-main/final/package-controlled-r5.log",
+      "bytes": 1316,
+      "sha256": "11ab2cc0a7afaac04d437e6fa9eae1b700003094d0b1e46e5fb774a2ce7df939"
+    },
+    {
+      "path": "docs/visual-primitives/runs/devin-like-main/final/package-mas-board-r5.log",
+      "bytes": 326,
+      "sha256": "5a6c5c536e6b7c344c9935533618d245a92cd943421e20990ef7503c8d875f96"
+    },
+    {
+      "path": "docs/visual-primitives/runs/devin-like-main/final/package-product-r5.log",
+      "bytes": 422,
+      "sha256": "1688f56429c892ff380f27264482063bf6910807d07d329d143c3b3df2a9db99"
+    },
+    {
+      "path": "docs/visual-primitives/runs/devin-like-main/final/package-r5.log",
+      "bytes": 5860,
+      "sha256": "49422199f878b4cca0d3ce5b6e493a3260bb28ff3f29738768d5ae7d6b113d8a"
+    },
+    {
+      "path": "docs/visual-primitives/runs/devin-like-main/final/reference-archive-check.json",
+      "bytes": 301,
+      "sha256": "152a61e514092155ec62d6bdb04ff7e8aa19906e28afb8a13d2c353b273ba01a"
+    },
+    {
+      "path": "docs/visual-primitives/runs/devin-like-main/final/reference-colors.json",
+      "bytes": 1979,
+      "sha256": "5ceb89cfb7196f430c858a7c0737e46c221104bd23d001daa25a6b7a9aba5972"
+    },
+    {
+      "path": "docs/visual-primitives/runs/devin-like-main/final/reference-colors.log",
+      "bytes": 42,
+      "sha256": "395ad3d64d536d7f1dd042d26353a72df8008e0aa8d3e146e373ceddf85afd21"
+    },
+    {
+      "path": "docs/visual-primitives/runs/devin-like-main/final/reference-desktop.png",
+      "bytes": 79109,
+      "sha256": "baa097000667c283166e65f141aaeb5cda8937c7a6c25deabe9f4b8a670e9826"
+    },
+    {
+      "path": "docs/visual-primitives/runs/devin-like-main/final/reference-home-crop.json",
+      "bytes": 896,
+      "sha256": "9b924ac5c6f084f924bccacd7602974c21193917aac7a023c027f1c709913bc7"
+    },
+    {
+      "path": "docs/visual-primitives/runs/devin-like-main/final/reference-home-crop.log",
+      "bytes": 258,
+      "sha256": "032ee0d9d1647b71252fc9949723a79c5cf9565964af0cfd1cacc59261f24e83"
+    },
+    {
+      "path": "docs/visual-primitives/runs/devin-like-main/final/reference-home-crop.png",
+      "bytes": 17113,
+      "sha256": "d20a3e735b0b7eeeb2c7781a3117df967bd96e538f1a4398f12774f7dba4799e"
+    },
+    {
+      "path": "docs/visual-primitives/runs/devin-like-main/final/reference-layout.json",
+      "bytes": 1221,
+      "sha256": "eb053d0d93ae483d22bd0b204400b984274b6616e62ef878dfdbca40935255fb"
+    },
+    {
+      "path": "docs/visual-primitives/runs/devin-like-main/final/reference-layout.log",
+      "bytes": 249,
+      "sha256": "fcb8fefdf30ae508fbbd856a3100af2a540f992a5a4fff2d1d7fad889d9b8096"
+    },
+    {
+      "path": "docs/visual-primitives/runs/devin-like-main/final/reference-layout.png",
+      "bytes": 70509,
+      "sha256": "dbceeb8b402c59f760ac792d487fb416d761dedf48b947c0bfe0c8fbbb600aff"
+    },
+    {
+      "path": "docs/visual-primitives/runs/devin-like-main/final/reference-runtime-check.json",
+      "bytes": 14958,
+      "sha256": "8d98528fe33e842de2173abe1cb9c59eb239f4c8e62815cbb329ec2ec93f4cf7"
+    },
+    {
+      "path": "docs/visual-primitives/runs/devin-like-main/final/remaining-limitations.md",
+      "bytes": 4408,
+      "sha256": "90839cf7099f34bee2708915981b1c918cadeb50d2d68b98a612068b5e94d657"
+    },
+    {
+      "path": "docs/visual-primitives/runs/devin-like-main/final/reproduce.md",
+      "bytes": 3885,
+      "sha256": "8f7ed5b0ffa4d749bebbc2c9d75261edf2328be002fd340d5202fd39a97d6d7a"
+    },
+    {
+      "path": "docs/visual-primitives/runs/devin-like-main/final/test-files.json",
+      "bytes": 1629,
+      "sha256": "bd2303d969fa9f65ef0d565cd9701da59b791bdcc6ce9beb5d0d56723a8bd269"
+    },
+    {
+      "path": "docs/visual-primitives/runs/devin-like-main/final/webui-r5.log",
+      "bytes": 7063,
+      "sha256": "3a1cfb3c7ce4dbfc606f485a41754b775fbcf9124edea9e326d5b4e21ac316ab"
+    },
+    {
+      "path": "docs/visual-primitives/runs/devin-like-main/oracles/home-desktop.png",
+      "bytes": 79109,
+      "sha256": "baa097000667c283166e65f141aaeb5cda8937c7a6c25deabe9f4b8a670e9826",
+      "previouslyUntracked": true
+    },
+    {
+      "path": "docs/visual-primitives/runs/devin-like-main/oracles/oracle-colors.json",
+      "bytes": 1975,
+      "sha256": "29c3b0b7a8ada47e3bb34577b4aed56ccad8d1afb717dde768219a72dbb1a541",
+      "previouslyUntracked": true
+    },
+    {
+      "path": "docs/visual-primitives/runs/devin-like-main/oracles/oracle-manifest.json",
+      "bytes": 657,
+      "sha256": "b0d25dc2def8232737802ac25b9f0d23c4e5882a3a783a9a1458ccc255ca8e18",
+      "previouslyUntracked": true
+    },
+    {
+      "path": "docs/visual-primitives/runs/devin-like-main/rendered/final-colors.json",
+      "bytes": 1976,
+      "sha256": "7951fda66860be4dc9cf66f67043b642030089d75b893b4a97bd95309423e3c5",
+      "previouslyUntracked": true
+    },
+    {
+      "path": "docs/visual-primitives/runs/devin-like-main/rendered/home-desktop.png",
+      "bytes": 37919,
+      "sha256": "b00f7ea7aed489814a6d6df1ab7813bc4a2b72d96e0d56959a7c30a3544b3641",
+      "previouslyUntracked": true
+    }
+  ],
+  "roots": [
+    "docs/plans",
+    "docs/archive/plans",
+    "docs/archive/design",
+    "docs/archive/reviews",
+    "docs/archive/status",
+    "docs/design/mas-board",
+    "docs/MAS-BOARD-DESIGN.md",
+    "docs/MAS-BOARD-DESIGN.v1.md",
+    "docs/MAS-BOARD-REVISION.md",
+    "docs/verification/DOCUMENTATION-SYSTEM.md",
+    "docs/verification/DOCUMENTATION-REORGANIZATION-R0.md",
+    "docs/verification/DEVIN-LIKE-FRONTEND-R1.md",
+    "docs/visual-primitives/runs/devin-like-main"
+  ]
+}

@@ -13,6 +13,8 @@ dist/
 # absolute machine paths, raw provider request/response payloads, host
 # snapshots and session JSONL copies.
 artifacts/
+# Local desktop observations may include unrelated windows; never publish.
+.cu/
 
 # --- Packed packages ---------------------------------------------------------
 # npm pack output, e.g. pakka-agent-0.1.0.tgz from a manual pack.
@@ -65,3 +67,5 @@ desktop.ini
 tmp/
 .tmp/
 *.tmp
+# Local plans, drafts and experiments; durable decisions/evidence live outside.
+/docs/.temp/

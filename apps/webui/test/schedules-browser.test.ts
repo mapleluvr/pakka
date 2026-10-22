@@ -7,6 +7,7 @@ import { createPocketSchedules } from "../../server/src/pocket-schedules.ts";
 import { startPocket } from "../src/bootstrap.ts";
 import { workspaceSchedulesExtensionRoot, workspaceSchedulesService } from "../src/workflows.ts";
 import { ownedBrowser } from "./browser.ts";
+import { toggleConversations } from "./frontend-controls.ts";
 
 test(
 	"Pocket automation panel: actual human schedules native work, leaving the interface keeps it alive, a viewer is read-only and cancel fences delivery",
@@ -48,7 +49,7 @@ test(
 				await page.wait('document.querySelector("[data-action=signin]")');
 				await page.click("[data-action=signin]");
 				await page.wait('document.querySelector("[data-conversation]")');
-				if (page === viewer) await page.click('[aria-label="Toggle conversations"]');
+				if (page === viewer) await toggleConversations(page);
 				await page.click("[data-conversation]");
 				await page.wait('document.querySelector("[data-interface=workspace-schedules-schedules]")');
 			}
@@ -67,7 +68,7 @@ test(
 			assert.ok(JSON.stringify(m.f.requests[0]).includes("ACTUAL-SCHEDULED-BROWSER-WORK"));
 			await owner.click("[data-interface=workspace-schedules-schedules]");
 			await owner.wait('document.querySelector("[data-schedule-state]")?.textContent.includes("done")');
-			await viewer.click('[aria-label="Toggle conversations"]');
+			await toggleConversations(viewer);
 			await viewer.click("[data-interface=workspace-schedules-schedules]");
 			await viewer.wait('document.querySelector("[data-schedule-state]")');
 			assert.equal(

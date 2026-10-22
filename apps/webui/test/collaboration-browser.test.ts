@@ -5,6 +5,7 @@ import { writeFile, mkdir } from "node:fs/promises";
 import { runtimeFixture } from "../../../packages/agent/test/runtime-fixture.ts";
 import { startPocket } from "../src/bootstrap.ts";
 import { ownedBrowser } from "./browser.ts";
+import { conversationAction, toggleConversations, openConversationMenu } from "./frontend-controls.ts";
 
 // This fails if the adopted collaboration controls are decorative, if driver changes stop only the UI,
 // or if side chat/notes are promoted to model input. All actions traverse actual Cookie/RPC/SSE.
@@ -36,7 +37,7 @@ test(
 			await owner.wait('document.querySelector("[data-conversation]")');
 			await owner.click(`[data-conversation="${ref.conversationId}"]`);
 			await owner.wait('document.querySelector("[data-action=send]")?.disabled===false');
-			await owner.click("[data-action=collaboration]");
+			await conversationAction(owner, "collaboration");
 			await owner.wait('document.querySelector("textarea[name=teamChat]")');
 			await owner.type("textarea[name=teamChat]", "SIDE-CHAT-DO-NOT-MODEL");
 			await owner.click("[data-action=post-chat]");
@@ -58,10 +59,10 @@ test(
 			await guest.type("input[name=person]", "Bob");
 			await guest.click("[data-action=signin]");
 			await guest.wait('document.querySelector("[data-conversation]")');
-			await guest.click('[aria-label="Toggle conversations"]');
+			await toggleConversations(guest);
 			await guest.click("[data-conversation]");
-			await guest.wait('document.querySelector("[data-action=collaboration]")');
-			await guest.click("[data-action=collaboration]");
+			await openConversationMenu(guest);
+			await conversationAction(guest, "collaboration");
 			await guest.wait(
 				'document.querySelector("[data-chat-message]")?.innerText.includes("SIDE-CHAT-DO-NOT-MODEL")',
 			);
@@ -103,10 +104,10 @@ test(
 			);
 			assert.equal(refused, "denied");
 			assert.equal(m.f.requests.length, 0);
-			await owner.click("[data-action=collaboration]");
+			await conversationAction(owner, "collaboration");
 			await owner.wait('document.querySelector("[data-action=release-driver]")?.disabled===false');
 			await owner.click("[data-action=release-driver]");
-			await guest.click("[data-action=collaboration]");
+			await conversationAction(guest, "collaboration");
 			await guest.wait('document.querySelector("[data-action=claim-driver]")?.disabled===false');
 			await guest.click("[data-action=claim-driver]");
 			await guest.wait(

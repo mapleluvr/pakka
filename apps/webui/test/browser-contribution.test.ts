@@ -7,6 +7,7 @@ import { runtimeFixture } from "../../../packages/agent/test/runtime-fixture.ts"
 import { startPocket } from "../src/bootstrap.ts";
 import { workspaceBrowserExtensionRoot, workspaceBrowserService } from "../src/workflows.ts";
 import { browserExecutable, ownedBrowser } from "./browser.ts";
+import { toggleConversations } from "./frontend-controls.ts";
 
 test(
 	"Pocket browser contribution: actual UI controls owned page, real frame renders, mobile viewer cannot act",
@@ -68,10 +69,10 @@ test(
 				await page.wait('document.querySelector("[data-action=signin]")');
 				await page.click("[data-action=signin]");
 				await page.wait('document.querySelector("[data-conversation]")');
-				if (page === viewer) await page.click('[aria-label="Toggle conversations"]');
+				if (page === viewer) await toggleConversations(page);
 				await page.click("[data-conversation]");
 				await page.wait('document.querySelector("[data-interface=workspace-browser-browser]")');
-				if (page === viewer) await page.click('[aria-label="Toggle conversations"]');
+				if (page === viewer) await toggleConversations(page);
 				await page.click("[data-interface=workspace-browser-browser]");
 				await page.wait('document.querySelector("[data-owned-browser]")');
 			}

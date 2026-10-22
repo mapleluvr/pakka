@@ -1,6 +1,6 @@
 # Pakka-Pocket source and native feasibility
 
-This is the executable P0 evidence path, not an installed WebUI or a claim that the migration is finished. Product scope and sequencing remain in [the Pocket plan](../../docs/plans/PAKKA-POCKET-PLAN.md).
+This is the executable P0 evidence path, not an installed WebUI or a claim that the migration is finished. Current product scope is in [state](../../docs/state/product.md); the complete [Pocket change and specs](../../docs/changes/webui-and-mas.md) retain the development record.
 
 ## Immutable sources
 

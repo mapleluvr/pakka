@@ -1,0 +1,2 @@
+# Keep this run's selected raw validation logs despite the root *.log rule.
+!*.log

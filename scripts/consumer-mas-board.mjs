@@ -8,6 +8,7 @@ import { createRuntime } from "@pakka/agent";
 import { createMasProfilePacks } from "@pakka/mas-devpack/agent";
 import { createMas } from "@pakka/mas";
 import { ownedBrowser } from "./pocket-browser.ts";
+import { openConversations } from "./frontend-controls.ts";
 
 const root = dirname(fileURLToPath(import.meta.url)),
 	requests = [],
@@ -195,7 +196,7 @@ try {
 	);
 	assert.equal(
 		await owner.evaluate(
-			'!!document.querySelector("[data-member=coordinator][aria-pressed=true]") && !document.querySelector(".pocket-composer")',
+			'!!document.querySelector("[data-member=coordinator][aria-pressed=true]") && !document.querySelector(".conversation-view")',
 		),
 		true,
 		"Installed controls preserve the Board instead of embedding another composer",
@@ -245,7 +246,7 @@ try {
 	await viewer.type("input[name=person]", "Installed viewer");
 	await viewer.click("[data-action=signin]");
 	await viewer.wait('document.querySelector("[data-interface=mas-devpack-board]")');
-	await viewer.click('[aria-label="Toggle conversations"]');
+	await openConversations(viewer);
 	await viewer.click("[data-interface=mas-devpack-board]");
 	await viewer.wait('document.querySelector("[data-member=installed-child]")');
 	const filtered = await call(viewer, "view");
@@ -284,7 +285,10 @@ try {
 		),
 	);
 	await writeFile(join(evidence, "exchanges.json"), JSON.stringify(deliveredHistory, null, 2));
+	await owner.click("[data-member-management]");
 	await owner.click("[data-mas-retire]");
+	await owner.wait('document.querySelector("[data-mas-confirm-retire]")');
+	await owner.click("[data-mas-confirm-retire]");
 	await owner.wait('document.querySelector("[data-member-phase]")?.textContent === "retired"');
 	await owner.click('[aria-label="Close Agent controls"]');
 	await owner.wait(
@@ -294,11 +298,13 @@ try {
 	await owner.click("[data-member=installed-child]");
 	await owner.click('[data-open-conversation="installed-child"]');
 	await owner.wait(
-		`Array.from(document.querySelectorAll('[data-conversation]')).some(row=>row.dataset.conversation===${JSON.stringify(member.ref.conversationId)}&&row.classList.contains('selected'))`,
+		`Array.from(document.querySelectorAll('[data-conversation]')).some(row=>row.dataset.conversation===${JSON.stringify(member.ref.conversationId)}&&row.getAttribute('aria-current')==='true')`,
 	);
 	await owner.click("[data-return-extension]");
 	await owner.wait('document.querySelector("[data-member=installed-child][aria-pressed=true]")');
 	assert.equal(requests.length, 6, "Installed Conversation navigation never replays work");
+	if (await owner.evaluate('!document.querySelector("[data-agent-details]").parentElement.open'))
+		await owner.click("[data-agent-details]");
 	await owner.click("[data-hide-agent=installed-child]");
 	await owner.wait('!document.querySelector("[data-member=installed-child]")');
 	await owner.click("[data-board-tab=history]");

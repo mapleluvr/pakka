@@ -8,6 +8,7 @@ import { runtimeFixture } from "../../../packages/agent/test/runtime-fixture.ts"
 import { deferred } from "../../../packages/agent/test/fixture.ts";
 import { startPocket } from "../src/bootstrap.ts";
 import { ownedBrowser } from "./browser.ts";
+import { toggleConversations, settleFrontend, openExtensionManager } from "./frontend-controls.ts";
 
 // The shell cannot retain a hidden MAS page, and plugin removal cannot cancel native work or reveal a peer through live updates.
 test(
@@ -79,9 +80,10 @@ test(
 			await viewer.type("input[name=person]", "Viewer");
 			await viewer.click("[data-action=signin]");
 			await viewer.wait('document.querySelector("[data-interface=mas-devpack-board]")');
-			await viewer.click('[aria-label="Toggle conversations"]');
+			await toggleConversations(viewer);
 			await viewer.click("[data-interface=mas-devpack-board]");
 			await viewer.wait('document.querySelector("[data-member=visible]")');
+			await settleFrontend(viewer);
 			assert.equal(await viewer.evaluate('document.body.innerText.includes("PRIVATE-TEAM-CANARY")'), false);
 			assert.equal(await viewer.evaluate('document.querySelectorAll("[data-member]").length'), 1);
 			assert.equal(await viewer.evaluate("document.documentElement.scrollWidth > innerWidth"), false);
@@ -120,7 +122,7 @@ test(
 			await owner.wait(
 				'!document.querySelector("textarea[name=masMessage]") && document.activeElement?.getAttribute("data-agent-controls") === "visible"',
 			);
-			await owner.click("[data-action=commands]");
+			await openExtensionManager(owner);
 			await owner.wait('document.querySelector(".pocket-extension-registration button")');
 			await owner.click(".pocket-extension-registration button");
 			await owner.wait('!document.querySelector("[data-interface=mas-devpack-board],[data-member-phase]")');

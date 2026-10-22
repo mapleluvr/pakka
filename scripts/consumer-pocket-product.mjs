@@ -6,6 +6,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createPocketClient } from "@pakka/client/pocket";
 import { ownedBrowser } from "./pocket-browser.ts";
+import { conversationAction, organizationAction, openConversations } from "./frontend-controls.ts";
 
 const root = dirname(fileURLToPath(import.meta.url)),
 	requests = [],
@@ -171,11 +172,9 @@ try {
 	);
 	await owner.type("textarea[name=message]", '/preferences-card {"text":"INSTALLED-DISPLAY-CARD"}');
 	await owner.click("[data-action=send]");
-	await owner.wait(
-		'document.querySelector(".pocket-display")?.textContent.includes("INSTALLED-DISPLAY-CARD")',
-	);
+	await owner.wait('document.querySelector(".tool-card")?.textContent.includes("INSTALLED-DISPLAY-CARD")');
 	assert.equal(requests.length, 0);
-	await owner.click("[data-action=settings]");
+	await conversationAction(owner, "settings");
 	await owner.wait('document.querySelector("[data-cost]")');
 	assert.match(String(await owner.evaluate('document.querySelector("[data-cost]").innerText')), /unknown/i);
 	await owner.wait('document.querySelector("[data-credential-input]")?.disabled===false');
@@ -203,7 +202,7 @@ try {
 	assert.equal(requests.length, 1);
 	assert.equal(requests[0].model, "installed-alternate");
 	assert.equal(authorization[0], "Bearer SYNTHETIC-INSTALLED-REPLACEMENT");
-	await owner.click("[data-action=people]");
+	await organizationAction(owner, "people");
 	await owner.wait('document.querySelector("[data-action=invite]")');
 	await owner.click("[data-action=invite]");
 	await owner.wait('document.querySelector("input[name=inviteLink]")?.value.includes("#invite=")');
@@ -213,12 +212,12 @@ try {
 	await viewer.type("input[name=person]", "Installed viewer");
 	await viewer.click("[data-action=signin]");
 	await viewer.wait('document.querySelector("[data-conversation]")');
-	await viewer.click('[aria-label="Toggle conversations"]');
+	await openConversations(viewer);
 	await viewer.click("[data-conversation]");
 	await viewer.wait('document.querySelector("main").innerText.includes("INSTALLED-POCKET-ANSWER")');
 	assert.equal(await viewer.evaluate('document.querySelector("[data-action=send]").disabled'), true);
 	assert.equal(await viewer.evaluate("document.documentElement.scrollWidth > innerWidth"), false);
-	await viewer.click("[data-action=settings]");
+	await conversationAction(viewer, "settings");
 	await viewer.wait('document.querySelector("[data-cost]")');
 	assert.equal(await viewer.evaluate('document.querySelector("[data-action=model]").disabled'), true);
 	assert.equal(await viewer.evaluate('document.querySelector("[data-action=cwd]").disabled'), true);
@@ -249,7 +248,7 @@ try {
 	await owner.wait('document.querySelector("[data-conversation]")');
 	await owner.click("[data-conversation]");
 	await owner.wait('document.querySelector("main").innerText.includes("INSTALLED-POCKET-ANSWER")');
-	await owner.click("[data-action=settings]");
+	await conversationAction(owner, "settings");
 	await owner.wait('document.querySelector("[data-cost]")');
 	assert.equal(
 		await owner.evaluate('document.querySelector("[data-settings-model]").textContent'),
@@ -279,7 +278,7 @@ try {
 		'document.querySelector("[data-current-label]")?.textContent === "PRIVATE-INSTALLED-PREFERENCE"',
 	);
 	await owner.click('[aria-label="Close Example preferences"]');
-	await owner.click("[data-action=people]");
+	await organizationAction(owner, "people");
 	await owner.wait('document.querySelector(".pocket-person-row button")');
 	await owner.click(".pocket-person-row button");
 	await owner.wait('document.querySelector("[role=dialog]").innerText.includes("Revoked")');
@@ -297,7 +296,7 @@ try {
 	await owner.navigate(info.origin);
 	await owner.wait('document.querySelector("[data-conversation]")');
 	await owner.click("[data-conversation]");
-	await owner.click("[data-action=settings]");
+	await conversationAction(owner, "settings");
 	await owner.wait('document.querySelector("[data-credential-status]")?.dataset.version==="2"');
 	assert.equal(
 		await owner.evaluate('document.querySelector("[data-credential-status]").dataset.configured'),

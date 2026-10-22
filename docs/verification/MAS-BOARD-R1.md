@@ -1,6 +1,6 @@
 # MAS Board 实施与候选验证（r1–r8）
 
-本轮按 [设计第二稿](../MAS-BOARD-DESIGN.md) 实现，操作见 [MAS Board 使用](../guides/MAS-BOARD.md)。实现位于 `feat/mas-board` 独立工作树，基线为 `b5c302f4ec1535d9aadb6b4135366298d8f27035`。旧设计稿和已完成的用户验收保留其原范围。
+本轮按 [设计第二稿（OpenSpec）](../../openspec/changes/mas-board-relationship-workbench/design.md) 实现，操作见 [MAS Board 使用](../guides/MAS-BOARD.md)。实现位于 `feat/mas-board` 独立工作树，基线为 `b5c302f4ec1535d9aadb6b4135366298d8f27035`。旧设计稿和已完成的用户验收保留其原范围。
 
 ## 实施范围
 

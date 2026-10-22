@@ -1,0 +1,237 @@
+[
+  {
+    "sha256": "6595599be950f98dc7df47d444391504d0122349f8ebbf2c984ff18a212db0b9",
+    "path": "build.log",
+    "bytes": 913
+  },
+  {
+    "sha256": "4ca3577a130221638ebacfc196a3bd26ca80e6f166a2344833caee47b1443d5f",
+    "path": "check.log",
+    "bytes": 216
+  },
+  {
+    "sha256": "c6c6a8a5efb96e3d4694ee0cbf7c79f8c15e94a1297c89c664603fa35d73eef6",
+    "path": "full.log",
+    "bytes": 68075
+  },
+  {
+    "sha256": "aee3f7bf9efbe31ea64fa148f94e990afe7bdc14b24325878690ffdbbc2b887b",
+    "path": "installed-supplement/pocket-hooks.log",
+    "bytes": 345
+  },
+  {
+    "sha256": "72eacc0758d5b120764f1f043606690c19d20cd76876939c7caba89ca0cbed76",
+    "path": "installed-supplement/pocket-memory.log",
+    "bytes": 310
+  },
+  {
+    "sha256": "4ccfeaa847863ba6e985c21adfba4bb359ee0437039e94d1f4fde4161546ef67",
+    "path": "installed-supplement/pocket-notifications.log",
+    "bytes": 275
+  },
+  {
+    "sha256": "3aae7935fe74ece76aa99368d76211a739c9ecc63e4fb1e539f37568c98e53f9",
+    "path": "installed-supplement/pocket-schedules.log",
+    "bytes": 292
+  },
+  {
+    "sha256": "252df8a383d24744a5fb0eeb7f70884a642383a51d4d4d685f95dce06f3ae334",
+    "path": "installed-supplement/pocket-voice.log",
+    "bytes": 73
+  },
+  {
+    "sha256": "a5752a6d4231b52e7bd9d935b38556dfc6bf1159e2eb8f487d58c05b81cc1847",
+    "path": "installed-supplement/run.json",
+    "bytes": 2793
+  },
+  {
+    "sha256": "5da086434f6ca45b0cc2af53b05682fdf9db6099a17b93550e6bf962188a8b68",
+    "path": "installed-supplement/run.ps1",
+    "bytes": 2397
+  },
+  {
+    "sha256": "6595599be950f98dc7df47d444391504d0122349f8ebbf2c984ff18a212db0b9",
+    "path": "main-r2-control/build.log",
+    "bytes": 913
+  },
+  {
+    "sha256": "130401a255531c12a57054c27d436b0d7701e32b449cae0b01648a0228d0d615",
+    "path": "main-r2-control/install.log",
+    "bytes": 123
+  },
+  {
+    "sha256": "c3b41fb244eea272dbf99005bac8a3beb63ea55b3a267e22a09621794829342e",
+    "path": "main-r2-control/run.json",
+    "bytes": 1055
+  },
+  {
+    "sha256": "259191f512c97b691d2ac51bc29f852aba2e15762eff2138f2eb1d4f2a99ce7b",
+    "path": "main-r2-control/run.ps1",
+    "bytes": 2979
+  },
+  {
+    "sha256": "1829e468ec6977113b428cfe865f118df4217bc945deb88ce091faeccfc988d7",
+    "path": "main-r2-control/test.log",
+    "bytes": 6504
+  },
+  {
+    "sha256": "6b91a628ffedbf232c82d17dfb9f4166abd0c9d7fb12e019e8b8b62d12754f14",
+    "path": "package-logs/apps.log",
+    "bytes": 217
+  },
+  {
+    "sha256": "1fc7d37aebc713971ed1e63877f53c8bcd2dcf51e0c9e95031b05d0f925c2117",
+    "path": "package-logs/broker.log",
+    "bytes": 234
+  },
+  {
+    "sha256": "bfb1a57308900d922a1ddd1b5d4071c91b6ff0902b3cc4b583456cea7ae033f9",
+    "path": "package-logs/browser-declarations.log",
+    "bytes": 79
+  },
+  {
+    "sha256": "bfb1a57308900d922a1ddd1b5d4071c91b6ff0902b3cc4b583456cea7ae033f9",
+    "path": "package-logs/declarations.log",
+    "bytes": 79
+  },
+  {
+    "sha256": "962ffb13c1a59264f6a64fa53fd0102fc51578272380647b26df58081966060c",
+    "path": "package-logs/dependency-tree.log",
+    "bytes": 46464
+  },
+  {
+    "sha256": "00782bf82dbaab03cd63d56454cddc61bd1298d7e5d8badd7e3672c1523afaf0",
+    "path": "package-logs/devpack-headless.log",
+    "bytes": 217
+  },
+  {
+    "sha256": "35874cfbb49e08ffddeb4496f0c1b329c51e103f8297ee44b39e77bc4d731ef4",
+    "path": "package-logs/devpack.log",
+    "bytes": 169
+  },
+  {
+    "sha256": "d3027344e94501fdf2a4acf87b1a8727f0e2376e387c2ba8ff67b67d29515dcb",
+    "path": "package-logs/install-headless.log",
+    "bytes": 105
+  },
+  {
+    "sha256": "89e3de54c83efa94d13bda4d433f906f3b9c3af6052e8c0ab804572930bf1b62",
+    "path": "package-logs/install.log",
+    "bytes": 104
+  },
+  {
+    "sha256": "978479688cfc9918b11148eb22449e8369a5890e357e9b84cb9bfdbcedec03b2",
+    "path": "package-logs/mas-board.log",
+    "bytes": 326
+  },
+  {
+    "sha256": "70e95eed18d7b334df06f3836df9bef5e73076404feb56a3493bb114daee0466",
+    "path": "package-logs/mas.log",
+    "bytes": 330
+  },
+  {
+    "sha256": "b3bd0b1114d4d796c48aebd6a8aba2900cc48e8db09b7cb60fcce20b0cada62a",
+    "path": "package-logs/pack-cli.log",
+    "bytes": 607
+  },
+  {
+    "sha256": "7bff0016efc9ba68f69c546af8c95910270e648f115e478d608f8ecede6f21c1",
+    "path": "package-logs/pack-client.log",
+    "bytes": 697
+  },
+  {
+    "sha256": "5e25d28504555171296235a0b65a031d6cb3f6c931605ba41125442be3b6c756",
+    "path": "package-logs/pack-devpack.log",
+    "bytes": 1912
+  },
+  {
+    "sha256": "b396c8c78e8a97ab07e781784f11f9616f2d8d33b3802c4e333a8ff2f83ef3fa",
+    "path": "package-logs/pack-mas.log",
+    "bytes": 1212
+  },
+  {
+    "sha256": "a18b4b3d788c6057aff367ea34beec14103fea601a0db85aeb6db86a6a91308c",
+    "path": "package-logs/pack-protocol.log",
+    "bytes": 709
+  },
+  {
+    "sha256": "f08b77d3f4d7a530332ef8266236a5da4e3a0ba288e6e813dcd7418f0d0fa997",
+    "path": "package-logs/pack-server.log",
+    "bytes": 2494
+  },
+  {
+    "sha256": "61c0aeb1c824a542f4682afa86467351f7431978ce4698b6f71d95cb92454549",
+    "path": "package-logs/pack-webui.log",
+    "bytes": 4446
+  },
+  {
+    "sha256": "1b263f9cd4ec57e9e7cae2d4b544f30f2ab34bf222ede58658fe95543e8ef8f9",
+    "path": "package-logs/pocket-controlled.log",
+    "bytes": 82
+  },
+  {
+    "sha256": "1704e56e4e36950d8f0af827e8e5ecd64f302ab6958153fb50520617bc8ff98b",
+    "path": "package-logs/pocket-product.log",
+    "bytes": 422
+  },
+  {
+    "sha256": "7e1d7a539e252a54626530a90c12fb0e5e1a930563a00ba3fac75d4dfa2c5953",
+    "path": "package-logs/pocket-services.log",
+    "bytes": 250
+  },
+  {
+    "sha256": "58dd8450ae0df9d99f0b5a1cb618ad50dae104419b22f9e6956cf6ff9f9b1afa",
+    "path": "package-logs/pocket-workflows.log",
+    "bytes": 271
+  },
+  {
+    "sha256": "f09df4001de959167b1131c51ce7232b67fe94d889fd89cca505a36a4df6279a",
+    "path": "package-logs/product.log",
+    "bytes": 263
+  },
+  {
+    "sha256": "05c0385aabfdd69b3b5c43421918602246006473cfbadd802f03b2b5fcf1dcae",
+    "path": "package-logs/runtime.log",
+    "bytes": 450
+  },
+  {
+    "sha256": "694bc83a886e4679d6ac4b605a7dc8c8519afa8b481ff8908db3ebe14246c803",
+    "path": "package-logs/smoke.log",
+    "bytes": 619
+  },
+  {
+    "sha256": "14f5984895bda20b0e3926158a7201f97ee092ef794f86913809934b60645b34",
+    "path": "package.log",
+    "bytes": 4533
+  },
+  {
+    "sha256": "ac4188635fc256b913c6bdc8206558455cedaa3723c02c6d05c3cb0e98e0d7bf",
+    "path": "run.json",
+    "bytes": 1038
+  },
+  {
+    "sha256": "ceb4bbcdb69d78f64e4c5fc703c33f6c48820e7c013a218c5d37db446cfa1655",
+    "path": "source-summary.json",
+    "bytes": 2169
+  },
+  {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "path": "syntax.log",
+    "bytes": 0
+  },
+  {
+    "sha256": "2c8f259a932d33337eb79ccb9915a61a02f65a7edc40536ef393064ba065d3d2",
+    "path": "wide.log",
+    "bytes": 19451
+  },
+  {
+    "sha256": "0eab61de92e09e319f5644a1a6b8fdc29b3c557aebbb46bed03088b39bf45a80",
+    "path": "wide/run.json",
+    "bytes": 9244
+  },
+  {
+    "sha256": "5fe69fbbb31dd90f48a2ced041c3b0bba24022448fafc9da77c00ca09bae4df7",
+    "path": "wide/test.log",
+    "bytes": 19349
+  }
+]

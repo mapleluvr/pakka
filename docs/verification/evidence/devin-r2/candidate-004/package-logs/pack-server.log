@@ -1,0 +1,66 @@
+cwd=D:\Projects\kappa\migration-worktrees\pakka-devin-ui\apps\server
+pakka-server-0.5.0.tgz
+npm notice
+npm notice package: @pakka/server@0.5.0
+npm notice Tarball Contents
+npm notice 1.1kB LICENSE.pi-pocket
+npm notice 510B NOTICE.md
+npm notice 1.6kB dist/bootstrap.d.ts
+npm notice 12.8kB dist/bootstrap.js
+npm notice 924B dist/http-server.d.ts
+npm notice 13.9kB dist/http-server.js
+npm notice 97B dist/main.d.ts
+npm notice 2.4kB dist/main.js
+npm notice 2.1kB dist/pocket-approvals.d.ts
+npm notice 13.9kB dist/pocket-approvals.js
+npm notice 245B dist/pocket-browser-network.d.ts
+npm notice 5.7kB dist/pocket-browser-network.js
+npm notice 1.8kB dist/pocket-browser.d.ts
+npm notice 25.2kB dist/pocket-browser.js
+npm notice 3.5kB dist/pocket-collaboration.d.ts
+npm notice 20.8kB dist/pocket-collaboration.js
+npm notice 1.4kB dist/pocket-credentials.d.ts
+npm notice 7.7kB dist/pocket-credentials.js
+npm notice 772B dist/pocket-directories.d.ts
+npm notice 3.2kB dist/pocket-directories.js
+npm notice 5.0kB dist/pocket-files.d.ts
+npm notice 38.8kB dist/pocket-files.js
+npm notice 3.1kB dist/pocket-hooks.d.ts
+npm notice 32.3kB dist/pocket-hooks.js
+npm notice 3.2kB dist/pocket-memory.d.ts
+npm notice 30.9kB dist/pocket-memory.js
+npm notice 3.1kB dist/pocket-notifications.d.ts
+npm notice 27.1kB dist/pocket-notifications.js
+npm notice 3.1kB dist/pocket-people.d.ts
+npm notice 22.6kB dist/pocket-people.js
+npm notice 858B dist/pocket-push.d.ts
+npm notice 5.7kB dist/pocket-push.js
+npm notice 2.1kB dist/pocket-schedules.d.ts
+npm notice 19.1kB dist/pocket-schedules.js
+npm notice 6.3kB dist/pocket-workspace.d.ts
+npm notice 27.0kB dist/pocket-workspace.js
+npm notice 3.2kB dist/pocket.d.ts
+npm notice 901B dist/pocket.js
+npm notice 1.7kB dist/product-dynamite.d.ts
+npm notice 9.5kB dist/product-dynamite.js
+npm notice 189B dist/profile-devpack.d.ts
+npm notice 231B dist/profile-devpack.js
+npm notice 1.6kB dist/worker-ipc.d.ts
+npm notice 8.6kB dist/worker-ipc.js
+npm notice 994B dist/worker-manager.d.ts
+npm notice 12.7kB dist/worker-manager.js
+npm notice 11B dist/worker.d.ts
+npm notice 5.8kB dist/worker.js
+npm notice 1.0kB package.json
+npm notice Tarball Details
+npm notice name: @pakka/server
+npm notice version: 0.5.0
+npm notice filename: pakka-server-0.5.0.tgz
+npm notice package size: 80.9 kB
+npm notice unpacked size: 396.5 kB
+npm notice shasum: d130d5e9e3c1a5e9f5d38153cd93b198459221e8
+npm notice integrity: sha512-VTHqHz9mlNTMh[...]9QuAeRJLhj+Yw==
+npm notice total files: 49
+npm notice
+
+exit=0

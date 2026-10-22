@@ -1,0 +1,104 @@
+{
+  "staleRootsReappeared": [],
+  "checkedAt": "2026-10-21T14:00:41.350Z",
+  "baselineCommit": "dde60124ffd1b8dd900adb04283f725a6c6e6cf8",
+  "markdown": 137,
+  "localLinks": 635,
+  "linkFailures": [],
+  "summaryCoverage": [
+    {
+      "summary": "docs/changes/2026-10-21-documentation-system.md",
+      "change": "openspec/changes/organize-project-documentation",
+      "deltaSpecs": 1,
+      "expectedReferences": 5,
+      "missing": []
+    },
+    {
+      "summary": "docs/changes/devin-frontend-adoption.md",
+      "change": "openspec/changes/adopt-devin-frontend",
+      "deltaSpecs": 1,
+      "expectedReferences": 5,
+      "missing": []
+    },
+    {
+      "summary": "docs/changes/webui-and-mas.md",
+      "change": "openspec/changes/pakka-pocket-webui",
+      "deltaSpecs": 6,
+      "expectedReferences": 13,
+      "missing": []
+    },
+    {
+      "summary": "docs/changes/webui-and-mas.md",
+      "change": "openspec/changes/mas-board-relationship-workbench",
+      "deltaSpecs": 1,
+      "expectedReferences": 6,
+      "missing": []
+    },
+    {
+      "summary": "docs/changes/core-integration-lineage.md",
+      "change": "openspec/changes/archive/2026-10-12-conversation-scoped-runtime",
+      "deltaSpecs": 1,
+      "expectedReferences": 6,
+      "missing": []
+    },
+    {
+      "summary": "docs/changes/core-integration-lineage.md",
+      "change": "openspec/changes/archive/2026-10-13-mas-devpack",
+      "deltaSpecs": 2,
+      "expectedReferences": 8,
+      "missing": []
+    },
+    {
+      "summary": "docs/changes/core-integration-lineage.md",
+      "change": "openspec/changes/archive/2026-10-13-recoverable-multi-session",
+      "deltaSpecs": 1,
+      "expectedReferences": 6,
+      "missing": []
+    },
+    {
+      "summary": "docs/changes/core-integration-lineage.md",
+      "change": "openspec/changes/archive/2026-10-13-same-session-mas",
+      "deltaSpecs": 1,
+      "expectedReferences": 6,
+      "missing": []
+    },
+    {
+      "summary": "docs/changes/core-integration-lineage.md",
+      "change": "openspec/changes/archive/2026-10-14-authenticated-mas-apps",
+      "deltaSpecs": 2,
+      "expectedReferences": 8,
+      "missing": []
+    },
+    {
+      "summary": "docs/changes/core-integration-lineage.md",
+      "change": "openspec/changes/archive/2026-10-14-integrated-mas-product",
+      "deltaSpecs": 2,
+      "expectedReferences": 8,
+      "missing": []
+    },
+    {
+      "summary": "docs/changes/core-integration-lineage.md",
+      "change": "openspec/changes/archive/2026-10-15-optional-dynamite-product",
+      "deltaSpecs": 2,
+      "expectedReferences": 8,
+      "missing": []
+    }
+  ],
+  "productFiles": 432,
+  "unchangedProductFiles": 429,
+  "documentationOnlyProductChanges": [
+    "apps/webui/NOTICE.md",
+    "integrations/dynamite/README.md",
+    "integrations/pocket/README.md"
+  ],
+  "unexpectedProductChanges": [],
+  "protectedEvidenceFiles": 138,
+  "changedEvidence": [
+    "docs/visual-primitives/runs/devin-frontend-r2/drafts/adoption-001.md"
+  ],
+  "draftLinkOnly": true,
+  "unexpectedEvidenceChanges": [],
+  "changedMainRequirementsOrScenarios": [],
+  "removedDocuments": 82,
+  "removalFailures": []
+}

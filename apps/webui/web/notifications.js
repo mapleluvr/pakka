@@ -2,7 +2,7 @@
 import { h } from "preact";
 import { useEffect, useRef, useState } from "preact/hooks";
 import htm from "htm";
-import { Icon } from "@pakka/webui/components";
+import { SettingsPage } from "./settings-page.js";
 const html = htm.bind(h);
 let registering;
 const capable = () => isSecureContext && "Notification" in globalThis && "serviceWorker" in navigator;
@@ -47,17 +47,13 @@ export function Notifications({ target, person, client, close, error }) {
 		[pending, setPending] = useState(false),
 		[uncertain, setUncertain] = useState(false),
 		[message, setMessage] = useState("");
-	const instance = useRef(null),
-		panel = useRef(null);
+	const instance = useRef(null);
 	useEffect(() => {
 		const binding = {};
 		instance.current = binding;
-		const prior = document.activeElement;
-		panel.current?.querySelector("button")?.focus();
 		void load(binding);
 		return () => {
 			instance.current = null;
-			if (prior?.isConnected) prior.focus();
 		};
 	}, [target.key, target.incarnation, person.id]);
 	async function load(binding = instance.current) {
@@ -163,85 +159,57 @@ export function Notifications({ target, person, client, close, error }) {
 		setMessage("System notification check requested. This does not test background push delivery.");
 	}
 	const on = !!current && status?.devices.some((row) => row.subscriptionKey === currentKey);
-	function keys(event) {
-		if (event.key === "Escape") {
-			event.preventDefault();
-			close();
-			return;
-		}
-		if (event.key !== "Tab") return;
-		const items = [...panel.current.querySelectorAll("button:not([disabled]),input:not([disabled])")],
-			first = items[0],
-			last = items.at(-1);
-		if (event.shiftKey && document.activeElement === first) {
-			event.preventDefault();
-			last?.focus();
-		} else if (!event.shiftKey && document.activeElement === last) {
-			event.preventDefault();
-			first?.focus();
-		}
-	}
-	return html`<div class="pocket-scrim" onClick=${close}>
-		<section
-			class="pocket-sheet pocket-configuration"
-			ref=${panel}
-			role="dialog"
-			aria-modal="true"
-			aria-label="Notifications"
-			onClick=${(event) => event.stopPropagation()}
-			onKeyDown=${keys}
-		>
-			<header>
-				<h2>Notifications</h2>
-				<button class="pocket-icon-button" aria-label="Close notifications" onClick=${close}>
-					<${Icon} name="close" />
-				</button>
-			</header>
-			<div class="pocket-sheet-body">
+
+	return html`<${SettingsPage} title="Notifications" closeLabel="Close notifications" icon="bell" close=${close}>
+			<div class="settings-card settings-native-fields">
 				<p>Enable this device for the current conversation. Only updates you can still read are displayed.</p>
-				${!capable() &&
-				html`<p role="status">
-					System notifications require HTTPS (or localhost) and browser permission. On iPhone or iPad, open
-					the installed home-screen app.
-				</p>`}
-				${!status
-					? html`<p role="status">Loading notification settings…</p>`
-					: html`<p data-notification-devices>
-								${status.devices.length} registered device${status.devices.length === 1 ? "" : "s"} for this
-								conversation.
-							</p>
-							<button
-								class="button"
-								data-notification-enable
-								disabled=${pending || uncertain || !capable() || !("PushManager" in globalThis)}
-								onClick=${() => perform(on ? disable : enable)}
-							>
-								${on ? "Disable on this device" : "Enable background notifications"}
-							</button>
-							<fieldset disabled=${pending || uncertain}>
-								<legend>Notify me about</legend>
-								${Object.entries(labels).map(
-									([kind, label]) =>
-										html`<label class="pocket-notification-kind"
-											><input
-												type="checkbox"
-												data-notification-kind=${kind}
-												checked=${status.preferences[kind]}
-												onChange=${(event) => {
-													const value = event.currentTarget.checked;
-													void perform(async (binding) => {
-														const result = await client.request({
-															op: "notification.preferences",
-															target,
-															input: { requestId: crypto.randomUUID(), preferences: { [kind]: value } },
+				${
+					!capable() &&
+					html`<p role="status">
+						System notifications require HTTPS (or localhost) and browser permission. On iPhone or iPad, open
+						the installed home-screen app.
+					</p>`
+				}
+				${
+					!status
+						? html`<p role="status">Loading notification settings…</p>`
+						: html`<p data-notification-devices>
+									${status.devices.length} registered device${status.devices.length === 1 ? "" : "s"} for this
+									conversation.
+								</p>
+								<button
+									class="button"
+									data-notification-enable
+									disabled=${pending || uncertain || !capable() || !("PushManager" in globalThis)}
+									onClick=${() => perform(on ? disable : enable)}
+								>
+									${on ? "Disable on this device" : "Enable background notifications"}
+								</button>
+								<fieldset disabled=${pending || uncertain}>
+									<legend>Notify me about</legend>
+									${Object.entries(labels).map(
+										([kind, label]) =>
+											html`<label class="pocket-notification-kind"
+												><input
+													type="checkbox"
+													data-notification-kind=${kind}
+													checked=${status.preferences[kind]}
+													onChange=${(event) => {
+														const value = event.currentTarget.checked;
+														void perform(async (binding) => {
+															const result = await client.request({
+																op: "notification.preferences",
+																target,
+																input: { requestId: crypto.randomUUID(), preferences: { [kind]: value } },
+															});
+															if (instance.current === binding) setStatus(result.status);
 														});
-														if (instance.current === binding) setStatus(result.status);
-													});
-												}}
-											/>${label}</label
-										>`,
-								)}
-							</fieldset>`}
+													}}
+												/>${label}</label
+											>`,
+									)}
+								</fieldset>`
+				}
 				<button
 					class="button"
 					data-notification-test
@@ -250,16 +218,17 @@ export function Notifications({ target, person, client, close, error }) {
 				>
 					Check system notification
 				</button>
-				${uncertain &&
-				html`<button class="button" data-notification-reload onClick=${() => load()}>
-					Read current state
-				</button>`}
+				${
+					uncertain &&
+					html`<button class="button" data-notification-reload onClick=${() => load()}>
+						Read current state
+					</button>`
+				}
 				${message && html`<p role="status">${message}</p>`}
 				<p class="pocket-secondary">
 					Notifications open the conversation. Tool approvals still require your decision in the approval
 					panel.
 				</p>
 			</div>
-		</section>
-	</div>`;
+	</${SettingsPage}>`;
 }

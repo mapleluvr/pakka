@@ -2,9 +2,19 @@ import { h } from "preact";
 import { useLayoutEffect, useRef, useState } from "preact/hooks";
 import htm from "htm";
 const html = htm.bind(h);
+const surfaces = {
+	dialog: { layer: "pocket-scrim", panel: "pocket-sheet" },
+	palette: { layer: "palette-layer", panel: "palette" },
+	settings: { layer: "settings-layer", panel: "settings-view" },
+};
+// A replacement dialog mounts in the same commit as the old one's cleanup.
+// Transfer its history slot and focus target rather than asynchronously going
+// back through the newly mounted dialog. Unrelated/nested dialogs still push.
+let pendingHandoff = null;
 
 /** Shell-owned focus/back lifecycle. Closing a view never cancels an admitted operation. */
-export function Sheet({ label, close, children, anchor }) {
+export function Sheet({ label, close, children, anchor, initialFocus, variant = "dialog" }) {
+	const surface = surfaces[variant] ?? surfaces.dialog;
 	const [position, setPosition] = useState(undefined);
 	useLayoutEffect(() => {
 		if (!anchor) return;
@@ -31,20 +41,36 @@ export function Sheet({ label, close, children, anchor }) {
 		onClose = useRef(close);
 	onClose.current = close;
 	useLayoutEffect(() => {
-		const previous = document.activeElement,
+		const handoff = pendingHandoff;
+		const replacing = handoff && history.state?.pakkaSheet === handoff.id;
+		const previous = replacing ? handoff.previous : document.activeElement,
 			id = crypto.randomUUID();
-		history.pushState({ pakkaSheet: id }, "", location.href);
+		if (replacing) {
+			pendingHandoff = null;
+			history.replaceState({ pakkaSheet: id }, "", location.href);
+		} else {
+			history.pushState({ pakkaSheet: id }, "", location.href);
+		}
 		const back = () => {
 			if (history.state?.pakkaSheet !== id) onClose.current();
 		};
 		window.addEventListener("popstate", back);
 		(
-			panel.current?.querySelector("button:not(:disabled),input:not(:disabled),select:not(:disabled)") ??
-			panel.current
+			panel.current?.querySelector(
+				initialFocus ?? "button:not(:disabled),input:not(:disabled),select:not(:disabled)",
+			) ?? panel.current
 		)?.focus();
 		return () => {
 			window.removeEventListener("popstate", back);
-			if (history.state?.pakkaSheet === id) history.back();
+			if (history.state?.pakkaSheet === id) {
+				const release = { id, previous };
+				pendingHandoff = release;
+				queueMicrotask(() => {
+					if (pendingHandoff !== release) return;
+					pendingHandoff = null;
+					if (history.state?.pakkaSheet === id) history.back();
+				});
+			}
 			if (previous?.isConnected) previous.focus();
 		};
 	}, []);
@@ -54,10 +80,21 @@ export function Sheet({ label, close, children, anchor }) {
 			event.stopPropagation();
 			close();
 		}
+		if (variant === "palette" && ["ArrowUp", "ArrowDown"].includes(event.key)) {
+			const rows = [...panel.current.querySelectorAll("button.palette-row:not(:disabled)")].filter(
+				(node) => node.getClientRects().length,
+			);
+			if (rows.length) {
+				event.preventDefault();
+				const index = rows.indexOf(document.activeElement),
+					step = event.key === "ArrowDown" ? 1 : -1;
+				rows[(index + step + rows.length) % rows.length].focus();
+			}
+		}
 		if (event.key !== "Tab") return;
 		const nodes = [
 			...panel.current.querySelectorAll(
-				'button:not(:disabled),input:not(:disabled),select:not(:disabled),textarea:not(:disabled),a[href],[tabindex="0"]',
+				'button:not(:disabled),input:not(:disabled),select:not(:disabled),textarea:not(:disabled),a[href],summary,[tabindex="0"]',
 			),
 		].filter((node) => !node.hidden && node.getClientRects().length);
 		if (!nodes.length) {
@@ -77,14 +114,14 @@ export function Sheet({ label, close, children, anchor }) {
 		}
 	}
 	return html`<div
-		class="pocket-scrim"
+		class=${surface.layer}
 		onClick=${(event) => {
 			if (event.target === event.currentTarget) close();
 		}}
 	>
 		<section
 			ref=${panel}
-			class="pocket-sheet"
+			class=${surface.panel}
 			style=${position}
 			role="dialog"
 			aria-modal="true"

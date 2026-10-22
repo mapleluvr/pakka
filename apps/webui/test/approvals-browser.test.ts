@@ -12,6 +12,7 @@ import {
 import { startPocket } from "../src/bootstrap.ts";
 import { workspaceApprovalsExtensionRoot, workspaceApprovalsService } from "../src/workflows.ts";
 import { ownedBrowser } from "./browser.ts";
+import { toggleConversations } from "./frontend-controls.ts";
 
 test(
 	"Pocket approval panel: actual browser decisions release or deny original native effects and viewer cannot decide",
@@ -85,7 +86,7 @@ test(
 				await page.wait('document.querySelector("[data-action=signin]")');
 				await page.click("[data-action=signin]");
 				await page.wait('document.querySelector("[data-conversation]")');
-				if (page === viewer) await page.click('[aria-label="Toggle conversations"]');
+				if (page === viewer) await toggleConversations(page);
 				await page.click("[data-conversation]");
 				await page.wait('document.querySelector("[data-interface=workspace-approvals-approvals]")');
 			}
@@ -115,7 +116,7 @@ test(
 			);
 			assert.equal(effects, 0);
 			await assert.rejects(readFile(join(m.f.cwd, "human-effect.txt")), { code: "ENOENT" });
-			await viewer.click('[aria-label="Toggle conversations"]');
+			await toggleConversations(viewer);
 			await viewer.click("[data-interface=workspace-approvals-approvals]");
 			await viewer.wait('document.querySelector("[data-approval-state]")?.textContent.includes("pending")');
 			assert.equal(

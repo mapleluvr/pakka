@@ -5,8 +5,9 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { runtimeFixture } from "../../../packages/agent/test/runtime-fixture.ts";
 import { startPocket } from "../src/bootstrap.ts";
 import { ownedBrowser } from "./browser.ts";
+import { toggleConversations, settleFrontend } from "./frontend-controls.ts";
 
-// Losing dismissal or allowing a background click to submit must fail this real mobile browser consumer.
+// Dismissal must preserve the selected resource and draft without inference.
 test(
 	"Pocket mobile sidebar: outside click and Escape return to the same conversation without sending the draft",
 	{ timeout: 45000 },
@@ -30,30 +31,32 @@ test(
 			await page.wait('document.querySelector("[data-action=signin]")');
 			await page.click("[data-action=signin]");
 			await page.wait('document.querySelector("[data-conversation]")');
-			await page.click('[aria-label="Toggle conversations"]');
+			await toggleConversations(page);
 			await page.click("[data-conversation]");
 			await page.wait('document.querySelector(".pocket-status")?.textContent === "Ready"');
+			await settleFrontend(page);
 			await page.type("textarea[name=message]", "KEEP-THIS-UNSENT-DRAFT");
 			const target = await page.evaluate(
-				'document.querySelector("[data-conversation].selected").dataset.conversation',
+				'document.querySelector("[data-conversation][aria-current=true]").dataset.conversation',
 			);
-			await page.click('[aria-label="Toggle conversations"]');
-			await page.wait('getComputedStyle(document.querySelector(".sidebar")).display !== "none"');
-			// Interacting with the sidebar itself must leave it open.
-			await page.click('[aria-label="Find conversations"]');
+			await toggleConversations(page);
+			await page.click('[aria-label="Session options"]');
+			assert.equal(await page.evaluate('document.body.classList.contains("drawer-open")'), true);
+			await page.key("Escape");
+			await settleFrontend(page);
 			assert.equal(
-				await page.evaluate('getComputedStyle(document.querySelector(".sidebar")).display !== "none"'),
-				true,
+				await page.evaluate('document.querySelector(".scrim").getAttribute("aria-label")'),
+				"Close conversations",
+				"The shaded area must expose a named dismissal action",
 			);
+			// Only the right-hand strip is visible; the drawer covers the scrim centre.
+			await page.click('[aria-label="Close conversations"]', { offset: { x: 0.95, y: 0.5 } });
+			await settleFrontend(page);
+			await page.wait('document.querySelector(".sidebar").getBoundingClientRect().right <= 0');
 			assert.equal(
-				await page.evaluate(`Boolean(document.querySelector('[aria-label="Close conversations"]'))`),
-				true,
-				"The shaded area beside the sidebar needs an actionable close target",
-			);
-			await page.click('[aria-label="Close conversations"]');
-			await page.wait('getComputedStyle(document.querySelector(".sidebar")).display === "none"');
-			assert.equal(
-				await page.evaluate('document.querySelector("[data-conversation].selected").dataset.conversation'),
+				await page.evaluate(
+					'document.querySelector("[data-conversation][aria-current=true]").dataset.conversation',
+				),
 				target,
 			);
 			assert.equal(
@@ -64,15 +67,15 @@ test(
 				await page.evaluate('document.activeElement?.getAttribute("aria-label")'),
 				"Toggle conversations",
 			);
-			await page.click('[aria-label="Toggle conversations"]');
-			await page.wait('getComputedStyle(document.querySelector(".sidebar")).display !== "none"');
+			await toggleConversations(page);
 			await page.key("Escape");
-			await page.wait('getComputedStyle(document.querySelector(".sidebar")).display === "none"');
+			await settleFrontend(page);
+			await page.wait('document.querySelector(".sidebar").getBoundingClientRect().right <= 0');
 			assert.equal(
 				await page.evaluate('document.activeElement?.getAttribute("aria-label")'),
 				"Toggle conversations",
 			);
-			assert.equal(m.f.requests.length, 0, "Dismissing navigation must never submit the draft");
+			assert.equal(m.f.requests.length, 0, "Dismissal never submits the draft");
 			assert.equal(m.f.errors.length, 0);
 			const evidence = join(process.env.PAKKA_TEST_ARTIFACTS ?? m.f.root, "mobile-sidebar");
 			await mkdir(evidence, { recursive: true });

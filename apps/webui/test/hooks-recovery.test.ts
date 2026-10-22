@@ -7,6 +7,7 @@ import { runtimeFixture } from "../../../packages/agent/test/runtime-fixture.ts"
 import { startPocket } from "../src/bootstrap.ts";
 import { workspaceHooksExtensionRoot, workspaceHooksService } from "../src/workflows.ts";
 import { ownedBrowser } from "./browser.ts";
+import { toggleConversations, settleFrontend, organizationAction } from "./frontend-controls.ts";
 
 async function setup(loseHandler = false) {
 	const m = await runtimeFixture();
@@ -86,6 +87,8 @@ for (const loss of ["response", "handler"] as const)
 				await page.click("[data-conversation]");
 				await page.click("[data-interface=workspace-hooks-hooks]");
 				await page.wait('document.querySelector("[data-hook-reconcile]")?.disabled===false');
+				await page.wait('document.querySelectorAll("[data-hook-row]").length===1');
+				await settleFrontend(page);
 				await page.click("[data-hook-reconcile]");
 				await page.wait(
 					'!document.querySelector("[data-hook-reconcile]")&&document.querySelectorAll("[data-hook-row]").length===1',
@@ -148,12 +151,13 @@ test(
 			await page.wait('document.querySelector("[data-action=signin]")');
 			await page.click("[data-action=signin]");
 			await page.wait('document.querySelector("[data-conversation]")');
-			await page.click('[aria-label="Toggle conversations"]');
+			await toggleConversations(page);
 			await page.click("[data-conversation]");
 			await page.wait('document.querySelector("[data-interface=workspace-hooks-hooks]")');
-			await page.click('[aria-label="Toggle conversations"]');
+			await toggleConversations(page);
 			await page.click("[data-interface=workspace-hooks-hooks]");
 			await page.wait('document.querySelector("[data-hook-name]")?.disabled===false');
+			await settleFrontend(page);
 			await page.type("[data-hook-name]", "Mobile deploys");
 			await page.type("[data-hook-instructions]", "Explain deploy events. " + "LongInstruction".repeat(40));
 			await page.click("[data-hook-signed]");
@@ -183,7 +187,7 @@ test(
 			assert.equal(f.m.f.requests.length, 0);
 			assert.deepEqual(
 				await page.evaluate(
-					`Array.from(document.querySelectorAll('.pocket-topbar button')).filter(button=>{const r=button.getBoundingClientRect();return r.left<0||r.right>innerWidth||r.top<0||r.bottom>innerHeight||!button.contains(document.elementFromPoint((r.left+r.right)/2,(r.top+r.bottom)/2));}).map(button=>button.dataset.action||button.getAttribute('aria-label')||button.textContent)`,
+					`Array.from(document.querySelectorAll('.mobile-menu')).filter(button=>{const r=button.getBoundingClientRect();return r.left<0||r.right>innerWidth||r.top<0||r.bottom>innerHeight||!button.contains(document.elementFromPoint((r.left+r.right)/2,(r.top+r.bottom)/2));}).map(button=>button.dataset.action||button.getAttribute('aria-label')||button.textContent)`,
 				),
 				[],
 				"Every mobile toolbar control must be visible and hit-testable",
@@ -196,7 +200,7 @@ test(
 			await mkdir(output, { recursive: true });
 			await writeFile(join(output, "mobile-operator.png"), await page.screenshot());
 			t.diagnostic(output);
-			await page.click('[data-action="people"]');
+			await organizationAction(page, "people");
 			await page.wait("document.querySelector('[aria-label=\"Close people\"]')");
 			assert.equal(f.m.f.requests.length, 0);
 		} finally {

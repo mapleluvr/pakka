@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-tiling="on">
+<html lang="en" data-tiling="off">
 	<head>
 		<meta charset="utf-8" />
 		<meta
@@ -7,11 +7,10 @@
 			content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content"
 		/>
 		<meta name="color-scheme" content="dark light" />
-		<meta name="theme-color" content="#1a1b26" />
+		<meta name="theme-color" content="#141414" />
 		<title>Pakka-Pocket</title>
-		<link rel="stylesheet" href="/pocket.css" />
-		<link rel="stylesheet" href="/workbench.css" />
-		<link rel="stylesheet" href="/extensions.css" />
+		<link rel="stylesheet" href="/reference.css" />
+		<link rel="stylesheet" href="/elements.css" />
 		<script type="importmap">
 			{
 				"imports": {
@@ -32,6 +31,192 @@
 		</script>
 	</head>
 	<body>
+		<svg class="svg-defs" aria-hidden="true" focusable="false">
+			<symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></symbol>
+			<symbol id="i-chevron-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" /></symbol>
+			<symbol id="i-chevron-right" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6" /></symbol>
+			<symbol id="i-chevron-left" viewBox="0 0 24 24"><path d="m15 6-6 6 6 6" /></symbol>
+			<symbol id="i-search" viewBox="0 0 24 24">
+				<circle cx="11" cy="11" r="6.5" />
+				<path d="m16 16 4.5 4.5" />
+			</symbol>
+			<symbol id="i-bell" viewBox="0 0 24 24">
+				<path d="M6.5 9.5a5.5 5.5 0 0 1 11 0c0 4 1.5 5.5 1.5 5.5H5s1.5-1.5 1.5-5.5Z" />
+				<path d="M10 19a2.2 2.2 0 0 0 4 0" />
+			</symbol>
+			<symbol id="i-panel" viewBox="0 0 24 24">
+				<rect x="3.5" y="4.5" width="17" height="15" rx="3" />
+				<path d="M9.5 4.5v15" />
+			</symbol>
+			<symbol id="i-user" viewBox="0 0 24 24">
+				<circle cx="12" cy="8" r="3.5" />
+				<path d="M5.5 20a6.5 6.5 0 0 1 13 0" />
+			</symbol>
+			<symbol id="i-automation" viewBox="0 0 24 24">
+				<circle cx="12" cy="12" r="8" />
+				<path d="M12 8v4l2.8 2" />
+			</symbol>
+			<symbol id="i-shield" viewBox="0 0 24 24">
+				<path d="M12 3 5 6v5c0 4.4 3 7.6 7 10 4-2.4 7-5.6 7-10V6l-7-3Z" />
+			</symbol>
+			<symbol id="i-fork" viewBox="0 0 24 24">
+				<circle cx="7" cy="5" r="2.2" />
+				<circle cx="17" cy="5" r="2.2" />
+				<circle cx="12" cy="19" r="2.2" />
+				<path d="M7 7.2v2.3c0 1.4 1 2.5 2.5 2.5h5c1.5 0 2.5-1.1 2.5-2.5V7.2M12 12v4.8" />
+			</symbol>
+			<symbol id="i-book" viewBox="0 0 24 24">
+				<path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H11v16H6.5A2.5 2.5 0 0 0 4 21.5v-16Z" />
+				<path d="M20 5.5A2.5 2.5 0 0 0 17.5 3H13v16h4.5a2.5 2.5 0 0 1 2.5 2.5v-16Z" />
+			</symbol>
+			<symbol id="i-grid" viewBox="0 0 24 24">
+				<rect x="4" y="4" width="6" height="6" rx="1.4" />
+				<rect x="14" y="4" width="6" height="6" rx="1.4" />
+				<rect x="4" y="14" width="6" height="6" rx="1.4" />
+				<rect x="14" y="14" width="6" height="6" rx="1.4" />
+			</symbol>
+			<symbol id="i-more" viewBox="0 0 24 24">
+				<circle cx="5" cy="12" r="1.6" fill="currentColor" stroke="none" />
+				<circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none" />
+				<circle cx="19" cy="12" r="1.6" fill="currentColor" stroke="none" />
+			</symbol>
+			<symbol id="i-folder" viewBox="0 0 24 24">
+				<path
+					d="M3.5 7.5A2.5 2.5 0 0 1 6 5h3.4c.7 0 1.3.3 1.7.9l.8 1.1H18a2.5 2.5 0 0 1 2.5 2.5v6A2.5 2.5 0 0 1 18 18H6a2.5 2.5 0 0 1-2.5-2.5v-8Z"
+				/>
+			</symbol>
+			<symbol id="i-commands" viewBox="0 0 24 24">
+				<rect x="3.75" y="3.75" width="16.5" height="16.5" rx="4" />
+				<path d="M13.8 8.2 10.2 15.8" />
+			</symbol>
+			<symbol id="i-folder-plus" viewBox="0 0 24 24">
+				<path
+					d="M3.5 7.5A2.5 2.5 0 0 1 6 5h3.4c.7 0 1.3.3 1.7.9l.8 1.1H18a2.5 2.5 0 0 1 2.5 2.5v6A2.5 2.5 0 0 1 18 18H6a2.5 2.5 0 0 1-2.5-2.5v-8Z"
+				/>
+				<path d="M12 10.5v5M9.5 13h5" />
+			</symbol>
+			<symbol id="i-clock" viewBox="0 0 24 24">
+				<circle cx="12" cy="12" r="8" />
+				<path d="M12 8v4l2.8 2" />
+			</symbol>
+			<symbol id="i-help" viewBox="0 0 24 24">
+				<circle cx="12" cy="12" r="8.5" />
+				<path d="M9.7 9.3a2.4 2.4 0 0 1 4.6.9c0 1.6-2.3 1.8-2.3 3.5" />
+				<circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none" />
+			</symbol>
+			<symbol id="i-settings" viewBox="0 0 24 24">
+				<circle cx="12" cy="12" r="3" />
+				<path
+					d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.8 2.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6v.2h-4v-.2a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1L4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9A1.7 1.7 0 0 0 3 14H2.8v-4H3a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9L4.2 7 7 4.2l.1.1A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.6v-.2h4V3a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.2v4H21a1.7 1.7 0 0 0-1.6 1Z"
+				/>
+			</symbol>
+			<symbol id="i-mic" viewBox="0 0 24 24">
+				<rect x="9" y="3.5" width="6" height="11" rx="3" />
+				<path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v2.5" />
+			</symbol>
+			<symbol id="i-wave" viewBox="0 0 24 24">
+				<path d="M3 12h2M7 9v6M11 5.5v13M15 8v8M19 10v4M21.5 12H23" />
+			</symbol>
+			<symbol id="i-headphones" viewBox="0 0 24 24">
+				<path d="M4.5 14v-2a7.5 7.5 0 0 1 15 0v2" />
+				<path
+					d="M4.5 13.5h2.2a1 1 0 0 1 1 1v3.6a1 1 0 0 1-1 1H5.5a1 1 0 0 1-1-1zM19.5 13.5h-2.2a1 1 0 0 0-1 1v3.6a1 1 0 0 0 1 1h1.2a1 1 0 0 0 1-1z"
+				/>
+			</symbol>
+			<symbol id="i-arrow-up" viewBox="0 0 24 24"><path d="M12 19V5M6.5 10.5 12 5l5.5 5.5" /></symbol>
+			<symbol id="i-x" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18" /></symbol>
+			<symbol id="i-check" viewBox="0 0 24 24"><path d="m4.5 12.5 5 5L20 7" /></symbol>
+			<symbol id="i-sun" viewBox="0 0 24 24">
+				<circle cx="12" cy="12" r="4" />
+				<path
+					d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4"
+				/>
+			</symbol>
+			<symbol id="i-moon" viewBox="0 0 24 24">
+				<path d="M20 14.5A8.5 8.5 0 0 1 9.5 4 8.5 8.5 0 1 0 20 14.5Z" />
+			</symbol>
+			<symbol id="i-system" viewBox="0 0 24 24">
+				<circle cx="12" cy="12" r="8.5" />
+				<path d="M12 3.5v17" />
+				<path d="M12 3.5a8.5 8.5 0 0 1 0 17" fill="currentColor" stroke="none" />
+			</symbol>
+			<symbol id="i-copy" viewBox="0 0 24 24">
+				<rect x="8.5" y="8.5" width="11" height="11" rx="2.2" />
+				<path d="M15.5 8.5v-2a2 2 0 0 0-2-2h-7a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h2" />
+			</symbol>
+			<symbol id="i-accessibility" viewBox="0 0 24 24">
+				<circle cx="12" cy="5" r="2" />
+				<path d="M5 8.5h14M12 8.5v5M12 13.5 9 20M12 13.5l3 6.5" />
+			</symbol>
+			<symbol id="i-sidebar" viewBox="0 0 24 24">
+				<rect x="3.5" y="4.5" width="17" height="15" rx="3" />
+				<path d="M9.5 4.5v15" />
+			</symbol>
+			<symbol id="i-message" viewBox="0 0 24 24">
+				<path
+					d="M4 6.5A3.5 3.5 0 0 1 7.5 3h9A3.5 3.5 0 0 1 20 6.5v6a3.5 3.5 0 0 1-3.5 3.5H10l-4.5 3.5v-3.6A3.5 3.5 0 0 1 4 12.5v-6Z"
+				/>
+			</symbol>
+			<symbol id="i-git" viewBox="0 0 24 24">
+				<circle cx="6.5" cy="6.5" r="2.2" />
+				<circle cx="17.5" cy="6.5" r="2.2" />
+				<circle cx="12" cy="18" r="2.2" />
+				<path d="M6.5 8.7v1.8c0 1.4 1.1 2.5 2.5 2.5h6c1.4 0 2.5-1.1 2.5-2.5V8.7M12 13v2.8" />
+			</symbol>
+			<symbol id="i-external" viewBox="0 0 24 24">
+				<path d="M14 4h6v6M20 4l-8.5 8.5" />
+				<path d="M18 14v4.5A2.5 2.5 0 0 1 15.5 21h-9A2.5 2.5 0 0 1 4 18.5v-9A2.5 2.5 0 0 1 6.5 7H11" />
+			</symbol>
+			<symbol id="i-gauge" viewBox="0 0 24 24">
+				<path d="M4 18a8 8 0 1 1 16 0" />
+				<path d="m12 14 3.5-3.5" />
+				<circle cx="12" cy="14" r="1.4" fill="currentColor" stroke="none" />
+			</symbol>
+			<symbol id="i-spark" viewBox="0 0 24 24"><path d="m12 3 2 5 5 2-5 2-2 5-2-5-5-2 5-2 2-5Z" /></symbol>
+			<symbol id="i-bar-1" viewBox="0 0 24 24">
+				<path d="M7 18v-3" />
+				<path d="M12 18v-6" />
+				<path d="M17 18v-9" />
+			</symbol>
+			<symbol id="i-bar-2" viewBox="0 0 24 24">
+				<path d="M7 18v-2" />
+				<path d="M12 18v-5" />
+				<path d="M17 18v-8" />
+			</symbol>
+			<symbol id="i-bar-3" viewBox="0 0 24 24">
+				<path d="M7 18v-1" />
+				<path d="M12 18v-4" />
+				<path d="M17 18v-7" />
+			</symbol>
+			<symbol id="i-bar-4" viewBox="0 0 24 24">
+				<path d="M7 18v-4" />
+				<path d="M12 18v-7" />
+				<path d="M17 18v-10" />
+			</symbol>
+			<symbol id="i-paperclip" viewBox="0 0 24 24">
+				<path d="m8 12.5 6.5-6.5a3 3 0 0 1 4.2 4.2l-8.5 8.5a5 5 0 0 1-7-7l8-8" />
+			</symbol>
+			<symbol id="i-terminal" viewBox="0 0 24 24">
+				<rect x="3.5" y="5" width="17" height="14" rx="2.5" />
+				<path d="m7 10 2.5 2L7 14M12 14h5" />
+			</symbol>
+			<symbol id="i-doc" viewBox="0 0 24 24">
+				<path d="M6 3.5h7l5 5v12H6v-17Z" />
+				<path d="M13 3.5v5h5M9 13h6M9 16.5h6" />
+			</symbol>
+			<symbol id="i-branch" viewBox="0 0 24 24">
+				<circle cx="7" cy="5.5" r="2.2" />
+				<circle cx="17" cy="5.5" r="2.2" />
+				<circle cx="7" cy="18.5" r="2.2" />
+				<path d="M7 7.7v8.6M17 7.7v2.1c0 1.5-1.2 2.7-2.7 2.7H9.7" />
+			</symbol>
+			<symbol id="i-logo" viewBox="0 0 24 24">
+				<circle cx="7" cy="6.5" r="4.2" fill="currentColor" stroke="none" />
+				<circle cx="17.4" cy="8" r="3.6" fill="currentColor" stroke="none" />
+				<circle cx="9.2" cy="17.6" r="3.5" fill="currentColor" stroke="none" />
+				<circle cx="18.3" cy="18" r="2.8" fill="currentColor" stroke="none" />
+			</symbol>
+		</svg>
 		<div id="app">
 			<div class="boot" role="status">
 				<div class="boot-mark">P</div>

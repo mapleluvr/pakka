@@ -175,6 +175,7 @@ test(
 			await page.click("[data-mas-reply]");
 			await page.wait('document.querySelector("[data-mas-receipt]")?.textContent.includes("done")');
 			assert.equal(m.f.requests.length, 6);
+			await page.click("[data-member-management]");
 			await page.wait('document.querySelector("[data-mas-retire]")');
 			const hit = await page.evaluate(
 				`(()=>{const e=document.querySelector("[data-mas-retire]"),r=e.getBoundingClientRect(),p=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return {rect:{x:r.x,y:r.y,width:r.width,height:r.height},viewport:{width:innerWidth,height:innerHeight},hit:p?.outerHTML.slice(0,300),animations:document.getAnimations().map(a=>({playState:a.playState,effect:a.effect?.target?.className}))};})()`,
@@ -186,6 +187,9 @@ test(
 			await mkdir(evidence, { recursive: true });
 			await writeFile(join(evidence, "before-retire.json"), JSON.stringify(hit, null, 2));
 			await page.click("[data-mas-retire]");
+			await page.wait('document.querySelector("[data-mas-confirm-retire]")');
+			assert.equal((await mas.view()).members.find((row) => row.key === "board-child")?.phase, "active");
+			await page.click("[data-mas-confirm-retire]");
 			await page.wait('document.querySelector("[data-member-phase]")?.textContent==="retired"');
 			assert.equal((await mas.view()).members.find((row) => row.key === "board-child")!.phase, "retired");
 			assert.equal((await mas.view()).members.find((row) => row.key === "coordinator")!.phase, "active");
@@ -199,7 +203,7 @@ test(
 			await page.click('[data-open-conversation="board-child"]');
 			const childConversation = JSON.stringify(child.ref.conversationId);
 			await page.wait(
-				`Array.from(document.querySelectorAll("[data-conversation]")).some(row => row.dataset.conversation === ${childConversation} && row.classList.contains("selected"))`,
+				`Array.from(document.querySelectorAll("[data-conversation]")).some(row => row.dataset.conversation === ${childConversation} && row.getAttribute("aria-current") === "true")`,
 			);
 			await page.wait('document.querySelector("textarea[name=message]")');
 			assert.equal(m.f.requests.length, 6, "Opening a MAS Conversation does not replay model work");
@@ -230,6 +234,11 @@ test(
 			]) {
 				const mobile = page;
 				await mobile.resize(viewport);
+				// The adopted drawer transitions offscreen after this breakpoint change.
+				// Wait for a real pointer hit; do not remove the reference motion or force drawer state.
+				await mobile.wait(
+					`(()=>{const e=document.querySelector("[data-board-mode=canvas]"),r=e?.getBoundingClientRect();return Boolean(r && e.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2)))})()`,
+				);
 				await mobile.click("[data-board-mode=canvas]");
 				await mobile.wait('document.querySelector("[data-member=coordinator]")');
 				await mobile.evaluate("document.documentElement.style.setProperty('--text-size','24px')");

@@ -4,6 +4,9 @@ import htm from "htm";
 import { Icon } from "@pakka/webui/components";
 import { createExtensionClient } from "@pakka/webui/client";
 import { decodeValue } from "@pakka/webui/extension";
+import { Sheet } from "./sheet.js";
+import { SettingsPage } from "./settings-page.js";
+import { Glyph } from "./frontend.js";
 
 const html = htm.bind(h);
 // Presentation only: bundled tools still use the same public extension slots and permission checks.
@@ -271,10 +274,14 @@ export function useExtensions({ person, target, csrf, notice, error, navigate, o
 	};
 	const controls = registrations.map(
 		(registration) =>
-			html`<section key=${registration.manifest.id} class="pocket-extension-registration">
-				<strong>${registration.manifest.title}</strong><span>${registration.phase}</span>${person?.role ===
-					"admin" &&
-				html`<button
+			html`<section key=${registration.manifest.id} class="settings-card-row pocket-extension-registration">
+				<div class="extension-identity">
+					<strong>${registration.manifest.title}</strong>
+					<div class="extension-phase">${registration.phase}</div>
+				</div>
+				${person?.role === "admin" &&
+				html`<div class="extension-actions">
+					<button
 						onClick=${async () => {
 							try {
 								await client.control(
@@ -297,7 +304,8 @@ export function useExtensions({ person, target, csrf, notice, error, navigate, o
 						}}
 					>
 						Reload
-					</button>`}
+					</button>
+				</div>`}
 			</section>`,
 	);
 	const props = {
@@ -308,20 +316,21 @@ export function useExtensions({ person, target, csrf, notice, error, navigate, o
 		notice: (text) => latest.current.notice(text),
 		navigate: (ref) => latest.current.navigate(ref),
 	};
-	const navigation = (builtIn) =>
+	const navigation = (builtIn, className = "nav-row", search = "") =>
 		registrations
 			.filter((row) => row.phase === "ready" && webuiTools.has(row.manifest.id) === builtIn)
 			.flatMap((registration) =>
 				registration.manifest.interfaces
-					.filter((view) => view.navigation)
+					.filter((view) => view.navigation && view.title.toLowerCase().includes(search.toLowerCase()))
 					.map(
 						(view) =>
 							html`<button
 								key=${registration.manifest.id + view.id}
 								data-interface=${registration.manifest.id + "-" + view.id}
+								class=${className}
 								onClick=${() => open(registration, view.id)}
 							>
-								${view.title}
+								<${Icon} name="board" /><span>${view.title}</span>
 							</button>`,
 					),
 			);
@@ -388,6 +397,10 @@ export function useExtensions({ person, target, csrf, notice, error, navigate, o
 			>
 				Back to ${returnInterface.view.title}
 			</button>`,
+		openCommands: () => {
+			setQuery("");
+			setPalette(true);
+		},
 		workspaceNavigation: navigation(true),
 		navigation: navigation(false),
 		button: html`<button
@@ -403,12 +416,23 @@ export function useExtensions({ person, target, csrf, notice, error, navigate, o
 		overlay: overlay
 			? html`<${HostInterface} key=${overlay.id} instance=${overlay} ...${props} />`
 			: palette
-				? html`<${Container} title="Commands & extensions" modal=${true} close=${() => setPalette(false)}><input aria-label="Find command" value=${query} onInput=${(event) => setQuery(event.currentTarget.value)} placeholder="Find a command" />${commands.filter((row) => (row.command.title + row.command.slash).toLowerCase().includes(query.toLowerCase())).map(({ registration, command }) => html`<button class="pocket-command" data-command=${registration.manifest.id + "-" + command.id} onClick=${() => dispatch(registration, command)}><strong>/${command.slash}</strong><span>${command.title}</span></button>`)}${controls}</${Container}>`
+				? palette === "manage"
+					? html`<${SettingsPage} title="Extensions" category="Workspace" description="Installed extensions available to your current identity. Disabling a UI does not cancel accepted work or delete its history." close=${() => setPalette(false)}><section class="settings-section settings-native"><div class="settings-card extension-manager-list">${controls}</div></section></${SettingsPage}>`
+					: html`<${Sheet} variant="palette" label="Commands & extensions" initialFocus='input[aria-label="Find command"]' close=${() => setPalette(false)}>
+						<div class="palette-search"><${Glyph} name="search" /><input aria-label="Find command" value=${query} onInput=${(event) => setQuery(event.currentTarget.value)} placeholder="Find a command or page…" /></div>
+						<div class="palette-body">
+							<div class="palette-caption">Commands</div>
+							${commands.filter((row) => (row.command.title + row.command.slash).toLowerCase().includes(query.toLowerCase())).map(({ registration, command }) => html`<button class="palette-row pocket-command" data-command=${registration.manifest.id + "-" + command.id} onClick=${() => dispatch(registration, command)}><${Glyph} name="slash" /><strong>/${command.slash}</strong><span>${command.title}</span></button>`)}
+							<div class="palette-caption">Pages</div>${navigation(true, "palette-row", query)}${navigation(false, "palette-row", query)}
+							<button class="palette-row" data-action="manage-extensions" onClick=${() => setPalette("manage")}><${Glyph} name="settings" /><span>Manage extensions…</span></button>
+						</div>
+						<div class="palette-footer"><span><kbd>↑</kbd><kbd>↓</kbd> Navigate</span><button class="palette-footer-right" aria-label="Close commands" onClick=${() => setPalette(false)}><kbd>esc</kbd> Close</button></div>
+					</${Sheet}>`
 				: null,
 	};
 }
 
-function Container({ title, modal, close, children, trigger }) {
+function Container({ title, modal, page, close, children, trigger }) {
 	const root = useRef(null);
 	useEffect(() => {
 		if (!modal) return;
@@ -426,7 +450,7 @@ function Container({ title, modal, close, children, trigger }) {
 		if (modal && event.key === "Tab") {
 			const items = [
 					...root.current.querySelectorAll(
-						'button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),a[href],[tabindex="0"]',
+						'button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),a[href],summary,[tabindex="0"]',
 					),
 				],
 				first = items[0],
@@ -444,6 +468,10 @@ function Container({ title, modal, close, children, trigger }) {
 			}
 		}
 	};
+	if (page)
+		return html`<section class="extension-page" role="region" aria-label=${title} onKeyDown=${keydown}>
+			${children}
+		</section>`;
 	const content = html`<section
 		class=${modal ? "pocket-sheet" : "pocket-extension-surface"}
 		role=${modal ? "dialog" : "region"}
@@ -455,7 +483,7 @@ function Container({ title, modal, close, children, trigger }) {
 	>
 		<header>
 			<h2>${title}</h2>
-			<button class="pocket-icon-button" aria-label=${"Close " + title} onClick=${close}>
+			<button class="icon-btn" aria-label=${"Close " + title} onClick=${close}>
 				<${Icon} name="close" />
 			</button>
 		</header>
@@ -620,5 +648,5 @@ function HostInterface({ instance, client, execute, open, close, notice, navigat
 			});
 		return () => controller.abort();
 	}, [instance.id]);
-	return html`<${Container} title=${instance.view.title} modal=${["sheet", "settings"].includes(instance.view.slot)} trigger=${instance.trigger} close=${() => close(instance.id)}>${failed ? html`<p role="alert">Extension content is unavailable. Reload its registration and reopen.</p>` : component ? html`<${ContentBoundary}><${component} context=${context} /></${ContentBoundary}>` : html`<p role="status">Loading extension…</p>`}</${Container}>`;
+	return html`<${Container} title=${instance.view.title} page=${instance.view.slot === "page"} modal=${["sheet", "settings"].includes(instance.view.slot)} trigger=${instance.trigger} close=${() => close(instance.id)}>${failed ? html`<p role="alert">Extension content is unavailable. Reload its registration and reopen.</p>` : component ? html`<${ContentBoundary}><${component} context=${context} /></${ContentBoundary}>` : html`<p role="status">Loading extension…</p>`}</${Container}>`;
 }

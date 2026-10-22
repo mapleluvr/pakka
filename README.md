@@ -2,22 +2,22 @@
 
 基于 Pi **1.0.3 发布包**和可重建的 Pi Durable 下游补丁 **1.0.3-pakka.1** 的 headless 整合宿主，并提供可选 Pakka-Pocket Web 工作台。默认生产路径为 Durable；AgentSession 用于测试对照。当前配对是 `@pakka/agent@0.5.0`、`@pakka/mas@0.4.0`、可选 `@pakka/mas-devpack@0.2.0`、`@pakka/protocol@0.1.0`、`@pakka/client@0.1.0`、`@pakka/cli@0.1.0` 和 private `@pakka/server@0.5.0`；暂不发布。
 
-Web 工作台已接通普通 Conversation、多人邀请、文件／Git、审批、受控浏览器、Memory、Webhook、定时输入和通知。模型从输入区选择，cwd 从 Conversation 标题下独立选择；字体、字号和配色由 Appearance 调整。用户已确认本机五项功能／交互验收；远程部署、跨平台与 P6 指定审查和最终交付分别跟踪，见 **[当前状态与使用入口](docs/PAKKA-POCKET-STATUS.md)**。
+Web 工作台接入普通 Conversation、多人邀请、文件／Git、审批、受控浏览器、Memory、Webhook、定时输入和通知。前端以 Devin 原型结构/交互为主体接入真实服务；模型在输入区选择，cwd 从 Conversation 标题下独立选择，外观在 Settings 调整。当前固定候选仍有失败和独立验收阻塞，不据旧本机确认宣称 R2 完整通过。接续工作从 **[OVERVIEW](docs/OVERVIEW.md)** 和[实施状态](docs/PAKKA-POCKET-STATUS.md)开始。
 
-MAS DevPack 作为普通插件提供成员列表与操作面板。后续关系图、运行片段和交流日志的对象对应与交互见 [MAS Board 设计草案](docs/MAS-BOARD-DESIGN.md)。安装 WebUI 与装配模型工具相互独立。
+MAS DevPack 作为普通扩展提供 **Team：Graph / Activity / Agents**、成员 inspector、真实 Conversation 导航与获准控制。安装 WebUI 与装配模型工具相互独立。操作见[Team 指南](docs/guides/MAS-BOARD.md)，目标见[前端声明](docs/state/frontend.md#team)；旧 MAS 设计保留为形成材料。
 
-M1–M6 核心迁移和可选产品配对按明确范围验收，见 [应用 API](docs/guides/MAS-APPLICATION-API.md)、[支持矩阵](docs/guides/MAS-PRODUCT-SUPPORT.md)与 [M6 验收](docs/archive/acceptance/MIGRATION-M6-ACCEPTANCE.md)；这些历史验收不包括后续 GUI。Web 迁移的来源、分阶段依赖与开发契约见 [迁移计划](docs/plans/PAKKA-POCKET-PLAN.md)和 [开发规范](docs/development/WEBUI-DEVELOPMENT.md)。DevPack 公共工具与 M3 残余项分别见 [API](docs/reference/MAS-DEVPack-API.md)和 [M3 记录](docs/archive/acceptance/MIGRATION-M3-ACCEPTANCE.md)。
+M1–M6 核心迁移与可选配对保留各自范围，见[应用 API](docs/guides/MAS-APPLICATION-API.md)、[支持矩阵](docs/guides/MAS-PRODUCT-SUPPORT.md)及 [M6 验收](docs/archive/acceptance/MIGRATION-M6-ACCEPTANCE.md)；历史验收不自动覆盖后续 GUI。当前整体预期见 [state](docs/state/README.md)，采用来路见 [changes](docs/changes/README.md)，实现与验证分别记录。DevPack 工具及 M3 残余项仍见[API](docs/reference/MAS-DEVPack-API.md)和[M3 记录](docs/archive/acceptance/MIGRATION-M3-ACCEPTANCE.md)。
 
 它把会话封装、写权、生命周期和一部分 C2 放进同一个运行时，并用真实 Pi + 本地 HTTP provider + JSONL 做交叉测试。**不是完整 Kappa 迁移，也不是 stock Pi TUI/CLI 的替代品。**
 
 ## 文档
 
-**[文档总导航](docs/README.md)** 按当前用途分区：
+**[工作入口](docs/OVERVIEW.md)** · **[完整文档导航](docs/README.md)**。
 
 - 使用：[WebUI 启动与操作](docs/guides/WEBUI-GUIDE.md) · [当前产品状态](docs/PAKKA-POCKET-STATUS.md) · [MAS 应用装配](docs/guides/MAS-APPLICATION-API.md)
 - 接口：[公开 API 参考](docs/reference/README.md) · [Headless 产品支持](docs/guides/MAS-PRODUCT-SUPPORT.md)
 - 开发：[架构、仓库与扩展规范](docs/development/README.md) · [验证工作方式](docs/development/VERIFICATION.md)
-- 设计与计划：[MAS Board 当前草案](docs/MAS-BOARD-DESIGN.md) · [当前实施计划](docs/plans/README.md)
+- 预期与来路：[state](docs/state/README.md) · [changes](docs/changes/README.md) · [完整 OpenSpec 变更](openspec/changes/)
 - 证据：[验证导航](docs/verification/README.md) · [Deprecated 历史资料](docs/archive/README.md)
 
 ## 开发与验证

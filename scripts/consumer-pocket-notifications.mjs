@@ -16,6 +16,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createRuntime } from "@pakka/agent";
 import { ownedBrowser } from "./pocket-browser.ts";
+import { conversationAction, organizationAction, openConversations } from "./frontend-controls.ts";
 
 // Installed-package subject. All providers, TLS keys, people and browser contexts are owned by this run.
 // TLS encryption/service acceptance and CDP-delivered native worker display are distinct assertions.
@@ -266,7 +267,7 @@ try {
 		target = refs[0];
 	assert.ok(target && refs[1]);
 	await owner.allowNotifications();
-	await owner.click("[data-action=notifications]");
+	await conversationAction(owner, "notifications");
 	await owner.wait('document.querySelector("[data-notification-test]")?.disabled===false');
 	await settled(owner);
 	await owner.click("[data-notification-test]");
@@ -309,7 +310,7 @@ try {
 	await rpc(owner, { op: "wait", id: repeated.receipt.id });
 	await until(() => pushes.length === 2);
 	decrypt(1, registered.status.publicKey);
-	await owner.click("[data-action=notifications]");
+	await conversationAction(owner, "notifications");
 	await owner.wait('document.querySelector("[data-notification-kind=chat]")');
 	await settled(owner);
 	await owner.click("[data-notification-kind=chat]");
@@ -350,10 +351,10 @@ try {
 	await viewer.type("input[name=person]", "Mobile viewer");
 	await viewer.click("[data-action=signin]");
 	await viewer.wait('document.querySelector("[data-conversation]")');
-	await viewer.click('[aria-label="Toggle conversations"]');
+	await openConversations(viewer);
 	await viewer.click("[data-conversation]");
 	await viewer.allowNotifications();
-	await viewer.click("[data-action=notifications]");
+	await conversationAction(viewer, "notifications");
 	await viewer.wait('document.querySelector("[data-notification-test]")?.disabled===false');
 	await viewer.evaluate(
 		'navigator.serviceWorker.addEventListener("message",event=>{if(event.data?.type==="pakka.notification")globalThis.__notificationCheck=event.data;})',
@@ -424,7 +425,7 @@ try {
 	assert.equal(typeof viewerIdentity.person.id, "string");
 	await rpc(owner, { op: "person.revoke", id: viewerIdentity.person.id });
 	await viewer.wait('document.querySelector("[data-action=signin]")');
-	await owner.click("[data-action=logout]");
+	await organizationAction(owner, "logout");
 	await owner.wait('document.querySelector("[data-action=signin]")');
 	await owner.wait(
 		"(async()=>{const r=await navigator.serviceWorker.ready;return(await r.getNotifications()).length===0;})()",

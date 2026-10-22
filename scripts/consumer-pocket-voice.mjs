@@ -5,6 +5,7 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { ownedBrowser } from "./pocket-browser.ts";
+import { organizationAction, openConversations } from "./frontend-controls.ts";
 
 // This consumer is copied beside the packed product and imports no workspace source.
 const root = dirname(fileURLToPath(import.meta.url));
@@ -172,7 +173,7 @@ try {
 	await owner.wait('document.querySelector("main").innerText.includes("INSTALLED-VOICE-ANSWER")');
 	assert.equal(requests.length, 1);
 	assert.match(JSON.stringify(requests[0].messages), /Start installed words final end/);
-	await owner.click("[data-action=people]");
+	await organizationAction(owner, "people");
 	await owner.wait('document.querySelector("[data-action=invite]")');
 	await owner.click("[data-action=invite]");
 	await owner.wait('document.querySelector("input[name=inviteLink]")?.value.includes("#invite=")');
@@ -182,7 +183,7 @@ try {
 	await viewer.type("input[name=person]", "Installed voice viewer");
 	await viewer.click("[data-action=signin]");
 	await viewer.wait('document.querySelector("[data-conversation]")');
-	await viewer.click('[aria-label="Toggle conversations"]');
+	await openConversations(viewer);
 	await viewer.click("[data-conversation]");
 	await viewer.wait('document.querySelector("main").innerText.includes("INSTALLED-VOICE-ANSWER")');
 	assert.equal(await viewer.evaluate('Boolean(document.querySelector("[data-dictate]"))'), false);

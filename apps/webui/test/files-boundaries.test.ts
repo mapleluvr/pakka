@@ -7,6 +7,7 @@ import { runtimeFixture } from "../../../packages/agent/test/runtime-fixture.ts"
 import { startPocket } from "../src/bootstrap.ts";
 import { ownedBrowser } from "./browser.ts";
 import { workspaceFilesExtensionRoot, workspaceFilesService } from "../src/workflows.ts";
+import { settleFrontend, toggleConversations } from "./frontend-controls.ts";
 import type { PocketServiceContext } from "@pakka/webui/backend";
 
 type Page = Awaited<ReturnType<Awaited<ReturnType<typeof ownedBrowser>>["page"]>>;
@@ -18,16 +19,11 @@ async function click(page: Page, selector: string) {
 }
 async function openFiles(page: Page) {
 	await page.wait('document.querySelector("[data-conversation]")');
-	if (await page.evaluate("innerWidth<700")) {
-		await click(page, '[aria-label="Toggle conversations"]');
-		await page.wait('document.querySelector(".drawer-open")');
-	}
+	if (await page.evaluate("innerWidth<768")) await toggleConversations(page);
 	await click(page, "[data-conversation]");
-	if (await page.evaluate("innerWidth<700")) {
-		await click(page, '[aria-label="Toggle conversations"]');
-		await page.wait('document.querySelector(".drawer-open")');
-	}
+	if (await page.evaluate("innerWidth<768")) await toggleConversations(page);
 	await click(page, "[data-interface=workspace-files-files]");
+	await settleFrontend(page);
 	await page.wait('document.querySelector("[data-workspace-files]")');
 	await page.wait('getComputedStyle(document.querySelector("[data-workspace-files]")).display==="grid"');
 	await page.wait(`document.querySelector('[data-file-path="readme.txt"]')`);

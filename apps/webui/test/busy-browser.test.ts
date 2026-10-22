@@ -7,6 +7,7 @@ import { runtimeFixture } from "../../../packages/agent/test/runtime-fixture.ts"
 import { deferred } from "../../../packages/agent/test/fixture.ts";
 import { startPocket } from "../src/bootstrap.ts";
 import { ownedBrowser } from "./browser.ts";
+import { inputMode } from "./frontend-controls.ts";
 
 test(
 	"Pocket busy browser: after native admission the user can steer and follow up while original inference is blocked",
@@ -48,9 +49,7 @@ test(
 				["steer", "NATIVE-STEER"],
 				["followUp", "NATIVE-FOLLOWUP"],
 			]) {
-				await page.evaluate(
-					`(()=>{const select=document.querySelector("select[aria-label='Input mode']");select.value=${JSON.stringify(mode)};select.dispatchEvent(new Event("change",{bubbles:true}));})()`,
-				);
+				await inputMode(page, mode as "steer" | "followUp");
 				await page.type("textarea", message!);
 				await page.wait('document.querySelector("[data-action=send]")?.disabled === false');
 				await page.click("[data-action=send]");

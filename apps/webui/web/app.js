@@ -17,11 +17,13 @@ import {
 	clearDirectoryPreferences,
 } from "./conversation-configuration.js";
 import { Notifications, clearNotifications } from "./notifications.js";
-import { useDictation, MicButton } from "./voice.js";
+import { useDictation } from "./voice.js";
 import { Sheet } from "./sheet.js";
-import { Icon } from "@pakka/webui/components";
 import { ConversationSettings } from "./navigation.js";
 import { Appearance, readAppearance, applyAppearance } from "./appearance.js";
+import { Frontend, Glyph } from "./frontend.js";
+import { NativeComposer } from "./native-composer.js";
+import { SettingsPage } from "./settings-page.js";
 
 const html = htm.bind(h);
 const csrf = () => /(?:^|; )pakka_csrf=([A-Za-z0-9_-]{43})(?:;|$)/.exec(document.cookie)?.[1] ?? null;
@@ -44,55 +46,65 @@ function Message({ message, onDraft }) {
 	const content =
 		typeof message.content === "string" ? [{ type: "text", text: message.content }] : message.content;
 	return html`<article
-		class=${message.role === "user" ? "user-row" : "pocket-message"}
+		class=${message.role === "user" ? "message message-user" : "message message-agent"}
 		data-role=${message.role}
 	>
-		<div class="pocket-message-role">
-			${message.role === "user"
-				? "You"
-				: message.role === "assistant"
-					? "Agent"
-					: (message.toolName ?? "Tool")}
+		<div class=${"message-avatar " + (message.role === "user" ? "user-avatar" : "agent-avatar")}>
+			<${Glyph}
+				name=${message.role === "user" ? "user" : "logo"}
+				className=${message.role === "user" ? "icon" : "logo-mark"}
+			/>
 		</div>
-		${content.map((part, i) =>
-			part.type === "text"
-				? html`<div key=${i} class="markdown" dangerouslySetInnerHTML=${{ __html: markdown(part.text) }} />`
-				: part.type === "thinking"
-					? html`<details key=${i}>
-							<summary>Reasoning</summary>
-							<pre>${part.thinking}</pre>
-						</details>`
-					: part.type === "toolCall"
-						? html`<details key=${i} class="tool-card">
-								<summary>${part.name}</summary>
-								<pre>${JSON.stringify(part.arguments, null, 2)}</pre>
+		<div class="message-content">
+			<div class="message-byline">
+				<strong>
+					${message.role === "user"
+						? "You"
+						: message.role === "assistant"
+							? "Agent"
+							: (message.toolName ?? "Tool")}
+				</strong>
+			</div>
+			${content.map((part, i) =>
+				part.type === "text"
+					? html`<div key=${i} class="markdown" dangerouslySetInnerHTML=${{ __html: markdown(part.text) }} />`
+					: part.type === "thinking"
+						? html`<details key=${i}>
+								<summary>Reasoning</summary>
+								<pre>${part.thinking}</pre>
 							</details>`
-						: part.type === "image" && /^image\/(png|jpeg|webp|gif)$/.test(part.mimeType)
-							? html`<img
-									key=${i}
-									class="pocket-image"
-									alt="Conversation attachment"
-									src=${"data:" + part.mimeType + ";base64," + part.data}
-								/>`
-							: null,
-		)}
-		${message.role === "assistant" &&
-		message.errorMessage &&
-		html`<p class="pocket-error" data-message-error>${message.errorMessage}</p>`}
-		${message.role === "user" &&
-		onDraft &&
-		html`<button
-			data-action="use-draft"
-			onClick=${() =>
-				onDraft(
-					content
-						.filter((part) => part.type === "text")
-						.map((part) => part.text)
-						.join("\n"),
-				)}
-		>
-			Use as draft
-		</button>`}
+						: part.type === "toolCall"
+							? html`<details key=${i} class="tool-card">
+									<summary>${part.name}</summary>
+									<pre>${JSON.stringify(part.arguments, null, 2)}</pre>
+								</details>`
+							: part.type === "image" && /^image\/(png|jpeg|webp|gif)$/.test(part.mimeType)
+								? html`<img
+										key=${i}
+										class="pocket-image"
+										alt="Conversation attachment"
+										src=${"data:" + part.mimeType + ";base64," + part.data}
+									/>`
+								: null,
+			)}
+			${message.role === "assistant" &&
+			message.errorMessage &&
+			html`<p class="pocket-error" data-message-error>${message.errorMessage}</p>`}
+			${message.role === "user" &&
+			onDraft &&
+			html`<button
+				data-action="use-draft"
+				onClick=${() =>
+					onDraft(
+						content
+							.filter((part) => part.type === "text")
+							.map((part) => part.text)
+							.join("\n"),
+					)}
+			>
+				Use as draft
+			</button>`}
+		</div>
 	</article>`;
 }
 function App() {
@@ -101,7 +113,6 @@ function App() {
 		[titles, setTitles] = useState({}),
 		[states, setStates] = useState({}),
 		[pendingNavigation, setPendingNavigation] = useState({}),
-		[query, setQuery] = useState(""),
 		[showArchived, setShowArchived] = useState(false),
 		[find, setFind] = useState(""),
 		[historyEntries, setHistoryEntries] = useState([]),
@@ -124,7 +135,12 @@ function App() {
 	const [receipt, setReceipt] = useState(null),
 		[retry, setRetry] = useState(null),
 		[drawer, setDrawer] = useState(false),
+		[collapsed, setCollapsed] = useState(false),
+		[searchQuery, setSearchQuery] = useState(""),
+		[creationSource, setCreationSource] = useState(null),
+		[creationAttempt, setCreationAttempt] = useState(null),
 		[newName, setNewName] = useState("");
+	const creationCommand = useRef(null);
 	const drawerToggle = useRef(null);
 	const dismissDrawer = () => {
 		setDrawer(false);
@@ -187,6 +203,10 @@ function App() {
 		setReceipt(null);
 		setRetry(null);
 		setDraft("");
+		creationCommand.current = null;
+		setCreationAttempt(null);
+		setCreationSource(null);
+		setNewName("");
 	};
 	const error = (failure) => {
 		if (failure.code === "UNAUTHORIZED" || failure.code === "FORBIDDEN") {
@@ -240,6 +260,24 @@ function App() {
 			mounted.current = false;
 		};
 	}, []);
+	useEffect(() => {
+		if (!person) return;
+		const shortcut = (event) => {
+			if (event.defaultPrevented || event.altKey || !(event.ctrlKey || event.metaKey)) return;
+			if (event.key.toLowerCase() === "k") {
+				event.preventDefault();
+				searchConversations();
+			} else if (event.key.toLowerCase() === "b") {
+				event.preventDefault();
+				if (matchMedia("(max-width: 767px)").matches) {
+					if (drawer) dismissDrawer();
+					else setDrawer(true);
+				} else setCollapsed(!collapsed);
+			}
+		};
+		window.addEventListener("keydown", shortcut);
+		return () => window.removeEventListener("keydown", shortcut);
+	}, [person?.id, collapsed, drawer]);
 	useLayoutEffect(() => {
 		setView(null);
 		setShared(null);
@@ -414,6 +452,66 @@ function App() {
 		select(archived ? null : ref);
 		if (archived) notify("Archive hides navigation only; it does not cancel admitted work.");
 	}
+	function home() {
+		setCreationSource(selected ?? creationSource);
+		extensions.leave();
+		select(null);
+		setDrawer(false);
+	}
+	async function createdConversation(ref, command, binding) {
+		if (creationCommand.current !== command) return;
+		creationCommand.current = null;
+		setCreationAttempt(null);
+		setNewName("");
+		await refresh();
+		if (!mounted.current || resourceContext.current !== binding) return;
+		extensions.leave();
+		select(ref);
+		setDrawer(false);
+	}
+	async function createConversation(event) {
+		event.preventDefault();
+		if (working || creationCommand.current || !newName.trim()) return;
+		const source = selected ?? creationSource,
+			binding = resourceContext.current,
+			command = {
+				op: "create",
+				requestId: crypto.randomUUID(),
+				name: newName,
+				profile: source?.profile ?? "default",
+				...(source ? { inherit: source } : {}),
+			};
+		creationCommand.current = command;
+		setCreationAttempt({ command });
+		await run(async () => {
+			try {
+				const created = await client.request(command);
+				await createdConversation(created.ref, command, binding);
+			} catch (failure) {
+				if (failure.outcome === "denied" && creationCommand.current === command) {
+					creationCommand.current = null;
+					setCreationAttempt(null);
+				}
+				throw failure;
+			}
+		});
+	}
+	async function checkCreation() {
+		const command = creationCommand.current,
+			binding = resourceContext.current;
+		if (!command || working) return;
+		await run(async () => {
+			const result = await client.request({ op: "conversation.lookup", original: command });
+			if (creationCommand.current !== command) return;
+			if (result.result) await createdConversation(result.result, command, binding);
+			else setCreationAttempt({ command, missing: true });
+		});
+	}
+	function searchConversations() {
+		setSearchQuery("");
+		setDrawer(false);
+		openSheet("search");
+	}
 	async function earlier() {
 		const binding = resourceContext.current,
 			cursor = historyCursor === undefined ? view?.olderBeforeId : historyCursor;
@@ -514,323 +612,89 @@ function App() {
 				${notice && html`<p role="alert">${notice}</p>`}
 			</section>
 		</main>`;
-	return html`<div
-		class=${"layout pocket-workbench" + (drawer ? " drawer-open" : "")}
-		onKeyDown=${(event) => {
-			if (drawer && event.key === "Escape" && !event.defaultPrevented) {
-				event.preventDefault();
-				dismissDrawer();
-			}
+	return html`<${Frontend}
+		person=${person} refs=${refs} titles=${titles} states=${states} selected=${selected} view=${view} extensions=${extensions}
+		drawer=${drawer} collapsed=${collapsed} drawerToggle=${drawerToggle} dismissDrawer=${dismissDrawer}
+		home=${home} choose=${(ref) => {
+			extensions.leave();
+			select(ref);
+			setDrawer(false);
+		}} search=${searchConversations}
+		openSheet=${(route) => {
+			if (route === "collapse-sidebar") setCollapsed(true);
+			else if (route === "expand-sidebar") setCollapsed(false);
+			else if (route === "toggle-drawer") setDrawer(!drawer);
+			else openSheet(route);
 		}}
-	>
-		${drawer &&
-		html`<button
-			type="button"
-			class="pocket-drawer-backdrop"
-			aria-label="Close conversations"
-			onClick=${dismissDrawer}
-		/>`}
-		<aside class="sidebar window" id="pocket-sidebar">
-			<div class="pocket-side-head">
-				<strong>Pakka-Pocket</strong><span class="pocket-person">${person.name} · ${person.role}</span>
-			</div>
-			<div class="pocket-navigation-tools">
-				<input
-					aria-label="Find conversations"
-					type="search"
-					value=${query}
-					onInput=${(event) => setQuery(event.currentTarget.value)}
-					placeholder="Find conversations"
-				/>
-				<label
-					><input
-						type="checkbox"
-						data-action="show-archived"
-						checked=${showArchived}
-						onChange=${(event) => setShowArchived(event.currentTarget.checked)}
-					/>
-					Show archived</label
-				>
-				<button class="button" onClick=${() => void run(refresh)}>Refresh conversations</button>
-			</div>
-			<nav class="pocket-nav" aria-label="Conversations">
-				${refs
-					.filter(
-						(ref) =>
-							(showArchived || !states[ref.conversationId]?.archived) &&
-							title(ref).toLocaleLowerCase().includes(query.toLocaleLowerCase()),
-					)
-					.map(
-						(ref) =>
-							html`<button
-								key=${ref.key}
-								data-conversation=${ref.conversationId}
-								class=${selected?.key === ref.key ? "selected" : ""}
-								onClick=${() => {
-									extensions.leave();
-									select(ref);
-									setDrawer(false);
-								}}
-							>
-								<${Icon} name="conversation" />
-								<span>${title(ref)}${states[ref.conversationId]?.archived ? " · Archived" : ""}</span>
-							</button>`,
-					)}
-			</nav>
-			${(extensions.workspaceNavigation.length > 0 || extensions.navigation.length > 0) &&
-			html`<div class="pocket-tool-navigation" role="region" aria-label="Tools and extensions" tabindex="0">
-				${extensions.workspaceNavigation.length > 0 &&
-				html`<nav class="pocket-nav" aria-label="WebUI">
-					<h2>WebUI</h2>
-					${extensions.workspaceNavigation}
-				</nav>`}
-				${extensions.navigation.length > 0 &&
-				html`<nav class="pocket-nav" aria-label="Extensions">
-					<h2>Extensions</h2>
-					${extensions.navigation}
-				</nav>`}
-			</div>`}
-			${canDrive &&
-			html`<form
-				class="pocket-new"
-				onSubmit=${(event) => {
-					event.preventDefault();
-					void run(async () => {
-						const created = await client.request({
-							op: "create",
-							requestId: crypto.randomUUID(),
-							name: newName,
-							profile: selected?.profile ?? "default",
-							...(selected ? { inherit: selected } : {}),
-						});
-						setNewName("");
-						extensions.leave();
-						await refresh();
-						select(created.ref);
-						setDrawer(false);
-					});
-				}}
-			>
-				<input
-					aria-label="New conversation name"
-					value=${newName}
-					placeholder="New conversation"
-					onInput=${(event) => setNewName(event.currentTarget.value)}
-					required
-				/><button
-					class="button pocket-icon-button"
-					type="submit"
-					aria-label="Create conversation"
-					title="Create conversation"
+		showPeople=${showPeople} showCollaboration=${showCollaboration} refresh=${() => void run(refresh)}
+		signOut=${() =>
+			void run(async () => {
+				await client.request({ op: "session.logout" });
+				clearDirectoryPreferences(person);
+				invalidate();
+				setPerson(null);
+			})}
+		historyFind=${find} setHistoryFind=${setFind}
+		canDrive=${canDrive} configuration=${configuration} newName=${newName} setNewName=${setNewName}
+		createConversation=${createConversation} working=${working} creationAttempt=${creationAttempt}
+		transcript=${html`<div
+			class="conversation-scroll"
+			ref=${scroll}
+			onScroll=${(event) => {
+				const node = event.currentTarget;
+				follow.current = node.scrollHeight - node.scrollTop - node.clientHeight < 80;
+			}}
+		>
+			<div class="message-list">
+				${olderCursor &&
+				html`<button
+					class="pill-btn"
+					data-action="show-earlier"
 					disabled=${working}
+					onClick=${() => void earlier()}
 				>
-					<${Icon} name="plus" />
-				</button>
-			</form>`}
-			<div class="pocket-side-foot">
-				<button
-					data-action="appearance"
-					onClick=${() => {
-						setDrawer(false);
-						openSheet("appearance");
-					}}
-				>
-					Appearance</button
-				><button
-					data-action="logout"
-					onClick=${() =>
-						void run(async () => {
-							await client.request({ op: "session.logout" });
-							clearDirectoryPreferences(person);
-							invalidate();
-							setPerson(null);
-						})}
-				>
-					Sign out
-				</button>
+					Show earlier history
+				</button>`}
+				${!view
+					? html`<p role="status">Connecting…</p>`
+					: visibleEntries.map(
+							(entry) =>
+								html`<section key=${entry.id} data-entry=${entry.id}>
+									${entry.display
+										? html`<aside class="tool-card">
+												<div class="tool-card-head">
+													${entry.display.kind === "chat" ? "Team chat" : "Card"}
+												</div>
+												<p>${entry.display.text}</p>
+											</aside>`
+										: entry.messages.map(
+												(message, index) =>
+													html`<${Message}
+														key=${index}
+														message=${message}
+														onDraft=${canSend ? useDraft : undefined}
+													/>`,
+											)}
+								</section>`,
+						)}
+				${view?.live.message && html`<${Message} message=${view.live.message} />`}${view?.live.tools.map(
+					(tool) =>
+						html`<div class="tool-card">
+							<div class="tool-card-head">${tool.name} · ${tool.status}</div>
+							${tool.output && html`<pre>${tool.output}</pre>`}
+						</div>`,
+				)}
 			</div>
-		</aside>
-		<main class="pane window">
-			<header class="topbar pocket-topbar">
-				<button
-					class="pocket-menu pocket-icon-button"
-					aria-label="Toggle conversations"
-					aria-controls="pocket-sidebar"
-					aria-expanded=${drawer}
-					ref=${drawerToggle}
-					onClick=${() => setDrawer(!drawer)}
-				>
-					<${Icon} name="menu" />
-				</button>
-				<div class="pocket-heading">
-					<div class="pocket-title">${selected ? title(selected) : "Your workspace"}</div>
-					${selected &&
-					html`<button
-						type="button"
-						class="pocket-directory-trigger"
-						data-action="cwd"
-						aria-label=${"Working directory: " + (configuration?.current?.cwd ?? "Loading")}
-						title=${configuration?.current?.cwd ?? ""}
-						disabled=${!configuration?.canConfigure}
-						onClick=${() => openSheet("directory")}
-					>
-						<${Icon} name="folder" /><span>${configuration?.current?.cwd ?? "Loading directory…"}</span>
-					</button>`}
-				</div>
-				${extensions.back}
-				<span class="pocket-status">${view?.live.busy ? "Working" : view ? "Ready" : ""}</span>${selected &&
-				html`<button data-action="conversation" onClick=${() => openSheet("conversation")}>
-						Conversation
-					</button>
-					<button data-action="settings" onClick=${() => openSheet("configuration")}>Settings</button>
-					<button data-action="notifications" onClick=${() => openSheet("notifications")}>
-						Notifications
-					</button>
-					<button data-action="collaboration" onClick=${showCollaboration}>
-						Team
-					</button>`}${extensions.button}${person.role === "admin" &&
-				html`<button data-action="people" onClick=${showPeople}>People & invites</button>`}
-			</header>
-			${extensions.page && extensions.surface}
-			<div
-				class="scroller"
-				ref=${scroll}
-				hidden=${extensions.page}
-				onScroll=${(event) => {
-					const node = event.currentTarget;
-					follow.current = node.scrollHeight - node.scrollTop - node.clientHeight < 80;
-				}}
-			>
-				${selected
-					? html`<div class="transcript">
-							<label class="pocket-history-find"
-								>Find loaded history<input
-									type="search"
-									aria-label="Find loaded history"
-									value=${find}
-									onInput=${(event) => setFind(event.currentTarget.value)}
-							/></label>
-							${olderCursor &&
-							html`<button
-								class="button"
-								data-action="show-earlier"
-								disabled=${working}
-								onClick=${() => void earlier()}
-							>
-								Show earlier history
-							</button>`}
-							${find &&
-							html`<p role="status">
-								${visibleEntries.length} matching loaded entries. Earlier unread history is not searched.
-							</p>`}
-							${!view
-								? html`<p role="status">Connecting…</p>`
-								: visibleEntries.map(
-										(entry) =>
-											html`<section key=${entry.id} data-entry=${entry.id}>
-												${entry.display
-													? html`<aside class="pocket-display">
-															<span>${entry.display.kind === "chat" ? "Team chat" : "Card"}</span>
-															<p>${entry.display.text}</p>
-														</aside>`
-													: entry.messages.map(
-															(message, index) =>
-																html`<${Message}
-																	key=${index}
-																	message=${message}
-																	onDraft=${canSend ? useDraft : undefined}
-																/>`,
-														)}
-											</section>`,
-									)}${view?.live.message &&
-							html`<${Message} message=${view.live.message} />`}${view?.live.tools.map(
-								(tool) =>
-									html`<div class="tool-card">
-										${tool.name} · ${tool.status}${tool.output && html`<pre>${tool.output}</pre>`}
-									</div>`,
-							)}
-						</div>`
-					: html`<div class="pocket-welcome">
-							<div class="pocket-brand">P</div>
-							<h1>Your agents, together.</h1>
-							<p>Select a conversation or start a new one.</p>
-						</div>`}
-				${!extensions.page && extensions.surface}
-			</div>
-			${selected &&
-			!extensions.page &&
-			html`<div class="composer-wrap pocket-composer">
-				<div class="pocket-model-bar">
-					<button
-						type="button"
-						class="pocket-model-trigger"
-						data-action="model"
-						aria-haspopup="dialog"
-						disabled=${!configuration?.canConfigure}
-						onClick=${() => openSheet("model")}
-					>
-						<span>${configuration?.current?.model ?? "Loading model…"}</span><${Icon} name="chevron" />
-					</button>
-				</div>
-				<form class="composer" onSubmit=${send}>
-					<textarea
-						ref=${composer}
-						name="message"
-						maxlength="8192"
-						aria-label="Message"
-						rows="3"
-						value=${draft}
-						placeholder=${canSend ? "Message your agent…" : "Read-only commands…"}
-						onInput=${(event) => setDraft(event.currentTarget.value)}
-					/>
-					${dictation.available &&
-					html`<p id="pocket-dictation-help" class="pocket-dictation-help" data-dictation-help>
-						Browser speech recognition is provided by this browser. Review the draft before sending.
-					</p>`}
-					${draft.trimStart().startsWith("/") && extensions.suggestions(draft, () => setDraft(""))}
-					<div class="composer-row">
-						<select
-							aria-label="Input mode"
-							value=${mode}
-							onChange=${(event) => setMode(event.currentTarget.value)}
-						>
-							<option value="prompt" disabled=${!canSend}>Prompt</option>
-							${canDrive &&
-							html`<option value="steer">Steer</option>
-								<option value="followUp">Follow up</option>`}
-							<option value="chat">Team chat</option></select
-						>${canDrive &&
-						view?.live.busy &&
-						html`<button
-							type="button"
-							onClick=${() => void run(() => client.request({ op: "abort", target: selected }))}
-						>
-							Stop
-						</button>`}<button
-							class="button primary"
-							data-action="send"
-							type="submit"
-							disabled=${(mode !== "chat" && !canInput && !draft.trimStart().startsWith("/")) ||
-							working ||
-							!view ||
-							(mode === "prompt" && view?.live.busy && !draft.trimStart().startsWith("/"))}
-						>
-							Send
-						</button>
-					</div>
-					<div class="pocket-composer-meta">
-						<${MicButton} dictation=${dictation} />
-						<span class="pocket-usage"
-							>${view ? view.usage.totalTokens.toLocaleString() + " tokens" : ""}</span
-						>
-					</div>
-				</form>
-				${receipt &&
-				html`<div class="pocket-receipt" role="status">
-					${receipt.status} · ${receipt.id.slice(0, 12)}
-					${receipt.status === "queued" &&
+		</div>`}
+		composer=${html`<${NativeComposer} inputRef=${composer} draft=${draft} setDraft=${setDraft} mode=${mode} setMode=${setMode} canSend=${canSend} canDrive=${canDrive} canInput=${canInput} working=${working} view=${view} send=${send} abort=${() => void run(() => client.request({ op: "abort", target: selected }))} model=${configuration?.current?.model} canConfigure=${configuration?.canConfigure} configureModel=${() => openSheet("model")} dictation=${dictation} suggestions=${extensions.suggestions(draft, () => setDraft(""))}>
+			${
+				receipt &&
+				html`<div class="composer-annotation pocket-receipt" role="status">
+					${receipt.status} ·
+					${receipt.id.slice(0, 12)}${receipt.status === "queued" &&
 					canSend &&
 					html`<button
+						class="pill-btn"
 						disabled=${working}
 						onClick=${() =>
 							void run(async () => {
@@ -841,90 +705,143 @@ function App() {
 					>
 						Withdraw original input
 					</button>`}
-				</div>`}${retry &&
-				html`<button onClick=${() => void run(() => submit(retry))}>Retry original request</button>`}
-			</div>`}
-			${notice &&
-			html`<div class="pocket-notice" role="alert">
-				${notice}<button class="pocket-icon-button" aria-label="Dismiss notice" onClick=${() => notify("")}>
-					<${Icon} name="close" />
+				</div>`
+			}
+			${retry && html`<button class="pill-btn" onClick=${() => void run(() => submit(retry))}>Retry original request</button>`}
+		</${NativeComposer}>`}
+		recovery=${creationAttempt && html`<div class="creation-recovery" role="status"><span>${creationAttempt.missing ? "No committed result is visible. Nothing was replayed; new creation stays blocked in this page." : "New conversation result is unconfirmed. Check the original request before creating another."}</span><button class="pill-btn" data-action="check-creation" disabled=${working} onClick=${checkCreation}>Check original creation</button></div>`}
+		notice=${
+			notice &&
+			html`<div class="toast" role="alert">
+				${notice}<button class="icon-btn" aria-label="Dismiss notice" onClick=${() => notify("")}>
+					<${Glyph} name="x" />
 				</button>
-			</div>`}
-		</main>
+			</div>`
+		}
+	>
 		${extensions.overlay} ${sheet === "appearance" && html`<${Appearance} close=${() => openSheet(null)} />`}
-		${sheet === "conversation" &&
-		selected &&
-		html`<${ConversationSettings}
-			key=${contextKey}
-			target=${selected}
-			name=${title(selected)}
-			state=${states[selected.conversationId] ?? { version: 0, archived: false }}
-			entries=${allEntries}
-			canManage=${person.role === "admin"}
-			client=${client}
-			changed=${navigationChanged}
-			refresh=${refresh}
-			pending=${pendingNavigation[contextKey] ?? null}
-			setPending=${(command) => setPendingNavigation((previous) => ({ ...previous, [contextKey]: command }))}
-			close=${() => openSheet(null)}
-			error=${error}
-		/>`}
-		${sheet === "notifications" &&
-		selected &&
-		html`<${Notifications}
-			key=${person.id + ":" + selected.key + ":" + selected.incarnation}
-			target=${selected}
-			person=${person}
-			client=${client}
-			close=${() => openSheet(null)}
-			error=${error}
-		/>`}
-		${(sheet === "model" || sheet === "directory") &&
-		selected &&
-		configuration &&
-		html`<${sheet === "model" ? ModelPicker : DirectoryPicker}
-			key=${person.id + ":" + selected.key + ":" + selected.incarnation}
-			target=${selected}
-			person=${person}
-			value=${configuration}
-			client=${client}
-			busy=${view?.live.busy ?? true}
-			applied=${configurationApplied}
-			close=${() => openSheet(null)}
-			error=${error}
-		/>`}
-		${sheet === "configuration" &&
-		selected &&
-		html`<${Configuration}
-			key=${person.id + ":" + selected.key + ":" + selected.incarnation}
-			target=${selected}
-			client=${client}
-			busy=${view?.live.busy ?? true}
-			applied=${configurationApplied}
-			close=${() => openSheet(null)}
-			error=${error}
-		/>`}
-		${sheet === "collaboration" &&
-		selected &&
-		shared &&
-		html`<${Collaboration}
-			key=${selected.conversationId + ":" + selected.incarnation}
-			person=${person}
-			target=${selected}
-			client=${client}
-			snapshot=${shared}
-			updated=${setShared}
-			notice=${notify}
-			error=${error}
-			close=${() => openSheet(null)}
-		/>`}
-		${sheet === "people" &&
-		html`<${Sheet} label="People and invitations" close=${() => openSheet(null)}>
-				<header>
-					<h2>People & invitations</h2>
-					<button class="pocket-icon-button" aria-label="Close people" onClick=${() => openSheet(null)}><${Icon} name="close" /></button>
-				</header>
-				<div class="pocket-sheet-body">
+		${
+			sheet === "search" &&
+			html`<${Sheet} variant="palette" label="Search conversations" initialFocus='input[type="search"]' close=${() => openSheet(null)}>
+			<div class="palette-search"><${Glyph} name="search" /><input type="search" aria-label="Search conversations" placeholder="Type a command or search…" value=${searchQuery} onInput=${(event) => setSearchQuery(event.currentTarget.value)} /></div>
+			<div class="palette-body">
+				${refs
+					.filter(
+						(ref) =>
+							(showArchived || !states[ref.conversationId]?.archived) &&
+							title(ref).toLocaleLowerCase().includes(searchQuery.toLocaleLowerCase()),
+					)
+					.map(
+						(ref) =>
+							html`<button
+								class="palette-row"
+								data-search-conversation=${ref.conversationId}
+								onClick=${() => {
+									extensions.leave();
+									select(ref);
+									openSheet(null);
+								}}
+							>
+								<${Glyph} name="message" /><span
+									>${title(ref)}${states[ref.conversationId]?.archived ? " · Archived" : ""}</span
+								>
+							</button>`,
+					)}
+				<div class="palette-caption">Actions</div>
+				<button class="palette-row" onClick=${() => {
+					openSheet(null);
+					home();
+				}}><${Glyph} name="plus" /><span>New session</span></button>
+				<button class="palette-row" data-action="commands" onClick=${() => {
+					openSheet(null);
+					extensions.openCommands();
+				}}><${Glyph} name="commands" /><span>Commands & extensions</span></button>
+				<button class="palette-row" onClick=${() => openSheet("appearance")}><${Glyph} name="system" /><span>Appearance…</span></button>
+				<label class="palette-row"><input type="checkbox" data-action="show-archived" checked=${showArchived} onChange=${(event) => setShowArchived(event.currentTarget.checked)} />Show archived sessions</label>
+			</div><div class="palette-footer"><span><kbd>↑</kbd><kbd>↓</kbd> Navigate</span><span><kbd>esc</kbd> Close</span><span class="palette-footer-right"><kbd>↵</kbd> Select</span></div>
+		</${Sheet}>`
+		}
+		${
+			sheet === "conversation" &&
+			selected &&
+			html`<${ConversationSettings}
+				key=${contextKey}
+				target=${selected}
+				name=${title(selected)}
+				state=${states[selected.conversationId] ?? { version: 0, archived: false }}
+				entries=${allEntries}
+				canManage=${person.role === "admin"}
+				client=${client}
+				changed=${navigationChanged}
+				refresh=${refresh}
+				pending=${pendingNavigation[contextKey] ?? null}
+				setPending=${(command) =>
+					setPendingNavigation((previous) => ({ ...previous, [contextKey]: command }))}
+				close=${() => openSheet(null)}
+				error=${error}
+			/>`
+		}
+		${
+			sheet === "notifications" &&
+			selected &&
+			html`<${Notifications}
+				key=${person.id + ":" + selected.key + ":" + selected.incarnation}
+				target=${selected}
+				person=${person}
+				client=${client}
+				close=${() => openSheet(null)}
+				error=${error}
+			/>`
+		}
+		${
+			(sheet === "model" || sheet === "directory") &&
+			selected &&
+			configuration &&
+			html`<${sheet === "model" ? ModelPicker : DirectoryPicker}
+				key=${person.id + ":" + selected.key + ":" + selected.incarnation}
+				target=${selected}
+				person=${person}
+				value=${configuration}
+				client=${client}
+				busy=${view?.live.busy ?? true}
+				applied=${configurationApplied}
+				close=${() => openSheet(null)}
+				error=${error}
+			/>`
+		}
+		${
+			sheet === "configuration" &&
+			selected &&
+			html`<${Configuration}
+				key=${person.id + ":" + selected.key + ":" + selected.incarnation}
+				target=${selected}
+				client=${client}
+				busy=${view?.live.busy ?? true}
+				applied=${configurationApplied}
+				close=${() => openSheet(null)}
+				error=${error}
+			/>`
+		}
+		${
+			sheet === "collaboration" &&
+			selected &&
+			shared &&
+			html`<${Collaboration}
+				key=${selected.conversationId + ":" + selected.incarnation}
+				person=${person}
+				target=${selected}
+				client=${client}
+				snapshot=${shared}
+				updated=${setShared}
+				notice=${notify}
+				error=${error}
+				close=${() => openSheet(null)}
+			/>`
+		}
+		${
+			sheet === "people" &&
+			html`<${SettingsPage} title="People & invitations" label="People and invitations" category="Workspace" icon="user" closeLabel="Close people" close=${() => openSheet(null)} description="People with access, their roles and one-use invitations.">
+				<div class="settings-card settings-native-fields">
 					${people?.people.map(
 						(p) =>
 							html`<div class="pocket-person-row">
@@ -992,8 +909,9 @@ function App() {
 						>`
 					}
 				</div>
-		</${Sheet}>`}
-	</div>`;
+		</${SettingsPage}>`
+		}
+	</${Frontend}>`;
 }
 const root = document.getElementById("app");
 root.replaceChildren();

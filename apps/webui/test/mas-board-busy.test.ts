@@ -7,6 +7,7 @@ import { runtimeFixture } from "../../../packages/agent/test/runtime-fixture.ts"
 import { deferred, text } from "../../../packages/agent/test/fixture.ts";
 import { startPocket } from "../src/bootstrap.ts";
 import { ownedBrowser } from "./browser.ts";
+import { masInputMode } from "./frontend-controls.ts";
 
 // Human Board commands must enter native steer/follow-up/abort, never a serial prompt substitute.
 test(
@@ -56,7 +57,13 @@ test(
 			await page.wait('document.querySelector("[data-interface=mas-devpack-board]")');
 			await page.click("[data-interface=mas-devpack-board]");
 			await page.wait('document.querySelector("[data-member=busy-member]")');
+			assert.equal(
+				await page.evaluate('Boolean(document.querySelector(".workspace-home"))'),
+				false,
+				"Opening MAS Board from home must not overlay Board controls with the home header",
+			);
 			await page.click("[data-member=busy-member]");
+			await page.wait('document.querySelector("[data-agent-details]")');
 			await page.click("[data-agent-details]");
 			await page.click("[data-agent-controls=busy-member]");
 			await page.wait('document.querySelector("textarea[name=masMessage]")');
@@ -77,9 +84,7 @@ test(
 				["followUp", "BOARD-NATIVE-FOLLOWUP"],
 			]) {
 				const previous = await page.evaluate('document.querySelector("[data-mas-receipt]").textContent');
-				await page.evaluate(
-					`(()=>{const e=document.querySelector(".mas-member select");e.value=${JSON.stringify(mode)};e.dispatchEvent(new Event("change",{bubbles:true}));})()`,
-				);
+				await masInputMode(page, mode as "steer" | "followUp");
 				await page.type("textarea[name=masMessage]", message!);
 				await page.click("[data-mas-send]");
 				await page.wait(
@@ -93,9 +98,7 @@ test(
 			assert.match(JSON.stringify(m.f.requests.slice(1)), /BOARD-NATIVE-STEER/);
 			assert.match(JSON.stringify(m.f.requests.slice(1)), /BOARD-NATIVE-FOLLOWUP/);
 			const previous = m.f.requests.length;
-			await page.evaluate(
-				'(()=>{const e=document.querySelector(".mas-member select");e.value="prompt";e.dispatchEvent(new Event("change",{bubbles:true}));})()',
-			);
+			await masInputMode(page, "prompt");
 			await page.type("textarea[name=masMessage]", "BOARD-ABORT");
 			await page.click("[data-mas-send]");
 			await page.wait(
@@ -103,6 +106,7 @@ test(
 			);
 			await t.waitFor(() => assert.equal(aborting, true), { timeout: 5000, interval: 10 });
 			assert.equal(m.f.requests.length, previous + 1);
+			await page.click("[data-member-management]");
 			await page.click("[data-mas-abort]");
 			await page.wait('/aborted/.test(document.querySelector("[data-mas-receipt]")?.textContent)');
 			assert.equal(

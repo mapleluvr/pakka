@@ -1,4 +1,4 @@
-import { h, type TargetedKeyboardEvent, type TargetedPointerEvent } from "preact";
+import { Fragment, h, type TargetedKeyboardEvent, type TargetedPointerEvent } from "preact";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import { Icon } from "@pakka/webui/components";
 import type { WebInterfaceProps } from "@pakka/webui/ui";
@@ -23,7 +23,8 @@ const moveOffsets: Readonly<Record<string, readonly [number, number]>> = {
 };
 const viewPrefix = "pakka.mas-board.view.v2";
 const resourceKey = (ref: WorkbenchMember["ref"]) => JSON.stringify([ref.sessionId, ref.conversationId]);
-const stylesheet = () => h("link", { rel: "stylesheet", href: new URL("board.css", import.meta.url).href });
+const stylesheet = (handlers: { onLoad: () => void; onError: () => void }) =>
+	h("link", { rel: "stylesheet", href: new URL("board.css", import.meta.url).href, ...handlers });
 const storedString = (key: string, fallback: string) => {
 	try {
 		return localStorage.getItem(key) ?? fallback;
@@ -85,10 +86,10 @@ function EdgeShape({
 	label: string;
 	onActivate: () => void;
 }) {
-	const x1 = from.x + 250,
-		y1 = from.y + 65,
+	const x1 = from.x + 224,
+		y1 = from.y + 64,
 		x2 = to.x,
-		y2 = to.y + 65;
+		y2 = to.y + 64;
 	const labelX = (x1 + x2) / 2,
 		labelY = (y1 + y2) / 2 - 42;
 	const d =
@@ -201,19 +202,29 @@ function AgentCard({
 /** Relationship and exchange projections are read-only; member controls remain in MemberPanel. */
 export function GraphBoard({ context }: WebInterfaceProps) {
 	const [snapshot, setSnapshot] = useState<WorkbenchView | null>(null);
+	const [styleState, setStyleState] = useState<"loading" | "ready" | "failed">("loading");
 	useEffect(
 		() => context.subscribe("view", {}, (value) => setSnapshot(readBoard(value)), { intervalMs: 700 }),
 		[context],
 	);
-	if (!snapshot)
+	// Keep the same link mounted across snapshot/loading transitions. Mounting
+	// controls first can move them between pointer measurement and native press.
+	const styleLink = stylesheet({
+		onLoad: () => setStyleState("ready"),
+		onError: () => setStyleState("failed"),
+	});
+	if (styleState === "failed")
 		return h(
-			"section",
-			{ class: "board mas-board graph-board" },
-			stylesheet(),
-			h("p", null, "Loading team…"),
+			Fragment,
+			null,
+			styleLink,
+			h("p", { role: "alert" }, "Team appearance could not load. Refresh to try again."),
 		);
+	if (styleState !== "ready")
+		return h(Fragment, null, styleLink, h("p", { role: "status" }, "Loading team appearance…"));
+	if (!snapshot) return h(Fragment, null, styleLink, h("p", { role: "status" }, "Loading team…"));
 	const viewKey = `${viewPrefix}:${JSON.stringify([context.extension, context.person.id, snapshot.sessionId])}`;
-	return h(GraphView, { key: viewKey, viewKey, context, snapshot });
+	return h(Fragment, null, styleLink, h(GraphView, { key: viewKey, viewKey, context, snapshot }));
 }
 
 function GraphView({
@@ -273,6 +284,15 @@ function GraphView({
 	const [phase, setPhase] = useState(() => storedString(`${viewKey}.phase`, "all"));
 	const [zoom, setZoom] = useState(() => storedZoom(viewKey));
 	const scrollArea = useRef<HTMLDivElement>(null);
+	const optionsRoot = useRef<HTMLDetailsElement>(null);
+	useEffect(() => {
+		const outside = (event: PointerEvent) => {
+			const menu = optionsRoot.current;
+			if (menu?.open && !event.composedPath().includes(menu)) menu.open = false;
+		};
+		window.addEventListener("pointerdown", outside, true);
+		return () => window.removeEventListener("pointerdown", outside, true);
+	}, []);
 	const pan = useRef<{
 		readonly pointerId: number;
 		readonly x: number;
@@ -359,12 +379,10 @@ function GraphView({
 	}, [hidden]);
 	useEffect(() => {
 		try {
-			selected
-				? localStorage.setItem(`${viewKey}.selected`, selected)
-				: localStorage.removeItem(`${viewKey}.selected`);
-			selectedEdge
-				? localStorage.setItem(`${viewKey}.edge`, selectedEdge)
-				: localStorage.removeItem(`${viewKey}.edge`);
+			if (selected) localStorage.setItem(`${viewKey}.selected`, selected);
+			else localStorage.removeItem(`${viewKey}.selected`);
+			if (selectedEdge) localStorage.setItem(`${viewKey}.edge`, selectedEdge);
+			else localStorage.removeItem(`${viewKey}.edge`);
 		} catch {
 			/* View preference storage is optional. */
 		}
@@ -568,41 +586,48 @@ function GraphView({
 			onInput: (event: InputEvent) => setQuery((event.currentTarget as HTMLInputElement).value),
 		}),
 	);
-	const header = h(
-		"header",
-		{ class: "board-head" },
-		h(
-			"div",
-			{ class: "board-title" },
-			h(
-				"h2",
-				{
-					title: `${visibleMembers.length} of ${members.length} Agents shown · ${snapshot?.namespace ?? "Loading"}`,
-				},
-				h(Icon, { name: "board" }),
-				"MAS team",
-			),
-			h(
-				"div",
-				{ class: "board-sub" },
-				`${visibleMembers.length} of ${members.length} Agents shown · ${snapshot?.namespace ?? "Loading"}`,
-			),
-		),
+	const heading = h(
+		"div",
+		{ class: "board-title" },
+		h("h1", null, "Team"),
+		h("span", { class: "board-sub", title: snapshot.namespace }, snapshot.namespace),
 	);
 	const tabs = h(
 		"nav",
-		{ class: "board-tabs", "aria-label": "MAS views" },
-		(["relationships", "history"] as const).map((value) =>
-			h(
-				"button",
-				{
-					"data-board-tab": value,
-					class: screen === value ? "on" : "",
-					"aria-pressed": screen === value,
-					onClick: () => setScreen(value),
+		{ class: "board-tabs segmented", "aria-label": "MAS views" },
+		h(
+			"button",
+			{
+				"data-board-tab": "relationships",
+				"data-board-mode": "canvas",
+				"aria-pressed": screen === "relationships" && mode === "canvas",
+				onClick: () => {
+					setScreen("relationships");
+					setMode("canvas");
 				},
-				value === "relationships" ? "Graph" : "Log",
-			),
+			},
+			"Graph",
+		),
+		h(
+			"button",
+			{
+				"data-board-tab": "history",
+				"aria-pressed": screen === "history",
+				onClick: () => setScreen("history"),
+			},
+			"Activity",
+		),
+		h(
+			"button",
+			{
+				"data-board-mode": "list",
+				"aria-pressed": screen === "relationships" && mode === "list",
+				onClick: () => {
+					setScreen("relationships");
+					setMode("list");
+				},
+			},
+			"Agents",
 		),
 	);
 	const graphToolbar = h(
@@ -817,62 +842,76 @@ function GraphView({
 					"div",
 					{ class: "graph-selection-title" },
 					h("strong", null, selectedMember.key),
-					h("span", null, membershipLabel(selectedMember.phase)),
 					h(
 						"button",
-						{ onClick: clearSelection, "aria-label": "Close selection" },
+						{ class: "icon-btn", onClick: clearSelection, "aria-label": "Close selection" },
 						h(Icon, { name: "close" }),
 					),
 				),
+				h("span", { class: "member-phase" }, membershipLabel(selectedMember.phase)),
 				h(
 					"button",
-					{ "data-open-conversation": selectedMember.key, onClick: () => openConversation(selectedMember) },
+					{
+						class: "member-open pill-btn",
+						"data-open-conversation": selectedMember.key,
+						onClick: () => openConversation(selectedMember),
+					},
 					"Open Conversation",
 				),
-				selectedMember.phase === "retired" &&
+				h("h3", null, "Latest activity"),
+				h(
+					"p",
+					{ class: "member-latest" },
+					activityText(activities.get(resourceKey(selectedMember.ref)), selectedMember.phase),
+				),
+				h(
+					"dl",
+					{ class: "graph-provenance" },
+					h("dt", null, "Created by"),
+					h("dd", null, selectedMember.creator ?? (selectedMember.creationKnown ? "Host" : "Not recorded")),
+					h("dt", null, "Managed by"),
 					h(
-						"button",
-						{
-							"data-hide-agent": selectedMember.key,
-							onClick: () => {
-								setHiddenAgents(new Set([...hiddenAgents, resourceKey(selectedMember.ref)]));
-								clearSelection();
-							},
-						},
-						"Hide from Board",
+						"dd",
+						null,
+						selectedMember.parent ?? (selectedMember.owner === context.person.id ? "You" : "Not visible"),
 					),
+					selectedMember.forkSource && [
+						h("dt", null, "History from"),
+						h("dd", null, selectedMember.forkSource),
+					],
+				),
 				h(
 					"details",
-					null,
-					h("summary", { "data-agent-details": true }, "Agent details"),
+					{ class: "member-options" },
+					h("summary", { "data-agent-details": true }, "More"),
 					h(
-						"dl",
-						{ class: "graph-provenance" },
-						h("dt", null, "Created by"),
-						h("dd", null, selectedMember.creator ?? (selectedMember.creationKnown ? "Host" : "Not recorded")),
-						h("dt", null, "Managed by"),
+						"div",
+						{ class: "member-option-items" },
 						h(
-							"dd",
-							null,
-							selectedMember.parent ?? (selectedMember.owner === context.person.id ? "You" : "Not visible"),
+							"button",
+							{
+								"data-agent-controls": selectedMember.key,
+								onClick: () => context.open("member", { target: selectedMember.ref }),
+							},
+							"Member controls…",
 						),
-						selectedMember.forkSource && [
-							h("dt", null, "History from"),
-							h("dd", null, selectedMember.forkSource),
-						],
-					),
-					h(
-						"button",
-						{
-							"data-agent-controls": selectedMember.key,
-							onClick: () => context.open("member", { target: selectedMember.ref }),
-						},
-						"Agent controls",
-					),
-					h(
-						"button",
-						{ "data-hide-member-links": selectedMember.key, onClick: () => hideMember(selectedMember.key) },
-						"Hide Agent links",
+						h(
+							"button",
+							{ "data-hide-member-links": selectedMember.key, onClick: () => hideMember(selectedMember.key) },
+							"Hide communication links",
+						),
+						selectedMember.phase === "retired" &&
+							h(
+								"button",
+								{
+									"data-hide-agent": selectedMember.key,
+									onClick: () => {
+										setHiddenAgents(new Set([...hiddenAgents, resourceKey(selectedMember.ref)]));
+										clearSelection();
+									},
+								},
+								"Hide from Board",
+							),
 					),
 				),
 			)
@@ -880,7 +919,21 @@ function GraphView({
 			? h(
 					"aside",
 					{ class: "graph-selection", "aria-label": "Connection selected" },
-					h("strong", null, `${selectedConnection.kind === "creation" ? "Creation" : "Communication"} link`),
+					h(
+						"div",
+						{ class: "graph-selection-title" },
+						h(
+							"strong",
+							null,
+							selectedConnection.kind === "creation" ? "Creation link" : "Communication link",
+						),
+						h(
+							"button",
+							{ class: "icon-btn", onClick: clearSelection, "aria-label": "Close selection" },
+							h(Icon, { name: "close" }),
+						),
+					),
+					h("p", null, `${selectedConnection.from} → ${selectedConnection.to}`),
 					h(
 						"button",
 						{
@@ -890,12 +943,7 @@ function GraphView({
 						"Hide this link",
 					),
 					selectedConnection.kind === "communication" &&
-						h("button", { onClick: () => filterPair(selectedConnection) }, "View exchanges"),
-					h(
-						"button",
-						{ onClick: clearSelection, "aria-label": "Close selection" },
-						h(Icon, { name: "close" }),
-					),
+						h("button", { onClick: () => filterPair(selectedConnection) }, "View activity"),
 				)
 			: null;
 	const memberList = h(
@@ -919,40 +967,44 @@ function GraphView({
 	);
 	const viewOptions = h(
 		"details",
-		{ class: "graph-view-options" },
-		h("summary", { "data-board-options": true }, "View options"),
-		graphToolbar,
-	);
-	const viewMode = h(
-		"div",
-		{ class: "graph-view-mode", role: "group", "aria-label": "Relationship presentation" },
-		(["canvas", "list"] as const).map((value) =>
-			h(
-				"button",
-				{ "data-board-mode": value, "aria-pressed": mode === value, onClick: () => setMode(value) },
-				value === "canvas" ? "Canvas" : "List",
-			),
+		{
+			class: "graph-view-options",
+			ref: optionsRoot,
+			onKeyDown: (event: KeyboardEvent) => {
+				if (event.key !== "Escape" || !optionsRoot.current?.open) return;
+				event.preventDefault();
+				event.stopPropagation();
+				optionsRoot.current.open = false;
+				optionsRoot.current.querySelector<HTMLElement>("summary")?.focus();
+			},
+		},
+		h(
+			"summary",
+			{ class: "icon-btn", "data-board-options": true, "aria-label": "View options", title: "View options" },
+			h(Icon, { name: "menu" }),
 		),
 		h(
-			"button",
-			{
-				"data-reset-layout": true,
-				"aria-label": "Reset layout",
-				title: "Reset layout",
-				onClick: () => {
-					setSavedPositions({});
-					setZoom(1);
+			"div",
+			{ class: "board-options-menu" },
+			graphToolbar,
+			h(
+				"button",
+				{
+					class: "layout-reset",
+					"data-reset-layout": true,
+					onClick: () => {
+						setSavedPositions({});
+						setZoom(1);
+					},
 				},
-			},
-			h(Icon, { name: "reset" }),
+				"Reset layout",
+			),
 		),
 	);
 	const relationshipScreen = h(
 		"div",
 		{ class: "graph-layout" },
-		viewMode,
-		viewOptions,
-		mode === "list" ? memberList : canvas,
+		h("div", { class: "graph-stage" }, mode === "list" ? memberList : canvas),
 		selection,
 	);
 	const historyFilter = (
@@ -1123,9 +1175,7 @@ function GraphView({
 	return h(
 		"section",
 		{ class: "board mas-board graph-board", "aria-label": "MAS team" },
-		stylesheet(),
-		header,
-		tabs,
+		h("header", { class: "board-head" }, heading, tabs, viewOptions),
 		screen === "relationships" ? relationshipScreen : historyScreen,
 	);
 }

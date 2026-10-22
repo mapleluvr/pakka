@@ -1,0 +1,12 @@
+{
+  "startedAt": "2026-10-21T07:16:02.6674985Z",
+  "node": "v24.15.0",
+  "tests": [
+    "apps/webui/test/mas-stylesheet-browser.test.ts"
+  ],
+  "head": "623ae6be57691f714a5ce641ea4c6da20388eef2",
+  "dirty": [
+    " M apps/webui/test/frontend-controls.ts",
+    "?? apps/webui/test/mas-stylesheet-browser.test.ts"
+  ]
+}

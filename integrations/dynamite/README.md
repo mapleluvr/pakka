@@ -26,7 +26,7 @@ npm run test:dynamite
 
 `summary.status` 为 `passed`、`blocked` 或运行中的 `running`；任何安装、声明、host smoke 或行为断言失败都返回非零 exit。门禁自身有 8 项失败先行回归，要求完整 6 项行为检查全部通过，拒绝 missing/duplicate TAP counts、减少用例、todo/skip/cancelled 或不一致的 pass 总数。**不能通过删除失败断言、标记 todo/skip 或把已知失败改成 expected success 来放行 M0。**
 
-当前第一组回归覆盖编号、reduce/flush、64/128 cap 的压缩候选与 wire adoption、reload/reopen 和缺失权限的零 dispatch。源 edit/ABA、unknown-storage 及其他组合回归仍是 [M0 退出条件](../../docs/archive/plans/MONOREPO-MIGRATION-PLAN.md)，本目录初始回归不代表完整 M0 已通过。
+当前第一组回归覆盖编号、reduce/flush、64/128 cap 的压缩候选与 wire adoption、reload/reopen 和缺失权限的零 dispatch。源 edit/ABA、unknown-storage 及其他组合回归仍是 [保留的失败配对与恢复条件](../../docs/archive/investigations/DEFERRED-DYNAMITE-COMPATIBILITY.md)，本目录初始回归不代表完整 M0 已通过。
 
 ## 核心迁移后的可选产品配对（独立候选）
 

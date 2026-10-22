@@ -12,7 +12,7 @@ The operator selected one product package, UI adoption without old data import, 
 | Native commands        | `mapleluvr/pi-pocket@2cb652c465f670ba8c66fc3ee639798caca8afbc`  | Phase 1 in issue #35 / PR #36; human dispatch, toast/card and operation semantics       |
 | Native interfaces      | `mapleluvr/pi-pocket@58a4fdcc88ed755023aea9fac897735fca7396fe`  | Phase 2 stacked on Phase 1; custom Preact content, generation-bound RPC/assets          |
 | Accepted Pakka runtime | `@pakka/agent@0.5.0`, Durable `1.0.3-pakka.1`                   | Public controlled ports and append-only compatibility record remain authoritative       |
-| Existing product pair  | `docs/verification/DYNAMITE-PRODUCT-ACCEPTANCE.md`                           | Optional static-member composition only; GUI does not expand that pairing automatically |
+| Existing product pair  | `docs/verification/DYNAMITE-PRODUCT-ACCEPTANCE.md`              | Optional static-member composition only; GUI does not expand that pairing automatically |
 
 Read-only proposal research is under `artifacts/research/pi-pocket/`; executable P0 evidence is under `artifacts/pakka-pocket/p0/`, with [versioned source checks and notices](../../../integrations/pocket/README.md). These are not an installed or accepted product. P0 measured the unmodified main tree independently on Windows: install/check pass; 548 tests = 378 pass + 40 fail + 130 skip. Failures/skips stay recorded and are not promoted to Pakka acceptance. Phase 2 is a separate Durable `1.0.2` branch whose parent is Phase 1; it does not contain the main Durable `1.1.0` UI baseline. Source/tree/license checks and the common ancestor are fixed in `integrations/pocket/source-lock.json`.
 
@@ -128,7 +128,7 @@ Closing or disabling the UI removes its contributions/subscriptions, not members
 
 ## Migration Plan
 
-Execute P0–P6 in [the preparation plan](../../../docs/plans/PAKKA-POCKET-PLAN.md), using [WebUI development rules](../../../docs/development/WEBUI-DEVELOPMENT.md). Each stage first adds real failing boundary cases, then minimal implementation and affected gates. P2 created `@pakka/webui` with its actual executable, assets and installed consumers. Do not archive this change as implemented until the actual product and all required scenarios pass.
+Execute P0–P6 in [the original preparation plan backup](../../../docs/verification/DOCUMENTATION-CLEANUP.md#备份与恢复), using [WebUI development rules](../../../docs/development/WEBUI-DEVELOPMENT.md). Each stage first adds real failing boundary cases, then minimal implementation and affected gates. P2 created `@pakka/webui` with its actual executable, assets and installed consumers. Do not archive this change as implemented until the actual product and all required scenarios pass.
 
 Rollout uses an explicit new product entry/data directory and opt-in extension configuration. Headless v1 and accepted artifact identities remain available. Normal reopen restores durable business and people records but issues fresh runtime authority. Reverting code does not undo writes, model/tool effects, redeemed invites or consumed quota; version migrations and recovery must retain receipts and refuse uncertain state. Disabling MAS UI is not a resource rollback.
 

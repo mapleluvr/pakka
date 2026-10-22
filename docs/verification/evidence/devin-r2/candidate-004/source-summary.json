@@ -1,0 +1,62 @@
+{
+  "sourceCommit": "6d359b13d1b81c29f47495d303c1ed6afe4d0bb2",
+  "archivedAt": "2026-10-21T08:03:54.4232264Z",
+  "fixedSnapshot": true,
+  "gateResults": {
+    "wide": {
+      "fail": 3,
+      "pass": 121,
+      "cancelled": 1,
+      "tests": 125,
+      "skipped": 0
+    },
+    "supplement": "5/5 passed; does not replace failed pipeline",
+    "full": {
+      "fail": 5,
+      "pass": 542,
+      "cancelled": 6,
+      "tests": 555,
+      "skipped": 2
+    },
+    "package": "FAILED at pocket-controlled, exit=null"
+  },
+  "packageArchives": [
+    {
+      "sha256": "6e0bc4341e6d1d9d084b13da890ef541ec59ca396e513c487aff11ac92c863de",
+      "file": "pakka-agent-0.5.0.tgz"
+    },
+    {
+      "sha256": "9ceffdafe3e966c75c2210549530fb642bf585a789145dfaab57dfa99df70ed1",
+      "file": "pakka-cli-0.1.0.tgz"
+    },
+    {
+      "sha256": "41574c598b84f5625dbfa4f19cdb2496abbd9ab0839d2a49fc189e989852e54e",
+      "file": "pakka-client-0.1.0.tgz"
+    },
+    {
+      "sha256": "81d49e8e56a6a8cf05a719813188cc3cd7bed14d75ae9b843b034743164c3823",
+      "file": "pakka-mas-0.4.0.tgz"
+    },
+    {
+      "sha256": "5dd3e586776068905ad57b64835d2bdb73359d2dce45cad18055fecd4aedbdbb",
+      "file": "pakka-mas-devpack-0.2.0.tgz"
+    },
+    {
+      "sha256": "761c05454ddc179951b4779f5823ad4f5359f6023d4777556e10cebb623425c5",
+      "file": "pakka-protocol-0.1.0.tgz"
+    },
+    {
+      "sha256": "de42090206305358865c03d72f333a8783fec3f72f5d721e1b4297771cce1c32",
+      "file": "pakka-server-0.5.0.tgz"
+    },
+    {
+      "sha256": "5817575d7a09720d272bd45e445faf7dfda8e9499c4680716e6a1132bb869463",
+      "file": "pakka-webui-0.1.0.tgz"
+    }
+  ],
+  "notes": [
+    "Raw files are copied byte-for-byte. files.json is a SHA-256 inventory, not an independent verification.",
+    "The main control is partial, not a full baseline suite. Its captured run.json states its separate source identity.",
+    "The full pack.log is not archived because it is a redundant large npm transcript; per-package and consumer logs are archived. tgz payloads remain in the recorded local consumer; only their digests are portable here."
+  ]
+}

@@ -6,6 +6,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createRuntime } from "@pakka/agent";
 import { ownedBrowser } from "./pocket-browser.ts";
+import { conversationAction, openConversations } from "./frontend-controls.ts";
 const root = dirname(fileURLToPath(import.meta.url)),
 	requests = [],
 	errors = [];
@@ -180,7 +181,7 @@ try {
 	assert.ok(ref);
 	await click(owner, `[data-conversation="${ref.conversationId}"]`);
 	await owner.wait('document.querySelector("[data-action=send]")?.disabled===false');
-	await click(owner, "[data-action=collaboration]");
+	await conversationAction(owner, "collaboration");
 	await owner.wait('document.querySelector("textarea[name=teamChat]")');
 	await owner.type("textarea[name=teamChat]", "INSTALLED-HUMAN-CHAT-CANARY");
 	await click(owner, "[data-action=post-chat]");
@@ -278,7 +279,7 @@ try {
 	assert.equal(requests.length, 2);
 	await viewer.navigate(info.origin);
 	await viewer.wait('document.querySelectorAll("[data-conversation]").length===1');
-	await click(viewer, '[aria-label="Toggle conversations"]');
+	await openConversations(viewer);
 	await click(viewer, "[data-conversation]");
 	await viewer.wait('document.querySelector("[data-action=send]")');
 	const people = await rpc(owner, { op: "people" }),

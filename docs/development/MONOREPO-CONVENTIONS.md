@@ -2,7 +2,7 @@
 
 状态：当前采用的仓库规范。`@pakka/agent` 保留现名；agent、MAS、DevPack、protocol/client、server/CLI 和 WebUI 均已有实际消费者。
 
-当前契约见 [ARCHITECTURE.md](ARCHITECTURE.md)、[API 参考](../reference/README.md)和源码；实施范围见[当前计划](../plans/README.md)，实际完成情况见[产品状态](../PAKKA-POCKET-STATUS.md)。历史迁移和验收保存在[归档](../archive/README.md)，各自只覆盖记录的 commit、产物和范围。
+当前契约见 [ARCHITECTURE.md](ARCHITECTURE.md)、[API 参考](../reference/README.md)和源码；实施范围见[工作入口](../OVERVIEW.md)，实际完成情况见[产品状态](../PAKKA-POCKET-STATUS.md)。历史迁移和验收保存在[归档](../archive/README.md)，各自只覆盖记录的 commit、产物和范围。
 
 ## 1. 目录与命名
 
@@ -30,7 +30,7 @@ pakka/
 └── @pakka/dynamite             宿主无关 engine + Pakka adapter
 ```
 
-上图对应现有组件。后续 package/app 的建立继续以实际消费者和可执行路径为依据；产品范围见 [PAKKA-POCKET-PLAN.md](../plans/PAKKA-POCKET-PLAN.md)。`pakka-si` 保持独立范围。
+上图对应现有组件。后续 package/app 的建立继续以实际消费者和可执行路径为依据；产品范围见 [产品预期](../state/product.md)。`pakka-si` 保持独立范围。
 
 `packages/` 放可复用库及 extension；`apps/` 放可执行产品与 composition root。Pakka-Pocket 采用单一产品包 `@pakka/webui`，不另造空 SDK 包；可通过纯 public SDK 子路径供 extension peer 消费，边界见下节。只有真实应用加入时才扩展 workspace、构建和检查范围。进程部署拓扑由应用明确选择，与 package/repository 的数量无关。
 

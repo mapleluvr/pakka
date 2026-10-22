@@ -5,6 +5,7 @@ import { decodePocketResponse } from "@pakka/protocol/pocket";
 import { runtimeFixture } from "../../../packages/agent/test/runtime-fixture.ts";
 import { startPocket } from "../src/bootstrap.ts";
 import { ownedBrowser } from "./browser.ts";
+import { newConversation } from "./frontend-controls.ts";
 
 test(
 	"Pocket failed input: an unavailable recipient refuses new admission while its original receipt and spent attempts remain",
@@ -126,8 +127,7 @@ test(
 			assert.equal(await page.evaluate('document.querySelector(".pocket-receipt").textContent'), receipt);
 			assert.equal(m.f.requests.length, 1);
 			assert.equal(app.runtime.view().budget.primaryAttempts, 1);
-			await page.type("input[aria-label='New conversation name']", "Fresh project");
-			await page.click(".pocket-new button");
+			await newConversation(page, "Fresh project");
 			await page.wait('document.querySelector(".pocket-title")?.textContent.includes("Fresh project")');
 			await page.wait('document.querySelector("[data-action=send]")?.disabled === false');
 			await page.type("textarea[name=message]", "EXPLICIT-FRESH-INPUT", { replace: true });

@@ -1,51 +1,41 @@
-# MAS Board 使用
+# MAS Board / Team 使用
 
-MAS Board 由 `@pakka/mas-devpack` 的 Backend、WebUI 和 Client facets 提供。宿主显式启用这些 facets 并组装 MAS 服务后，侧栏的 Extensions 中出现 **MAS team**。界面沿用当前 Appearance 字体、字号与配色。
+宿主显式安装 MAS DevPack 的 Backend/WebUI/Client facets 并组装 MAS 服务后，从主导航 **Team** 或 **Commands & extensions → Pages** 进入。界面与 Agent tools 分别装配；没有安装该贡献时，普通 Conversation 工作仍可使用。
+
+当前页面采用 Devin 风格的单层 Team 页头和 **Graph / Activity / Agents**，不再查找旧 Extensions → MAS team、Graph/Log 或 Canvas/List 工具栏。页面预期见[前端声明](../state/frontend.md#team)，当前验证范围见 [R2 记录](../verification/DEVIN-FRONTEND-R2.md)。
 
 ## 关系画布与成员列表
 
-打开 **Graph** 后，直角卡片表示当前获准查看的 Agent，即对应的 Conversation。卡片名称来自 MAS 成员 key。创建连线按持久化创建记录绘制；选中节点的详情分别列出 **Created by**、**Managed by** 和 **History from**。旧记录缺少创建信息时显示 **Unknown**；被权限过滤的来源不会出现在详情或连线上。
+**Graph** 用卡片显示当前可读 Agent 对应的 Conversation；**Agents** 是同一数据的成员列表。选择成员后，桌面右侧 inspector、手机底部面板展示身份、当前状态和来源。Created by、Managed by、History from 分开说明；旧记录缺失则保留 Unknown，不从 owner 推断创建。
 
-成员的 **Available** 表示可用性。卡片的活动区域另从 Pi 运行观测显示：
+Availability 表示成员可用性，活动摘要另取原生观测：公开 thinking、工具名和对应 callId 参数、实际回复或公开错误。没有结构化 HTTP 码时不会合成一个；完成回执不等于应用回复。完整内容从 Conversation 读取。
 
-| 观测               | 卡片内容                                     |
-| ------------------ | -------------------------------------------- |
-| 正在等待模型       | Waiting for Model Response                   |
-| 公开 thinking      | Thinking... 与原文前段                       |
-| 工具调用           | Tool using、工具名与对应 callId 的参数前段   |
-| 回复或最近一条回复 | 回复原文前段                                 |
-| 模型请求失败       | 提供者原文原因；提供结构化状态码时显示实际码 |
-| 已确认会话故障     | Conversation crashed                         |
-| 尚无活动           | No activity yet                              |
+**View options** 提供搜索、成员阶段过滤、创建/通信图层、缩放和 Reset layout。鼠标拖画布空白处平移；节点移动把手可拖动或用方向键。位置、图层、选择和隐藏偏好按当前浏览器、人员与数据源保存。
 
-活动片段有长度上限，完整内容在 Conversation 中。生成完成的回执保持其原生含义；应用回复由显式回复关联标明。
+通信边按方向聚合可见持久投递；点击计数进入相应 **Activity**。选择边可 Hide this link；成员 **More** 可 Hide communication links。View options 的 Show hidden links 恢复关系。退休成员可从个人 Board 隐藏并恢复；这些动作不改变原通信、成员生命周期或历史。
 
-**View options** 中可搜索成员、筛选可用性、分别开关创建和通信图层，并调整缩放。鼠标拖动画布空白处平移；触屏可滚动画布。节点的移动把手可拖动，也可聚焦后用方向键移动。**List** 提供成员列表；**Reset layout** 恢复自动布局。节点位置、缩放、图层、选中项和隐藏关系按当前浏览器、人员与工作区保存。
-
-通信边按发送方向聚合，计数对应可见的持久消息。点击计数或边可打开该方向的交流记录。选择边后可以 **Hide this link**；选择 Agent 后可隐藏该 Agent 的通信线。**Show hidden links** 恢复隐藏关系。隐藏仅影响个人视图，消息投递、历史和额度继续遵循原有契约。新成员及新通信仍可从画布和日志中发现。
-
-退役节点选中后提供 **Hide from Board**，可将该节点及其关联线从个人画布和列表收起。**View options → Show hidden Agents** 显示隐藏数量并恢复节点。偏好绑定当前人员与 Board 的 Session，刷新或切换 Conversation 后继续保留；**Log** 和完整 Conversation 的历史仍可读取。服务重开保持退役状态和历史，不复活成员或重复此前输入。
-
-画布有明确的展示上限；达到上限时提示该范围，**Log** 仍可分页查看完整的获准交流记录。
+画布有明确上限，Activity 可按授权范围继续分页。加载期间先显示状态；若 Board 样式加载失败，页面显示错误而不开放未就绪控件。
 
 ## 进入 Conversation 与 Agent controls
 
-选中节点后，**Open Conversation** 打开现有完整对话界面。历史读取、输入、原生队列、模型与工作目录继续执行当前人员和资源权限。标题处的 **Back to MAS team** 返回 Board，恢复选中项与布局。
+选择成员后点击 **Open Conversation** 进入同一完整对话，模型、cwd、输入和历史仍执行当前资源权限。会话页返回 Team 后保留选择和个人布局。
 
-**Agent details** 展示来源并提供 **Agent controls**。控制界面通过独立弹层打开，Board 保留原选中节点和布局；正文独立滚动，顶部关闭按钮保持可达。点击关闭按钮、遮罩或按 Escape 返回 Board，键盘焦点回到打开入口。弹层提供 prompt、steer、followUp、真实 incoming receipt 的 reply，以及获准的 Stop、Retire；原 Conversation 草稿保持原样。
+**More → Member controls…** 打开成员控制界面。输入区采用 compact composer，原生模式由发送旁的菜单选择 Prompt/Steer/Follow up；对实际 incoming peer receipt 可输入正文后 Reply。权限不足的动作不会因打开面板获得授权。
 
-操作结果未确认时，面板锁住新操作。关闭并重开后可用 **Check original operation** 继续只读核对原请求。核对不会自动重发输入；关闭界面也不会撤销已经接纳的工作。
+控制界面的 **Management** 提供当前获准的 Stop work 和 **Retire member…**，退休需进一步确认。创建成员由实际 Agent 工具或宿主批准的服务路径发起；不要在 Management 中寻找并不存在的新建表单。
+
+结果未确认时新操作保持锁定。关闭后重开可 **Check original operation** 只读核对原请求，不重新发送，不把关闭当撤回。源 Conversation 的草稿不因观察 Team 被替换。
 
 ## 交流日志
 
-**Log** 按持久化顺序分页显示消息正文、实际时间、发送端、接收端、模式、发起方式、回执状态和显式回复关联。人类经某 Agent 发送的消息保留该通信端点，同时标为 **Human**。
+**Activity** 按持久顺序分页显示正文、实际记录时间、发送/接收、模式、发起方式、原生回执状态和已保存回复关联。人类经某 Agent 发送仍保留该端点，同时显示 Human；相邻消息不自动配为问答。
 
-**Exchange filters** 支持发送端、接收端、prompt／steer／followUp、发起方式、回执状态和正文搜索。**Load more exchanges** 读取更早的一页。隐藏连线的消息继续存在于日志中。
+Exchange filters 支持方向、模式、发起者和状态，Search 筛选可读正文，Load more exchanges 读取更早记录。隐藏画布连线不隐藏其获准日志。
 
-只有发送端和接收端都处于当前可读范围的交流才会返回。Viewer 的日志读取独立于发送权限。列表、搜索、游标和数量都使用同一过滤后的范围；撤权在异步读取完成后再次检查。
+服务端要求两端都在当前可读范围，先过滤再发布列表、搜索、游标和数量；Viewer 读取不获得 send/reply。异步读取完成后再次检查权限。
 
 ## 装配与范围
 
-启用方式沿用 [DevPack API](../reference/MAS-DEVPack-API.md) 的可选 facets 和 `masWorkbenchService`。业务 Agent 的工具仍由批准 profile 单独装配。普通 Conversation 的新建和归档继续使用工作台入口；实际删除仍受独立的删除契约约束。
+使用 [DevPack API](../reference/MAS-DEVPack-API.md)的可选 facets 和 `masWorkbenchService`；模型工具由批准 profile 单独启用。只停用 WebUI 不删除 members、history 或已接纳工作。
 
-设计依据见 [MAS Board 第二稿](../MAS-BOARD-DESIGN.md)，实现与验证状态见 [实施记录](../verification/MAS-BOARD-R1.md)。
+普通 Conversation 归档/恢复与 MAS retirement 不是物理删除。[MAS state](../state/mas.md)维护资源和观测关系；[OpenSpec 设计](../../openspec/changes/mas-board-relationship-workbench/design.md)只作来路，[既有实施记录](../verification/MAS-BOARD-R1.md)保留其版本证据，不能代替 R2 的结果。

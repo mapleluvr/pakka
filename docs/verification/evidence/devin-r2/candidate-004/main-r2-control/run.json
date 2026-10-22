@@ -1,0 +1,34 @@
+{
+  "sourceCommit": "df76ea439e98d58c27d4c680863db3beedbf24f3",
+  "dirtyBefore": [],
+  "node": "v24.15.0",
+  "startedAt": "2026-10-21T04:16:32.4397358Z",
+  "checkout": "git -c core.autocrlf=false worktree add --detach: LF Git blobs, no source patch",
+  "htmlBlob": "5469b2f4d77dc4dfdf60f3a1c83b793c64872875",
+  "htmlWorktreeHash": "5469b2f4d77dc4dfdf60f3a1c83b793c64872875",
+  "tests": [
+    "apps/server/test/pocket-browser.test.ts",
+    "apps/server/test/pocket-directories.test.ts",
+    "apps/webui/test/browser-launch.test.ts",
+    "apps/webui/test/browser-contribution.test.ts",
+    "apps/webui/test/hooks-recovery.test.ts"
+  ],
+  "results": {
+    "install": {
+      "log": "install.log",
+      "exitCode": 0
+    },
+    "build": {
+      "log": "build.log",
+      "exitCode": 0
+    },
+    "tests": {
+      "log": "test.log",
+      "exitCode": 1
+    }
+  },
+  "finishedAt": "2026-10-21T04:25:06.9010729Z",
+  "sourceCommitAfter": "df76ea439e98d58c27d4c680863db3beedbf24f3",
+  "dirtyAfter": [],
+  "fixedSnapshot": true
+}
