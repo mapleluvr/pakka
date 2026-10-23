@@ -1,0 +1,57 @@
+{
+  "version": 1,
+  "workflowRunId": "aba74ed4-972a-4026-b1c0-e3454500a458",
+  "state": "failed",
+  "createdAt": 1792759195839,
+  "entries": {
+    "a-first-review": {
+      "key": "a-first-review",
+      "agent": "reviewer",
+      "requestedContext": "fresh",
+      "resolvedContext": "fresh",
+      "continuation": {
+        "runIds": [
+          "50b9e721-3add-4c3e-a2f4-09668ce2ffe6"
+        ]
+      },
+      "latestRunId": "50b9e721-3add-4c3e-a2f4-09668ce2ffe6",
+      "resumability": {
+        "state": "resumable"
+      }
+    },
+    "b-first-challenge": {
+      "key": "b-first-challenge",
+      "requestedContext": "fresh",
+      "resolvedContext": "fresh",
+      "continuation": {
+        "runIds": []
+      },
+      "resumability": {
+        "state": "not-resumable",
+        "reason": "child produced no run id"
+      }
+    }
+  },
+  "argsDigest": "7a9c8ccfcea2dbe614e8060b67985c03dd54dccd1461a36b24e962cdc4b49cb7",
+  "workflowChildren": {
+    "version": 1,
+    "parentToolCallId": "call_bff9a27315114f37839949780e4a48f3|fc_0d1d8ada89fe99e2016adb5149c3a087d2ab7b30f0421a06be",
+    "workflowRunId": "aba74ed4-972a-4026-b1c0-e3454500a458",
+    "inventoryComplete": true,
+    "workflowState": "failed",
+    "children": [
+      {
+        "childId": "a-first-review",
+        "state": "completed",
+        "runId": "50b9e721-3add-4c3e-a2f4-09668ce2ffe6",
+        "agent": "reviewer",
+        "sessionName": "reviewer: ## Review target Review the frozen cross-repository candi...",
+        "model": "Mapleluv-Main/gemini-3.8-flash-high:high"
+      },
+      {
+        "childId": "b-first-challenge",
+        "state": "failed"
+      }
+    ]
+  }
+}

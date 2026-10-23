@@ -1,0 +1,73 @@
+✖ auxiliary output tool reaches real HTTP and returns an immutable call without executing a tool (193.1799ms)
+✖ auxiliary output tool rejects prose-only and preserves measured usage (166.3846ms)
+✔ auxiliary output tool rejects wrong-tool and preserves measured usage (157.5958ms)
+✔ auxiliary output tool rejects missing-parameter and preserves measured usage (160.6449ms)
+✔ auxiliary output tool rejects extra-parameter and preserves measured usage (159.0625ms)
+✔ auxiliary output tool rejects coerced-parameter and preserves measured usage (163.6797ms)
+✔ auxiliary output tool rejects truncated-call and preserves measured usage (162.9316ms)
+✖ invalid output tool declaration is refused before an inference reservation or HTTP (157.7158ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 5
+ℹ fail 3
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2441.619
+
+✖ failing tests:
+
+test at packages\agent\test\strategy-output-tool.test.ts:19:1
+✖ auxiliary output tool reaches real HTTP and returns an immutable call without executing a tool (193.1799ms)
+  AssertionError [ERR_ASSERTION]: Auxiliary output incomplete: toolUse
+  + actual - expected
+  
+  + 'failed'
+  - 'completed'
+  
+      at TestContext.<anonymous> (file:///D:/Projects/pakka/packages/agent/test/strategy-output-tool.test.ts:33:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'failed',
+    expected: 'completed',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at packages\agent\test\strategy-output-tool.test.ts:56:13
+✖ auxiliary output tool rejects prose-only and preserves measured usage (166.3846ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'completed'
+  - 'failed'
+  
+      at TestContext.<anonymous> (file:///D:/Projects/pakka/packages/agent/test/strategy-output-tool.test.ts:65:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'completed',
+    expected: 'failed',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at packages\agent\test\strategy-output-tool.test.ts:73:1
+✖ invalid output tool declaration is refused before an inference reservation or HTTP (157.7158ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async TestContext.<anonymous> (file:///D:/Projects/pakka/packages/agent/test/strategy-output-tool.test.ts:81:3)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /output tool|declaration/i,
+    operator: 'rejects',
+    diff: 'simple'
+  }

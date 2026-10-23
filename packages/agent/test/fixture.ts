@@ -22,7 +22,7 @@ export type Payload = {
 };
 export type Answer = (
 	| { text: string }
-	| { tool: string; args?: Record<string, unknown> }
+	| { tool: string; args?: Record<string, unknown>; argsJson?: string }
 	| { error: number }
 ) & {
 	finishReason?: string;
@@ -67,7 +67,10 @@ export async function fixture(
 									index: 0,
 									id: "call-" + n,
 									type: "function",
-									function: { name: answer.tool, arguments: JSON.stringify(answer.args ?? {}) },
+									function: {
+										name: answer.tool,
+										arguments: answer.argsJson ?? JSON.stringify(answer.args ?? {}),
+									},
 								},
 							],
 						}

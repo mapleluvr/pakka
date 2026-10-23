@@ -215,6 +215,17 @@ export interface SourceJobSpec {
 	/** Compression jobs require an exact post-write adoption receipt before their artifact intent is cleared. */
 	readonly requireArtifactReceipt?: boolean;
 }
+/** Declarative result channel; no tool execution authority is supplied. */
+export interface InferenceOutputTool {
+	readonly name: string;
+	readonly description: string;
+	readonly parameters: JsonObject;
+}
+export interface InferenceToolCall {
+	readonly id: string;
+	readonly name: string;
+	readonly arguments: JsonObject;
+}
 export interface InferenceRequest {
 	readonly modelKey: string;
 	readonly systemPrompt?: string;
@@ -222,12 +233,15 @@ export interface InferenceRequest {
 	/** 0 means no extra caller cap; finite host and model limits still apply. */
 	readonly maxOutputTokens?: number;
 	readonly thinkingLevel?: "off" | "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
+	/** A completed response must contain exactly one matching, schema-valid call. */
+	readonly outputTool?: InferenceOutputTool;
 }
 export interface InferenceResult {
 	readonly status: "completed" | "failed" | "quarantined";
 	readonly attemptId: string;
 	readonly modelKey: string;
 	readonly text?: string;
+	readonly toolCall?: InferenceToolCall;
 	readonly reason?: string;
 	readonly usageStatus: "known" | "unknown";
 	readonly usage?: UsageDTO;

@@ -1,0 +1,60 @@
+✔ auxiliary output tool reaches real HTTP and returns an immutable call without executing a tool (205.3196ms)
+✔ auxiliary output tool rejects prose-only and preserves measured usage (147.5352ms)
+✔ auxiliary output tool rejects wrong-tool and preserves measured usage (158.1811ms)
+✔ auxiliary output tool rejects missing-parameter and preserves measured usage (157.1794ms)
+✔ auxiliary output tool rejects extra-parameter and preserves measured usage (156.938ms)
+✔ auxiliary output tool rejects coerced-parameter and preserves measured usage (153.7327ms)
+✔ auxiliary output tool rejects truncated-call and preserves measured usage (139.1403ms)
+✖ auxiliary output tool rejects unfinished-json-with-tool-stop and preserves measured usage (157.088ms)
+✖ auxiliary output tool rejects repaired-json-escape and preserves measured usage (142.8353ms)
+✔ invalid output tool declaration is refused before an inference reservation or HTTP (120.6022ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 8
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2278.5242
+
+✖ failing tests:
+
+test at packages\agent\test\strategy-output-tool.test.ts:88:2
+✖ auxiliary output tool rejects unfinished-json-with-tool-stop and preserves measured usage (157.088ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'completed'
+  - 'failed'
+  
+      at TestContext.<anonymous> (file:///D:/Projects/pakka/packages/agent/test/strategy-output-tool.test.ts:99:11)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'completed',
+    expected: 'failed',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at packages\agent\test\strategy-output-tool.test.ts:88:2
+✖ auxiliary output tool rejects repaired-json-escape and preserves measured usage (142.8353ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'completed'
+  - 'failed'
+  
+      at TestContext.<anonymous> (file:///D:/Projects/pakka/packages/agent/test/strategy-output-tool.test.ts:99:11)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'completed',
+    expected: 'failed',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

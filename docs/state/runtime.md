@@ -18,6 +18,7 @@ Pi 集成使用公开 API。下游 [Durable 源补丁](durable-patch.md)为 gene
 - 每次效果前以及异步等待后重新检查 authority、作用域和有效引用。invocation、lease 与其原 Session 和 generation 绑定，失效后拒绝调用。
 - reopen 打开经物理路径、所有权、来源、配置和预算校验的原存储；缺失、损坏、异属存储或未确认的 writer claim 使打开失败并保留原状态。持久身份、记录和已消费额度按契约保留；进程内 admission ledger 的寿命随宿主结束，grants、leases 和操作 capability 由受信任 bootstrap 显式创建。
 - 策略通过 owner/lease、受控 frame、journal 和有限 inference job 工作；模型与工具效果使用宿主批准的端口和预算。
+- 辅助 inference 可声明一个 output tool；完整且符合 schema 的单次调用作为冻结 DTO 返回，经同一 job/source、预算、completion 与采用回执约束。调用的执行和产物采用由策略的受控端口承担。细则见 [Tool Calling 场景](../../openspec/changes/add-auxiliary-tool-output/specs/auxiliary-tool-output/spec.md)。
 
 ## 契约定位
 

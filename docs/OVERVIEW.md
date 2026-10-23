@@ -4,6 +4,8 @@ Pakka 将 Pi 的 Conversation、权限、持久化和 MAS 服务接到可选的 
 
 ## 当前工作
 
+[Dynamite P2/P3/P4 的受控 Tool Calling 生产](changes/auxiliary-tool-output.md)已完成代码及所选执行验证；独立双审被 B 的 provider 路由阻塞，尚未完成接受与归档。实际差距由[任务](../openspec/changes/add-auxiliary-tool-output/tasks.md)、[固定验证记录](verification/AUXILIARY-TOOL-OUTPUT.md)和独立 pakka-dynamite 仓库的 state/计划承接。
+
 当前为[设置路由、前端调优与本机管理员恢复](changes/webui-navigation-and-local-recovery.md)准备采用方案，见[proposal](../openspec/changes/improve-webui-navigation-and-local-recovery/proposal.md)、[design](../openspec/changes/improve-webui-navigation-and-local-recovery/design.md)和[统一 tasks](../openspec/changes/improve-webui-navigation-and-local-recovery/tasks.md)。提案待确认，恢复入口和新路由尚未实现。
 
 设置直达、命名及[规范采用与首批排版/焦点改进](changes/webui-frontend-guidelines.md)已实现；结果留在[指南 tasks](../openspec/changes/adopt-webui-frontend-guidelines/tasks.md)和[设置 tasks](../openspec/changes/correct-webui-settings-and-name/tasks.md)。后续队列由上述统一 tasks 承接。

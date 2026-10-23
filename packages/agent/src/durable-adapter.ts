@@ -49,6 +49,7 @@ import { openNodeJsonlStorage } from "@earendil-works/pi-durable/storage/jsonl/n
 import {
 	createModels,
 	createProvider,
+	validateToolCall,
 	type Models,
 	type Model,
 	type Api,
@@ -2935,11 +2936,15 @@ export class DurableAdapter {
 			throw new Error("Session auxiliary attempt budget exhausted");
 		check();
 		const model = { ...definition.model, maxTokens: Math.min(cap, definition.model.maxTokens) };
-		const answer = await this.#rawModels.completeSimple(
+		const outputTool = request.outputTool
+			? { ...request.outputTool, parameters: request.outputTool.parameters as TSchema }
+			: undefined;
+		const response = this.#rawModels.streamSimple(
 			model,
 			{
 				systemPrompt: request.systemPrompt ?? "",
 				messages: [{ role: "user", content: request.prompt, timestamp: Date.now() }],
+				...(outputTool ? { tools: [outputTool] } : {}),
 			},
 			{
 				apiKey: definition.apiKey,
@@ -2955,7 +2960,46 @@ export class DurableAdapter {
 				},
 			},
 		);
-		const failed = answer.stopReason !== "stop";
+		// Pi repairs partial JSON for interactive tool streaming. Output submissions
+		// need the complete public delta bytes as well as schema-valid final DTOs.
+		let argumentJson = "",
+			argumentBytes = 0;
+		if (outputTool) {
+			for await (const event of response) {
+				if (event.type !== "toolcall_delta") continue;
+				argumentBytes += Buffer.byteLength(event.delta, "utf8");
+				if (argumentBytes <= 262144) argumentJson += event.delta;
+			}
+		}
+		const answer = await response.result();
+		let failure =
+			answer.stopReason !== "stop" ? "Auxiliary output incomplete: " + answer.stopReason : undefined;
+		let toolCall: InferenceResult["toolCall"];
+		if (outputTool) {
+			try {
+				const calls = answer.content.filter((part) => part.type === "toolCall");
+				if (
+					answer.stopReason !== "toolUse" ||
+					calls.length !== 1 ||
+					!calls[0].id ||
+					calls[0].name !== outputTool.name
+				)
+					throw new Error("Expected one complete declared output tool call");
+				const call = calls[0];
+				if (argumentBytes > 262144 || !isDeepStrictEqual(JSON.parse(argumentJson), call.arguments))
+					throw new Error("Output tool arguments are incomplete or normalized");
+				json(call.arguments);
+				if (Buffer.byteLength(JSON.stringify(call.arguments), "utf8") > 262144)
+					throw new Error("Output tool arguments exceed byte limit");
+				const validated: unknown = validateToolCall([outputTool], structuredClone(call));
+				if (!isDeepStrictEqual(validated, call.arguments))
+					throw new Error("Output tool arguments require coercion");
+				toolCall = { id: call.id, name: call.name, arguments: structuredClone(call.arguments) as JsonObject };
+				failure = undefined;
+			} catch {
+				failure = "Invalid or incomplete auxiliary output tool call";
+			}
+		}
 		const known = [
 			answer.usage.input,
 			answer.usage.output,
@@ -2964,11 +3008,9 @@ export class DurableAdapter {
 			answer.usage.totalTokens,
 		].some((n) => Number.isFinite(n) && n > 0);
 		return copy({
-			status: failed ? "failed" : "completed",
+			status: failure ? "failed" : "completed",
 			modelKey: request.modelKey,
-			...(failed
-				? { reason: "Auxiliary output incomplete: " + answer.stopReason }
-				: { text: messageText(answer) }),
+			...(failure ? { reason: failure } : toolCall ? { toolCall } : { text: messageText(answer) }),
 			usageStatus: known ? "known" : "unknown",
 			usage: known ? usageDTO(answer.usage) : undefined,
 		});

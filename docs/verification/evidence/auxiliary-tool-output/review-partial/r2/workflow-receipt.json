@@ -1,0 +1,64 @@
+{
+  "version": 1,
+  "workflowRunId": "8c5551f6-5ed6-4ddf-ae36-d31737b40cce",
+  "state": "failed",
+  "createdAt": 1792760687825,
+  "entries": {
+    "a-first-review": {
+      "key": "a-first-review",
+      "agent": "reviewer",
+      "requestedContext": "fresh",
+      "resolvedContext": "fresh",
+      "continuation": {
+        "runIds": [
+          "97734867-5a33-49a0-abfd-8a5f5881d9a6"
+        ]
+      },
+      "latestRunId": "97734867-5a33-49a0-abfd-8a5f5881d9a6",
+      "resumability": {
+        "state": "resumable"
+      }
+    },
+    "b-first-challenge": {
+      "key": "b-first-challenge",
+      "agent": "reviewer",
+      "requestedContext": "fresh",
+      "resolvedContext": "fresh",
+      "continuation": {
+        "runIds": [
+          "f7d46898-abaf-41ea-b2b1-4187432a4c98"
+        ]
+      },
+      "latestRunId": "f7d46898-abaf-41ea-b2b1-4187432a4c98",
+      "resumability": {
+        "state": "resumable"
+      }
+    }
+  },
+  "argsDigest": "93570e0a63e504e779ed7159ce7ac2584a0d6ac60eb0919614e46ea691ea47d1",
+  "workflowChildren": {
+    "version": 1,
+    "parentToolCallId": "call_58109295bdd143808ea0f48a8d153778|fc_0d1d8ada89fe99e2016adb5667889c87d2a42a2f408cb15976",
+    "workflowRunId": "8c5551f6-5ed6-4ddf-ae36-d31737b40cce",
+    "inventoryComplete": true,
+    "workflowState": "failed",
+    "children": [
+      {
+        "childId": "a-first-review",
+        "state": "completed",
+        "runId": "97734867-5a33-49a0-abfd-8a5f5881d9a6",
+        "agent": "reviewer",
+        "sessionName": "reviewer: ## Review target Review the complete frozen retry candida...",
+        "model": "Mapleluv-Main/gemini-3.8-flash-high:high"
+      },
+      {
+        "childId": "b-first-challenge",
+        "state": "rejected",
+        "runId": "f7d46898-abaf-41ea-b2b1-4187432a4c98",
+        "agent": "reviewer",
+        "sessionName": "reviewer: ## Review target Review the complete frozen retry candida...",
+        "model": "Mapleluv-Main/deepseek-v4-flash:high"
+      }
+    ]
+  }
+}

@@ -1,6 +1,6 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 import { randomUUID } from "node:crypto";
-import { ArtifactJournal, copy, freeze, hash, type ArtifactIntent } from "./artifact-journal.ts";
+import { ArtifactJournal, copy, freeze, hash, json, type ArtifactIntent } from "./artifact-journal.ts";
 import { applyProjection } from "./strategy-projection.ts";
 import type { AdapterFrame, RunScopeToken } from "./durable-adapter.ts";
 import type {
@@ -720,6 +720,24 @@ export class StrategyControl {
 				(!Number.isSafeInteger(request.maxOutputTokens) || request.maxOutputTokens < 0))
 		)
 			throw new Error("Invalid inference request");
+		if (request.outputTool !== undefined) {
+			const tool = request.outputTool;
+			json(tool);
+			if (
+				!tool ||
+				typeof tool !== "object" ||
+				Array.isArray(tool) ||
+				typeof tool.name !== "string" ||
+				!/^[A-Za-z0-9_-]{1,64}$/.test(tool.name) ||
+				typeof tool.description !== "string" ||
+				!tool.description.trim() ||
+				tool.description.length > 8192 ||
+				!isJsonObject(tool.parameters) ||
+				tool.parameters.type !== "object" ||
+				Buffer.byteLength(JSON.stringify(tool), "utf8") > 65536
+			)
+				throw new Error("Invalid inference output tool declaration");
+		}
 		const cap = Math.min(
 			model.maxOutputTokens,
 			job.policy.maxOutputTokens,

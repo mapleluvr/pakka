@@ -1,0 +1,18 @@
+✔ auxiliary output tool reaches real HTTP and returns an immutable call without executing a tool (211.5952ms)
+✔ auxiliary output tool rejects prose-only and preserves measured usage (169.3025ms)
+✔ auxiliary output tool rejects wrong-tool and preserves measured usage (157.7929ms)
+✔ auxiliary output tool rejects missing-parameter and preserves measured usage (157.9909ms)
+✔ auxiliary output tool rejects extra-parameter and preserves measured usage (157.5542ms)
+✔ auxiliary output tool rejects coerced-parameter and preserves measured usage (160.1086ms)
+✔ auxiliary output tool rejects truncated-call and preserves measured usage (168.5792ms)
+✔ auxiliary output tool rejects unfinished-json-with-tool-stop and preserves measured usage (175.1235ms)
+✔ auxiliary output tool rejects repaired-json-escape and preserves measured usage (157.2628ms)
+✔ invalid output tool declaration is refused before an inference reservation or HTTP (118.9956ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2370.0958

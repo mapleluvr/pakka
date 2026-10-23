@@ -6,6 +6,7 @@
 | ----------------------------- | ------------------------------------------------------------------------------------------------------------ |
 | Devin 接入 R2、固定候选 004   | [R2 记录](DEVIN-FRONTEND-R2.md)                                                                              |
 | MAS Board r1 实现和后续专项   | [MAS 记录](MAS-BOARD-R1.md)                                                                                  |
+| Dynamite Tool Calling 库候选  | [受控输出验证](AUXILIARY-TOOL-OUTPUT.md)                                                                     |
 | Dynamite 已接受的有界配对     | [配对记录](DYNAMITE-PRODUCT-ACCEPTANCE.md)、[机器配对身份](../../integrations/dynamite/core-m6-pairing.json) |
 | 2026-10-21 文档清理与外置恢复 | [清理记录](DOCUMENTATION-CLEANUP.md)                                                                         |
 | 更早阶段                      | [历史资料索引](../archive/README.md)                                                                         |

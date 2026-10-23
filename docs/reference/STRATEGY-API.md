@@ -128,6 +128,8 @@ Each auxiliary attempt reserves a durable budget slot before dispatch. Limits ar
 
 For inference-derived persisted candidates, create the job with `requireArtifactReceipt: true` and include the exact completed `attemptIds` in its scoped artifact append. Before any artifact intent or bytes are written, the host validates unique nonempty IDs, the job/plan/session/strategy/principal/lease reservation and its completion. Already adopted, nonexistent, foreign or unfinished attempts are rejected without effects. After physical artifact receipt, an adoption record binds the attempt to that exact transaction ID/version. Missing or uncertain receipts block same-session reconstruction; cancellation and unrelated progress writes do not settle a completed result. Reopen checks every adopted transaction against the physical artifact journal, including earlier versions followed by later ordinary appends. Failed/quarantined attempts retain their audit and bounded retry behavior. Dynamite opts compression jobs into this protocol; fresh jobs used only to authorize existing summaries do not reserve new inference. These receipts remain part of the bounded single-writer contract, not a general exactly-once model-call guarantee.
 
+An optional `outputTool: { name, description, parameters }` declares a result channel on the same single inference request. The declaration uses an object JSON Schema and a bounded name/description/serialized size; it supplies no executable callback. The public Pi stream must expose complete JSON argument deltas that parse strictly and exactly match its final argument DTO; missing, repaired, oversized or mismatched bytes fail closed. Exactly one complete matching `toolUse` call with schema-valid arguments returns `toolCall: { id, name, arguments }` instead of text. Prose-only, wrong/multiple calls, implicit argument coercion, invalid parameters and truncation fail with measured usage retained. Arguments are bounded to 256 KiB JSON and returned as detached frozen DTOs. The strategy validates its own domain references and adopts candidates through the existing exact attempt receipt; the host executes no returned tool. Absence of outputTool preserves text completion behavior.
+
 Auxiliary messages/results never use `Client.submit`, never append to the main transcript, and create no main C2 receipt. Audit includes reserved attempts without a completion as quarantined/unknown; completed failed/quarantined calls remain observable when storage is readable. A failed call without usage is not zero billing. `usage.cost` is `null` for unpriced configured models. Unknown storage throws or returns an unknown artifact receipt; it is not an inference failure to retry. Do not retry/fallback after revocation, cancellation or unknown storage.
 
 There is no native Pi extension discovery, OS sandbox, full TUI/CLI, fsynced C2 ledger, arbitrary provider compatibility, runtime model-policy mutation, Dynamite algorithm or default-strategy integration in this component. Main native steering/follow-up and the original 22 C2/permission/lifecycle tests are preserved.
@@ -354,6 +356,16 @@ export interface SourceJobSpec {
 	/** Compression jobs require an exact post-write adoption receipt before their artifact intent is cleared. */
 	readonly requireArtifactReceipt?: boolean;
 }
+export interface InferenceOutputTool {
+	readonly name: string;
+	readonly description: string;
+	readonly parameters: JsonObject;
+}
+export interface InferenceToolCall {
+	readonly id: string;
+	readonly name: string;
+	readonly arguments: JsonObject;
+}
 export interface InferenceRequest {
 	readonly modelKey: string;
 	readonly systemPrompt?: string;
@@ -361,12 +373,14 @@ export interface InferenceRequest {
 	/** 0 means no extra caller cap; finite host and model limits still apply. */
 	readonly maxOutputTokens?: number;
 	readonly thinkingLevel?: "off" | "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
+	readonly outputTool?: InferenceOutputTool;
 }
 export interface InferenceResult {
 	readonly status: "completed" | "failed" | "quarantined";
 	readonly attemptId: string;
 	readonly modelKey: string;
 	readonly text?: string;
+	readonly toolCall?: InferenceToolCall;
 	readonly reason?: string;
 	readonly usageStatus: "known" | "unknown";
 	readonly usage?: UsageDTO;

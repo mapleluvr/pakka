@@ -53,7 +53,7 @@
 		"build": "tsc -p tsconfig.json"
 	},
 	"dependencies": {
-		"@pakka/agent": "0.5.0",
+		"@pakka/agent": "0.5.1",
 		"@pakka/client": "0.1.0",
 		"@pakka/protocol": "0.1.0",
 		"@pakka/server": "0.5.0",
