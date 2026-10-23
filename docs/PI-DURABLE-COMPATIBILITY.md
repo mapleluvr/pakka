@@ -732,3 +732,13 @@ SourceJob.converse 使用原生 hooks/inbox/steer/afterFailedRun，不自建 age
 本次选择新建 JSONL 存储；历史 SQLite schema 2 数据迁移/回退、跨 store 崩溃原子性、自动恢复未知模型效果、其他 provider 协议、历史清理和新 pair 的 optional server 激活不在该结果内。CLI 的 8.3 module-path 入口差异仍为已记录平台边界；消费者使用规范长路径并不等于修复该入口。
 
 复现和全部形成链见[试行验证](verification/COMPRESSER-SESSION-TRIAL.md)、[Compresser change](changes/compressor-repair-session.md)、[cohort change](changes/durable-1-4-0-and-verification.md)。SDK/hash、请求事件协议、checkpoint/收据、权限预算、持久化或线程/进程边界变化时应重跑相关真实矩阵并追加账本；本条不覆盖以前 failed pairing，也不发布或默认启用 Dynamite。
+
+## 条目 DURABLE-2026-10-23-12：Compresser 共享诊断来源隔离修正
+
+在条目 11 的候选冻结后，父审发现其共享拒绝信息可能把 A 的 schema 错误及候选正文写进 B 的状态、审计和 failed run。真实 source RED 和旧安装归档 RED 均复现；原快照、配对与功能结果保留，但不作为最终共享服务交付。
+
+adapter 对其他来源仅返回通用 sealed/unavailable 原因；原任务保留自己的实际诊断，可信 bootstrap snapshot 保留最后实际错误及来源。新增跨业务 Session 用例覆盖已在途结果、无额外 reservation 的新拒绝，以及真实持久化的业务失败记录。SDK 补丁、构建锁及 Durable 1.4.0-pakka.1 归档未变。
+
+替代 agent 0.6.0 SHA-256 `575ec96324ab29542f855c402ee0091f5c27df2aa190c29e8b73dde66024600a`；Dynamite 0.4.0 SHA-256 `eb70791592f8981727d3b26f36a7095e05daa90e8d885abfd9d1e1b302f05242`。宿主 596 passed、0 failed、2 原有跳过；Dynamite 源码 378/378，替代归档外部安装 65/65、413 本地 HTTP、0 非预期 fixture 错误；类型/构建和独立既有产品烟测通过。Node 24.18.0 / Windows / 隔离 profile，不使用付费模型、用户凭据或 adversarial review。
+
+[修正验证与原始证据](verification/COMPRESSER-SESSION-TRIAL-ISOLATION.md)、[新身份](../integrations/dynamite/compresser-trial-pairing.json)和[形成摘要](changes/compressor-repair-session.md)承接完整范围。条目 11 的存储、恢复、provider、CLI alias 和非默认产品装配限制继续有效；不自动清理旧 writer、不重放未知效果、不改为 Conversation 级容忍值。后续改变共享诊断边界时重跑该跨来源负例与精确归档安装矩阵并追加记录。

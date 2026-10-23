@@ -27,3 +27,9 @@ SourceJob.converse 复用原生 inbox/steer/afterFailedRun，逐次经过原辅�
 本次也协调 [cohort 变更](../../openspec/changes/prepare-durable-1-4-0-patch/)、[proposal](../../openspec/changes/prepare-durable-1-4-0-patch/proposal.md)、[design](../../openspec/changes/prepare-durable-1-4-0-patch/design.md)、[tasks](../../openspec/changes/prepare-durable-1-4-0-patch/tasks.md)、全部 [durable-request-policy delta](../../openspec/changes/prepare-durable-1-4-0-patch/specs/durable-request-policy/spec.md) 与 [development-verification delta](../../openspec/changes/prepare-durable-1-4-0-patch/specs/development-verification/spec.md)。生产 cohort 选择 1.4.0；旧归档、历史配对和旧账本原文保留。Durable 1.4 的必需公开依赖包含 pi-codemode；它不等于旧 oracle 或给模型增加执行工具。
 
 [固定试行验证](../verification/COMPRESSER-SESSION-TRIAL.md)保存最终私有归档身份、执行选择、RED/GREEN、原始失败和范围。新状态表述在[会话状态](../state/compressor-session.md)，公共端口在[Strategy API](../reference/STRATEGY-API.md)。本次选用全仓源码、外部安装、真实 localhost、进程中断、类型/构建及文档/OpenSpec 检查；没有付费模型、用户凭据或 adversarial review。
+
+## 冻结后的共享诊断隔离修正
+
+父审发现共享封存原因会携带另一来源的 schema 错误和候选正文；source 负例及旧安装归档负例都证实 B 的状态、audit 和 failed run 可含 A 正文。原快照及其 64 项功能验收保留，但不作为最终共享服务交付。修正将原始全局诊断限定在可信 bootstrap snapshot，源任务只取得通用共享拒绝，仍保留自身实际错误。相关要求已进入同一 delta 的 Shared diagnostics retain source privacy。
+
+[替代试行记录](../verification/COMPRESSER-SESSION-TRIAL-ISOLATION.md)固定新 hash、source/installed RED/GREEN、596 个宿主通过 / 2 原有跳过、Dynamite 378/378 与新安装 65/65 / 413 HTTP。初始归档和已失败意见没有被改写，新归档实际重跑；SDK 补丁未改。状态、API、tasks 和本地计划同步此边界，当前仍不默认启用新 server 产品。

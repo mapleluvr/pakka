@@ -1,0 +1,86 @@
+{
+  "state": {
+    "sessionId": "a1160783-fd61-42a2-9056-3e9f68bc7bbe",
+    "status": "sealed",
+    "toolCallingTolerance": 1,
+    "unresolvedErrorTolerance": 4,
+    "toolErrors": 1,
+    "unresolvedErrors": 0,
+    "lastError": {
+      "reason": "Error: Validation failed for tool \"submit_candidate\":\n  - text: must have required properties text\n  - privateDraft: schema is false\n  - root: must not have additional properties\n\nReceived arguments:\n{\n  \"privateDraft\": \"SOURCE_A_PRIVATE_CANDIDATE\"\n}",
+      "incidentId": "e1edd3db-c613-426b-89f4-e4359c695e4f:tool:32",
+      "conversationId": "19",
+      "jobId": "c515f1bb-a917-41f0-9a3c-cdcd6f59ddfa"
+    },
+    "conversations": [
+      {
+        "conversationId": "8",
+        "jobId": "3775f0fe-c19d-4c7c-a5bc-d0d0c33de221",
+        "planId": "private-observer",
+        "sourceSessionId": "4319c26b-f98c-4777-9ba5-71b8dec77914",
+        "sourceConversationId": "1",
+        "status": "running"
+      },
+      {
+        "conversationId": "19",
+        "jobId": "c515f1bb-a917-41f0-9a3c-cdcd6f59ddfa",
+        "planId": "private-owner",
+        "sourceSessionId": "0cd6e9be-6a8f-4447-bd17-8378887c38ce",
+        "sourceConversationId": "1",
+        "status": "failed"
+      }
+    ]
+  },
+  "admission": "Error: Compresser Session sealed; trusted bootstrap inspection required",
+  "late": {
+    "status": "quarantined",
+    "modelKey": "summary",
+    "reason": "Error: Compresser Session sealed; trusted bootstrap inspection required",
+    "usageStatus": "known",
+    "usage": {
+      "input": 10,
+      "output": 2,
+      "cacheRead": 0,
+      "cacheWrite": 0,
+      "totalTokens": 12,
+      "cost": null
+    },
+    "attemptId": "8ae33243-d7de-4c7a-ab7f-144459a4858c",
+    "compresser": {
+      "sessionId": "a1160783-fd61-42a2-9056-3e9f68bc7bbe",
+      "conversationId": "8",
+      "attemptIds": [
+        "8ae33243-d7de-4c7a-ab7f-144459a4858c"
+      ],
+      "usageStatus": "known",
+      "reportedUsage": {
+        "input": 10,
+        "output": 2,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "totalTokens": 12,
+        "cost": null
+      }
+    }
+  },
+  "otherAudit": [
+    {
+      "status": "quarantined",
+      "modelKey": "summary",
+      "reason": "Error: Compresser Session sealed; trusted bootstrap inspection required",
+      "usageStatus": "known",
+      "usage": {
+        "input": 10,
+        "output": 2,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "totalTokens": 12,
+        "cost": null
+      },
+      "attemptId": "8ae33243-d7de-4c7a-ab7f-144459a4858c",
+      "jobId": "3775f0fe-c19d-4c7c-a5bc-d0d0c33de221",
+      "planId": "private-observer",
+      "maxOutputTokens": 256
+    }
+  ]
+}

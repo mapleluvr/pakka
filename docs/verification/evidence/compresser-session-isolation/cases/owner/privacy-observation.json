@@ -1,0 +1,123 @@
+{
+  "state": {
+    "sessionId": "4ac29ae2-ae35-4aec-975e-6a405d4d993d",
+    "status": "sealed",
+    "toolCallingTolerance": 1,
+    "unresolvedErrorTolerance": 4,
+    "toolErrors": 1,
+    "unresolvedErrors": 0,
+    "lastError": {
+      "reason": "Error: Validation failed for tool \"submit_compaction\":\n  - clues: must have required properties clues\n\nReceived arguments:\n{\n  \"summary\": \"SOURCE_A_PRIVATE_SUMMARY\\n## Goal\\nPreserve source decisions, exact identifiers, completed work and pending next actions.\\n\\n## Progress\\nThe fixed local source was checked without changing the original history.\",\n  \"graphs\": [\n    {\n      \"id\": \"g\",\n      \"title\": \"NATIVE-SIDECAR\",\n      \"nodes\": [\n        {\n          \"id\": \"n\",\n          \"label\": \"native source\",\n          \"sourceEntryIds\": [\n            \"19\"\n          ]\n        }\n      ],\n      \"edges\": [],\n      \"annotations\": [\n        {\n          \"nodeIds\": [\n            \"n\"\n          ],\n          \"text\": \"NATIVE-ANNOTATION\",\n          \"sourceEntryIds\": [\n            \"19\"\n          ]\n        }\n      ]\n    }\n  ],\n  \"unresolved\": []\n}",
+      "incidentId": "f7c92874-126b-4d56-b677-8d4a59d5c515:tool:32",
+      "conversationId": "19",
+      "jobId": "519d3054-f0f2-4887-a767-f35ecc94fb36"
+    },
+    "conversations": [
+      {
+        "conversationId": "8",
+        "jobId": "32b15e0b-8211-4ee5-89f6-a88f9d468711",
+        "planId": "mvlga89z-10bmtdfj",
+        "sourceSessionId": "51be7978-2f7c-483c-8e95-7a2dc012e7d0",
+        "sourceConversationId": "1",
+        "status": "running"
+      },
+      {
+        "conversationId": "19",
+        "jobId": "519d3054-f0f2-4887-a767-f35ecc94fb36",
+        "planId": "mvlga8eq-ov10w704",
+        "sourceSessionId": "218496c9-861f-4d14-a0a8-dbf90f1a2c53",
+        "sourceConversationId": "1",
+        "status": "failed"
+      }
+    ]
+  },
+  "visible": {
+    "status": {
+      "blocks": {
+        "count": 0,
+        "throughStep": 0
+      },
+      "queue": {
+        "count": 0,
+        "tokens": 0
+      },
+      "compression": "idle",
+      "occupancy": {
+        "tokens": 140,
+        "percent": 0.10937500000000001,
+        "contextWindow": 128000
+      },
+      "lastRun": {
+        "outcome": "failed",
+        "stepRange": "2-6",
+        "input": 150,
+        "output": 12,
+        "usageStatus": "reported"
+      },
+      "lastFailure": "Error: Compresser Session sealed; trusted bootstrap inspection required (steps 2-6)"
+    },
+    "audit": [
+      {
+        "status": "quarantined",
+        "modelKey": "summary",
+        "reason": "Error: Compresser Session sealed; trusted bootstrap inspection required",
+        "usageStatus": "known",
+        "usage": {
+          "input": 150,
+          "output": 12,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "totalTokens": 162,
+          "cost": null
+        },
+        "attemptId": "ea7c1ad2-97a3-4912-91bd-62262cf8d389",
+        "jobId": "32b15e0b-8211-4ee5-89f6-a88f9d468711",
+        "planId": "mvlga89z-10bmtdfj",
+        "maxOutputTokens": 1024
+      }
+    ],
+    "records": [
+      {
+        "type": "run",
+        "id": "mvlga8a8-374pjhyo",
+        "timestamp": "2026-10-23T20:56:43.376Z",
+        "atHostEntryId": "23",
+        "planId": "mvlga89z-10bmtdfj",
+        "attemptIndex": 1,
+        "stepRange": {
+          "from": 2,
+          "to": 6
+        },
+        "windowEntryIds": [
+          "11",
+          "12",
+          "15",
+          "16",
+          "19"
+        ],
+        "windowFingerprint": "9da6833f63ad85b29f17de97cca11f620910d6dddc91684594bf2b2116796d1d",
+        "windowContentVersions": [
+          "3287a5d6af6217f45a8ff426e2def87d37139e80c5dc7eb5ff3fd37bc1e21344",
+          "6ecdc38d0111d499e541deebf06d9c480b4678cccea78666557e22a7588edfbf",
+          "cdf129ace7abd1e9f405a29ceded6c84afd66090eef1ec076c77441823556c49",
+          "41d5c73a0c0b440639d28f654b47aa012cddcb1e8511be59aaa03f6a3281e16c",
+          "ae8ead0c593841b3e85b0c0d69b94cf9f65d973a5038bb53f0ab5a92e2d13b39"
+        ],
+        "contextContentVersions": [],
+        "model": {
+          "provider": "host",
+          "id": "summary"
+        },
+        "usage": {
+          "input": 150,
+          "output": 12,
+          "cacheRead": 0,
+          "cacheWrite": 0
+        },
+        "usageStatus": "reported",
+        "outcome": "failed",
+        "error": "Error: Compresser Session sealed; trusted bootstrap inspection required"
+      }
+    ]
+  }
+}

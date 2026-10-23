@@ -1,0 +1,75 @@
+
+> @pakka/dynamite@0.4.0 smoke:package
+> npm run build && node scripts/package-smoke.mjs D:/Projects/pakka
+
+
+> @pakka/dynamite@0.4.0 build
+> tsc -p tsconfig.build.json
+
+{
+  "consumer": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\dynamite-packed-consumer-2vT6rE",
+  "node": "v24.18.0",
+  "integrationTests": {
+    "tests": 65,
+    "pass": 65,
+    "fail": 0,
+    "skipped": 0,
+    "cancelled": 0,
+    "todo": 0
+  },
+  "testFiles": [
+    "durable-artifacts.test.mjs",
+    "durable-compresser-session.test.mjs",
+    "durable-inference-boundary.test.mjs",
+    "durable-managed.test.mjs",
+    "durable.test.mjs",
+    "pakka-boundaries.test.mjs",
+    "pakka-review.test.mjs",
+    "pakka.test.mjs"
+  ],
+  "declarations": "passed",
+  "inventory": {
+    "@earendil-works/pi-coding-agent": [],
+    "@earendil-works/pi-ai": [
+      "1.4.0"
+    ],
+    "@earendil-works/pi-agent-core": [],
+    "@earendil-works/pi-tui": [],
+    "@earendil-works/chord": [
+      "1.4.0"
+    ],
+    "@earendil-works/pi-codemode": [
+      "1.4.0"
+    ],
+    "@earendil-works/pi-mcp": [],
+    "@earendil-works/pi-telemetry": [
+      "1.4.0"
+    ],
+    "@earendil-works/pi-durable": [
+      "1.4.0-pakka.1"
+    ]
+  },
+  "providerRequests": 413,
+  "providerErrors": 0,
+  "tarballs": [
+    {
+      "name": "@pakka/agent",
+      "version": "0.6.0",
+      "path": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\dynamite-packed-consumer-2vT6rE\\pakka-agent-0.6.0.tgz",
+      "shasum": "1f985aa00be81bf33f226d4b5b0b39f221afdf3b",
+      "sha256": "575ec96324ab29542f855c402ee0091f5c27df2aa190c29e8b73dde66024600a",
+      "integrity": "sha512-RAQzd4IA66QwAZWQwPODkUzqPqwJMNtCWW3/0kcjQZmIbZMsTsG4Ly8knqx7VqdZ/IRfhhH6mXQ/gqdgSQYSMg==",
+      "files": 12649
+    },
+    {
+      "name": "@pakka/dynamite",
+      "version": "0.4.0",
+      "path": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\dynamite-packed-consumer-2vT6rE\\pakka-dynamite-0.4.0.tgz",
+      "shasum": "a76bdef52526cdc9f9551452d88c84b184bd962e",
+      "sha256": "eb70791592f8981727d3b26f36a7095e05daa90e8d885abfd9d1e1b302f05242",
+      "integrity": "sha512-Ez+cpC+RyAm4t/gBuu/ghulK7G9OkbcH7/W568g6M5UtHHw/MdFJltDlVc/aOz3WF4AI0w9MLqq7Gukw8KujPg==",
+      "files": 50
+    }
+  ],
+  "evidence": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\dynamite-packed-consumer-2vT6rE\\evidence"
+}

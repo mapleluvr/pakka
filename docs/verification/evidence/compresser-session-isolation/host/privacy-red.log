@@ -1,0 +1,29 @@
+✖ shared sealing keeps another source's candidate private in admission and late-result errors (994.4208ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1941.4746
+
+✖ failing tests:
+
+test at packages\agent\test\compresser-session.test.ts:509:1
+✖ shared sealing keeps another source's candidate private in admission and late-result errors (994.4208ms)
+  AssertionError [ERR_ASSERTION]: another source cannot receive the private seal cause
+      at Object.<anonymous> (file:///D:/Projects/pakka/packages/agent/test/compresser-session.test.ts:537:11)
+      at expectedException (node:assert:578:17)
+      at expectsError (node:assert:703:21)
+      at strict.rejects (node:assert:769:3)
+      at async TestContext.<anonymous> (file:///D:/Projects/pakka/packages/agent/test/compresser-session.test.ts:535:3)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'Error: Compresser Session sealed: Error: Validation failed for tool "submit_candidate":\n  - text: must have required properties text\n  - privateDraft: schema is false\n  - root: must not have additional properties\n\nReceived arguments:\n{\n  "privateDraft": "SOURCE_A_PRIVATE_CANDIDATE"\n}',
+    expected: /SOURCE_A_PRIVATE_CANDIDATE/,
+    operator: 'doesNotMatch',
+    diff: 'simple'
+  }

@@ -110,3 +110,13 @@ A reopened unconfirmed running or pending Compresser job SHALL be quarantined an
 - **WHEN** the owning process exits after dispatch and trusted recovery has resolved its stale writer claim
 - **THEN** reopening reports the unfinished job as quarantined and the container as sealed
 - **AND** inspection or attempted continuation produces no replayed provider request
+
+### Requirement: Shared diagnostics retain source privacy
+
+A shared Compresser container SHALL retain the last actual error for trusted bootstrap inspection without forwarding its raw cause to unrelated source jobs. Generic seal/fault refusals, late-result status, source audit and failed business artifacts SHALL NOT contain another source's candidate or diagnostic. The originating source SHALL retain its own actual diagnostic.
+
+#### Scenario: One source seals while another is in flight
+
+- **WHEN** source A reaches a tolerance with a schema diagnostic containing A's private candidate and source B has an in-flight request
+- **THEN** trusted bootstrap retains A's actual cause while B is quarantined with only a generic refusal
+- **AND** new source-B admissions produce no request or extra reservation and expose none of A's raw cause

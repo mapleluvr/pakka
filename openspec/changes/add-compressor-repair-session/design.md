@@ -4,7 +4,7 @@ See [proposal](proposal.md) for operator requirements. The operator selected Pi 
 
 The [initial characterization](../../../docs/verification/COMPRESSOR-SESSION-FEASIBILITY.md) used host acf49fa with Durable 1.0.3-pakka.1 and strategy 87d6fa6/0.3.0 (retry observation in 0427185). It remains historical, not a 1.4 capability verdict. Current SourceJob.infer is single-call and each failed strategy attempt restarts from the original input.
 
-The operator subsequently authorized the first executable trial. It implements the native hook/inbox/scheduler route in agent 0.6.0 and Dynamite 0.4.0, with the coordinated 1.4 production cohort migration. The earlier capability records retain their original scopes; [trial verification](../../../docs/verification/COMPRESSER-SESSION-TRIAL.md) owns the actual source and installed-library result. A custom agent loop was not adopted.
+The operator subsequently authorized the first executable trial. It implements the native hook/inbox/scheduler route in agent 0.6.0 and Dynamite 0.4.0, with the coordinated 1.4 production cohort migration. The earlier capability records retain their original scopes; [source-isolated trial verification](../../../docs/verification/COMPRESSER-SESSION-TRIAL-ISOLATION.md) owns the actual source and installed-library result. A custom agent loop was not adopted.
 
 ## Goals / Non-Goals
 

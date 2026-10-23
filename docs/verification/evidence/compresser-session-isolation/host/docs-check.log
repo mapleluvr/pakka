@@ -1,0 +1,22 @@
+{
+  "status": "passed",
+  "checks": [
+    {
+      "documents": 22,
+      "localLinks": 248
+    },
+    {
+      "appendOnlyLedger": {
+        "prefixBytes": 48063,
+        "prefixSha256": "d233faba79dba70d6b145bfb0425a79743c8257ea1852262d2c79d53e7b1af27",
+        "appendBytes": 1761
+      }
+    },
+    {
+      "frozenSourceFiles": 36
+    },
+    {
+      "evidenceFiles": 32
+    }
+  ]
+}

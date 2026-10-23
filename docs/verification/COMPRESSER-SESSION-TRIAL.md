@@ -1,5 +1,7 @@
 # Native Compresser first trial
 
+**Historical initial snapshot:** this pair is superseded by the [source-isolation correction](COMPRESSER-SESSION-TRIAL-ISOLATION.md). Its functional results below remain truthful, but it is not the final shared-service delivery.
+
 ## Fixed subject
 
 Private library trial on Windows, Node 24.18.0, deterministic localhost OpenAI-completions providers and isolated test profiles. No paid model, user credential, custom agent loop, default activation or adversarial review was used.
@@ -10,7 +12,7 @@ Private library trial on Windows, Node 24.18.0, deterministic localhost OpenAI-c
 | @pakka/dynamite | 0.4.0 | fb323bc537bf95e369f268c664e5bcf180a1def79880a1a6ab0938e283e034cd |
 | bundled pi-durable | 1.4.0-pakka.1 | 7fd9f3310dfa003a9077139a25faf93567922a065461fa3767dd5a1066efa891 |
 
-[Pair identity](../../integrations/dynamite/compresser-trial-pairing.json), [installed identity](evidence/compresser-session-trial/archive-identity.json) and [36-file source manifest](evidence/compresser-session-trial/source-manifest.json) bind these results. Host source baseline is 88a693c; strategy baseline is 6da541f plus the manifested changes. Historical 0.2.1 × 0.5.0 and 0.3.0 × 0.5.1 records retain their own status and bytes.
+[Initial pair identity](../../integrations/dynamite/compresser-trial-initial-pairing.json), [installed identity](evidence/compresser-session-trial/archive-identity.json) and [36-file source manifest](evidence/compresser-session-trial/source-manifest.json) bind these results. Host source baseline is 88a693c; strategy baseline is 6da541f plus the manifested changes. Historical 0.2.1 × 0.5.0 and 0.3.0 × 0.5.1 records retain their own status and bytes.
 
 Pi AI/Chord/Telemetry are 1.4.0. Durable 1.4.0 explicitly requires pi-codemode 1.4.0; this is a public SDK dependency, not a coding-agent oracle leak or an additional model tool. Installed pi-coding-agent, pi-agent-core, pi-tui and pi-mcp are absent. The controlled compressor declares only its submission tool.
 

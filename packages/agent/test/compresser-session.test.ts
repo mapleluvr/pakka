@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { dirname, join } from "node:path";
-import { chmod, readdir, readFile } from "node:fs/promises";
+import { chmod, readdir, readFile, writeFile } from "node:fs/promises";
 import * as api from "../src/index.ts";
 import { fixture as httpFixture, seed, text, deferred } from "./fixture.ts";
 import { binding, target, inferencePolicy } from "./strategy-fixture.ts";
@@ -500,6 +500,82 @@ test("one container serves distinct external Sessions and sealing refuses adopti
 		);
 		assert.equal(original.b.artifacts.read(job.scope).version, 0);
 	} finally {
+		await first.close();
+		await second.close();
+		await c?.close();
+	}
+});
+
+test("shared sealing keeps another source's candidate private in admission and late-result errors", async () => {
+	const secret = "SOURCE_A_PRIVATE_CANDIDATE";
+	const entered = deferred(),
+		release = deferred();
+	const first = await fixture({}, (p) =>
+		p.model === "summary-model"
+			? { tool: "submit_candidate", args: { privateDraft: secret } }
+			: { text: "MAIN" },
+	);
+	const second = await fixture({}, async (p) => {
+		if (p.model !== "summary-model") return { text: "MAIN" };
+		entered.resolve();
+		await release.promise;
+		return { tool: "submit_candidate", args: { text: "OTHER COMPLETE" } };
+	});
+	let c: api.CompresserSession | undefined, pending: Promise<api.InferenceResult> | undefined;
+	try {
+		c = await container(first.root, 1, 4);
+		const hostA = await first.start(policy(first.endpoint, c));
+		await seed(hostA);
+		const hostB = await second.start(policy(second.endpoint, c));
+		await seed(hostB);
+		const observer = source(hostB, "private-observer");
+		pending = observer.job.converse(request);
+		await entered.promise;
+		const rejected = await source(hostA, "private-owner").job.converse(request);
+		assert.equal(rejected.status, "failed");
+		assert.match(
+			rejected.reason!,
+			new RegExp(secret),
+			"the originating source retains its actual diagnostic",
+		);
+		const state = await c.snapshot();
+		assert.equal(state.status, "sealed");
+		assert.match(
+			state.lastError!.reason,
+			new RegExp(secret),
+			"trusted bootstrap retains the last actual error",
+		);
+		const frame = observer.b.readFrame();
+		const blocked = observer.b.createJob(frame.basis, {
+			planId: "private-blocked",
+			targetEntryIds: [target(frame)],
+			maxCalls: 3,
+		});
+		let admission = "";
+		await assert.rejects(blocked.converse(request), (error) => {
+			admission = String(error);
+			assert.match(admission, /sealed|unavailable/i);
+			assert.doesNotMatch(
+				admission,
+				new RegExp(secret),
+				"another source cannot receive the private seal cause",
+			);
+			return true;
+		});
+		release.resolve();
+		const late = await pending;
+		assert.equal(late.status, "quarantined");
+		assert.doesNotMatch(JSON.stringify(late), new RegExp(secret));
+		assert.equal(second.requests.filter((p) => p.model === "summary-model").length, 1);
+		assert.equal(observer.b.audit().length, 1, "denied admission spends no new auxiliary attempt");
+		assert.match((await c.snapshot()).lastError!.reason, new RegExp(secret));
+		await writeFile(
+			join(first.root, "privacy-observation.json"),
+			JSON.stringify({ state, admission, late, otherAudit: observer.b.audit() }, null, 2),
+		);
+	} finally {
+		release.resolve();
+		await pending?.catch(() => {});
 		await first.close();
 		await second.close();
 		await c?.close();

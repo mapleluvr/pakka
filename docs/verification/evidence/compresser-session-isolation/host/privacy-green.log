@@ -1,0 +1,30 @@
+✔ Compresser hard interruption stays writer-locked; after explicit dead-writer recovery, unconfirmed work seals without replay (1345.616ms)
+✔ Compresser repairs a stop and invalid call in the same native trajectory, auditing every real request (812.4562ms)
+✔ an empty semantic error is still a rejected call, including repeated admission validation (679.358ms)
+✔ Compresser provider errors use the native failed-run boundary without losing earlier analysis (764.5277ms)
+✔ one external Conversation creates independent Compresser Conversations and repeated job admission sends nothing (797.704ms)
+✔ tool tolerance is shared across child Conversations and survives reopen without dispatch (946.2828ms)
+✔ four stop errors seal the Session, preserve the actual reason, and send no fifth request (818.4003ms)
+✔ four provider errors seal the Session, preserve the actual reason, and send no fifth request (842.851ms)
+✔ Compresser HTTP 429 has no hidden provider retries outside the charged native attempts (503.4156ms)
+✔ Compresser HTTP 503 has no hidden provider retries outside the charged native attempts (522.483ms)
+✔ Compresser output-length failure with a tool-shaped partial is unresolved, never an adopted tool error (549.2966ms)
+✔ Compresser strict raw and source validation failures are complete-call repairs, not adopted normalized DTOs (790.6611ms)
+✔ a source revocation during Compresser HTTP prevents late adoption and another dispatch (366.2469ms)
+✔ Compresser job and strategy hard budgets remain independent of error tolerances (895.8324ms)
+✔ managed Compresser requests spend auxiliary aggregate quota and never primary quota (662.6385ms)
+✔ one container serves distinct external Sessions and sealing refuses adoption of a previously returned candidate (1075.464ms)
+✔ shared sealing keeps another source's candidate private in admission and late-result errors (872.467ms)
+✔ a sibling seal quarantines an already-in-flight otherwise valid response (722.0185ms)
+✔ multiple output calls in one response are not candidate patches and each actual tool error counts once (528.6514ms)
+✔ cancelling the source job refuses a late result without spending error tolerance or dispatching again (392.78ms)
+✔ a source audit storage failure after real HTTP seals unknown work without a correction or releasing admission (443.3412ms)
+✔ completed native job state survives reopen without new HTTP and one writer is enforced (407.7644ms)
+ℹ tests 22
+ℹ suites 0
+ℹ pass 22
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 17679.1418

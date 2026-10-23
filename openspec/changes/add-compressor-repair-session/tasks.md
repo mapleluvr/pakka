@@ -21,12 +21,14 @@
 - [x] 3.4 Verify shared thresholds, sibling in-flight rejection after sealing, repeated independent jobs, budgets, revocation, cancellation, unknown effects, multiple calls and restart/reopen on the real product path.
 - [x] 3.5 Build and check source/public consumers, fix a separate artifact pairing, synchronize documents and archive only the actually completed result.
 
+- [x] 3.6 Correct the post-freeze shared diagnostic disclosure with source and installed RED/GREEN; retain the original candidate identity, restrict raw shared causes to bootstrap inspection, and re-freeze/retest the replacement pair.
+
 ## 4. Follow-up scope after the explicit library trial
 
 - [ ] Define operational history retention/inspection and explicitly authorized replacement/recovery for a long-lived sealed container; the trial retains history and quarantines uncertainty rather than resuming it.
 - [ ] Decide and separately verify optional server/managed-member assembly for the new artifact pair. The historical accepted product pair remains independent; the trial does not activate itself.
 - [ ] Broaden provider/storage and crash-boundary coverage when selected. This trial uses deterministic OpenAI-completions and new JSONL stores; historical SQLite migration and cross-store crash atomicity are not claimed.
 
-[Trial evidence](../../../docs/verification/COMPRESSER-SESSION-TRIAL.md) records selected source, package, failure-first and interrupted-process checks. The cohort is owned by [prepare-durable-1-4-0-patch tasks](../prepare-durable-1-4-0-patch/tasks.md).
+[Source-isolated trial evidence](../../../docs/verification/COMPRESSER-SESSION-TRIAL-ISOLATION.md) records the final selected source/package result; the [initial snapshot](../../../docs/verification/COMPRESSER-SESSION-TRIAL.md) preserves earlier failure-first and interrupted-process checks. Per-layer sidecar decay and active retrieval are not implemented or accepted by this session-lifecycle trial. The cohort is owned by [prepare-durable-1-4-0-patch tasks](../prepare-durable-1-4-0-patch/tasks.md).
 
 Independent adversarial review is not selected under the operator instruction; partial historical opinions remain recorded, not promoted to a passing protocol.

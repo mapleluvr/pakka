@@ -14,13 +14,15 @@ Source jobs instead bind exact effective target and previous-context fingerprint
 
 Trusted bootstrap creates `createCompresserSession({ storageDir, toolCallingTolerance, unresolvedErrorTolerance })`; both tolerances are explicit positive safe integers. Its frozen facade exposes `snapshot(): Promise<CompresserSnapshot>` and idempotent `close()`. Bootstrap can share this same facade through participating Hosts' `inference.compresserSession`. The adapter owns the native Session/storage writer; a copied, forged or closed facade supplies no authority. In source metadata, an empty sourceConversationId denotes the standalone Host root context; managed Conversations carry their explicit ID.
 
+The bootstrap snapshot may contain diagnostics from several sources and must not be exposed as a conversation-scoped endpoint. A shared seal/fault returns only a generic refusal to source jobs; original diagnostics remain in their own audit and the trusted snapshot.
+
 A source job can explicitly call `converse(request, validateCall?)` with a declared output tool. The optional synchronous `InferenceCallValidator` receives a frozen call DTO and returns a diagnostic string or `undefined`; it receives no native handles. A job selects either primitive infer or conversational inference. Same live job/request admission shares one operation; native repair preserves the originating source and transcript rather than rebuilding prompts.
 
 Each native request separately passes the source checks and finite auxiliary budgets and receives a reservation/completion audit. Tool failures require complete matched replacements. Incomplete stops and provider errors admit bounded native steering; shared Session tolerances seal all internal Conversations at the exact count. Per-job hard limits, cancellation and revocation remain terminal host conditions.
 
 A final `InferenceResult.compresser` identifies the internal Session/Conversation, all attempt IDs, `reportedUsage` summed from actual reports, and whether every attempt is known. The ordinary result's `attemptId` remains the final exact artifact-adoption receipt. Native submission failure is not the whole source-job result. Previously adopted artifacts retain their source authority; a seal refuses later successful candidate adoption.
 
-Normal reopen retains policy and completed job metadata. Unconfirmed running work is quarantined and seals the container before scheduling. Writer claims are resolved only by explicit trusted recovery; persisted jobs are not refreshed source capabilities. See [current lifecycle state](../state/compressor-session.md), [trial verification](../verification/COMPRESSER-SESSION-TRIAL.md), and `packages/agent/test/compresser-session.test.ts`.
+Normal reopen retains policy and completed job metadata. Unconfirmed running work is quarantined and seals the container before scheduling. Writer claims are resolved only by explicit trusted recovery; persisted jobs are not refreshed source capabilities. See [current lifecycle state](../state/compressor-session.md), [source-isolated trial verification](../verification/COMPRESSER-SESSION-TRIAL-ISOLATION.md), and `packages/agent/test/compresser-session.test.ts`.
 
 ## Minimal Usage
 

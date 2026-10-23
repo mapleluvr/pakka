@@ -398,9 +398,11 @@ export async function createCompresserSession(
 	}
 	const guard = () => {
 		if (closed) throw new Error("Compresser Session closed");
-		if (fatal) throw new Error(fatal);
+		// The shared container may hold another source's raw arguments in its diagnostics.
+		// Only trusted bootstrap snapshot() may inspect that cross-source cause.
+		if (fatal) throw new Error("Compresser Session unavailable after an internal fault");
 		if (sealedReason || cached.status === "sealed")
-			throw new Error("Compresser Session sealed: " + (sealedReason ?? cached.lastError?.reason));
+			throw new Error("Compresser Session sealed; trusted bootstrap inspection required");
 	};
 	async function commit<T>(change: (tx: Tx) => Promise<T>): Promise<T> {
 		try {

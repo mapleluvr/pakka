@@ -1,26 +1,27 @@
 {
   "schema": "pakka.dynamite.compresser-trial-pairing.v1",
-  "status": "explicit-library-trial-verified",
+  "status": "explicit-library-trial-source-isolation-verified",
   "host": {
     "package": "@pakka/agent",
     "version": "0.6.0",
-    "sourceBaseline": "88a693cea1c4e18440e365d8a5bb5b2fac173788",
-    "tarballSha256": "f502ce87579a05dff90b744a5183e0e3bb235e736c79206c73380852f7c4ab65",
+    "sourceBaseline": "bdc3ab7971a9094079aa1c0425bf23ce6c9ae4ad",
+    "tarballSha256": "575ec96324ab29542f855c402ee0091f5c27df2aa190c29e8b73dde66024600a",
     "durableVersion": "1.4.0-pakka.1"
   },
   "strategy": {
     "package": "@pakka/dynamite",
     "version": "0.4.0",
-    "sourceBaseline": "6da541f6d7b63cf5c16871dd71754d534cb567d6",
-    "tarballSha256": "fb323bc537bf95e369f268c664e5bcf180a1def79880a1a6ab0938e283e034cd"
+    "sourceBaseline": "ed0ea874b5673dbf61fc84930c773e07a07b04e4",
+    "tarballSha256": "eb70791592f8981727d3b26f36a7095e05daa90e8d885abfd9d1e1b302f05242"
   },
   "acceptance": {
-    "installedTests": 64,
-    "httpRequests": 403,
+    "installedTests": 65,
+    "httpRequests": 413,
     "providerErrors": 0,
-    "record": "../../docs/verification/COMPRESSER-SESSION-TRIAL.md",
-    "sourceManifest": "../../docs/verification/evidence/compresser-session-trial/source-manifest.json"
+    "record": "../../docs/verification/COMPRESSER-SESSION-TRIAL-ISOLATION.md",
+    "sourceManifest": "../../docs/verification/evidence/compresser-session-isolation/source-manifest.json"
   },
   "activation": "explicit-bootstrap-only",
+  "supersedes": "./compresser-trial-initial-pairing.json",
   "historicalPair": "./core-m6-pairing.json"
 }
