@@ -9,7 +9,7 @@ import { toggleConversations, settleFrontend } from "./frontend-controls.ts";
 
 // Dismissal must preserve the selected resource and draft without inference.
 test(
-	"Pocket mobile sidebar: outside click and Escape return to the same conversation without sending the draft",
+	"WebUI mobile sidebar: outside click and Escape return to the same conversation without sending the draft",
 	{ timeout: 45000 },
 	async () => {
 		const m = await runtimeFixture();

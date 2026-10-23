@@ -10,7 +10,7 @@ import { ownedBrowser } from "./browser.ts";
 import { toggleConversations } from "./frontend-controls.ts";
 
 test(
-	"Pocket hooks browser: human setup, signed real HTTP, key rotation, private mobile viewer and removal use ordinary extension slots",
+	"WebUI hooks browser: human setup, signed real HTTP, key rotation, private mobile viewer and removal use ordinary extension slots",
 	{ timeout: 40000 },
 	async (t) => {
 		const m = await runtimeFixture();

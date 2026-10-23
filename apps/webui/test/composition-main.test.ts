@@ -9,7 +9,7 @@ import { ownedBrowser } from "./browser.ts";
 
 // The generic executable consumes an operator-owned ESM composition through public exports; it contains no MAS route/import.
 test(
-	"Pocket executable: trusted ESM root composes the real optional Agent and WebUI facets",
+	"WebUI executable: trusted ESM root composes the real optional Agent and WebUI facets",
 	{ timeout: 30000 },
 	async () => {
 		const m = await runtimeFixture({}, undefined, (payload) =>

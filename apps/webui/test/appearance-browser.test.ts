@@ -9,7 +9,7 @@ import { toggleConversations, openAppearance } from "./frontend-controls.ts";
 
 // Losing persisted typography, failing to apply it, or hiding Send at a larger size must fail this real consumer.
 test(
-	"Pocket appearance: font and size survive reload without sending the draft, with mobile Send beside input mode",
+	"WebUI appearance: font and size survive reload without sending the draft, with mobile Send beside input mode",
 	{ timeout: 45000 },
 	async () => {
 		const m = await runtimeFixture();
@@ -38,7 +38,7 @@ test(
 			await page.type("textarea[name=message]", "KEEP-TYPOGRAPHY-DRAFT");
 			await toggleConversations(page);
 			assert.equal(
-				await page.evaluate('Boolean(document.querySelector("[data-action=appearance]"))'),
+				await page.evaluate('Boolean(document.querySelector("[data-action=open-settings]"))'),
 				true,
 				"Appearance must expose font and size preferences",
 			);
@@ -88,7 +88,7 @@ test(
 			await writeFile(join(evidence, "mobile-20px.png"), await page.screenshot());
 			await writeFile(join(evidence, "composer-controls.json"), JSON.stringify(controls, null, 2));
 			await page.reload();
-			await page.wait('document.querySelector("[data-action=appearance]")');
+			await page.wait('document.querySelector("[data-action=open-settings]")');
 			await page.wait('[...document.querySelectorAll("link[rel=stylesheet]")].every(e=>e.sheet)');
 			assert.equal(await page.evaluate("getComputedStyle(document.body).fontSize"), "20px");
 			assert.match(String(await page.evaluate("getComputedStyle(document.body).fontFamily")), /system-ui/);
@@ -108,7 +108,7 @@ test(
 				'localStorage.setItem("pakka-typography",JSON.stringify({font:"invalid",size:-100}))',
 			);
 			await page.reload();
-			await page.wait('document.querySelector("[data-action=appearance]")');
+			await page.wait('document.querySelector("[data-action=open-settings]")');
 			await page.wait('[...document.querySelectorAll("link[rel=stylesheet]")].every(e=>e.sheet)');
 			assert.equal(await page.evaluate("getComputedStyle(document.body).fontSize"), "14px");
 			assert.match(String(await page.evaluate("getComputedStyle(document.body).fontFamily")), /Inter/);

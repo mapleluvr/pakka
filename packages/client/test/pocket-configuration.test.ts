@@ -3,7 +3,7 @@ import { strict as assert } from "node:assert";
 import { createServer } from "node:http";
 import { createPocketClient, PocketRemoteError } from "../src/pocket.ts";
 const ref = { key: "work", sessionId: "s", conversationId: "c", incarnation: "i", profile: "default" };
-test("Pocket settings client: real HTTP metadata keeps exact resource/profile/incarnation correlation without retry", async () => {
+test("WebUI settings client: real HTTP metadata keeps exact resource/profile/incarnation correlation without retry", async () => {
 	let requests = 0,
 		change: Record<string, string> = {};
 	const server = createServer((req, res) => {

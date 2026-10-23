@@ -8,7 +8,7 @@ import { createPocketWorkspace } from "../src/pocket-workspace.ts";
 
 // Replacing raw HMAC verification, re-entering admission, or publishing setup secrets must fail real provider/storage assertions.
 test(
-	"Pocket hooks: exact signed bytes admit one native input and changing unsigned delivery metadata cannot replay it",
+	"WebUI hooks: exact signed bytes admit one native input and changing unsigned delivery metadata cannot replay it",
 	{ timeout: 12000 },
 	async () => {
 		const f = await hooksFixture();
@@ -66,7 +66,7 @@ test(
 );
 
 test(
-	"Pocket hooks: generic secret rotation and removal preserve original records while refusing old endpoints",
+	"WebUI hooks: generic secret rotation and removal preserve original records while refusing old endpoints",
 	{ timeout: 12000 },
 	async () => {
 		const f = await hooksFixture();
@@ -149,7 +149,7 @@ test(
 );
 
 test(
-	"Pocket hooks: signed outsider content is ignored by default even when the unsigned event header claims a push",
+	"WebUI hooks: signed outsider content is ignored by default even when the unsigned event header claims a push",
 	{ timeout: 12000 },
 	async () => {
 		const f = await hooksFixture();
@@ -229,7 +229,7 @@ test(
 );
 
 test(
-	"Pocket hooks: normal writer reopen reconciles the original native delivery with retained creator scope and budget",
+	"WebUI hooks: normal writer reopen reconciles the original native delivery with retained creator scope and budget",
 	{ timeout: 12000 },
 	async () => {
 		const f = await hooksFixture();

@@ -6,7 +6,7 @@ import { startPocket } from "../src/bootstrap.ts";
 import { decodePocketResponse } from "../../../packages/protocol/src/pocket.ts";
 
 test(
-	"Pocket private HTTP: real product preserves the host resolver, scopes replace/clear, never returns secrets and reopens cleared",
+	"WebUI private HTTP: real product preserves the host resolver, scopes replace/clear, never returns secrets and reopens cleared",
 	{ timeout: 20000 },
 	async () => {
 		let lookups = 0;

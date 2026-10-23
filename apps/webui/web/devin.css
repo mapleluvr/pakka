@@ -1,5 +1,5 @@
 /* Pakka's production shell. Measured visual reference: devin-ui-comparison@ed20cec,
- * clean-room/current; authored for the existing Pocket DTO/client/extension UI.
+ * clean-room/current; authored for the existing WebUI DTO/client/extension UI.
  * No Devin production stylesheet or application code is included. */
 @font-face {
 	font-family: Inter;

@@ -200,7 +200,7 @@ function decode(raw: unknown, sessionId: string, version: number): State {
 		!raw.resources.every(resource) ||
 		new Set(raw.resources.map((r) => r.id)).size !== raw.resources.length
 	)
-		throw new Error("Pocket collaboration storage unconfirmed");
+		throw new Error("WebUI collaboration storage unconfirmed");
 	return { schema: 1, sessionId, resources: raw.resources };
 }
 const fingerprint = (v: unknown) => createHash("sha256").update(JSON.stringify(v)).digest("hex");
@@ -245,7 +245,7 @@ async function open(
 	const live = new Map<string, Map<string, { value: PocketPresence; check: () => void }>>(),
 		pendingDriver = new Map<string, number>();
 	const ready = () => {
-		if (!available || runtime.view().phase !== "ready") throw new Error("Pocket collaboration unavailable");
+		if (!available || runtime.view().phase !== "ready") throw new Error("WebUI collaboration unavailable");
 	};
 	const time = () => {
 		const value = now();
@@ -268,7 +268,7 @@ async function open(
 					),
 				)
 		)
-			throw new Error("Pocket collaboration stale resource denied");
+			throw new Error("WebUI collaboration stale resource denied");
 		return people.current(actor);
 	};
 	const refresh = async () => {
@@ -371,7 +371,7 @@ async function open(
 						),
 					)
 			)
-				throw Error("Pocket collaboration stale resource denied");
+				throw Error("WebUI collaboration stale resource denied");
 			checkDriver(actorId, ref);
 		},
 		bind(actor: PocketAuthority): PocketCollaborationClient {

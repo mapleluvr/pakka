@@ -7,6 +7,7 @@
 | Runtime 身份、持久化与原生执行          | [架构契约](ARCHITECTURE.md)                  |
 | package/app、依赖与发布边界             | [Monorepo 规范](MONOREPO-CONVENTIONS.md)     |
 | WebUI/Backend/Client/Agent contribution | [WebUI 开发契约](WEBUI-DEVELOPMENT.md)       |
+| 排版、交互质量与 Devin 原生行为来源     | [前端开发规范](FRONTEND-GUIDELINES.md)       |
 | 页面结构与 Team 交互                    | [前端声明](../state/frontend.md)             |
 | 测试、外部安装和证据身份                | [验证方法](VERIFICATION.md)                  |
 | Pi Durable 下游变更                     | [追加式账本](../PI-DURABLE-COMPATIBILITY.md) |

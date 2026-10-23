@@ -9,7 +9,7 @@ import { createPocketHttp } from "../src/http.ts";
 
 // Public test-only TLS material generated for localhost; never used as a deployment certificate or credential.
 test(
-	"Pocket remote: actual TLS proxy uses exact trusted peer/origin and secure cookies; direct/plain/spoofed access is rejected",
+	"WebUI remote: actual TLS proxy uses exact trusted peer/origin and secure cookies; direct/plain/spoofed access is rejected",
 	{ timeout: 20000 },
 	async () => {
 		// Load required assets before allocating a Runtime/listener, so a missing fixture cannot leak handles.

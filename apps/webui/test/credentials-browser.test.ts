@@ -8,7 +8,7 @@ import { ownedBrowser } from "./browser.ts";
 import { conversationAction, organizationAction, toggleConversations } from "./frontend-controls.ts";
 
 test(
-	"Pocket private settings browser: explicit replacement and clear affect actual provider auth without round-tripping or browser persistence",
+	"WebUI private settings browser: explicit replacement and clear affect actual provider auth without round-tripping or browser persistence",
 	{ timeout: 40000 },
 	async (t) => {
 		const replacement = "SYNTHETIC-BROWSER-PRIVATE-REPLACEMENT";
@@ -112,7 +112,7 @@ test(
 
 // Losing a committed replacement result must not retain its key or re-enter the write on refresh.
 test(
-	"Pocket private settings recovery: a lost committed response clears the input and only reads state before another explicit change",
+	"WebUI private settings recovery: a lost committed response clears the input and only reads state before another explicit change",
 	{ timeout: 30000 },
 	async () => {
 		const replacement = "SYNTHETIC-LOST-PRIVATE-REPLACEMENT";

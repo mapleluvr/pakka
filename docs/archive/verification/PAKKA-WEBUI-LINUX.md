@@ -1,8 +1,8 @@
-# Pakka-Pocket — Linux closeout（进行中）
+# pakka-webui — Linux closeout（进行中）
 
 > **Deprecated — 历史资料。** 本文保留当时的计划、试写或验证结论，供追溯其条件、版本和产物；现行使用与实施入口见 [当前工作](../../OVERVIEW.md) 与 [文档导航](../../README.md)。deprecated 指本页作为当前指引的地位，历史事实、验收结果及尚有效的约束仍按原范围保留。分类与迁移说明见 [历史资料索引](../README.md)。
 
-本页保存 Linux 各轮候选、诊断和验收记录，包含当时仍待完成而后来已补齐的项目。用户已确认本机五项验收；当前产品、远程／跨平台和 P6 交付范围统一见 [移除前状态快照](https://github.com/mapleluvr/pakka/blob/200af506913ee38d7a357e5da96ea5e2afc03d67/docs/PAKKA-POCKET-STATUS.md)。后台 GUI 验收仍暂停。历史通过／失败与相应版本保留，Windows、真实设备公网 FCM 等测量独立记录。计划和操作协议见 [迁移计划（外置备份）](../../verification/DOCUMENTATION-CLEANUP.md#备份与恢复)、[P0 action ledger](../webui/PAKKA-POCKET-P0.md#3-页面与-action-ledger) 及 [分阶段协议](../../development/WEBUI-DEVELOPMENT.md#10-分阶段-computer-use-实操验收)。
+本页保存 Linux 各轮候选、诊断和验收记录，包含当时仍待完成而后来已补齐的项目。用户已确认本机五项验收；当前产品、远程／跨平台和 P6 交付范围统一见 [移除前状态快照](https://github.com/mapleluvr/pakka/blob/200af506913ee38d7a357e5da96ea5e2afc03d67/docs/PAKKA-POCKET-STATUS.md)。后台 GUI 验收仍暂停。历史通过／失败与相应版本保留，Windows、真实设备公网 FCM 等测量独立记录。计划和操作协议见 [迁移计划（外置备份）](../../verification/DOCUMENTATION-CLEANUP.md#备份与恢复)、[P0 action ledger](../webui/PAKKA-WEBUI-P0.md#3-页面与-action-ledger) 及 [分阶段协议](../../development/WEBUI-DEVELOPMENT.md#10-分阶段-computer-use-实操验收)。
 
 ## 用户授权的 main 同步
 
@@ -20,11 +20,11 @@
 
 ### 输入模式与本机字体设置
 
-用户要求将 Prompt/Steer/Follow up/Team chat 选择框与 Send 同行，并提供字体/字号设置。模式选择框改为内容宽度、限制最大宽度；语音与用量移至下一行。侧栏底部 Appearance 现在打开普通 Sheet，提供 Theme、Font、Text size、实时预览和重置；字体为 Pocket Mono/系统无衬线/衬线，字号14–24px，浏览器本地保存，非法旧值回落到默认值。代码预览保持等宽，触屏输入保留至少16px并随大字号增长。
+用户要求将 Prompt/Steer/Follow up/Team chat 选择框与 Send 同行，并提供字体/字号设置。模式选择框改为内容宽度、限制最大宽度；语音与用量移至下一行。侧栏底部 Appearance 现在打开普通 Sheet，提供 Theme、Font、Text size、实时预览和重置；字体为 WebUI Mono/系统无衬线/衬线，字号14–24px，浏览器本地保存，非法旧值回落到默认值。代码预览保持等宽，触屏输入保留至少16px并随大字号增长。
 
 新增真实浏览器回归先验证旧版缺少设置入口；实现后字号/字体应用、刷新持久化、重置、无效存储、草稿保留和手机同行行为通过。相关浏览器 **6/6**、构建/类型/格式通过；新安装包在320、390、1440px及24px字号下四种输入模式均无横向溢出，零模型调用。`typography-r3` 八归档、锁及12,639安装文件核对一致，正常关闭/备份后更新45000；原Session与数据/项目保持，仅正常追加且重启零模型调用，实时JS/CSS与新包一致。
 
-本轮全量为 **513/514**，唯一失败为既有 `Pocket owned browser: disallowed direct navigation redirects subresources and popup never reach another origin` 的 `Pocket browser closed or unavailable`。随后该浏览器隔离文件单独 **6/6** 通过，原失败保留，不能据复测声称全量通过；未修改其产品实现或测试。证据在 `pakka-evidence/user-feedback/typography-r3/`。用户暂停自动验收的指令保持有效，P5/P6未放行。
+本轮全量为 **513/514**，唯一失败为既有 `WebUI owned browser: disallowed direct navigation redirects subresources and popup never reach another origin` 的 `WebUI browser closed or unavailable`。随后该浏览器隔离文件单独 **6/6** 通过，原失败保留，不能据复测声称全量通过；未修改其产品实现或测试。证据在 `pakka-evidence/user-feedback/typography-r3/`。用户暂停自动验收的指令保持有效，P5/P6未放行。
 
 ### SVG 图标与重启后的本机预览
 
@@ -97,7 +97,7 @@
 
 ### 新候选的原生通知与公网 tunnel
 
-两个新增验收任务共同固定候选 `f7e78b1e35374fcbf815d86824dd0ccc085e95d7b564cba1a3e46190d60da188`，482 个实际文件，包含 npm bin 和手机状态宽度修复。分别从独立 worktree cwd 启动仓库外实际安装的 `.bin/pakka-pocket`，安装字节、数据、端口、profile 和桌面均独立。模型仍为指定的 `Mapleluv-ChatCompletions/deepseek-flash:max`。
+两个新增验收任务共同固定候选 `f7e78b1e35374fcbf815d86824dd0ccc085e95d7b564cba1a3e46190d60da188`，482 个实际文件，包含 npm bin 和手机状态宽度修复。分别从独立 worktree cwd 启动仓库外实际安装的 `.bin/pakka-webui`，安装字节、数据、端口、profile 和桌面均独立。模型仍为指定的 `Mapleluv-ChatCompletions/deepseek-flash:max`。
 
 | 任务                                      | workspace / worktree 后缀                         | run id                                 | 合同、报告和证据                                             | 状态                      |
 | ----------------------------------------- | ------------------------------------------------- | -------------------------------------- | ------------------------------------------------------------ | ------------------------- |
@@ -135,7 +135,7 @@ Linux 全量基线的 `493/494` 失败来自已完成 DOM click 后立即检查�
 
 ### npm bin 的真实入口
 
-从八个实际 tarball 的独立安装启动 `.bin/pakka-pocket` 时，原入口因符号链接路径与模块真实路径不同而直接退出 0，没有启动 listener。该问题此前被 consumer 直接调用 `dist/main.js` 的路径掩盖。新真实回归先复现同样的静默退出，再将入口判断改为公开 `realpath` 的规范路径比较，保留导入不自启动的行为。
+从八个实际 tarball 的独立安装启动 `.bin/pakka-webui` 时，原入口因符号链接路径与模块真实路径不同而直接退出 0，没有启动 listener。该问题此前被 consumer 直接调用 `dist/main.js` 的路径掩盖。新真实回归先复现同样的静默退出，再将入口判断改为公开 `realpath` 的规范路径比较，保留导入不自启动的行为。
 
 链接启动、导入无副作用和真实 MAS CLI 组装的 focused 检查为 3/3；原失败及修复日志是 `executable-bin-red.log`、`executable-bin-green.log`。安装消费者现直接覆盖 Linux npm bin 入口。此变更在第二轮 GUI 冻结之后，旧报告不验证新安装入口；新候选和 tarball 需重新通过全量及安装门禁，并由后续原生通知任务实操启动路径。
 
@@ -195,7 +195,7 @@ adapter 现把 `conversationId` 绑定当前受控 view，并用可选 `sourceCo
 
 ## 4. OpenSpec 文档门禁
 
-13 个 `>500 characters` requirement 警告已按行为拆为命名要求；原所有规范句子保持原文，原 scenario 也保留。新增 scenario 说明各自边界，没有删除权限、unknown、效果或恢复约束。`openspec-split-verification.json` 保存逐句保留校验，`openspec validate pakka-pocket-webui --strict --no-interactive --json` 当前退出 0，输出在 `openspec-green.json`。这是文档门禁，不代表 task 通过，不归档 active change。
+13 个 `>500 characters` requirement 警告已按行为拆为命名要求；原所有规范句子保持原文，原 scenario 也保留。新增 scenario 说明各自边界，没有删除权限、unknown、效果或恢复约束。`openspec-split-verification.json` 保存逐句保留校验，`openspec validate pakka-webui --strict --no-interactive --json` 当前退出 0，输出在 `openspec-green.json`。这是文档门禁，不代表 task 通过，不归档 active change。
 
 ## 5. 仓库外交付身份和反例
 

@@ -10,7 +10,7 @@ import { ownedBrowser } from "./browser.ts";
 import { toggleConversations } from "./frontend-controls.ts";
 
 test(
-	"Pocket automation panel: actual human schedules native work, leaving the interface keeps it alive, a viewer is read-only and cancel fences delivery",
+	"WebUI automation panel: actual human schedules native work, leaving the interface keeps it alive, a viewer is read-only and cancel fences delivery",
 	{ timeout: 30000 },
 	async (t) => {
 		const m = await runtimeFixture();

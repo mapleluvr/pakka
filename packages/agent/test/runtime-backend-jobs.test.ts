@@ -38,7 +38,7 @@ async function effect(endpoint: string) {
 
 // Cancelling a UI waiter must not release a native job; native abort cannot claim rollback of prior work.
 test(
-	"Pocket job port: cancelled wait retains native work and explicit abort produces a terminal receipt",
+	"WebUI job port: cancelled wait retains native work and explicit abort produces a terminal receipt",
 	{ timeout: 10000 },
 	async () => {
 		const entered = deferred();
@@ -83,7 +83,7 @@ test(
 
 // Replaying a handler after an uncheckpointed external effect would duplicate the real HTTP request.
 test(
-	"Pocket job port: uncheckpointed interrupted execution reopens as unknown without replay",
+	"WebUI job port: uncheckpointed interrupted execution reopens as unknown without replay",
 	{ timeout: 10000 },
 	async () => {
 		const effected = deferred();
@@ -139,7 +139,7 @@ test(
 
 // A checkpoint must persist together with the native phase so recovery resumes only the approved next step.
 test(
-	"Pocket job port: committed checkpoint continues once and retained completed receipt survives another reopen",
+	"WebUI job port: committed checkpoint continues once and retained completed receipt survives another reopen",
 	{ timeout: 10000 },
 	async () => {
 		const checkpointed = deferred();
@@ -208,7 +208,7 @@ test(
 
 // Admission and execution are separate authority boundaries; an admitted job must recheck before effects.
 test(
-	"Pocket job port: late authority revocation stops the approved checkpoint/effect path",
+	"WebUI job port: late authority revocation stops the approved checkpoint/effect path",
 	{ timeout: 10000 },
 	async () => {
 		const entered = deferred(),

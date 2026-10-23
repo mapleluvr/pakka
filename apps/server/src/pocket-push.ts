@@ -1,5 +1,5 @@
 // RFC 8291 (aes128gcm) and RFC 8292 (VAPID), using public Node crypto/TLS APIs.
-// Behavior reference: pi-pocket@de612d5622cd src/server/push.ts; no Pocket storage/authority is imported.
+// Behavior reference: pi-pocket@de612d5622cd src/server/push.ts; no WebUI storage/authority is imported.
 import { createCipheriv, createECDH, createHmac, createPrivateKey, randomBytes, sign } from "node:crypto";
 import { request } from "node:https";
 

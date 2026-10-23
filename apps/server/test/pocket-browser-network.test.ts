@@ -8,7 +8,7 @@ import { readFile } from "node:fs/promises";
 import { browserNetwork } from "../src/pocket-browser-network.ts";
 
 test(
-	"Pocket browser network: a real approved HTTPS tunnel preserves TLS validation; a foreign CONNECT has no target request",
+	"WebUI browser network: a real approved HTTPS tunnel preserves TLS validation; a foreign CONNECT has no target request",
 	{ timeout: 10000 },
 	async () => {
 		const [key, cert] = await Promise.all([

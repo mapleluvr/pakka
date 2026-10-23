@@ -28,8 +28,8 @@ async function localServer(handler: (request: IncomingMessage, response: ServerR
 	};
 }
 
-// The browser-safe path must retain instance correlation and send only explicit finite Pocket commands.
-test("Pocket fetch client: actual HTTP uses v2/CSRF and reconnect checks the storage instance", async () => {
+// The browser-safe path must retain instance correlation and send only explicit finite WebUI commands.
+test("WebUI fetch client: actual HTTP uses v2/CSRF and reconnect checks the storage instance", async () => {
 	const seen: Record<string, unknown>[] = [];
 	const server = await localServer((req, res) => {
 		const parts: Buffer[] = [];
@@ -67,7 +67,7 @@ test("Pocket fetch client: actual HTTP uses v2/CSRF and reconnect checks the sto
 });
 
 // A connection drop after the server receives a mutation is not proof of refusal and must not auto-replay it.
-test("Pocket fetch client: a received mutation followed by disconnect remains unknown with zero automatic retries", async () => {
+test("WebUI fetch client: a received mutation followed by disconnect remains unknown with zero automatic retries", async () => {
 	let received = 0;
 	const server = await localServer((req, res) => {
 		req.resume();
@@ -95,7 +95,7 @@ test("Pocket fetch client: a received mutation followed by disconnect remains un
 });
 
 // HTTP status cannot substitute for a valid correlated protocol refusal; malformed bytes must not be replaced.
-test("Pocket fetch client: unrelated errors, wrong target and malformed UTF-8 remain unknown", async () => {
+test("WebUI fetch client: unrelated errors, wrong target and malformed UTF-8 remain unknown", async () => {
 	let mode = "unrelated";
 	const server = await localServer((req, res) => {
 		req.resume();
@@ -135,7 +135,7 @@ test("Pocket fetch client: unrelated errors, wrong target and malformed UTF-8 re
 });
 
 // A well-formed result for a different resource/profile still cannot confirm a requested human mutation.
-test("Pocket fetch client: create/configure/fork results bind the requested resource and profile", async () => {
+test("WebUI fetch client: create/configure/fork results bind the requested resource and profile", async () => {
 	let wrong = false;
 	const server = await localServer((req, res) => {
 		const chunks: Buffer[] = [];

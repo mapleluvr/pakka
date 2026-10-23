@@ -82,7 +82,7 @@ async function start() {
 		[
 			process.platform === "win32"
 				? join(root, "node_modules/@pakka/webui/dist/main.js")
-				: join(root, "node_modules/.bin/pakka-pocket"),
+				: join(root, "node_modules/.bin/pakka-webui"),
 			"--config",
 			configFile,
 			"--owner-file",
@@ -316,7 +316,7 @@ try {
 	assert.deepEqual(errors, []);
 	await writeFile(join(root, "pocket-product-evidence/requests.json"), JSON.stringify(requests, null, 2));
 	console.log(
-		"Installed Pocket product passed: real executable/assets/public GUI-only and backend settings extensions, desktop/mobile isolated Chrome, invitation/viewer/revocation, exact approved model selection, private provider replace/clear and scoped usage across normal reopen; 1 local HTTP, 3 charged attempts and no fallback or duplicate model work.",
+		"Installed WebUI product passed: real executable/assets/public GUI-only and backend settings extensions, desktop/mobile isolated Chrome, invitation/viewer/revocation, exact approved model selection, private provider replace/clear and scoped usage across normal reopen; 1 local HTTP, 3 charged attempts and no fallback or duplicate model work.",
 	);
 } finally {
 	await browser?.close();

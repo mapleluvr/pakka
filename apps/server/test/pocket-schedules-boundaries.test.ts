@@ -11,7 +11,7 @@ import { createPocketCollaboration } from "../src/pocket-collaboration.ts";
 import { createPocketSchedules } from "../src/pocket-schedules.ts";
 
 test(
-	"Pocket schedules: the declared bounded text limit reaches the actual provider unchanged",
+	"WebUI schedules: the declared bounded text limit reaches the actual provider unchanged",
 	{ timeout: 8000 },
 	async () => {
 		const f = await fixture();
@@ -80,7 +80,7 @@ async function fixture(wrap: (workspace: PocketWorkspace) => PocketWorkspace = (
 }
 
 test(
-	"Pocket schedule authority: resource scopes and viewers cannot register native work or claim a different incarnation",
+	"WebUI schedule authority: resource scopes and viewers cannot register native work or claim a different incarnation",
 	{ timeout: 8000 },
 	async () => {
 		const f = await fixture();
@@ -116,7 +116,7 @@ test(
 );
 
 test(
-	"Pocket schedule authority: current driver handover fences a previously committed due input",
+	"WebUI schedule authority: current driver handover fences a previously committed due input",
 	{ timeout: 8000 },
 	async (t) => {
 		const f = await fixture();
@@ -143,7 +143,7 @@ test(
 );
 
 test(
-	"Pocket schedule authority: a revoked creator cannot release the next scheduled native input",
+	"WebUI schedule authority: a revoked creator cannot release the next scheduled native input",
 	{ timeout: 8000 },
 	async (t) => {
 		const f = await fixture();
@@ -166,7 +166,7 @@ test(
 );
 
 test(
-	"Pocket schedule uncertainty: losing a real native admission result cannot re-enter it on retry or receipt reads",
+	"WebUI schedule uncertainty: losing a real native admission result cannot re-enter it on retry or receipt reads",
 	{ timeout: 8000 },
 	async (t) => {
 		let admissions = 0;
@@ -201,7 +201,7 @@ test(
 // Lose the confirmation view only after a real native admission; the actual provider effect is counted independently.
 for (const maxRuns of [1, 2]) {
 	test(
-		`Pocket schedule uncertainty: an unknown native receipt stops ${maxRuns}-run scheduled work`,
+		`WebUI schedule uncertainty: an unknown native receipt stops ${maxRuns}-run scheduled work`,
 		{ timeout: 8000 },
 		async () => {
 			const f = await fixture((workspace) =>
@@ -241,7 +241,7 @@ for (const maxRuns of [1, 2]) {
 }
 
 test(
-	"Pocket schedules: a finite recurring job uses separate native delivery identities and does not reset its consumed quota",
+	"WebUI schedules: a finite recurring job uses separate native delivery identities and does not reset its consumed quota",
 	{ timeout: 8000 },
 	async (t) => {
 		const f = await fixture();

@@ -145,7 +145,7 @@ try {
 	assert.equal(requests.length, 1);
 	assert.deepEqual(errors, []);
 	console.log(
-		"Installed Pocket services passed: 1 local HTTP; identity, resource scope, passive read/display, finite v2 exports, native jobs and original admission preserved on reopen.",
+		"Installed WebUI services passed: 1 local HTTP; identity, resource scope, passive read/display, finite v2 exports, native jobs and original admission preserved on reopen.",
 	);
 } finally {
 	await runtime?.close();

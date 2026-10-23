@@ -30,7 +30,7 @@ const snapshot = {
 	presence: [{ personId: "human-two", name: "Bob", state: "typing", expiresAt: 10000 }],
 };
 // A permissive generic payload could accept forged authors/driver identities or private storage metadata.
-test("Pocket collaboration protocol: human operations reject serialized authority, unbounded values and metadata", () => {
+test("WebUI collaboration protocol: human operations reject serialized authority, unbounded values and metadata", () => {
 	const commands = [
 		{ op: "collaboration.read", target },
 		{
@@ -73,7 +73,7 @@ test("Pocket collaboration protocol: human operations reject serialized authorit
 		);
 });
 // Client-visible snapshots/events have their own finite decode; source DTO typing cannot sanitize wire bytes.
-test("Pocket collaboration protocol: bounded attributed snapshots and scoped events reject malformed state", () => {
+test("WebUI collaboration protocol: bounded attributed snapshots and scoped events reject malformed state", () => {
 	const response = {
 		version: 2,
 		requestId: "rpc",

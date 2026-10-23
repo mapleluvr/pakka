@@ -4,10 +4,10 @@ import { resolve } from "node:path";
 import { existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { verifySource, inventorySource } from "./source.mjs";
 
-const primary = resolve("artifacts/pakka-pocket/p0/upstream-source");
-const reference = resolve("artifacts/pakka-pocket/p0/pi-pocket-source");
+const primary = resolve("artifacts/pakka-webui/p0/upstream-source");
+const reference = resolve("artifacts/pakka-webui/p0/pi-pocket-source");
 
-test("Pocket source: primary UI tree is exact and never silently substituted by the issue branch", () => {
+test("WebUI source: primary UI tree is exact and never silently substituted by the issue branch", () => {
 	const source = verifySource(primary, "upstream");
 	assert.equal(source.commit, "de612d5622cdc66b6b8b4900c650c6f2efdf4c63");
 	assert.equal(source.durableVersion, "1.1.0");
@@ -17,14 +17,14 @@ test("Pocket source: primary UI tree is exact and never silently substituted by 
 	assert.throws(() => verifySource(reference, "upstream"), /commit|source|tree/i);
 });
 
-test("Pocket source: Phase 2 is a separate older reference with a provable Phase 1 parent", () => {
+test("WebUI source: Phase 2 is a separate older reference with a provable Phase 1 parent", () => {
 	const source = verifySource(reference, "extensionReference");
 	assert.equal(source.durableVersion, "1.0.2");
 	assert.equal(source.parents[0], "2cb652c465f670ba8c66fc3ee639798caca8afbc");
 	assert.ok(source.files.some((file) => file.path === "web/sheets/extension.js"));
 });
 
-test("Pocket source: a dirtied checkout is not accepted as the pinned adoptable bytes", () => {
+test("WebUI source: a dirtied checkout is not accepted as the pinned adoptable bytes", () => {
 	const path = resolve(primary, "web/ui.js"),
 		before = readFileSync(path);
 	try {
@@ -35,7 +35,7 @@ test("Pocket source: a dirtied checkout is not accepted as the pinned adoptable 
 	}
 });
 
-test("Pocket source: an untracked executable input cannot join the pinned upstream test tree", () => {
+test("WebUI source: an untracked executable input cannot join the pinned upstream test tree", () => {
 	const path = resolve(primary, "test/pakka-pin-injection.test.ts");
 	assert.equal(existsSync(path), false, "do not overwrite a foreign source input");
 	try {
@@ -46,7 +46,7 @@ test("Pocket source: an untracked executable input cannot join the pinned upstre
 	}
 });
 
-test("Pocket source: every adopted UI module has one explicit service owner and a real acceptance path", () => {
+test("WebUI source: every adopted UI module has one explicit service owner and a real acceptance path", () => {
 	let map;
 	try {
 		map = JSON.parse(readFileSync(new URL("./adoption-map.json", import.meta.url), "utf8"));
@@ -70,7 +70,7 @@ test("Pocket source: every adopted UI module has one explicit service owner and 
 	assert.equal(map.groups.find((group) => group.id === "pip-removal").modelEffect, "removed");
 });
 
-test("Pocket source: the inventory exposes actual UI/backend dependency edges to remove", () => {
+test("WebUI source: the inventory exposes actual UI/backend dependency edges to remove", () => {
 	const inventory = inventorySource(primary, "upstream");
 	assert.ok(
 		inventory.authorityEdges.some(

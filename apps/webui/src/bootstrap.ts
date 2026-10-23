@@ -61,10 +61,10 @@ async function publicAssets() {
 	let bytes = 0;
 	async function walk(folder: string): Promise<void> {
 		for (const name of await readdir(folder)) {
-			if (name.startsWith(".") || name.includes(":")) throw new Error("Invalid public Pocket asset");
+			if (name.startsWith(".") || name.includes(":")) throw new Error("Invalid public WebUI asset");
 			const path = join(folder, name),
 				stat = await lstat(path);
-			if (stat.isSymbolicLink()) throw new Error("Public Pocket asset link refused");
+			if (stat.isSymbolicLink()) throw new Error("Public WebUI asset link refused");
 			if (stat.isDirectory()) {
 				await walk(path);
 				continue;
@@ -77,7 +77,7 @@ async function publicAssets() {
 				(bytes += stat.size) > 16 * 1024 * 1024 ||
 				assets.size >= 128
 			)
-				throw new Error("Invalid bounded public Pocket assets");
+				throw new Error("Invalid bounded public WebUI assets");
 			const key = "/" + relative(directory, path).replaceAll("\\", "/");
 			assets.set(key === "/index.html" ? "/" : key, { type, body: await readFile(path) });
 		}
@@ -127,7 +127,7 @@ export async function startPocket(options: PocketProductOptions) {
 		) ||
 		initial.some((row) => !profiles.includes(row.profile))
 	)
-		throw new Error("Invalid approved Pocket product configuration");
+		throw new Error("Invalid approved WebUI product configuration");
 	const assets = await publicAssets();
 	const bootstrapCredential = options.runtime.resolveApiKey ?? (() => options.runtime.apiKey);
 	let credentials: PocketCredentials | undefined;
@@ -164,7 +164,7 @@ export async function startPocket(options: PocketProductOptions) {
 				failed = true;
 			}
 		}
-		if (failed) throw Error("Pocket service shutdown unconfirmed");
+		if (failed) throw Error("WebUI service shutdown unconfirmed");
 	}
 	try {
 		const people = await createPocketPeople({ runtime, namespace: "pocket.people" }),
@@ -192,11 +192,11 @@ export async function startPocket(options: PocketProductOptions) {
 		let initialOwner: PocketSession | null = null;
 		let ownerId: string;
 		const ready = () => {
-			if (runtime.view().phase !== "ready") throw new Error("Pocket runtime unavailable");
+			if (runtime.view().phase !== "ready") throw new Error("WebUI runtime unavailable");
 		};
 		if (saved.version === 0) {
 			if (options.runtime.reopenSessionFile)
-				throw new Error("Reopened storage has no confirmed Pocket product identity");
+				throw new Error("Reopened storage has no confirmed WebUI product identity");
 			await store.compareAndSet(0, { schema: 1, phase: "initializing", fingerprint }, ready);
 			initialOwner = await people.initializeOwner(options.owner);
 			ownerId = initialOwner.person.id;
@@ -230,7 +230,7 @@ export async function startPocket(options: PocketProductOptions) {
 				)
 			)
 				throw new Error(
-					"Pocket initialization unavailable or configuration conflict; explicit reconciliation required",
+					"WebUI initialization unavailable or configuration conflict; explicit reconciliation required",
 				);
 			ownerId = data.ownerId;
 		}

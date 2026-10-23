@@ -30,7 +30,7 @@ async function openFiles(page: Page) {
 }
 // Omitting a pre-write hash check loses a real outside edit; hiding buttons alone does not protect RPC.
 test(
-	"Pocket files browser: real edit conflicts keep drafts while a mobile viewer decodes an image without write authority",
+	"WebUI files browser: real edit conflicts keep drafts while a mobile viewer decodes an image without write authority",
 	{ timeout: 25000 },
 	async () => {
 		const m = await runtimeFixture();
@@ -76,8 +76,8 @@ test(
 				"LOCAL-UNSAVED-DRAFT",
 			);
 			assert.equal(await readFile(join(m.f.cwd, "readme.txt"), "utf8"), "EXTERNAL-WINNING-EDIT\n");
-			await mkdir("artifacts/pakka-pocket/p5", { recursive: true });
-			await writeFile("artifacts/pakka-pocket/p5/files-desktop.png", await owner.screenshot());
+			await mkdir("artifacts/pakka-webui/p5", { recursive: true });
+			await writeFile("artifacts/pakka-webui/p5/files-desktop.png", await owner.screenshot());
 			const invitation = await owner.evaluate(
 				`(async()=>{const {createPocketClient}=await import('@pakka/client/pocket');return createPocketClient({endpoint:location.origin+'/pocket/rpc',csrf:()=>/pakka_csrf=([^;]+)/.exec(document.cookie)?.[1]??null}).request({op:'invite',requestId:'file-viewer',role:'viewer',resources:[${JSON.stringify(ref.conversationId)}],ttlMs:60000});})()`,
 			);
@@ -111,7 +111,7 @@ test(
 			assert.deepEqual(denied, { code: "FORBIDDEN", outcome: "denied" });
 			assert.equal(await readFile(join(m.f.cwd, "readme.txt"), "utf8"), "EXTERNAL-WINNING-EDIT\n");
 			assert.deepEqual(await readFile(join(m.f.cwd, "pixel.png")), image);
-			await writeFile("artifacts/pakka-pocket/p5/files-mobile.png", await viewer.screenshot());
+			await writeFile("artifacts/pakka-webui/p5/files-mobile.png", await viewer.screenshot());
 			assert.equal(m.f.requests.length, 0);
 			assert.deepEqual(m.f.errors, []);
 		} finally {

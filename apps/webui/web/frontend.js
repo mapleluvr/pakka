@@ -1,5 +1,5 @@
 // Frontend structure follows devin-ui-comparison@ed20cec/clean-room/current.
-// Pocket state/actions are supplied by app.js; this module never grants authority.
+// WebUI state/actions are supplied by app.js; this module never grants authority.
 import { h } from "preact";
 import { useLayoutEffect, useRef, useState } from "preact/hooks";
 import htm from "htm";
@@ -14,12 +14,9 @@ export function Menu({ name, trigger, close, children }) {
 		const place = () => {
 			const r = trigger.getBoundingClientRect(),
 				box = node.current.getBoundingClientRect();
-			const above = name === "gear";
 			setPosition({
 				left: Math.max(8, Math.min(r.left, innerWidth - box.width - 8)) + "px",
-				top:
-					Math.max(8, Math.min(above ? r.top - box.height - 8 : r.bottom + 6, innerHeight - box.height - 8)) +
-					"px",
+				top: Math.max(8, Math.min(r.bottom + 6, innerHeight - box.height - 8)) + "px",
 			});
 		};
 		place();
@@ -203,11 +200,9 @@ export function Frontend({
 				<div class="footer-actions">
 					<button
 						class="icon-btn"
-						data-action="appearance"
+						data-action="open-settings"
 						aria-label="Settings"
-						aria-haspopup="menu"
-						aria-expanded=${menu?.name === "gear"}
-						onClick=${(e) => openMenu("gear", e)}
+						onClick=${() => openSheet("appearance")}
 					>
 						<${Glyph} name="settings" />
 					</button>
@@ -398,7 +393,6 @@ export function Frontend({
 					Sign out
 				</button>`
 		}
-   ${menu.name === "gear" && html`<button class="menu-row" role="menuitem" data-action="open-appearance" onClick=${action(() => openSheet("appearance"))}><${Glyph} name="settings" />Appearance</button>${person.role === "admin" && html`<button class="menu-row" role="menuitem" data-action="people" onClick=${action(showPeople)}><${Glyph} name="user" />People & invitations</button>`}`}
    ${
 			menu.name === "history" &&
 			html`<div class="palette-search">

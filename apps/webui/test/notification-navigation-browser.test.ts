@@ -7,7 +7,7 @@ import { ownedBrowser } from "./browser.ts";
 import { conversationAction, organizationAction } from "./frontend-controls.ts";
 
 test(
-	"Pocket notification links select visible conversation history in an already open document without replaying input",
+	"WebUI notification links select visible conversation history in an already open document without replaying input",
 	{ timeout: 40000 },
 	async () => {
 		const m = await runtimeFixture();

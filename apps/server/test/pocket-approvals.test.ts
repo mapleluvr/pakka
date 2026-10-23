@@ -120,7 +120,7 @@ async function setup(options: { failAfterEffect?: boolean; pauseStart?: boolean 
 
 for (const allow of [true, false])
 	test(
-		`Pocket approvals: real native tool ${allow ? "allow executes once" : "deny has no external effect"}`,
+		`WebUI approvals: real native tool ${allow ? "allow executes once" : "deny has no external effect"}`,
 		{ timeout: 15000 },
 		async (t) => {
 			const f = await setup();
@@ -178,7 +178,7 @@ for (const allow of [true, false])
 	);
 
 test(
-	"Pocket approvals: aborting the native call seals a late decision and unresolved restore never replays",
+	"WebUI approvals: aborting the native call seals a late decision and unresolved restore never replays",
 	{ timeout: 15000 },
 	async (t) => {
 		const f = await setup();
@@ -217,7 +217,7 @@ test(
 );
 
 test(
-	"Pocket approvals: a real external effect followed by callback failure remains unknown",
+	"WebUI approvals: a real external effect followed by callback failure remains unknown",
 	{ timeout: 15000 },
 	async (t) => {
 		const f = await setup({ failAfterEffect: true });
@@ -246,7 +246,7 @@ test(
 	},
 );
 
-test("Pocket approvals: a serialized invocation cannot create an approval or execute a tool", async () => {
+test("WebUI approvals: a serialized invocation cannot create an approval or execute a tool", async () => {
 	const f = await setup();
 	let effects = 0;
 	try {
@@ -267,7 +267,7 @@ test("Pocket approvals: a serialized invocation cannot create an approval or exe
 });
 
 test(
-	"Pocket approvals: losing the bound interface after committed allow blocks a not-yet-started effect",
+	"WebUI approvals: losing the bound interface after committed allow blocks a not-yet-started effect",
 	{ timeout: 15000 },
 	async (t) => {
 		const f = await setup({ pauseStart: true });
@@ -299,7 +299,7 @@ test(
 );
 
 test(
-	"Pocket approvals: revocation after committed allow but before the tool effect denies the late effect",
+	"WebUI approvals: revocation after committed allow but before the tool effect denies the late effect",
 	{ timeout: 15000 },
 	async (t) => {
 		const f = await setup({ pauseStart: true });

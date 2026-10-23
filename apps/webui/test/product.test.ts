@@ -5,7 +5,7 @@ import { startPocket } from "../src/bootstrap.ts";
 
 // A static mock GUI or a second Durable backend would not produce this real native receipt/request history.
 test(
-	"Pocket product: actual assets and approved workspace run without MAS, then reopen the same identity and admission",
+	"WebUI product: actual assets and approved workspace run without MAS, then reopen the same identity and admission",
 	{ timeout: 20000 },
 	async () => {
 		const m = await runtimeFixture();
@@ -22,7 +22,7 @@ test(
 			assert.ok(token);
 			const html = await fetch(origin + "/");
 			assert.equal(html.status, 200);
-			assert.match(await html.text(), /Pakka-Pocket/);
+			assert.match(await html.text(), /pakka-webui/);
 			const script = await fetch(origin + "/app.js");
 			assert.equal(script.status, 200);
 			assert.match(script.headers.get("content-type") ?? "", /javascript/);

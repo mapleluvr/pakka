@@ -41,9 +41,8 @@ export async function openExtensionManager(page: FrontendPage) {
 export async function openAppearance(page: FrontendPage) {
 	await backFromSettings(page);
 	await sidebarReady(page);
-	await page.click('[data-action="appearance"]');
-	await settleFrontend(page);
-	await page.click('[data-action="open-appearance"]');
+	await page.click('[data-action="open-settings"]');
+	await page.wait('document.querySelector(".settings-view [aria-label=Theme]")');
 }
 export async function openConversationMenu(page: FrontendPage) {
 	await backFromSettings(page);

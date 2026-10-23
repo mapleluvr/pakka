@@ -1,4 +1,4 @@
-// Pakka-Pocket's notification worker. Behavioral reference: pi-pocket@de612d5622cd web/sw.js (MIT).
+// pakka-webui's notification worker. Behavioral reference: pi-pocket@de612d5622cd web/sw.js (MIT).
 // It caches no application, credentials or resource content. Push carries only opaque lookup IDs.
 self.addEventListener("install", () => self.skipWaiting());
 self.addEventListener("activate", (event) => event.waitUntil(self.clients.claim()));
@@ -91,7 +91,7 @@ self.addEventListener("message", (event) => {
 	if (event.data.type === "pakka.notifications.clear") event.waitUntil(clear());
 	else if (event.data.type === "pakka.notifications.test")
 		event.waitUntil(
-			self.registration.showNotification("Pakka-Pocket", {
+			self.registration.showNotification("pakka-webui", {
 				body: "System notifications work on this device.",
 				tag: "pakka-device-test",
 			}),

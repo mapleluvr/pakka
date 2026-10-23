@@ -5,6 +5,9 @@ patches/pi-durable/**/artifact.json text eol=lf
 packages/agent/vendor/*.tgz binary
 # Preserve adopted upstream license bytes, including original whitespace.
 integrations/pocket/licenses/*.txt -text -whitespace
+# Preserve the adopted external frontend guide bytes across platforms.
+docs/development/frontend-guides/vercel-web-interface-guidelines.md text eol=lf
+docs/development/frontend-guides/vercel-LICENSE.txt text eol=lf
 # Preserve the pinned Devin frontend Git-blob bytes on every platform.
 apps/webui/web/reference.css text eol=lf
 # Archived verification records keep their measured bytes (including CRLF).

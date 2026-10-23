@@ -5,7 +5,7 @@ import { runtimeFixture } from "../../../packages/agent/test/runtime-fixture.ts"
 import { createPocketPeople } from "../src/pocket-people.ts";
 
 // A pre-queue check alone would redeem an invitation after expiry at the real commit boundary.
-test("Pocket people: invitation expiry is rechecked after session preparation before native commit", async () => {
+test("WebUI people: invitation expiry is rechecked after session preparation before native commit", async () => {
 	const m = await runtimeFixture();
 	const base = Date.now();
 	let armed = false,
@@ -35,7 +35,7 @@ test("Pocket people: invitation expiry is rechecked after session preparation be
 });
 
 // Revocation must fence an already queued redemption rather than wait for a session to be minted.
-test("Pocket people: pending redemption is fenced by invitation revocation before allocation commits", async () => {
+test("WebUI people: pending redemption is fenced by invitation revocation before allocation commits", async () => {
 	const m = await runtimeFixture();
 	try {
 		const people = await createPocketPeople({ runtime: m.runtime, namespace: "test-people" });
@@ -63,7 +63,7 @@ test("Pocket people: pending redemption is fenced by invitation revocation befor
 });
 
 // Reducing a role must invalidate current sessions; a new sign-in must retain the existing person.
-test("Pocket people: role changes invalidate old checks and a targeted sign-in preserves the person", async () => {
+test("WebUI people: role changes invalidate old checks and a targeted sign-in preserves the person", async () => {
 	const m = await runtimeFixture();
 	try {
 		const people = await createPocketPeople({ runtime: m.runtime, namespace: "test-people" });
@@ -109,7 +109,7 @@ test("Pocket people: role changes invalidate old checks and a targeted sign-in p
 });
 
 // A failed native write must close old checks and must never restore a bootstrap owner.
-test("Pocket people: uncertain native storage closes authority rather than restoring a bootstrap owner", async () => {
+test("WebUI people: uncertain native storage closes authority rather than restoring a bootstrap owner", async () => {
 	const m = await runtimeFixture();
 	const file = m.runtime.view().sessionFile;
 	let moved = false;

@@ -7,7 +7,7 @@ import { fileURLToPath } from "node:url";
 import { runtimeFixture } from "../../../packages/agent/test/runtime-fixture.ts";
 
 test(
-	"Pocket executable: explicit config starts real product and writes its owner link only to the designated private file",
+	"WebUI executable: explicit config starts real product and writes its owner link only to the designated private file",
 	{ timeout: 20000 },
 	async () => {
 		const m = await runtimeFixture();
@@ -63,7 +63,7 @@ test(
 				allowed.search ||
 				allowed.hash
 			)
-				throw new Error("Owned Pocket child loopback address required");
+				throw new Error("Owned WebUI child loopback address required");
 			assert.equal(allowed.origin, endpoint.origin);
 			const link = new URL((await readFile(owner, "utf8")).trim());
 			assert.equal(link.origin, endpoint.origin);
@@ -74,7 +74,7 @@ test(
 			assert.equal(stdout.includes(m.config.apiKey), false);
 			const page = await fetch(allowed);
 			assert.equal(page.status, 200);
-			assert.match(await page.text(), /Pakka-Pocket/);
+			assert.match(await page.text(), /pakka-webui/);
 			const login = await fetch(endpoint.origin + "/pocket/exchange", {
 				method: "POST",
 				headers: { Origin: endpoint.origin, "Content-Type": "application/json" },
@@ -109,7 +109,7 @@ test(
 );
 
 test(
-	"Pocket executable: unknown configuration, unsafe proxy shortcut and existing owner file fail before storage or provider effects",
+	"WebUI executable: unknown configuration, unsafe proxy shortcut and existing owner file fail before storage or provider effects",
 	{ timeout: 15000 },
 	async () => {
 		const m = await runtimeFixture();

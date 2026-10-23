@@ -33,7 +33,7 @@ async function fixture() {
 
 // Removing the native due-time wait or using a different admission identity would produce early/duplicate HTTP.
 test(
-	"Pocket schedules: a real due native job sends once and request reconciliation never re-enters work",
+	"WebUI schedules: a real due native job sends once and request reconciliation never re-enters work",
 	{ timeout: 10000 },
 	async (t) => {
 		const f = await fixture();
@@ -62,7 +62,7 @@ test(
 
 // Cancelling the actual queued job must fence admission; UI disappearance alone is not cancellation evidence.
 test(
-	"Pocket schedules: explicit cancel leaves a native terminal receipt and zero provider effects",
+	"WebUI schedules: explicit cancel leaves a native terminal receipt and zero provider effects",
 	{ timeout: 10000 },
 	async (t) => {
 		const f = await fixture();
@@ -102,7 +102,7 @@ test(
 
 // Restoring just a browser timer or rerunning a waiting handler without its committed checkpoint would lose/duplicate work.
 test(
-	"Pocket schedules recovery: a future checkpoint survives a normal writer reopen and keeps the original job and budget",
+	"WebUI schedules recovery: a future checkpoint survives a normal writer reopen and keeps the original job and budget",
 	{ timeout: 12000 },
 	async (t) => {
 		const f = await fixture();

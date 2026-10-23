@@ -10,7 +10,7 @@ import { browserExecutable, ownedBrowser } from "./browser.ts";
 import { toggleConversations } from "./frontend-controls.ts";
 
 test(
-	"Pocket browser contribution: actual UI controls owned page, real frame renders, mobile viewer cannot act",
+	"WebUI browser contribution: actual UI controls owned page, real frame renders, mobile viewer cannot act",
 	{ timeout: 30000 },
 	async (t) => {
 		let effects = 0;
@@ -156,7 +156,7 @@ test(
 			assert.equal(effects, 2);
 			assert.equal(m.f.requests.length, 0);
 			const artifacts =
-				process.env.PAKKA_TEST_ARTIFACTS ?? join(process.cwd(), "artifacts", "pakka-pocket", "p5");
+				process.env.PAKKA_TEST_ARTIFACTS ?? join(process.cwd(), "artifacts", "pakka-webui", "p5");
 			await mkdir(artifacts, { recursive: true });
 			await writeFile(join(artifacts, "browser-panel-desktop.png"), await owner.screenshot());
 			await writeFile(join(artifacts, "browser-panel-mobile.png"), await viewer.screenshot());

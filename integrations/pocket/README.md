@@ -1,6 +1,6 @@
-# Pakka-Pocket source and native feasibility
+# pakka-webui source and native feasibility
 
-This is the executable P0 evidence path, not an installed WebUI or a claim that the migration is finished. Current product scope is in [state](../../docs/state/product.md); the complete [Pocket change and specs](../../docs/changes/webui-and-mas.md) retain the development record.
+This is the executable P0 evidence path, not an installed WebUI or a claim that the migration is finished. Current product scope is in [state](../../docs/state/product.md); the complete [WebUI change and specs](../../docs/changes/webui-and-mas.md) retain the development record.
 
 ## Immutable sources
 
@@ -18,7 +18,7 @@ Code and font notices are retained byte-for-byte in [licenses/](licenses/). Ever
 From the Pakka repository root, create the two ignored source checkouts. Fetch the three exact commits without depth truncation, not a floating branch. Do not execute their application or use user credentials.
 
 ```powershell
-$root = 'artifacts/pakka-pocket/p0'
+$root = 'artifacts/pakka-webui/p0'
 New-Item -ItemType Directory -Force $root | Out-Null
 git init "$root/upstream-source"
 git -C "$root/upstream-source" remote add origin https://github.com/mapleluvr/pi-pocket.git
@@ -43,9 +43,9 @@ The inventory uses Git blob bytes, not a raw copy of a dirty checkout. The AST p
 
 ## Results and what they establish
 
-[The original baseline](upstream-baseline.json) records **548 = 378 passed + 40 failed + 130 skipped**, no cancelled/todo, on Windows/Node 24.18.0. Install and check passed. Failures and skips are preserved, not fixed or counted as acceptance. Raw logs are under `artifacts/pakka-pocket/p0/`. Faux-provider upstream results do not substitute for the real pinned-Durable production path.
+[The original baseline](upstream-baseline.json) records **548 = 378 passed + 40 failed + 130 skipped**, no cancelled/todo, on Windows/Node 24.18.0. Install and check passed. Failures and skips are preserved, not fixed or counted as acceptance. Raw logs are under `artifacts/pakka-webui/p0/`. Faux-provider upstream results do not substitute for the real pinned-Durable production path.
 
-`source.mjs` emits per-file modes/blob IDs/SHA-256/lengths and AST call/route/old-authority candidate locations. The initial primary inventory contains **259 files, 364 call locations, 113 route conditions, 880 candidate authority references**. These are lexical/AST inventory counts, not counts of distinct user features or confirmed vulnerabilities. [The adoption map](adoption-map.json) assigns all **61** upstream Web modules exactly one owner, scope, effect policy and real acceptance path. The generated action locations stay associated with those module owners; generic store/API endpoints are mapped by the service ledger in [the P0 record](../../docs/archive/webui/PAKKA-POCKET-P0.md).
+`source.mjs` emits per-file modes/blob IDs/SHA-256/lengths and AST call/route/old-authority candidate locations. The initial primary inventory contains **259 files, 364 call locations, 113 route conditions, 880 candidate authority references**. These are lexical/AST inventory counts, not counts of distinct user features or confirmed vulnerabilities. [The adoption map](adoption-map.json) assigns all **61** upstream Web modules exactly one owner, scope, effect policy and real acceptance path. The generated action locations stay associated with those module owners; generic store/API endpoints are mapped by the service ledger in [the P0 record](../../docs/archive/webui/PAKKA-WEBUI-P0.md).
 
 The committed adapter tests exercise actual `createRuntime`/Harness, real local provider HTTP, real live tool execution and native storage:
 
@@ -60,4 +60,4 @@ The committed adapter tests exercise actual `createRuntime`/Harness, real local 
 
 The new read/display ports take bootstrap-owned checks, not browser-supplied permissions. A UI command will need a current human/resource/profile check at each controlled effect. MAS send/discover is not human read authority. Existing DevPack-mode v1 startup refuses RPC spawn/configure/fork grants; keep this guard until P1 proves an explicit person-to-profile ceiling. A generic owner check or `profile: "approved-name"` is not sufficient to bypass it.
 
-Native mechanics above need **no new Durable patch**. People/session metadata, actor/profile ceilings, finite Pocket protocol, event streams and the controlled long-job interface remain P1/P2 work. Broker native receipts are not newly published; the exact endpoint/namespace gate remains closed until verified. No WebUI package, second Harness/SQLite writer or original subagent/PiP backend is introduced by P0.
+Native mechanics above need **no new Durable patch**. People/session metadata, actor/profile ceilings, finite WebUI protocol, event streams and the controlled long-job interface remain P1/P2 work. Broker native receipts are not newly published; the exact endpoint/namespace gate remains closed until verified. No WebUI package, second Harness/SQLite writer or original subagent/PiP backend is introduced by P0.

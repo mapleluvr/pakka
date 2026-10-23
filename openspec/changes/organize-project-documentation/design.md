@@ -15,16 +15,16 @@ The original documentation record and all pre-cleanup tracked docs/OpenSpec/conf
 
 ### Documentation ownership
 
-| Content                                            | Owner                                                                |
-| -------------------------------------------------- | -------------------------------------------------------------------- |
-| Current expectations and domain relationships      | docs/state, with explicit API/OpenSpec mappings                      |
-| Complete adopted change                            | OpenSpec proposal/design/tasks and every specs/\*\*/spec.md          |
-| Cross-change summary                               | docs/changes, with change directory and all artifact/spec references |
-| Current gaps                                       | docs/PAKKA-POCKET-STATUS.md and local active-plan                    |
-| Actual usage                                       | guides                                                               |
-| Public fields and development rules                | reference/development                                                |
-| Fixed candidate evidence and compatibility history | verification, visual-primitives and append-only ledger               |
-| Scratch work                                       | ignored docs/.temp; existing runners use ignored artifacts           |
+| Content                                            | Owner                                                                                                                                                                |
+| -------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Current expectations and domain relationships      | docs/state, with explicit API/OpenSpec mappings                                                                                                                      |
+| Complete adopted change                            | OpenSpec proposal/design/tasks and every specs/\*\*/spec.md                                                                                                          |
+| Cross-change summary                               | docs/changes, with change directory and all artifact/spec references                                                                                                 |
+| Current gaps                                       | [Version-scoped status snapshot](https://github.com/mapleluvr/pakka/blob/200af506913ee38d7a357e5da96ea5e2afc03d67/docs/PAKKA-POCKET-STATUS.md) and local active-plan |
+| Actual usage                                       | guides                                                                                                                                                               |
+| Public fields and development rules                | reference/development                                                                                                                                                |
+| Fixed candidate evidence and compatibility history | verification, visual-primitives and append-only ledger                                                                                                               |
+| Scratch work                                       | ignored docs/.temp; existing runners use ignored artifacts                                                                                                           |
 
 A summary lists the exact change, proposal, design when present, tasks, every delta spec and related main specs. Multi-change summaries enumerate all changes. Archiving updates these references to the archived change and resulting main specs, rather than leaving a stale active path.
 

@@ -9,7 +9,7 @@ import { ownedBrowser } from "./browser.ts";
 
 for (const lost of ["browser-response", "backend-response"] as const) {
 	test(
-		"Pocket memory recovery: a lost " +
+		"WebUI memory recovery: a lost " +
 			lost +
 			" is resolved from the original committed mutation without another write",
 		{ timeout: 30000 },

@@ -61,7 +61,7 @@ async function setup() {
 	}
 }
 
-test("Pocket collaboration: real shared attribution, concurrent note conflict, pins/reactions/quote and no human content in model payload", async () => {
+test("WebUI collaboration: real shared attribution, concurrent note conflict, pins/reactions/quote and no human content in model payload", async () => {
 	const f = await setup();
 	try {
 		const owner = f.collaboration.bind(f.owner),
@@ -131,7 +131,7 @@ test("Pocket collaboration: real shared attribution, concurrent note conflict, p
 	}
 });
 
-test("Pocket collaboration: viewer participation is human-only, presence is ephemeral and resource/identity scopes are checked before publication", async () => {
+test("WebUI collaboration: viewer participation is human-only, presence is ephemeral and resource/identity scopes are checked before publication", async () => {
 	const f = await setup();
 	try {
 		const invite = await f.people.invite(f.owner, {
@@ -166,7 +166,7 @@ test("Pocket collaboration: viewer participation is human-only, presence is ephe
 	}
 });
 
-test("Pocket collaboration: real driver CAS controls native input and an expired lease during admission has zero provider effects", async () => {
+test("WebUI collaboration: real driver CAS controls native input and an expired lease during admission has zero provider effects", async () => {
 	const f = await setup();
 	try {
 		const owner = f.collaboration.bind(f.owner),
@@ -214,7 +214,7 @@ test("Pocket collaboration: real driver CAS controls native input and an expired
 	}
 });
 
-test("Pocket collaboration: durable records/driver reopen with the original writer while presence is not restored", async () => {
+test("WebUI collaboration: durable records/driver reopen with the original writer while presence is not restored", async () => {
 	const f = await setup();
 	let runtime: Awaited<ReturnType<typeof createRuntime>> | undefined;
 	try {

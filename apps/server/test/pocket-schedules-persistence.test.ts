@@ -34,7 +34,7 @@ async function fixture(wrap: (runtime: Runtime) => Runtime) {
 
 // The native storage commit is real. Pausing its acknowledgement exposes stale in-memory cancellation state.
 test(
-	"Pocket schedule cancel boundary: a committed cancel intent fences due effects even while the CAS acknowledgement is held",
+	"WebUI schedule cancel boundary: a committed cancel intent fences due effects even while the CAS acknowledgement is held",
 	{ timeout: 8000 },
 	async (t) => {
 		const entered = deferred(),
@@ -95,7 +95,7 @@ test(
 );
 
 test(
-	"Pocket schedule intent uncertainty: loss after the real intent commit never starts work on the original request retry",
+	"WebUI schedule intent uncertainty: loss after the real intent commit never starts work on the original request retry",
 	{ timeout: 8000 },
 	async () => {
 		let writes = 0;

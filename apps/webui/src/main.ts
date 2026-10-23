@@ -12,21 +12,21 @@ function object(value: unknown, keys: readonly string[]): Record<string, unknown
 		Array.isArray(value) ||
 		Object.keys(value).some((key) => !keys.includes(key))
 	)
-		throw new Error("Invalid Pocket configuration object");
+		throw new Error("Invalid WebUI configuration object");
 	return value as Record<string, unknown>;
 }
 function text(value: unknown, max = 8192): string {
 	if (typeof value !== "string" || !value.trim() || value.length > max)
-		throw new Error("Invalid Pocket configuration text");
+		throw new Error("Invalid WebUI configuration text");
 	return value;
 }
 function integer(value: unknown, min: number, max: number): number {
 	if (!Number.isSafeInteger(value) || (value as number) < min || (value as number) > max)
-		throw new Error("Invalid Pocket configuration bound");
+		throw new Error("Invalid WebUI configuration bound");
 	return value as number;
 }
 function strings(value: unknown, max: number): string[] {
-	if (!Array.isArray(value) || value.length > max) throw new Error("Invalid Pocket configuration array");
+	if (!Array.isArray(value) || value.length > max) throw new Error("Invalid WebUI configuration array");
 	return value.map((item) => text(item));
 }
 
@@ -75,7 +75,7 @@ export function decodePocketProduct(value: unknown): PocketProductOptions {
 			? []
 			: (() => {
 					if (!Array.isArray(root.initial) || root.initial.length > 64)
-						throw new Error("Invalid initial Pocket conversations");
+						throw new Error("Invalid initial WebUI conversations");
 					return root.initial.map((item) => {
 						const row = object(item, ["name", "profile"]);
 						return { name: text(row.name, 80), profile: text(row.profile, 128) };
@@ -239,12 +239,12 @@ export async function runPocket(args: readonly string[]): Promise<number> {
 			!args[3] ||
 			!(args.length === 4 || (args.length === 5 && args[4] === "--control-stdin"))
 		)
-			throw new Error("Explicit Pocket configuration and private owner-file path required");
+			throw new Error("Explicit WebUI configuration and private owner-file path required");
 		let options: PocketProductOptions;
 		if (args[0] === "--config-module") options = await loadPocketModule(args[1]);
 		else {
 			const data = await readFile(args[1]);
-			if (data.byteLength > 131072) throw new Error("Pocket configuration too large");
+			if (data.byteLength > 131072) throw new Error("WebUI configuration too large");
 			const raw: unknown = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(data));
 			options = decodePocketProduct(raw);
 		}
@@ -294,7 +294,7 @@ export async function runPocket(args: readonly string[]): Promise<number> {
 			/* Unknown storage ownership remains unresolved. */
 		}
 		process.stderr.write(
-			"Pocket startup/control unconfirmed; check explicit configuration and private owner file.\n",
+			"WebUI startup/control unconfirmed; check explicit configuration and private owner file.\n",
 		);
 		return 1;
 	}

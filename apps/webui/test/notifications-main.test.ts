@@ -7,7 +7,7 @@ import { fileURLToPath } from "node:url";
 import { runtimeFixture } from "../../../packages/agent/test/runtime-fixture.ts";
 
 test(
-	"Pocket executable notification bounds: malformed push authority is rejected before storage or provider effects",
+	"WebUI executable notification bounds: malformed push authority is rejected before storage or provider effects",
 	{ timeout: 15000 },
 	async () => {
 		const m = await runtimeFixture();

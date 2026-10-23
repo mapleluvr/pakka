@@ -2,7 +2,7 @@
 
 ### Requirement: Single adopted product with traceable sources
 
-Pakka-Pocket SHALL be delivered as one product package named `@pakka/webui`, with executable, Web assets and pure public extension SDK exports. Adopted code/assets SHALL retain source commit, license and modification provenance. The product SHALL NOT load pi-pocket's old SQLite/user/task data, introduce a second Durable cohort or silently upgrade Pakka's audited runtime.
+pakka-webui SHALL be delivered as one product package named `@pakka/webui`, with executable, Web assets and pure public extension SDK exports. Adopted code/assets SHALL retain source commit, license and modification provenance. The product SHALL NOT load pi-pocket's old SQLite/user/task data, introduce a second Durable cohort or silently upgrade Pakka's audited runtime.
 
 #### Scenario: Clean product start
 

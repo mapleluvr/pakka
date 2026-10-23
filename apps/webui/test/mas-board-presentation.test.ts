@@ -13,7 +13,7 @@ type Browser = Awaited<ReturnType<typeof ownedBrowser>>;
 type Page = Awaited<ReturnType<Browser["page"]>>;
 async function frame(page: Page, name: string) {
 	const directory = join(
-		process.env.PAKKA_TEST_ARTIFACTS ?? resolve("artifacts/pakka-pocket"),
+		process.env.PAKKA_TEST_ARTIFACTS ?? resolve("artifacts/pakka-webui"),
 		"board-presentation",
 	);
 	await mkdir(directory, { recursive: true });

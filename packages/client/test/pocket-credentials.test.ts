@@ -4,7 +4,7 @@ import { createServer } from "node:http";
 import { createPocketClient, PocketRemoteError } from "../src/pocket.ts";
 
 // A structurally legal but unrelated status must not turn a possibly committed private write into success.
-test("Pocket private client: real HTTP requires the original version and replace/clear outcome, with no automatic replay", async () => {
+test("WebUI private client: real HTTP requires the original version and replace/clear outcome, with no automatic replay", async () => {
 	let requests = 0;
 	let status: Record<string, unknown> = { version: 1, configured: true };
 	const server = createServer((req, res) => {

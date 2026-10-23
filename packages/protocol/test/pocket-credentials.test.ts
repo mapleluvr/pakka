@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import { strict as assert } from "node:assert";
 import { decodePocketRequest, decodePocketResponse } from "../src/pocket.ts";
-test("Pocket private configuration protocol: dedicated replace/clear/status never accepts an identity or returns a saved value", () => {
+test("WebUI private configuration protocol: dedicated replace/clear/status never accepts an identity or returns a saved value", () => {
 	const input = { requestId: "replacement", expectedVersion: 0, secret: "SYNTHETIC-KEY" };
 	for (const command of [
 		{ op: "credential.status" },

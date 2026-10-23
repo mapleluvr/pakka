@@ -57,7 +57,7 @@ const same = (a: ConversationRef, b: ConversationRef) =>
 	a.incarnation === b.incarnation &&
 	a.profile === b.profile;
 function deny(): never {
-	throw Error("Pocket browser authority/origin denied");
+	throw Error("WebUI browser authority/origin denied");
 }
 function checkedRef(v: unknown): ConversationRef {
 	if (
@@ -268,7 +268,7 @@ export async function createPocketBrowser(options: PocketBrowserOptions): Promis
 	const pages = new Map<string, Page>();
 	const ready = () => {
 		if (closed || failed || runtime.view().phase !== "ready")
-			throw Error("Pocket browser closed or unavailable");
+			throw Error("WebUI browser closed or unavailable");
 	};
 	const permitted = (raw: string) => {
 		try {
@@ -588,7 +588,7 @@ export async function createPocketBrowser(options: PocketBrowserOptions): Promis
 				},
 				navigate: (ref, input) => {
 					const url = httpUrl(input.url);
-					if (!origins.has(url.origin)) return Promise.reject(Error("Pocket browser origin denied"));
+					if (!origins.has(url.origin)) return Promise.reject(Error("WebUI browser origin denied"));
 					return mutate(ref, input, "navigate", ["url"], async (guard) => {
 						const p = await page(ref, guard, true);
 						guard();

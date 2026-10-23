@@ -8,7 +8,7 @@ import { conversationAction, openConversationMenu } from "./frontend-controls.ts
 
 for (const lost of ["before-send", "after-commit"])
 	test(
-		`Pocket metadata browser lost ${lost}: closed/reopened sheet only reads original result, never repeats or replaces the mutation`,
+		`WebUI metadata browser lost ${lost}: closed/reopened sheet only reads original result, never repeats or replaces the mutation`,
 		{ timeout: 30000 },
 		async () => {
 			const m = await runtimeFixture();

@@ -9,7 +9,7 @@ import { stream } from "./events.ts";
 // Rejecting a concurrent stale edit must leave the winner unchanged and publish a definite conflict,
 // not an opaque unknown or a forged/foreign resource's data. Exercise actual Cookie/RPC/SSE.
 test(
-	"Pocket collaboration HTTP: scoped attributed events, viewer participation and definite note conflict",
+	"WebUI collaboration HTTP: scoped attributed events, viewer participation and definite note conflict",
 	{ timeout: 15000 },
 	async () => {
 		const m = await runtimeFixture();

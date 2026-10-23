@@ -370,7 +370,7 @@ try {
 	const denied = await rpc(viewer, { op: "notification.status", target: refs[1] }).catch((error) =>
 		String(error),
 	);
-	assert.match(String(denied), /Pocket|Browser evaluation/);
+	assert.match(String(denied), /WebUI|Browser evaluation/);
 	assert.equal(await viewer.evaluate("document.documentElement.scrollWidth>innerWidth"), false);
 	for (const page of [owner, viewer]) await settled(page);
 	await writeFile(join(run, "desktop.png"), await owner.screenshot());

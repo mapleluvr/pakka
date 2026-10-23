@@ -5,7 +5,7 @@ import { runtimeFixture } from "../../../packages/agent/test/runtime-fixture.ts"
 import { createPocketPeople } from "../src/pocket-people.ts";
 
 // Session rotation must not leave the previous bearer/CSRF usable or duplicate the person.
-test("Pocket people: session rotation is one-time, persists and replaces both bearer and CSRF", async () => {
+test("WebUI people: session rotation is one-time, persists and replaces both bearer and CSRF", async () => {
 	const m = await runtimeFixture();
 	let reopened: Awaited<ReturnType<typeof createRuntime>> | undefined;
 	try {
@@ -40,7 +40,7 @@ test("Pocket people: session rotation is one-time, persists and replaces both be
 });
 
 // Decoding only the outer JSON would turn a malformed saved identity into grants or a new bootstrap owner.
-test("Pocket people: malformed nested persisted identity seals the service without rewriting it", async () => {
+test("WebUI people: malformed nested persisted identity seals the service without rewriting it", async () => {
 	const m = await runtimeFixture();
 	try {
 		const people = await createPocketPeople({ runtime: m.runtime, namespace: "test-people" });

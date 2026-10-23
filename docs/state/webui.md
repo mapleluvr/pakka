@@ -2,7 +2,7 @@
 
 ## 人类身份与资源
 
-Pakka-Pocket 的人类身份与权限由服务端绑定，浏览器请求按该绑定解释。邀请消费、session/role、资源 scope、当前 driver 和 Agent profile ceiling 共同约束读取与效果。
+pakka-webui 的人类身份与权限由服务端绑定，浏览器请求按该绑定解释。邀请消费、session/role、资源 scope、当前 driver 和 Agent profile ceiling 共同约束读取与效果。
 
 发现、HTTP/RPC、SSE、assets、历史、查询、导出和操作核对在序列化前按当前授权过滤。撤权停止后续读写与事件发布；已发布字节处于接收端。模型密钥通过独立的受控凭据命令提交、保存和解析；输入提交后清空，状态读取返回版本与 configured。表单回填、通用 settings、URL、浏览器持久存储、模型历史和广播对已存模型密钥仅读取公开配置状态。
 
@@ -23,9 +23,9 @@ Pakka-Pocket 的人类身份与权限由服务端绑定，浏览器请求按该�
 
 ## 领域场景
 
-| 主题                                                                                 | 维护位置                                                                                                                                 |
-| ------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| 产品、files/Git、审批/browser、配置、通知、schedules、Memory、Webhook、context、语音 | [Pakka-Pocket 场景](../../openspec/changes/pakka-pocket-webui/specs/pakka-pocket/spec.md)                                                |
-| 人类角色、协作、stream 与远程部署                                                    | [协作场景](../../openspec/changes/pakka-pocket-webui/specs/pocket-collaboration/spec.md)                                                 |
-| facets、command、RPC、assets、生命周期及 unknown                                     | [扩展场景](../../openspec/changes/pakka-pocket-webui/specs/webui-extensions/spec.md)                                                     |
-| browser-safe 协议与独立的 WebUI 桥接                                                 | [应用 API](../guides/MAS-APPLICATION-API.md)、[桥接场景](../../openspec/changes/pakka-pocket-webui/specs/authenticated-mas-apps/spec.md) |
+| 主题                                                                                 | 维护位置                                                                                                                          |
+| ------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------- |
+| 产品、files/Git、审批/browser、配置、通知、schedules、Memory、Webhook、context、语音 | [pakka-webui 场景](../../openspec/changes/pakka-webui/specs/pakka-webui/spec.md)                                                  |
+| 人类角色、协作、stream 与远程部署                                                    | [协作场景](../../openspec/changes/pakka-webui/specs/pocket-collaboration/spec.md)                                                 |
+| facets、command、RPC、assets、生命周期及 unknown                                     | [扩展场景](../../openspec/changes/pakka-webui/specs/webui-extensions/spec.md)                                                     |
+| browser-safe 协议与独立的 WebUI 桥接                                                 | [应用 API](../guides/MAS-APPLICATION-API.md)、[桥接场景](../../openspec/changes/pakka-webui/specs/authenticated-mas-apps/spec.md) |

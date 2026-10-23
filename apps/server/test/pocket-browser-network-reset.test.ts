@@ -5,7 +5,7 @@ import { createServer } from "node:http";
 import { browserNetwork } from "../src/pocket-browser-network.ts";
 
 test(
-	"Pocket browser network: a real reset after a rejected CONNECT stays connection-local and never reaches the target",
+	"WebUI browser network: a real reset after a rejected CONNECT stays connection-local and never reaches the target",
 	{ timeout: 10000 },
 	async () => {
 		let requests = 0;

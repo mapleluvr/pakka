@@ -17,7 +17,7 @@ function deferred() {
 
 for (const change of ["creator", "extension", "rotation"] as const)
 	test(
-		`Pocket hooks effect boundary: ${change} invalidation after real intent commit blocks a late native input`,
+		`WebUI hooks effect boundary: ${change} invalidation after real intent commit blocks a late native input`,
 		{ timeout: 12000 },
 		async (t) => {
 			let armed = false,
@@ -101,7 +101,7 @@ for (const change of ["creator", "extension", "rotation"] as const)
 	);
 
 test(
-	"Pocket hooks unknown: a real admission followed by lost confirmation is retained across retries and writer reopen without a second HTTP",
+	"WebUI hooks unknown: a real admission followed by lost confirmation is retained across retries and writer reopen without a second HTTP",
 	{ timeout: 12000 },
 	async () => {
 		const captured: PocketInputReceipt[] = [];
@@ -172,7 +172,7 @@ test(
 );
 
 test(
-	"Pocket hooks finite rate: 30 actual native inputs consume the hour quota and the 31st has no effect",
+	"WebUI hooks finite rate: 30 actual native inputs consume the hour quota and the 31st has no effect",
 	{ timeout: 20000 },
 	async () => {
 		const f = await hooksFixture();
@@ -230,7 +230,7 @@ test(
 );
 
 test(
-	"Pocket hooks finite bytes: oversized raw input has no effect and the exact 5 MiB bound fits the real native text limit",
+	"WebUI hooks finite bytes: oversized raw input has no effect and the exact 5 MiB bound fits the real native text limit",
 	{ timeout: 12000 },
 	async () => {
 		const f = await hooksFixture();
@@ -284,7 +284,7 @@ test(
 );
 
 test(
-	"Pocket hooks authority and copies: viewers and foreign resources cannot create hooks, and later input mutation cannot change signed bytes",
+	"WebUI hooks authority and copies: viewers and foreign resources cannot create hooks, and later input mutation cannot change signed bytes",
 	{ timeout: 12000 },
 	async () => {
 		const f = await hooksFixture();

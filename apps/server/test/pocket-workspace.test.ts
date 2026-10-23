@@ -19,7 +19,7 @@ async function setup() {
 const catalog = { namespace: "pocket-workbench", maxDeliveries: 32, maxPending: 8 };
 
 // Runtime-approved profiles alone must not let a lower-ceiling person select stronger Agent authority.
-test("Pocket workspace: human create/configure/fork stay inside the host-selected profile ceiling", async () => {
+test("WebUI workspace: human create/configure/fork stay inside the host-selected profile ceiling", async () => {
 	const { m, people, admin } = await setup();
 	try {
 		const workspace = createPocketWorkspace({
@@ -85,7 +85,7 @@ test("Pocket workspace: human create/configure/fork stay inside the host-selecte
 });
 
 // A visibility filter in the browser or a copied authority object would expose a private Conversation.
-test("Pocket workspace: views and actions bind to the real human identity and current resource scope", async () => {
+test("WebUI workspace: views and actions bind to the real human identity and current resource scope", async () => {
 	const { m, people, admin } = await setup();
 	try {
 		const workspace = createPocketWorkspace({
@@ -132,7 +132,7 @@ test("Pocket workspace: views and actions bind to the real human identity and cu
 });
 
 // Rechecking only before an awaited catalog read would admit a profile after the host removes it.
-test("Pocket workspace: a removed profile ceiling during creation produces no native member", async () => {
+test("WebUI workspace: a removed profile ceiling during creation produces no native member", async () => {
 	const { m, people, admin } = await setup();
 	let allowed = true;
 	try {

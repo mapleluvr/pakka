@@ -1,4 +1,4 @@
-# Pakka-Pocket WebUI 与扩展开发规范
+# pakka-webui WebUI 与扩展开发规范
 
 本文件维护 `@pakka/webui` 的服务、扩展、组件、配置与验证方法细则。整体预期见 [WebUI state](../state/webui.md)，页面结构与交互由[前端声明](../state/frontend.md)维护；当前工作及未完成门禁见[工作入口](../OVERVIEW.md)和所指 OpenSpec tasks。公共 API 通过明确 exports 和独立消费者核对，实际实现较窄不自动缩减目标。
 
@@ -43,6 +43,8 @@ MAS Board 必须通过右侧的通用贡献方式实现。不为 MAS 增加特�
 
 ## 4. 组件、交互和样式
 
+界面实施采用[前端开发规范](FRONTEND-GUIDELINES.md)及其中保存的 Atlassian 排版、Vercel 界面指南；对应原生行为以 Devin 离线生产前端为准。具体来源、直接定位和证据类型在该规范中维护。
+
 - 前端基座、CSS 身份、页面布局、响应式和 Team 交互统一由[前端声明](../state/frontend.md)维护。扩展采用宿主 Preact/htm、公开组件和同套界面语言，保留代码与字体许可证，不另建应用壳层。
 - 组件默认消费 DTO 和 host-owned context，不把整个应用状态注入扩展。
 - 状态分别处理 loading、empty、denied、conflict、unknown、stale/disconnected 和 terminal；不要把它们合成同一个红/绿点。
@@ -82,7 +84,7 @@ Card 是显示记录，不是偷偷添加 system/user message。必须用下一�
 - 实际 public SDK 的 `ExtensionClient.operationByRequest({ extension, requestId, target })` 可在丢失 host operation ID 时只读查询原请求；服务端绑定当前 person 和精确 AgentRef，并在发布前重查原权限。`UIContext.operationByRequest(requestId)` 另绑定当前 open instance。
 - 外层 operation 已记录 `done` 不证明内层 job/browser/native effect 已完成；内层仍为 `unknown` 时必须保留待确认身份，不解锁重复效果。
 - 明确 pre-effect guard 的拒绝可报 denied；opaque callback 可能已有效果，其异常/断连/超时保持 unknown。不要解析报错文本推断 rollback。
-- Memory 是相同插槽的另一实际消费者：`workspaceMemoryService`/`workspaceMemoryExtensionRoot` 绑定当前人类与精确资源；宿主分别选择 `createPocketMemory().tools` 与 `.source`。人类界面不自动激活 Agent 能力；记忆审批、版本冲突、暂停与原操作核对见 [P5 阶段记录](../archive/webui/PAKKA-POCKET-P5.md)。
+- Memory 是相同插槽的另一实际消费者：`workspaceMemoryService`/`workspaceMemoryExtensionRoot` 绑定当前人类与精确资源；宿主分别选择 `createPocketMemory().tools` 与 `.source`。人类界面不自动激活 Agent 能力；记忆审批、版本冲突、暂停与原操作核对见 [P5 阶段记录](../archive/webui/PAKKA-WEBUI-P5.md)。
 - 对外 incoming endpoint 可由已安装 Backend 的 `ExtensionService.ingress` 声明：有限 raw body/headers/path、截止时间、封闭输出 schema 与 generation live check；handler 不取得 socket、Cookie/CSRF authority、模块或任意响应 header。服务先验证外部身份，再把 live check 传到受控效果边界，超时保持 unknown。
 - Webhooks 已通过这一通用接口实现签名/专用 secret、轮换、原请求恢复和真实 native follow-up；明确 Conversation 的目标与当前创建人权限由服务端绑定，移除 WebUI 保留 Backend。私密 setup 是显式授权的只读操作，不落入通用 operation ledger；详细路径与容量见 [Webhook 说明](../guides/WEBHOOKS.md)。
 - 不把 metadata 写和 native Durable effect 称为跨存储原子提交。保留各自 operation/receipt 与不确定状态。
@@ -97,11 +99,11 @@ Card 是显示记录，不是偷偷添加 system/user message。必须用下一�
 4. 私有 toast 只回当前操作者；shared card/notes 明确共享 scope；人类 side chat/presence 默认不进入模型。
 5. 已存 provider secret 不回填表单，不进 URL、command history、browser persistent storage、task/entry、广播或 export。配置敏感值区分 keep/replace/clear；provider credentials 不成为通用 plugin client 字段。外部 Webhook 的专用 URL secret 是显式授权 setup 的独立契约，不能套用为 provider key 的返回接口。
 
-Pakka-Pocket 的主 provider key 使用独立 `credential.status / credential.replace / credential.clear` 命令，不进入扩展 command palette 或通用 settings 回填。只有具备全局安装权限的当前人类可调用；scoped admin 也不能改变全 Session 的凭据。写请求带稳定 request ID 和预期 version，只返回 `{ version, configured }`。表单提交即清空输入，未知响应后只能显式读取当前状态，不自动重发密钥；读到当前配置不等于证明原写操作的完整历史。
+pakka-webui 的主 provider key 使用独立 `credential.status / credential.replace / credential.clear` 命令，不进入扩展 command palette 或通用 settings 回填。只有具备全局安装权限的当前人类可调用；scoped admin 也不能改变全 Session 的凭据。写请求带稳定 request ID 和预期 version，只返回 `{ version, configured }`。表单提交即清空输入，未知响应后只能显式读取当前状态，不自动重发密钥；读到当前配置不等于证明原写操作的完整历史。
 
 owned 私密服务会持久保存显式提交的值，供未来原生主请求解析；保留已有启动 resolver，直到明确替换/清除。清除会阻止后续解析且重开不回退，但不撤回已发请求、不擦除旧持久日志，也不宣称加密。它的稳定写回执有每 Session 256 次的上限，不以自动遗忘回执扩大容量。
 
-通知使用独立的 `notification.status / subscribe / unsubscribe / preferences` 有限命令，设备与偏好绑定当前人类，当前 Conversation 在服务端校验。`PocketServiceContext.notifications` 是受信任 producer；浏览器命令不能决定通知收件人或文案。pending/unknown 的真实 push 不自动重发；worker 在显示和导航前用当前 Cookie 读取 metadata，HTTP 接受不作为 OS 显示的证据。状态仅返回公开 VAPID key、偏好和当前资源设备的 `{ id, subscriptionKey }`；摘要匹配真实 PushSubscription，丢注册响应后的核对不再写注册，也不返回 endpoint/auth/private VAPID。实际边界、保留上限与测量记录见 [P5 通知](../archive/webui/PAKKA-POCKET-P5.md)。
+通知使用独立的 `notification.status / subscribe / unsubscribe / preferences` 有限命令，设备与偏好绑定当前人类，当前 Conversation 在服务端校验。`PocketServiceContext.notifications` 是受信任 producer；浏览器命令不能决定通知收件人或文案。pending/unknown 的真实 push 不自动重发；worker 在显示和导航前用当前 Cookie 读取 metadata，HTTP 接受不作为 OS 显示的证据。状态仅返回公开 VAPID key、偏好和当前资源设备的 `{ id, subscriptionKey }`；摘要匹配真实 PushSubscription，丢注册响应后的核对不再写注册，也不返回 endpoint/auth/private VAPID。实际边界、保留上限与测量记录见 [P5 通知](../archive/webui/PAKKA-WEBUI-P5.md)。
 
 ## 8. 生命周期与资产
 

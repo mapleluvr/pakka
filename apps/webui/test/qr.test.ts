@@ -5,7 +5,7 @@ import jsQR from "jsqr";
 import { fixture } from "./fixture.ts";
 
 test(
-	"Pocket invitation: independently decoded actual QR opens the same one-use local invitation",
+	"WebUI invitation: independently decoded actual QR opens the same one-use local invitation",
 	{ timeout: 15000 },
 	async () => {
 		const m = await fixture();

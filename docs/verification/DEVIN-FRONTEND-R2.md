@@ -32,7 +32,7 @@
 不以“环境问题”豁免失败。全量明细：
 
 - 5 项 owned browser 测试和 1 项 Browser contribution 测试超时取消。干净 main 对照复现这六项停点，但这只支持“不是候选独有”，不证明 Browser 可用，也不说明更深根因已解决。
-- 4 项符号链接 `EPERM`：Pocket directories、两项 Browser discovery、runtime configuration。前三项在本次 main 对照复现；runtime configuration 没有在这次局部对照中运行，不能假装拥有同项对照结论。
+- 4 项符号链接 `EPERM`：WebUI directories、两项 Browser discovery、runtime configuration。前三项在本次 main 对照复现；runtime configuration 没有在这次局部对照中运行，不能假装拥有同项对照结论。
 - 1 项原生 Enter 测试在退出时清理 Chrome 临时 `lockfile` 返回 `EBUSY`。本轮不把清理失败写成按键失效，也不声称已查明锁持有者；不为测试杀宿主进程。
 - 两项跳过是日志明确声明的 POSIX CDP 场景；不能以它们替代 Windows 的真实隔离检查。
 
@@ -52,7 +52,7 @@
 
 ## 4. 安装副本与补测
 
-本轮真实安装已通过：headless DevPack 公共导入、声明检查、durable/runtime/MAS/broker/DevPack/server-client-CLI/product/services、Pocket 产品、MAS Team 和 workflows。其中 Team 真正执行了子成员创建、通信／回复、退休与正常重开，未用直接 API 调用绕过退休按钮。
+本轮真实安装已通过：headless DevPack 公共导入、声明检查、durable/runtime/MAS/broker/DevPack/server-client-CLI/product/services、WebUI 产品、MAS Team 和 workflows。其中 Team 真正执行了子成员创建、通信／回复、退休与正常重开，未用直接 API 调用绕过退休按钮。
 
 随后 `pocket-controlled` 仅留下 `exit=null`，未保存结构化进程错误；**不能把它沿用写成旧一轮的 unknown 或 Send 不可交互，也不能从缺失日志推定精确原因**。原串行流程之后的 Notifications、Schedules、Memory、Webhooks、Voice 均为 NOT_RUN。
 

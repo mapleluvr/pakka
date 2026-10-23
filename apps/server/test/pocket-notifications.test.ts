@@ -105,7 +105,7 @@ async function reached(promise: Promise<void>): Promise<void> {
 }
 
 test(
-	"Pocket notifications: an invalid unsubscribe identity cannot disable a real registered device",
+	"WebUI notifications: an invalid unsubscribe identity cannot disable a real registered device",
 	{ timeout: 15000 },
 	async () => {
 		const f = await managedNotifications();
@@ -138,7 +138,7 @@ test(
 );
 
 test(
-	"Pocket notifications: native event input is captured before asynchronous store preparation",
+	"WebUI notifications: native event input is captured before asynchronous store preparation",
 	{ timeout: 15000 },
 	async () => {
 		let armed = false;
@@ -178,7 +178,7 @@ test(
 );
 
 test(
-	"Pocket notifications: revocation after the real dispatch intent commit prevents the actual TLS push",
+	"WebUI notifications: revocation after the real dispatch intent commit prevents the actual TLS push",
 	{ timeout: 15000 },
 	async () => {
 		let armed = false;
@@ -225,7 +225,7 @@ test(
 );
 
 test(
-	"Pocket notification audiences: mention preferences cannot notify a different subscribed person",
+	"WebUI notification audiences: mention preferences cannot notify a different subscribed person",
 	{ timeout: 15000 },
 	async () => {
 		const f = await managedNotifications();
@@ -377,7 +377,7 @@ async function pushFixture() {
 }
 
 test(
-	"Pocket notifications: real encrypted TLS push, independent VAPID verification, person/resource metadata and unsubscribe",
+	"WebUI notifications: real encrypted TLS push, independent VAPID verification, person/resource metadata and unsubscribe",
 	{ timeout: 20000 },
 	async () => {
 		const push = await pushFixture(),
@@ -479,7 +479,7 @@ test(
 );
 
 test(
-	"Pocket notifications recovery: lost accepted transport remains unknown after retry and normal writer reopen",
+	"WebUI notifications recovery: lost accepted transport remains unknown after retry and normal writer reopen",
 	{ timeout: 20000 },
 	async () => {
 		const push = await pushFixture(),

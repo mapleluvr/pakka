@@ -1,10 +1,10 @@
 # MAS DevPack API（M4，accepted with notes）
 
-M4 阶段固定配对为 `@pakka/agent@0.5.0`、`@pakka/mas@0.3.0`、`@pakka/mas-devpack@0.1.0`、private `@pakka/server@0.2.0`，使用 `pi-durable 1.0.3-pakka.1`。本页的 M4 验收数字保留当时条件；后续已有 M5 transport／CLI、M6 可选配对和 Pakka-Pocket P1–P5，当前版本与范围见 [仓库入口](../../README.md)和 [Web 产品范围](../state/product.md)。
+M4 阶段固定配对为 `@pakka/agent@0.5.0`、`@pakka/mas@0.3.0`、`@pakka/mas-devpack@0.1.0`、private `@pakka/server@0.2.0`，使用 `pi-durable 1.0.3-pakka.1`。本页的 M4 验收数字保留当时条件；后续已有 M5 transport／CLI、M6 可选配对和 pakka-webui P1–P5，当前版本与范围见 [仓库入口](../../README.md)和 [Web 产品范围](../state/product.md)。
 
 ## 可选 Web 产品 facets
 
-公开 Backend/Client/WebUI 子入口提供 MAS Board 关系画布、实时活动、分页交流日志和 member panel，保留 Agent-only 入口及其 headless 依赖图。操作见 [MAS Board](../guides/MAS-BOARD.md)，本轮源码和门禁范围见 [实施记录](../verification/MAS-BOARD-R1.md)。实际组装、独立 profile 选择、人类权限、原生 reply、facet 移除与恢复的契约和验证见 [P4 记录](../archive/webui/PAKKA-POCKET-P4.md)。Runtime 的固定批准 profile 集保持原契约；关闭 Agent contribution 使用已批准的无工具 profile 和真实 owner configure，不通过改写重开配置放宽身份校验。
+公开 Backend/Client/WebUI 子入口提供 MAS Board 关系画布、实时活动、分页交流日志和 member panel，保留 Agent-only 入口及其 headless 依赖图。操作见 [MAS Board](../guides/MAS-BOARD.md)，本轮源码和门禁范围见 [实施记录](../verification/MAS-BOARD-R1.md)。实际组装、独立 profile 选择、人类权限、原生 reply、facet 移除与恢复的契约和验证见 [P4 记录](../archive/webui/PAKKA-WEBUI-P4.md)。Runtime 的固定批准 profile 集保持原契约；关闭 Agent contribution 使用已批准的无工具 profile 和真实 owner configure，不通过改写重开配置放宽身份校验。
 
 Board 的只读 `WorkbenchView` 包含宿主绑定的 `sessionId`；浏览器据此保存个人视图，身份不依赖宿主此刻是否选中了某个 Conversation。`member` 界面使用公开 `sheet` 插槽承载 Agent controls，关闭仅结束观察。退役节点的个人隐藏与恢复不写入 MAS catalog。
 

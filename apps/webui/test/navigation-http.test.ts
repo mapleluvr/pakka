@@ -14,7 +14,7 @@ const change = (
 	input: { requestId, expectedVersion, name, archived },
 });
 
-test("Pocket navigation metadata: real HTTP CAS, original receipts, archive/restore and current role/resource boundaries", async () => {
+test("WebUI navigation metadata: real HTTP CAS, original receipts, archive/restore and current role/resource boundaries", async () => {
 	const m = await fixture();
 	try {
 		const initial = await m.rpc({ op: "list" });
@@ -88,7 +88,7 @@ test("Pocket navigation metadata: real HTTP CAS, original receipts, archive/rest
 	}
 });
 
-test("Pocket navigation metadata: malformed fields, stale incarnation and revoked actors cannot mutate state", async () => {
+test("WebUI navigation metadata: malformed fields, stale incarnation and revoked actors cannot mutate state", async () => {
 	const m = await fixture();
 	try {
 		for (const command of [

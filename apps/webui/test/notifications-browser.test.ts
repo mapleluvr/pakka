@@ -15,7 +15,7 @@ import {
 } from "./frontend-controls.ts";
 
 test(
-	"Pocket notification worker: real native display resolves only current cookie/device/resource metadata and closes after logout",
+	"WebUI notification worker: real native display resolves only current cookie/device/resource metadata and closes after logout",
 	{ timeout: 40000 },
 	async (t) => {
 		const key = await readFile(new URL("./tls/key.pem", import.meta.url)),

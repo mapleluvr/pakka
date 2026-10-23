@@ -141,7 +141,7 @@ function freeze<T>(value: T): T {
 	return value;
 }
 function deny(): never {
-	throw new Error("Pocket authority denied");
+	throw new Error("WebUI authority denied");
 }
 function personView(p: Person): PocketPerson {
 	return freeze({ ...p, resources: p.resources === "*" ? "*" : [...p.resources] });
@@ -159,7 +159,7 @@ function decode(data: JsonObject, version: number, sessionId: string): State {
 	if (version === 0 && Object.keys(data).length === 0)
 		return { schema: 1, sessionId, people: [], sessions: [], invites: [] };
 	const bad = () => {
-		throw new Error("Invalid persisted Pocket people state");
+		throw new Error("Invalid persisted WebUI people state");
 	};
 	if (
 		!record(data) ||
@@ -285,7 +285,7 @@ export function createPocketPeople(options: PocketPeopleOptions): Promise<Pocket
 	const ttl = options.sessionTtlMs ?? 7 * 24 * 60 * 60 * 1000,
 		now = options.now ?? Date.now;
 	if (!Number.isSafeInteger(ttl) || ttl < 1000 || ttl > 30 * 24 * 60 * 60 * 1000)
-		throw new Error("Invalid finite Pocket session lifetime");
+		throw new Error("Invalid finite WebUI session lifetime");
 	let map = opened.get(options.runtime);
 	if (!map) {
 		map = new Map();
@@ -293,7 +293,7 @@ export function createPocketPeople(options: PocketPeopleOptions): Promise<Pocket
 	}
 	const prior = map.get(options.namespace);
 	if (prior) {
-		if (prior.ttl !== ttl || prior.now !== now) throw new Error("Pocket people owner options conflict");
+		if (prior.ttl !== ttl || prior.now !== now) throw new Error("WebUI people owner options conflict");
 		return prior.value;
 	}
 	const value = openPeople(options, ttl, now);
@@ -321,7 +321,7 @@ async function openPeople(
 	}
 	function time() {
 		const value = now();
-		if (!isTime(value)) throw new Error("Invalid Pocket issuer clock");
+		if (!isTime(value)) throw new Error("Invalid WebUI issuer clock");
 		return value;
 	}
 	async function refresh() {
@@ -388,7 +388,7 @@ async function openPeople(
 		};
 	}
 	function scope(resources: PocketResources): "*" | string[] {
-		if (!isScope(resources)) throw new Error("Invalid Pocket resource scope");
+		if (!isScope(resources)) throw new Error("Invalid WebUI resource scope");
 		const approved = new Set(runtime.view().conversations.map((ref) => ref.conversationId));
 		if (resources !== "*" && resources.some((id) => !approved.has(id))) return deny();
 		return resources === "*" ? "*" : [...resources].sort();
@@ -432,7 +432,7 @@ async function openPeople(
 				draft.sessions.length > MAX_SESSIONS ||
 				draft.invites.length > MAX_INVITES
 			)
-				throw new Error("Pocket identity capacity exceeded");
+				throw new Error("WebUI identity capacity exceeded");
 			if (JSON.stringify(draft) !== before) {
 				decode(draft, version + 1, sessionId);
 				try {
@@ -470,9 +470,9 @@ async function openPeople(
 			return personView(p);
 		},
 		initializeOwner: async (name: string) => {
-			if (!isName(name)) throw new Error("Invalid Pocket person name");
+			if (!isName(name)) throw new Error("Invalid WebUI person name");
 			return mutate((draft) => {
-				if (draft.people.length) throw new Error("Pocket owner already initialized");
+				if (draft.people.length) throw new Error("WebUI owner already initialized");
 				const person: Person = {
 					id: randomUUID(),
 					name: name.trim(),
@@ -524,7 +524,7 @@ async function openPeople(
 				input.ttlMs < 1 ||
 				input.ttlMs > 7 * 24 * 60 * 60 * 1000
 			)
-				throw new Error("Invalid finite Pocket invitation");
+				throw new Error("Invalid finite WebUI invitation");
 			const { requestId, role, ttlMs } = input,
 				targetPersonId = input.personId ?? null;
 			const resources = scope(input.resources),
@@ -534,7 +534,7 @@ async function openPeople(
 					const { p } = bound(actor, "invite");
 					const prior = draft.invites.find((row) => row.issuerId === p.id && row.requestId === requestId);
 					if (prior) {
-						if (prior.fingerprint !== fingerprint) throw new Error("Pocket invitation request conflict");
+						if (prior.fingerprint !== fingerprint) throw new Error("WebUI invitation request conflict");
 						return freeze({ invite: inviteView(prior), token: null });
 					}
 					if (

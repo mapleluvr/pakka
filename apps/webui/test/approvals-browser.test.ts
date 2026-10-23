@@ -15,7 +15,7 @@ import { ownedBrowser } from "./browser.ts";
 import { toggleConversations } from "./frontend-controls.ts";
 
 test(
-	"Pocket approval panel: actual browser decisions release or deny original native effects and viewer cannot decide",
+	"WebUI approval panel: actual browser decisions release or deny original native effects and viewer cannot decide",
 	{ timeout: 30000 },
 	async (t) => {
 		let approvals!: PocketApprovals,

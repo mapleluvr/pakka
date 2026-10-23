@@ -2,7 +2,7 @@
 
 ## 条件与采用依据
 
-用户先要求删除 docs 根的 M3/M4/M5 迁移验收跳转、忽略 visual-primitives，并讨论 verification 是否主要为历史。随后要求核对 Pocket 状态页的冗余，将 Pi Durable patch 作为项目产物补入 state。
+用户先要求删除 docs 根的 M3/M4/M5 迁移验收跳转、忽略 visual-primitives，并讨论 verification 是否主要为历史。随后要求核对 WebUI 状态页的冗余，将 Pi Durable patch 作为项目产物补入 state。
 
 核对基线为 main `200af506913ee38d7a357e5da96ea5e2afc03d67`。原验证方法已经在 `docs/development/VERIFICATION.md`；verification 的 97 个跟踪文件包括 92 个 evidence 文件、四份报告和一个索引。此数量描述目录用途，不是内容冗余率。
 
@@ -19,7 +19,7 @@
 | 回归持续依赖的参考元数据           | apps/webui/test/fixtures，作为测试输入跟踪                            |
 | 通用执行方法                       | 既有 development/VERIFICATION.md；verification 是结果记录而非方法规范 |
 
-## Pocket 状态页的去重依据
+## WebUI 状态页的去重依据
 
 其产品和边界声明已由 product、runtime、mas、webui、frontend、delivery 承接。候选 004 的结果在 R2 记录中；人工确认和 main 集成还有清理前的固定 Git 快照。五类交付待办对应 adopt-devin-frontend/tasks；Conversation 删除/保留策略及各远程条件补到所属未完成任务。
 
@@ -70,6 +70,6 @@
 - 全仓非忽略 Markdown 的相对路径/锚点与所用固定 Git 链接共核对 624 项，无新增或继承的未处理断链；账本三条旧引用单独按新增映射核对。账本历史前缀与基线一致，仅末尾追加八行。
 - reference 回归在 tracked-only 导出中先因缺少旧 manifest 失败，分离稳定 fixture 后通过；完整 workspace build 与 `npm run check` 通过。
 - 55 个修改/新增文档及测试输入的格式检查通过。主动 LSP 检查覆盖同一批路径：49 confirmed clean、6 inconclusive、未返回诊断；类型结论另由实际编译/check 核对。
-- 本轮 change、organize-project-documentation、adopt-devin-frontend 和 pakka-pocket-webui 的 strict 均通过。当前与独立基线的全量 strict 都只含相同三条长度警告：authenticated-mas-apps、integrated-mas-product、recoverable-multi-session。
+- 本轮 change、organize-project-documentation、adopt-devin-frontend 和 pakka-webui 的 strict 均通过。当前与独立基线的全量 strict 都只含相同三条长度警告：authenticated-mas-apps、integrated-mas-product、recoverable-multi-session。
 
 链接核对按当前 tracked 与非忽略新文件解析相对路径、Markdown heading 和固定 Git 目标；代码块/内联代码中的示例排除，账本原条目通过其追加映射解析。执行原始输出与审计 helper 在本机 `docs/.temp/documentation-slimming/`；本记录保存核对范围、方法与所得，不把临时目录当唯一说明。

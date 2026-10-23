@@ -7,7 +7,7 @@ import { workspaceHooksExtensionRoot, workspaceHooksService } from "../src/workf
 import { ownedBrowser } from "./browser.ts";
 
 test(
-	"Pocket hooks private read: a real setup response delayed across panel replacement cannot reveal a key in the new instance",
+	"WebUI hooks private read: a real setup response delayed across panel replacement cannot reveal a key in the new instance",
 	{ timeout: 30000 },
 	async () => {
 		const m = await runtimeFixture();

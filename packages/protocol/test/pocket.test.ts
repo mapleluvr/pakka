@@ -28,7 +28,7 @@ const response = {
 };
 
 // Sharing a decoder/default with headless v1 would silently widen the original authenticated API.
-test("Pocket protocol: explicit v2 commands are independent of unchanged headless v1", () => {
+test("WebUI protocol: explicit v2 commands are independent of unchanged headless v1", () => {
 	assert.deepEqual(decodeV1({ version: 1, requestId: "old", command: { op: "hello" } }).command, {
 		op: "hello",
 	});
@@ -49,7 +49,7 @@ test("Pocket protocol: explicit v2 commands are independent of unchanged headles
 });
 
 // Accepting raw native docs, system messages or an unrelated response id would leak configuration or miscorrelate work.
-test("Pocket protocol: complete sanitized Conversation DTOs are bounded and strictly correlated", () => {
+test("WebUI protocol: complete sanitized Conversation DTOs are bounded and strictly correlated", () => {
 	assert.deepEqual(decodePocketResponse(response, "read-1"), response);
 	assert.equal(Object.isFrozen(decodePocketResponse(response, "read-1")), true);
 	assert.throws(() => decodePocketResponse(response, "another-request"));
@@ -79,7 +79,7 @@ test("Pocket protocol: complete sanitized Conversation DTOs are bounded and stri
 });
 
 // Native failed assistant turns must remain readable over RPC and SSE after a service restart.
-test("Pocket protocol: bounded assistant error history survives both response and event decoding", () => {
+test("WebUI protocol: bounded assistant error history survives both response and event decoding", () => {
 	const failed = {
 		role: "assistant",
 		content: [],
@@ -122,7 +122,7 @@ test("Pocket protocol: bounded assistant error history survives both response an
 });
 
 // A slash text cannot bypass the human dispatcher by entering the raw model-input endpoint.
-test("Pocket protocol: human display, explicit model work and person administration use finite separate commands", () => {
+test("WebUI protocol: human display, explicit model work and person administration use finite separate commands", () => {
 	const commands = [
 		{ op: "display", target: ref, requestId: "card", kind: "card", text: "Not model input" },
 		{ op: "submit", target: ref, input: { requestId: "input", text: "Explicit work", mode: "followUp" } },
@@ -158,7 +158,7 @@ test("Pocket protocol: human display, explicit model work and person administrat
 });
 
 // Profile selection is a request, never a serialized permission grant.
-test("Pocket protocol: human resource control selects a profile without accepting a capability or runtime configuration", () => {
+test("WebUI protocol: human resource control selects a profile without accepting a capability or runtime configuration", () => {
 	const commands = [
 		{ op: "create", requestId: "work", name: "Work", profile: "safe" },
 		{ op: "configure", target: ref, profile: "safe" },
@@ -180,7 +180,7 @@ test("Pocket protocol: human resource control selects a profile without acceptin
 });
 
 // Cursors belong to one authorized stream/resource, not a global cross-Session revision or a serialized capability.
-test("Pocket protocol: resource streams validate incarnation and explicit resnapshot signals", () => {
+test("WebUI protocol: resource streams validate incarnation and explicit resnapshot signals", () => {
 	const event = {
 		version: 2,
 		serverId: "server-a",

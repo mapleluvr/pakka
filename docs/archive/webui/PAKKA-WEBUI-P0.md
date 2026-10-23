@@ -1,4 +1,4 @@
-# Pakka-Pocket P0 — 来源固定与原生端口证明
+# pakka-webui P0 — 来源固定与原生端口证明
 
 > **Deprecated — 历史资料。** 本文保留当时的计划、试写或验证结论，供追溯其条件、版本和产物；现行使用与实施入口见 [当前工作](../../OVERVIEW.md) 与 [文档导航](../../README.md)。deprecated 指本页作为当前指引的地位，历史事实、验收结果及尚有效的约束仍按原范围保留。分类与迁移说明见 [历史资料索引](../README.md)。
 
@@ -53,7 +53,7 @@
 | Schedules                                                  | 通用 automation 贡献 + 受控 durable jobs                   | 保存 originating actor，到期重验；意图明确的输入          | 真 checkpoint/reopen、取消回执、到期撤权、lost response 无重复             |
 | Memory/project settings                                    | 可选公开贡献，scoped records/settings                      | 项目/global owner 域；Agent contribution 独立选择         | read/write/CAS/批准、跨项目过滤、后续模型输入、禁用不删历史                |
 | Webhooks                                                   | 显式 Conversation 的通用贡献                               | endpoint 与签名校验、当前来源 authority                   | 真实本地 signed webhook、rotation/replay/body bounds、原生 receipt         |
-| 原 CLI/Pocket session picker/import                        | 改为 Pakka 自有 Conversation 搜索/正常 reopen              | 不发现旧 Pi 目录或导入旧 storage                          | 当前产品所有权与搜索；不依赖 SessionManager/oracle/旧数据                  |
+| 原 CLI/WebUI session picker/import                         | 改为 Pakka 自有 Conversation 搜索/正常 reopen              | 不发现旧 Pi 目录或导入旧 storage                          | 当前产品所有权与搜索；不依赖 SessionManager/oracle/旧数据                  |
 
 ### 必须拆除的旧 authority
 
@@ -104,4 +104,4 @@ P0 日志、raw 本地 HTTP 与生成清单集中在 `artifacts/pakka-pocket/p0/
 
 `package-final.log` 记录了一次类型反例注释被 formatter 移到错误行导致的失败；修正的是注释位置，不是类型边界或旧断言。重跑通过后才记录门禁。该 tarball 是新代码的开发快照，不更新已验收 M6/Dynamite 原 archive 的字节身份，也不发布或声称 Web 产品已经接受。
 
-P0 不开启任何新的 broker receipt publication；[既有 provenance 跟进](../acceptance/MIGRATION-M5-ACCEPTANCE.md) 保持 fail-closed。P1/P2 下一步是持久人类身份/邀请、受控 jobs、profile ceiling、分页/事件和有限 Pocket protocol，再创建真正可运行的产品消费者。MAS Board 要等通用扩展与独立例子验证，不能先成为核心页面。
+P0 不开启任何新的 broker receipt publication；[既有 provenance 跟进](../acceptance/MIGRATION-M5-ACCEPTANCE.md) 保持 fail-closed。P1/P2 下一步是持久人类身份/邀请、受控 jobs、profile ceiling、分页/事件和有限 WebUI protocol，再创建真正可运行的产品消费者。MAS Board 要等通用扩展与独立例子验证，不能先成为核心页面。

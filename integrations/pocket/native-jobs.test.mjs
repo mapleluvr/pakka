@@ -47,7 +47,7 @@ test("P0 native job: cancelling the waiter retains live work; explicit task abor
 			await rt.commit(() => ({ status: "terminal", outcome: { status: "aborted" } }), ctx);
 		},
 	});
-	const root = await mkdtemp(join(tmpdir(), "pakka-pocket-native-job-"));
+	const root = await mkdtemp(join(tmpdir(), "pakka-webui-native-job-"));
 	const h = await harnessAt(root, task);
 	try {
 		const c = await h.root(BACKGROUND_CONTEXT);
@@ -104,7 +104,7 @@ test("P0 native job: a committed checkpoint survives writer close/reopen and con
 			},
 		},
 	});
-	const root = await mkdtemp(join(tmpdir(), "pakka-pocket-native-reopen-"));
+	const root = await mkdtemp(join(tmpdir(), "pakka-webui-native-reopen-"));
 	let h = await harnessAt(root, task);
 	try {
 		const c = await h.root(BACKGROUND_CONTEXT);

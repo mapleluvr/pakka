@@ -88,8 +88,7 @@ test(
 				await writeFile(join(evidence, `home-${size.width}.png`), await page.screenshot());
 			}
 			await page.resize({ width: 1440, height: 900 });
-			await page.click('[data-action="appearance"]');
-			await page.click('[data-action="open-appearance"]');
+			await page.click('[data-action="open-settings"]');
 			await page.wait('document.querySelector("[aria-label=Theme]")');
 			assert.equal(
 				await page.evaluate('document.querySelectorAll(".settings-view").length'),

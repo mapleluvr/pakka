@@ -5,7 +5,7 @@ import { startPocket, type PocketServiceContext } from "../src/bootstrap.ts";
 
 // A product-specific MAS import in the shell is unnecessary; this public composition callback serves any trusted extension.
 test(
-	"Pocket service assembly: trusted factory receives the existing writer/identity and original owner on normal reopen",
+	"WebUI service assembly: trusted factory receives the existing writer/identity and original owner on normal reopen",
 	{ timeout: 15000 },
 	async () => {
 		const m = await runtimeFixture();

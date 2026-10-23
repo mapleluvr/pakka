@@ -1,8 +1,8 @@
-# Pakka-Pocket P4 — MAS DevPack 的公共 Web facets
+# pakka-webui P4 — MAS DevPack 的公共 Web facets
 
 > **Deprecated — 历史资料。** 本文保留当时的计划、试写或验证结论，供追溯其条件、版本和产物；现行使用与实施入口见 [当前工作](../../OVERVIEW.md) 与 [文档导航](../../README.md)。deprecated 指本页作为当前指引的地位，历史事实、验收结果及尚有效的约束仍按原范围保留。分类与迁移说明见 [历史资料索引](../README.md)。
 
-本页记录 P4 的真实 MAS 插件消费和阶段门禁。Board 在 [P3 公共扩展宿主](PAKKA-POCKET-P3.md)中提供成员格子和操作面板；[移除前状态快照](https://github.com/mapleluvr/pakka/blob/200af506913ee38d7a357e5da96ea5e2afc03d67/docs/PAKKA-POCKET-STATUS.md)区分既有能力与验收范围。新的关系画布和交流记录见 [MAS Board 原设计](../../../openspec/changes/mas-board-relationship-workbench/design.md)，属于后续实现。
+本页记录 P4 的真实 MAS 插件消费和阶段门禁。Board 在 [P3 公共扩展宿主](PAKKA-WEBUI-P3.md)中提供成员格子和操作面板；[移除前状态快照](https://github.com/mapleluvr/pakka/blob/200af506913ee38d7a357e5da96ea5e2afc03d67/docs/PAKKA-POCKET-STATUS.md)区分既有能力与验收范围。新的关系画布和交流记录见 [MAS Board 原设计](../../../openspec/changes/mas-board-relationship-workbench/design.md)，属于后续实现。
 
 ## 包入口与独立选择
 
@@ -25,7 +25,7 @@ WebUI 与 Preact 是可选 peer。Agent/headless 消费只需要原有 Agent/MAS
 JSON 配置保留有限数据输入。需要同时组装 Agent tools 和人类服务时，操作者可以显式指定绝对路径的本地 `.mjs` 配置：
 
 ```powershell
-pakka-pocket --config-module D:/approved/pocket.mjs --owner-file D:/private/pocket-owner.txt
+pakka-webui --config-module D:/approved/pocket.mjs --owner-file D:/private/pocket-owner.txt
 ```
 
 该模块是受信任的 composition root，default export 为 `PocketProductOptions`；不是 browser/RPC 接受的路径。`--config` 与 `--config-module` 二选一，入口验证路径、类型和文件大小；opaque import 失败输出脱敏，不自动重入或宣称 rollback。原 JSON 默认值和旧 headless v1 不变。
@@ -100,7 +100,7 @@ Board 用公共导航页、`/team` 人工命令和资源 member panel，展示�
 
 全量 **343/343** 后新增一项固定 profile 集/Agent 移除恢复回归；最终定向 **22/22**，无 skip/todo/cancel；build/check/format 通过。独立 identity 检查确认全量与安装所测的生产源码未变，变化仅为 MAS 安装 helper 和新增测试，不以补充回归伪报完整 344 项 suite。关键源码的主动 LSP 检查无错误。
 
-隔离安装的原有 legacy/runtime/MAS/broker/DevPack/apps/product/Pocket services/Pocket product 消费者全部通过；新增实际 CLI + 两个 Chrome 的 Board 消费者完成原生 spawn/send/reply、受限 viewer、关闭 facets/正常重开、原生历史/回执与已消费 **8 次 primary attempts** 的独立核对，共 **8 次本地 HTTP**。独立 headless 安装不含 WebUI/Preact；DOM-only/NodeNext 公开声明消费通过。桌面和手机截图已直接检查，手机无横向溢出，viewer 仅返回获准成员和脱敏的 owner/parent。
+隔离安装的原有 legacy/runtime/MAS/broker/DevPack/apps/product/WebUI services/WebUI product 消费者全部通过；新增实际 CLI + 两个 Chrome 的 Board 消费者完成原生 spawn/send/reply、受限 viewer、关闭 facets/正常重开、原生历史/回执与已消费 **8 次 primary attempts** 的独立核对，共 **8 次本地 HTTP**。独立 headless 安装不含 WebUI/Preact；DOM-only/NodeNext 公开声明消费通过。桌面和手机截图已直接检查，手机无横向溢出，viewer 仅返回获准成员和脱敏的 owner/parent。
 
 原始日志、HTTP/原生存储、截图与 source/helper SHA 位于 `artifacts/pakka-pocket/p4/`；这是 P4 中间身份。初轮忙碌回归暴露 `placed` 与 provider 进入的时序差异，红日志保留；最终测试使用有限的真实 provider 进入断言，不放宽生产状态或增长截止时间。安装消费者的两处错误预期（重写固定 profile 定义、把内部冲突码当作 HTTP 预检码）保留原失败后修正；未修改生产恢复校验或拒绝分类。
 

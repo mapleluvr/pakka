@@ -5,7 +5,7 @@ import { createPocketPeople } from "../src/pocket-people.ts";
 import { createPocketMemory } from "../src/pocket-memory.ts";
 
 test(
-	"Pocket memory native changes: repeated updates are idempotent and a model cannot replace or forget approved context before human approval",
+	"WebUI memory native changes: repeated updates are idempotent and a model cannot replace or forget approved context before human approval",
 	{ timeout: 15000 },
 	async () => {
 		let lessonId = "",

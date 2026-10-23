@@ -2,6 +2,9 @@
 
 完整的形成条件、选择、设计、任务与场景由 [OpenSpec](../../openspec/changes/)维护；本目录只提供摘要和完整引用，不复制第二套变更正文。当前预期见 [state](../state/README.md)，实际差距见[工作入口与领域任务](../OVERVIEW.md)。
 
+- [设置路由与本机恢复](webui-navigation-and-local-recovery.md)：登录恢复闭环、可寻址配置和逐页质量的待采用方案。
+- [前端规范与原生行为](webui-frontend-guidelines.md)：采用两份开发指南、直接生产代码参考和第一批可读性/焦点改进。
+- [设置与产品命名](webui-settings-and-name.md)：单击进入专用配置页、页内分类与 pakka-webui 命名。
 - [验证入口与补丁声明](verification-and-patch-state.md)：重复入口清理、视觉生成物本地化、Durable patch state 与验证文档评估。
 - [文档系统](2026-10-21-documentation-system.md)：state-evo、OpenSpec 主记录和备份后清理。
 - [Devin 前端](devin-frontend-adoption.md)：原型为主体、真实接口、Team 和加载边界；完整验收未通过。

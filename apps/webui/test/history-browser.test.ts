@@ -7,7 +7,7 @@ import { ownedBrowser } from "./browser.ts";
 import { findInConversation } from "./frontend-controls.ts";
 
 test(
-	"Pocket history browser: explicit earlier pages remain searchable across live updates without implicit inference",
+	"WebUI history browser: explicit earlier pages remain searchable across live updates without implicit inference",
 	{ timeout: 45000 },
 	async () => {
 		const m = await runtimeFixture();

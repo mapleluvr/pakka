@@ -10,7 +10,7 @@ const ref = {
 };
 const envelope = { version: 2, requestId: "rpc", serverId: "server" };
 
-test("Pocket navigation protocol: finite metadata command/result and scoped list states reject authority/foreign fields", () => {
+test("WebUI navigation protocol: finite metadata command/result and scoped list states reject authority/foreign fields", () => {
 	const command = {
 		op: "conversation.set",
 		target: ref,
@@ -56,7 +56,7 @@ test("Pocket navigation protocol: finite metadata command/result and scoped list
 	);
 });
 
-test("Pocket fork transcript: current scope and explicit inherited attribution are independent; attribution is never a resource grant", () => {
+test("WebUI fork transcript: current scope and explicit inherited attribution are independent; attribution is never a resource grant", () => {
 	const snapshot = {
 		ref,
 		entries: [

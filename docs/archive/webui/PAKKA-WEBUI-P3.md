@@ -1,10 +1,10 @@
-# Pakka-Pocket P3 — 公共扩展宿主
+# pakka-webui P3 — 公共扩展宿主
 
 > **Deprecated — 历史资料。** 本文保留当时的计划、试写或验证结论，供追溯其条件、版本和产物；现行使用与实施入口见 [当前工作](../../OVERVIEW.md) 与 [文档导航](../../README.md)。deprecated 指本页作为当前指引的地位，历史事实、验收结果及尚有效的约束仍按原范围保留。分类与迁移说明见 [历史资料索引](../README.md)。
 
-本页保留 P3 当时的阶段验收。后续 Agent facet 组装和 MAS Board/member panel 已在 [P4](PAKKA-POCKET-P4.md) 实现并独立验证。
+本页保留 P3 当时的阶段验收。后续 Agent facet 组装和 MAS Board/member panel 已在 [P4](PAKKA-WEBUI-P4.md) 实现并独立验证。
 
-P3 在 [P2 实际产品](PAKKA-POCKET-P2.md) 上增加公共 Backend／WebUI／Client 宿主，并通过当时的实现阶段门禁。这里的非 MAS 示例证明相同插槽可以独立消费；后续 MAS 与本机工作台的实际范围见 [移除前状态快照](https://github.com/mapleluvr/pakka/blob/200af506913ee38d7a357e5da96ea5e2afc03d67/docs/PAKKA-POCKET-STATUS.md)。下文阶段结果保留原版本条件。
+P3 在 [P2 实际产品](PAKKA-WEBUI-P2.md) 上增加公共 Backend／WebUI／Client 宿主，并通过当时的实现阶段门禁。这里的非 MAS 示例证明相同插槽可以独立消费；后续 MAS 与本机工作台的实际范围见 [移除前状态快照](https://github.com/mapleluvr/pakka/blob/200af506913ee38d7a357e5da96ea5e2afc03d67/docs/PAKKA-POCKET-STATUS.md)。下文阶段结果保留原版本条件。
 
 ## 公共入口与示例
 

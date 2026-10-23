@@ -11,7 +11,7 @@ import { conversationAction, organizationAction, settleFrontend } from "./fronte
 type Browser = Awaited<ReturnType<typeof ownedBrowser>>;
 
 test(
-	"Pocket browser dictation: caret and final text reach only the draft until a real explicit Send",
+	"WebUI browser dictation: caret and final text reach only the draft until a real explicit Send",
 	{ timeout: 25000 },
 	async () => {
 		const m = await runtimeFixture();
@@ -91,7 +91,7 @@ test(
 );
 
 test(
-	"Pocket browser dictation: resource and sheet replacement, errors and logout discard old callbacks without dispatch",
+	"WebUI browser dictation: resource and sheet replacement, errors and logout discard old callbacks without dispatch",
 	{ timeout: 25000 },
 	async () => {
 		const m = await runtimeFixture();
@@ -190,7 +190,7 @@ test(
 );
 
 test(
-	"Pocket browser dictation: absent speech support retains real typed input and a mobile viewer has no model dictation",
+	"WebUI browser dictation: absent speech support retains real typed input and a mobile viewer has no model dictation",
 	{ timeout: 25000 },
 	async () => {
 		const m = await runtimeFixture();

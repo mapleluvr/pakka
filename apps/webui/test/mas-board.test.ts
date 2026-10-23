@@ -181,7 +181,7 @@ test(
 				`(()=>{const e=document.querySelector("[data-mas-retire]"),r=e.getBoundingClientRect(),p=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return {rect:{x:r.x,y:r.y,width:r.width,height:r.height},viewport:{width:innerWidth,height:innerHeight},hit:p?.outerHTML.slice(0,300),animations:document.getAnimations().map(a=>({playState:a.playState,effect:a.effect?.target?.className}))};})()`,
 			);
 			const evidence = join(
-				process.env.PAKKA_TEST_ARTIFACTS ?? resolve("artifacts/pakka-pocket/p4"),
+				process.env.PAKKA_TEST_ARTIFACTS ?? resolve("artifacts/pakka-webui/p4"),
 				"board-pointer",
 			);
 			await mkdir(evidence, { recursive: true });

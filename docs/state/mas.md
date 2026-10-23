@@ -29,5 +29,5 @@ Team 通过 MAS DevPack 的 Backend/WebUI/Client facets 提供，与其他扩展
 | 同 Session 身份、接纳、寿命 | [MAS API](../reference/MAS-API.md)、[领域场景](../../openspec/specs/same-session-mas/spec.md)                |
 | 跨 Session 与 worker        | [Broker API](../reference/BROKER-API.md)、[恢复场景](../../openspec/specs/recoverable-multi-session/spec.md) |
 | DevPack Agent contribution  | [DevPack API](../reference/MAS-DEVPack-API.md)、[基础规范](../../openspec/specs/mas-devpack/spec.md)         |
-| 可选 WebUI/Backend/Client   | [facet 补充](../../openspec/changes/pakka-pocket-webui/specs/mas-devpack/spec.md)                            |
+| 可选 WebUI/Backend/Client   | [facet 补充](../../openspec/changes/pakka-webui/specs/mas-devpack/spec.md)                                   |
 | 关系、交流、实时活动与返回  | [关系工作台场景](../../openspec/changes/mas-board-relationship-workbench/specs/mas-devpack/spec.md)          |

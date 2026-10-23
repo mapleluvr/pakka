@@ -60,7 +60,7 @@ class Refusal extends Error {
 	readonly code: PocketErrorCode;
 	readonly confirmedNoEffect: boolean;
 	constructor(status: number, code: PocketErrorCode, confirmedNoEffect = false) {
-		super("Pocket request refused");
+		super("WebUI request refused");
 		this.status = status;
 		this.code = code;
 		this.confirmedNoEffect = confirmedNoEffect;
@@ -131,7 +131,7 @@ function originValue(raw: string): URL {
 	try {
 		url = new URL(raw);
 	} catch {
-		throw new Error("Invalid explicit Pocket public origin");
+		throw new Error("Invalid explicit WebUI public origin");
 	}
 	if (
 		!["http:", "https:"].includes(url.protocol) ||
@@ -142,7 +142,7 @@ function originValue(raw: string): URL {
 		url.search ||
 		url.hash
 	)
-		throw new Error("Invalid explicit Pocket public origin");
+		throw new Error("Invalid explicit WebUI public origin");
 	return url;
 }
 
@@ -165,7 +165,7 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 			external?.protocol !== "https:" &&
 			!options.allowInsecureRemote)
 	)
-		throw new Error("Explicit Pocket remote/TLS boundary required");
+		throw new Error("Explicit WebUI remote/TLS boundary required");
 	const pollMs = options.pollMs ?? 100,
 		capacity = options.maxConnections ?? 32;
 	if (
@@ -176,7 +176,7 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 		capacity < 1 ||
 		capacity > 128
 	)
-		throw new Error("Invalid finite Pocket transport options");
+		throw new Error("Invalid finite WebUI transport options");
 	const assets = new Map(
 		[...(options.assets ?? [])].map(([path, value]) => [
 			path,
@@ -876,9 +876,9 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 									else resolve();
 								};
 								const drained = () => finish(),
-									aborted = () => finish(new Error("Pocket stream closed"));
+									aborted = () => finish(new Error("WebUI stream closed"));
 								const timer = setTimeout(
-									() => finish(new Error("Slow Pocket reader requires resnapshot")),
+									() => finish(new Error("Slow WebUI reader requires resnapshot")),
 									1000,
 								);
 								res.once("drain", drained);
@@ -954,7 +954,7 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 				error: {
 					code: refusal ? error.code : "UNKNOWN",
 					outcome: refusal && (!dispatched || error.confirmedNoEffect) ? "denied" : "unknown",
-					message: refusal ? "Pocket request refused" : "Pocket operation outcome unconfirmed",
+					message: refusal ? "WebUI request refused" : "WebUI operation outcome unconfirmed",
 				},
 			});
 		});
@@ -972,7 +972,7 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 	const address = server.address();
 	if (!address || typeof address === "string") {
 		server.close();
-		throw new Error("Pocket listener missing");
+		throw new Error("WebUI listener missing");
 	}
 	listeningHost = `${host.includes(":") ? `[${host}]` : host}:${address.port}`;
 	publicHost = external?.host ?? listeningHost;

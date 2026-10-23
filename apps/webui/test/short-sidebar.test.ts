@@ -17,7 +17,7 @@ import {
 // Extensions use the reference palette rather than an expanding legacy rail.
 // A short screen must still reach sessions, settings and actual extension UI.
 test(
-	"Pocket short sidebar: sessions remain usable and extensions stay reachable through the palette",
+	"WebUI short sidebar: sessions remain usable and extensions stay reachable through the palette",
 	{ timeout: 45000 },
 	async () => {
 		const m = await runtimeFixture(
@@ -69,7 +69,7 @@ test(
 			);
 			assert.equal(
 				await page.evaluate(
-					`(()=>{const n=document.querySelector('[data-action="appearance"]'),r=n.getBoundingClientRect();return r.bottom<=innerHeight&&n.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2));})()`,
+					`(()=>{const n=document.querySelector('[data-action="open-settings"]'),r=n.getBoundingClientRect();return r.bottom<=innerHeight&&n.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2));})()`,
 				),
 				true,
 				"Settings remains visible and hit-testable",
@@ -119,7 +119,7 @@ test(
 			assert.equal(await page.evaluate("getComputedStyle(document.body).fontSize"), "24px");
 			assert.equal(
 				await page.evaluate(
-					`(()=>{const n=document.querySelector('[data-action="appearance"]'),r=n.getBoundingClientRect();return document.documentElement.scrollWidth<=innerWidth&&r.bottom<=innerHeight&&n.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2));})()`,
+					`(()=>{const n=document.querySelector('[data-action="open-settings"]'),r=n.getBoundingClientRect();return document.documentElement.scrollWidth<=innerWidth&&r.bottom<=innerHeight&&n.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2));})()`,
 				),
 				true,
 			);

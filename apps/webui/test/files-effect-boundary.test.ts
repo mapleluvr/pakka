@@ -14,7 +14,7 @@ import { workspaceFilesExtensionRoot, workspaceFilesService } from "../src/workf
 // This wait wraps a public port AFTER its real Durable CAS; it does not replace storage or disk effects.
 for (const change of ["disable", "abort"] as const) {
 	test(
-		`Pocket file contribution: ${change} after real intent commit prevents a late disk effect`,
+		`WebUI file contribution: ${change} after real intent commit prevents a late disk effect`,
 		{ timeout: 15000 },
 		async (t) => {
 			const m = await runtimeFixture(),

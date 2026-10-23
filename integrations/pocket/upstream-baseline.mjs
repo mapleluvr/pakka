@@ -4,7 +4,7 @@ import { existsSync, mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { verifySource } from "./source.mjs";
 
-const root = resolve("artifacts/pakka-pocket/p0");
+const root = resolve("artifacts/pakka-webui/p0");
 const cwd = join(root, "upstream-source");
 const pinned = verifySource(cwd, "upstream");
 const isolated = mkdtempSync(join(root, "baseline-profile-"));

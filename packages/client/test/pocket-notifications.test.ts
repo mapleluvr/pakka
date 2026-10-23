@@ -9,7 +9,7 @@ const target = {
 	incarnation: "incarnation",
 	profile: "default",
 };
-test("Pocket notification client: real HTTP rejects a legal status for another exact resource and never repeats a device write", async () => {
+test("WebUI notification client: real HTTP rejects a legal status for another exact resource and never repeats a device write", async () => {
 	let requests = 0,
 		returned = target;
 	const server = createServer((req, res) => {

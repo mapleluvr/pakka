@@ -17,7 +17,7 @@ pakka/
 ├── apps/
 │   ├── server/                装配、认证、transport 与 worker 启动
 │   ├── cli/                   操作员命令入口
-│   └── webui/                 @pakka/webui：Pakka-Pocket 工作台与公开扩展 SDK
+│   └── webui/                 @pakka/webui：pakka-webui 工作台与公开扩展 SDK
 ├── integrations/
 │   └── dynamite/              固定外部版本的跨包验收
 ├── patches/
@@ -32,7 +32,7 @@ pakka/
 
 上图对应现有组件。后续 package/app 的建立继续以实际消费者和可执行路径为依据；产品范围见 [产品预期](../state/product.md)。`pakka-si` 保持独立范围。
 
-`packages/` 放可复用库及 extension；`apps/` 放可执行产品与 composition root。Pakka-Pocket 采用单一产品包 `@pakka/webui`，不另造空 SDK 包；可通过纯 public SDK 子路径供 extension peer 消费，边界见下节。只有真实应用加入时才扩展 workspace、构建和检查范围。进程部署拓扑由应用明确选择，与 package/repository 的数量无关。
+`packages/` 放可复用库及 extension；`apps/` 放可执行产品与 composition root。pakka-webui 采用单一产品包 `@pakka/webui`，不另造空 SDK 包；可通过纯 public SDK 子路径供 extension peer 消费，边界见下节。只有真实应用加入时才扩展 workspace、构建和检查范围。进程部署拓扑由应用明确选择，与 package/repository 的数量无关。
 
 暂不引入 `@pakka/gate`、转发包或双名称发布。文档可以使用“gate 职责”描述 `@pakka/agent`，生产 import 和 package metadata 继续使用现名。
 
@@ -58,7 +58,7 @@ Dynamite adapter ──→ principal-bound StrategyBinding
 @pakka/agent     ──→ 固定的 patched Durable + pi-ai/chord
 ```
 
-MAS 和 Dynamite 不依赖 CLI；agent 不反向 import MAS、DevPack 或 Dynamite。`apps/` 可以装配库，核心库不能依赖 app。Pakka-Pocket 的明确例外仅为可选 extension facet peer-consume `@pakka/webui` 的纯 public SDK exports：不得 import executable、私有 store/router/backend startup；现有 Agent-only export 不加载 WebUI。纯 SDK、browser/backend graph 与安装消费者必须独立验收。默认启用、工具组合、模型 allowlist、凭据、预算与 worker 隔离由受信任 bootstrap 明确配置。
+MAS 和 Dynamite 不依赖 CLI；agent 不反向 import MAS、DevPack 或 Dynamite。`apps/` 可以装配库，核心库不能依赖 app。pakka-webui 的明确例外仅为可选 extension facet peer-consume `@pakka/webui` 的纯 public SDK exports：不得 import executable、私有 store/router/backend startup；现有 Agent-only export 不加载 WebUI。纯 SDK、browser/backend graph 与安装消费者必须独立验收。默认启用、工具组合、模型 allowlist、凭据、预算与 worker 隔离由受信任 bootstrap 明确配置。
 
 MAS policy 决定资源关系和可授予的动作；agent 在实际效果边界绑定调用身份、目标与有效期，并执行授权。MAS 通过窄端口完成登记和编排，不能取得可任意调用的原始事务或 Harness。可信 bootstrap 的控制端口与 agent-facing 端口必须分别授予。
 
@@ -121,7 +121,7 @@ Durable ownership 是生命周期关系，不是 ACL。应用 ownership 变更�
 
 ## 6. 协议与客户端的抽取条件
 
-`@pakka/protocol` 与 `@pakka/client` 已有实际浏览器／CLI 消费。Headless v1 保留显式 loopback token 边界；Pakka-Pocket 使用独立 version-2 schema/client 入口、person-scoped read model 与 SSE。产品范围见[产品声明](../state/product.md)，候选证据见[验证记录](../verification/README.md)，对应开发接口见 [WebUI 规范](WEBUI-DEVELOPMENT.md)。
+`@pakka/protocol` 与 `@pakka/client` 已有实际浏览器／CLI 消费。Headless v1 保留显式 loopback token 边界；pakka-webui 使用独立 version-2 schema/client 入口、person-scoped read model 与 SSE。产品范围见[产品声明](../state/product.md)，候选证据见[验证记录](../verification/README.md)，对应开发接口见 [WebUI 规范](WEBUI-DEVELOPMENT.md)。
 
 协议层只包含可序列化引用、命令、事件、错误、receipt、runtime schema 和版本协商；不能依赖 Node 文件系统、Pi runtime、server 启动或进程内 capability。TypeScript interface 不能替代消息 runtime validation。
 

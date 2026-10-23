@@ -10,7 +10,7 @@ import { ownedBrowser } from "./browser.ts";
 import { inputMode } from "./frontend-controls.ts";
 
 test(
-	"Pocket busy browser: after native admission the user can steer and follow up while original inference is blocked",
+	"WebUI busy browser: after native admission the user can steer and follow up while original inference is blocked",
 	{ timeout: 30000 },
 	async () => {
 		const release = deferred();

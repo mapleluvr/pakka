@@ -8,7 +8,7 @@ import { createPocketWorkspace } from "../src/pocket-workspace.ts";
 import { createPocketCredentials, type PocketCredentials } from "../src/pocket-credentials.ts";
 
 // Only synthetic keys are used. The independent real HTTP listener is the oracle, not a resolver self-report.
-test("Pocket private credentials: explicit replace/clear changes real Authorization, never returns a secret and survives normal reopen without fallback", async () => {
+test("WebUI private credentials: explicit replace/clear changes real Authorization, never returns a secret and survives normal reopen without fallback", async () => {
 	const authorization: unknown[] = [];
 	const server = createServer((req, res) => {
 		req.resume();

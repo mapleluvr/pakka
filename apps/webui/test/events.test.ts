@@ -11,7 +11,7 @@ function conversation(event: PocketEvent | null) {
 
 // A missing snapshot/subscribe handoff would omit the card; a global channel would leak the peer canary.
 test(
-	"Pocket SSE: initial scoped snapshot and subsequent committed update cross the same real authorization boundary",
+	"WebUI SSE: initial scoped snapshot and subsequent committed update cross the same real authorization boundary",
 	{ timeout: 15000 },
 	async () => {
 		const m = await fixture();
@@ -53,7 +53,7 @@ test(
 
 // Reusing a cursor from any old/foreign incarnation must resnapshot, never replay a mutation or assume its authority.
 test(
-	"Pocket SSE: reconnect with stale cursor explicitly resnapshots current authorized state",
+	"WebUI SSE: reconnect with stale cursor explicitly resnapshots current authorized state",
 	{ timeout: 15000 },
 	async () => {
 		const m = await fixture();

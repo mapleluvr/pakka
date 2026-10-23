@@ -5,7 +5,7 @@ import { runtimeFixture } from "../../../packages/agent/test/runtime-fixture.ts"
 import { createPocketPeople } from "../src/pocket-people.ts";
 
 // Removing persisted role/resource checks would let a guessed Conversation become a readable resource.
-test("Pocket people: a redeemed viewer sees only its granted resources and never receives a write grant", async () => {
+test("WebUI people: a redeemed viewer sees only its granted resources and never receives a write grant", async () => {
 	const m = await runtimeFixture();
 	try {
 		const people = await createPocketPeople({ runtime: m.runtime, namespace: "test-people" });
@@ -49,7 +49,7 @@ test("Pocket people: a redeemed viewer sees only its granted resources and never
 });
 
 // Non-atomic redemption would give both independent callers a valid session from one invitation.
-test("Pocket people: concurrent one-time redemption grants exactly one session and retries do not mint invitations", async () => {
+test("WebUI people: concurrent one-time redemption grants exactly one session and retries do not mint invitations", async () => {
 	const m = await runtimeFixture();
 	try {
 		const people = await createPocketPeople({ runtime: m.runtime, namespace: "test-people" });
@@ -87,7 +87,7 @@ test("Pocket people: concurrent one-time redemption grants exactly one session a
 });
 
 // Restoring an owner from bootstrap options or not persisting revocation would revive old authority on reopen.
-test("Pocket people: normal writer reopen preserves identity and revocation while old bound checks fail", async () => {
+test("WebUI people: normal writer reopen preserves identity and revocation while old bound checks fail", async () => {
 	const m = await runtimeFixture();
 	let reopened: Awaited<ReturnType<typeof createRuntime>> | undefined;
 	try {
@@ -127,7 +127,7 @@ test("Pocket people: normal writer reopen preserves identity and revocation whil
 });
 
 // Expiry must be checked at use as well as session creation; revoking pending invites must survive reuse.
-test("Pocket people: expired authority and revoked invitations cannot regain scope", async () => {
+test("WebUI people: expired authority and revoked invitations cannot regain scope", async () => {
 	const m = await runtimeFixture();
 	let now = Date.now();
 	try {
