@@ -4,7 +4,9 @@ Pakka 将 Pi 的 Conversation、权限、持久化和 MAS 服务接到可选的 
 
 ## 当前工作
 
-下一项文档工作是确定通用测试方法补全与 verification 历史瘦身的采用方案，见[本轮评估](../openspec/changes/streamline-verification-and-patch-state/design.md#验证方法与进一步瘦身)和[待决定任务](../openspec/changes/streamline-verification-and-patch-state/tasks.md#4-待决定的后续方案)。入口精简、视觉生成物本地化与 Durable 源补丁声明已经完成。
+Pi Durable `1.4.0-pakka.1` 独立补丁已制备；下一项工程工作是[新 cohort 的产品接入](../openspec/changes/prepare-durable-1-4-0-patch/tasks.md#4-后续产品接入)。生产依赖由 package.json/lock 指定。开发 verification 的选用见[交付声明](state/delivery.md#verification-的选用)。
+
+文档后续为通用测试方法补全与 verification 历史瘦身，采用范围见[评估与待决定任务](../openspec/changes/streamline-verification-and-patch-state/tasks.md#4-待决定的后续方案)。
 
 - **预期**：[state](state/README.md)，包括 [Durable 源补丁](state/durable-patch.md)。
 - **产品后续工作**：[前端交付任务](../openspec/changes/adopt-devin-frontend/tasks.md)、[服务与生命周期任务](../openspec/changes/pakka-pocket-webui/tasks.md)。

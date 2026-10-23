@@ -4,8 +4,15 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
-const metadataPath = join(root, "patches", "pi-durable", "1.0.3-pakka.1", "artifact.json");
-const metadata = JSON.parse(readFileSync(metadataPath, "utf8"));
+const version = process.argv[2] ?? "1.0.3-pakka.1";
+if (!/^\d+\.\d+\.\d+-pakka\.\d+$/.test(version)) throw new Error("Invalid patch version");
+const metadataPath = join(root, "patches", "pi-durable", version, "artifact.json");
+let metadata;
+try {
+	metadata = JSON.parse(readFileSync(metadataPath, "utf8"));
+} catch (cause) {
+	throw new Error(`Unable to read Durable patch metadata: ${metadataPath}`, { cause });
+}
 const artifactPath = join(root, "packages", "agent", "vendor", metadata.filename);
 const actual = createHash("sha256").update(readFileSync(artifactPath)).digest("hex");
 if (actual !== metadata.sha256) {

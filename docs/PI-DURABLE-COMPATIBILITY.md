@@ -672,3 +672,35 @@ store: (options: RuntimeStoreOptions) => port.store(options),
 - 旧 `MIGRATION-M4-ACCEPTANCE.md` 对应 [M4 历史原文](archive/acceptance/MIGRATION-M4-ACCEPTANCE.md)。
 - 旧 `MIGRATION-M5-ACCEPTANCE.md` 对应 [M5 历史原文](archive/acceptance/MIGRATION-M5-ACCEPTANCE.md)。
 - 当前补丁产物、行为与构建/回归入口见 [Durable state](state/durable-patch.md)；本次文档归属调整见[摘要](changes/verification-and-patch-state.md)。
+
+## 条目 DURABLE-2026-10-23-10：1.4.0 独立补丁产物
+
+- ID: DURABLE-2026-10-23-10
+- 产物: `pi-durable@1.4.0-pakka.1`；[baseline](../patches/pi-durable/1.4.0-pakka.1/baseline.json)、[source patch](../patches/pi-durable/1.4.0-pakka.1/source.patch)、[构建锁](../patches/pi-durable/1.4.0-pakka.1/build-lock.json)、[artifact](../patches/pi-durable/1.4.0-pakka.1/artifact.json)。
+- 来源: 查询于 2026-10-22T16:24:44Z，npm latest 为 `1.4.0`，发布时间 2026-10-21T22:44:09.320Z；[GitHub v1.4.0](https://github.com/earendil-works/pi/releases/tag/v1.4.0) tag commit `4a080252f06caf63a525d7873c5d94d3c23887e0`。
+- 归档: [earendil-works-pi-durable-1.4.0-pakka.1.tgz](../packages/agent/vendor/earendil-works-pi-durable-1.4.0-pakka.1.tgz)，SHA-256 `7fd9f3310dfa003a9077139a25faf93567922a065461fa3767dd5a1066efa891`。
+- 工具环境: Node `24.15.0`、npm `11.12.1`，隔离 HOME/PI 目录、本地确定性 provider；构建依赖按 lock 安装。
+
+### 补丁形成
+
+上游 beforeRequest 仍仅支持 request message replacement。新基线保留普通 hook 异常的 report-and-continue，并增加明确 block 与 attempt 级同步 checks；检查在 hooks 链结束和既有 onPayload 完成后执行。拒绝使用原生 endRun 的事务结算为 unanswered/blocked，generation 完成为 `{ blocked }`，保留原生队列、后续工作与恢复关系。
+
+源补丁针对 1.4.0 request context/telemetry 和 recovery import 重建，同时更新公开类型与文档。构建工具接受显式版本、按新 cohort 固定依赖，并使用锁定 JSONC parser 处理上游配置。每次构建均导出精确 commit，在新目录应用源码 patch；现有安装依赖未手改。
+
+### 实际运行
+
+- 新基线六项目标 source 回归失败；真实 loopback HTTP 对照中，明确 block 结算为 faulted，payload 撤权后仍发送请求；普通 hook throw 的对照正常。
+- 下游 source 的 generation/recovery/inbox/tools/HTTP 共 5 文件、113 项通过。
+- 独立 npm project 安装实际归档，通过 compiled dist/公开 exports 执行 3 项 HTTP 回归：拒绝与原生 receipt/idempotency/idle、后续允许请求、awaited payload 后撤权及普通 hook 异常。
+- 两个独立构建得到相同归档 SHA-256，artifact.json 字节一致；source patch SHA-256 为 `128df5c9618c3f92cb8dcb43c1eb71d069b7927d32e1688067e1ccb5cf2a1f66`，build lock SHA-256 为 `e0cac343fe8bb39fe303f97175dc5c88f466f61a2c584058727f0bb8d47bbc3b`。
+- 相同新版工具在独立目录重建 1.0.3-pakka.1，105 项 source 回归通过，归档仍为 `535d90fd195a1e9c6c9dc1b22b7f0ca15aac41652bb7d644da616148947bcfa7`。
+- 当前生产 cohort 的 Pakka Durable 集成和工具回归共 13 项通过；workspace build/check/format 通过。新版本选择、独立篡改和非法路径由工具回归覆盖。
+- 本条 HTTP 范围为显式 OpenAI-completions，retry/compaction 关闭。复现入口见[构建说明](../patches/pi-durable/1.4.0-pakka.1/README.md)。
+
+### 产品接入关系
+
+生产 package/lock 仍选择 1.0.3-pakka.1。在全部 workspace 声明对齐、全新 lock + npm ci、npm ls 确认有效的 1.4.0 cohort 中，protocol 编译通过；adapter 初次有 10 个错误。只在诊断副本补齐五处 checkpointWhen 后，剩余为 StorageRejected、两处 sleep 与工具 content/output 的 4 个错误，family 调用错误是派生项。该诊断未作为生产 checkpoint 策略采用。
+
+1.4.0 的独立补丁消费与 Pakka 产品接入分别描述；后续错误分类、持久化 sleeping、checkpoint、工具结果、cohort/lock 和 SQLite schema 2 处置见[所属任务](../openspec/changes/prepare-durable-1-4-0-patch/tasks.md#4-后续产品接入)。现有生产补丁和 Dynamite 精确配对保持原身份。
+
+完整形成与选用决定见[变更摘要](changes/durable-1-4-0-and-verification.md)所列 proposal/design/tasks/delta；当前产物声明见 [Durable state](state/durable-patch.md)。
