@@ -21,7 +21,7 @@ const cases: readonly { name: string; first: JsonObject; equivalent: JsonObject;
 // the adapter, before an outer scheduler fault can leave its already-queued public receipt behind indefinitely.
 for (const example of cases) {
 	test(
-		`Pocket job progress: ${example.name} preserves unknown after a real effect and never repeats it`,
+		`WebUI job progress: ${example.name} preserves unknown after a real effect and never repeats it`,
 		{ timeout: 8000 },
 		async (t) => {
 			let executions = 0,

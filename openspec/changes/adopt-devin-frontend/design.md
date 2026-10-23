@@ -34,7 +34,7 @@ This is a retrospective relocation of adopted decisions, not a claim that this O
 ### 前端主从关系
 
 - **保留主体**：参考的 app-shell、sidebar-header / primary-nav / sessions-area / footer、hero / composer、conversation、menus / palette、settings-view，以及它们的原始尺寸、留白、层级和响应式切换。
-- **接口适配**：将公共 Pocket client、SSE、扩展注册与实例生命周期接入这些位置；身份、Conversation、模型、目录、状态、消息均取实际响应。
+- **接口适配**：将公共 WebUI client、SSE、扩展注册与实例生命周期接入这些位置；身份、Conversation、模型、目录、状态、消息均取实际响应。
 - **元素级变化**：替换产品名、用户名称、模型与目录；真实会话替代演示会话；导航项绑定已安装能力；缺失能力删除对应元素或明确 unavailable，不虚构 Devin 服务。
 - **不再采用**：旧 layout/window/pane/topbar、侧栏常驻搜索／归档／刷新／新建表单、横排全功能按钮、在扩展页上再套同名标题框。不能依靠 pocket.css → workbench.css → devin.css 的覆盖链继续逼近外观。
 - 交互与授权分离：移走按钮不移走服务端权限；重做展示不重写 native Prompt / Steer / Follow up、requestId、receipt、unknown reconciliation 或 incarnation 语义。

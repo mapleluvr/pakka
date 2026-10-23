@@ -16,7 +16,7 @@ function git(path: string, ...args: string[]) {
 	});
 }
 test(
-	"Pocket files browser: public extension performs actual edits upload diff branch/worktree effects without hidden model input",
+	"WebUI files browser: public extension performs actual edits upload diff branch/worktree effects without hidden model input",
 	{ timeout: 25000 },
 	async () => {
 		const m = await runtimeFixture();

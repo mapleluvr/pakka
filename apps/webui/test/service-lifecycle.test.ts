@@ -6,7 +6,7 @@ import { runtimeFixture } from "../../../packages/agent/test/runtime-fixture.ts"
 import { startPocket } from "../src/bootstrap.ts";
 
 for (const startupFailure of [false, true])
-	test(`Pocket services: ${startupFailure ? "failed registration" : "normal product close"} releases host-owned listeners`, async () => {
+	test(`WebUI services: ${startupFailure ? "failed registration" : "normal product close"} releases host-owned listeners`, async () => {
 		const m = await runtimeFixture();
 		await m.runtime.close();
 		const listener = createServer((_req, res) => res.end("OWNED-RESOURCE"));

@@ -7,7 +7,7 @@ import { createPocketPeople } from "../src/pocket-people.ts";
 import { createPocketWorkspace } from "../src/pocket-workspace.ts";
 
 // A directory picker must read server folders, not files or symlink destinations outside authorized project trees.
-test("Pocket directories: authorized browsing, independent changes and revocation use current resource authority", async () => {
+test("WebUI directories: authorized browsing, independent changes and revocation use current resource authority", async () => {
 	const m = await runtimeFixture({
 		profiles: [{ id: "other-model", model: "alternate-model", systemPrompt: "DO-NOT-APPLY" }],
 	});

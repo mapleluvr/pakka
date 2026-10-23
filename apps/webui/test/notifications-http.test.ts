@@ -9,7 +9,7 @@ import { startPocket } from "../src/bootstrap.ts";
 import { decodePocketResponse } from "../../../packages/protocol/src/pocket.ts";
 
 test(
-	"Pocket notifications HTTP: real product native completion, device registration, current cookie metadata and resource revocation",
+	"WebUI notifications HTTP: real product native completion, device registration, current cookie metadata and resource revocation",
 	{ timeout: 25000 },
 	async (t) => {
 		const key = await readFile(new URL("./tls/key.pem", import.meta.url)),

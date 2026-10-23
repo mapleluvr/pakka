@@ -22,7 +22,7 @@ async function login(page: Page) {
 
 // A completed native configure with a lost HTTP response must not be repeated, even when the old SSE resource stops updating.
 test(
-	"Pocket settings recovery: lost configure response locks mutations and explicit workspace reload only reads the new incarnation",
+	"WebUI settings recovery: lost configure response locks mutations and explicit workspace reload only reads the new incarnation",
 	{ timeout: 30000 },
 	async () => {
 		const m = await runtimeFixture({ profiles: [{ id: "alternate", model: "alternate-model" }] });
@@ -82,7 +82,7 @@ test(
 
 // A read can complete after the user closes one sheet and mounts another. It may not replace the new sheet's profile or usage.
 test(
-	"Pocket settings recovery: a real delayed response from the old resource cannot populate the replacement sheet",
+	"WebUI settings recovery: a real delayed response from the old resource cannot populate the replacement sheet",
 	{ timeout: 30000 },
 	async () => {
 		const m = await runtimeFixture({ profiles: [{ id: "alternate", model: "alternate-model" }] });

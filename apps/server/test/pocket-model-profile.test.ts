@@ -10,7 +10,7 @@ import { createPocketWorkspace } from "../src/pocket-workspace.ts";
 const catalog = { namespace: "model-selection", maxDeliveries: 16, maxPending: 8 };
 
 // Ignoring an approved profile's model would make settings look changed while the provider still receives the original model.
-test("Pocket model choices: an approved profile changes the real next provider request and survives normal reopen without refund", async () => {
+test("WebUI model choices: an approved profile changes the real next provider request and survives normal reopen without refund", async () => {
 	const m = await runtimeFixture({
 		apiKey: "SYNTHETIC-MODEL-KEY-CANARY",
 		profiles: [
@@ -106,7 +106,7 @@ test("Pocket model choices: an approved profile changes the real next provider r
 });
 
 // A malformed bootstrap model choice must fail before creating storage, rather than being ignored or normalized into another model.
-test("Pocket model choices: invalid approved model identifiers reject before storage or provider effects", async () => {
+test("WebUI model choices: invalid approved model identifiers reject before storage or provider effects", async () => {
 	const m = await runtimeFixture();
 	try {
 		for (const [index, model] of ["", " whitespace-model ", "x".repeat(257), null, 42, false].entries()) {

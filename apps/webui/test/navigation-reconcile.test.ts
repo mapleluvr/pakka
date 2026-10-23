@@ -2,7 +2,7 @@ import { test } from "node:test";
 import { strict as assert } from "node:assert";
 import { fixture } from "./fixture.ts";
 
-test("Pocket original-operation lookup is read-only: absent and committed metadata/create/fork never re-enter a mutation", async () => {
+test("WebUI original-operation lookup is read-only: absent and committed metadata/create/fork never re-enter a mutation", async () => {
 	const m = await fixture();
 	try {
 		const catalog = m.runtime.catalog({ namespace: "pocket", maxDeliveries: 32, maxPending: 8 });

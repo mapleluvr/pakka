@@ -4,7 +4,7 @@ import { fixture } from "./fixture.ts";
 import { stream } from "./events.ts";
 
 test(
-	"Pocket SSE: normal large frame handles backpressure and remains subscribed for the next real commit",
+	"WebUI SSE: normal large frame handles backpressure and remains subscribed for the next real commit",
 	{ timeout: 10000 },
 	async () => {
 		const m = await fixture();

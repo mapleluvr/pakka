@@ -8,7 +8,7 @@ import { ownedBrowser } from "./browser.ts";
 import { conversationAction, organizationAction, toggleConversations } from "./frontend-controls.ts";
 
 test(
-	"Pocket configuration browser: compact model choice changes provider input while mobile viewer cannot configure or read Session totals",
+	"WebUI configuration browser: compact model choice changes provider input while mobile viewer cannot configure or read Session totals",
 	{ timeout: 45000 },
 	async (t) => {
 		const m = await runtimeFixture({

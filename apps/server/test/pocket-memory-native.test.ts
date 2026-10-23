@@ -11,7 +11,7 @@ const options = {
 };
 
 test(
-	"Pocket memory native tool: a real model invocation creates only an attributed proposal until a human owner approves it",
+	"WebUI memory native tool: a real model invocation creates only an attributed proposal until a human owner approves it",
 	{ timeout: 15000 },
 	async () => {
 		const prepared = createPocketMemory(options),
@@ -82,7 +82,7 @@ test(
 );
 
 test(
-	"Pocket memory native authority: forged invocation scopes cannot create a proposal or select a human owner",
+	"WebUI memory native authority: forged invocation scopes cannot create a proposal or select a human owner",
 	{ timeout: 10000 },
 	async () => {
 		const prepared = createPocketMemory(options),
@@ -111,7 +111,7 @@ test(
 );
 
 test(
-	"Pocket memory facet isolation: human-only assembly neither advertises a memory tool nor injects approved lessons into actual model input",
+	"WebUI memory facet isolation: human-only assembly neither advertises a memory tool nor injects approved lessons into actual model input",
 	{ timeout: 10000 },
 	async () => {
 		const prepared = createPocketMemory(options),

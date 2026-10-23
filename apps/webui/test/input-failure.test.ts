@@ -8,7 +8,7 @@ import { ownedBrowser } from "./browser.ts";
 import { newConversation } from "./frontend-controls.ts";
 
 test(
-	"Pocket failed input: an unavailable recipient refuses new admission while its original receipt and spent attempts remain",
+	"WebUI failed input: an unavailable recipient refuses new admission while its original receipt and spent attempts remain",
 	{ timeout: 15000 },
 	async () => {
 		const m = await runtimeFixture({}, undefined, () => ({ error: 400 }));
@@ -84,7 +84,7 @@ test(
 );
 
 test(
-	"Pocket failed input browser: a known refusal explains how to continue without offering a meaningless retry or replaying the original",
+	"WebUI failed input browser: a known refusal explains how to continue without offering a meaningless retry or replaying the original",
 	{ timeout: 30000 },
 	async () => {
 		const m = await runtimeFixture({}, undefined, (_payload, n) =>

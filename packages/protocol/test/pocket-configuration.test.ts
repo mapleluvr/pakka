@@ -58,7 +58,7 @@ const envelope = {
 	requestId: "settings",
 	result: { kind: "configuration", configuration: view },
 };
-test("Pocket settings protocol: exact scoped metadata and unknown cost are accepted; secret fields and malformed quotas fail closed", () => {
+test("WebUI settings protocol: exact scoped metadata and unknown cost are accepted; secret fields and malformed quotas fail closed", () => {
 	const request = { version: 2, requestId: "settings", command: { op: "configuration", target: ref } };
 	assert.deepEqual(decodePocketRequest(request), request);
 	assert.deepEqual(decodePocketResponse(envelope, "settings"), envelope);

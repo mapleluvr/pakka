@@ -5,7 +5,7 @@ import { createPocketPeople } from "../src/pocket-people.ts";
 import { createPocketWorkspace } from "../src/pocket-workspace.ts";
 
 // A settings page that displays raw bootstrap configuration would leak credentials or profiles outside the person's ceiling.
-test("Pocket configuration: passive frozen choices and scoped usage hide secrets, peer totals and forbidden profiles", async () => {
+test("WebUI configuration: passive frozen choices and scoped usage hide secrets, peer totals and forbidden profiles", async () => {
 	const m = await runtimeFixture({
 		apiKey: "PRIVATE-SETTINGS-KEY",
 		profiles: [

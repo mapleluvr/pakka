@@ -13,7 +13,7 @@ const subscription = {
 	keys: { p256dh: "B" + "x".repeat(86), auth: "x".repeat(22) },
 };
 const prefs = { done: true, approval: true, chat: true, mention: true };
-test("Pocket notification protocol: finite device controls cannot select a person, content or network authority", () => {
+test("WebUI notification protocol: finite device controls cannot select a person, content or network authority", () => {
 	for (const command of [
 		{ op: "notification.status", target },
 		{ op: "notification.subscribe", target, input: { requestId: "register", subscription } },

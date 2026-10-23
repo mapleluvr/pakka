@@ -44,7 +44,7 @@ export interface PocketMetadataInput {
 }
 export class PocketMetadataConflict extends Error {
 	constructor() {
-		super("Pocket conversation metadata changed");
+		super("WebUI conversation metadata changed");
 		this.name = "PocketMetadataConflict";
 	}
 }
@@ -159,7 +159,7 @@ function frozen<T>(v: T): T {
 	return v;
 }
 function denied(): never {
-	throw new Error("Pocket workspace authority denied");
+	throw new Error("WebUI workspace authority denied");
 }
 
 const object = (value: unknown): value is JsonObject =>
@@ -179,7 +179,7 @@ function metadata(row: CatalogMember): PocketNavigation {
 				!Array.isArray(state.receipts) ||
 				state.receipts.length !== state.version))
 	)
-		throw Error("Invalid Pocket conversation metadata");
+		throw Error("Invalid WebUI conversation metadata");
 	return frozen({
 		ref: row.ref,
 		name: row.data.name,
@@ -312,7 +312,7 @@ export function createPocketWorkspace(options: PocketWorkspaceOptions): PocketWo
 					!allowed.every(key) ||
 					!allowed.includes(profile)
 				)
-					throw new Error("Pocket profile ceiling denied");
+					throw new Error("WebUI profile ceiling denied");
 			};
 			const ceiling = () => {
 				const value = options.profileCeiling(current());
@@ -340,7 +340,7 @@ export function createPocketWorkspace(options: PocketWorkspaceOptions): PocketWo
 					/[\x00-\x1f\x7f]/.test(input.name) ||
 					(source && (!entryId || !/^[0-9]+$/.test(entryId)))
 				)
-					return Promise.reject(new Error("Invalid bounded Pocket creation input"));
+					return Promise.reject(new Error("Invalid bounded WebUI creation input"));
 				const saved = Object.freeze({
 						requestId: input.requestId,
 						name: input.name.trim(),
@@ -381,7 +381,7 @@ export function createPocketWorkspace(options: PocketWorkspaceOptions): PocketWo
 							prior.data.personId !== personId ||
 							prior.data.fingerprint !== fingerprint
 						)
-							throw new Error("Pocket creation request conflict");
+							throw new Error("WebUI creation request conflict");
 						await runtime.conversation(prior.ref);
 						authorize();
 						return prior.ref;
@@ -484,7 +484,7 @@ export function createPocketWorkspace(options: PocketWorkspaceOptions): PocketWo
 					!nameValid(saved.name) ||
 					typeof saved.archived !== "boolean"
 				)
-					return Promise.reject(Error("Invalid bounded Pocket metadata input"));
+					return Promise.reject(Error("Invalid bounded WebUI metadata input"));
 				const fingerprint = hash({ ref, ...saved, name: saved.name.trim() }),
 					authorize = () => check("manage", ref);
 				return serial(async () => {
@@ -511,7 +511,7 @@ export function createPocketWorkspace(options: PocketWorkspaceOptions): PocketWo
 							Number(receipt.version) < 1 ||
 							Number(receipt.version) > currentState.version
 						)
-							throw Error("Invalid Pocket metadata receipt");
+							throw Error("Invalid WebUI metadata receipt");
 						if (receipt.actorId === personId && receipt.requestId === saved.requestId) {
 							if (receipt.fingerprint !== fingerprint) throw new PocketMetadataConflict();
 							authorize();
@@ -525,7 +525,7 @@ export function createPocketWorkspace(options: PocketWorkspaceOptions): PocketWo
 					}
 					if (lookupOnly) return null;
 					if (currentState.version !== saved.expectedVersion) throw new PocketMetadataConflict();
-					if (receipts.length >= 256) throw Error("Pocket metadata receipt capacity reached");
+					if (receipts.length >= 256) throw Error("WebUI metadata receipt capacity reached");
 					const next = {
 						name: saved.name.trim(),
 						archived: saved.archived,
@@ -685,7 +685,7 @@ export function createPocketWorkspace(options: PocketWorkspaceOptions): PocketWo
 						authorize = () => check("send", saved);
 					authorize();
 					if (!input || Object.keys(input).some((k) => !["requestId", "kind", "text"].includes(k)))
-						throw new Error("Invalid Pocket display input");
+						throw new Error("Invalid WebUI display input");
 					return runtime.writeDisplay(
 						saved,
 						{
@@ -708,7 +708,7 @@ export function createPocketWorkspace(options: PocketWorkspaceOptions): PocketWo
 					authorize();
 					const provider = await resource(saved, authorize);
 					if (!data || Object.keys(data).some((k) => !["requestId", "text", "mode"].includes(k)))
-						throw new Error("Invalid Pocket input fields");
+						throw new Error("Invalid WebUI input fields");
 					if (provider) return provider.submit(saved, data, authorize);
 					return receiptCheck(
 						await catalog.deliver(

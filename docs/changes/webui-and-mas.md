@@ -2,12 +2,12 @@
 
 这两项变更沿用原 OpenSpec 组织。活动目录不等于全部完成；当前有效范围由 [state](../state/README.md)映射，候选事实由[固定验证记录](../verification/README.md)记录。
 
-## Pakka-Pocket
+## pakka-webui
 
-- [change](../../openspec/changes/pakka-pocket-webui/)、[proposal](../../openspec/changes/pakka-pocket-webui/proposal.md)、[design](../../openspec/changes/pakka-pocket-webui/design.md)、[tasks](../../openspec/changes/pakka-pocket-webui/tasks.md)。
-- 全部 delta：[authenticated-mas-apps](../../openspec/changes/pakka-pocket-webui/specs/authenticated-mas-apps/spec.md)、[conversation-runtime](../../openspec/changes/pakka-pocket-webui/specs/conversation-runtime/spec.md)、[mas-devpack](../../openspec/changes/pakka-pocket-webui/specs/mas-devpack/spec.md)、[pakka-pocket](../../openspec/changes/pakka-pocket-webui/specs/pakka-pocket/spec.md)、[pocket-collaboration](../../openspec/changes/pakka-pocket-webui/specs/pocket-collaboration/spec.md)、[webui-extensions](../../openspec/changes/pakka-pocket-webui/specs/webui-extensions/spec.md)。
+- [change](../../openspec/changes/pakka-webui/)、[proposal](../../openspec/changes/pakka-webui/proposal.md)、[design](../../openspec/changes/pakka-webui/design.md)、[tasks](../../openspec/changes/pakka-webui/tasks.md)。
+- 全部 delta：[authenticated-mas-apps](../../openspec/changes/pakka-webui/specs/authenticated-mas-apps/spec.md)、[conversation-runtime](../../openspec/changes/pakka-webui/specs/conversation-runtime/spec.md)、[mas-devpack](../../openspec/changes/pakka-webui/specs/mas-devpack/spec.md)、[pakka-webui](../../openspec/changes/pakka-webui/specs/pakka-webui/spec.md)、[pocket-collaboration](../../openspec/changes/pakka-webui/specs/pocket-collaboration/spec.md)、[webui-extensions](../../openspec/changes/pakka-webui/specs/webui-extensions/spec.md)。
 - 已有主 spec：[authenticated-mas-apps](../../openspec/specs/authenticated-mas-apps/spec.md)、[conversation-runtime](../../openspec/specs/conversation-runtime/spec.md)、[mas-devpack](../../openspec/specs/mas-devpack/spec.md)。
-- pakka-pocket、pocket-collaboration、webui-extensions 尚无主 spec；活动 delta 不据此自动归档。
+- pakka-webui、pocket-collaboration、webui-extensions 尚无主 spec；活动 delta 不据此自动归档。
 
 ## MAS 关系工作台
 

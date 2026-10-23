@@ -1,0 +1,60 @@
+{
+	"schemaVersion": 1,
+	"retrievedOn": "2026-10-23",
+	"atlassian": {
+		"source": "https://atlassian.design/foundations/typography/applying-typography",
+		"capturedHtmlBytes": 455314,
+		"capturedHtmlSha256": "349225b2f873cfb7e49d02cf391219c3e1fbc173f441e20f1736896a60c814f4",
+		"retainedDocument": "atlassian-applying-typography.md",
+		"retainedForm": "Project-authored Chinese adoption summary; raw capture is local temporary material.",
+		"license": "https://atlassian.design/license"
+	},
+	"vercel": {
+		"requestedSource": "https://raw.githubusercontent.com/vercel-labs/web-interface-guidelines/main/AGENTS.md",
+		"revision": "4ecfb9fb8d1d3b7009674869b3aaee2f904042e1",
+		"source": "https://raw.githubusercontent.com/vercel-labs/web-interface-guidelines/4ecfb9fb8d1d3b7009674869b3aaee2f904042e1/AGENTS.md",
+		"retainedDocument": "vercel-web-interface-guidelines.md",
+		"bytes": 7995,
+		"sha256": "35411b4a2dcfa651fd33706a92cc860947364b521643107fbf3116abe3826d44",
+		"license": "vercel-LICENSE.txt",
+		"licenseSha256": "6cd1609c9c12233507cdd2ce0d32e9a721e3c27494951be06b90090deeeb7af2"
+	},
+	"devin": {
+		"repository": "https://github.com/mapleluvr/devin-ui-comparison",
+		"revision": "ed20cec0aef82daa22aa50da19597b7ba1607e02",
+		"evidence": "Direct static inspection; no authenticated or proxied Devin execution.",
+		"identity": "Hashes below are fixed Git blob bytes, not platform line-ending conversions.",
+		"sourceFiles": [
+			{
+				"path": "reference-dump/source/assets/webapp-B9OnyKmM.js",
+				"gitBlob": "bfeb8ea7c80c19435f5fb548db9f0d737b68f756",
+				"bytes": 1162652,
+				"sha256": "18076b0d095c12d62b256dda2f3b917d3d26e8f7d6e4ccd2f5883e19e5df7a7a"
+			},
+			{
+				"path": "reference-dump/source/assets/settings-DvAqVerK.js",
+				"gitBlob": "5057b6bca95fc758179f9f8816edaf99959d1dce",
+				"bytes": 28496,
+				"sha256": "85f2cdb7adc4db8561458af32fff1721f5233463d2583cf2cfb33c7a272a6cb0"
+			},
+			{
+				"path": "reference-dump/source/assets/app-initial-D97LNTSt.js",
+				"gitBlob": "39257c234aef8de98f12b50fab51748516e4f551",
+				"bytes": 59762,
+				"sha256": "4140eb90c62fcb0ab546b92f9b979c186b926a419d48f25c42cba9fbe2c08a98"
+			},
+			{
+				"path": "reference-dump/source/assets/SessionPage-DC_GJPKO.js",
+				"gitBlob": "4de7072db2868021b9052f4b1e4e3d823ca79882",
+				"bytes": 35394,
+				"sha256": "dd8e77129a2fb463c51f2da884200c8d9ba78ea072c524a8b24d62c809a765ea"
+			},
+			{
+				"path": "reference-dump/source/assets/useInputBox-CuK1TzIu.js",
+				"gitBlob": "d727989a825ffec763027087e2cd4db9bc4c36e7",
+				"bytes": 297824,
+				"sha256": "465c944a21c078a73a76e4f5e3098571cd93b7823decb32f204c5147d3bbd2f4"
+			}
+		]
+	}
+}

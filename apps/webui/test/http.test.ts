@@ -2,9 +2,9 @@ import { test } from "node:test";
 import { strict as assert } from "node:assert";
 import { fixture } from "./fixture.ts";
 
-// This would fail if Pocket cookie auth were translated into unscoped v1 privileges or display became model input.
+// This would fail if WebUI cookie auth were translated into unscoped v1 privileges or display became model input.
 test(
-	"Pocket HTTP: real cookie workbench negotiates v2, records human card, admits native work and recovers its receipt",
+	"WebUI HTTP: real cookie workbench negotiates v2, records human card, admits native work and recovers its receipt",
 	{ timeout: 15000 },
 	async () => {
 		const m = await fixture();
@@ -50,7 +50,7 @@ test(
 
 // Foreign Origin, missing CSRF and browser-supplied identity must be refused before either UI state or model effects.
 test(
-	"Pocket HTTP: authentication, host/origin/CSRF and finite envelopes fence the real native effects",
+	"WebUI HTTP: authentication, host/origin/CSRF and finite envelopes fence the real native effects",
 	{ timeout: 15000 },
 	async () => {
 		const m = await fixture();
@@ -113,7 +113,7 @@ test(
 
 // Filtering after sending data to the browser would leak the private card even if the navigation hid it.
 test(
-	"Pocket HTTP: one-time invited viewer receives only its authorized resource and cannot drive or retain revoked access",
+	"WebUI HTTP: one-time invited viewer receives only its authorized resource and cannot drive or retain revoked access",
 	{ timeout: 15000 },
 	async () => {
 		const m = await fixture();

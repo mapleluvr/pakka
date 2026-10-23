@@ -1,8 +1,8 @@
-# Pakka-Pocket P1 — 受控服务与独立协议
+# pakka-webui P1 — 受控服务与独立协议
 
 > **Deprecated — 历史资料。** 本文保留当时的计划、试写或验证结论，供追溯其条件、版本和产物；现行使用与实施入口见 [当前工作](../../OVERVIEW.md) 与 [文档导航](../../README.md)。deprecated 指本页作为当前指引的地位，历史事实、验收结果及尚有效的约束仍按原范围保留。分类与迁移说明见 [历史资料索引](../README.md)。
 
-本页记录 P1 的受控服务实现与当时的阶段门禁：在 P0 来源／原生证明之上增加人类身份、工作区、有限分页与原生后台任务；HTTP、Cookie 登录、SSE 和浏览器界面随后由 [P2](PAKKA-POCKET-P2.md) 接入。当前能力和验收范围见 [移除前状态快照](https://github.com/mapleluvr/pakka/blob/200af506913ee38d7a357e5da96ea5e2afc03d67/docs/PAKKA-POCKET-STATUS.md)；下文测试总数属于该阶段版本。[当时范围计划（外置备份）](../../verification/DOCUMENTATION-CLEANUP.md#备份与恢复)与 [WebUI 开发规范](../../development/WEBUI-DEVELOPMENT.md)继续有效。
+本页记录 P1 的受控服务实现与当时的阶段门禁：在 P0 来源／原生证明之上增加人类身份、工作区、有限分页与原生后台任务；HTTP、Cookie 登录、SSE 和浏览器界面随后由 [P2](PAKKA-WEBUI-P2.md) 接入。当前能力和验收范围见 [移除前状态快照](https://github.com/mapleluvr/pakka/blob/200af506913ee38d7a357e5da96ea5e2afc03d67/docs/PAKKA-POCKET-STATUS.md)；下文测试总数属于该阶段版本。[当时范围计划（外置备份）](../../verification/DOCUMENTATION-CLEANUP.md#备份与恢复)与 [WebUI 开发规范](../../development/WEBUI-DEVELOPMENT.md)继续有效。
 
 ## 公开入口
 
@@ -63,4 +63,4 @@
 - `packages/protocol/test/pocket.test.ts`、`packages/client/test/pocket.test.ts`：v1/v2 分离、有限 schema、错误关联、fatal UTF-8、丢响应不重放。
 - [隔离消费者](../../../scripts/consumer-pocket-services.mjs)经 `npm run smoke:package` 安装真实 tarballs，校验公开声明与 DOM-only browser 声明、身份/工作区/任务、原 admission 和预算。
 
-精确阶段执行结果记录在 `artifacts/pakka-pocket/p1/`。上游原始失败基线独立保留于 [P0 记录](PAKKA-POCKET-P0.md)，不与新路径的通过数相加。最终产品的真实浏览器、部署、插件和指定独立复审仍属于 P2–P6。
+精确阶段执行结果记录在 `artifacts/pakka-pocket/p1/`。上游原始失败基线独立保留于 [P0 记录](PAKKA-WEBUI-P0.md)，不与新路径的通过数相加。最终产品的真实浏览器、部署、插件和指定独立复审仍属于 P2–P6。

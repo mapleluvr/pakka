@@ -5,7 +5,7 @@ import { runtimeFixture } from "./runtime-fixture.ts";
 const options = { namespace: "bounded-jobs", maxJobs: 1, maxBytes: 65536 };
 
 // Unknown fields are not approved job payload or a place to smuggle private host configuration into receipts.
-test("Pocket jobs: unapproved programs and extra authority/configuration fields are rejected before execution", async () => {
+test("WebUI jobs: unapproved programs and extra authority/configuration fields are rejected before execution", async () => {
 	let executions = 0;
 	const m = await runtimeFixture({
 		jobs: [
@@ -50,7 +50,7 @@ test("Pocket jobs: unapproved programs and extra authority/configuration fields 
 });
 
 // Distinct submissions must consume real retention capacity; retries must not allocate extra native tasks.
-test("Pocket jobs: concurrent retries share one native execution and options conflicts do not poison the Session", async () => {
+test("WebUI jobs: concurrent retries share one native execution and options conflicts do not poison the Session", async () => {
 	let executions = 0;
 	const m = await runtimeFixture({
 		jobs: [

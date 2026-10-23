@@ -9,3 +9,5 @@ apps/webui/web/reference.css
 # Digest-anchored raw verification records.
 docs/verification/evidence/
 docs/visual-primitives/
+# Verbatim, version-pinned external development guide.
+docs/development/frontend-guides/vercel-web-interface-guidelines.md

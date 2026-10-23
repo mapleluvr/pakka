@@ -6,7 +6,7 @@ The project SHALL expose adopted contracts through domain state and mapped API/s
 
 #### Scenario: Resume without local scratch files
 
-- **WHEN** a contributor resumes from the tracked repository without docs/.temp or the removed Pocket status aggregate
+- **WHEN** a contributor resumes from the tracked repository without docs/.temp or the removed WebUI status aggregate
 - **THEN** OVERVIEW, state and the owning OpenSpec tasks provide adopted requirements, current work and detailed open items, while candidate results remain version-scoped
 
 ### Requirement: Verified recoverable removal

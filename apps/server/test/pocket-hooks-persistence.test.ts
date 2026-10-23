@@ -17,7 +17,7 @@ function deferred() {
 }
 
 test(
-	"Pocket hooks interrupted intent: writer reopen retains unknown without admitting a replacement native input",
+	"WebUI hooks interrupted intent: writer reopen retains unknown without admitting a replacement native input",
 	{ timeout: 12000 },
 	async (t) => {
 		let armed = false,
@@ -113,7 +113,7 @@ test(
 
 for (const corruption of ["enum", "association"] as const)
 	test(
-		`Pocket hooks persistent ${corruption}: malformed or foreign recorded results fail closed`,
+		`WebUI hooks persistent ${corruption}: malformed or foreign recorded results fail closed`,
 		{ timeout: 12000 },
 		async () => {
 			const f = await hooksFixture();

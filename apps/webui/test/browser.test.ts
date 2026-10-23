@@ -10,7 +10,7 @@ import { organizationAction, toggleConversations } from "./frontend-controls.ts"
 
 // Assertions cross actual DOM interaction, served JS/Cookie/SSE and a native model tool result, independently observed at provider.
 test(
-	"Pocket browser: actual adopted workbench, invitation and two isolated users respect live server visibility",
+	"WebUI browser: actual adopted workbench, invitation and two isolated users respect live server visibility",
 	{ timeout: 45000 },
 	async () => {
 		let tools = 0;

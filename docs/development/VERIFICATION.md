@@ -46,7 +46,7 @@ Windows 独立命令需重新设置隔离 HOME/USERPROFILE/PI_CODING_AGENT_DIR�
 选用 OpenSpec 校验且有可用 CLI 时，按变更范围运行并保存相关或全量结果：
 
 ```sh
-openspec validate pakka-pocket-webui --strict --no-interactive --json
+openspec validate pakka-webui --strict --no-interactive --json
 openspec validate mas-board-relationship-workbench --strict --no-interactive --json
 openspec validate --all --strict --no-interactive --json
 ```

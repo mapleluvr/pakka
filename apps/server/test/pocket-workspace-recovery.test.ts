@@ -10,7 +10,7 @@ const catalog = { namespace: "pocket-workbench", maxDeliveries: 32, maxPending: 
 const ceiling = () => ["default"];
 
 // Another person with access to the same resource still cannot claim the original person's input receipt.
-test("Pocket workspace: shared resource does not share message authority or allow forged actor/request fields", async () => {
+test("WebUI workspace: shared resource does not share message authority or allow forged actor/request fields", async () => {
 	const m = await runtimeFixture();
 	try {
 		const people = await createPocketPeople({ runtime: m.runtime, namespace: "people" });
@@ -66,7 +66,7 @@ test("Pocket workspace: shared resource does not share message authority or allo
 });
 
 // Re-bootstrap must reuse the committed resource, original message and spent primary quota.
-test("Pocket workspace: normal reopen reattaches original creation/admission without allocating or dispatching again", async () => {
+test("WebUI workspace: normal reopen reattaches original creation/admission without allocating or dispatching again", async () => {
 	const m = await runtimeFixture();
 	let reopened: Awaited<ReturnType<typeof createRuntime>> | undefined;
 	try {
@@ -108,7 +108,7 @@ test("Pocket workspace: normal reopen reattaches original creation/admission wit
 });
 
 // UI wait cancellation must not be confused with withdrawing queued input or stopping model work.
-test("Pocket workspace: cancelled receipt wait preserves native delivery and an explicit follow-up", async () => {
+test("WebUI workspace: cancelled receipt wait preserves native delivery and an explicit follow-up", async () => {
 	const entered = deferred(),
 		release = deferred();
 	const m = await runtimeFixture({}, undefined, async (_request, index) => {

@@ -57,7 +57,7 @@ async function setup(loseHandler = false) {
 }
 for (const loss of ["response", "handler"] as const)
 	test(
-		`Pocket hooks recovery: lost ${loss} is checked read-only after panel reopen without creating another hook`,
+		`WebUI hooks recovery: lost ${loss} is checked read-only after panel reopen without creating another hook`,
 		{ timeout: 30000 },
 		async () => {
 			const f = await setup(loss === "handler");
@@ -137,7 +137,7 @@ for (const loss of ["response", "handler"] as const)
 	);
 
 test(
-	"Pocket hooks mobile operator: generic setup fits the real phone view without persisting its secret address or triggering a model",
+	"WebUI hooks mobile operator: generic setup fits the real phone view without persisting its secret address or triggering a model",
 	{ timeout: 30000 },
 	async (t) => {
 		const f = await setup();

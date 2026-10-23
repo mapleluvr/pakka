@@ -1,4 +1,4 @@
-# Pakka-Pocket P5 — 协作与保留工作流
+# pakka-webui P5 — 协作与保留工作流
 
 > **Deprecated — 历史资料。** 本文保留当时的计划、试写或验证结论，供追溯其条件、版本和产物；现行使用与实施入口见 [当前工作](../../OVERVIEW.md) 与 [文档导航](../../README.md)。deprecated 指本页作为当前指引的地位，历史事实、验收结果及尚有效的约束仍按原范围保留。分类与迁移说明见 [历史资料索引](../README.md)。
 
@@ -131,7 +131,7 @@ export default {
 
 本批最终定向 **38/38**、全量 **464/464**（无 fail/skip/cancel/todo），构建、类型、独立公开声明和代码格式均通过，10 个关键路径主动诊断清零；450 个冻结源码/helper/TLS 文件在定向、全量和实际安装前后 SHA 一致。完整 `smoke:package` 的全部消费者通过，8 个实际归档逐一匹配 lock integrity 并保存到 `artifacts/pakka-pocket/p5/memory/delivery/`。新归档的实际 CLI 驱动原生 `memory` 工具提议、审批、暂停、profile 切换、两次正常重开和移除 WebUI，核对 **5 次模型 HTTP、5 次已消费额度、1 次原生工具结果**，原写入未重放且记录保留。重开验收用 Chrome 原生 `Page.reload` 并核对 `timeOrigin`，不把 hash 导航当作新页面；旧页面跨服务重启的重连留给 P6 独立验证。
 
-首次安装在既有文件/协作消费者登录前曾遇到 8 秒启动等待超时，页面停在 `Starting Pakka-Pocket`，原因未确认。同一失败归档加被动 CDP 诊断后连续 3 次通过；恢复原始驱动、生产与测试源码均未改的新一轮完整安装也通过，不能称为启动问题已修复。失败日志、诊断 driver/runner、8 个失败归档及其 SHA 独立保留在 `failed-install/`，P6 继续复查。其余 red/green、实际 provider payload、Runtime 视图、原生存储、桌面/手机截图和最终门禁位于 `artifacts/pakka-pocket/p5/memory/`。其余可选界面、部署及 P6 仍未完成。
+首次安装在既有文件/协作消费者登录前曾遇到 8 秒启动等待超时，页面停在 `Starting pakka-webui`，原因未确认。同一失败归档加被动 CDP 诊断后连续 3 次通过；恢复原始驱动、生产与测试源码均未改的新一轮完整安装也通过，不能称为启动问题已修复。失败日志、诊断 driver/runner、8 个失败归档及其 SHA 独立保留在 `failed-install/`，P6 继续复查。其余 red/green、实际 provider payload、Runtime 视图、原生存储、桌面/手机截图和最终门禁位于 `artifacts/pakka-pocket/p5/memory/`。其余可选界面、部署及 P6 仍未完成。
 
 ## 外部 Webhook 与普通 ingress 贡献（6.4 部分完成）
 

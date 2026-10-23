@@ -2,7 +2,7 @@
 
 本分支的前端以 Devin 原型为页面与交互基座，接入 Pakka 的真实 API，不使用原型演示数据。当前候选的通过、失败及独立验收阻塞见 [R2 验证记录](../verification/DEVIN-FRONTEND-R2.md)。
 
-Pakka-Pocket 是可选的 Web 工作台。它提供普通 Conversation、原生输入、多人协作和宿主装配的服务／插件；模型工具与界面按各自权限启用。产品组成见[产品声明](../state/product.md)，后续工作见[领域任务](../../openspec/changes/adopt-devin-frontend/tasks.md)。
+pakka-webui 是可选的 Web 工作台。它提供普通 Conversation、原生输入、多人协作和宿主装配的服务／插件；模型工具与界面按各自权限启用。产品组成见[产品声明](../state/product.md)，后续工作见[领域任务](../../openspec/changes/adopt-devin-frontend/tasks.md)。
 
 ## 1. 从源码启动
 
@@ -14,7 +14,7 @@ npm run build
 node apps/webui/dist/main.js --config /absolute/private/pakka.json --owner-file /absolute/private/owner-link.txt
 ```
 
-安装归档后的入口为 `node_modules/.bin/pakka-pocket`，使用同样的 `--config` 和 `--owner-file` 参数。下面是结构完整的启动配置示例，**目录、endpoint、模型 ID 和认证字符串是示例值**，需要替换为现有服务器目录及实际本地 provider 的配置：
+安装归档后的入口为 `node_modules/.bin/pakka-webui`，使用同样的 `--config` 和 `--owner-file` 参数。下面是结构完整的启动配置示例，**目录、endpoint、模型 ID 和认证字符串是示例值**，需要替换为现有服务器目录及实际本地 provider 的配置：
 
 ```json
 {
@@ -73,7 +73,7 @@ node apps/webui/dist/main.js --config /absolute/private/pakka.json --owner-file 
 
 生产页面直接采用参考的平整侧栏、首页卡片、palette 和独立 Settings 页面，不包括没有后端的 Ask、PR、额度或仓库连接演示。桌面侧栏可通过侧栏顶部面板图标或 Ctrl/⌘ B 收起；手机该快捷键开关抽屉。搜索图标或 Ctrl/⌘ K 打开当前身份可见的 Conversation 搜索；在搜索 palette 中选择 **Include archived**，归档项可显式 **Restore**。会话页头搜索只筛选已加载的历史，不发送模型工作。
 
-侧栏底部 **Settings** 齿轮菜单中的 **Appearance** 打开独立 Settings 页。可选择 Dark / Light、默认 Inter、JetBrains Mono、系统无衬线或衬线字体，以及 14–24px 字号；合法的已保存字体／字号偏好继续生效。选择即时应用并保存到当前浏览器，代码块维持等宽显示。模型按钮在输入卡片内，Input mode 与 Send 同行；窄屏模型入口为带可访问名称的图标。
+侧栏底部 **Settings** 单击进入独立配置页，默认显示 **Appearance**。页内分类导航提供外观、Conversation settings（用量与凭据）、Notifications、管理员可见的 People & invitations 和 Extensions。Conversation 专属分类在选中会话后可用；手机上可横向滚动分类栏。**Back to app** 返回原页面并保留当前会话与未发送草稿。可选择 Dark / Light、默认 Inter、JetBrains Mono、系统无衬线或衬线字体，以及 14–24px 字号；合法的已保存字体／字号偏好继续生效。选择即时应用并保存到当前浏览器，代码块维持等宽显示。模型按钮在输入卡片内，Input mode 与 Send 同行；窄屏模型入口为带可访问名称的图标。
 
 ## 4. 人员、服务和插件
 
@@ -98,7 +98,7 @@ Team 使用单层页头与 **Graph / Activity / Agents** 三视图。选择成�
 
 正常停止 CLI 后，在原启动配置的 `runtime.reopenSessionFile` 填入 stdout 曾输出的确切 sessionFile，并保留原 dataDir、profile、limits 和批准根声明，再用同一入口启动。已有身份、资源、回执、实际模型／cwd 和已花额度按持久记录恢复，不重新签发 owner。
 
-归档／恢复用于当前界面的 Conversation 整理。MAS 退役具有另外的成员语义；实际删除契约仍在[工程待办](../../openspec/changes/pakka-pocket-webui/tasks.md)中。
+归档／恢复用于当前界面的 Conversation 整理。MAS 退役具有另外的成员语义；实际删除契约仍在[工程待办](../../openspec/changes/pakka-webui/tasks.md)中。
 
 未知结果先通过原请求与当前状态只读核对；刷新、关闭面板或退出浏览器都不自动重放输入，也不退还已消费额度。强制终止后的 claim 或未知存储需要另行恢复判断，正常重开说明不承诺 crash recovery。
 

@@ -3,7 +3,7 @@ import { strict as assert } from "node:assert";
 import { fixture } from "./fixture.ts";
 
 test(
-	"Pocket metadata single writer: competing CAS admits one; finite capacity preserves original receipts and never prunes/replays",
+	"WebUI metadata single writer: competing CAS admits one; finite capacity preserves original receipts and never prunes/replays",
 	{ timeout: 15000 },
 	async () => {
 		const m = await fixture();

@@ -9,7 +9,7 @@
 	height: 100%;
 }
 body {
-	font-size: var(--text-size, 14px);
+	font-size: var(--text-size, 0.875rem);
 }
 code {
 	font-family: var(--mono);
@@ -22,6 +22,39 @@ code {
 	--bg1: var(--card);
 	--bg2: var(--hover-strong);
 	--pocket-accent: var(--accent);
+	--type-ui-size: calc(var(--text-size, 0.875rem) * 13 / 14);
+	--type-page-title-size: calc(var(--text-size, 0.875rem) * 18 / 14);
+	--type-section-title-size: calc(var(--text-size, 0.875rem) * 15 / 14);
+	--type-caption-size: calc(var(--text-size, 0.875rem) * 12 / 14);
+	--type-group-label-size: calc(var(--text-size, 0.875rem) * 11 / 14);
+}
+/* Keep the default compact hierarchy while respecting the reader's text scale. */
+.settings-page,
+.settings-view
+	:is(.settings-sub, .settings-card-row, .card-row-label, .settings-content-head, .settings-nav-row),
+.settings-page .settings-data dl,
+.settings-page .settings-native-fields :is(label, input, select, textarea, p) {
+	font-size: var(--type-ui-size);
+}
+.settings-page h1 {
+	font-size: var(--type-page-title-size);
+}
+.settings-page h2 {
+	font-size: var(--type-section-title-size);
+}
+.settings-page h3 {
+	font-size: var(--text-size, 0.875rem);
+}
+.settings-view .settings-group-label {
+	font-size: var(--type-group-label-size);
+}
+.settings-page :is(.pocket-secondary, .extension-phase),
+.settings-page .settings-native-fields button {
+	font-size: var(--type-caption-size);
+}
+.composer-surface:has(textarea:focus-visible) {
+	outline: 2px solid var(--accent);
+	outline-offset: 2px;
 }
 .org-name {
 	overflow: hidden;
@@ -117,6 +150,27 @@ button:disabled {
 	max-width: 160px;
 	overflow: hidden;
 	text-overflow: ellipsis;
+}
+/* Settings categories remain reachable inside the configuration page on phones. */
+@media (max-width: 767px) {
+	.settings-layer .settings-rail {
+		height: auto;
+		min-height: 44px;
+		flex-wrap: wrap;
+	}
+	.settings-layer .settings-rail .settings-nav {
+		display: flex;
+		flex-basis: 100%;
+		min-width: 0;
+		overflow-x: auto;
+		padding-bottom: 4px;
+	}
+	.settings-layer .settings-nav-row {
+		width: auto;
+		flex: none;
+		white-space: nowrap;
+		min-height: 44px;
+	}
 }
 @media (max-width: 380px) {
 	.native-model-picker.model-chip {
@@ -344,6 +398,7 @@ button:disabled {
 	font-size: var(--text-size, 14px);
 }
 .appearance-fields select {
+	font: inherit;
 	margin-left: auto;
 	min-width: 160px;
 	min-height: 32px;
@@ -594,6 +649,18 @@ button:disabled {
 	background: var(--hover);
 }
 @media (max-width: 767px) {
+	#composerInput,
+	#replyInput,
+	:is(.settings-layer, .pocket-scrim, .pocket-signin, .palette)
+		:is(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
+		font-size: max(16px, 1rem, var(--text-size, 0.875rem));
+	}
+	.settings-layer .appearance-fields select,
+	.settings-layer
+		.settings-native-fields
+		:is(input:not([type="checkbox"]):not([type="radio"]), select, button) {
+		min-height: 44px;
+	}
 	.extension-page {
 		padding-top: 44px;
 	}

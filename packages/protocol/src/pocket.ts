@@ -1,4 +1,4 @@
-/** Pocket v2 is an explicit, browser-safe product protocol. Headless v1 stays in index.ts. */
+/** WebUI v2 is an explicit, browser-safe product protocol. Headless v1 stays in index.ts. */
 import { identity } from "./index.ts";
 import type { AgentRef } from "./index.ts";
 export type { AgentRef } from "./index.ts";
@@ -1140,19 +1140,19 @@ function frozen<T>(value: T): T {
 }
 function decode<T>(value: unknown, validate: (v: unknown) => v is T): T {
 	if (!finite(value, 0, { nodes: 16384 }) || !validate(value))
-		throw new Error("Invalid finite Pocket protocol");
+		throw new Error("Invalid finite WebUI protocol");
 	let encoded: string;
 	try {
 		encoded = JSON.stringify(value);
 	} catch {
-		throw new Error("Invalid Pocket JSON");
+		throw new Error("Invalid WebUI JSON");
 	}
 	if (new TextEncoder().encode(encoded).byteLength > POCKET_MAX_BYTES)
-		throw new Error("Pocket wire capacity exceeded");
+		throw new Error("WebUI wire capacity exceeded");
 	try {
 		return frozen(JSON.parse(encoded) as T);
 	} catch {
-		throw new Error("Invalid Pocket JSON");
+		throw new Error("Invalid WebUI JSON");
 	}
 }
 export function decodePocketRequest(value: unknown): PocketRequest {

@@ -4,7 +4,7 @@ import { createRuntime, type Runtime } from "../../../packages/agent/src/index.t
 import { createPocketPeople, createPocketWorkspace } from "@pakka/server/pocket";
 import { fixture } from "./fixture.ts";
 
-test("Pocket navigation normal reopen: metadata and original receipt persist without rewriting history, effects or spent attempts", async () => {
+test("WebUI navigation normal reopen: metadata and original receipt persist without rewriting history, effects or spent attempts", async () => {
 	const m = await fixture();
 	let runtime: Runtime | undefined;
 	try {

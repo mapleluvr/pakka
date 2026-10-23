@@ -14,7 +14,7 @@ function deferred() {
 }
 
 test(
-	"Pocket hooks busy product: native queued input survives completed HTTP and extension disable while new ingress is refused",
+	"WebUI hooks busy product: native queued input survives completed HTTP and extension disable while new ingress is refused",
 	{ timeout: 15000 },
 	async (t) => {
 		const release = deferred();

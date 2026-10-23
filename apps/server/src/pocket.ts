@@ -1,4 +1,4 @@
-/** Host composition APIs for the Pocket product. Imports allocate no identities, writers or listeners. */
+/** Host composition APIs for the WebUI product. Imports allocate no identities, writers or listeners. */
 export { createPocketHooks } from "./pocket-hooks.js";
 export type {
 	PocketHooks,

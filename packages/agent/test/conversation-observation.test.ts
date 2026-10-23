@@ -14,7 +14,7 @@ const card = {
 	text: "DISPLAY-ONLY-CANARY",
 };
 
-test("Pocket port: committed transcript is scoped, frozen, sanitized and passive", async () => {
+test("WebUI port: committed transcript is scoped, frozen, sanitized and passive", async () => {
 	const m = await runtimeFixture({ apiKey: "PRIVATE-CREDENTIAL-CANARY" });
 	try {
 		assert.equal(typeof m.runtime.readConversation, "function", "controlled observation port is required");
@@ -55,7 +55,7 @@ test("Pocket port: committed transcript is scoped, frozen, sanitized and passive
 	}
 });
 
-test("Pocket port: display records are idempotent after reopen and absent from real provider payloads", async () => {
+test("WebUI port: display records are idempotent after reopen and absent from real provider payloads", async () => {
 	const m = await runtimeFixture();
 	let reopened: Runtime | undefined;
 	try {
@@ -89,7 +89,7 @@ test("Pocket port: display records are idempotent after reopen and absent from r
 	}
 });
 
-test("Pocket port: read and passive write recheck authority at their publication/commit boundary", async () => {
+test("WebUI port: read and passive write recheck authority at their publication/commit boundary", async () => {
 	const m = await runtimeFixture();
 	try {
 		assert.equal(typeof m.runtime.readConversation, "function");
@@ -119,7 +119,7 @@ test("Pocket port: read and passive write recheck authority at their publication
 	}
 });
 
-test("Pocket port: a real native tool's live and committed activity is observable without new work", async () => {
+test("WebUI port: a real native tool's live and committed activity is observable without new work", async () => {
 	const entered = deferred(),
 		finish = deferred();
 	const m = await runtimeFixture(

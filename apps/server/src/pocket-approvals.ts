@@ -59,7 +59,7 @@ function freeze<T>(v: T): T {
 	return v;
 }
 function denied(): never {
-	throw Error("Pocket approval authority denied or decision conflict");
+	throw Error("WebUI approval authority denied or decision conflict");
 }
 function jsonObject(value: unknown): JsonObject {
 	const valid = (v: unknown, depth: number): boolean =>

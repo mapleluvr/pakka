@@ -4,7 +4,7 @@ import { readFile } from "node:fs/promises";
 import { runtimeFixture } from "./runtime-fixture.ts";
 
 // Ignoring the page boundary would repeat recent entries and hide older committed human records.
-test("Pocket observation: finite earlier pages keep exact order across a new committed append", async () => {
+test("WebUI observation: finite earlier pages keep exact order across a new committed append", async () => {
 	const m = await runtimeFixture();
 	try {
 		const ref = m.runtime.view().conversations[0]!;
@@ -56,7 +56,7 @@ test("Pocket observation: finite earlier pages keep exact order across a new com
 });
 
 // A foreign, missing or forged boundary must fail rather than read some other resource's history.
-test("Pocket observation: foreign boundaries and unbounded options are refused without effects", async () => {
+test("WebUI observation: foreign boundaries and unbounded options are refused without effects", async () => {
 	const m = await runtimeFixture();
 	try {
 		const ref = m.runtime.view().conversations[0]!;

@@ -127,7 +127,7 @@ async function setup(
 	}
 }
 
-test("Pocket owned browser: approved resource configuration is detached from later caller mutation", async () => {
+test("WebUI owned browser: approved resource configuration is detached from later caller mutation", async () => {
 	const f = await setup();
 	try {
 		f.resources.push(f.hidden.conversationId);
@@ -139,7 +139,7 @@ test("Pocket owned browser: approved resource configuration is detached from lat
 });
 for (const unconfirmed of [false, true])
 	test(
-		`Pocket owned browser: ${unconfirmed ? "restored running intent" : "completed click"} survives writer reopen without another page effect`,
+		`WebUI owned browser: ${unconfirmed ? "restored running intent" : "completed click"} survives writer reopen without another page effect`,
 		{ timeout: 20000 },
 		async () => {
 			const f = await setup({ effectDelayMs: 50 });
@@ -197,7 +197,7 @@ for (const unconfirmed of [false, true])
 	);
 
 test(
-	"Pocket owned browser: real isolated page controls, actual screenshot decode and viewer/resource checks",
+	"WebUI owned browser: real isolated page controls, actual screenshot decode and viewer/resource checks",
 	{ timeout: 20000 },
 	async (t) => {
 		const f = await setup();
@@ -238,7 +238,7 @@ test(
 );
 
 test(
-	"Pocket owned browser: disallowed direct navigation redirects subresources and popup never reach another origin",
+	"WebUI owned browser: disallowed direct navigation redirects subresources and popup never reach another origin",
 	{ timeout: 20000 },
 	async (t) => {
 		const f = await setup();
@@ -260,7 +260,7 @@ test(
 );
 
 test(
-	"Pocket owned browser: an already-revoked interception does not seal subsequent authorized reads",
+	"WebUI owned browser: an already-revoked interception does not seal subsequent authorized reads",
 	{
 		skip:
 			process.platform === "win32"
@@ -290,7 +290,7 @@ test(
 );
 
 test(
-	"Pocket owned browser: unknown interception rejection still seals the service",
+	"WebUI owned browser: unknown interception rejection still seals the service",
 	{
 		skip:
 			process.platform === "win32"
@@ -321,7 +321,7 @@ test(
 );
 
 test(
-	"Pocket owned browser: invalidated interfaces and service shutdown seal old clients",
+	"WebUI owned browser: invalidated interfaces and service shutdown seal old clients",
 	{ timeout: 20000 },
 	async (t) => {
 		const f = await setup();

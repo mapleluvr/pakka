@@ -2,7 +2,7 @@
 
 ### Requirement: Persistent people and scoped invitations
 
-Pakka-Pocket SHALL retain multi-user access, people/role management and revocable finite-use invitation links/QR flows. Server-bound people SHALL map to current principals and explicit all-approved-resource or selected-resource scope. The server SHALL control role delegation, one-time redemption, expiry, revocation and session invalidation; supplied user/role/source fields SHALL NOT grant authority.
+pakka-webui SHALL retain multi-user access, people/role management and revocable finite-use invitation links/QR flows. Server-bound people SHALL map to current principals and explicit all-approved-resource or selected-resource scope. The server SHALL control role delegation, one-time redemption, expiry, revocation and session invalidation; supplied user/role/source fields SHALL NOT grant authority.
 
 #### Scenario: Invitation races and normal restart
 
@@ -56,7 +56,7 @@ Conversation entries, tool activity, receipts and extension/collaboration events
 
 ### Requirement: Explicit remote modes with real transport protection
 
-The product SHALL retain local, LAN, tailnet and public-tunnel access workflows through an explicit Pocket entry/configuration. The existing headless listener SHALL remain loopback by default. Public remote access SHALL require HTTPS at an approved termination boundary; any plain-HTTP trusted-LAN mode SHALL be explicit and accurately disclose its lack of confidentiality.
+The product SHALL retain local, LAN, tailnet and public-tunnel access workflows through an explicit WebUI entry/configuration. The existing headless listener SHALL remain loopback by default. Public remote access SHALL require HTTPS at an approved termination boundary; any plain-HTTP trusted-LAN mode SHALL be explicit and accurately disclose its lack of confidentiality.
 
 #### Scenario: Spoofed proxy origin and genuine remote connection
 

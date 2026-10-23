@@ -13,7 +13,7 @@ import {
 } from "./frontend-controls.ts";
 
 test(
-	"Pocket navigation browser: rename/archive/search/restore, reviewed resend, real fork and keyboard history have actual subsequent effects",
+	"WebUI navigation browser: rename/archive/search/restore, reviewed resend, real fork and keyboard history have actual subsequent effects",
 	{ timeout: 45000 },
 	async () => {
 		const m = await runtimeFixture();

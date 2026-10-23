@@ -8,7 +8,7 @@ import { runtimeFixture } from "../../../packages/agent/test/runtime-fixture.ts"
 
 const main = fileURLToPath(new URL("../dist/main.js", import.meta.url));
 test(
-	"Pocket executable starts through the symlinked npm bin path without exposing the owner token",
+	"WebUI executable starts through the symlinked npm bin path without exposing the owner token",
 	{ timeout: 20000 },
 	async () => {
 		const fixture = await runtimeFixture();
@@ -80,7 +80,7 @@ test(
 	},
 );
 
-test("Importing the Pocket executable does not start it", async () => {
+test("Importing the WebUI executable does not start it", async () => {
 	const child = spawn(
 		process.execPath,
 		[

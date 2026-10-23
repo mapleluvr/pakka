@@ -4,7 +4,7 @@
 	"private": true,
 	"type": "module",
 	"bin": {
-		"pakka-pocket": "dist/main.js"
+		"pakka-webui": "dist/main.js"
 	},
 	"exports": {
 		".": {

@@ -397,6 +397,14 @@ export function useExtensions({ person, target, csrf, notice, error, navigate, o
 			>
 				Back to ${returnInterface.view.title}
 			</button>`,
+		closeSettings: () => {
+			setOverlay(null);
+			setPalette(false);
+		},
+		openSettings: () => {
+			setOverlay(null);
+			setPalette("manage");
+		},
 		openCommands: () => {
 			setQuery("");
 			setPalette(true);

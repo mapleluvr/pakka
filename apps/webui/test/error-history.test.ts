@@ -8,7 +8,7 @@ import { conversationAction } from "./frontend-controls.ts";
 
 // Dropping errorMessage at the wire boundary must not strand a reopened Conversation in Connecting.
 test(
-	"Pocket error history: a cleared-credential failure stays readable after restart without replay",
+	"WebUI error history: a cleared-credential failure stays readable after restart without replay",
 	{ timeout: 30000 },
 	async () => {
 		const m = await runtimeFixture();

@@ -86,7 +86,7 @@ async function setup(respond?: Parameters<typeof runtimeFixture>[2]) {
 	}
 }
 // Ignoring approved roots/current identity, failing hash checks or replaying writes would change real bytes.
-test("Pocket files: approved scoped reads and CAS edits have real byte/receipt evidence without model work", async () => {
+test("WebUI files: approved scoped reads and CAS edits have real byte/receipt evidence without model work", async () => {
 	const f = await setup();
 	try {
 		const roots = await f.client.roots(f.ref);
@@ -136,7 +136,7 @@ test("Pocket files: approved scoped reads and CAS edits have real byte/receipt e
 	}
 });
 // Lexical path checks alone miss directory junctions and hard links; all probes address real disk objects.
-test("Pocket files: traversal hidden data junctions and hard links cannot expose another root", async () => {
+test("WebUI files: traversal hidden data junctions and hard links cannot expose another root", async () => {
 	const f = await setup();
 	try {
 		await symlink(f.other, join(f.root, "portal"), process.platform === "win32" ? "junction" : "dir");
@@ -169,7 +169,7 @@ test("Pocket files: traversal hidden data junctions and hard links cannot expose
 	}
 });
 // Upload/export must retain exact bytes, not silently UTF-8 replace data or overwrite an existing file.
-test("Pocket files: bounded upload and export preserve original bytes and reject overwrite", async () => {
+test("WebUI files: bounded upload and export preserve original bytes and reject overwrite", async () => {
 	const f = await setup();
 	try {
 		const data = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x00, 0xff, 0x10]);
@@ -203,7 +203,7 @@ test("Pocket files: bounded upload and export preserve original bytes and reject
 	}
 });
 // Branch/worktree controls must operate on a real approved repository, leave commits intact and not run hooks.
-test("Pocket files Git: actual changes branches and managed worktrees are bounded native effects", async () => {
+test("WebUI files Git: actual changes branches and managed worktrees are bounded native effects", async () => {
 	const f = await setup();
 	try {
 		await writeFile(join(f.root, "readme.txt"), "REAL-DIFF-CANARY\n");
@@ -254,43 +254,39 @@ test("Pocket files Git: actual changes branches and managed worktrees are bounde
 		await f.m.close();
 	}
 });
-test(
-	"Pocket files Git: a real running native input prevents branch changes",
-	{ timeout: 10000 },
-	async () => {
-		const entered = deferred(),
-			release = deferred(),
-			f = await setup(async () => {
-				entered.resolve();
-				await release.promise;
-				return { text: "NATIVE-WORK-DONE" };
-			});
-		try {
-			const admission = await f.workspace
-				.bind(f.actor)
-				.submit(f.ref, { requestId: "native-busy", text: "BLOCKED-MODEL-WORK", mode: "prompt" });
-			await entered.promise;
-			await assert.rejects(
-				f.client.switchBranch(f.ref, {
-					root: "project",
-					requestId: "while-busy",
-					name: "forbidden-branch",
-					create: true,
-				}),
-				/conflict/i,
-			);
-			assert.equal(git(f.root, "branch", "--show-current").trim(), "main");
-			release.resolve();
-			assert.equal((await f.workspace.bind(f.actor).wait(admission.id)).status, "done");
-			assert.equal(f.m.f.requests.length, 1);
-		} finally {
-			release.resolve();
-			await f.m.close();
-		}
-	},
-);
+test("WebUI files Git: a real running native input prevents branch changes", { timeout: 10000 }, async () => {
+	const entered = deferred(),
+		release = deferred(),
+		f = await setup(async () => {
+			entered.resolve();
+			await release.promise;
+			return { text: "NATIVE-WORK-DONE" };
+		});
+	try {
+		const admission = await f.workspace
+			.bind(f.actor)
+			.submit(f.ref, { requestId: "native-busy", text: "BLOCKED-MODEL-WORK", mode: "prompt" });
+		await entered.promise;
+		await assert.rejects(
+			f.client.switchBranch(f.ref, {
+				root: "project",
+				requestId: "while-busy",
+				name: "forbidden-branch",
+				create: true,
+			}),
+			/conflict/i,
+		);
+		assert.equal(git(f.root, "branch", "--show-current").trim(), "main");
+		release.resolve();
+		assert.equal((await f.workspace.bind(f.actor).wait(admission.id)).status, "done");
+		assert.equal(f.m.f.requests.length, 1);
+	} finally {
+		release.resolve();
+		await f.m.close();
+	}
+});
 // Establish that the genuine Git hook executes first; its later absence is then positive policy evidence.
-test("Pocket files Git: native hooks are disabled and unsafe local config is refused", async () => {
+test("WebUI files Git: native hooks are disabled and unsafe local config is refused", async () => {
 	const f = await setup();
 	try {
 		const marker = join(f.root, "hook-effect"),
@@ -324,7 +320,7 @@ test("Pocket files Git: native hooks are disabled and unsafe local config is ref
 		await f.m.close();
 	}
 });
-test("Pocket files: an opaque host guard cannot forge a definite conflict after its own real effect", async () => {
+test("WebUI files: an opaque host guard cannot forge a definite conflict after its own real effect", async () => {
 	const f = await setup();
 	try {
 		const marker = join(f.root, "opaque-effect"),
@@ -359,7 +355,7 @@ test("Pocket files: an opaque host guard cannot forge a definite conflict after 
 	}
 });
 // Controlled public-store restore represents an unconfirmed external effect, not a claim of process-kill testing.
-test("Pocket files: restored running intents stay unknown and do not replay disk writes", async () => {
+test("WebUI files: restored running intents stay unknown and do not replay disk writes", async () => {
 	const f = await setup();
 	try {
 		const input = {
@@ -395,7 +391,7 @@ test("Pocket files: restored running intents stay unknown and do not replay disk
 	}
 });
 // Completed request IDs survive reopen; a retry must never overwrite a later outside edit.
-test("Pocket files: committed external-effect receipts reconcile after normal reopen without replay", async () => {
+test("WebUI files: committed external-effect receipts reconcile after normal reopen without replay", async () => {
 	const f = await setup();
 	let runtime: Awaited<ReturnType<typeof createRuntime>> | undefined;
 	try {

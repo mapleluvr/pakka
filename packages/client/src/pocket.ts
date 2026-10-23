@@ -23,7 +23,7 @@ export class PocketRemoteError extends Error {
 	readonly outcome: "denied" | "unknown";
 	readonly requestId: string;
 	constructor(code: PocketErrorCode, outcome: "denied" | "unknown", requestId: string) {
-		super(outcome === "denied" ? "Pocket request refused" : "Pocket operation outcome unconfirmed");
+		super(outcome === "denied" ? "WebUI request refused" : "WebUI operation outcome unconfirmed");
 		this.name = "PocketRemoteError";
 		this.code = code;
 		this.outcome = outcome;
@@ -169,7 +169,7 @@ function correlated(command: PocketCommand, result: PocketResult, personId?: str
 }
 async function readBody(response: Response): Promise<string> {
 	const reader = response.body?.getReader();
-	if (!reader) throw new Error("Missing Pocket response");
+	if (!reader) throw new Error("Missing WebUI response");
 	const decoder = new TextDecoder("utf-8", { fatal: true });
 	let bytes = 0,
 		text = "";
@@ -180,7 +180,7 @@ async function readBody(response: Response): Promise<string> {
 			bytes += chunk.value.byteLength;
 			if (bytes > POCKET_MAX_BYTES) {
 				await reader.cancel();
-				throw new Error("Pocket response capacity");
+				throw new Error("WebUI response capacity");
 			}
 			text += decoder.decode(chunk.value, { stream: true });
 		}
@@ -195,7 +195,7 @@ export function createPocketClient(options: PocketClientOptions): PocketClient {
 	try {
 		endpoint = new URL(options.endpoint);
 	} catch {
-		throw new Error("Invalid Pocket endpoint");
+		throw new Error("Invalid WebUI endpoint");
 	}
 	if (
 		!["http:", "https:"].includes(endpoint.protocol) ||
@@ -206,10 +206,10 @@ export function createPocketClient(options: PocketClientOptions): PocketClient {
 		endpoint.hash ||
 		(typeof globalThis.location !== "undefined" && globalThis.location.origin !== endpoint.origin)
 	)
-		throw new Error("Explicit same-origin Pocket endpoint required");
+		throw new Error("Explicit same-origin WebUI endpoint required");
 	const timeoutMs = options.timeoutMs ?? 10000;
 	if (!Number.isSafeInteger(timeoutMs) || timeoutMs < 1 || timeoutMs > 60000)
-		throw new Error("Invalid finite Pocket deadline");
+		throw new Error("Invalid finite WebUI deadline");
 	const url = endpoint.href;
 	let serverId: string | undefined, personId: string | undefined;
 	async function request(
@@ -217,7 +217,7 @@ export function createPocketClient(options: PocketClientOptions): PocketClient {
 		input: PocketRequestOptions = {},
 	): Promise<PocketClientResult> {
 		const requestId = input.requestId ?? globalThis.crypto.randomUUID();
-		if (!identity(requestId)) throw new Error("Invalid Pocket request identity");
+		if (!identity(requestId)) throw new Error("Invalid WebUI request identity");
 		const encoded = decodePocketRequest({ version: 2, requestId, command });
 		if (input.signal?.aborted) throw new PocketRemoteError("FORBIDDEN", "denied", requestId);
 		const controller = new AbortController(),

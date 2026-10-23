@@ -14,7 +14,7 @@ function gate() {
 }
 
 test(
-	"Pocket private configuration: revoke while waiting at the real CAS boundary prevents the late replacement",
+	"WebUI private configuration: revoke while waiting at the real CAS boundary prevents the late replacement",
 	{ timeout: 10000 },
 	async () => {
 		const m = await runtimeFixture(),
@@ -72,7 +72,7 @@ test(
 );
 
 test(
-	"Pocket private configuration: clearing while the preserved bootstrap callback is awaited rejects its late old key",
+	"WebUI private configuration: clearing while the preserved bootstrap callback is awaited rejects its late old key",
 	{ timeout: 10000 },
 	async () => {
 		const m = await runtimeFixture(),
@@ -109,7 +109,7 @@ test(
 	},
 );
 
-test("Pocket private configuration: nonzero empty storage is corruption and never reinitializes a secret source", async () => {
+test("WebUI private configuration: nonzero empty storage is corruption and never reinitializes a secret source", async () => {
 	const m = await runtimeFixture();
 	try {
 		const people = await createPocketPeople({
@@ -139,7 +139,7 @@ test("Pocket private configuration: nonzero empty storage is corruption and neve
 	}
 });
 
-test("Pocket private configuration: a failing host resolver cannot publish its secret error message or send HTTP", async () => {
+test("WebUI private configuration: a failing host resolver cannot publish its secret error message or send HTTP", async () => {
 	const m = await runtimeFixture({
 		resolveApiKey: async () => {
 			throw Error("SYNTHETIC-RESOLVER-PRIVATE-ERROR");

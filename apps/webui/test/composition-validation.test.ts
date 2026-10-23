@@ -8,7 +8,7 @@ import { runtimeFixture } from "../../../packages/agent/test/runtime-fixture.ts"
 
 // Executable configuration is explicitly trusted local code; refusal/error must never be mistaken for rollback or trigger a retry.
 test(
-	"Pocket ESM configuration: finite source selection, malformed exports, opaque failures and redacted output",
+	"WebUI ESM configuration: finite source selection, malformed exports, opaque failures and redacted output",
 	{ timeout: 20000 },
 	async () => {
 		const m = await runtimeFixture();

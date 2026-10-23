@@ -4,7 +4,7 @@ import { fixture } from "./fixture.ts";
 import type { AgentRef } from "@pakka/protocol/pocket";
 
 test(
-	"Pocket HTTP workspace: human create/configure/fork preserve approved config and real inherited model history",
+	"WebUI HTTP workspace: human create/configure/fork preserve approved config and real inherited model history",
 	{ timeout: 15000 },
 	async () => {
 		const m = await fixture();

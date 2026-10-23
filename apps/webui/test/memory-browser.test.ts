@@ -10,7 +10,7 @@ import { ownedBrowser } from "./browser.ts";
 import { toggleConversations } from "./frontend-controls.ts";
 
 test(
-	"Pocket memory browser: real sender proposal, owner approval, preserved conflict draft, current provider context and mobile read-only view",
+	"WebUI memory browser: real sender proposal, owner approval, preserved conflict draft, current provider context and mobile read-only view",
 	{ timeout: 40000 },
 	async (t) => {
 		const m = await runtimeFixture();

@@ -140,12 +140,12 @@ export interface PocketFilesOptions {
 /** Raised only by a definite pre-effect hash/existence/dirty-tree guard. */
 export class PocketFileConflict extends Error {
 	constructor() {
-		super("Pocket file conflict");
+		super("WebUI file conflict");
 	}
 }
 class FileDenied extends Error {
 	constructor() {
-		super("Pocket file authority/path denied");
+		super("WebUI file authority/path denied");
 	}
 }
 const deny = (): never => {

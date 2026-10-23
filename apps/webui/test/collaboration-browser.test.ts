@@ -10,7 +10,7 @@ import { conversationAction, toggleConversations, openConversationMenu } from ".
 // This fails if the adopted collaboration controls are decorative, if driver changes stop only the UI,
 // or if side chat/notes are promoted to model input. All actions traverse actual Cookie/RPC/SSE.
 test(
-	"Pocket collaboration browser: attributed human work, driver handoff and scoped mobile live updates",
+	"WebUI collaboration browser: attributed human work, driver handoff and scoped mobile live updates",
 	{ timeout: 45000 },
 	async () => {
 		const m = await runtimeFixture({}, undefined, () => ({ text: "EXPLICIT-AGENT-ANSWER" }));

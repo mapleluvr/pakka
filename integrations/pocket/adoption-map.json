@@ -186,7 +186,7 @@
 			"owner": "replace with Pakka-owned Conversation search/restore; no old storage import/discovery",
 			"scope": "authorized Pakka data directory and current person's resources",
 			"modelEffect": "read/normal reopen only, no automatic inference",
-			"acceptance": "P2/P5: search and reopen owned history; no scan of Pi CLI directories, old Pocket database or user credentials; old imports are outside the confirmed no-data-migration scope"
+			"acceptance": "P2/P5: search and reopen owned history; no scan of Pi CLI directories, old WebUI database or user credentials; old imports are outside the confirmed no-data-migration scope"
 		}
 	]
 }

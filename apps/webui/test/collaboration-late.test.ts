@@ -9,7 +9,7 @@ import { conversationAction } from "./frontend-controls.ts";
 // Only response delivery is delayed: the real authorized HTTP request completes. A closure capturing
 // an earlier resource must not reopen its sheet or publish its contents into the newly selected view.
 test(
-	"Pocket collaboration: a real late read cannot reopen or populate another Conversation",
+	"WebUI collaboration: a real late read cannot reopen or populate another Conversation",
 	{ timeout: 20000 },
 	async () => {
 		const m = await runtimeFixture();

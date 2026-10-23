@@ -8,7 +8,7 @@ import { workspaceSchedulesExtensionRoot, workspaceSchedulesService } from "../s
 import { ownedBrowser } from "./browser.ts";
 
 test(
-	"Pocket schedule panel recovery: losing an admitted response survives interface replacement and read-only reconciliation never schedules twice",
+	"WebUI schedule panel recovery: losing an admitted response survives interface replacement and read-only reconciliation never schedules twice",
 	{ timeout: 25000 },
 	async (t) => {
 		const m = await runtimeFixture();

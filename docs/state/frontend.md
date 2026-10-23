@@ -4,11 +4,11 @@
 
 ## 基座与真实状态
 
-Pakka-Pocket 以 [Devin 参考](https://github.com/mapleluvr/devin-ui-comparison/tree/ed20cec0aef82daa22aa50da19597b7ba1607e02/clean-room/current)的页面结构、尺寸、留白、层级和交互为主体，把 Pakka 的 API、权限与真实状态绑定到事件和状态中。适配限于必要的产品字符串、元素和真实能力接入。
+pakka-webui 的对应原生界面行为以 [Devin 离线生产前端](https://github.com/mapleluvr/devin-ui-comparison/tree/ed20cec0aef82daa22aa50da19597b7ba1607e02/reference-dump)为绝对参考，页面操作及其适用条件由生产代码、真实 DOM 和相应运行证据确定。[视觉基座](https://github.com/mapleluvr/devin-ui-comparison/tree/ed20cec0aef82daa22aa50da19597b7ba1607e02/clean-room/current)提供页面结构、尺寸、留白和层级输入；Pakka 的 API、权限与真实状态绑定到对应事件和状态中。排版与交互质量采用[前端开发规范](../development/FRONTEND-GUIDELINES.md)及所保存的 Atlassian、Vercel 指南。
 
 - shell 使用参考 app-shell、300px sidebar、primary navigation、Sessions、footer、hero/composer、conversation、menus/palette 和 settings-view。
 - `apps/webui/web/reference.css` 保持参考 commit 的 Git blob 字节，UTF-8 LF，SHA-256 为 `084adce8bc6e1feab314b301f57ddac0bab5081cfa08d1c911addece9bdb9974`。
-- 生产页的布局样式由参考基座及独立的产品附加样式组成。认证、原生工具结果和专属字段的附加样式作用于对应内容；shell/hero/导航/菜单的几何以固定参考 CSS 为准。
+- 生产页的布局样式由参考基座及独立的产品附加样式组成。默认 shell/hero/导航/菜单几何取固定参考 CSS；产品附加样式承接认证、原生工具结果、专属字段、用户字体偏好、浏览器字号缩放与触控可访问性。
 - 身份、会话、模型、目录、消息和状态来自实际授权响应。
 - 页面切换、查看和筛选处理本地呈现与授权读取；模型输入由明确的发送动作提交。各页面操作使用同一资源与原请求身份、权限校验、native 调度和 unknown 核对契约。
 
@@ -26,7 +26,9 @@ Pakka-Pocket 以 [Devin 参考](https://github.com/mapleluvr/devin-ui-comparison
 | cwd                | 入口为 Conversation 标题下的当前路径；选择器限定批准目录，仅 Use this directory 明确应用所选目录 |
 | Send caret         | 工作输入使用原生 Prompt/Steer/Follow up 调度；Team chat 使用独立的人类协作通道                   |
 | Palette            | 会话搜索、命令、主题和导航共用参考层级，保留键盘与焦点行为                                       |
-| Settings           | Appearance、配置、凭据、人员、通知、扩展使用独立页面与分组卡片                                   |
+| Settings           | 左下角按钮单击进入独立配置页，默认 Appearance；页内分类导航连接配置、凭据、人员、通知和扩展      |
+
+设置页的 Conversation 分类在选中会话后可用，人员管理入口按管理员权限呈现。手机分类栏支持横向滚动。Back to app 返回原页面并保留会话和未发送草稿。详细场景及命名契约见[设置与命名 delta](../../openspec/changes/correct-webui-settings-and-name/specs/devin-frontend/spec.md)，采用记录见[变更摘要](../changes/webui-settings-and-name.md)。
 
 模型/cwd 持久化、批准 roots、incarnation 和配置拒绝的详细条件由[开发契约](../development/WEBUI-DEVELOPMENT.md#独立选择模型和-conversation-工作目录)维护。
 
@@ -52,6 +54,8 @@ Team 的动态 `board.css` 节点在加载、成功和失败之间保持同一�
 - 图标使用 SVG paths 与公共 Icon。常用图标清楚可见于 24px；独立图标控件有至少 44×44px 点击区域与可访问名称。
 - 控件支持键盘操作与可见焦点；模态管理 focus trap/return，支持 Escape/Back 及关闭后焦点返回。导航交接后，关闭与清理只作用于所属弹层实例。
 - unknown/pending 操作保留原身份及交互锁；重开后以原 request ID 进行只读核对。
+
+配置页按页面标题、分区标题、控件正文和说明维护相对文字角色，随字体偏好及浏览器基准字号缩放。手机配置控件的触达高度至少为 44px，手机文字输入至少为 16px，并保留更大的阅读偏好。composer 的键盘焦点由输入框或所属输入分组给出可见指示。采用关系和后续差距见[指南变更](../changes/webui-frontend-guidelines.md)及其任务。
 
 ## 可检验条件
 

@@ -5,8 +5,8 @@
 ## 保留内容
 
 - [M1](acceptance/MIGRATION-M1-ACCEPTANCE.md)、[M2](acceptance/MIGRATION-M2-ACCEPTANCE.md)、[M3](acceptance/MIGRATION-M3-ACCEPTANCE.md)、[M4](acceptance/MIGRATION-M4-ACCEPTANCE.md)、[M5](acceptance/MIGRATION-M5-ACCEPTANCE.md)、[M6](acceptance/MIGRATION-M6-ACCEPTANCE.md) 固定阶段验收。
-- WebUI [P0](webui/PAKKA-POCKET-P0.md)、[P1](webui/PAKKA-POCKET-P1.md)、[P2](webui/PAKKA-POCKET-P2.md)、[P3](webui/PAKKA-POCKET-P3.md)、[P4](webui/PAKKA-POCKET-P4.md)、[P5](webui/PAKKA-POCKET-P5.md) 的版本快照。
-- [累计验证](verification/VERIFICATION.md)和 [Linux 逐轮记录](verification/PAKKA-POCKET-LINUX.md)。
+- WebUI [P0](webui/PAKKA-WEBUI-P0.md)、[P1](webui/PAKKA-WEBUI-P1.md)、[P2](webui/PAKKA-WEBUI-P2.md)、[P3](webui/PAKKA-WEBUI-P3.md)、[P4](webui/PAKKA-WEBUI-P4.md)、[P5](webui/PAKKA-WEBUI-P5.md) 的版本快照。
+- [累计验证](verification/VERIFICATION.md)和 [Linux 逐轮记录](verification/PAKKA-WEBUI-LINUX.md)。
 - Dynamite [迁移调查](investigations/MIGRATING-DYNAMITE.md)、[失败配对/延期条件](investigations/DEFERRED-DYNAMITE-COMPATIBILITY.md)；后来有界支持另见[配对验收](../verification/DYNAMITE-PRODUCT-ACCEPTANCE.md)。
 
 ## 已外置与必要兼容入口

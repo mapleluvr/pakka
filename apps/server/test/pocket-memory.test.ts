@@ -44,7 +44,7 @@ async function memoryFixture() {
 
 // Auto-approving a sender, leaking another project, or treating UI installation as an Agent source must fail real HTTP assertions.
 test(
-	"Pocket memory: approved lessons affect actual profile/project context while sender proposals remain private and inactive",
+	"WebUI memory: approved lessons affect actual profile/project context while sender proposals remain private and inactive",
 	{ timeout: 15000 },
 	async () => {
 		const f = await memoryFixture();
@@ -99,7 +99,7 @@ test(
 );
 
 test(
-	"Pocket memory versions: stale edits preserve the winner, unapproved replacement preserves current context, and original requests never apply twice",
+	"WebUI memory versions: stale edits preserve the winner, unapproved replacement preserves current context, and original requests never apply twice",
 	{ timeout: 15000 },
 	async () => {
 		const f = await memoryFixture();
@@ -164,7 +164,7 @@ test(
 );
 
 test(
-	"Pocket memory recovery: disabled injection preserves lessons and the original mutation across normal writer reopen without resetting spent quota",
+	"WebUI memory recovery: disabled injection preserves lessons and the original mutation across normal writer reopen without resetting spent quota",
 	{ timeout: 15000 },
 	async () => {
 		const f = await memoryFixture();

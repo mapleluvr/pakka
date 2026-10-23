@@ -13,7 +13,7 @@ const record = {
 	text: "DISPLAY-PRIVATE-CANARY",
 };
 
-test("Pocket read: revocation during native watch cleanup prevents publishing the acquired snapshot", async () => {
+test("WebUI read: revocation during native watch cleanup prevents publishing the acquired snapshot", async () => {
 	const m = await runtimeFixture();
 	try {
 		const ref = m.runtime.view().conversations[0]!;
@@ -36,7 +36,7 @@ test("Pocket read: revocation during native watch cleanup prevents publishing th
 	}
 });
 
-test("Pocket display: concurrent retry has one committed entry; actor and namespace are independent", async () => {
+test("WebUI display: concurrent retry has one committed entry; actor and namespace are independent", async () => {
 	const m = await runtimeFixture();
 	try {
 		const ref = m.runtime.view().conversations[0]!;
@@ -55,7 +55,7 @@ test("Pocket display: concurrent retry has one committed entry; actor and namesp
 	}
 });
 
-test("Pocket display: chat/card writes during a real native tool do not join or replace the run's inputs", async () => {
+test("WebUI display: chat/card writes during a real native tool do not join or replace the run's inputs", async () => {
 	const entered = deferred(),
 		release = deferred();
 	const m = await runtimeFixture(
@@ -99,7 +99,7 @@ test("Pocket display: chat/card writes during a real native tool do not join or 
 	}
 });
 
-test("Pocket display: invalid shapes, oversized records and expired scope are rejected without commits", async () => {
+test("WebUI display: invalid shapes, oversized records and expired scope are rejected without commits", async () => {
 	const m = await runtimeFixture();
 	try {
 		const ref = m.runtime.view().conversations[0]!;

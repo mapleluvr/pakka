@@ -1,4 +1,4 @@
-// Pakka-Pocket workbench. Adapted from pi-pocket's app/composer/transcript patterns; authority is the public Pocket client.
+// pakka-webui workbench. Adapted from pi-pocket's app/composer/transcript patterns; authority is the public WebUI client.
 import { render } from "preact";
 import { useEffect, useLayoutEffect, useRef, useState } from "preact/hooks";
 import htm from "htm";
@@ -23,7 +23,7 @@ import { ConversationSettings } from "./navigation.js";
 import { Appearance, readAppearance, applyAppearance } from "./appearance.js";
 import { Frontend, Glyph } from "./frontend.js";
 import { NativeComposer } from "./native-composer.js";
-import { SettingsPage } from "./settings-page.js";
+import { SettingsNavigation, SettingsPage } from "./settings-page.js";
 
 const html = htm.bind(h);
 const csrf = () => /(?:^|; )pakka_csrf=([A-Za-z0-9_-]{43})(?:;|$)/.exec(document.cookie)?.[1] ?? null;
@@ -127,7 +127,7 @@ function App() {
 		[mode, setMode] = useState("prompt");
 	const [notice, notify] = useState(""),
 		[working, setWorking] = useState(false),
-		[sheet, openSheet] = useState(null),
+		[sheet, setSheet] = useState(null),
 		[people, setPeople] = useState(null),
 		[link, setLink] = useState(""),
 		[qr, setQr] = useState(""),
@@ -141,6 +141,11 @@ function App() {
 		[creationAttempt, setCreationAttempt] = useState(null),
 		[newName, setNewName] = useState("");
 	const creationCommand = useRef(null);
+	const settingsIntent = useRef(null);
+	function openSheet(page) {
+		settingsIntent.current = {};
+		setSheet(page);
+	}
 	const drawerToggle = useRef(null);
 	const dismissDrawer = () => {
 		setDrawer(false);
@@ -435,8 +440,13 @@ function App() {
 		openSheet(null);
 	}
 	async function showPeople() {
+		const binding = resourceContext.current;
+		const intent = {};
+		settingsIntent.current = intent;
 		await run(async () => {
 			const result = await client.request({ op: "people" });
+			if (!mounted.current || resourceContext.current !== binding || settingsIntent.current !== intent)
+				return;
 			setPeople(result);
 			setLink("");
 			setQr("");
@@ -586,7 +596,7 @@ function App() {
 		return html`<main class="pocket-signin">
 			<section class="signin">
 				<div class="pocket-brand">P</div>
-				<h1>Pakka-Pocket</h1>
+				<h1>pakka-webui</h1>
 				<p>A shared workbench for your agents.</p>
 				<form onSubmit=${signIn}>
 					<label
@@ -612,7 +622,60 @@ function App() {
 				${notice && html`<p role="alert">${notice}</p>`}
 			</section>
 		</main>`;
-	return html`<${Frontend}
+	const settingsRoute = (route) => {
+		extensions.closeSettings();
+		openSheet(route);
+	};
+	const settingsPages = [
+		{
+			id: "appearance",
+			title: "Appearance",
+			category: "Personal",
+			icon: "system",
+			open: () => settingsRoute("appearance"),
+		},
+		{
+			id: "configuration",
+			title: "Conversation settings",
+			category: "Conversation",
+			icon: "settings",
+			disabled: !selected,
+			open: () => settingsRoute("configuration"),
+		},
+		{
+			id: "notifications",
+			title: "Notifications",
+			category: "Conversation",
+			icon: "bell",
+			disabled: !selected,
+			open: () => settingsRoute("notifications"),
+		},
+		...(person.role === "admin"
+			? [
+					{
+						id: "people",
+						title: "People & invitations",
+						category: "Workspace",
+						icon: "user",
+						open: () => {
+							extensions.closeSettings();
+							void showPeople();
+						},
+					},
+				]
+			: []),
+		{
+			id: "extensions",
+			title: "Extensions",
+			category: "Workspace",
+			icon: "commands",
+			open: () => {
+				openSheet(null);
+				extensions.openSettings();
+			},
+		},
+	];
+	return html`<${SettingsNavigation.Provider} value=${settingsPages}><${Frontend}
 		person=${person} refs=${refs} titles=${titles} states=${states} selected=${selected} view=${view} extensions=${extensions}
 		drawer=${drawer} collapsed=${collapsed} drawerToggle=${drawerToggle} dismissDrawer=${dismissDrawer}
 		home=${home} choose=${(ref) => {
@@ -911,7 +974,7 @@ function App() {
 				</div>
 		</${SettingsPage}>`
 		}
-	</${Frontend}>`;
+	</${Frontend}></${SettingsNavigation.Provider}>`;
 }
 const root = document.getElementById("app");
 root.replaceChildren();

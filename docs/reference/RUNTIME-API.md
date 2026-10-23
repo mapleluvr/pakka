@@ -39,13 +39,13 @@ try {
 
 bootstrap 必须给出三项正的有限整数配额。额外 profile 接受允许的 `id`、instructions、配置的工具，以及可选的 `model` ID。省略 `model` 时沿用 HostOptions；显式值必须为 1–256 个 UTF-16 code units，不含控制字符或首尾空白。模型仍使用该 Runtime 固定的 provider、endpoint、宿主批准的凭据来源和主调用参数，profile 不能改写 credentials、cwd、storage path 或原始 extensions。创建相同 key/profile 返回已有 resource；同 key 的不同 profile 被拒绝。
 
-例如 `{ id: "reviewer", model: "approved-review-model", systemPrompt: "Review the requested work." }` 在启动时注册该确切模型 ID。通过受控 catalog 的配置操作切换 profile 时，model、instructions 和 tools 在同一 native commit 更新；原 incarnation 作废，下一次实际 provider 请求采用新模型。人类只能选其 profile ceiling 内的配置；重开校验模型所属的 profile identity，并保留已消费额度。对应的设置界面与私密配置 replace/clear 已通过实际产品、provider 和仓库外安装门禁，见 [P5 阶段记录](../archive/webui/PAKKA-POCKET-P5.md)；通知与其余可选界面继续实施。
+例如 `{ id: "reviewer", model: "approved-review-model", systemPrompt: "Review the requested work." }` 在启动时注册该确切模型 ID。通过受控 catalog 的配置操作切换 profile 时，model、instructions 和 tools 在同一 native commit 更新；原 incarnation 作废，下一次实际 provider 请求采用新模型。人类只能选其 profile ceiling 内的配置；重开校验模型所属的 profile identity，并保留已消费额度。对应的设置界面与私密配置 replace/clear 已通过实际产品、provider 和仓库外安装门禁，见 [P5 阶段记录](../archive/webui/PAKKA-WEBUI-P5.md)；通知与其余可选界面继续实施。
 
 ### 主模型凭据来源
 
 `HostOptions.resolveApiKey?: () => string | Promise<string>` 是可选、仅由受信任宿主提供的主模型凭据来源。不传时继续使用显式 `apiKey`；传入时，每次原生主请求解析凭据都会调用它，resolver 拒绝或返回非法值时失败封闭，不回退、发现环境凭据或发出 provider HTTP。对外只保留通用错误，原异常中的私密文本不进入原生输出。这是 adapter 对公开 auth callback 的配置，不修改 Durable，也不序列化到 browser/worker 配置。辅助 inference 的既有独立配置不受它隐式改写。
 
-Pakka-Pocket 保留宿主已有 resolver 作为初始来源，仅全局管理员的专用 replace/clear 操作建立覆盖；clear 后正常重开仍不回退原值。已解析凭据或已开始的请求不会被 retroactive 撤销，已准备的调用不因凭据失败退还额度。服务端私密存储和备份必须按凭据数据保护：清除当前来源不承诺物理擦除持久历史或加密。
+pakka-webui 保留宿主已有 resolver 作为初始来源，仅全局管理员的专用 replace/clear 操作建立覆盖；clear 后正常重开仍不回退原值。已解析凭据或已开始的请求不会被 retroactive 撤销，已准备的调用不因凭据失败退还额度。服务端私密存储和备份必须按凭据数据保护：清除当前来源不承诺物理擦除持久历史或加密。
 
 `runtime.profileChoices()` 只向受信任宿主返回冻结的 `{ id, model }[]`，不包含 instructions、工具代码或密钥。人类 API 在它之上按当前 profile ceiling 过滤；该列表本身不是授予配置权限。
 
@@ -57,7 +57,7 @@ Pakka-Pocket 保留宿主已有 resolver 作为初始来源，仅全局管理员
 
 这些文本只装入当前主请求的临时 system sections，不改写 raw Conversation history，也不成为永久重放的 instructions。历史中的用户内容或真实工具结果仍保留原始含义。调用方不会取得 Pi Harness、Conversation、Tx、provider 凭据或可伪造的原生 scope。通过原有公开准备 callback 保留既有的权限、projection、receipt 与配额检查。
 
-可选 memory 的真实消费见 [`consumer-pocket-memory.mjs`](../../scripts/consumer-pocket-memory.mjs)：`createPocketMemory()` 分别提供 `.tools`、`.source` 和 `.attach()`；宿主在 Runtime 里显式选择前两者，并在首次工作前绑定受控服务。只安装 Backend/Client/WebUI 不会自动安装工具或来源。项目范围、人类审批与恢复语义见 [P5 阶段记录](../archive/webui/PAKKA-POCKET-P5.md)。
+可选 memory 的真实消费见 [`consumer-pocket-memory.mjs`](../../scripts/consumer-pocket-memory.mjs)：`createPocketMemory()` 分别提供 `.tools`、`.source` 和 `.attach()`；宿主在 Runtime 里显式选择前两者，并在首次工作前绑定受控服务。只安装 Backend/Client/WebUI 不会自动安装工具或来源。项目范围、人类审批与恢复语义见 [P5 阶段记录](../archive/webui/PAKKA-WEBUI-P5.md)。
 
 ## 身份、作用域与 journal
 
@@ -97,7 +97,7 @@ M1 提供 `migrateLegacy: { expectedSessionId, expectedConversationId }` 的显�
 
 `reservedSessionId` 是受信任 bootstrap 选择的 lowercase UUID storage/provenance 地址，不是 provider identity。它具有 create-once 语义；已存在目录不会被覆盖。重开必须明确指定同一 owned storage 的 `reopenSessionFile`，且 provenance、runtime 配置与 reservation 均匹配。worker manager 使用这条接口恢复固定 placement；未知初始化和遗留 writer claim 不允许分配替代目录或自动抢占。
 
-## Pocket P0 读取与显示端口（开发快照）
+## WebUI P0 读取与显示端口（开发快照）
 
 受信任 bootstrap 可以用 `runtime.readConversation(ref, check)` 取得冻结的 `ConversationSnapshot`：已提交消息、display records、live tools 和 usage。只投影当前引用的 Conversation，不返回原生 handles、system/config/provider identity 等内部字段。读取不启动工作或提交存储；异步 native watch 清理后还会重验 `check`，才发布结果。当前为有限 tail（最多 256 entries、JSON envelope 2 MiB），`truncated` 不等于完整历史；P1 将补充分页与人类资源服务。
 
@@ -105,11 +105,11 @@ M1 提供 `migrateLegacy: { expectedSessionId, expectedConversationId }` 的显�
 
 `check` 是宿主提供的同步检查，**拒绝时必须 throw**，不是浏览器传来的 grant 或返回 boolean 的 policy。两项命令都不是远端 API，不能直接交给模型或 Web 客户端。usage 的 token 值可展示，未提供权威价格时 `cost` 保持 `null`，不能把默认零价格说成免费。
 
-阶段证明见 [P0 记录](../archive/webui/PAKKA-POCKET-P0.md)；这不是 `@pakka/webui` 产品交付或通用后台 job 已完成的声明。已接受的可选 Dynamite [固定产品配对](../verification/DYNAMITE-PRODUCT-ACCEPTANCE.md) 仍以原 tarball SHA 为准，不自动覆盖新的开发快照；[历史失败配对](../archive/investigations/DEFERRED-DYNAMITE-COMPATIBILITY.md) 继续保留。
+阶段证明见 [P0 记录](../archive/webui/PAKKA-WEBUI-P0.md)；这不是 `@pakka/webui` 产品交付或通用后台 job 已完成的声明。已接受的可选 Dynamite [固定产品配对](../verification/DYNAMITE-PRODUCT-ACCEPTANCE.md) 仍以原 tarball SHA 为准，不自动覆盖新的开发快照；[历史失败配对](../archive/investigations/DEFERRED-DYNAMITE-COMPATIBILITY.md) 继续保留。
 
 ## 受控后台 job 与 checkpoint（P1 / P5 开发快照）
 
-宿主在 `RuntimeOptions.jobs` 中批准有名称和版本的程序，再经 `runtime.jobs({ namespace, maxJobs, maxBytes })` 绑定当前人类/资源校验。浏览器不能提交可执行程序或恢复任意模块；收到的是冻结 job receipt，不是 native task。见 [P1 服务记录](../archive/webui/PAKKA-POCKET-P1.md) 与 [P5 实际消费者](../archive/webui/PAKKA-POCKET-P5.md)。
+宿主在 `RuntimeOptions.jobs` 中批准有名称和版本的程序，再经 `runtime.jobs({ namespace, maxJobs, maxBytes })` 绑定当前人类/资源校验。浏览器不能提交可执行程序或恢复任意模块；收到的是冻结 job receipt，不是 native task。见 [P1 服务记录](../archive/webui/PAKKA-WEBUI-P1.md) 与 [P5 实际消费者](../archive/webui/PAKKA-WEBUI-P5.md)。
 
 `RuntimeJobContext.advance(data)` 必须提交真正改变的 JSON checkpoint；对象键重排、重新分配相同对象、JSON 中等价的正负零都不算进展。适配器在排入新的 queued 状态前拒绝无进展数据；未由受信任程序处理的失败保存为 `unknown`，不留下 native 已 faulted、公开记录却仍声称可继续等待的新增任务。该保护不迁移历史 faulted job 的状态。
 

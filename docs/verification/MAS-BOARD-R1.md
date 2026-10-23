@@ -10,7 +10,7 @@
 - 交流记录有界分页，支持两端、成员、模式、发起方式、状态和正文筛选。先过滤双端 read 权限，再搜索与分页，并在异步返回前复核。
 - 通用宿主 Conversation 来源接口让插件成员使用完整对话界面；输入、独立模型／cwd、读取和管理继续执行既有权限，返回 Board 保留个人选择。
 - 未决成员操作可在关闭、重开面板后按原请求核对；进一步输入维持锁定，核对不重发工作。
-- 原生 assistant 错误以有界 `errorMessage` 穿过 Pocket 协议，并在完整 Conversation 中显示。读取或重开错误历史不会重发工作、重置额度或退回已清除的启动凭据。
+- 原生 assistant 错误以有界 `errorMessage` 穿过 WebUI 协议，并在完整 Conversation 中显示。读取或重开错误历史不会重发工作、重置额度或退回已清除的启动凭据。
 
 ## 回归及修订证据
 
@@ -36,7 +36,7 @@
 
 r1 安装候选的源码身份为 `d71dc328836b864d550a439560f76a0b0fe5f9342b4ea9056c4b22a6575052d8`，含 533 个源码文件、八个归档；12,649 个安装文件与包内容匹配。身份前置检查及反例通过，但完整安装消费者 **FAIL**：清除私密 provider 凭据后产生的错误历史在第二次正常重开时让 Conversation 停在 Connecting。
 
-原生 Runtime 能读取历史；新投影的 `errorMessage` 却未被 Pocket assistant 消息的有限解码器接受，SSE 在首条快照编码时结束。原安装包在两个干净数据目录中复现，保留请求／SSE 元数据、原生读取及编码失败证据。诊断详见 `r1/reopen-diagnosis/REPORT.md`。原失败目录为 `/tmp/pakka-packed-consumer-hOV3C3`；未沿用可能指向旧成功运行的 `consumer-path.txt`。
+原生 Runtime 能读取历史；新投影的 `errorMessage` 却未被 WebUI assistant 消息的有限解码器接受，SSE 在首条快照编码时结束。原安装包在两个干净数据目录中复现，保留请求／SSE 元数据、原生读取及编码失败证据。诊断详见 `r1/reopen-diagnosis/REPORT.md`。原失败目录为 `/tmp/pakka-packed-consumer-hOV3C3`；未沿用可能指向旧成功运行的 `consumer-path.txt`。
 
 协议及浏览器红测试分别复现后，修复有限 DTO 并显示原文原因。`r1/reopen-diagnosis/targeted-green.log` 记录 **12/12** 定向通过；这不替代 r2 的全量和完整安装门禁。
 
@@ -46,7 +46,7 @@ r2 修复后的全量 `full.log` 为 **536/536**，零失败／跳过／取消�
 
 `r2/complete-gate-identity.json` 记录源码身份 `1b52f45056c59ed6e2db43aed3c731a8abf2fefe40b98b603434049faf06838d`、534 个源码文件、八个实际运行归档及 12,649 个安装文件的逐字节核对。归档、实际 lock、逐文件清单和各消费者原日志均单独保留。
 
-交付身份前置检查比较实际源码清单、八个归档、lock 与安装内容，并验证遗漏源码、遗漏包、损坏包和篡改身份会阻止后续命令。完整消费者使用安装后的 `.bin/pakka-pocket` 与公开资源；固定源码、实际使用归档、lock 和逐文件比对随该候选保存。
+交付身份前置检查比较实际源码清单、八个归档、lock 与安装内容，并验证遗漏源码、遗漏包、损坏包和篡改身份会阻止后续命令。完整消费者使用安装后的 `.bin/pakka-webui` 与公开资源；固定源码、实际使用归档、lock 和逐文件比对随该候选保存。
 
 ### r3：实时活动与拦截生命周期修订
 
@@ -77,7 +77,7 @@ r4 的身份核对 **PASS**，完整安装门禁 **FAIL**。`r4/failed-gate-iden
 r5 最终候选的工程及交付门禁 **PASS**，结果记录在 `pakka-evidence/mas-board/r5/`：
 
 - `full.log`／`full.exit`：**539/539**，零失败、跳过、取消或 TODO；类型、全仓构建、代码及文档格式、链接和本次 OpenSpec 严格校验通过。
-- `package-gate.log`／`package-gate.exit`：完整仓库外安装门禁通过，包括实际 `.bin/pakka-pocket`、Board 关系与日志、受限手机读者、Conversation 往返、错误历史重开、通知、定时输入、Memory、Hook 和原生输入核对。
+- `package-gate.log`／`package-gate.exit`：完整仓库外安装门禁通过，包括实际 `.bin/pakka-webui`、Board 关系与日志、受限手机读者、Conversation 往返、错误历史重开、通知、定时输入、Memory、Hook 和原生输入核对。
 - `complete-gate-identity.json`／`verify-complete-gate.exit`：535 个源码文件、八个实际运行归档、两份实际 lock 与 **12,649** 个安装文件逐字节匹配。实际消费者为 `/tmp/pakka-packed-consumer-UaddlV`，其归档、lock、逐文件清单和原始消费者日志均已保留。
 - `clean-ci.json`／`clean-ci.exit`：独立干净 `npm ci` 通过，lock 未改变，12,649 个文件再次与冻结归档匹配。
 - `driver-only-continuity.json`：r4→r5 只变更三份测试驱动及两份状态文档；产品源码与八个冻结归档相同。

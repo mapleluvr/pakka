@@ -1,6 +1,6 @@
-# Pakka-Pocket Webhooks
+# pakka-webui Webhooks
 
-Webhook 是可选的普通 Backend/Client/WebUI 贡献。人类在明确的 Conversation 中创建入口，外部 POST 通过签名或专用 URL secret 验证后，再以创建人的当前权限进入原生 `followUp`。安装界面、创建和轮换均不会触发模型。阶段证据见 [P5 记录](../archive/webui/PAKKA-POCKET-P5.md)。
+Webhook 是可选的普通 Backend/Client/WebUI 贡献。人类在明确的 Conversation 中创建入口，外部 POST 通过签名或专用 URL secret 验证后，再以创建人的当前权限进入原生 `followUp`。安装界面、创建和轮换均不会触发模型。阶段证据见 [P5 记录](../archive/webui/PAKKA-WEBUI-P5.md)。
 
 ## 宿主组装
 

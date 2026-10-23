@@ -6,7 +6,7 @@ import { createPocketHttp } from "../src/http.ts";
 import { ownedBrowser } from "./browser.ts";
 
 // Hashing raw checkout bytes rather than HTML-parsed newlines blocks imports on Windows.
-test("Pocket CSP: import maps execute with LF, CRLF and CR source newlines", { timeout: 30000 }, async () => {
+test("WebUI CSP: import maps execute with LF, CRLF and CR source newlines", { timeout: 30000 }, async () => {
 	const m = await fixture();
 	let browser: Awaited<ReturnType<typeof ownedBrowser>> | undefined;
 	try {

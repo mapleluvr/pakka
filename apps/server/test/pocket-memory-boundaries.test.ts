@@ -29,7 +29,7 @@ async function fixture(extra: Partial<RuntimeOptions> = {}) {
 
 for (const field of ["state", "scope"] as const) {
 	test(
-		"Pocket memory corruption: an array-coerced " + field + " cannot become a trusted restored mutation",
+		"WebUI memory corruption: an array-coerced " + field + " cannot become a trusted restored mutation",
 		{ timeout: 10000 },
 		async () => {
 			const f = await fixture();
@@ -64,7 +64,7 @@ for (const field of ["state", "scope"] as const) {
 }
 
 test(
-	"Pocket memory shared namespace: a second approved binding cannot leave the first source's dispatch check stale",
+	"WebUI memory shared namespace: a second approved binding cannot leave the first source's dispatch check stale",
 	{ timeout: 10000 },
 	async (t) => {
 		const release = deferred();
@@ -103,7 +103,7 @@ test(
 );
 
 test(
-	"Pocket memory effect boundary: revocation while the real CAS is waiting prevents a new lesson",
+	"WebUI memory effect boundary: revocation while the real CAS is waiting prevents a new lesson",
 	{ timeout: 10000 },
 	async (t) => {
 		const f = await fixture(),
@@ -159,7 +159,7 @@ test(
 );
 
 test(
-	"Pocket memory confirmation: losing the real committed CAS result resolves the exact saved request without applying it again",
+	"WebUI memory confirmation: losing the real committed CAS result resolves the exact saved request without applying it again",
 	{ timeout: 10000 },
 	async () => {
 		const f = await fixture(),
