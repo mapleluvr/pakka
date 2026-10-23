@@ -1,0 +1,1 @@
+{"format":1,"type":"record","seq":8,"ordinal":3,"payload":{"type":"document","id":4,"content":{"version":1,"kind":"base","value":{"models":{"local140/local-model":{"input":0,"output":0,"cacheRead":0,"cacheWrite":0,"totalTokens":0,"cost":{"input":0,"output":0,"cacheRead":0,"cacheWrite":0,"total":0}}},"tools":{}}}}}

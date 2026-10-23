@@ -1,0 +1,11 @@
+{
+  "name": "pakka-compressor-native-140-feasibility",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@earendil-works/pi-durable": "file:../../../packages/agent/vendor/earendil-works-pi-durable-1.4.0-pakka.1.tgz",
+    "@earendil-works/pi-ai": "1.4.0",
+    "@earendil-works/chord": "1.4.0",
+    "@earendil-works/pi-telemetry": "1.4.0"
+  }
+}

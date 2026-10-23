@@ -1,0 +1,16 @@
+import { mkdtempSync, realpathSync, mkdirSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { spawnSync } from 'node:child_process';
+import { randomUUID } from 'node:crypto';
+const project=fileURLToPath(new URL('.',import.meta.url));
+const root=resolve(project,'../../..');
+const base=join(root,'artifacts/compressor-session/native-1.4');
+const output=join(base,'run-'+randomUUID());mkdirSync(output,{recursive:true});writeFileSync(join(base,'latest-run.txt'),output);console.log('OUTPUT='+output);
+const temp=realpathSync.native(tmpdir());const profile=mkdtempSync(join(temp,'pakka-compressor-140-'));
+const env=Object.fromEntries(['PATH','PATHEXT','SystemRoot','WINDIR','COMSPEC'].filter(k=>process.env[k]).map(k=>[k,process.env[k]]));
+Object.assign(env,{HOME:profile,USERPROFILE:profile,PI_CODING_AGENT_DIR:profile,PI_OFFLINE:'1',DO_NOT_TRACK:'1',NO_COLOR:'1',TEMP:temp,TMP:temp,COMPRESSOR_140_OUTPUT:output});
+const result=spawnSync(process.execPath,['--test','--test-concurrency=1','--test-timeout=18000',join(project,'probe.mjs')],{cwd:project,env,encoding:'utf8',timeout:120000});
+writeFileSync(join(output,'probe.log'),(result.stdout??'')+(result.stderr??'')+'\nexit='+result.status+',signal='+result.signal+'\n');
+process.stdout.write(result.stdout??'');process.stderr.write(result.stderr??'');if(result.error)console.error(result.error);process.exitCode=result.status??1;

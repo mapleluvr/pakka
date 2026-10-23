@@ -1,0 +1,18 @@
+{
+  "pi-durable": {
+    "version": "1.4.0-pakka.1",
+    "entry": "D:\\Projects\\pakka\\docs\\.temp\\compressor-native-1.4\\node_modules\\@earendil-works\\pi-durable\\dist\\index.js"
+  },
+  "pi-ai": {
+    "version": "1.4.0",
+    "entry": "D:\\Projects\\pakka\\docs\\.temp\\compressor-native-1.4\\node_modules\\@earendil-works\\pi-ai\\dist\\index.js"
+  },
+  "chord": {
+    "version": "1.4.0",
+    "entry": "D:\\Projects\\pakka\\docs\\.temp\\compressor-native-1.4\\node_modules\\@earendil-works\\chord\\dist\\index.js"
+  },
+  "pi-telemetry": {
+    "version": "1.4.0",
+    "entry": "D:\\Projects\\pakka\\docs\\.temp\\compressor-native-1.4\\node_modules\\@earendil-works\\pi-telemetry\\dist\\index.js"
+  }
+}

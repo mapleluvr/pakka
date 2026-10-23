@@ -1,0 +1,271 @@
+{
+  "baseline": {
+    "durable": "1.4.0-pakka.1",
+    "ai": "1.4.0",
+    "chord": "1.4.0",
+    "telemetry": "1.4.0",
+    "archiveSha256": "7fd9f3310dfa003a9077139a25faf93567922a065461fa3767dd5a1066efa891"
+  },
+  "run": "artifacts/compressor-session/native-1.4/run-0e515544-afa9-4739-b102-662d9145ffb0",
+  "tests": 18,
+  "pass": 18,
+  "fail": 0,
+  "httpRequests": 51,
+  "nativeReports": 0,
+  "serverErrors": 0,
+  "cases": [
+    {
+      "name": "coercion",
+      "http": 2,
+      "status": "accepted",
+      "toolErrors": 1,
+      "unresolvedErrors": 0,
+      "queuedRepairs": 0,
+      "executed": 1,
+      "lastError": {
+        "kind": "toolErrors",
+        "reason": "[{\"type\":\"text\",\"text\":\"<harness>\\n[error] Tool call blocked: Incomplete or normalized raw JSON. REWRITE ENTIRE submit_compaction with summary (P1), graphs and annotations (P2/P3), clues (P4), and unresolved. Do not return a partial patch.\\n</harness>\"}]",
+        "key": "tool:14"
+      }
+    },
+    {
+      "name": "continue-without-input",
+      "http": 1,
+      "status": "running",
+      "toolErrors": 0,
+      "unresolvedErrors": 1,
+      "queuedRepairs": 0,
+      "executed": 0,
+      "lastError": {
+        "kind": "unresolvedErrors",
+        "reason": "400: {\"message\":\"provider-failure-1\"}",
+        "key": "provider:10"
+      }
+    },
+    {
+      "name": "duplicate-calls",
+      "http": 2,
+      "status": "accepted",
+      "toolErrors": 2,
+      "unresolvedErrors": 0,
+      "queuedRepairs": 0,
+      "executed": 1,
+      "lastError": {
+        "kind": "toolErrors",
+        "reason": "[{\"type\":\"text\",\"text\":\"<harness>\\n[error] Tool call blocked: Expected exactly one output call. REWRITE ENTIRE submit_compaction with summary (P1), graphs and annotations (P2/P3), clues (P4), and unresolved. Do not return a partial patch.\\n</harness>\"}]",
+        "key": "tool:16"
+      }
+    },
+    {
+      "name": "invalid-escape",
+      "http": 2,
+      "status": "accepted",
+      "toolErrors": 1,
+      "unresolvedErrors": 0,
+      "queuedRepairs": 0,
+      "executed": 1,
+      "lastError": {
+        "kind": "toolErrors",
+        "reason": "[{\"type\":\"text\",\"text\":\"<harness>\\n[error] Tool call blocked: Incomplete or normalized raw JSON. REWRITE ENTIRE submit_compaction with summary (P1), graphs and annotations (P2/P3), clues (P4), and unresolved. Do not return a partial patch.\\n</harness>\"}]",
+        "key": "tool:14"
+      }
+    },
+    {
+      "name": "keep-control",
+      "http": 1,
+      "status": "running",
+      "toolErrors": 0,
+      "unresolvedErrors": 1,
+      "queuedRepairs": 1,
+      "executed": 0,
+      "lastError": {
+        "kind": "unresolvedErrors",
+        "reason": "400: {\"message\":\"provider-failure-1\"}",
+        "key": "provider:10"
+      }
+    },
+    {
+      "name": "late-after-seal",
+      "http": 1,
+      "status": "sealed",
+      "toolErrors": 0,
+      "unresolvedErrors": 0,
+      "queuedRepairs": 0,
+      "executed": 0,
+      "lastError": {
+        "kind": "terminal",
+        "reason": "source-revoked",
+        "key": "explicit-seal"
+      }
+    },
+    {
+      "name": "length",
+      "http": 2,
+      "status": "accepted",
+      "toolErrors": 0,
+      "unresolvedErrors": 1,
+      "queuedRepairs": 0,
+      "executed": 1,
+      "lastError": {
+        "kind": "unresolvedErrors",
+        "reason": "No complete P1/P2/P3/P4 submission: length:1",
+        "key": "yield:10"
+      }
+    },
+    {
+      "name": "mixed",
+      "http": 6,
+      "status": "accepted",
+      "toolErrors": 2,
+      "unresolvedErrors": 3,
+      "queuedRepairs": 1,
+      "executed": 1,
+      "lastError": {
+        "kind": "unresolvedErrors",
+        "reason": "No complete P1/P2/P3/P4 submission: stop:5",
+        "key": "yield:27"
+      }
+    },
+    {
+      "name": "provider-auto-success",
+      "http": 4,
+      "status": "accepted",
+      "toolErrors": 0,
+      "unresolvedErrors": 3,
+      "queuedRepairs": 3,
+      "executed": 1,
+      "lastError": {
+        "kind": "unresolvedErrors",
+        "reason": "400: {\"message\":\"provider-failure-3\"}",
+        "key": "provider:19"
+      }
+    },
+    {
+      "name": "provider-limit-400",
+      "http": 4,
+      "status": "sealed",
+      "toolErrors": 0,
+      "unresolvedErrors": 4,
+      "queuedRepairs": 3,
+      "executed": 0,
+      "lastError": {
+        "kind": "unresolvedErrors",
+        "reason": "400: {\"message\":\"provider-failure-4\"}",
+        "key": "provider:23"
+      }
+    },
+    {
+      "name": "provider-limit-500",
+      "http": 4,
+      "status": "sealed",
+      "toolErrors": 0,
+      "unresolvedErrors": 4,
+      "queuedRepairs": 3,
+      "executed": 0,
+      "lastError": {
+        "kind": "unresolvedErrors",
+        "reason": "500: {\"message\":\"provider-failure-4\"}",
+        "key": "provider:23"
+      }
+    },
+    {
+      "name": "sealed-reopen",
+      "http": 4,
+      "status": "sealed",
+      "toolErrors": 0,
+      "unresolvedErrors": 4,
+      "queuedRepairs": 3,
+      "executed": 0,
+      "lastError": {
+        "kind": "unresolvedErrors",
+        "reason": "400: {\"message\":\"provider-failure-4\"}",
+        "key": "provider:23"
+      }
+    },
+    {
+      "name": "socket-error",
+      "http": 3,
+      "status": "accepted",
+      "toolErrors": 0,
+      "unresolvedErrors": 2,
+      "queuedRepairs": 1,
+      "executed": 1,
+      "lastError": {
+        "kind": "unresolvedErrors",
+        "reason": "Connection error.",
+        "key": "provider:14"
+      }
+    },
+    {
+      "name": "stop-limit-continue",
+      "http": 4,
+      "status": "sealed",
+      "toolErrors": 0,
+      "unresolvedErrors": 4,
+      "queuedRepairs": 0,
+      "executed": 0,
+      "lastError": {
+        "kind": "unresolvedErrors",
+        "reason": "No complete P1/P2/P3/P4 submission: stop:4",
+        "key": "yield:20"
+      }
+    },
+    {
+      "name": "stop-limit-steer",
+      "http": 4,
+      "status": "sealed",
+      "toolErrors": 0,
+      "unresolvedErrors": 4,
+      "queuedRepairs": 3,
+      "executed": 0,
+      "lastError": {
+        "kind": "unresolvedErrors",
+        "reason": "No complete P1/P2/P3/P4 submission: stop:4",
+        "key": "yield:23"
+      }
+    },
+    {
+      "name": "strict-json",
+      "http": 2,
+      "status": "accepted",
+      "toolErrors": 1,
+      "unresolvedErrors": 0,
+      "queuedRepairs": 0,
+      "executed": 1,
+      "lastError": {
+        "kind": "toolErrors",
+        "reason": "[{\"type\":\"text\",\"text\":\"<harness>\\n[error] Invalid arguments for tool \\\"submit_compaction\\\": Expected ',' or '}' after property value in JSON at position 460 (line 1 column 461)\\n\\nReceived arguments:\\n{\\\"summary\\\":\\\"SOURCE-GROUNDED SUMMARY SOURCE-GROUNDED SUMMARY SOURCE-GROUNDED SUMMARY SOURCE-GROUNDED SUMMARY SOURCE-GROUNDED SUMMARY SOURCE-GROUNDED SUMMARY \\\",\\\"graphs\\\":[{\\\"id\\\":\\\"g1\\\",\\\"title\\\":\\\"local graph\\\",\\\"nodes\\\":[{\\\"id\\\":\\\"n1\\\",\\\"label\\\":\\\"observation\\\",\\\"sourceEntryIds\\\":[\\\"source-1\\\"]}],\\\"edges\\\":[],\\\"annotations\\\":[{\\\"nodeIds\\\":[\\\"n1\\\"],\\\"text\\\":\\\"grounded annotation\\\",\\\"sourceEntryIds\\\":[\\\"source-1\\\"]}]}],\\\"clues\\\":[{\\\"text\\\":\\\"target clue\\\",\\\"sourceEntryIds\\\":[\\\"source-1\\\"]}],\\\"unresolved\\\":[]\\n</harness>\"}]",
+        "key": "tool:14"
+      }
+    },
+    {
+      "name": "tool-limit",
+      "http": 3,
+      "status": "sealed",
+      "toolErrors": 3,
+      "unresolvedErrors": 0,
+      "queuedRepairs": 0,
+      "executed": 0,
+      "lastError": {
+        "kind": "toolErrors",
+        "reason": "[{\"type\":\"text\",\"text\":\"<harness>\\n[error] Tool unknown_submit is not available\\n</harness>\"}]",
+        "key": "tool:23"
+      }
+    },
+    {
+      "name": "tool-replacement",
+      "http": 2,
+      "status": "accepted",
+      "toolErrors": 1,
+      "unresolvedErrors": 0,
+      "queuedRepairs": 0,
+      "executed": 1,
+      "lastError": {
+        "kind": "toolErrors",
+        "reason": "[{\"type\":\"text\",\"text\":\"<harness>\\n[error] Validation failed for tool \\\"submit_compaction\\\":\\n  - clues: must have required properties clues\\n\\nReceived arguments:\\n{\\n  \\\"summary\\\": \\\"SOURCE-GROUNDED SUMMARY SOURCE-GROUNDED SUMMARY SOURCE-GROUNDED SUMMARY SOURCE-GROUNDED SUMMARY SOURCE-GROUNDED SUMMARY SOURCE-GROUNDED SUMMARY \\\",\\n  \\\"graphs\\\": [\\n    {\\n      \\\"id\\\": \\\"g1\\\",\\n      \\\"title\\\": \\\"local graph\\\",\\n      \\\"nodes\\\": [\\n        {\\n          \\\"id\\\": \\\"n1\\\",\\n          \\\"label\\\": \\\"observation\\\",\\n          \\\"sourceEntryIds\\\": [\\n            \\\"source-1\\\"\\n          ]\\n        }\\n      ],\\n      \\\"edges\\\": [],\\n      \\\"annotations\\\": [\\n        {\\n          \\\"nodeIds\\\": [\\n            \\\"n1\\\"\\n          ],\\n          \\\"text\\\": \\\"grounded annotation\\\",\\n          \\\"sourceEntryIds\\\": [\\n            \\\"source-1\\\"\\n          ]\\n        }\\n      ]\\n    }\\n  ],\\n  \\\"unresolved\\\": []\\n}\\n</harness>\"}]",
+        "key": "tool:14"
+      }
+    }
+  ],
+  "productionIntegration": false
+}

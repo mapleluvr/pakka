@@ -1,0 +1,1680 @@
+{
+  "settings": {
+    "afterFailedRun": "continue",
+    "recoverProvider": true,
+    "yieldMode": "continue"
+  },
+  "requests": [
+    {
+      "model": "local-model",
+      "messages": [
+        {
+          "role": "system",
+          "content": "<instructions>\nCOMPRESSOR: preserve analysis; submit all P1/P2/P3/P4. REWRITE ENTIRE submit_compaction with summary (P1), graphs and annotations (P2/P3), clues (P4), and unresolved. Do not return a partial patch.\n</instructions>"
+        },
+        {
+          "role": "user",
+          "content": "FIXED-SOURCE source-1: retained host-bound source"
+        }
+      ],
+      "stream": true,
+      "stream_options": {
+        "include_usage": true
+      },
+      "store": false,
+      "max_tokens": 4096,
+      "tools": [
+        {
+          "type": "function",
+          "function": {
+            "name": "submit_compaction",
+            "description": "REWRITE ENTIRE submit_compaction with summary (P1), graphs and annotations (P2/P3), clues (P4), and unresolved. Do not return a partial patch.",
+            "parameters": {
+              "type": "object",
+              "required": [
+                "summary",
+                "graphs",
+                "clues",
+                "unresolved"
+              ],
+              "properties": {
+                "summary": {
+                  "type": "string",
+                  "minLength": 80
+                },
+                "graphs": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "id",
+                      "title",
+                      "nodes",
+                      "edges",
+                      "annotations"
+                    ],
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "title": {
+                        "type": "string"
+                      },
+                      "nodes": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "required": [
+                            "id",
+                            "label",
+                            "sourceEntryIds"
+                          ],
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "label": {
+                              "type": "string"
+                            },
+                            "sourceEntryIds": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              },
+                              "minItems": 1
+                            }
+                          },
+                          "additionalProperties": false
+                        }
+                      },
+                      "edges": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "required": [
+                            "from",
+                            "to",
+                            "label",
+                            "sourceEntryIds"
+                          ],
+                          "properties": {
+                            "from": {
+                              "type": "string"
+                            },
+                            "to": {
+                              "type": "string"
+                            },
+                            "label": {
+                              "type": "string"
+                            },
+                            "sourceEntryIds": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              },
+                              "minItems": 1
+                            }
+                          },
+                          "additionalProperties": false
+                        }
+                      },
+                      "annotations": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "required": [
+                            "nodeIds",
+                            "text",
+                            "sourceEntryIds"
+                          ],
+                          "properties": {
+                            "nodeIds": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            },
+                            "text": {
+                              "type": "string"
+                            },
+                            "sourceEntryIds": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              },
+                              "minItems": 1
+                            }
+                          },
+                          "additionalProperties": false
+                        }
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                },
+                "clues": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "text",
+                      "sourceEntryIds"
+                    ],
+                    "properties": {
+                      "text": {
+                        "type": "string"
+                      },
+                      "sourceEntryIds": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "minItems": 1
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "minItems": 1
+                },
+                "unresolved": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "text",
+                      "sourceEntryIds"
+                    ],
+                    "properties": {
+                      "text": {
+                        "type": "string"
+                      },
+                      "sourceEntryIds": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "minItems": 1
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                }
+              },
+              "additionalProperties": false
+            }
+          }
+        }
+      ]
+    },
+    {
+      "model": "local-model",
+      "messages": [
+        {
+          "role": "system",
+          "content": "<instructions>\nCOMPRESSOR: preserve analysis; submit all P1/P2/P3/P4. REWRITE ENTIRE submit_compaction with summary (P1), graphs and annotations (P2/P3), clues (P4), and unresolved. Do not return a partial patch.\n</instructions>"
+        },
+        {
+          "role": "user",
+          "content": "FIXED-SOURCE source-1: retained host-bound source"
+        },
+        {
+          "role": "assistant",
+          "content": null,
+          "tool_calls": [
+            {
+              "id": "call-1-0",
+              "type": "function",
+              "function": {
+                "name": "unknown_submit",
+                "arguments": "{\"summary\":\"SOURCE-GROUNDED SUMMARY SOURCE-GROUNDED SUMMARY SOURCE-GROUNDED SUMMARY SOURCE-GROUNDED SUMMARY SOURCE-GROUNDED SUMMARY SOURCE-GROUNDED SUMMARY \",\"graphs\":[{\"id\":\"g1\",\"title\":\"local graph\",\"nodes\":[{\"id\":\"n1\",\"label\":\"observation\",\"sourceEntryIds\":[\"source-1\"]}],\"edges\":[],\"annotations\":[{\"nodeIds\":[\"n1\"],\"text\":\"grounded annotation\",\"sourceEntryIds\":[\"source-1\"]}]}],\"clues\":[{\"text\":\"target clue\",\"sourceEntryIds\":[\"source-1\"]}],\"unresolved\":[]}"
+              }
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "content": "<harness>\n[error] Tool unknown_submit is not available\n</harness>\nREWRITE ENTIRE submit_compaction with summary (P1), graphs and annotations (P2/P3), clues (P4), and unresolved. Do not return a partial patch.",
+          "tool_call_id": "call-1-0"
+        }
+      ],
+      "stream": true,
+      "stream_options": {
+        "include_usage": true
+      },
+      "store": false,
+      "max_tokens": 4096,
+      "tools": [
+        {
+          "type": "function",
+          "function": {
+            "name": "submit_compaction",
+            "description": "REWRITE ENTIRE submit_compaction with summary (P1), graphs and annotations (P2/P3), clues (P4), and unresolved. Do not return a partial patch.",
+            "parameters": {
+              "type": "object",
+              "required": [
+                "summary",
+                "graphs",
+                "clues",
+                "unresolved"
+              ],
+              "properties": {
+                "summary": {
+                  "type": "string",
+                  "minLength": 80
+                },
+                "graphs": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "id",
+                      "title",
+                      "nodes",
+                      "edges",
+                      "annotations"
+                    ],
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "title": {
+                        "type": "string"
+                      },
+                      "nodes": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "required": [
+                            "id",
+                            "label",
+                            "sourceEntryIds"
+                          ],
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "label": {
+                              "type": "string"
+                            },
+                            "sourceEntryIds": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              },
+                              "minItems": 1
+                            }
+                          },
+                          "additionalProperties": false
+                        }
+                      },
+                      "edges": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "required": [
+                            "from",
+                            "to",
+                            "label",
+                            "sourceEntryIds"
+                          ],
+                          "properties": {
+                            "from": {
+                              "type": "string"
+                            },
+                            "to": {
+                              "type": "string"
+                            },
+                            "label": {
+                              "type": "string"
+                            },
+                            "sourceEntryIds": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              },
+                              "minItems": 1
+                            }
+                          },
+                          "additionalProperties": false
+                        }
+                      },
+                      "annotations": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "required": [
+                            "nodeIds",
+                            "text",
+                            "sourceEntryIds"
+                          ],
+                          "properties": {
+                            "nodeIds": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            },
+                            "text": {
+                              "type": "string"
+                            },
+                            "sourceEntryIds": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              },
+                              "minItems": 1
+                            }
+                          },
+                          "additionalProperties": false
+                        }
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                },
+                "clues": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "text",
+                      "sourceEntryIds"
+                    ],
+                    "properties": {
+                      "text": {
+                        "type": "string"
+                      },
+                      "sourceEntryIds": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "minItems": 1
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "minItems": 1
+                },
+                "unresolved": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "text",
+                      "sourceEntryIds"
+                    ],
+                    "properties": {
+                      "text": {
+                        "type": "string"
+                      },
+                      "sourceEntryIds": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "minItems": 1
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                }
+              },
+              "additionalProperties": false
+            }
+          }
+        }
+      ]
+    },
+    {
+      "model": "local-model",
+      "messages": [
+        {
+          "role": "system",
+          "content": "<instructions>\nCOMPRESSOR: preserve analysis; submit all P1/P2/P3/P4. REWRITE ENTIRE submit_compaction with summary (P1), graphs and annotations (P2/P3), clues (P4), and unresolved. Do not return a partial patch.\n</instructions>"
+        },
+        {
+          "role": "user",
+          "content": "FIXED-SOURCE source-1: retained host-bound source"
+        },
+        {
+          "role": "assistant",
+          "content": null,
+          "tool_calls": [
+            {
+              "id": "call-1-0",
+              "type": "function",
+              "function": {
+                "name": "unknown_submit",
+                "arguments": "{\"summary\":\"SOURCE-GROUNDED SUMMARY SOURCE-GROUNDED SUMMARY SOURCE-GROUNDED SUMMARY SOURCE-GROUNDED SUMMARY SOURCE-GROUNDED SUMMARY SOURCE-GROUNDED SUMMARY \",\"graphs\":[{\"id\":\"g1\",\"title\":\"local graph\",\"nodes\":[{\"id\":\"n1\",\"label\":\"observation\",\"sourceEntryIds\":[\"source-1\"]}],\"edges\":[],\"annotations\":[{\"nodeIds\":[\"n1\"],\"text\":\"grounded annotation\",\"sourceEntryIds\":[\"source-1\"]}]}],\"clues\":[{\"text\":\"target clue\",\"sourceEntryIds\":[\"source-1\"]}],\"unresolved\":[]}"
+              }
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "content": "<harness>\n[error] Tool unknown_submit is not available\n</harness>\nREWRITE ENTIRE submit_compaction with summary (P1), graphs and annotations (P2/P3), clues (P4), and unresolved. Do not return a partial patch.",
+          "tool_call_id": "call-1-0"
+        },
+        {
+          "role": "assistant",
+          "content": "PRIOR-ANALYSIS"
+        },
+        {
+          "role": "user",
+          "content": "REWRITE ENTIRE submit_compaction with summary (P1), graphs and annotations (P2/P3), clues (P4), and unresolved. Do not return a partial patch."
+        }
+      ],
+      "stream": true,
+      "stream_options": {
+        "include_usage": true
+      },
+      "store": false,
+      "max_tokens": 4096,
+      "tools": [
+        {
+          "type": "function",
+          "function": {
+            "name": "submit_compaction",
+            "description": "REWRITE ENTIRE submit_compaction with summary (P1), graphs and annotations (P2/P3), clues (P4), and unresolved. Do not return a partial patch.",
+            "parameters": {
+              "type": "object",
+              "required": [
+                "summary",
+                "graphs",
+                "clues",
+                "unresolved"
+              ],
+              "properties": {
+                "summary": {
+                  "type": "string",
+                  "minLength": 80
+                },
+                "graphs": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "id",
+                      "title",
+                      "nodes",
+                      "edges",
+                      "annotations"
+                    ],
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "title": {
+                        "type": "string"
+                      },
+                      "nodes": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "required": [
+                            "id",
+                            "label",
+                            "sourceEntryIds"
+                          ],
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "label": {
+                              "type": "string"
+                            },
+                            "sourceEntryIds": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              },
+                              "minItems": 1
+                            }
+                          },
+                          "additionalProperties": false
+                        }
+                      },
+                      "edges": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "required": [
+                            "from",
+                            "to",
+                            "label",
+                            "sourceEntryIds"
+                          ],
+                          "properties": {
+                            "from": {
+                              "type": "string"
+                            },
+                            "to": {
+                              "type": "string"
+                            },
+                            "label": {
+                              "type": "string"
+                            },
+                            "sourceEntryIds": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              },
+                              "minItems": 1
+                            }
+                          },
+                          "additionalProperties": false
+                        }
+                      },
+                      "annotations": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "required": [
+                            "nodeIds",
+                            "text",
+                            "sourceEntryIds"
+                          ],
+                          "properties": {
+                            "nodeIds": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            },
+                            "text": {
+                              "type": "string"
+                            },
+                            "sourceEntryIds": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              },
+                              "minItems": 1
+                            }
+                          },
+                          "additionalProperties": false
+                        }
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                },
+                "clues": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "text",
+                      "sourceEntryIds"
+                    ],
+                    "properties": {
+                      "text": {
+                        "type": "string"
+                      },
+                      "sourceEntryIds": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "minItems": 1
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "minItems": 1
+                },
+                "unresolved": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "text",
+                      "sourceEntryIds"
+                    ],
+                    "properties": {
+                      "text": {
+                        "type": "string"
+                      },
+                      "sourceEntryIds": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "minItems": 1
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                }
+              },
+              "additionalProperties": false
+            }
+          }
+        }
+      ]
+    },
+    {
+      "model": "local-model",
+      "messages": [
+        {
+          "role": "system",
+          "content": "<instructions>\nCOMPRESSOR: preserve analysis; submit all P1/P2/P3/P4. REWRITE ENTIRE submit_compaction with summary (P1), graphs and annotations (P2/P3), clues (P4), and unresolved. Do not return a partial patch.\n</instructions>"
+        },
+        {
+          "role": "user",
+          "content": "FIXED-SOURCE source-1: retained host-bound source"
+        },
+        {
+          "role": "assistant",
+          "content": null,
+          "tool_calls": [
+            {
+              "id": "call-1-0",
+              "type": "function",
+              "function": {
+                "name": "unknown_submit",
+                "arguments": "{\"summary\":\"SOURCE-GROUNDED SUMMARY SOURCE-GROUNDED SUMMARY SOURCE-GROUNDED SUMMARY SOURCE-GROUNDED SUMMARY SOURCE-GROUNDED SUMMARY SOURCE-GROUNDED SUMMARY \",\"graphs\":[{\"id\":\"g1\",\"title\":\"local graph\",\"nodes\":[{\"id\":\"n1\",\"label\":\"observation\",\"sourceEntryIds\":[\"source-1\"]}],\"edges\":[],\"annotations\":[{\"nodeIds\":[\"n1\"],\"text\":\"grounded annotation\",\"sourceEntryIds\":[\"source-1\"]}]}],\"clues\":[{\"text\":\"target clue\",\"sourceEntryIds\":[\"source-1\"]}],\"unresolved\":[]}"
+              }
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "content": "<harness>\n[error] Tool unknown_submit is not available\n</harness>\nREWRITE ENTIRE submit_compaction with summary (P1), graphs and annotations (P2/P3), clues (P4), and unresolved. Do not return a partial patch.",
+          "tool_call_id": "call-1-0"
+        },
+        {
+          "role": "assistant",
+          "content": "PRIOR-ANALYSIS"
+        },
+        {
+          "role": "user",
+          "content": "REWRITE ENTIRE submit_compaction with summary (P1), graphs and annotations (P2/P3), clues (P4), and unresolved. Do not return a partial patch."
+        },
+        {
+          "role": "user",
+          "content": "Provider request failed: 400: {\"message\":\"provider-failure-3\"}\nREWRITE ENTIRE submit_compaction with summary (P1), graphs and annotations (P2/P3), clues (P4), and unresolved. Do not return a partial patch."
+        }
+      ],
+      "stream": true,
+      "stream_options": {
+        "include_usage": true
+      },
+      "store": false,
+      "max_tokens": 4096,
+      "tools": [
+        {
+          "type": "function",
+          "function": {
+            "name": "submit_compaction",
+            "description": "REWRITE ENTIRE submit_compaction with summary (P1), graphs and annotations (P2/P3), clues (P4), and unresolved. Do not return a partial patch.",
+            "parameters": {
+              "type": "object",
+              "required": [
+                "summary",
+                "graphs",
+                "clues",
+                "unresolved"
+              ],
+              "properties": {
+                "summary": {
+                  "type": "string",
+                  "minLength": 80
+                },
+                "graphs": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "id",
+                      "title",
+                      "nodes",
+                      "edges",
+                      "annotations"
+                    ],
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "title": {
+                        "type": "string"
+                      },
+                      "nodes": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "required": [
+                            "id",
+                            "label",
+                            "sourceEntryIds"
+                          ],
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "label": {
+                              "type": "string"
+                            },
+                            "sourceEntryIds": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              },
+                              "minItems": 1
+                            }
+                          },
+                          "additionalProperties": false
+                        }
+                      },
+                      "edges": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "required": [
+                            "from",
+                            "to",
+                            "label",
+                            "sourceEntryIds"
+                          ],
+                          "properties": {
+                            "from": {
+                              "type": "string"
+                            },
+                            "to": {
+                              "type": "string"
+                            },
+                            "label": {
+                              "type": "string"
+                            },
+                            "sourceEntryIds": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              },
+                              "minItems": 1
+                            }
+                          },
+                          "additionalProperties": false
+                        }
+                      },
+                      "annotations": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "required": [
+                            "nodeIds",
+                            "text",
+                            "sourceEntryIds"
+                          ],
+                          "properties": {
+                            "nodeIds": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            },
+                            "text": {
+                              "type": "string"
+                            },
+                            "sourceEntryIds": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              },
+                              "minItems": 1
+                            }
+                          },
+                          "additionalProperties": false
+                        }
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                },
+                "clues": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "text",
+                      "sourceEntryIds"
+                    ],
+                    "properties": {
+                      "text": {
+                        "type": "string"
+                      },
+                      "sourceEntryIds": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "minItems": 1
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "minItems": 1
+                },
+                "unresolved": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "text",
+                      "sourceEntryIds"
+                    ],
+                    "properties": {
+                      "text": {
+                        "type": "string"
+                      },
+                      "sourceEntryIds": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "minItems": 1
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                }
+              },
+              "additionalProperties": false
+            }
+          }
+        }
+      ]
+    },
+    {
+      "model": "local-model",
+      "messages": [
+        {
+          "role": "system",
+          "content": "<instructions>\nCOMPRESSOR: preserve analysis; submit all P1/P2/P3/P4. REWRITE ENTIRE submit_compaction with summary (P1), graphs and annotations (P2/P3), clues (P4), and unresolved. Do not return a partial patch.\n</instructions>"
+        },
+        {
+          "role": "user",
+          "content": "FIXED-SOURCE source-1: retained host-bound source"
+        },
+        {
+          "role": "assistant",
+          "content": null,
+          "tool_calls": [
+            {
+              "id": "call-1-0",
+              "type": "function",
+              "function": {
+                "name": "unknown_submit",
+                "arguments": "{\"summary\":\"SOURCE-GROUNDED SUMMARY SOURCE-GROUNDED SUMMARY SOURCE-GROUNDED SUMMARY SOURCE-GROUNDED SUMMARY SOURCE-GROUNDED SUMMARY SOURCE-GROUNDED SUMMARY \",\"graphs\":[{\"id\":\"g1\",\"title\":\"local graph\",\"nodes\":[{\"id\":\"n1\",\"label\":\"observation\",\"sourceEntryIds\":[\"source-1\"]}],\"edges\":[],\"annotations\":[{\"nodeIds\":[\"n1\"],\"text\":\"grounded annotation\",\"sourceEntryIds\":[\"source-1\"]}]}],\"clues\":[{\"text\":\"target clue\",\"sourceEntryIds\":[\"source-1\"]}],\"unresolved\":[]}"
+              }
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "content": "<harness>\n[error] Tool unknown_submit is not available\n</harness>\nREWRITE ENTIRE submit_compaction with summary (P1), graphs and annotations (P2/P3), clues (P4), and unresolved. Do not return a partial patch.",
+          "tool_call_id": "call-1-0"
+        },
+        {
+          "role": "assistant",
+          "content": "PRIOR-ANALYSIS"
+        },
+        {
+          "role": "user",
+          "content": "REWRITE ENTIRE submit_compaction with summary (P1), graphs and annotations (P2/P3), clues (P4), and unresolved. Do not return a partial patch."
+        },
+        {
+          "role": "user",
+          "content": "Provider request failed: 400: {\"message\":\"provider-failure-3\"}\nREWRITE ENTIRE submit_compaction with summary (P1), graphs and annotations (P2/P3), clues (P4), and unresolved. Do not return a partial patch."
+        },
+        {
+          "role": "assistant",
+          "content": null,
+          "tool_calls": [
+            {
+              "id": "call-4-0",
+              "type": "function",
+              "function": {
+                "name": "submit_compaction",
+                "arguments": "{\"summary\":\"SOURCE-GROUNDED SUMMARY SOURCE-GROUNDED SUMMARY SOURCE-GROUNDED SUMMARY SOURCE-GROUNDED SUMMARY SOURCE-GROUNDED SUMMARY SOURCE-GROUNDED SUMMARY \",\"graphs\":[{\"id\":\"g1\",\"title\":\"local graph\",\"nodes\":[{\"id\":\"n1\",\"label\":\"observation\",\"sourceEntryIds\":[\"source-1\"]}],\"edges\":[],\"annotations\":[{\"nodeIds\":[\"n1\"],\"text\":\"grounded annotation\",\"sourceEntryIds\":[\"source-1\"]}]}],\"unresolved\":[]}"
+              }
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "content": "<harness>\n[error] Validation failed for tool \"submit_compaction\":\n  - clues: must have required properties clues\n\nReceived arguments:\n{\n  \"summary\": \"SOURCE-GROUNDED SUMMARY SOURCE-GROUNDED SUMMARY SOURCE-GROUNDED SUMMARY SOURCE-GROUNDED SUMMARY SOURCE-GROUNDED SUMMARY SOURCE-GROUNDED SUMMARY \",\n  \"graphs\": [\n    {\n      \"id\": \"g1\",\n      \"title\": \"local graph\",\n      \"nodes\": [\n        {\n          \"id\": \"n1\",\n          \"label\": \"observation\",\n          \"sourceEntryIds\": [\n            \"source-1\"\n          ]\n        }\n      ],\n      \"edges\": [],\n      \"annotations\": [\n        {\n          \"nodeIds\": [\n            \"n1\"\n          ],\n          \"text\": \"grounded annotation\",\n          \"sourceEntryIds\": [\n            \"source-1\"\n          ]\n        }\n      ]\n    }\n  ],\n  \"unresolved\": []\n}\n</harness>\nREWRITE ENTIRE submit_compaction with summary (P1), graphs and annotations (P2/P3), clues (P4), and unresolved. Do not return a partial patch.",
+          "tool_call_id": "call-4-0"
+        }
+      ],
+      "stream": true,
+      "stream_options": {
+        "include_usage": true
+      },
+      "store": false,
+      "max_tokens": 4096,
+      "tools": [
+        {
+          "type": "function",
+          "function": {
+            "name": "submit_compaction",
+            "description": "REWRITE ENTIRE submit_compaction with summary (P1), graphs and annotations (P2/P3), clues (P4), and unresolved. Do not return a partial patch.",
+            "parameters": {
+              "type": "object",
+              "required": [
+                "summary",
+                "graphs",
+                "clues",
+                "unresolved"
+              ],
+              "properties": {
+                "summary": {
+                  "type": "string",
+                  "minLength": 80
+                },
+                "graphs": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "id",
+                      "title",
+                      "nodes",
+                      "edges",
+                      "annotations"
+                    ],
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "title": {
+                        "type": "string"
+                      },
+                      "nodes": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "required": [
+                            "id",
+                            "label",
+                            "sourceEntryIds"
+                          ],
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "label": {
+                              "type": "string"
+                            },
+                            "sourceEntryIds": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              },
+                              "minItems": 1
+                            }
+                          },
+                          "additionalProperties": false
+                        }
+                      },
+                      "edges": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "required": [
+                            "from",
+                            "to",
+                            "label",
+                            "sourceEntryIds"
+                          ],
+                          "properties": {
+                            "from": {
+                              "type": "string"
+                            },
+                            "to": {
+                              "type": "string"
+                            },
+                            "label": {
+                              "type": "string"
+                            },
+                            "sourceEntryIds": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              },
+                              "minItems": 1
+                            }
+                          },
+                          "additionalProperties": false
+                        }
+                      },
+                      "annotations": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "required": [
+                            "nodeIds",
+                            "text",
+                            "sourceEntryIds"
+                          ],
+                          "properties": {
+                            "nodeIds": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            },
+                            "text": {
+                              "type": "string"
+                            },
+                            "sourceEntryIds": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              },
+                              "minItems": 1
+                            }
+                          },
+                          "additionalProperties": false
+                        }
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                },
+                "clues": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "text",
+                      "sourceEntryIds"
+                    ],
+                    "properties": {
+                      "text": {
+                        "type": "string"
+                      },
+                      "sourceEntryIds": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "minItems": 1
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "minItems": 1
+                },
+                "unresolved": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "text",
+                      "sourceEntryIds"
+                    ],
+                    "properties": {
+                      "text": {
+                        "type": "string"
+                      },
+                      "sourceEntryIds": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "minItems": 1
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                }
+              },
+              "additionalProperties": false
+            }
+          }
+        }
+      ]
+    },
+    {
+      "model": "local-model",
+      "messages": [
+        {
+          "role": "system",
+          "content": "<instructions>\nCOMPRESSOR: preserve analysis; submit all P1/P2/P3/P4. REWRITE ENTIRE submit_compaction with summary (P1), graphs and annotations (P2/P3), clues (P4), and unresolved. Do not return a partial patch.\n</instructions>"
+        },
+        {
+          "role": "user",
+          "content": "FIXED-SOURCE source-1: retained host-bound source"
+        },
+        {
+          "role": "assistant",
+          "content": null,
+          "tool_calls": [
+            {
+              "id": "call-1-0",
+              "type": "function",
+              "function": {
+                "name": "unknown_submit",
+                "arguments": "{\"summary\":\"SOURCE-GROUNDED SUMMARY SOURCE-GROUNDED SUMMARY SOURCE-GROUNDED SUMMARY SOURCE-GROUNDED SUMMARY SOURCE-GROUNDED SUMMARY SOURCE-GROUNDED SUMMARY \",\"graphs\":[{\"id\":\"g1\",\"title\":\"local graph\",\"nodes\":[{\"id\":\"n1\",\"label\":\"observation\",\"sourceEntryIds\":[\"source-1\"]}],\"edges\":[],\"annotations\":[{\"nodeIds\":[\"n1\"],\"text\":\"grounded annotation\",\"sourceEntryIds\":[\"source-1\"]}]}],\"clues\":[{\"text\":\"target clue\",\"sourceEntryIds\":[\"source-1\"]}],\"unresolved\":[]}"
+              }
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "content": "<harness>\n[error] Tool unknown_submit is not available\n</harness>\nREWRITE ENTIRE submit_compaction with summary (P1), graphs and annotations (P2/P3), clues (P4), and unresolved. Do not return a partial patch.",
+          "tool_call_id": "call-1-0"
+        },
+        {
+          "role": "assistant",
+          "content": "PRIOR-ANALYSIS"
+        },
+        {
+          "role": "user",
+          "content": "REWRITE ENTIRE submit_compaction with summary (P1), graphs and annotations (P2/P3), clues (P4), and unresolved. Do not return a partial patch."
+        },
+        {
+          "role": "user",
+          "content": "Provider request failed: 400: {\"message\":\"provider-failure-3\"}\nREWRITE ENTIRE submit_compaction with summary (P1), graphs and annotations (P2/P3), clues (P4), and unresolved. Do not return a partial patch."
+        },
+        {
+          "role": "assistant",
+          "content": null,
+          "tool_calls": [
+            {
+              "id": "call-4-0",
+              "type": "function",
+              "function": {
+                "name": "submit_compaction",
+                "arguments": "{\"summary\":\"SOURCE-GROUNDED SUMMARY SOURCE-GROUNDED SUMMARY SOURCE-GROUNDED SUMMARY SOURCE-GROUNDED SUMMARY SOURCE-GROUNDED SUMMARY SOURCE-GROUNDED SUMMARY \",\"graphs\":[{\"id\":\"g1\",\"title\":\"local graph\",\"nodes\":[{\"id\":\"n1\",\"label\":\"observation\",\"sourceEntryIds\":[\"source-1\"]}],\"edges\":[],\"annotations\":[{\"nodeIds\":[\"n1\"],\"text\":\"grounded annotation\",\"sourceEntryIds\":[\"source-1\"]}]}],\"unresolved\":[]}"
+              }
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "content": "<harness>\n[error] Validation failed for tool \"submit_compaction\":\n  - clues: must have required properties clues\n\nReceived arguments:\n{\n  \"summary\": \"SOURCE-GROUNDED SUMMARY SOURCE-GROUNDED SUMMARY SOURCE-GROUNDED SUMMARY SOURCE-GROUNDED SUMMARY SOURCE-GROUNDED SUMMARY SOURCE-GROUNDED SUMMARY \",\n  \"graphs\": [\n    {\n      \"id\": \"g1\",\n      \"title\": \"local graph\",\n      \"nodes\": [\n        {\n          \"id\": \"n1\",\n          \"label\": \"observation\",\n          \"sourceEntryIds\": [\n            \"source-1\"\n          ]\n        }\n      ],\n      \"edges\": [],\n      \"annotations\": [\n        {\n          \"nodeIds\": [\n            \"n1\"\n          ],\n          \"text\": \"grounded annotation\",\n          \"sourceEntryIds\": [\n            \"source-1\"\n          ]\n        }\n      ]\n    }\n  ],\n  \"unresolved\": []\n}\n</harness>\nREWRITE ENTIRE submit_compaction with summary (P1), graphs and annotations (P2/P3), clues (P4), and unresolved. Do not return a partial patch.",
+          "tool_call_id": "call-4-0"
+        },
+        {
+          "role": "assistant",
+          "content": "MORE-ANALYSIS"
+        },
+        {
+          "role": "user",
+          "content": "REWRITE ENTIRE submit_compaction with summary (P1), graphs and annotations (P2/P3), clues (P4), and unresolved. Do not return a partial patch."
+        }
+      ],
+      "stream": true,
+      "stream_options": {
+        "include_usage": true
+      },
+      "store": false,
+      "max_tokens": 4096,
+      "tools": [
+        {
+          "type": "function",
+          "function": {
+            "name": "submit_compaction",
+            "description": "REWRITE ENTIRE submit_compaction with summary (P1), graphs and annotations (P2/P3), clues (P4), and unresolved. Do not return a partial patch.",
+            "parameters": {
+              "type": "object",
+              "required": [
+                "summary",
+                "graphs",
+                "clues",
+                "unresolved"
+              ],
+              "properties": {
+                "summary": {
+                  "type": "string",
+                  "minLength": 80
+                },
+                "graphs": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "id",
+                      "title",
+                      "nodes",
+                      "edges",
+                      "annotations"
+                    ],
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "title": {
+                        "type": "string"
+                      },
+                      "nodes": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "required": [
+                            "id",
+                            "label",
+                            "sourceEntryIds"
+                          ],
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "label": {
+                              "type": "string"
+                            },
+                            "sourceEntryIds": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              },
+                              "minItems": 1
+                            }
+                          },
+                          "additionalProperties": false
+                        }
+                      },
+                      "edges": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "required": [
+                            "from",
+                            "to",
+                            "label",
+                            "sourceEntryIds"
+                          ],
+                          "properties": {
+                            "from": {
+                              "type": "string"
+                            },
+                            "to": {
+                              "type": "string"
+                            },
+                            "label": {
+                              "type": "string"
+                            },
+                            "sourceEntryIds": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              },
+                              "minItems": 1
+                            }
+                          },
+                          "additionalProperties": false
+                        }
+                      },
+                      "annotations": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "required": [
+                            "nodeIds",
+                            "text",
+                            "sourceEntryIds"
+                          ],
+                          "properties": {
+                            "nodeIds": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            },
+                            "text": {
+                              "type": "string"
+                            },
+                            "sourceEntryIds": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              },
+                              "minItems": 1
+                            }
+                          },
+                          "additionalProperties": false
+                        }
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                },
+                "clues": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "text",
+                      "sourceEntryIds"
+                    ],
+                    "properties": {
+                      "text": {
+                        "type": "string"
+                      },
+                      "sourceEntryIds": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "minItems": 1
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "minItems": 1
+                },
+                "unresolved": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "text",
+                      "sourceEntryIds"
+                    ],
+                    "properties": {
+                      "text": {
+                        "type": "string"
+                      },
+                      "sourceEntryIds": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "minItems": 1
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                }
+              },
+              "additionalProperties": false
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "events": [
+    {
+      "event": "beforeRequest",
+      "taskId": 10,
+      "status": "running"
+    },
+    {
+      "event": "afterResponse",
+      "taskId": 10,
+      "stopReason": "toolUse",
+      "error": null
+    },
+    {
+      "event": "afterTools",
+      "assistant": 12,
+      "errors": [
+        {
+          "id": 13,
+          "message": {
+            "role": "toolResult",
+            "toolCallId": "call-1-0",
+            "toolName": "unknown_submit",
+            "content": [
+              {
+                "type": "text",
+                "text": "<harness>\n[error] Tool unknown_submit is not available\n</harness>"
+              }
+            ],
+            "isError": true,
+            "timestamp": 1792766291192
+          }
+        }
+      ]
+    },
+    {
+      "event": "beforeRequest",
+      "taskId": 15,
+      "status": "running"
+    },
+    {
+      "event": "afterResponse",
+      "taskId": 15,
+      "stopReason": "stop",
+      "error": null
+    },
+    {
+      "event": "onYield",
+      "taskId": 15,
+      "stopReason": "stop"
+    },
+    {
+      "event": "beforeRequest",
+      "taskId": 18,
+      "status": "running"
+    },
+    {
+      "event": "afterResponse",
+      "taskId": 18,
+      "stopReason": "error",
+      "error": "400: {\"message\":\"provider-failure-3\"}"
+    },
+    {
+      "event": "beforeRequest",
+      "taskId": 22,
+      "status": "running"
+    },
+    {
+      "event": "afterResponse",
+      "taskId": 22,
+      "stopReason": "toolUse",
+      "error": null
+    },
+    {
+      "event": "afterTools",
+      "assistant": 23,
+      "errors": [
+        {
+          "id": 25,
+          "message": {
+            "role": "toolResult",
+            "toolCallId": "call-4-0",
+            "toolName": "submit_compaction",
+            "content": [
+              {
+                "type": "text",
+                "text": "<harness>\n[error] Validation failed for tool \"submit_compaction\":\n  - clues: must have required properties clues\n\nReceived arguments:\n{\n  \"summary\": \"SOURCE-GROUNDED SUMMARY SOURCE-GROUNDED SUMMARY SOURCE-GROUNDED SUMMARY SOURCE-GROUNDED SUMMARY SOURCE-GROUNDED SUMMARY SOURCE-GROUNDED SUMMARY \",\n  \"graphs\": [\n    {\n      \"id\": \"g1\",\n      \"title\": \"local graph\",\n      \"nodes\": [\n        {\n          \"id\": \"n1\",\n          \"label\": \"observation\",\n          \"sourceEntryIds\": [\n            \"source-1\"\n          ]\n        }\n      ],\n      \"edges\": [],\n      \"annotations\": [\n        {\n          \"nodeIds\": [\n            \"n1\"\n          ],\n          \"text\": \"grounded annotation\",\n          \"sourceEntryIds\": [\n            \"source-1\"\n          ]\n        }\n      ]\n    }\n  ],\n  \"unresolved\": []\n}\n</harness>"
+              }
+            ],
+            "isError": true,
+            "timestamp": 1792766291449
+          }
+        }
+      ]
+    },
+    {
+      "event": "beforeRequest",
+      "taskId": 27,
+      "status": "running"
+    },
+    {
+      "event": "afterResponse",
+      "taskId": 27,
+      "stopReason": "stop",
+      "error": null
+    },
+    {
+      "event": "onYield",
+      "taskId": 27,
+      "stopReason": "stop"
+    },
+    {
+      "event": "beforeRequest",
+      "taskId": 30,
+      "status": "running"
+    },
+    {
+      "event": "afterResponse",
+      "taskId": 30,
+      "stopReason": "toolUse",
+      "error": null
+    },
+    {
+      "event": "beforeTool",
+      "callId": "call-6-0"
+    },
+    {
+      "event": "afterTool",
+      "callId": "call-6-0",
+      "isError": false
+    },
+    {
+      "event": "afterTools",
+      "assistant": 31,
+      "errors": []
+    }
+  ],
+  "reports": [],
+  "executed": [
+    {
+      "summary": "SOURCE-GROUNDED SUMMARY SOURCE-GROUNDED SUMMARY SOURCE-GROUNDED SUMMARY SOURCE-GROUNDED SUMMARY SOURCE-GROUNDED SUMMARY SOURCE-GROUNDED SUMMARY ",
+      "graphs": [
+        {
+          "id": "g1",
+          "title": "local graph",
+          "nodes": [
+            {
+              "id": "n1",
+              "label": "observation",
+              "sourceEntryIds": [
+                "source-1"
+              ]
+            }
+          ],
+          "edges": [],
+          "annotations": [
+            {
+              "nodeIds": [
+                "n1"
+              ],
+              "text": "grounded annotation",
+              "sourceEntryIds": [
+                "source-1"
+              ]
+            }
+          ]
+        }
+      ],
+      "clues": [
+        {
+          "text": "target clue",
+          "sourceEntryIds": [
+            "source-1"
+          ]
+        }
+      ],
+      "unresolved": []
+    }
+  ],
+  "repairs": [
+    {
+      "id": 19,
+      "requestId": "repair-18",
+      "admitted": "queued",
+      "final": {
+        "conversationId": 1,
+        "requestId": "repair-18",
+        "type": "input",
+        "status": "done",
+        "id": 19,
+        "entry": 21,
+        "answer": 31
+      }
+    }
+  ],
+  "policy": {
+    "status": "accepted",
+    "toolErrors": 2,
+    "unresolvedErrors": 3,
+    "toolTolerance": 3,
+    "unresolvedTolerance": 4,
+    "lastError": {
+      "kind": "unresolvedErrors",
+      "reason": "No complete P1/P2/P3/P4 submission: stop:5",
+      "key": "yield:27"
+    },
+    "processed": [
+      "tool:13",
+      "yield:15",
+      "provider:18",
+      "tool:25",
+      "yield:27"
+    ],
+    "candidate": {
+      "summary": "SOURCE-GROUNDED SUMMARY SOURCE-GROUNDED SUMMARY SOURCE-GROUNDED SUMMARY SOURCE-GROUNDED SUMMARY SOURCE-GROUNDED SUMMARY SOURCE-GROUNDED SUMMARY ",
+      "graphs": [
+        {
+          "id": "g1",
+          "title": "local graph",
+          "nodes": [
+            {
+              "id": "n1",
+              "label": "observation",
+              "sourceEntryIds": [
+                "source-1"
+              ]
+            }
+          ],
+          "edges": [],
+          "annotations": [
+            {
+              "nodeIds": [
+                "n1"
+              ],
+              "text": "grounded annotation",
+              "sourceEntryIds": [
+                "source-1"
+              ]
+            }
+          ]
+        }
+      ],
+      "clues": [
+        {
+          "text": "target clue",
+          "sourceEntryIds": [
+            "source-1"
+          ]
+        }
+      ],
+      "unresolved": []
+    }
+  },
+  "provider": {
+    "sessionId": "01a16932-acc3-77eb-923c-f3cdcc9815c5"
+  },
+  "usage": {
+    "models": {
+      "local140/local-model": {
+        "input": 50,
+        "output": 10,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "reasoning": 0,
+        "totalTokens": 60,
+        "cost": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "total": 0
+        }
+      }
+    },
+    "tools": {}
+  },
+  "inspection": {
+    "scheduling": "running",
+    "tasks": [],
+    "submissions": []
+  }
+}

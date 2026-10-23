@@ -1,0 +1,197 @@
+// Isolated 1.4 capability experiment. No production adapter or custom inference loop.
+import assert from 'node:assert/strict';
+import { test } from 'node:test';
+import { createServer } from 'node:http';
+import { mkdir, writeFile, readFile } from 'node:fs/promises';
+import { join, resolve, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { isDeepStrictEqual } from 'node:util';
+import { Harness, createRegistry, defineTool, defineExtension, hook, GenerationTask, ToolTask, ToolResultEntry, defineDoc, ProviderDoc } from '@earendil-works/pi-durable';
+import { openNodeJsonlStorage } from '@earendil-works/pi-durable/storage/jsonl/node';
+import { BACKGROUND_CONTEXT as context } from '@earendil-works/chord/context';
+import { Type, createModels, createProvider } from '@earendil-works/pi-ai';
+import * as oac from '@earendil-works/pi-ai/api/openai-completions';
+
+const out = resolve(process.env.COMPRESSOR_140_OUTPUT);
+await mkdir(out, { recursive: true });
+const cohort = {};
+for (const [name, expected] of [['pi-durable','1.4.0-pakka.1'],['pi-ai','1.4.0'],['chord','1.4.0'],['pi-telemetry','1.4.0']]) {
+ const entry = fileURLToPath(import.meta.resolve('@earendil-works/' + name));
+ let dir = dirname(entry), manifest;
+ while (dir !== dirname(dir)) { try { const candidate = JSON.parse(await readFile(join(dir,'package.json'),'utf8')); if (candidate.name === '@earendil-works/' + name) { manifest = candidate; break; } } catch {} dir = dirname(dir); }
+ assert.equal(manifest?.version, expected, name); cohort[name] = { version: manifest.version, entry };
+}
+await writeFile(join(out,'cohort.json'),JSON.stringify(cohort,null,2));
+const text = input => typeof input === 'string' ? input : JSON.stringify(input);
+const fullRewrite = 'REWRITE ENTIRE submit_compaction with summary (P1), graphs and annotations (P2/P3), clues (P4), and unresolved. Do not return a partial patch.';
+const source = ['source-1'];
+const valid = { summary: 'SOURCE-GROUNDED SUMMARY ' .repeat(6), graphs: [{ id:'g1', title:'local graph', nodes:[{ id:'n1', label:'observation', sourceEntryIds:source }], edges:[], annotations:[{ nodeIds:['n1'], text:'grounded annotation', sourceEntryIds:source }] }], clues:[{ text:'target clue', sourceEntryIds:source }], unresolved:[] };
+const ref = Type.Array(Type.String(), { minItems:1 });
+const graph = Type.Object({ id:Type.String(), title:Type.String(), nodes:Type.Array(Type.Object({id:Type.String(),label:Type.String(),sourceEntryIds:ref},{additionalProperties:false})), edges:Type.Array(Type.Object({from:Type.String(),to:Type.String(),label:Type.String(),sourceEntryIds:ref},{additionalProperties:false})), annotations:Type.Array(Type.Object({nodeIds:Type.Array(Type.String()),text:Type.String(),sourceEntryIds:ref},{additionalProperties:false})) },{additionalProperties:false});
+const parameters = Type.Object({ summary:Type.String({minLength:80}), graphs:Type.Array(graph), clues:Type.Array(Type.Object({text:Type.String(),sourceEntryIds:ref},{additionalProperties:false}),{minItems:1}), unresolved:Type.Array(Type.Object({text:Type.String(),sourceEntryIds:ref},{additionalProperties:false})) },{additionalProperties:false});
+const Policy = defineDoc({kind:'probe140.compressor',version:1,scope:'conversation',history:'latest',fork:'initial',initial:()=>({status:'running',toolErrors:0,unresolvedErrors:0,toolTolerance:3,unresolvedTolerance:4,lastError:null,processed:[],candidate:null}),checkpointWhen:()=>true});
+
+async function fixture(name, reply, {afterFailedRun='continue',recoverProvider=true,yieldMode='continue'}={}) {
+ const directory=join(out,name); await mkdir(directory,{recursive:true});
+ const requests=[],events=[],reports=[],executed=[],repairs=[],envelopes=new Map(),raw=new Map();
+ let harness,conversation;
+ const server=createServer((req,res)=>{void(async()=>{
+  let body=''; for await(const chunk of req)body+=chunk;
+  const payload=JSON.parse(body); requests.push(payload);
+  const n=requests.length; const answer=await reply(n,payload);
+  if(res.destroyed)return;
+  if(answer.disconnect){res.destroy();return;}
+  if(answer.http){res.writeHead(answer.http,{'content-type':'application/json'});res.end(JSON.stringify({error:{message:'provider-failure-'+n}}));return;}
+  const base={id:'probe140-'+n,object:'chat.completion.chunk',created:1,model:'local-model'};
+  const calls=answer.calls??(answer.tool?[{name:answer.tool,args:answer.args??{},argsJson:answer.argsJson,fragments:answer.fragments}]:[]);
+  const deltas=[];
+  if(calls.length){
+   for(const [index,call]of calls.entries()){
+    const input=call.argsJson??JSON.stringify(call.args); const pieces=call.fragments??[input];
+    pieces.forEach((piece,i)=>deltas.push({tool_calls:[{index,...(i===0?{id:'call-'+n+'-'+index,type:'function'}:{}),function:{...(i===0?{name:call.name}:{}),arguments:piece}}]}));
+   }
+  }else deltas.push({content:answer.text??'incomplete-draft-'+n});
+  const chunks=[{...base,choices:[{index:0,delta:{role:'assistant'},finish_reason:null}]},...deltas.map(delta=>({...base,choices:[{index:0,delta,finish_reason:null}]})),{...base,choices:[{index:0,delta:{},finish_reason:answer.finishReason??(calls.length?'tool_calls':'stop')}],usage:{prompt_tokens:10,completion_tokens:2,total_tokens:12}}];
+  res.writeHead(200,{'content-type':'text/event-stream'});for(const chunk of chunks)res.write('data: '+JSON.stringify(chunk)+'\n\n');res.end('data: [DONE]\n\n');
+ })().catch(error=>{reports.push({where:'server',message:String(error)});res.destroy(error);});});
+ await new Promise(r=>server.listen(0,'127.0.0.1',r));
+ const endpoint='http://127.0.0.1:'+server.address().port+'/v1';
+ const api={...oac,streamSimple:(model,transcript,options)=>{
+  const byIndex=new Map();
+  return oac.streamSimple(model,transcript,{...options,onProviderStreamEvent:async(data,currentModel)=>{
+   await options?.onProviderStreamEvent?.(data,currentModel);
+   for(const choice of data.choices??[])for(const call of choice.delta?.tool_calls??[]){
+    const state=byIndex.get(call.index)??{id:undefined,text:''}; if(call.id)state.id=call.id;state.text+=call.function?.arguments??'';byIndex.set(call.index,state);if(state.id)raw.set(state.id,state);
+   }
+  }});
+ }};
+ const models=createModels();models.setProvider(createProvider({id:'local140',name:'isolated local 1.4',baseUrl:endpoint,auth:{apiKey:{name:'Synthetic only',resolve:()=>({auth:{apiKey:'synthetic-local-only',baseUrl:endpoint}})}},api:{'openai-completions':api},models:[{id:'local-model',name:'local-model',provider:'local140',api:'openai-completions',baseUrl:endpoint,reasoning:false,input:['text'],cost:{input:0,output:0,cacheRead:0,cacheWrite:0},contextWindow:128000,maxTokens:4096,compat:{maxTokensField:'max_tokens',supportsMidConvoSystemMessages:true}}]}));
+ async function incident(kind,reason,key){return harness.commit(async tx=>{const doc=await tx.doc(Policy,conversation.id);if(doc.status==='running'&&!doc.processed.includes(key)){doc.processed.push(key);doc[kind]++;doc.lastError={kind,reason,key};if(doc.toolErrors>=doc.toolTolerance||doc.unresolvedErrors>=doc.unresolvedTolerance)doc.status='sealed';}return JSON.parse(JSON.stringify(doc));},context);}
+ async function enqueue(api,reason){
+  const requestId='repair-'+api.taskId;
+  const sub=await conversation.submit({type:'input',requestId,whenBusy:'steer',content:'Provider request failed: '+reason+'\n'+fullRewrite},context);
+  repairs.push({id:sub.id,requestId,admitted:(await sub.status(context)).status});
+ }
+ const registry=createRegistry();
+ const tool=defineTool({name:'submit_compaction',description:fullRewrite,parameters,replay:'safe',execute:async(args,api,ctx)=>{
+  const bad=JSON.stringify(args).includes('foreign-source');
+  if(bad)return{output:[{type:'text',text:'Unknown source reference. '+fullRewrite}],isError:true};
+  const state=await harness.snapshot(Policy,api.conversationId,ctx);
+  if(state.status!=='running')return{output:[{type:'text',text:'Session is sealed.'}],isError:true,control:{terminate:true}};
+  executed.push(args);await api.commit(async tx=>{const doc=await tx.doc(Policy,api.conversationId);doc.status='accepted';doc.candidate=args;},ctx);
+  return{output:[{type:'text',text:'Complete candidate accepted'}],control:{terminate:true}};
+ }});
+ registry.install(defineExtension({name:'compressor140',tools:[tool],hooks:[
+  hook(ToolTask,{
+   beforeTool:async(call,api,ctx)=>{
+    events.push({event:'beforeTool',callId:call.id});
+    const doc=await harness.snapshot(Policy,api.conversationId,ctx);if(doc.status!=='running')return{block:'sealed session'};
+    if(!envelopes.get(call.id))return{block:'Expected exactly one output call. '+fullRewrite};
+    try{const original=JSON.parse(raw.get(call.id)?.text);if(!isDeepStrictEqual(original,call.arguments))throw Error('normalization');}catch{return{block:'Incomplete or normalized raw JSON. '+fullRewrite};}
+   },
+   afterTool:(call,result)=>{events.push({event:'afterTool',callId:call.id,isError:result.isError??false});}
+  }),
+  hook(GenerationTask,{
+   beforeRequest:async(_request,api,ctx)=>{const doc=await harness.snapshot(Policy,api.conversationId,ctx);events.push({event:'beforeRequest',taskId:api.taskId,status:doc.status});if(doc.status!=='running')return{block:'compressor-'+doc.status};return{messages:_request.messages,check:()=>{if(closed)throw Error('source or session closed');}};},
+   afterResponse:async(message,api,ctx)=>{
+    events.push({event:'afterResponse',taskId:api.taskId,stopReason:message.stopReason,error:message.errorMessage??null});
+    const calls=message.content.filter(x=>x.type==='toolCall');for(const call of calls)envelopes.set(call.id,calls.length===1&&message.stopReason==='toolUse'&&call.name==='submit_compaction');
+    if(message.stopReason!=='error')return;
+    const state=await incident('unresolvedErrors',message.errorMessage??'provider error','provider:'+api.taskId);
+    if(state.status==='running'&&recoverProvider)await enqueue(api,message.errorMessage??'provider error');
+   },
+   onYield:async(message,api,ctx)=>{
+    events.push({event:'onYield',taskId:api.taskId,stopReason:message.stopReason});
+    const state=await incident('unresolvedErrors','No complete P1/P2/P3/P4 submission: '+message.stopReason+':'+requests.length,'yield:'+api.taskId);
+    if(state.status!=='running')return;
+    if(yieldMode==='steer'){const sub=await conversation.submit({type:'input',requestId:'yield-'+api.taskId,whenBusy:'steer',content:fullRewrite},ctx);repairs.push({id:sub.id,requestId:'yield-'+api.taskId,admitted:(await sub.status(ctx)).status});return;}
+    return{continue:fullRewrite};
+   },
+   afterTools:async(assistant,ids,api,ctx)=>{
+    const records=await harness.commit(tx=>Promise.all(ids.map(id=>tx.entry(ToolResultEntry,id))),ctx);
+    const errors=records.filter(x=>x?.model?.[0]?.isError);
+    events.push({event:'afterTools',assistant,errors:errors.map(x=>({id:x.id,message:x.model[0]}))});
+    for(const record of errors){const reason=text(record.model[0].content);await incident('toolErrors',reason,'tool:'+record.id);}
+    if(errors.length)await harness.commit(async tx=>{for(const record of errors){const msg=record.model[0];await tx.appendEntry(api.conversationId,{kind:'probe140.rewrite-feedback',data:{target:record.id},edits:[{target:record.id,action:'replace',messages:[{...msg,content:[...msg.content,{type:'text',text:fullRewrite}]}]}]});}},ctx);
+   }
+  })
+ ]}));
+ let closed=false;
+ const options={models,registry,settings:{stream:{maxRetries:0},retry:{enabled:false,maxRetries:0},compaction:{enabled:false},toolExecution:'sequential',afterFailedRun},onReport:error=>reports.push({where:'native',message:String(error)})};
+ async function open(){harness=await Harness.open(await openNodeJsonlStorage(join(directory,'session'),context,{fsync:true}),options,context);conversation=await harness.root(context,{agent:{model:{provider:'local140',modelId:'local-model'},extensions:[registry.snapshot().extension('compressor140')],tools:[tool],thinkingLevel:'off',instructions:'COMPRESSOR: preserve analysis; submit all P1/P2/P3/P4. '+fullRewrite},init:async(tx,id)=>{await tx.doc(Policy,id);}});}
+ await open();
+ return{requests,events,reports,executed,repairs,get harness(){return harness;},get conversation(){return conversation;},async start(){return conversation.submit({type:'input',requestId:'source-request',content:'FIXED-SOURCE source-1: retained host-bound source'},context);},async run(){const sub=await this.start();const receipt=await sub.wait(context);await conversation.waitForIdle(context);return receipt;},async state(){return harness.snapshot(Policy,conversation.id,context);},async seal(reason){closed=true;await harness.commit(async tx=>{const doc=await tx.doc(Policy,conversation.id);doc.status='sealed';doc.lastError={kind:'terminal',reason,key:'explicit-seal'};},context);},async reopen(){await harness.close(context);closed=false;await open();},async close(){try{const statuses=[];for(const item of repairs){const sub=await harness.submission(item.id,context);statuses.push({...item,final:sub?await sub.status(context):null});}await writeFile(join(directory,'observations.json'),JSON.stringify({settings:{afterFailedRun,recoverProvider,yieldMode},requests,events,reports,executed,repairs:statuses,policy:await this.state(),provider:await harness.snapshot(ProviderDoc,conversation.id,context),usage:await harness.usage(context),inspection:await harness.inspect(context)},null,2));}finally{await harness.close(context);server.closeAllConnections();await new Promise(r=>server.close(r));}}};
+}
+
+const good={tool:'submit_compaction',args:valid};
+const missing=()=>{const result=structuredClone(valid);delete result.clues;return result;};
+
+test('control: afterFailedRun=keep retains the queued correction but does not dispatch it',async()=>{
+ const f=await fixture('keep-control',()=>({http:400}),{afterFailedRun:'keep'});
+ try{const first=await f.run();assert.equal(first.status,'unanswered');assert.equal(f.requests.length,1);assert.equal(f.repairs.length,1);assert.equal(f.repairs[0].admitted,'queued');assert.equal((await f.harness.inspect(context)).submissions.filter(x=>x.status==='queued').length,1);assert.deepEqual(f.reports,[]);}finally{await f.close();}
+});
+test('control: continue policy alone does not retry when no corrective input is admitted',async()=>{
+ const f=await fixture('continue-without-input',()=>({http:400}),{recoverProvider:false});
+ try{assert.equal((await f.run()).status,'unanswered');assert.equal(f.requests.length,1);assert.equal(f.repairs.length,0);assert.deepEqual(f.reports,[]);}finally{await f.close();}
+});
+test('native error boundary drains three in-hook steering repairs and succeeds without an outer inference loop',async()=>{
+ const f=await fixture('provider-auto-success',n=>n<=3?{http:400}:good);
+ try{const first=await f.run();assert.equal(first.status,'unanswered','initial native run remains failed');assert.equal(f.requests.length,4);assert.equal(f.repairs.length,3);assert.ok(f.repairs.every(x=>x.admitted==='queued'));assert.equal((await f.state()).status,'accepted');assert.equal((await f.state()).unresolvedErrors,3);assert.match(JSON.stringify(f.requests[3]),/Provider request failed/);assert.equal(f.executed.length,1);assert.deepEqual(f.reports,[]);}finally{await f.close();}
+});
+for(const status of [400,500])test('four provider '+status+' errors seal with no fifth HTTP and retain the last reason',async()=>{
+ const f=await fixture('provider-limit-'+status,()=>({http:status}));
+ try{await f.run();const state=await f.state();assert.equal(f.requests.length,4);assert.equal(f.repairs.length,3);assert.equal(state.status,'sealed');assert.equal(state.unresolvedErrors,4);assert.equal(state.toolErrors,0);assert.match(state.lastError.reason,/provider-failure-4/);assert.deepEqual(f.reports,[]);}finally{await f.close();}
+});
+for(const mode of ['continue','steer'])test('four incomplete stops seal at exact count using native '+mode,async()=>{
+ const f=await fixture('stop-limit-'+mode,n=>({text:'PRESERVED-DRAFT-'+n}),{yieldMode:mode});
+ try{await f.run();const state=await f.state();assert.equal(f.requests.length,4);assert.equal(state.status,'sealed');assert.equal(state.unresolvedErrors,4);assert.equal(state.toolErrors,0);assert.match(JSON.stringify(f.requests[3]),/PRESERVED-DRAFT-1/);assert.match(state.lastError.reason,/stop:4$/);assert.equal(f.repairs.length,mode==='steer'?3:0);assert.deepEqual(f.reports,[]);}finally{await f.close();}
+});
+test('invalid schema, foreign source and unavailable tool all count toward one tool tolerance and receive full rewrite feedback',async()=>{
+ const foreign=structuredClone(valid);foreign.clues[0].sourceEntryIds=['foreign-source'];
+ const f=await fixture('tool-limit',n=>n===1?{tool:'submit_compaction',args:missing()}:n===2?{tool:'submit_compaction',args:foreign}:{tool:'unknown_submit',args:valid});
+ try{await f.run();const state=await f.state();assert.equal(f.requests.length,3);assert.equal(state.status,'sealed');assert.equal(state.toolErrors,3);assert.equal(state.unresolvedErrors,0);assert.equal(f.executed.length,0);assert.match(JSON.stringify(f.requests[1]),/REWRITE ENTIRE/);assert.match(JSON.stringify(f.requests[2]),/Unknown source reference/);assert.equal(f.events.filter(x=>x.event==='afterTool').length,1,'schema and unknown name bypass afterTool');assert.deepEqual(f.reports,[]);}finally{await f.close();}
+});
+test('schema error is a call-ID-matched full replacement, not a partial field merge',async()=>{
+ const f=await fixture('tool-replacement',n=>n===1?{tool:'submit_compaction',args:missing()}:good);
+ try{await f.run();assert.equal(f.requests.length,2);const result=f.requests[1].messages.find(x=>x.role==='tool'&&x.tool_call_id==='call-1-0');assert.ok(result);assert.match(text(result.content),/clues/);assert.match(text(result.content),/REWRITE ENTIRE/);assert.equal((await f.state()).status,'accepted');assert.equal((await f.state()).toolErrors,1);assert.equal(f.executed.length,1);assert.deepEqual(f.reports,[]);}finally{await f.close();}
+});
+test('interleaved tool errors, stops and provider failure retain one Conversation and separate cumulative counters',async()=>{
+ const f=await fixture('mixed',n=>n===1?{tool:'unknown_submit',args:valid}:n===2?{text:'PRIOR-ANALYSIS'}:n===3?{http:400}:n===4?{tool:'submit_compaction',args:missing()}:n===5?{text:'MORE-ANALYSIS'}:good);
+ try{const id=f.conversation.id;await f.run();const state=await f.state();assert.equal(f.conversation.id,id);assert.equal(f.requests.length,6);assert.equal(state.status,'accepted');assert.equal(state.toolErrors,2);assert.equal(state.unresolvedErrors,3);assert.equal(f.repairs.length,1);assert.match(JSON.stringify(f.requests[5]),/PRIOR-ANALYSIS/);assert.match(JSON.stringify(f.requests[5]),/MORE-ANALYSIS/);assert.deepEqual(f.reports,[]);}finally{await f.close();}
+});
+test('native malformed-argument rejection preserves matched repair feedback while valid fragments are accepted',async()=>{
+ const encoded=JSON.stringify(valid);const chunks=[encoded.slice(0,15),encoded.slice(15,90),encoded.slice(90)];
+ const f=await fixture('strict-json',n=>n===1?{tool:'submit_compaction',argsJson:encoded.slice(0,-1)}:{tool:'submit_compaction',args:valid,fragments:chunks});
+ try{await f.run();assert.equal(f.requests.length,2);assert.equal(f.executed.length,1);assert.equal((await f.state()).toolErrors,1);assert.match(JSON.stringify(f.requests[1]),/Invalid arguments for tool/);assert.match(JSON.stringify(f.requests[1]),/REWRITE ENTIRE/);assert.deepEqual(f.reports,[]);}finally{await f.close();}
+});
+test('raw parameter coercion is rejected and the next full replacement can succeed',async()=>{
+ const coerced=structuredClone(valid);coerced.graphs[0].nodes[0].label=123;
+ const f=await fixture('coercion',n=>n===1?{tool:'submit_compaction',args:coerced}:good);
+ try{await f.run();assert.equal(f.requests.length,2);assert.equal(f.executed.length,1);assert.equal((await f.state()).toolErrors,1);assert.match(JSON.stringify(f.requests[1]),/REWRITE ENTIRE/);assert.deepEqual(f.reports,[]);}finally{await f.close();}
+});
+test('raw guard rejects an SDK-repaired JSON escape and supplies full replacement feedback',async()=>{
+ const invalid=JSON.stringify(valid).replace('grounded annotation','bad\\q');
+ const f=await fixture('invalid-escape',n=>n===1?{tool:'submit_compaction',argsJson:invalid}:good);
+ try{await f.run();assert.equal(f.requests.length,2);assert.equal(f.executed.length,1);assert.equal((await f.state()).toolErrors,1);assert.match(JSON.stringify(f.requests[1]),/Incomplete or normalized raw JSON/);assert.match(JSON.stringify(f.requests[1]),/REWRITE ENTIRE/);assert.deepEqual(f.reports,[]);}finally{await f.close();}
+});
+test('output length is an unresolved error, not a tool error, and preserves earlier draft',async()=>{
+ const f=await fixture('length',n=>n===1?{text:'TRUNCATED-PRIOR-DRAFT',finishReason:'length'}:good);
+ try{await f.run();assert.equal(f.requests.length,2);assert.equal((await f.state()).unresolvedErrors,1);assert.equal((await f.state()).toolErrors,0);assert.equal((await f.state()).status,'accepted');assert.match(JSON.stringify(f.requests[1]),/TRUNCATED-PRIOR-DRAFT/);assert.deepEqual(f.reports,[]);}finally{await f.close();}
+});
+test('socket failure is a native provider error and the prior visible analysis survives native queued repair',async()=>{
+ const f=await fixture('socket-error',n=>n===1?{text:'BEFORE-SOCKET-ERROR'}:n===2?{disconnect:true}:good);
+ try{await f.run();assert.equal(f.requests.length,3);assert.equal(f.repairs.length,1);assert.equal((await f.state()).unresolvedErrors,2);assert.equal((await f.state()).status,'accepted');assert.match(JSON.stringify(f.requests[2]),/BEFORE-SOCKET-ERROR/);assert.deepEqual(f.reports,[]);}finally{await f.close();}
+});
+test('duplicate valid calls cannot partially adopt before the whole output envelope is accepted',async()=>{
+ const f=await fixture('duplicate-calls',n=>n===1?{calls:[{name:'submit_compaction',args:valid},{name:'submit_compaction',args:valid}]}:good);
+ try{await f.run();assert.equal(f.requests.length,2);assert.equal(f.executed.length,1);assert.equal((await f.state()).toolErrors,2);assert.equal((await f.state()).status,'accepted');assert.match(JSON.stringify(f.requests[1]),/Expected exactly one output call/);assert.deepEqual(f.reports,[]);}finally{await f.close();}
+});
+test('sealed provider-error session survives normal reopen and an attempted late input dispatches nothing',async()=>{
+ const f=await fixture('sealed-reopen',()=>({http:400}));
+ try{await f.run();const saved=await f.state();const provider=await f.harness.snapshot(ProviderDoc,f.conversation.id,context);await f.reopen();assert.deepEqual(await f.state(),saved);assert.deepEqual(await f.harness.snapshot(ProviderDoc,f.conversation.id,context),provider);assert.equal(f.requests.length,4);const sub=await f.conversation.submit({type:'input',content:'LATE REPAIR MUST NOT REOPEN'},context);assert.equal((await sub.wait(context)).status,'unanswered');await f.conversation.waitForIdle(context);assert.equal(f.requests.length,4);assert.deepEqual(await f.state(),saved);assert.deepEqual(f.reports,[]);}finally{await f.close();}
+});
+test('explicit source seal rejects a late otherwise-valid tool submission and permits no next provider request',async()=>{
+ let arrive,release;const arrived=new Promise(r=>arrive=r);const released=new Promise(r=>release=r);
+ const f=await fixture('late-after-seal',async()=>{arrive();await released;return good;});
+ try{const sub=await f.start();await arrived;await f.seal('source-revoked');release();await sub.wait(context);await f.conversation.waitForIdle(context);assert.equal(f.requests.length,1);assert.equal(f.executed.length,0);assert.equal((await f.state()).status,'sealed');assert.equal((await f.state()).lastError.reason,'source-revoked');assert.deepEqual(f.reports,[]);}finally{release();await f.close();}
+});

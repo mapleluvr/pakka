@@ -22,6 +22,10 @@ Each request retains the source job authority and durable attempt reservation, o
 
 The host owns native handles. The strategy receives detached immutable records and identity-bound commands. Source/lifecycle checks run at dispatch and adoption. Normal-stop corrections and tool-result placement use their native boundaries; a final-boundary continuation and an externally queued steer are distinct operations.
 
+## Evaluation baseline
+
+The operator-selected assessment baseline is the fixed Pi Durable `1.4.0-pakka.1` archive with Pi AI/Chord/Telemetry 1.4.0. The [1.4 capability record](../verification/COMPRESSOR-SESSION-1.4-FEASIBILITY.md) supports native queued steering and failed-run continuation for this lifecycle. A compressor session can span several native runs; its retained status, not the first submission receipt, determines completion. This recommendation does not promote production dependencies or implement the source-job auxiliary port. The earlier 1.0.3 record remains version-scoped historical evidence.
+
 ## Contract ownership
 
 Formation and the pending infrastructure choice are in [the change record](../changes/compressor-repair-session.md), its [OpenSpec definition](../../openspec/changes/add-compressor-repair-session/specs/compressor-repair-session/spec.md) and [design](../../openspec/changes/add-compressor-repair-session/design.md). [Fixed characterization](../verification/COMPRESSOR-SESSION-FEASIBILITY.md) describes measured capability; [tasks](../../openspec/changes/add-compressor-repair-session/tasks.md) tracks remaining product work.

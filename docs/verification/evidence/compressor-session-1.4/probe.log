@@ -1,0 +1,28 @@
+✔ control: afterFailedRun=keep retains the queued correction but does not dispatch it (146.0804ms)
+✔ control: continue policy alone does not retry when no corrective input is admitted (95.4108ms)
+✔ native error boundary drains three in-hook steering repairs and succeeds without an outer inference loop (364.3081ms)
+✔ four provider 400 errors seal with no fifth HTTP and retain the last reason (297.5773ms)
+✔ four provider 500 errors seal with no fifth HTTP and retain the last reason (301.7117ms)
+✔ four incomplete stops seal at exact count using native continue (279.3364ms)
+✔ four incomplete stops seal at exact count using native steer (333.7618ms)
+✔ invalid schema, foreign source and unavailable tool all count toward one tool tolerance and receive full rewrite feedback (351.8462ms)
+✔ schema error is a call-ID-matched full replacement, not a partial field merge (242.7943ms)
+✔ interleaved tool errors, stops and provider failure retain one Conversation and separate cumulative counters (524.1961ms)
+✔ native malformed-argument rejection preserves matched repair feedback while valid fragments are accepted (253.1906ms)
+✔ raw parameter coercion is rejected and the next full replacement can succeed (238.4494ms)
+✔ raw guard rejects an SDK-repaired JSON escape and supplies full replacement feedback (236.7451ms)
+✔ output length is an unresolved error, not a tool error, and preserves earlier draft (191.0156ms)
+✔ socket failure is a native provider error and the prior visible analysis survives native queued repair (267.8652ms)
+✔ duplicate valid calls cannot partially adopt before the whole output envelope is accepted (294.4976ms)
+✔ sealed provider-error session survives normal reopen and an attempted late input dispatches nothing (387.0819ms)
+✔ explicit source seal rejects a late otherwise-valid tool submission and permits no next provider request (178.0909ms)
+ℹ tests 18
+ℹ suites 0
+ℹ pass 18
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 5323.7374
+
+exit=0,signal=null
