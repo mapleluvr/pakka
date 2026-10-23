@@ -1,0 +1,22 @@
+✔ Compresser repairs a stop and invalid call in the same native trajectory, auditing every real request (816.0191ms)
+✔ Compresser provider errors use the native failed-run boundary without losing earlier analysis (710.2548ms)
+✔ one external Conversation creates independent Compresser Conversations and repeated job admission sends nothing (691.9175ms)
+✔ tool tolerance is shared across child Conversations and survives reopen without dispatch (900.9818ms)
+✔ four stop errors seal the Session, preserve the actual reason, and send no fifth request (799.0817ms)
+✔ four provider errors seal the Session, preserve the actual reason, and send no fifth request (724.4591ms)
+✔ Compresser output-length failure with a tool-shaped partial is unresolved, never an adopted tool error (514.702ms)
+✔ Compresser strict raw and source validation failures are complete-call repairs, not adopted normalized DTOs (741.9003ms)
+✔ a source revocation during Compresser HTTP prevents late adoption and another dispatch (386.5184ms)
+✔ Compresser job and strategy hard budgets remain independent of error tolerances (877.424ms)
+✔ managed Compresser requests spend auxiliary aggregate quota and never primary quota (659.9553ms)
+✔ one container serves distinct external Sessions and sealing refuses adoption of a previously returned candidate (964.861ms)
+✔ a sibling seal quarantines an already-in-flight otherwise valid response (705.9578ms)
+✔ completed native job state survives reopen without new HTTP and one writer is enforced (417.5506ms)
+ℹ tests 14
+ℹ suites 0
+ℹ pass 14
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 10864.5301

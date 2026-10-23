@@ -1,5 +1,5 @@
 import { createServer } from "node:http";
-import { mkdtemp, mkdir, readFile, writeFile, appendFile, cp } from "node:fs/promises";
+import { mkdtemp, mkdir, readFile, writeFile, appendFile, cp, realpath } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, basename } from "node:path";
 import { createHost, type Host, type HostOptions } from "../src/index.ts";
@@ -23,6 +23,7 @@ export type Payload = {
 export type Answer = (
 	| { text: string }
 	| { tool: string; args?: Record<string, unknown>; argsJson?: string }
+	| { toolCalls: { tool: string; args?: Record<string, unknown>; argsJson?: string }[] }
 	| { error: number }
 ) & {
 	finishReason?: string;
@@ -39,7 +40,7 @@ export async function fixture(
 	options: FixtureOptions = {},
 	reply: (payload: Payload, n: number) => Answer | Promise<Answer> = () => ({ text: "LOCAL-ANSWER" }),
 ) {
-	const root = await mkdtemp(join(tmpdir(), "pakka-integration-"));
+	const root = await realpath(await mkdtemp(join(tmpdir(), "pakka-integration-")));
 	const requests: Payload[] = [];
 	const errors: unknown[] = [];
 	// Synthetic deterministic-provider evidence only; never reads ambient credentials.
@@ -60,19 +61,14 @@ export async function fixture(
 			}
 			const base = { id: "local-" + n, object: "chat.completion.chunk", created: 1, model: "local-model" };
 			const delta =
-				"tool" in answer
+				"tool" in answer || "toolCalls" in answer
 					? {
-							tool_calls: [
-								{
-									index: 0,
-									id: "call-" + n,
-									type: "function",
-									function: {
-										name: answer.tool,
-										arguments: answer.argsJson ?? JSON.stringify(answer.args ?? {}),
-									},
-								},
-							],
+							tool_calls: ("toolCalls" in answer ? answer.toolCalls : [answer]).map((call, index) => ({
+								index,
+								id: "call-" + n + (index ? "-" + index : ""),
+								type: "function",
+								function: { name: call.tool, arguments: call.argsJson ?? JSON.stringify(call.args ?? {}) },
+							})),
 						}
 					: { content: answer.text };
 			const chunks = [
@@ -84,7 +80,8 @@ export async function fixture(
 						{
 							index: 0,
 							delta: {},
-							finish_reason: answer.finishReason ?? ("tool" in answer ? "tool_calls" : "stop"),
+							finish_reason:
+								answer.finishReason ?? ("tool" in answer || "toolCalls" in answer ? "tool_calls" : "stop"),
 						},
 					],
 					...(answer.usage === null
@@ -148,6 +145,7 @@ export async function fixture(
 						["sessions", "sessions"],
 						["artifacts", "strategy-artifacts"],
 						["journal-ownership", "journal-ownership"],
+						["../compresser", "compresser"],
 					]) {
 						try {
 							await cp(join(dataDir, source), join(directory, destination), { recursive: true });

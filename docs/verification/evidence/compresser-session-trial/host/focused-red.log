@@ -1,0 +1,208 @@
+✖ Compresser repairs a stop and invalid call in the same native trajectory, auditing every real request (1.0934ms)
+✖ Compresser provider errors use the native failed-run boundary without losing earlier analysis (0.1942ms)
+✖ one external Conversation creates independent Compresser Conversations and repeated job admission sends nothing (0.159ms)
+✖ tool tolerance is shared across child Conversations and survives reopen without dispatch (0.137ms)
+✖ four stop errors seal the Session, preserve the actual reason, and send no fifth request (0.1401ms)
+✖ four provider errors seal the Session, preserve the actual reason, and send no fifth request (0.076ms)
+✖ Compresser strict raw and source validation failures are complete-call repairs, not adopted normalized DTOs (0.1609ms)
+✖ a source revocation during Compresser HTTP prevents late adoption and another dispatch (0.165ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 0
+ℹ fail 8
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 804.2344
+
+✖ failing tests:
+
+test at packages\agent\test\compresser-session.test.ts:33:1
+✖ Compresser repairs a stop and invalid call in the same native trajectory, auditing every real request (1.0934ms)
+  AssertionError [ERR_ASSERTION]: the production public API must create the governed native Compresser Session
+  + actual - expected
+  
+  + 'undefined'
+  - 'function'
+  
+      at fixture (file:///D:/Projects/pakka/packages/agent/test/compresser-session.test.ts:15:9)
+      at TestContext.<anonymous> (file:///D:/Projects/pakka/packages/agent/test/compresser-session.test.ts:35:18)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1325:25)
+      at Test.start (node:internal/test_runner/test:1191:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:385:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'undefined',
+    expected: 'function',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at packages\agent\test\compresser-session.test.ts:57:1
+✖ Compresser provider errors use the native failed-run boundary without losing earlier analysis (0.1942ms)
+  AssertionError [ERR_ASSERTION]: the production public API must create the governed native Compresser Session
+  + actual - expected
+  
+  + 'undefined'
+  - 'function'
+  
+      at fixture (file:///D:/Projects/pakka/packages/agent/test/compresser-session.test.ts:15:9)
+      at TestContext.<anonymous> (file:///D:/Projects/pakka/packages/agent/test/compresser-session.test.ts:59:18)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1325:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:911:18)
+      at Test.postRun (node:internal/test_runner/test:1465:19)
+      at Test.run (node:internal/test_runner/test:1390:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'undefined',
+    expected: 'function',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at packages\agent\test\compresser-session.test.ts:71:1
+✖ one external Conversation creates independent Compresser Conversations and repeated job admission sends nothing (0.159ms)
+  AssertionError [ERR_ASSERTION]: the production public API must create the governed native Compresser Session
+  + actual - expected
+  
+  + 'undefined'
+  - 'function'
+  
+      at fixture (file:///D:/Projects/pakka/packages/agent/test/compresser-session.test.ts:15:9)
+      at TestContext.<anonymous> (file:///D:/Projects/pakka/packages/agent/test/compresser-session.test.ts:72:18)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1325:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:911:18)
+      at Test.postRun (node:internal/test_runner/test:1465:19)
+      at Test.run (node:internal/test_runner/test:1390:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'undefined',
+    expected: 'function',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at packages\agent\test\compresser-session.test.ts:89:1
+✖ tool tolerance is shared across child Conversations and survives reopen without dispatch (0.137ms)
+  AssertionError [ERR_ASSERTION]: the production public API must create the governed native Compresser Session
+  + actual - expected
+  
+  + 'undefined'
+  - 'function'
+  
+      at fixture (file:///D:/Projects/pakka/packages/agent/test/compresser-session.test.ts:15:9)
+      at TestContext.<anonymous> (file:///D:/Projects/pakka/packages/agent/test/compresser-session.test.ts:91:18)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1325:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:911:18)
+      at Test.postRun (node:internal/test_runner/test:1465:19)
+      at Test.run (node:internal/test_runner/test:1390:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'undefined',
+    expected: 'function',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at packages\agent\test\compresser-session.test.ts:108:51
+✖ four stop errors seal the Session, preserve the actual reason, and send no fifth request (0.1401ms)
+  AssertionError [ERR_ASSERTION]: the production public API must create the governed native Compresser Session
+  + actual - expected
+  
+  + 'undefined'
+  - 'function'
+  
+      at fixture (file:///D:/Projects/pakka/packages/agent/test/compresser-session.test.ts:15:9)
+      at TestContext.<anonymous> (file:///D:/Projects/pakka/packages/agent/test/compresser-session.test.ts:110:18)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1325:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:911:18)
+      at Test.postRun (node:internal/test_runner/test:1465:19)
+      at Test.run (node:internal/test_runner/test:1390:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'undefined',
+    expected: 'function',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at packages\agent\test\compresser-session.test.ts:108:51
+✖ four provider errors seal the Session, preserve the actual reason, and send no fifth request (0.076ms)
+  AssertionError [ERR_ASSERTION]: the production public API must create the governed native Compresser Session
+  + actual - expected
+  
+  + 'undefined'
+  - 'function'
+  
+      at fixture (file:///D:/Projects/pakka/packages/agent/test/compresser-session.test.ts:15:9)
+      at TestContext.<anonymous> (file:///D:/Projects/pakka/packages/agent/test/compresser-session.test.ts:110:18)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1325:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:911:18)
+      at Test.postRun (node:internal/test_runner/test:1465:19)
+      at Test.run (node:internal/test_runner/test:1390:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'undefined',
+    expected: 'function',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at packages\agent\test\compresser-session.test.ts:122:1
+✖ Compresser strict raw and source validation failures are complete-call repairs, not adopted normalized DTOs (0.1609ms)
+  AssertionError [ERR_ASSERTION]: the production public API must create the governed native Compresser Session
+  + actual - expected
+  
+  + 'undefined'
+  - 'function'
+  
+      at fixture (file:///D:/Projects/pakka/packages/agent/test/compresser-session.test.ts:15:9)
+      at TestContext.<anonymous> (file:///D:/Projects/pakka/packages/agent/test/compresser-session.test.ts:124:18)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1325:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:911:18)
+      at Test.postRun (node:internal/test_runner/test:1465:19)
+      at Test.run (node:internal/test_runner/test:1390:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'undefined',
+    expected: 'function',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at packages\agent\test\compresser-session.test.ts:136:1
+✖ a source revocation during Compresser HTTP prevents late adoption and another dispatch (0.165ms)
+  AssertionError [ERR_ASSERTION]: the production public API must create the governed native Compresser Session
+  + actual - expected
+  
+  + 'undefined'
+  - 'function'
+  
+      at fixture (file:///D:/Projects/pakka/packages/agent/test/compresser-session.test.ts:15:9)
+      at TestContext.<anonymous> (file:///D:/Projects/pakka/packages/agent/test/compresser-session.test.ts:138:18)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1325:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:911:18)
+      at Test.postRun (node:internal/test_runner/test:1465:19)
+      at Test.run (node:internal/test_runner/test:1390:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'undefined',
+    expected: 'function',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

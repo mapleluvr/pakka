@@ -1,0 +1,47 @@
+✔ Compresser repairs a stop and invalid call in the same native trajectory, auditing every real request (812.9941ms)
+✖ an empty semantic error is still a rejected call, including repeated admission validation (446.0588ms)
+✔ Compresser provider errors use the native failed-run boundary without losing earlier analysis (680.0824ms)
+✔ one external Conversation creates independent Compresser Conversations and repeated job admission sends nothing (650.6885ms)
+✔ tool tolerance is shared across child Conversations and survives reopen without dispatch (879.791ms)
+✔ four stop errors seal the Session, preserve the actual reason, and send no fifth request (775.088ms)
+✔ four provider errors seal the Session, preserve the actual reason, and send no fifth request (781.8726ms)
+✔ Compresser HTTP 429 has no hidden provider retries outside the charged native attempts (556.4979ms)
+✔ Compresser HTTP 503 has no hidden provider retries outside the charged native attempts (493.9784ms)
+✔ Compresser output-length failure with a tool-shaped partial is unresolved, never an adopted tool error (552.577ms)
+✔ Compresser strict raw and source validation failures are complete-call repairs, not adopted normalized DTOs (736.9784ms)
+✔ a source revocation during Compresser HTTP prevents late adoption and another dispatch (359.6796ms)
+✔ Compresser job and strategy hard budgets remain independent of error tolerances (825.6083ms)
+✔ managed Compresser requests spend auxiliary aggregate quota and never primary quota (637.9066ms)
+✔ one container serves distinct external Sessions and sealing refuses adoption of a previously returned candidate (1029.4259ms)
+✔ a sibling seal quarantines an already-in-flight otherwise valid response (706.4312ms)
+✔ multiple output calls in one response are not candidate patches and each actual tool error counts once (520.2894ms)
+✔ cancelling the source job refuses a late result without spending error tolerance or dispatching again (392.5394ms)
+✔ a source audit storage failure after real HTTP seals unknown work without a correction or releasing admission (422.5558ms)
+✔ completed native job state survives reopen without new HTTP and one writer is enforced (447.7349ms)
+ℹ tests 20
+ℹ suites 0
+ℹ pass 19
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 13558.9856
+
+✖ failing tests:
+
+test at packages\agent\test\compresser-session.test.ts:68:1
+✖ an empty semantic error is still a rejected call, including repeated admission validation (446.0588ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  2 !== 3
+  
+      at TestContext.<anonymous> (file:///D:/Projects/pakka/packages/agent/test/compresser-session.test.ts:75:44)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 3,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

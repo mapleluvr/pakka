@@ -1,0 +1,44 @@
+✔ Compresser repairs a stop and invalid call in the same native trajectory, auditing every real request (787.0982ms)
+✔ Compresser provider errors use the native failed-run boundary without losing earlier analysis (686.1763ms)
+✔ one external Conversation creates independent Compresser Conversations and repeated job admission sends nothing (680.2813ms)
+✔ tool tolerance is shared across child Conversations and survives reopen without dispatch (907.0655ms)
+✔ four stop errors seal the Session, preserve the actual reason, and send no fifth request (794.859ms)
+✔ four provider errors seal the Session, preserve the actual reason, and send no fifth request (801.8717ms)
+✔ Compresser output-length failure with a tool-shaped partial is unresolved, never an adopted tool error (575.0756ms)
+✔ Compresser strict raw and source validation failures are complete-call repairs, not adopted normalized DTOs (821.7153ms)
+✔ a source revocation during Compresser HTTP prevents late adoption and another dispatch (416.7817ms)
+✔ Compresser job and strategy hard budgets remain independent of error tolerances (943.8382ms)
+✔ managed Compresser requests spend auxiliary aggregate quota and never primary quota (722.3331ms)
+✔ one container serves distinct external Sessions and sealing refuses adoption of a previously returned candidate (980.4356ms)
+✔ a sibling seal quarantines an already-in-flight otherwise valid response (695.8212ms)
+✔ multiple output calls in one response are not candidate patches and each actual tool error counts once (512.2494ms)
+✔ cancelling the source job refuses a late result without spending error tolerance or dispatching again (343.6729ms)
+✖ a source audit storage failure after real HTTP seals unknown work without a correction or releasing admission (420.8822ms)
+✔ completed native job state survives reopen without new HTTP and one writer is enforced (409.9313ms)
+ℹ tests 17
+ℹ suites 0
+ℹ pass 16
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 12352.7306
+
+✖ failing tests:
+
+test at packages\agent\test\compresser-session.test.ts:271:1
+✖ a source audit storage failure after real HTTP seals unknown work without a correction or releasing admission (420.8822ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  'open' !== 'sealed'
+  
+      at TestContext.<anonymous> (file:///D:/Projects/pakka/packages/agent/test/compresser-session.test.ts:287:44)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'open',
+    expected: 'sealed',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

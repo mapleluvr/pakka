@@ -1,0 +1,222 @@
+{
+  "hostBaseline": "88a693cea1c4e18440e365d8a5bb5b2fac173788",
+  "strategyBaseline": "6da541f6d7b63cf5c16871dd71754d534cb567d6",
+  "files": [
+    {
+      "repo": "host",
+      "path": "package.json",
+      "bytes": 1556,
+      "sha256": "7af8a2886a3a90c19f5781f781f96107cbb8ba212333b572fdfe219c5b503ece"
+    },
+    {
+      "repo": "host",
+      "path": "package-lock.json",
+      "bytes": 85009,
+      "sha256": "ab86c9d8891e4da816d0d0a979f39265e4eb047d3ae07cd4460bb3eeed94ffe9"
+    },
+    {
+      "repo": "host",
+      "path": "packages/agent/package.json",
+      "bytes": 1169,
+      "sha256": "95de6435574edea3c3b43496d445a3916fae48718ffdfc38e87bd6266d031ff4"
+    },
+    {
+      "repo": "host",
+      "path": "packages/agent/src/durable-adapter.ts",
+      "bytes": 152597,
+      "sha256": "fa3e84dcd5bb42c0876e5ce14e7e6cbfe099f36a0cb21b782f4a0afd966376e5"
+    },
+    {
+      "repo": "host",
+      "path": "packages/agent/src/strategy-control.ts",
+      "bytes": 38069,
+      "sha256": "588ad933b5ff92016ee8dc80b4c35e9b4b9e93ddf3ac68cafce7079979630576"
+    },
+    {
+      "repo": "host",
+      "path": "packages/agent/src/host.ts",
+      "bytes": 20185,
+      "sha256": "18d19e84c76dd0ec293727a53328b639512faa8e00333474c9b1867980e10470"
+    },
+    {
+      "repo": "host",
+      "path": "packages/agent/src/types.ts",
+      "bytes": 28502,
+      "sha256": "86b48c493e4a925f13d7d6769e176db848c29a79afe258e4ddc9d7524ee56fd6"
+    },
+    {
+      "repo": "host",
+      "path": "packages/agent/src/index.ts",
+      "bytes": 217,
+      "sha256": "c589cc18a9186d3bc13ae30d55c237231ddd181ccef5704b59410d677ce67cc6"
+    },
+    {
+      "repo": "host",
+      "path": "packages/agent/test/compresser-session.test.ts",
+      "bytes": 25125,
+      "sha256": "456623966d8408612845490107b4fe62dc6f84260be0e42e4f158903e58b6786"
+    },
+    {
+      "repo": "host",
+      "path": "packages/agent/test/compresser-crash.test.ts",
+      "bytes": 3035,
+      "sha256": "7b65c5a459e4fbe3f87a577eb64ecff88a9da91aa1d1ad60f8d4870060b06cdb"
+    },
+    {
+      "repo": "host",
+      "path": "packages/agent/test/compresser-crash-child.ts",
+      "bytes": 1712,
+      "sha256": "303ea4f355c46183ef28cda0fd002e0c90493cf83b891a633d3c799258a693cc"
+    },
+    {
+      "repo": "host",
+      "path": "packages/agent/test/fixture-paths.test.ts",
+      "bytes": 509,
+      "sha256": "c81045d26b401c98a5ec0ef016669c0007f51d5da259a81c794ffa65d217ab69"
+    },
+    {
+      "repo": "host",
+      "path": "packages/agent/test/fixture.ts",
+      "bytes": 6902,
+      "sha256": "d58c0be0ce7045ef18f704bb159ef1deeb75ba4e8143a8866b363fc091321ff3"
+    },
+    {
+      "repo": "host",
+      "path": "apps/webui/test/browser.ts",
+      "bytes": 14919,
+      "sha256": "d8c601101bf4f5760366aa2dddf76f1e8584e3ffc59f9f140f710542ef2f458f"
+    },
+    {
+      "repo": "host",
+      "path": "apps/webui/test/input-failure.test.ts",
+      "bytes": 6727,
+      "sha256": "20156ac982671a5439ee3c7258c2efe0fcf3c118e047fd07e496eb54586a1ead"
+    },
+    {
+      "repo": "host",
+      "path": "scripts/consumer-smoke.mjs",
+      "bytes": 8178,
+      "sha256": "cf4f51aacac0c99ddb04b3874b3277d16d52ac0ff5b531e6baf5b2b382556ea2"
+    },
+    {
+      "repo": "host",
+      "path": "scripts/pack-smoke.mjs",
+      "bytes": 9358,
+      "sha256": "f0d99c5764d542e7836e6c8a97f37c2092cd0dfc57c82a569c2e92022a834785"
+    },
+    {
+      "repo": "strategy",
+      "path": "package.json",
+      "bytes": 1787,
+      "sha256": "64c963280349fab6d08d7dbe6e3a7063c1ff87bde0ef45e11ae81934dc569d97"
+    },
+    {
+      "repo": "strategy",
+      "path": "package-lock.json",
+      "bytes": 107346,
+      "sha256": "ff6e4ef78b8c28982e9c3fd91b4fef26e71608ed3a03127167f008f813f13995"
+    },
+    {
+      "repo": "strategy",
+      "path": "src/artifacts.ts",
+      "bytes": 6694,
+      "sha256": "535c526660a61dea17d614306c842d408fd37faab8aa3e93add7dd9f3125e10c"
+    },
+    {
+      "repo": "strategy",
+      "path": "src/pakka-adapter.ts",
+      "bytes": 20570,
+      "sha256": "d733bcf3419b5eaf894036b1817c6ebe2e24cf0e3ebdbe51e9358cda87d74e39"
+    },
+    {
+      "repo": "strategy",
+      "path": "src/ports.ts",
+      "bytes": 4462,
+      "sha256": "0d2f753dd21580e251fbd8e46076b3765fb44283952891e6dcb123d386828b90"
+    },
+    {
+      "repo": "strategy",
+      "path": "src/runtime.ts",
+      "bytes": 50506,
+      "sha256": "2ceb8f776ecdc12937a6ee0784366538b26c5256f681c8305258021aa8786fde"
+    },
+    {
+      "repo": "strategy",
+      "path": "src/version.ts",
+      "bytes": 133,
+      "sha256": "38c44bf42f340fc95b9b4fee4358a814d0f06fc7db9c446c287f7de401d8f445"
+    },
+    {
+      "repo": "strategy",
+      "path": "tests/durable-compresser-session.test.mjs",
+      "bytes": 10799,
+      "sha256": "d37850e4c69eeee421fb1cfcd9b9970f20f07cbe7c41263397b0dc333244bdc5"
+    },
+    {
+      "repo": "strategy",
+      "path": "tests/helpers/durable-fixture.mjs",
+      "bytes": 6083,
+      "sha256": "eef8cfa9567a10dd3c1990c4f3e583faf045625eb9f8f9ac862b0c904a761307"
+    },
+    {
+      "repo": "strategy",
+      "path": "tests/pairing-guard.test.mjs",
+      "bytes": 2545,
+      "sha256": "2d8cb4047984e085bd09681a8d6967d8efacc2b9d20dfef099602894fcc34faa"
+    },
+    {
+      "repo": "strategy",
+      "path": "scripts/consumer-types.ts",
+      "bytes": 2375,
+      "sha256": "39e323c76cd69f7359eaec0bfd0253b43ec59d199ead66e496529eb116ee5337"
+    },
+    {
+      "repo": "strategy",
+      "path": "scripts/bootstrap-host.mjs",
+      "bytes": 4339,
+      "sha256": "0f88876a5d5dbee6095e57b358336cf642bdb5717998cd331ac19b921b584df2"
+    },
+    {
+      "repo": "strategy",
+      "path": "scripts/package-smoke.mjs",
+      "bytes": 11668,
+      "sha256": "f20eb9c73d2d75de0b012d3d21ef747c26699384ce39a7a9fe9384f942d21615"
+    },
+    {
+      "repo": "strategy",
+      "path": "integrations/pakka/pairing.json",
+      "bytes": 812,
+      "sha256": "77067a8ef7dd25011de9f5255b89b315845843aebf48655712f0f35433dd3914"
+    },
+    {
+      "repo": "strategy",
+      "path": "integrations/pakka/0.3.0-pairing.json",
+      "bytes": 724,
+      "sha256": "379f96f3b51da10ec10133951d50c5ce5084edd30b3ff844c4b36f13adf0cc2f"
+    },
+    {
+      "repo": "strategy",
+      "path": "README.md",
+      "bytes": 13096,
+      "sha256": "a1d13bc9bc6343119ba994b90a7c57e040f3b874c1420a991ec44784fd8028d3"
+    },
+    {
+      "repo": "strategy",
+      "path": "docs/state/artifacts.md",
+      "bytes": 5313,
+      "sha256": "d128249696a7c40a77c3e4ae4be0a9b1682ac8b58e313c2fca7b8b21568bf9dc"
+    },
+    {
+      "repo": "strategy",
+      "path": "docs/ENGINE-PORTS.md",
+      "bytes": 13419,
+      "sha256": "398c497fdb8e0959c03a0df3995bc5b65a9a86f8b2618fcc8e7be2a9c725c190"
+    },
+    {
+      "repo": "strategy",
+      "path": "docs/DURABLE-COMPATIBILITY.md",
+      "bytes": 10770,
+      "sha256": "fa14d62124a9a39a99f6e9574607ec893feaa22b20368ece39b55c15439c0421"
+    }
+  ]
+}

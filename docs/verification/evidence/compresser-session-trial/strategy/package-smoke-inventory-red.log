@@ -1,0 +1,33 @@
+
+> @pakka/dynamite@0.4.0 smoke:package
+> npm run build && node scripts/package-smoke.mjs D:/Projects/pakka
+
+
+> @pakka/dynamite@0.4.0 build
+> tsc -p tsconfig.build.json
+
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Unexpected production dependency: @earendil-works/pi-codemode
++ actual - expected
+
++ [
++   '1.4.0'
++ ]
+- []
+
+    at file:///D:/Projects/pakka-dynamite/scripts/package-smoke.mjs:92:9
+    at ModuleJob.run (node:internal/modules/esm/module_job:439:25)
+    at async node:internal/modules/esm/loader:643:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: [ '1.4.0' ],
+  expected: [],
+  operator: 'deepStrictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.18.0

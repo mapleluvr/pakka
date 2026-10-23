@@ -236,12 +236,23 @@ export interface InferenceRequest {
 	/** A completed response must contain exactly one matching, schema-valid call. */
 	readonly outputTool?: InferenceOutputTool;
 }
+export interface CompresserReceipt {
+	readonly sessionId: string;
+	readonly conversationId: string;
+	readonly attemptIds: readonly string[];
+	/** Whether every attempt has authoritative usage; partial totals are not complete spend. */
+	readonly usageStatus: "known" | "unknown";
+	/** Sum of provider-reported usage only; unknown portions are never invented. */
+	readonly reportedUsage: UsageDTO;
+}
 export interface InferenceResult {
 	readonly status: "completed" | "failed" | "quarantined";
 	readonly attemptId: string;
 	readonly modelKey: string;
 	readonly text?: string;
 	readonly toolCall?: InferenceToolCall;
+	/** Logical native Conversation receipt; the ordinary usage/attemptId still describe the final request. */
+	readonly compresser?: CompresserReceipt;
 	readonly reason?: string;
 	readonly usageStatus: "known" | "unknown";
 	readonly usage?: UsageDTO;
@@ -251,12 +262,47 @@ export interface InferenceAudit extends InferenceResult {
 	readonly planId: string;
 	readonly maxOutputTokens: number;
 }
+export interface CompresserSessionOptions {
+	readonly storageDir: string;
+	readonly toolCallingTolerance: number;
+	readonly unresolvedErrorTolerance: number;
+}
+export interface CompresserSnapshot {
+	readonly sessionId: string;
+	readonly status: "open" | "sealed";
+	readonly toolCallingTolerance: number;
+	readonly unresolvedErrorTolerance: number;
+	readonly toolErrors: number;
+	readonly unresolvedErrors: number;
+	readonly lastError: null | {
+		readonly reason: string;
+		readonly incidentId: string;
+		readonly conversationId: string;
+		readonly jobId: string;
+	};
+	readonly conversations: readonly {
+		readonly conversationId: string;
+		readonly jobId: string;
+		readonly planId: string;
+		readonly sourceSessionId: string;
+		readonly sourceConversationId: string;
+		readonly status: "running" | "completed" | "failed" | "quarantined";
+	}[];
+}
+/** Bootstrap-only lifecycle facade. Native mutable objects never leave the adapter. */
+export interface CompresserSession {
+	snapshot(): Promise<CompresserSnapshot>;
+	close(): Promise<void>;
+}
+/** Source/artifact validation only; receives a detached frozen DTO, never tool execution authority. */
+export type InferenceCallValidator = (call: InferenceToolCall) => string | undefined;
 export interface SourceJob {
 	readonly id: string;
 	readonly scope: JobScope;
 	readonly signal: AbortSignal;
 	check(): void;
 	infer(request: InferenceRequest): Promise<InferenceResult>;
+	converse(request: InferenceRequest, validateCall?: InferenceCallValidator): Promise<InferenceResult>;
 	cancel(reason?: string): void;
 }
 export interface StrategyLifecycleEvent {
@@ -653,6 +699,8 @@ export interface HostOptions {
 	inference?: {
 		readonly models: readonly InferenceModelDefinition[];
 		readonly policies: readonly InferencePolicy[];
+		/** Explicit shared Compresser container; source jobs retain all inference authority/budgets. */
+		readonly compresserSession?: CompresserSession;
 	};
 	prepareInput?: (
 		input: Readonly<{ principal: string; text: string; mode: InputMode }>,

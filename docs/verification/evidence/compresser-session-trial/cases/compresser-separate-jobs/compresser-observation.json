@@ -1,0 +1,173 @@
+{
+  "state": {
+    "sessionId": "5a38ce10-22b6-4885-a354-1da7887d0f53",
+    "status": "open",
+    "toolCallingTolerance": 3,
+    "unresolvedErrorTolerance": 4,
+    "toolErrors": 0,
+    "unresolvedErrors": 1,
+    "lastError": {
+      "reason": "No complete submission: stop",
+      "incidentId": "c8664b7e-e388-4d9a-94cd-fcfc84a001c5:yield",
+      "conversationId": "8",
+      "jobId": "381b93d7-b76b-4bf2-b3ee-cb2a9aebbb13"
+    },
+    "conversations": [
+      {
+        "conversationId": "8",
+        "jobId": "381b93d7-b76b-4bf2-b3ee-cb2a9aebbb13",
+        "planId": "mvle95bw-y0xgu2jd",
+        "sourceSessionId": "da5b3db3-fa2b-4587-a96a-48d9f2e0d2b2",
+        "sourceConversationId": "1",
+        "status": "completed"
+      },
+      {
+        "conversationId": "26",
+        "jobId": "c9819e09-ddc9-4b64-a30f-1384dd340ded",
+        "planId": "mvle960f-cauy8ie9",
+        "sourceSessionId": "da5b3db3-fa2b-4587-a96a-48d9f2e0d2b2",
+        "sourceConversationId": "1",
+        "status": "completed"
+      }
+    ]
+  },
+  "artifacts": [
+    {
+      "blockId": 1,
+      "runId": "mvle95c8-qd8ce9od",
+      "sourceEntryIds": [
+        "11",
+        "12",
+        "15",
+        "16",
+        "19"
+      ],
+      "contextEntryIds": [],
+      "sourceContentVersions": [
+        "645295ff41b454d07b5fc1505b4e9cd6d9192644f22260494d998ec92e9813c8",
+        "91947ec23d168cf8b2e552ce215931e0d4505441598e7e6fa32df2c2d26280d5",
+        "e335c7a5d549219e45b59f5c08989da236867f7e5b52e9bd1aa2aacbf3efc649",
+        "731ef4f0da4c9e4294dd50090613002b00e0c322a6943140d30c9edfffd2bf9d",
+        "b82ceee8797623a16d2f78f6bd3de180bec82acb03245cbd650c882ad278ff21"
+      ],
+      "contextContentVersions": [],
+      "sourceFingerprint": "9329aa910485b18013d1e14fa8731abaf839ad27ae39668e55e7f079f4a665b4",
+      "sourceStatus": "current",
+      "artifacts": {
+        "schemaVersion": 1,
+        "toolCallId": "call-2",
+        "graphs": [
+          {
+            "id": "g",
+            "title": "NATIVE-SIDECAR",
+            "nodes": [
+              {
+                "id": "n",
+                "label": "native source",
+                "sourceEntryIds": [
+                  "19"
+                ]
+              }
+            ],
+            "edges": [],
+            "annotations": [
+              {
+                "nodeIds": [
+                  "n"
+                ],
+                "text": "NATIVE-ANNOTATION",
+                "sourceEntryIds": [
+                  "19"
+                ]
+              }
+            ]
+          }
+        ],
+        "clues": [
+          {
+            "text": "NATIVE-CLUE",
+            "sourceEntryIds": [
+              "19"
+            ]
+          }
+        ],
+        "unresolved": []
+      }
+    },
+    {
+      "blockId": 2,
+      "runId": "mvle960q-6dlza95o",
+      "sourceEntryIds": [
+        "20",
+        "23",
+        "24",
+        "27",
+        "28",
+        "31"
+      ],
+      "contextEntryIds": [
+        "12",
+        "15",
+        "16",
+        "19"
+      ],
+      "sourceContentVersions": [
+        "a35a2fb2f77f6e0df11ee0f267ad0a5f95bd05fe3b310b022703ebb0019ce233",
+        "3f3052442fc02696eace4dc91754193cca081ec4506588f5767b4a9f4d0f0a44",
+        "a6ffbf58deb9595761a2c86147a5d299d417f6be23edb3ed9acb048cbd345c60",
+        "a4e647d7ef9daf975449f05f09285fa08ae590aa708b27d292ccc13774043aac",
+        "f845a77eee82fc378b730b4fc53f33a180402b3433b6c890031bf8bdd1370ea4",
+        "f5666bc50e9e66117038ae3d21fa939079d0b5a386ce27c5682f29dea0b20216"
+      ],
+      "contextContentVersions": [
+        "91947ec23d168cf8b2e552ce215931e0d4505441598e7e6fa32df2c2d26280d5",
+        "e335c7a5d549219e45b59f5c08989da236867f7e5b52e9bd1aa2aacbf3efc649",
+        "731ef4f0da4c9e4294dd50090613002b00e0c322a6943140d30c9edfffd2bf9d",
+        "b82ceee8797623a16d2f78f6bd3de180bec82acb03245cbd650c882ad278ff21"
+      ],
+      "sourceFingerprint": "cd82548bd050fdf8f65e8341b977b4de4f37fed2714e73d20e89e6566e20dd36",
+      "contextFingerprint": "bf15870cbc50bef364188ef80a03ac0d927759c9c08854a189614aa5832c8619",
+      "sourceStatus": "current",
+      "artifacts": {
+        "schemaVersion": 1,
+        "toolCallId": "call-3",
+        "graphs": [
+          {
+            "id": "g",
+            "title": "NATIVE-SIDECAR",
+            "nodes": [
+              {
+                "id": "n",
+                "label": "native source",
+                "sourceEntryIds": [
+                  "31"
+                ]
+              }
+            ],
+            "edges": [],
+            "annotations": [
+              {
+                "nodeIds": [
+                  "n"
+                ],
+                "text": "NATIVE-ANNOTATION",
+                "sourceEntryIds": [
+                  "31"
+                ]
+              }
+            ]
+          }
+        ],
+        "clues": [
+          {
+            "text": "NATIVE-CLUE",
+            "sourceEntryIds": [
+              "31"
+            ]
+          }
+        ],
+        "unresolved": []
+      }
+    }
+  ]
+}

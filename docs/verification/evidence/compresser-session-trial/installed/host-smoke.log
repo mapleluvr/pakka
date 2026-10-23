@@ -1,0 +1,4 @@
+cwd=C:\Users\Administrator\AppData\Local\Temp\dynamite-packed-consumer-k3P6bF
+{"status":"passed","consumer":"C:\\Users\\Administrator\\AppData\\Local\\Temp\\dynamite-packed-consumer-k3P6bF","entry":"file:///C:/Users/Administrator/AppData/Local/Temp/dynamite-packed-consumer-k3P6bF/node_modules/@pakka/agent/dist/index.js","versions":{"pi-ai":"1.4.0","chord":"1.4.0","pi-durable":"1.4.0-pakka.1","pi-telemetry":"1.4.0"},"httpRequests":7,"privateSubpath":"rejected","auxiliaryWireCaps":[64,128],"projectorAfterReload":"verified","rangeOmission":"verified","generationBlock":"verified","oracleDependency":"absent","artifactVersion":1}
+
+exit=0

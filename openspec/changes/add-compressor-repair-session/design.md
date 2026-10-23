@@ -4,13 +4,13 @@ See [proposal](proposal.md) for operator requirements. The operator selected Pi 
 
 The [initial characterization](../../../docs/verification/COMPRESSOR-SESSION-FEASIBILITY.md) used host acf49fa with Durable 1.0.3-pakka.1 and strategy 87d6fa6/0.3.0 (retry observation in 0427185). It remains historical, not a 1.4 capability verdict. Current SourceJob.infer is single-call and each failed strategy attempt restarts from the original input.
 
-This remains an infrastructure assessment, not product implementation or cohort promotion. The 1.4 result recommends a native hook/inbox/scheduler route. No custom agent loop or dependency upgrade has been selected.
+The operator subsequently authorized the first executable trial. It implements the native hook/inbox/scheduler route in agent 0.6.0 and Dynamite 0.4.0, with the coordinated 1.4 production cohort migration. The earlier capability records retain their original scopes; [trial verification](../../../docs/verification/COMPRESSER-SESSION-TRIAL.md) owns the actual source and installed-library result. A custom agent loop was not adopted.
 
 ## Goals / Non-Goals
 
 **Goals:** preserve the source-bound trajectory; count tool and other recoverable errors independently; seal at either exact count and report the last reason; reuse native infrastructure and charge every continuation to the original auxiliary policy.
 
-**Non-Goals for this investigation:** implement a custom loop, release a new pairing, promote the prepared Durable 1.4 cohort, or use product Conversations as an inference-policy bypass. Independent adversarial review is not selected under the operator instruction.
+**Trial scope:** explicit source-bound native service, private package pair, coordinated 1.4 cohort and fresh JSONL storage. Automatic server activation, historical SQLite migration and resumable unknown-effect recovery are separate work. Product Conversations are not used as an inference-policy bypass. Independent adversarial review is not selected under the operator instruction.
 
 ## Decisions
 
@@ -24,7 +24,7 @@ This replaces the earlier single-root container recommendation, not the measured
 
 ### Adopted lifecycle requirement
 
-Use two cumulative per-session counts, not consecutive-error counts or whole-prompt retries. Values 3 and 4 are operator examples and probe inputs; public defaults remain a future API decision. Complete replacement calls reuse prior visible analysis and stand alone. Source/lease revocation, cancellation, hard budget exhaustion and persistence unknown remain earlier terminal boundaries.
+Use two cumulative per-session counts, not consecutive-error counts or whole-prompt retries. Values 3 and 4 are operator examples and probe inputs; the trial requires both positive finite settings at bootstrap instead of choosing public defaults. Complete replacement calls reuse prior visible analysis and stand alone. Source/lease revocation, cancellation, hard budget exhaustion and persistence unknown remain earlier terminal boundaries.
 
 ### Native primitives confirmed
 
@@ -38,11 +38,11 @@ The 1.0.3 provider-error gap is not the 1.4 verdict. With `afterFailedRun: "cont
 
 A Compresser Conversation can span multiple native runs. The original submission remains truthfully `unanswered/model_error` even if that job later succeeds. Native `done` after an incomplete stop is likewise not proof of a valid candidate. The host must report the retained job status/candidate, not use the first Submission.wait() as that job’s completion signal. Completing one job does not complete the long-lived Compresser Session.
 
-### Remaining host integration boundaries
+### Integration boundaries and trial resolution
 
-1. The existing Pakka SourceJob.infer remains a single-call interface. The earlier production probe used 1.0.3 and spent primary rather than auxiliary slots through ordinary managed-member APIs; it did not test a migrated 1.4 product. The multi-Conversation Compresser service still needs an adapter-owned port binding each internal Conversation to its external source job, per-request reservation/completion, revocation and final adoption checks. Granting bootstrap Runtime or mutable Conversation handles to a strategy is not an acceptable shortcut.
+1. The existing Pakka SourceJob.infer remains a single-call interface. The earlier production probe used 1.0.3 and spent primary rather than auxiliary slots through ordinary managed-member APIs; it did not test a migrated 1.4 product. The trial supplies SourceJob.converse and an adapter-owned shared container facade, binding every child to its external source, per-request reservation/completion, revocation and final adoption checks. Granting bootstrap Runtime or mutable Conversation handles to a strategy is not an acceptable shortcut.
 2. Native validation can repair/coerce arguments, and schema/unknown-tool errors bypass afterTool. The 1.4 prototype uses public afterTools context edits for full matched rewrite feedback and composed public OpenAI-completions callbacks for strict raw equality. Truncated JSON was rejected by native validation, but an illegal escape was repaired by the SDK and had to be rejected by the raw guard. Valid fragmented arguments succeeded.
-3. Retained Session policy and source-bound Conversation job records must coordinate incidents, queue admission and native settlement. Normal single-Conversation sealing/reopen is measured; shared Session accounting, arbitrary crash atomicity and production artifact adoption are not. Unconfirmed effects must fail closed before scheduling can resume.
+3. Retained Session policy and source-bound Conversation job records must coordinate incidents, queue admission and native settlement. The earlier probe measured single-Conversation sealing/reopen. The production trial additionally tests shared Session accounting, external artifact adoption, sibling rejection and actual interrupted-process quarantine. Arbitrary cross-store crash atomicity remains outside that evidence; unconfirmed effects fail closed before scheduling can resume.
 
 ### Recommended native route
 
@@ -52,7 +52,7 @@ A Compresser Conversation can span multiple native runs. The original submission
 - On provider/request error, record one unresolved incident and admit at most one stable-ID native steer below tolerance; `afterFailedRun: "continue"` performs the native boundary placement and scheduling. Disable hidden native/provider retries so policy observes every attempt.
 - Reaching either cumulative Session threshold seals the container before further repair/job admission, dispatch or adoption by any child, preserving the final diagnostic, originating job and both counts. Host command admission and native request/payload checks refuse further work. Do not reset counts by changing models, opening another Conversation or by the legacy outer retry loop opening another Session.
 
-The 1.4 mechanism needs policy hooks and host-bound admission, but does not require rebuilding provider streaming, tool execution, history or scheduling. No additional downstream failure-continuation patch is demonstrated necessary. A custom agent loop is not recommended by this evidence. Product DTO/defaults/receipt/recovery choices and the separate cohort migration remain unfinished.
+The 1.4 mechanism needs policy hooks and host-bound admission, but does not require rebuilding provider streaming, tool execution, history or scheduling. No additional downstream failure-continuation patch is demonstrated necessary. A custom agent loop is not recommended by this evidence. The trial realizes explicit settings, frozen DTOs, per-request receipts, fail-closed interrupted jobs and the coordinated cohort migration; broader recovery and product assembly remain separate.
 
 ## Risks / Trade-offs
 
@@ -63,6 +63,16 @@ The 1.4 mechanism needs policy hooks and host-bound admission, but does not requ
 - Raw inspection depends on provider support. The proof covers deterministic OpenAI-completions events, not every provider or delta fragmentation pattern; missing evidence must fail closed.
 - Close acknowledgment alone is not sealing; retained terminal status must guard scheduling and old capabilities.
 
+## First executable trial
+
+The operator authorized the first implementation trial. Bootstrap explicitly creates one `createCompresserSession({ storageDir, toolCallingTolerance, unresolvedErrorTolerance })` facade; both tolerances are required positive integers rather than silently chosen defaults. Its frozen `snapshot()` reports container policy and source-bound job metadata, and `close()` owns disposal. Hosts share that facade through `HostOptions.inference.compresserSession`. Native instances live only in the adapter; a forged or closed facade is refused.
+
+A granted `SourceJob.converse(request, validateCall?)` uses that container and retains an idempotent binding for the same job/request. The optional synchronous callback receives a frozen call DTO and returns a source/artifact validation diagnostic or no error, never native tool authority. Every native request gets an original source-job reservation/completion and auxiliary aggregate debit. Complete successful candidates still require the original artifact adoption receipt. Failed native run receipts remain native facts, not overall job results.
+
+Dynamite selects this path with an explicit service option and finite per-job request budget, requiring tool output and one configured compression model for the first trial. It bypasses the legacy outer retry/fallback loop rather than silently replacing native steering with serial prompts. The single-call path remains available. On reopen, any unfinished/unconfirmed native job seals the container before scheduling; completed metadata stays inspectable, and no lost source authority or unknown model effect is replayed. Automatic recovery/re-adoption of interrupted jobs is not claimed.
+
+The existing 1.4 cohort migration tasks own the necessary StorageRejected/checkpoint/task/tool changes. Existing vendor archives and pairing identities remain historical. The first trial uses JSONL storage; it does not automatically migrate historical SQLite databases.
+
 ## Implementation gate
 
-For the recommended 1.4 native route, first define the source-job DTO/port, receipt ownership and interrupted-session recovery, and coordinate the existing cohort-migration tasks. Then write failure-first production tests and implement adapter-local native ownership. Cover multiple compression jobs from one external Conversation, external Session isolation, shared Session thresholds, sibling late-result refusal, real repair messages, budgets, revocation, unknown storage and reopen before fixing a separate package pair. The single-call primitive remains compatible.
+The first-trial gate uses failure-first tests, real localhost native/Pakka paths, full source checks and a separately pinned out-of-repo installed consumer. It covers one-to-many external bindings, external Session isolation, shared thresholds, sibling late-result refusal, retained repair messages, hard budgets, revocation, cancellation, unknown writes, process interruption and normal reopen. [Tasks](tasks.md) distinguish completed trial work from operational retention/recovery and optional product assembly. The single-call primitive remains available.

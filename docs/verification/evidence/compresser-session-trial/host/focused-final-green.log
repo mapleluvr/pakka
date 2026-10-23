@@ -1,0 +1,30 @@
+✔ Compresser hard interruption stays writer-locked; after explicit dead-writer recovery, unconfirmed work seals without replay (1181.026ms)
+✔ Compresser repairs a stop and invalid call in the same native trajectory, auditing every real request (761.9863ms)
+✔ an empty semantic error is still a rejected call, including repeated admission validation (587.8682ms)
+✔ Compresser provider errors use the native failed-run boundary without losing earlier analysis (718.5012ms)
+✔ one external Conversation creates independent Compresser Conversations and repeated job admission sends nothing (708.7262ms)
+✔ tool tolerance is shared across child Conversations and survives reopen without dispatch (985.2486ms)
+✔ four stop errors seal the Session, preserve the actual reason, and send no fifth request (868.4844ms)
+✔ four provider errors seal the Session, preserve the actual reason, and send no fifth request (903.4246ms)
+✔ Compresser HTTP 429 has no hidden provider retries outside the charged native attempts (563.9416ms)
+✔ Compresser HTTP 503 has no hidden provider retries outside the charged native attempts (550.4527ms)
+✔ Compresser output-length failure with a tool-shaped partial is unresolved, never an adopted tool error (581.6347ms)
+✔ Compresser strict raw and source validation failures are complete-call repairs, not adopted normalized DTOs (830.413ms)
+✔ a source revocation during Compresser HTTP prevents late adoption and another dispatch (392.5726ms)
+✔ Compresser job and strategy hard budgets remain independent of error tolerances (877.8323ms)
+✔ managed Compresser requests spend auxiliary aggregate quota and never primary quota (729.3088ms)
+✔ one container serves distinct external Sessions and sealing refuses adoption of a previously returned candidate (1028.3406ms)
+✔ a sibling seal quarantines an already-in-flight otherwise valid response (800.369ms)
+✔ multiple output calls in one response are not candidate patches and each actual tool error counts once (542.2956ms)
+✔ cancelling the source job refuses a late result without spending error tolerance or dispatching again (353.9957ms)
+✔ a source audit storage failure after real HTTP seals unknown work without a correction or releasing admission (405.9303ms)
+✔ completed native job state survives reopen without new HTTP and one writer is enforced (445.724ms)
+✔ deterministic HTTP fixtures expose canonical temporary paths, including Windows short-name TEMP aliases (15.9459ms)
+ℹ tests 22
+ℹ suites 0
+ℹ pass 22
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 17384.5163

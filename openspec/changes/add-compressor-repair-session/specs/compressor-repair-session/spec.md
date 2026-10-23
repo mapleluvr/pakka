@@ -84,3 +84,29 @@ Every compressor request SHALL be checked against its source job, current author
 #### Scenario: Repaired truncated wire arguments
 - **WHEN** an SDK presents normalized valid arguments from a truncated raw tool argument stream
 - **THEN** the candidate is rejected at the strict wire-integrity boundary despite passing schema validation
+
+### Requirement: Explicit native service assembly
+
+Trusted bootstrap SHALL create a single Compresser container facade with explicit positive finite tolerances and one storage writer. Participating external Hosts SHALL receive the same identity-bound facade. A source job SHALL select the conversational port explicitly; every native continuation SHALL retain the original source authority and an individual auxiliary reservation/completion. Strategies SHALL receive frozen data and commands rather than mutable native handles.
+
+#### Scenario: Finite native correction budget
+
+- **WHEN** an explicitly enabled tool-format Dynamite service supplies a finite per-job request ceiling
+- **THEN** native corrections remain within that ceiling and the original host auxiliary policy
+- **AND** a failure cannot open the engine's primitive retry/fallback chain to bypass the shared seal
+
+#### Scenario: Required settings survive reopen
+
+- **WHEN** bootstrap reopens an existing Compresser storage
+- **THEN** the original settings, counts, source-job bindings and seal are retained
+- **AND** changing the tolerances rejects instead of resetting the policy
+
+### Requirement: Interrupted work is quarantined
+
+A reopened unconfirmed running or pending Compresser job SHALL be quarantined and seal the container before native scheduling. Writer ownership SHALL require explicit trusted resolution after a process crash. Persisted metadata SHALL NOT refresh lost source authority or automatically replay an unknown model effect.
+
+#### Scenario: Process stops after request dispatch
+
+- **WHEN** the owning process exits after dispatch and trusted recovery has resolved its stale writer claim
+- **THEN** reopening reports the unfinished job as quarantined and the container as sealed
+- **AND** inspection or attempted continuation produces no replayed provider request

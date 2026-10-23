@@ -1,0 +1,126 @@
+[
+  {
+    "model": "main-local",
+    "messages": [
+      {
+        "role": "user",
+        "content": "SOURCE-1"
+      },
+      {
+        "role": "system",
+        "content": "Updated system prompt section \"system\":\n\nLEADING-SYSTEM\n\nUpdated system prompt section \"instructions\":\n\n<instructions>\nLEADING-SYSTEM\n</instructions>"
+      }
+    ],
+    "stream": true,
+    "stream_options": {
+      "include_usage": true
+    },
+    "store": false,
+    "max_tokens": 4096
+  },
+  {
+    "model": "main-local",
+    "messages": [
+      {
+        "role": "user",
+        "content": "SOURCE-1"
+      },
+      {
+        "role": "system",
+        "content": "Updated system prompt section \"system\":\n\nLEADING-SYSTEM\n\nUpdated system prompt section \"instructions\":\n\n<instructions>\nLEADING-SYSTEM\n</instructions>"
+      },
+      {
+        "role": "assistant",
+        "content": "MAIN"
+      },
+      {
+        "role": "user",
+        "content": "SOURCE-2"
+      }
+    ],
+    "stream": true,
+    "stream_options": {
+      "include_usage": true
+    },
+    "store": false,
+    "max_tokens": 4096
+  },
+  {
+    "model": "main-local",
+    "messages": [
+      {
+        "role": "user",
+        "content": "SOURCE-1"
+      },
+      {
+        "role": "system",
+        "content": "Updated system prompt section \"system\":\n\nLEADING-SYSTEM\n\nUpdated system prompt section \"instructions\":\n\n<instructions>\nLEADING-SYSTEM\n</instructions>"
+      },
+      {
+        "role": "assistant",
+        "content": "MAIN"
+      },
+      {
+        "role": "user",
+        "content": "SOURCE-2"
+      },
+      {
+        "role": "assistant",
+        "content": "MAIN"
+      },
+      {
+        "role": "user",
+        "content": "SOURCE-3"
+      }
+    ],
+    "stream": true,
+    "stream_options": {
+      "include_usage": true
+    },
+    "store": false,
+    "max_tokens": 4096
+  },
+  {
+    "model": "main-local",
+    "messages": [
+      {
+        "role": "user",
+        "content": "SOURCE-1"
+      },
+      {
+        "role": "system",
+        "content": "Updated system prompt section \"system\":\n\nLEADING-SYSTEM\n\nUpdated system prompt section \"instructions\":\n\n<instructions>\nLEADING-SYSTEM\n</instructions>"
+      },
+      {
+        "role": "assistant",
+        "content": "MAIN"
+      },
+      {
+        "role": "user",
+        "content": "SOURCE-2"
+      },
+      {
+        "role": "assistant",
+        "content": "MAIN"
+      },
+      {
+        "role": "user",
+        "content": "SOURCE-3"
+      },
+      {
+        "role": "assistant",
+        "content": "MAIN"
+      },
+      {
+        "role": "user",
+        "content": "SOURCE-4"
+      }
+    ],
+    "stream": true,
+    "stream_options": {
+      "include_usage": true
+    },
+    "store": false,
+    "max_tokens": 4096
+  }
+]

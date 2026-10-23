@@ -1,0 +1,81 @@
+
+> pakka-workspace@0.1.0 smoke:package
+> npm run build && node scripts/pack-smoke.mjs
+
+
+> pakka-workspace@0.1.0 build
+> npm run build --workspaces && npm run build:webui --workspace=@pakka/mas-devpack
+
+
+> @pakka/protocol@0.1.0 build
+> tsc -p tsconfig.json
+
+
+> @pakka/agent@0.6.0 build
+> node ../../scripts/verify-durable-patch.mjs 1.4.0-pakka.1 && node -e "require('node:fs').rmSync('dist', { recursive: true, force: true })" && tsc -p tsconfig.json
+
+Verified pi-durable 1.4.0-pakka.1 (7fd9f3310dfa003a9077139a25faf93567922a065461fa3767dd5a1066efa891)
+
+> @pakka/mas@0.4.0 build
+> tsc -p tsconfig.json
+
+
+> @pakka/mas-devpack@0.2.0 build
+> tsc -p tsconfig.json
+
+
+> @pakka/client@0.1.0 build
+> tsc -p tsconfig.json
+
+
+> @pakka/cli@0.1.0 build
+> tsc -p tsconfig.json
+
+
+> @pakka/server@0.5.0 build
+> tsc -p tsconfig.json
+
+
+> @pakka/webui@0.1.0 build
+> tsc -p tsconfig.json
+
+
+> @pakka/mas-devpack@0.2.0 build:webui
+> tsc -p tsconfig.webui.json && node scripts/write-manifest.mjs
+
+Headless DevPack public Agent/workbench imports passed with neither @pakka/webui nor Preact installed or resolvable; no model dispatch.
+
+{"status":"passed","consumer":"C:\\Users\\Administrator\\AppData\\Local\\Temp\\pakka-packed-consumer-Jn9N5b","entry":"file:///C:/Users/Administrator/AppData/Local/Temp/pakka-packed-consumer-Jn9N5b/node_modules/@pakka/agent/dist/index.js","versions":{"pi-ai":"1.4.0","chord":"1.4.0","pi-durable":"1.4.0-pakka.1","pi-telemetry":"1.4.0"},"httpRequests":7,"privateSubpath":"rejected","auxiliaryWireCaps":[64,128],"projectorAfterReload":"verified","rangeOmission":"verified","generationBlock":"verified","oracleDependency":"absent","artifactVersion":1}
+
+{"status":"passed","consumer":"C:\\Users\\Administrator\\AppData\\Local\\Temp\\pakka-packed-consumer-Jn9N5b","httpRequests":3,"session":"shared","contexts":"independent","journals":"independent","quotas":"persistent","reopen":"zero-dispatch","profileModel":"exact-approved-id-persisted","observation":"scoped-frozen-passive","display":"reopen-dedup-zero-model-contribution"}
+
+{"status":"passed","consumer":"C:\\Users\\Administrator\\AppData\\Local\\Temp\\pakka-packed-consumer-Jn9N5b","httpRequests":3,"activation":"single-commit","delivery":"native-persistent","contexts":"independent","owner":"checked","reopen":"zero-dispatch"}
+
+Installed multi-Session broker/real worker smoke passed (3 local HTTP requests; lost admission reconciled after all processes reopened, 0 extra requests).
+
+installed DevPack smoke passed: native tools/revocation/temporary worker, 8 HTTP requests
+
+Pakka installed server/client/CLI smoke passed: 2 local HTTP requests; fresh reconnect and repeated admission produced no extra dispatch.
+
+Pakka installed product smoke passed: 18 local HTTP requests, 7 native tool calls; dynamic reopen, native lifetimes, approved A2A/reply and spent quota verified without hidden replay.
+
+Installed WebUI services passed: 1 local HTTP; identity, resource scope, passive read/display, finite v2 exports, native jobs and original admission preserved on reopen.
+
+Installed WebUI product passed: real executable/assets/public GUI-only and backend settings extensions, desktop/mobile isolated Chrome, invitation/viewer/revocation, exact approved model selection, private provider replace/clear and scoped usage across normal reopen; 1 local HTTP, 3 charged attempts and no fallback or duplicate model work.
+
+Installed MAS Board passed: actual executable, public Agent/Backend/Client/WebUI exports, native spawn/send/reply, filtered mobile viewer, facet removal/normal reopen, original native receipt/history and 8 retained primary attempts; 8 local HTTP.
+
+{"pocketWorkflows":"ok","httpRequests":2,"cli":true,"sharedAttribution":true,"scopedViewer":true,"realFileAndDiff":true,"normalReopen":true,"originalOperationNoReplay":true,"spentAttempts":2}
+
+Installed controlled workflows verified: 4 model HTTP, real allow/deny, 2 page clicks with visible original-result reconciliation, retry/reopen dedup, mobile viewer and owned cleanup
+
+{"installedNotifications":true,"modelHttp":2,"tlsPushes":3,"nativeWorkerDisplay":true,"unknownNeverReplayed":true,"spentAttempts":2,"evidence":"C:\\Users\\Administrator\\AppData\\Local\\Temp\\pakka-packed-consumer-Jn9N5b\\notification-run-021a5715-aa42-4f84-bd8a-7ee418af1e86"}
+
+{"installedSchedules":true,"modelHttp":2,"spentAttempts":2,"lostResponseNeverReplayed":true,"nativeJobsPreserved":true,"webuiRemovalPreservesWork":true,"evidence":"C:\\Users\\Administrator\\AppData\\Local\\Temp\\pakka-packed-consumer-Jn9N5b\\schedules-run-78cb2481-1b7c-453b-9deb-5f0777678e03"}
+
+{"installedMemory":true,"modelHttp":5,"spentAttempts":5,"nativeToolResults":1,"lostResponseNeverReplayed":true,"approvedMemoryOnly":true,"webuiRemovalPreservesRecords":true,"evidence":"C:\\Users\\Administrator\\AppData\\Local\\Temp\\pakka-packed-consumer-Jn9N5b\\memory-run-32e810e3-3f3a-40f6-b420-de31f9c14ded"}
+
+{"installedHooks":true,"modelHttp":3,"spentAttempts":3,"lostCreationNeverReplayed":true,"unsignedHeaderCannotReplay":true,"keyRotation":true,"webuiRemovalPreservesIngress":true,"viewerPrivateSetupDenied":true,"evidence":"C:\\Users\\Administrator\\AppData\\Local\\Temp\\pakka-packed-consumer-Jn9N5b\\hooks-run-971501d4-a052-4e4b-a3ca-37318340ea71"}
+
+{"installed":true,"modelHttp":1,"persisted":true,"viewerReadOnly":true}
+

@@ -1,0 +1,838 @@
+{
+  "sessionId": "23d1445d-83f7-4ad2-9984-031c31567c65",
+  "durableSessionId": "23d1445d-83f7-4ad2-9984-031c31567c65",
+  "conversationId": "1",
+  "providerSessionId": "01a16a59-2a0b-7273-9065-c3a8d0db9d6c",
+  "cwd": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\dynamite-packed-consumer-k3P6bF\\evidence\\dynamite\\compresser-repairs-0M3Wu6\\workspace",
+  "leafId": "27",
+  "entries": [
+    {
+      "id": "7",
+      "parentId": null,
+      "type": "pi.user",
+      "raw": {
+        "model": [
+          {
+            "role": "user",
+            "content": "SOURCE-1",
+            "timestamp": 1792785590814
+          }
+        ],
+        "kind": "pi.user",
+        "id": 7,
+        "conversationId": 1
+      }
+    },
+    {
+      "id": "10",
+      "parentId": "7",
+      "type": "pi.system",
+      "raw": {
+        "model": [
+          {
+            "role": "system",
+            "content": "",
+            "sections": {
+              "system": "LEADING-SYSTEM",
+              "instructions": "<instructions>\nLEADING-SYSTEM\n</instructions>"
+            },
+            "timestamp": 1792785590844
+          }
+        ],
+        "kind": "pi.system",
+        "id": 10,
+        "conversationId": 1,
+        "byTaskId": 9
+      }
+    },
+    {
+      "id": "11",
+      "parentId": "10",
+      "type": "pi.assistant",
+      "raw": {
+        "model": [
+          {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "text",
+                "text": "MAIN"
+              }
+            ],
+            "api": "openai-completions",
+            "provider": "pakka-provider-70faedfc4a0f",
+            "model": "main-local",
+            "usage": {
+              "input": 110,
+              "output": 12,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "reasoning": 0,
+              "totalTokens": 122,
+              "cost": {
+                "input": 0,
+                "output": 0,
+                "cacheRead": 0,
+                "cacheWrite": 0,
+                "total": 0
+              }
+            },
+            "stopReason": "stop",
+            "timestamp": 1792785590857,
+            "responseId": "local-1",
+            "rawStopReason": "stop",
+            "durationMs": 17
+          }
+        ],
+        "kind": "pi.assistant",
+        "id": 11,
+        "conversationId": 1,
+        "byTaskId": 9
+      }
+    },
+    {
+      "id": "12",
+      "parentId": "11",
+      "type": "pi.user",
+      "raw": {
+        "model": [
+          {
+            "role": "user",
+            "content": "SOURCE-2",
+            "timestamp": 1792785590904
+          }
+        ],
+        "kind": "pi.user",
+        "id": 12,
+        "conversationId": 1
+      }
+    },
+    {
+      "id": "15",
+      "parentId": "12",
+      "type": "pi.assistant",
+      "raw": {
+        "model": [
+          {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "text",
+                "text": "MAIN"
+              }
+            ],
+            "api": "openai-completions",
+            "provider": "pakka-provider-70faedfc4a0f",
+            "model": "main-local",
+            "usage": {
+              "input": 120,
+              "output": 12,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "reasoning": 0,
+              "totalTokens": 132,
+              "cost": {
+                "input": 0,
+                "output": 0,
+                "cacheRead": 0,
+                "cacheWrite": 0,
+                "total": 0
+              }
+            },
+            "stopReason": "stop",
+            "timestamp": 1792785590941,
+            "responseId": "local-2",
+            "rawStopReason": "stop",
+            "durationMs": 8
+          }
+        ],
+        "kind": "pi.assistant",
+        "id": 15,
+        "conversationId": 1,
+        "byTaskId": 14
+      }
+    },
+    {
+      "id": "16",
+      "parentId": "15",
+      "type": "pi.user",
+      "raw": {
+        "model": [
+          {
+            "role": "user",
+            "content": "SOURCE-3",
+            "timestamp": 1792785590978
+          }
+        ],
+        "kind": "pi.user",
+        "id": 16,
+        "conversationId": 1
+      }
+    },
+    {
+      "id": "19",
+      "parentId": "16",
+      "type": "pi.assistant",
+      "raw": {
+        "model": [
+          {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "text",
+                "text": "MAIN"
+              }
+            ],
+            "api": "openai-completions",
+            "provider": "pakka-provider-70faedfc4a0f",
+            "model": "main-local",
+            "usage": {
+              "input": 130,
+              "output": 12,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "reasoning": 0,
+              "totalTokens": 142,
+              "cost": {
+                "input": 0,
+                "output": 0,
+                "cacheRead": 0,
+                "cacheWrite": 0,
+                "total": 0
+              }
+            },
+            "stopReason": "stop",
+            "timestamp": 1792785591014,
+            "responseId": "local-3",
+            "rawStopReason": "stop",
+            "durationMs": 13
+          }
+        ],
+        "kind": "pi.assistant",
+        "id": 19,
+        "conversationId": 1,
+        "byTaskId": 18
+      }
+    },
+    {
+      "id": "20",
+      "parentId": "19",
+      "type": "pi.user",
+      "raw": {
+        "model": [
+          {
+            "role": "user",
+            "content": "SOURCE-4",
+            "timestamp": 1792785591054
+          }
+        ],
+        "kind": "pi.user",
+        "id": 20,
+        "conversationId": 1
+      }
+    },
+    {
+      "id": "23",
+      "parentId": "20",
+      "type": "pi.assistant",
+      "raw": {
+        "model": [
+          {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "text",
+                "text": "MAIN"
+              }
+            ],
+            "api": "openai-completions",
+            "provider": "pakka-provider-70faedfc4a0f",
+            "model": "main-local",
+            "usage": {
+              "input": 140,
+              "output": 12,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "reasoning": 0,
+              "totalTokens": 152,
+              "cost": {
+                "input": 0,
+                "output": 0,
+                "cacheRead": 0,
+                "cacheWrite": 0,
+                "total": 0
+              }
+            },
+            "stopReason": "stop",
+            "timestamp": 1792785591090,
+            "responseId": "local-4",
+            "rawStopReason": "stop",
+            "durationMs": 14
+          }
+        ],
+        "kind": "pi.assistant",
+        "id": 23,
+        "conversationId": 1,
+        "byTaskId": 22
+      }
+    },
+    {
+      "id": "24",
+      "parentId": "23",
+      "type": "pi.user",
+      "raw": {
+        "model": [
+          {
+            "role": "user",
+            "content": "MAIN-AFTER-NATIVE-COMPACTION",
+            "timestamp": 1792785591992
+          }
+        ],
+        "kind": "pi.user",
+        "id": 24,
+        "conversationId": 1
+      }
+    },
+    {
+      "id": "27",
+      "parentId": "24",
+      "type": "pi.assistant",
+      "raw": {
+        "model": [
+          {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "text",
+                "text": "MAIN"
+              }
+            ],
+            "api": "openai-completions",
+            "provider": "pakka-provider-70faedfc4a0f",
+            "model": "main-local",
+            "usage": {
+              "input": 190,
+              "output": 12,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "reasoning": 0,
+              "totalTokens": 202,
+              "cost": {
+                "input": 0,
+                "output": 0,
+                "cacheRead": 0,
+                "cacheWrite": 0,
+                "total": 0
+              }
+            },
+            "stopReason": "stop",
+            "timestamp": 1792785592059,
+            "responseId": "local-9",
+            "rawStopReason": "stop",
+            "durationMs": 10
+          }
+        ],
+        "kind": "pi.assistant",
+        "id": 27,
+        "conversationId": 1,
+        "byTaskId": 26
+      }
+    }
+  ],
+  "activeEntryIds": [
+    "7",
+    "10",
+    "11",
+    "12",
+    "15",
+    "16",
+    "19",
+    "20",
+    "23",
+    "24",
+    "27"
+  ],
+  "projection": [
+    {
+      "sourceEntryId": "7",
+      "messages": [
+        {
+          "role": "user",
+          "content": "SOURCE-1",
+          "timestamp": 1792785590814
+        }
+      ],
+      "boundary": null,
+      "excluded": false,
+      "fingerprint": "85a02b77fc14ebd2aa2be85df321279db3f8b7da48db58b1b8ed16096030708c"
+    },
+    {
+      "sourceEntryId": "10",
+      "messages": [
+        {
+          "role": "system",
+          "content": "",
+          "sections": {
+            "system": "LEADING-SYSTEM",
+            "instructions": "<instructions>\nLEADING-SYSTEM\n</instructions>"
+          },
+          "timestamp": 1792785590844
+        }
+      ],
+      "boundary": "system",
+      "excluded": false,
+      "fingerprint": "0743eebed57c1d588579e3b92058c878c806b5899d1e1284634df3a4b2770510"
+    },
+    {
+      "sourceEntryId": "11",
+      "messages": [
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "MAIN"
+            }
+          ],
+          "api": "openai-completions",
+          "provider": "pakka-provider-70faedfc4a0f",
+          "model": "main-local",
+          "usage": {
+            "input": 110,
+            "output": 12,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0,
+            "totalTokens": 122,
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            }
+          },
+          "stopReason": "stop",
+          "timestamp": 1792785590857,
+          "responseId": "local-1",
+          "rawStopReason": "stop",
+          "durationMs": 17
+        }
+      ],
+      "boundary": null,
+      "excluded": false,
+      "fingerprint": "08a99acd226d9ecdf341e39871937246ebb7eddca7ac5fabe00263dfbb23cb84"
+    },
+    {
+      "sourceEntryId": "12",
+      "messages": [
+        {
+          "role": "user",
+          "content": "SOURCE-2",
+          "timestamp": 1792785590904
+        }
+      ],
+      "boundary": null,
+      "excluded": false,
+      "fingerprint": "e6792727a84a0e1bb74f2008589cfb01c90f813852878550dac413cf8a977d52"
+    },
+    {
+      "sourceEntryId": "15",
+      "messages": [
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "MAIN"
+            }
+          ],
+          "api": "openai-completions",
+          "provider": "pakka-provider-70faedfc4a0f",
+          "model": "main-local",
+          "usage": {
+            "input": 120,
+            "output": 12,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0,
+            "totalTokens": 132,
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            }
+          },
+          "stopReason": "stop",
+          "timestamp": 1792785590941,
+          "responseId": "local-2",
+          "rawStopReason": "stop",
+          "durationMs": 8
+        }
+      ],
+      "boundary": null,
+      "excluded": false,
+      "fingerprint": "ac3381df04763a886f8a8acfcd9d4e9e3f8d9b9e394f3766182ee44267374348"
+    },
+    {
+      "sourceEntryId": "16",
+      "messages": [
+        {
+          "role": "user",
+          "content": "SOURCE-3",
+          "timestamp": 1792785590978
+        }
+      ],
+      "boundary": null,
+      "excluded": false,
+      "fingerprint": "5e6b0145d73f99b1e42b68642d50c32ea7439a7a7584b2dfe5b9099f702f0520"
+    },
+    {
+      "sourceEntryId": "19",
+      "messages": [
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "MAIN"
+            }
+          ],
+          "api": "openai-completions",
+          "provider": "pakka-provider-70faedfc4a0f",
+          "model": "main-local",
+          "usage": {
+            "input": 130,
+            "output": 12,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0,
+            "totalTokens": 142,
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            }
+          },
+          "stopReason": "stop",
+          "timestamp": 1792785591014,
+          "responseId": "local-3",
+          "rawStopReason": "stop",
+          "durationMs": 13
+        }
+      ],
+      "boundary": null,
+      "excluded": false,
+      "fingerprint": "636e8b129ccc906a3b54ed36ed80690a04b3493039958c82104cf5cc86f5bbe9"
+    },
+    {
+      "sourceEntryId": "20",
+      "messages": [
+        {
+          "role": "user",
+          "content": "SOURCE-4",
+          "timestamp": 1792785591054
+        }
+      ],
+      "boundary": null,
+      "excluded": false,
+      "fingerprint": "ab1c49467afd5752b4299712a74aa89e6236fc82848a1258bedf1638f74dd415"
+    },
+    {
+      "sourceEntryId": "23",
+      "messages": [
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "MAIN"
+            }
+          ],
+          "api": "openai-completions",
+          "provider": "pakka-provider-70faedfc4a0f",
+          "model": "main-local",
+          "usage": {
+            "input": 140,
+            "output": 12,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0,
+            "totalTokens": 152,
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            }
+          },
+          "stopReason": "stop",
+          "timestamp": 1792785591090,
+          "responseId": "local-4",
+          "rawStopReason": "stop",
+          "durationMs": 14
+        }
+      ],
+      "boundary": null,
+      "excluded": false,
+      "fingerprint": "6cc560fe38373d90d4c47b43d8c75a9d6a9a1bf637f1065c4e9e032487118edd"
+    },
+    {
+      "sourceEntryId": "24",
+      "messages": [
+        {
+          "role": "user",
+          "content": "MAIN-AFTER-NATIVE-COMPACTION",
+          "timestamp": 1792785591992
+        }
+      ],
+      "boundary": null,
+      "excluded": false,
+      "fingerprint": "dc0f53b474b8f1c22bf3bd4ac3d7ba3b32984f258396b44700a9f25cf60e0234"
+    },
+    {
+      "sourceEntryId": "27",
+      "messages": [
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "MAIN"
+            }
+          ],
+          "api": "openai-completions",
+          "provider": "pakka-provider-70faedfc4a0f",
+          "model": "main-local",
+          "usage": {
+            "input": 190,
+            "output": 12,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0,
+            "totalTokens": 202,
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            }
+          },
+          "stopReason": "stop",
+          "timestamp": 1792785592059,
+          "responseId": "local-9",
+          "rawStopReason": "stop",
+          "durationMs": 10
+        }
+      ],
+      "boundary": null,
+      "excluded": false,
+      "fingerprint": "adb2392b96081805ec648840b464aa5194292b6f971d3423bffc631aa534fd5e"
+    }
+  ],
+  "model": {
+    "key": "main",
+    "model": "main-local",
+    "name": "main-local",
+    "reasoning": false,
+    "contextWindow": 128000,
+    "maxOutputTokens": 4096,
+    "available": true
+  },
+  "usage": {
+    "input": 690,
+    "output": 60,
+    "cacheRead": 0,
+    "cacheWrite": 0,
+    "totalTokens": 750,
+    "cost": null
+  },
+  "generation": 0,
+  "navigationId": "417acbb1-0737-409b-957b-46a40dea8316",
+  "strategyId": "default-context-strategy",
+  "principal": "dynamite-owner",
+  "leaseId": "a5dfde69-8859-4f8b-b822-d47a1d777854",
+  "basis": {},
+  "requestId": null,
+  "artifacts": {
+    "version": 4,
+    "records": [
+      {
+        "type": "run",
+        "id": "mvle93ev-ts808rb9",
+        "timestamp": "2026-10-23T19:59:51.175Z",
+        "atHostEntryId": "23",
+        "planId": "mvle93eo-a64tce7r",
+        "attemptIndex": 1,
+        "stepRange": {
+          "from": 2,
+          "to": 6
+        },
+        "windowEntryIds": [
+          "11",
+          "12",
+          "15",
+          "16",
+          "19"
+        ],
+        "windowFingerprint": "c1e93bd22d876991e66f0a7f7b0b26dc6501b9e91a19798b6a3eb4f8861a378a",
+        "windowContentVersions": [
+          "08a99acd226d9ecdf341e39871937246ebb7eddca7ac5fabe00263dfbb23cb84",
+          "e6792727a84a0e1bb74f2008589cfb01c90f813852878550dac413cf8a977d52",
+          "ac3381df04763a886f8a8acfcd9d4e9e3f8d9b9e394f3766182ee44267374348",
+          "5e6b0145d73f99b1e42b68642d50c32ea7439a7a7584b2dfe5b9099f702f0520",
+          "636e8b129ccc906a3b54ed36ed80690a04b3493039958c82104cf5cc86f5bbe9"
+        ],
+        "contextContentVersions": [],
+        "model": {
+          "provider": "host",
+          "id": "summary"
+        },
+        "usage": {
+          "input": 660,
+          "output": 48,
+          "cacheRead": 0,
+          "cacheWrite": 0
+        },
+        "usageStatus": "reported",
+        "outcome": "accepted",
+        "blockId": 1
+      },
+      {
+        "type": "block",
+        "id": "mvle93zs-g68wlkao",
+        "timestamp": "2026-10-23T19:59:51.175Z",
+        "atHostEntryId": "23",
+        "blockId": 1,
+        "originalBlockIds": [
+          "11",
+          "12",
+          "15",
+          "16",
+          "19"
+        ],
+        "text": "## Goal\nPreserve source decisions, exact identifiers, completed work and pending next actions.\n\n## Progress\nThe fixed local source was checked without changing the original history.",
+        "artifacts": {
+          "schemaVersion": 1,
+          "toolCallId": "submission-4",
+          "graphs": [
+            {
+              "id": "g",
+              "title": "NATIVE-SIDECAR",
+              "nodes": [
+                {
+                  "id": "n",
+                  "label": "native source",
+                  "sourceEntryIds": [
+                    "19"
+                  ]
+                }
+              ],
+              "edges": [],
+              "annotations": [
+                {
+                  "nodeIds": [
+                    "n"
+                  ],
+                  "text": "NATIVE-ANNOTATION",
+                  "sourceEntryIds": [
+                    "19"
+                  ]
+                }
+              ]
+            }
+          ],
+          "clues": [
+            {
+              "text": "NATIVE-CLUE",
+              "sourceEntryIds": [
+                "19"
+              ]
+            }
+          ],
+          "unresolved": []
+        },
+        "runId": "mvle93ev-ts808rb9",
+        "verified": true,
+        "sourceFingerprint": "c1e93bd22d876991e66f0a7f7b0b26dc6501b9e91a19798b6a3eb4f8861a378a",
+        "sourceContentVersions": [
+          "08a99acd226d9ecdf341e39871937246ebb7eddca7ac5fabe00263dfbb23cb84",
+          "e6792727a84a0e1bb74f2008589cfb01c90f813852878550dac413cf8a977d52",
+          "ac3381df04763a886f8a8acfcd9d4e9e3f8d9b9e394f3766182ee44267374348",
+          "5e6b0145d73f99b1e42b68642d50c32ea7439a7a7584b2dfe5b9099f702f0520",
+          "636e8b129ccc906a3b54ed36ed80690a04b3493039958c82104cf5cc86f5bbe9"
+        ],
+        "contextContentVersions": []
+      },
+      {
+        "type": "cursor",
+        "id": "mvle9418-hr1v8apv",
+        "timestamp": "2026-10-23T19:59:51.980Z",
+        "atHostEntryId": "23",
+        "compressedThroughStep": 6,
+        "protectedTail": {
+          "steps": 2,
+          "tokens": 1
+        },
+        "lastTrigger": {
+          "cause": "flush",
+          "tokensBefore": 140,
+          "appliedBlockIds": [
+            1
+          ]
+        }
+      },
+      {
+        "type": "reduce",
+        "id": "mvle944p-kpccs1wr",
+        "timestamp": "2026-10-23T19:59:52.105Z",
+        "atHostEntryId": "27",
+        "op": "queue",
+        "targets": [
+          {
+            "kind": "block",
+            "blockId": 1
+          }
+        ],
+        "source": "user"
+      },
+      {
+        "type": "reduce",
+        "id": "mvle9457-s5auq48v",
+        "timestamp": "2026-10-23T19:59:52.123Z",
+        "atHostEntryId": "27",
+        "op": "apply",
+        "targets": [
+          {
+            "kind": "block",
+            "blockId": 1
+          }
+        ],
+        "trigger": "flush",
+        "releasedTokens": 0
+      },
+      {
+        "type": "cursor",
+        "id": "mvle9457-nwi9m8sy",
+        "timestamp": "2026-10-23T19:59:52.123Z",
+        "atHostEntryId": "27",
+        "compressedThroughStep": 6,
+        "protectedTail": {
+          "steps": 2,
+          "tokens": 1
+        },
+        "lastTrigger": {
+          "cause": "flush",
+          "tokensBefore": 190,
+          "appliedBlockIds": []
+        }
+      }
+    ]
+  }
+}

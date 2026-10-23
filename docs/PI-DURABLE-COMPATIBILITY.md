@@ -704,3 +704,31 @@ store: (options: RuntimeStoreOptions) => port.store(options),
 1.4.0 的独立补丁消费与 Pakka 产品接入分别描述；后续错误分类、持久化 sleeping、checkpoint、工具结果、cohort/lock 和 SQLite schema 2 处置见[所属任务](../openspec/changes/prepare-durable-1-4-0-patch/tasks.md#4-后续产品接入)。现有生产补丁和 Dynamite 精确配对保持原身份。
 
 完整形成与选用决定见[变更摘要](changes/durable-1-4-0-and-verification.md)所列 proposal/design/tasks/delta；当前产物声明见 [Durable state](state/durable-patch.md)。
+
+## 条目 DURABLE-2026-10-23-11：1.4 cohort 与原生 Compresser 试行
+
+- ID: DURABLE-2026-10-23-11；继承条目 10 的已固定 SDK 基线与补丁，不修改此前记录。
+- SDK: upstream 1.4.0 / 4a080252f06caf63a525d7873c5d94d3c23887e0；Durable 1.4.0-pakka.1，SHA-256 `7fd9f3310dfa003a9077139a25faf93567922a065461fa3767dd5a1066efa891`；源补丁、构建锁和 vendor 归档保持原身份，没有追加 generation 修改。
+- 生产 cohort: Pi AI/Chord/Telemetry 1.4.0，加 Durable 必需的 pi-codemode 1.4.0；无 coding-agent oracle、agent-core、TUI 或 MCP。
+- 私有 pair: agent 0.6.0 SHA-256 `f502ce87579a05dff90b744a5183e0e3bb235e736c79206c73380852f7c4ab65`；Dynamite 0.4.0 SHA-256 `fb323bc537bf95e369f268c664e5bcf180a1def79880a1a6ab0938e283e034cd`。固定身份见[机器记录](../integrations/dynamite/compresser-trial-pairing.json)。
+- 环境: Windows、Node 24.18.0、隔离 profile 与真实 localhost OpenAI-completions provider；不读取用户凭据、不使用付费模型。
+
+### 接入与行为
+
+adapter 迁移到显式 document checkpoint、原生持久 timer/sleeping 与工具 output；显式策略拒绝由自有 MutationDenied 区分，其他不明持久化故障保持 unknown 闭锁。Bootstrap 提供身份绑定的冻结 Compresser facade：一个长期 Session 中容纳多个 source-job Conversations，服务外部业务 Sessions/Conversations；一个业务 Conversation 可以启动多个压缩 Conversation。
+
+SourceJob.converse 使用原生 hooks/inbox/steer/afterFailedRun，不自建 agent loop。每次请求仍由原 source job 的辅助额度和权限预留／结算。独立累计的 Session 级工具错误和未解决错误达到显式容忍值即封存；多 child、迟到采用、取消和未确认写入沿失败关闭边界处理。Dynamite 的 P1 与 P2/P3/P4 sidecar 使用最终精确回执在业务 store 原子采用；generation 轨迹、失败调用和共享策略留在独立容器。
+
+### 本次执行
+
+- 完整宿主源码 597 项：595 passed、0 failed、2 个原有 Windows/POSIX 条件跳过；聚焦边界 22/22，workspace check/build 和审计归档通过。
+- 既有安装 core/worker/server/WebUI 产品烟测通过；不等于新 Dynamite pair 的 server 装配通过。
+- Dynamite 源码 377/377；类型、构建通过。新归档的外部安装矩阵 64/64、403 次 HTTP、0 fixture errors，公开声明和依赖树核对通过。
+- 真正终止子进程后，旧 writer 锁先拒绝重开；可信确认进程退出并显式解除后，未确认 job 被 quarantined，容器 sealed，HTTP 不重发。
+- 首轮源码、审计写入、调用完整性、Windows 测试设施、错误归档参数和旧 dependency-inventory 规则的失败保留在[固定试行记录](verification/COMPRESSER-SESSION-TRIAL.md)及其原始证据。更新 1.4 inventory 后重新打包并重跑安装，未把早一轮局部 64/64 冒充整轮通过。
+
+### 限定与失效条件
+
+本次选择新建 JSONL 存储；历史 SQLite schema 2 数据迁移/回退、跨 store 崩溃原子性、自动恢复未知模型效果、其他 provider 协议、历史清理和新 pair 的 optional server 激活不在该结果内。CLI 的 8.3 module-path 入口差异仍为已记录平台边界；消费者使用规范长路径并不等于修复该入口。
+
+复现和全部形成链见[试行验证](verification/COMPRESSER-SESSION-TRIAL.md)、[Compresser change](changes/compressor-repair-session.md)、[cohort change](changes/durable-1-4-0-and-verification.md)。SDK/hash、请求事件协议、checkpoint/收据、权限预算、持久化或线程/进程边界变化时应重跑相关真实矩阵并追加账本；本条不覆盖以前 failed pairing，也不发布或默认启用 Dynamite。

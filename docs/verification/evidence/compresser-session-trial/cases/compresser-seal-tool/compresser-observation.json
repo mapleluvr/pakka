@@ -1,0 +1,82 @@
+{
+  "state": {
+    "sessionId": "2863570b-3e58-44ab-aa59-1070a80ea5cd",
+    "status": "sealed",
+    "toolCallingTolerance": 3,
+    "unresolvedErrorTolerance": 4,
+    "toolErrors": 3,
+    "unresolvedErrors": 0,
+    "lastError": {
+      "reason": "Error: Validation failed for tool \"submit_compaction\":\n  - summary: must have required properties summary, graphs, clues, unresolved\n\nReceived arguments:\n{}",
+      "incidentId": "abb0fdff-1744-4cd1-9ed4-1ecf229f58d4:tool:31",
+      "conversationId": "8",
+      "jobId": "b10a86c5-0b6e-49c1-807e-e68762e0d98c"
+    },
+    "conversations": [
+      {
+        "conversationId": "8",
+        "jobId": "b10a86c5-0b6e-49c1-807e-e68762e0d98c",
+        "planId": "mvle96mt-hpid8gvx",
+        "sourceSessionId": "478b0674-b42b-40a5-8aef-d47dd10941ae",
+        "sourceConversationId": "1",
+        "status": "failed"
+      }
+    ]
+  },
+  "audit": [
+    {
+      "status": "failed",
+      "modelKey": "summary",
+      "reason": "Error: Validation failed for tool \"submit_compaction\":\n  - summary: must have required properties summary, graphs, clues, unresolved\n\nReceived arguments:\n{}",
+      "usageStatus": "known",
+      "usage": {
+        "input": 150,
+        "output": 12,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "totalTokens": 162,
+        "cost": null
+      },
+      "attemptId": "7da8dbde-400c-40d3-b827-41f1bd7eb4b0",
+      "jobId": "b10a86c5-0b6e-49c1-807e-e68762e0d98c",
+      "planId": "mvle96mt-hpid8gvx",
+      "maxOutputTokens": 1024
+    },
+    {
+      "status": "failed",
+      "modelKey": "summary",
+      "reason": "Error: Validation failed for tool \"submit_compaction\":\n  - summary: must have required properties summary, graphs, clues, unresolved\n\nReceived arguments:\n{}",
+      "usageStatus": "known",
+      "usage": {
+        "input": 160,
+        "output": 12,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "totalTokens": 172,
+        "cost": null
+      },
+      "attemptId": "5cb0c3b5-5594-4971-ae8a-bd1aec8aa377",
+      "jobId": "b10a86c5-0b6e-49c1-807e-e68762e0d98c",
+      "planId": "mvle96mt-hpid8gvx",
+      "maxOutputTokens": 1024
+    },
+    {
+      "status": "failed",
+      "modelKey": "summary",
+      "reason": "Error: Validation failed for tool \"submit_compaction\":\n  - summary: must have required properties summary, graphs, clues, unresolved\n\nReceived arguments:\n{}",
+      "usageStatus": "known",
+      "usage": {
+        "input": 170,
+        "output": 12,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "totalTokens": 182,
+        "cost": null
+      },
+      "attemptId": "abb0fdff-1744-4cd1-9ed4-1ecf229f58d4",
+      "jobId": "b10a86c5-0b6e-49c1-807e-e68762e0d98c",
+      "planId": "mvle96mt-hpid8gvx",
+      "maxOutputTokens": 1024
+    }
+  ]
+}

@@ -6,12 +6,12 @@ Pakka 维护版本固定的 Pi Durable 源补丁与可安装归档。补丁为 g
 
 | 版本与角色                    | 固定输入                                                                                                                                                                                                | 归档与身份                                                                                                                                          |
 | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 生产依赖 `1.0.3-pakka.1`      | [baseline](../../patches/pi-durable/1.0.3-pakka.1/baseline.json)、[source patch](../../patches/pi-durable/1.0.3-pakka.1/source.patch)、[构建锁](../../patches/pi-durable/1.0.3-pakka.1/build-lock.json) | [安装包](../../packages/agent/vendor/earendil-works-pi-durable-1.0.3-pakka.1.tgz)、[artifact](../../patches/pi-durable/1.0.3-pakka.1/artifact.json) |
-| 独立 SDK 补丁 `1.4.0-pakka.1` | [baseline](../../patches/pi-durable/1.4.0-pakka.1/baseline.json)、[source patch](../../patches/pi-durable/1.4.0-pakka.1/source.patch)、[构建锁](../../patches/pi-durable/1.4.0-pakka.1/build-lock.json) | [安装包](../../packages/agent/vendor/earendil-works-pi-durable-1.4.0-pakka.1.tgz)、[artifact](../../patches/pi-durable/1.4.0-pakka.1/artifact.json) |
+| 历史固定补丁 `1.0.3-pakka.1`      | [baseline](../../patches/pi-durable/1.0.3-pakka.1/baseline.json)、[source patch](../../patches/pi-durable/1.0.3-pakka.1/source.patch)、[构建锁](../../patches/pi-durable/1.0.3-pakka.1/build-lock.json) | [安装包](../../packages/agent/vendor/earendil-works-pi-durable-1.0.3-pakka.1.tgz)、[artifact](../../patches/pi-durable/1.0.3-pakka.1/artifact.json) |
+| 生产依赖 `1.4.0-pakka.1` | [baseline](../../patches/pi-durable/1.4.0-pakka.1/baseline.json)、[source patch](../../patches/pi-durable/1.4.0-pakka.1/source.patch)、[构建锁](../../patches/pi-durable/1.4.0-pakka.1/build-lock.json) | [安装包](../../packages/agent/vendor/earendil-works-pi-durable-1.4.0-pakka.1.tgz)、[artifact](../../patches/pi-durable/1.4.0-pakka.1/artifact.json) |
 
 各 baseline 固定上游 release、commit 与下游版本；artifact 记录源补丁、构建锁和归档的 SHA-256。1.4.0 补丁的公开依赖 cohort 为 pi-ai、Chord、pi-codemode、pi-telemetry `1.4.0`。
 
-生产选择由根及 agent 的 package.json/lock 绑定；`pack:agent` 在独立 staging 安装并捆绑所选实现，向仓库外消费者发布精确的下游依赖。产品接入的当前工作由[所属任务](../../openspec/changes/prepare-durable-1-4-0-patch/tasks.md#4-后续产品接入)承接。
+生产选择由根及 agent 的 package.json/lock 绑定；`pack:agent` 在独立 staging 安装并捆绑所选实现，向仓库外消费者发布精确的下游依赖。当前生产 cohort 为 Pi AI/Chord/Telemetry 1.4.0 与 Durable 1.4.0-pakka.1；adapter 使用显式 checkpoint、持久化任务 timer 及工具 output 契约。Compresser 试行使用新建 JSONL 存储，存储错误保持 unknown 闭锁。接入边界由[所属任务](../../openspec/changes/prepare-durable-1-4-0-patch/tasks.md#4-后续产品接入)及[试行记录](../verification/COMPRESSER-SESSION-TRIAL.md)维护。
 
 ## 生成拒绝与请求检查
 
@@ -30,7 +30,7 @@ Pakka 生产接入采用 OpenAI-completions，重试与自动压缩处于关闭�
 
 ## 构建与使用
 
-构建入口为 `npm run build:durable-patch -- <upstream-checkout> [patched-version]`，由[构建脚本](../../scripts/build-durable-patch.mjs)执行。默认选择生产补丁；独立版本使用显式参数：
+构建入口为 `npm run build:durable-patch -- <upstream-checkout> [patched-version]`，由[构建脚本](../../scripts/build-durable-patch.mjs)执行。构建版本由入口默认值及显式参数选择；当前生产的 1.4.0 补丁使用显式参数：
 
 ```powershell
 npm run build:durable-patch -- ./docs/.temp/pi-v1.4.0 1.4.0-pakka.1

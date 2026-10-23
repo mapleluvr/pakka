@@ -37,7 +37,7 @@
 		"build:webui": "tsc -p tsconfig.webui.json && node scripts/write-manifest.mjs"
 	},
 	"peerDependencies": {
-		"@pakka/agent": "0.5.1",
+		"@pakka/agent": "0.6.0",
 		"@pakka/mas": "0.4.0",
 		"@pakka/webui": "0.1.0",
 		"preact": "11.0.1"

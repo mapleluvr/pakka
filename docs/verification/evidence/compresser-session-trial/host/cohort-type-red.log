@@ -1,0 +1,43 @@
+
+> pakka-workspace@0.1.0 check
+> node scripts/verify-durable-patch.mjs 1.4.0-pakka.1 && tsc --noEmit -p tsconfig.test.json
+
+Verified pi-durable 1.4.0-pakka.1 (7fd9f3310dfa003a9077139a25faf93567922a065461fa3767dd5a1066efa891)
+packages/agent/src/durable-adapter.ts(27,2): error TS2305: Module '"@earendil-works/pi-durable"' has no exported member 'StorageRejected'.
+packages/agent/src/durable-adapter.ts(246,2): error TS2769: No overload matches this call.
+  The last overload gave the following error.
+    Type '"session"' is not assignable to type '"task"'.
+packages/agent/src/durable-adapter.ts(479,2): error TS2769: No overload matches this call.
+  The last overload gave the following error.
+    Type '"session"' is not assignable to type '"task"'.
+packages/agent/src/durable-adapter.ts(489,2): error TS2769: No overload matches this call.
+  The last overload gave the following error.
+    Type '"session"' is not assignable to type '"task"'.
+packages/agent/src/durable-adapter.ts(500,2): error TS2769: No overload matches this call.
+  The last overload gave the following error.
+    Type '"conversation"' is not assignable to type '"task"'.
+packages/agent/src/durable-adapter.ts(520,2): error TS2769: No overload matches this call.
+  The last overload gave the following error.
+    Type '"session"' is not assignable to type '"task"'.
+packages/agent/src/durable-adapter.ts(670,22): error TS2339: Property 'sleep' does not exist on type 'TaskRuntime<JobInput, JobCheckpoint, null, object>'.
+packages/agent/src/durable-adapter.ts(712,18): error TS2339: Property 'sleep' does not exist on type 'TaskRuntime<{}, { phase: "hold"; tick: number; }, null, object>'.
+packages/agent/src/durable-adapter.ts(1319,6): error TS2322: Type '(args: unknown, api: ToolExecutionApi<JsonValue>, context: Context) => Promise<{ content: { type: string; text: string; }[]; }>' is not assignable to type '(args: unknown, api: ToolExecutionApi<JsonValue>, context: Context) => Promise<ToolExecutionResult<JsonValue>>'.
+  Type 'Promise<{ content: { type: string; text: string; }[]; }>' is not assignable to type 'Promise<ToolExecutionResult<JsonValue>>'.
+    Type '{ content: { type: string; text: string; }[]; }' has no properties in common with type 'ToolExecutionResult<JsonValue>'.
+packages/agent/src/durable-adapter.ts(1732,31): error TS2769: No overload matches this call.
+  The last overload gave the following error.
+    Argument of type 'SessionDocFamilyToken<{ count: number; receipts: Record<string, { fingerprint: string; entryId: string; }>; }, null>' is not assignable to parameter of type 'TaskDocFamilyToken<{ count: number; receipts: Record<string, { fingerprint: string; entryId: string; }>; }, null>'.
+      Type 'Omit<CommonDocDefinition<{ count: number; receipts: Record<string, { fingerprint: string; entryId: string; }>; }>, "initial"> & { readonly scope: "session"; readonly history?: undefined; readonly fork?: undefined; } & { ...; } & { ...; }' is not assignable to type 'Omit<CommonDocDefinition<{ count: number; receipts: Record<string, { fingerprint: string; entryId: string; }>; }>, "initial"> & { readonly scope: "task"; readonly history?: undefined; readonly fork?: undefined; } & { ...; } & { ...; }'.
+        Type 'Omit<CommonDocDefinition<{ count: number; receipts: Record<string, { fingerprint: string; entryId: string; }>; }>, "initial"> & { readonly scope: "session"; readonly history?: undefined; readonly fork?: undefined; } & { ...; } & { ...; }' is not assignable to type '{ readonly scope: "task"; readonly history?: undefined; readonly fork?: undefined; }'.
+          Types of property 'scope' are incompatible.
+            Type '"session"' is not assignable to type '"task"'.
+packages/agent/src/strategy-control.ts(700,3): error TS2741: Property 'converse' is missing in type 'Readonly<{ id: string; scope: object; signal: AbortSignal; check: () => void; infer: (request: InferenceRequest) => Promise<InferenceResult>; cancel: (reason?: string) => void; }>' but required in type 'SourceJob'.
+packages/agent/test/compresser-session.test.ts(15,26): error TS2339: Property 'createCompresserSession' does not exist on type 'typeof import("D:/Projects/pakka/packages/agent/src/index")'.
+packages/agent/test/compresser-session.test.ts(19,26): error TS2339: Property 'createCompresserSession' does not exist on type 'typeof import("D:/Projects/pakka/packages/agent/src/index")'.
+packages/agent/test/compresser-session.test.ts(20,13): error TS2339: Property 'createCompresserSession' does not exist on type 'typeof import("D:/Projects/pakka/packages/agent/src/index")'.
+packages/agent/test/compresser-session.test.ts(41,44): error TS2769: No overload matches this call.
+  The last overload gave the following error.
+    Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+packages/agent/test/compresser-session.test.ts(83,48): error TS7006: Parameter 'row' implicitly has an 'any' type.
+packages/agent/test/compresser-session.test.ts(85,48): error TS7006: Parameter 'row' implicitly has an 'any' type.

@@ -1,35 +1,45 @@
-# Compresser repair session
+# Compresser repair service
 
-## Container, sources and trajectories
+## Container and external sources
 
-Pakka-dynamite maintains one long-lived pi-durable Session named the **Compresser Session**. Its Compresser Conversations perform compression work for ordinary business Sessions and Conversations outside that container. The native Session and Conversation handles are held by the host adapter; Dynamite maintains the service lifecycle through its ports.
+Dynamite maintains one long-lived pi-durable **Compresser Session**. Its independent Compresser Conversations serve ordinary business Sessions/Conversations outside that container. A business Conversation may start several compression jobs, each with its own internal Conversation and fixed source snapshot. Conversation cardinality follows authorized work rather than a preset Conversation-count quota.
 
-An external business Conversation can trigger multiple Compresser Conversations. Each Compresser Conversation is bound to its own host-authorized source job and fixed compression context, including the external source Session/Conversation, target and snapshot identity. Job identity, rather than the external Conversation alone, determines the binding. Repeated admission of the same job reuses its binding; different jobs can have distinct Conversations even when they originate from the same external Conversation. The Compresser Session has no preset Conversation-count limit; source-job authority and request/resource budgets govern admitted work.
+Bootstrap creates the service with `createCompresserSession({ storageDir, toolCallingTolerance, unresolvedErrorTolerance })`. Both tolerances are required positive finite safe integers. The returned frozen facade exposes `snapshot()` and `close()`; native Harness, Session, Conversation, documents and providers remain in `durable-adapter.ts`. Bootstrap shares this same identity-bound facade through each participating Host's `inference.compresserSession`. Each storage directory has one writer.
 
-Each Compresser Conversation retains its own earlier assistant analysis, drafts, rejected tool calls and call-ID-matched results. Recoverable corrections continue that trajectory; unrelated compression contexts have independent histories. A successful candidate supplies the complete required P1 summary, P2 graphs with P3 annotations, P4 clues and explicit unresolved information. Legal empty collections follow the artifact contract. Completion belongs to the bound compression job; the Compresser Session remains a service container.
+Each internal Conversation binds the originating external Session/Conversation, host-issued source job, plan and request fingerprint. Repeating a live job with the same request shares its operation and receipts; changing that request rejects. Different jobs, including jobs from one external Conversation, have independent transcripts. Job completion leaves the container available for subsequent authorized work.
 
-## Repair and tolerances
+## Source-bound repair
 
-The Compresser Session has independent positive finite integer settings `Tool_Calling_Tolerance` and `Unresolved_Error_Tolerance`. Each counter is cumulative for that Session across its Compresser Conversations. A setting is the error count that seals the session, including the error that reaches it. The operator example is tool errors 3 and unresolved errors 4; those values are characterization inputs rather than a published default.
+`SourceJob.converse(request, validateCall?)` declares one output tool and preserves the Conversation's previous assistant analysis, drafts, calls and matched results. The optional synchronous validator receives a frozen call DTO and returns a diagnostic string or `undefined`. Whole-envelope, raw JSON and schema checks precede that callback.
 
-A tool-submission error produces a matched error result describing the defect and directing a complete replacement call. A complete replacement stands on its own; earlier partial fields remain failed history. A normal stop with no accepted complete candidate produces a correction in the bound Compresser Conversation. Explicit empty values allowed by the artifact schema count as supplied fields.
+A rejected call produces a call-ID-matched error result requesting a complete replacement. Schema, source and persisted-envelope defects are repairable tool errors. Multiple calls are checked as one invalid envelope before any candidate can succeed; actual failed tool results retain distinct incident identities. Successful replacement arguments stand alone.
 
-Tool-submission errors include invalid tool names, malformed/incomplete arguments, schema failure, invalid source references and invalid submission envelopes. Other recoverable failures, including final stop without a complete accepted candidate, output truncation and provider/request failure, increment the unresolved counter. Each incident has a stable identity and belongs to one category, so recovery charges it once. Counts accumulate across interleaved categories and Compresser Conversations; each incident retains its source job and originating Conversation identity.
+A normal stop or truncation without a complete candidate records an unresolved incident and admits a bounded native steer. Provider failure records an unresolved incident and admits at most one stable-ID steer; Durable's `afterFailedRun: "continue"` places it at the failed-run boundary. Native automatic retries and automatic compaction are disabled. The retained job status determines completion across native runs; the first native submission receipt remains its own truthful result.
 
-## Sealing and reporting
+## Cumulative policy and sealing
 
-Reaching either setting seals the Compresser Session before another provider dispatch or candidate adoption in any of its Conversations. Its retained record contains the container identity, the originating Compresser Conversation/source job, both counters and settings, terminal cause, and the most recent actual diagnostic with incident identity. Normal reopen preserves the record, child histories and closed dispatch/adoption boundaries. New Conversation admission, automated retries and model changes use the same Session accounting. A new Compresser Session after a reached tolerance requires explicit authorized admission.
+`toolCallingTolerance` and `unresolvedErrorTolerance` implement independent cumulative Session-wide counters. An incident increments exactly one category once, with its originating job and Conversation. Counts span successful jobs and independent child Conversations. The incident reaching either configured count seals the container immediately.
 
-## Host effects
+The frozen snapshot reports Session identity/status, settings, counts, last actual error with incident/job/Conversation identity, and each child job's external source identities and status. Dispatch, provider-payload checks and adoption check the shared seal. Sibling in-flight output can retain its usage/effect evidence but cannot become an accepted candidate after sealing. Reopen retains counters and seal; changing settings on the same storage is rejected. A replacement container requires explicit bootstrap admission.
 
-Each request retains the external source job authority and durable attempt reservation, output/time/call budgets, usage and completion receipt. Source bindings keep candidates and receipts with their originating job even when several jobs share an external business Conversation or the Compresser Session. Source or lease invalidation, explicit cancellation, exhausted hard budgets and unknown persistence use the existing terminal authority/storage behavior.
+## Authority, budgets and receipts
 
-The host owns native handles. The strategy receives detached immutable records and identity-bound commands. Source/lifecycle checks run at dispatch and adoption. Normal-stop corrections and tool-result placement use their native boundaries; a final-boundary continuation and an externally queued steer are distinct operations.
+Every native provider request reserves and completes an attempt under the original source job and auxiliary Session/strategy policy. Model allowlists, output/time/job/call limits, source versions, lease checks and cancellation remain authoritative. Primary business-model quota is separate. Each completed conversational result includes `compresser` metadata with internal Session/Conversation IDs, all attempt IDs, reported usage totals and whether every attempt has authoritative usage.
 
-## Evaluation baseline
+The final candidate's exact successful attempt authorizes the source-bound artifact append; failed attempts remain separately audited. Unknown usage is not invented. Cancellation, revocation and hard budget exhaustion terminate the affected job under host rules. Unconfirmed persistence latches admission; an unconfirmed completion retains its pending reservation.
 
-The operator-selected assessment baseline is the fixed Pi Durable `1.4.0-pakka.1` archive with Pi AI/Chord/Telemetry 1.4.0. The [1.4 capability record](../verification/COMPRESSOR-SESSION-1.4-FEASIBILITY.md) supports native queued steering and failed-run continuation for this lifecycle. Each Compresser Conversation can span several native runs; its retained job status, not the first submission receipt, determines that job’s completion. The measured cases each used one root Conversation in a fresh Session; multi-Conversation source isolation, shared Session accounting and the external service port remain product verification work. This recommendation does not promote production dependencies or implement the source-job auxiliary port. The earlier 1.0.3 record remains version-scoped historical evidence.
+## Persistence and reopen
 
-## Contract ownership
+The container uses fsynced native JSONL storage with a Session policy document and separate job documents/transcripts. Normal close/reopen preserves completed metadata and supports new independently authorized jobs. Persisted operation records are inspection evidence, not refreshed source capabilities.
 
-Formation and the pending infrastructure choice are in [the change record](../changes/compressor-repair-session.md), its [OpenSpec definition](../../openspec/changes/add-compressor-repair-session/specs/compressor-repair-session/spec.md) and [design](../../openspec/changes/add-compressor-repair-session/design.md). [Fixed characterization](../verification/COMPRESSOR-SESSION-FEASIBILITY.md) describes measured capability; [tasks](../../openspec/changes/add-compressor-repair-session/tasks.md) tracks remaining product work.
+An interrupted running/pending job is quarantined and seals the container before native scheduling resumes. A process crash leaves `pakka-writer.json` in place: trusted recovery first establishes that the writer is gone and resolves that claim explicitly. Opening storage does not automatically steal it or replay unconfirmed inference.
+
+## Dynamite assembly and output
+
+The private trial pairing is `@pakka/dynamite@0.4.0` with `@pakka/agent@0.6.0`, Pi AI/Chord/Telemetry 1.4.0 and bundled Durable `1.4.0-pakka.1`. `createDynamite(binding, { compressionSession: { maxCalls }, config })` explicitly selects this driver with tool-format compression and one allowlisted model. `maxCalls` is a finite per-job ceiling additionally capped by host policy. The engine delegates corrections to the native port rather than opening primitive retry/fallback chains.
+
+Candidates contain P1 summary, P2 graphs with P3 annotations, P4 clues and explicit unresolved items. The external business Session owns the atomic run/block artifact and final receipt. The Compresser container owns generation/repair history and policy, not the business projection. Only P1 enters the next main request through the ordinary projection; sidecars are read through the artifact query.
+
+## Contract and evidence
+
+[Strategy API](../reference/STRATEGY-API.md) maps the public types and commands. [Dynamite artifact state](../../../pakka-dynamite/docs/state/artifacts.md) owns P1/P2/P3/P4 representation. Formation and current gaps are in the [change](../changes/compressor-repair-session.md), [design](../../openspec/changes/add-compressor-repair-session/design.md) and [tasks](../../openspec/changes/add-compressor-repair-session/tasks.md). [First-trial verification](../verification/COMPRESSER-SESSION-TRIAL.md) binds the actual package pair and measured boundaries.

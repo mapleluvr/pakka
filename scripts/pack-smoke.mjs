@@ -1,10 +1,10 @@
 import { spawnSync } from "node:child_process";
-import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
-const consumer = mkdtempSync(join(tmpdir(), "pakka-packed-consumer-"));
+const consumer = realpathSync.native(mkdtempSync(join(tmpdir(), "pakka-packed-consumer-")));
 const versions = Object.fromEntries(
 	["agent", "mas", "mas-devpack", "protocol", "client", "cli", "server", "webui"].map((name) => {
 		try {
@@ -146,7 +146,7 @@ run(
 	consumer,
 );
 // A separate sibling install must not resolve optional browser peers from this full consumer's node_modules.
-const headless = mkdtempSync(join(tmpdir(), "pakka-headless-consumer-"));
+const headless = realpathSync.native(mkdtempSync(join(tmpdir(), "pakka-headless-consumer-")));
 const headlessDependencies = {};
 for (const name of ["agent", "mas", "mas-devpack"]) {
 	const archive = `pakka-${name}-${versions[name]}.tgz`;

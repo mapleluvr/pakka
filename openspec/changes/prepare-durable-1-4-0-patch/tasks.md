@@ -25,6 +25,8 @@
 
 ## 4. 后续产品接入
 
-- [ ] 处理 StorageRejected 移除后的错误分类与 unknown 闭锁，明确 document checkpoint 策略。
-- [ ] 将任务的等待改为持久化 sleeping/checkpoint，迁移工具 output 契约。
-- [ ] 更新生产 cohort、依赖锁与打包身份，并设计 SQLite schema 2 的升级/回退处置。
+- [x] 处理 StorageRejected 移除后的错误分类与 unknown 闭锁，明确 document checkpoint 策略；显式策略拒绝使用 adapter MutationDenied，其他存储错误保持 unknown。
+- [x] 将任务的等待改为持久化 sleeping/timer checkpoint，迁移工具 output 契约；在真实调度、取消和重开回归中检查。
+- [x] 更新生产 cohort、依赖锁与打包身份；本次选择新建 JSONL 存储，保留旧归档/配对字节，SQLite schema 2 的既有数据库迁移/回退须由单独方案和实测承接。
+
+本次产品接入与 [Compresser 第一版试行](../../../docs/verification/COMPRESSER-SESSION-TRIAL.md)协调执行；新 cohort 的源码回归、受控错误、真实进程中断和外部安装均由该固定记录承接，不把旧版 SDK 测量改写为新版结果。

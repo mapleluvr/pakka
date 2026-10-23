@@ -1,0 +1,74 @@
+{
+  "createdAt": "2026-10-23T20:28:17.717Z",
+  "consumer": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\dynamite-packed-consumer-k3P6bF",
+  "node": "v24.18.0",
+  "integrationTests": {
+    "tests": 64,
+    "pass": 64,
+    "fail": 0,
+    "skipped": 0,
+    "cancelled": 0,
+    "todo": 0
+  },
+  "testFiles": [
+    "durable-artifacts.test.mjs",
+    "durable-compresser-session.test.mjs",
+    "durable-inference-boundary.test.mjs",
+    "durable-managed.test.mjs",
+    "durable.test.mjs",
+    "pakka-boundaries.test.mjs",
+    "pakka-review.test.mjs",
+    "pakka.test.mjs"
+  ],
+  "declarations": "passed",
+  "inventory": {
+    "@earendil-works/pi-coding-agent": [],
+    "@earendil-works/pi-ai": [
+      "1.4.0"
+    ],
+    "@earendil-works/pi-agent-core": [],
+    "@earendil-works/pi-tui": [],
+    "@earendil-works/chord": [
+      "1.4.0"
+    ],
+    "@earendil-works/pi-codemode": [
+      "1.4.0"
+    ],
+    "@earendil-works/pi-mcp": [],
+    "@earendil-works/pi-telemetry": [
+      "1.4.0"
+    ],
+    "@earendil-works/pi-durable": [
+      "1.4.0-pakka.1"
+    ]
+  },
+  "providerRequests": 403,
+  "providerErrors": 0,
+  "tarballs": [
+    {
+      "name": "@pakka/agent",
+      "version": "0.6.0",
+      "path": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\dynamite-packed-consumer-k3P6bF\\pakka-agent-0.6.0.tgz",
+      "shasum": "1ffd9b8e92ea9a425b3558ee154b2cf11117f86c",
+      "sha256": "f502ce87579a05dff90b744a5183e0e3bb235e736c79206c73380852f7c4ab65",
+      "integrity": "sha512-wEkiys9AdrZ5J5Hg+iV7EkKmJTfLF3mmNL3SQ6QMRT29OtlswTcrTRZqnbOYhmbMnxeaLBuoyF4QQCf/7maxgw==",
+      "files": 12649
+    },
+    {
+      "name": "@pakka/dynamite",
+      "version": "0.4.0",
+      "path": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\dynamite-packed-consumer-k3P6bF\\pakka-dynamite-0.4.0.tgz",
+      "shasum": "eb00b943f5edf15248ab2bbb4531f00ca129f220",
+      "sha256": "fb323bc537bf95e369f268c664e5bcf180a1def79880a1a6ab0938e283e034cd",
+      "integrity": "sha512-oTr5i/qf8dbIjgOUscupwjoDZXG75tfZ6+S3hgGWTdYK0l4C+DcxYkMxN5DJNujJyo6sfyDtUwiE9+V8m0/hng==",
+      "files": 49
+    }
+  ],
+  "evidence": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\dynamite-packed-consumer-k3P6bF\\evidence",
+  "hostPackLog": {
+    "bytes": 1857177,
+    "sha256": "66abb4b3860b0d4cad5f9a8ee021a3e607c452eb54cd53efc28aa5c251038600"
+  },
+  "historicalPairSha256": "379f96f3b51da10ec10133951d50c5ce5084edd30b3ff844c4b36f13adf0cc2f",
+  "productionPatchSha256": "7fd9f3310dfa003a9077139a25faf93567922a065461fa3767dd5a1066efa891"
+}

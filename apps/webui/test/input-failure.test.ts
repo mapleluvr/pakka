@@ -112,6 +112,8 @@ test(
 			await page.wait('document.querySelector(".pocket-receipt")?.textContent.includes("unanswered")');
 			const receipt = await page.evaluate('document.querySelector(".pocket-receipt").textContent');
 			await page.type("textarea[name=message]", "NOT-ADMITTED");
+			// A settled receipt does not imply the later activity snapshot has reached the browser.
+			await page.wait('document.querySelector("[data-action=send]")?.disabled === false');
 			await page.click("[data-action=send]");
 			await page.wait('document.body.innerText.includes("Start a new conversation")');
 			assert.equal(

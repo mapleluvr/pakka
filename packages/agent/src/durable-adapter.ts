@@ -13,6 +13,8 @@ import {
 	section,
 	hook,
 	GenerationTask,
+	ToolTask,
+	ToolResultEntry,
 	CompactionEntry,
 	defineDoc,
 	defineDocFamily,
@@ -24,7 +26,6 @@ import {
 	LiveDoc,
 	configure,
 	ProviderDoc,
-	StorageRejected,
 	ROOT_CONVERSATION_ID,
 	type Tx,
 	type Registry,
@@ -78,6 +79,10 @@ import type {
 	UsageDTO,
 	InferenceRequest,
 	InferenceResult,
+	InferenceCallValidator,
+	CompresserSession,
+	CompresserSessionOptions,
+	CompresserSnapshot,
 	ToolInvocationScope,
 	ConversationRef,
 	ConversationSpec,
@@ -211,6 +216,690 @@ export function messageText(message: unknown): string {
 		: "";
 }
 
+export interface GovernedConversation {
+	readonly request: InferenceRequest;
+	readonly cap: number;
+	readonly timeoutMs: number;
+	readonly signal: AbortSignal;
+	readonly source: {
+		readonly jobId: string;
+		readonly planId: string;
+		readonly sessionId: string;
+		readonly conversationId: string;
+	};
+	readonly validateCall?: InferenceCallValidator;
+	check(): void;
+	begin(): string;
+	complete(attemptId: string, output: Omit<InferenceResult, "attemptId">): InferenceResult;
+	reserve(): Promise<boolean>;
+}
+type CompresserPolicy = {
+	sessionId: string;
+	status: "open" | "sealed";
+	toolCallingTolerance: number;
+	unresolvedErrorTolerance: number;
+	toolErrors: number;
+	unresolvedErrors: number;
+	lastError: null | { reason: string; incidentId: string; conversationId: string; jobId: string };
+	conversations: Record<string, string>;
+	incidents: Record<string, true>;
+};
+type CompresserJobState = {
+	jobId: string;
+	planId: string;
+	sourceSessionId: string;
+	sourceConversationId: string;
+	fingerprint: string;
+	status: "running" | "completed" | "failed" | "quarantined";
+	pendingAttempt: string | null;
+	result: JsonRepresentation<InferenceResult> | null;
+};
+const CompresserPolicyDoc = defineDoc<CompresserPolicy>({
+	kind: "pakka.compresser",
+	version: 1,
+	scope: "session",
+	checkpointWhen: () => true,
+	initial: () => ({
+		sessionId: "",
+		status: "open",
+		toolCallingTolerance: 0,
+		unresolvedErrorTolerance: 0,
+		toolErrors: 0,
+		unresolvedErrors: 0,
+		lastError: null,
+		conversations: {},
+		incidents: {},
+	}),
+});
+const CompresserJobDoc = defineDoc<CompresserJobState>({
+	kind: "pakka.compresser-job",
+	version: 1,
+	scope: "conversation",
+	history: "latest",
+	fork: "initial",
+	checkpointWhen: () => true,
+	initial: () => ({
+		jobId: "",
+		planId: "",
+		sourceSessionId: "",
+		sourceConversationId: "",
+		fingerprint: "",
+		status: "running",
+		pendingAttempt: null,
+		result: null,
+	}),
+});
+type AuxiliaryModel = { model: Model<Api>; apiKey: string; headers?: Record<string, string> };
+const nativeCompresserSessions = new WeakMap<
+	CompresserSession,
+	{ check(): void; run(input: GovernedConversation, model: AuxiliaryModel): Promise<InferenceResult> }
+>();
+const COMPLETE_REWRITE =
+	"Preserve your earlier analysis. Call the submission tool again and REWRITE THE ENTIRE COMPLETE candidate with every required field; never submit a patch or merge with an earlier invalid candidate.";
+
+/** One explicit native container; the public facade contains no Pi handles or inference authority. */
+export async function createCompresserSession(
+	original: CompresserSessionOptions,
+): Promise<CompresserSession> {
+	const options = { ...original, storageDir: resolve(original.storageDir) };
+	if (
+		!original.storageDir ||
+		[options.toolCallingTolerance, options.unresolvedErrorTolerance].some(
+			(n) => !Number.isSafeInteger(n) || n < 1,
+		)
+	)
+		throw new Error("Invalid explicit Compresser Session storage/tolerances");
+	await mkdir(options.storageDir, { recursive: true });
+	const release = await claimWriter(options.storageDir);
+	const models = createModels(),
+		registry = createRegistry();
+	let harness: Harness;
+	let closed = false,
+		fatal: string | undefined,
+		sealedReason: string | undefined;
+	let cached: CompresserPolicy;
+	const active = new Map<
+		string,
+		{ fingerprint: string; operation: Promise<InferenceResult>; conversation?: Conversation }
+	>();
+	try {
+		harness = await Harness.open(
+			await openNodeJsonlStorage(options.storageDir, BACKGROUND_CONTEXT, { fsync: true }),
+			{
+				models,
+				registry,
+				settings: {
+					stream: { maxRetries: 0 },
+					retry: { enabled: false, maxRetries: 0 },
+					compaction: { enabled: false },
+					toolExecution: "sequential",
+					afterFailedRun: "continue",
+				},
+				onReport: (error) => {
+					fatal ??= "Compresser native report: " + String(error);
+					const reason = fatal;
+					if (harness)
+						void harness
+							.commit(async (tx) => {
+								const policy = await tx.doc(CompresserPolicyDoc);
+								if (policy.status === "open") {
+									policy.status = "sealed";
+									policy.lastError = { reason, incidentId: "native-report", conversationId: "", jobId: "" };
+								}
+							}, BACKGROUND_CONTEXT)
+							.catch(() => {});
+				},
+			},
+			BACKGROUND_CONTEXT,
+		);
+		const previous = await harness.snapshot(CompresserPolicyDoc, BACKGROUND_CONTEXT);
+		if (!previous) {
+			const inspection = await harness.inspect(BACKGROUND_CONTEXT);
+			const root = await harness.root(BACKGROUND_CONTEXT),
+				frame = await root.context(BACKGROUND_CONTEXT);
+			if (frame.entries.length || inspection.tasks.length || inspection.submissions.length)
+				throw new Error("Storage is not an owned Compresser Session");
+		}
+		cached = await harness.commit(async (tx) => {
+			const policy = await tx.doc(CompresserPolicyDoc);
+			if (!policy.sessionId)
+				Object.assign(policy, {
+					sessionId: randomUUID(),
+					toolCallingTolerance: options.toolCallingTolerance,
+					unresolvedErrorTolerance: options.unresolvedErrorTolerance,
+				});
+			if (
+				policy.toolCallingTolerance !== options.toolCallingTolerance ||
+				policy.unresolvedErrorTolerance !== options.unresolvedErrorTolerance
+			)
+				throw new MutationDenied("Compresser Session policy changed; reopening cannot reset tolerances");
+			for (const [jobId, id] of Object.entries(policy.conversations)) {
+				const job = await tx.doc(CompresserJobDoc, conversationId(id));
+				if (!job.jobId || job.status === "running" || job.pendingAttempt) {
+					job.status = "quarantined";
+					if (policy.status === "open") {
+						policy.status = "sealed";
+						policy.lastError = {
+							reason:
+								"Unconfirmed Compresser job on reopen; source authority and model effects cannot be replayed",
+							incidentId: "reopen:" + jobId,
+							conversationId: id,
+							jobId,
+						};
+					}
+				}
+			}
+			return storedJson<CompresserPolicy>(policy);
+		}, BACKGROUND_CONTEXT);
+	} catch (error) {
+		if (harness!) await harness.close(BACKGROUND_CONTEXT).catch(() => {});
+		await release();
+		throw error;
+	}
+	const guard = () => {
+		if (closed) throw new Error("Compresser Session closed");
+		if (fatal) throw new Error(fatal);
+		if (sealedReason || cached.status === "sealed")
+			throw new Error("Compresser Session sealed: " + (sealedReason ?? cached.lastError?.reason));
+	};
+	async function commit<T>(change: (tx: Tx) => Promise<T>): Promise<T> {
+		try {
+			return await harness.commit(change, BACKGROUND_CONTEXT);
+		} catch (error) {
+			if (!(error instanceof MutationDenied)) fatal ??= "Compresser persistence unknown: " + String(error);
+			throw error;
+		}
+	}
+	async function run(input: GovernedConversation, definition: AuxiliaryModel): Promise<InferenceResult> {
+		guard();
+		input.check();
+		const fingerprint = hash([input.source, input.request]),
+			key = input.source.jobId;
+		const existing = active.get(key);
+		if (existing) {
+			if (existing.fingerprint !== fingerprint) throw new Error("Compresser source job request changed");
+			const result = await existing.operation;
+			guard();
+			input.check();
+			if (result.toolCall && input.validateCall?.(copy(result.toolCall)) !== undefined)
+				throw new Error("Completed Compresser candidate validation changed");
+			return result;
+		}
+		const holder = {
+			fingerprint,
+			operation: undefined! as Promise<InferenceResult>,
+			conversation: undefined as Conversation | undefined,
+		};
+		holder.operation = execute();
+		active.set(key, holder);
+		return holder.operation;
+		async function execute(): Promise<InferenceResult> {
+			const outputTool = input.request.outputTool!;
+			const providerId = "pakka-compresser-" + key;
+			let currentAttempt: string | undefined, answer: AssistantMessage | undefined;
+			let latest: InferenceResult | undefined,
+				diagnostic: string | undefined,
+				validCall: InferenceResult["toolCall"];
+			const rounds: InferenceResult[] = [];
+			let child: Conversation;
+			const raw = new Map<number, { id: string; text: string; bytes: number }>();
+			const providerApi = {
+				...oac,
+				streamSimple: (
+					model: Parameters<typeof oac.streamSimple>[0],
+					transcript: Parameters<typeof oac.streamSimple>[1],
+					streamOptions: Parameters<typeof oac.streamSimple>[2],
+				) => {
+					raw.clear();
+					return oac.streamSimple(model, transcript, {
+						...streamOptions,
+						maxRetries: 0,
+						timeoutMs: input.timeoutMs,
+						headers: { ...definition.headers, ...streamOptions?.headers },
+						onProviderStreamEvent: async (event, currentModel) => {
+							await streamOptions?.onProviderStreamEvent?.(event, currentModel);
+							const packet = event as {
+								choices?: {
+									delta?: {
+										tool_calls?: { index: number; id?: string; function?: { arguments?: string } }[];
+									};
+								}[];
+							};
+							for (const choice of packet?.choices ?? [])
+								for (const call of choice.delta?.tool_calls ?? []) {
+									const value = raw.get(call.index) ?? { id: "", text: "", bytes: 0 };
+									if (call.id) value.id = call.id;
+									const delta = call.function?.arguments ?? "";
+									value.bytes += Buffer.byteLength(delta, "utf8");
+									if (value.bytes <= 262144) value.text += delta;
+									raw.set(call.index, value);
+								}
+						},
+					});
+				},
+			};
+			models.setProvider(
+				createProvider({
+					id: providerId,
+					name: providerId,
+					baseUrl: definition.model.baseUrl,
+					auth: {
+						apiKey: {
+							name: "Host-approved auxiliary model",
+							resolve: async () => ({
+								auth: { apiKey: definition.apiKey, baseUrl: definition.model.baseUrl },
+							}),
+						},
+					},
+					api: { "openai-completions": providerApi },
+					models: [
+						{ ...definition.model, api: "openai-completions", provider: providerId, maxTokens: input.cap },
+					],
+				}),
+			);
+			const check = () => {
+				guard();
+				input.signal.throwIfAborted();
+				input.check();
+			};
+			async function record(output: Omit<InferenceResult, "attemptId">): Promise<InferenceResult> {
+				if (!currentAttempt) throw new Error("Compresser response lacks an exact request reservation");
+				const attempt = currentAttempt;
+				latest = input.complete(attempt, output);
+				rounds.push(latest);
+				await commit(async (tx) => {
+					const job = await tx.doc(CompresserJobDoc, child.id);
+					job.pendingAttempt = null;
+					job.result = storedJson<JsonRepresentation<InferenceResult>>(latest!);
+				});
+				currentAttempt = undefined;
+				return latest;
+			}
+			function output(
+				status: InferenceResult["status"],
+				reason?: string,
+			): Omit<InferenceResult, "attemptId"> {
+				const known =
+					answer &&
+					[
+						answer.usage.input,
+						answer.usage.output,
+						answer.usage.cacheRead,
+						answer.usage.cacheWrite,
+						answer.usage.totalTokens,
+					].some((n) => Number.isFinite(n) && n > 0);
+				return {
+					status,
+					modelKey: input.request.modelKey,
+					...(reason ? { reason } : {}),
+					usageStatus: known ? "known" : "unknown",
+					...(known ? { usage: usageDTO(answer!.usage) } : {}),
+				};
+			}
+			async function finish(status: CompresserJobState["status"]) {
+				await commit(async (tx) => {
+					const job = await tx.doc(CompresserJobDoc, child.id);
+					job.status = status;
+				});
+			}
+			async function incident(kind: "toolErrors" | "unresolvedErrors", reason: string, id: string) {
+				cached = await commit(async (tx) => {
+					const policy = await tx.doc(CompresserPolicyDoc);
+					if (policy.status === "open" && !policy.incidents[id]) {
+						policy.incidents[id] = true;
+						policy[kind]++;
+						policy.lastError = { reason, incidentId: id, conversationId: String(child.id), jobId: key };
+						if (
+							policy.toolErrors >= policy.toolCallingTolerance ||
+							policy.unresolvedErrors >= policy.unresolvedErrorTolerance
+						) {
+							policy.status = "sealed";
+							sealedReason ??= reason;
+						}
+					}
+					return storedJson<CompresserPolicy>(policy);
+				});
+				if (cached.status === "sealed") await finish("failed");
+			}
+			async function steer(reason: string, attemptId: string) {
+				check();
+				await child.submit(
+					{
+						type: "input",
+						whenBusy: "steer",
+						requestId: "repair-" + attemptId,
+						content: reason + "\n" + COMPLETE_REWRITE,
+					},
+					BACKGROUND_CONTEXT,
+				);
+			}
+			const nativeTool = defineTool({
+				...outputTool,
+				parameters: outputTool.parameters as TSchema,
+				replay: "unsafe",
+				execute: async (_args, api, context) => {
+					try {
+						check();
+					} catch (error) {
+						return {
+							output: [{ type: "text", text: String(error) }],
+							isError: true,
+							control: { terminate: true },
+						};
+					}
+					if (!validCall || diagnostic !== undefined)
+						return {
+							output: [
+								{
+									type: "text",
+									text: (diagnostic ?? "No validated complete submission") + "\n" + COMPLETE_REWRITE,
+								},
+							],
+							isError: true,
+						};
+					const result = await record({ ...output("completed"), toolCall: validCall });
+					check();
+					await api.commit(async (tx) => {
+						checkAuthority(check);
+						const job = await tx.doc(CompresserJobDoc, child.id);
+						job.status = result.status;
+					}, context);
+					return {
+						output: [
+							{ type: "text", text: "Complete candidate recorded; host artifact adoption remains separate." },
+						],
+						...(result.status === "completed" ? {} : { isError: true }),
+						control: { terminate: true },
+					};
+				},
+			});
+			const extension = defineExtension({
+				name: providerId,
+				tools: [nativeTool],
+				hooks: [
+					hook(ToolTask, {
+						beforeTool: () => {
+							try {
+								check();
+							} catch (error) {
+								return { block: String(error) };
+							}
+							if (diagnostic !== undefined || !validCall)
+								return { block: (diagnostic ?? "No complete output envelope") + "\n" + COMPLETE_REWRITE };
+						},
+					}),
+					hook(GenerationTask, {
+						beforeRequest: async (request) => {
+							try {
+								check();
+								currentAttempt = input.begin();
+								answer = undefined;
+								diagnostic = undefined;
+								validCall = undefined;
+								await commit(async (tx) => {
+									const job = await tx.doc(CompresserJobDoc, child.id);
+									job.pendingAttempt = currentAttempt!;
+								});
+								if (!(await input.reserve())) throw new Error("Session auxiliary attempt budget exhausted");
+								check();
+								return { messages: request.messages, check };
+							} catch (error) {
+								if (currentAttempt) await record(output("failed", String(error)));
+								await finish(latest?.status === "quarantined" ? "quarantined" : "failed");
+								return { block: String(error) };
+							}
+						},
+						afterResponse: async (message) => {
+							answer = message;
+							try {
+								check();
+							} catch (error) {
+								await record(output("quarantined", String(error)));
+								await finish("quarantined");
+								return;
+							}
+							if (message.stopReason === "error") {
+								const attempt = currentAttempt!,
+									reason = message.errorMessage ?? "Provider request failed";
+								await record(output("failed", reason));
+								await incident("unresolvedErrors", reason, attempt + ":provider");
+								if (cached.status === "open") await steer(reason, attempt);
+								return;
+							}
+							const calls = message.content.filter((p) => p.type === "toolCall");
+							if (
+								message.stopReason !== "toolUse" ||
+								calls.length !== 1 ||
+								calls[0].name !== outputTool.name
+							) {
+								diagnostic = "Expected exactly one complete declared submission call";
+								return;
+							}
+							try {
+								const call = calls[0],
+									wire = [...raw.values()].find((value) => value.id === call.id);
+								if (!wire || wire.bytes > 262144 || !isDeepStrictEqual(JSON.parse(wire.text), call.arguments))
+									throw new Error("Incomplete or normalized raw JSON");
+								json(call.arguments);
+								const parameters = { ...outputTool, parameters: outputTool.parameters as TSchema };
+								if (!isDeepStrictEqual(validateToolCall([parameters], structuredClone(call)), call.arguments))
+									throw new Error("Submission requires parameter coercion");
+								const candidate = copy({
+									id: call.id,
+									name: call.name,
+									arguments: call.arguments as JsonObject,
+								});
+								diagnostic = input.validateCall?.(candidate);
+								if (diagnostic !== undefined && typeof diagnostic !== "string")
+									throw new Error("Candidate validation must return a diagnostic string or undefined");
+								if (diagnostic === undefined) validCall = candidate;
+							} catch (error) {
+								diagnostic = String(error);
+							}
+						},
+						onYield: async (message) => {
+							if (!currentAttempt) return;
+							const attempt = currentAttempt,
+								reason = "No complete submission: " + message.stopReason;
+							await record(output("failed", reason));
+							await incident("unresolvedErrors", reason, attempt + ":yield");
+							if (cached.status === "open") await steer(reason, attempt);
+						},
+						afterTools: async (_assistant, ids) => {
+							if (!currentAttempt) return;
+							const entries = await commit((tx) =>
+								Promise.all(ids.map((id) => tx.entry(ToolResultEntry, id))),
+							);
+							const errors = entries.filter(
+								(entry) => entry?.model?.[0]?.role === "toolResult" && entry.model[0].isError,
+							);
+							const reason =
+								diagnostic ??
+								(errors.length
+									? messageText(errors.at(-1)!.model?.[0])
+									: "No complete submission was recorded");
+							const attempt = currentAttempt;
+							await record(output("failed", reason));
+							for (const entry of errors)
+								await incident("toolErrors", reason, attempt + ":tool:" + entry!.id);
+							if (!errors.length) await incident("unresolvedErrors", reason, attempt + ":empty-tools");
+							if (errors.length)
+								await commit(async (tx) => {
+									for (const entry of errors) {
+										const message = entry!.model![0]!;
+										await tx.appendEntry(child.id, {
+											kind: "pakka.compresser-rewrite",
+											data: { resultEntryId: String(entry!.id) },
+											edits: [
+												{
+													target: entry!.id,
+													action: "replace",
+													messages: [
+														{
+															...message,
+															content: [{ type: "text", text: reason + "\n" + COMPLETE_REWRITE }],
+														},
+													],
+												},
+											],
+										});
+									}
+								});
+						},
+					}),
+				],
+			});
+			registry.install(extension);
+			child = await harness.createConversation(
+				{
+					ownership: { kind: "ownerless" },
+					agent: {
+						model: { provider: providerId, modelId: definition.model.id },
+						extensions: [extension],
+						tools: [nativeTool],
+						thinkingLevel: input.request.thinkingLevel ?? "off",
+						instructions: input.request.systemPrompt ?? "",
+					},
+				},
+				BACKGROUND_CONTEXT,
+			);
+			holder.conversation = child;
+			await commit(async (tx) => {
+				checkAuthority(check);
+				const policy = await tx.doc(CompresserPolicyDoc),
+					job = await tx.doc(CompresserJobDoc, child.id);
+				policy.conversations[key] = String(child.id);
+				Object.assign(job, {
+					jobId: key,
+					planId: input.source.planId,
+					sourceSessionId: input.source.sessionId,
+					sourceConversationId: input.source.conversationId,
+					fingerprint,
+				});
+				cached = storedJson<CompresserPolicy>(policy);
+			});
+			const abort = () => {
+				void child.abort(BACKGROUND_CONTEXT).catch((error) => {
+					fatal ??= "Compresser abort unknown: " + String(error);
+				});
+			};
+			input.signal.addEventListener("abort", abort, { once: true });
+			try {
+				check();
+				harness.resume();
+				const submission = await child.submit(
+					{ type: "input", requestId: "source-" + key, content: input.request.prompt, whenBusy: "reject" },
+					BACKGROUND_CONTEXT,
+				);
+				await submission.wait(BACKGROUND_CONTEXT);
+				await child.waitForIdle(BACKGROUND_CONTEXT);
+				if (currentAttempt)
+					await record(output("quarantined", "Compresser run ended without a confirmed output"));
+				if (!latest) throw new Error("Compresser ended without an inference reservation");
+				if (latest.status === "completed") {
+					try {
+						check();
+					} catch (error) {
+						latest = { ...latest, status: "quarantined", reason: String(error) };
+					}
+				}
+				const reported = { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, totalTokens: 0 };
+				let cost: number | null = 0;
+				for (const round of rounds) {
+					for (const field of ["input", "output", "cacheRead", "cacheWrite", "totalTokens"] as const)
+						reported[field] += round.usage?.[field] ?? 0;
+					cost = cost !== null && round.usage?.cost != null ? cost + round.usage.cost : null;
+				}
+				latest = copy({
+					...latest,
+					compresser: {
+						sessionId: cached.sessionId,
+						conversationId: String(child.id),
+						attemptIds: rounds.map((round) => round.attemptId),
+						usageStatus: rounds.every((round) => round.usageStatus === "known") ? "known" : "unknown",
+						reportedUsage: { ...reported, cost },
+					},
+				});
+				await commit(async (tx) => {
+					const job = await tx.doc(CompresserJobDoc, child.id);
+					job.status = latest!.status;
+					job.result = storedJson<JsonRepresentation<InferenceResult>>(latest!);
+				});
+				return latest;
+			} catch (error) {
+				if (currentAttempt || fatal) {
+					const reason = "Unconfirmed Compresser completion: " + String(error);
+					fatal ??= reason;
+					await commit(async (tx) => {
+						const job = await tx.doc(CompresserJobDoc, child.id),
+							policy = await tx.doc(CompresserPolicyDoc);
+						job.status = "quarantined"; // Keep the pending reservation; uncertainty is not a release.
+						if (policy.status === "open") {
+							policy.status = "sealed";
+							policy.lastError = {
+								reason,
+								incidentId: currentAttempt ?? "native-fault",
+								conversationId: String(child.id),
+								jobId: key,
+							};
+						}
+						cached = storedJson<CompresserPolicy>(policy);
+					}).catch(() => {
+						/* A failed seal write leaves the fatal latch and pending on-disk work for fail-closed reopen. */
+					});
+				}
+				throw error;
+			} finally {
+				input.signal.removeEventListener("abort", abort);
+			}
+		}
+	}
+	let closing: Promise<void> | undefined;
+	const facade: CompresserSession = Object.freeze({
+		snapshot: async (): Promise<CompresserSnapshot> =>
+			commit(async (tx) => {
+				const policy = await tx.doc(CompresserPolicyDoc),
+					conversations: CompresserSnapshot["conversations"][number][] = [];
+				for (const [jobId, id] of Object.entries(policy.conversations)) {
+					const job = await tx.doc(CompresserJobDoc, conversationId(id));
+					conversations.push({
+						conversationId: id,
+						jobId,
+						planId: job.planId,
+						sourceSessionId: job.sourceSessionId,
+						sourceConversationId: job.sourceConversationId,
+						status: job.status,
+					});
+				}
+				return copy({
+					sessionId: policy.sessionId,
+					status: policy.status,
+					toolCallingTolerance: policy.toolCallingTolerance,
+					unresolvedErrorTolerance: policy.unresolvedErrorTolerance,
+					toolErrors: policy.toolErrors,
+					unresolvedErrors: policy.unresolvedErrors,
+					lastError: storedJson<CompresserSnapshot["lastError"]>(policy.lastError),
+					conversations,
+				});
+			}),
+		close: () =>
+			(closing ??= (async () => {
+				closed = true;
+				try {
+					await Promise.allSettled(
+						[...active.values()].map((item) => item.conversation?.abort(BACKGROUND_CONTEXT)),
+					);
+					await Promise.allSettled([...active.values()].map((item) => item.operation));
+					await harness.close(BACKGROUND_CONTEXT);
+				} finally {
+					await release();
+				}
+			})()),
+	});
+	nativeCompresserSessions.set(facade, { check: guard, run });
+	return facade;
+}
+
 interface ProvenanceData {
 	sessionId: string;
 	cwd: string;
@@ -243,6 +932,7 @@ type RuntimeRecord = {
 const RuntimeDoc = defineDoc<RuntimeRecord>({
 	kind: "pakka.runtime",
 	version: 2,
+	checkpointWhen: () => true,
 	scope: "session",
 	migrate: (value, fromVersion) => {
 		if (fromVersion !== 1 || !value.budget || typeof value.budget !== "object" || Array.isArray(value.budget))
@@ -476,6 +1166,7 @@ type CatalogRecord = {
 const CatalogDoc = defineDocFamily<CatalogRecord, JsonRepresentation<CatalogOptions>>({
 	kind: "pakka.catalog",
 	version: 1,
+	checkpointWhen: () => true,
 	scope: "session",
 	family: true,
 	initial: (options) => ({ version: 0, options: { ...options }, members: {}, deliveries: {} }),
@@ -486,6 +1177,7 @@ const CoordinatorDoc = defineDocFamily<
 >({
 	kind: "pakka.coordinator",
 	version: 1,
+	checkpointWhen: () => true,
 	scope: "session",
 	family: true,
 	initial: (options) => ({ version: 0, options: { ...options }, data: {} }),
@@ -497,6 +1189,7 @@ const DisplayReceipts = defineDocFamily<
 >({
 	kind: "pakka.display-receipts",
 	version: 1,
+	checkpointWhen: () => true,
 	scope: "conversation",
 	history: "latest",
 	fork: "initial",
@@ -517,6 +1210,7 @@ type BackendJobs = { options: JsonRepresentation<RuntimeJobOptions>; jobs: Recor
 const BackendJobsDoc = defineDocFamily<BackendJobs, JsonRepresentation<RuntimeJobOptions>>({
 	kind: "pakka.backend-jobs",
 	version: 1,
+	checkpointWhen: () => true,
 	scope: "session",
 	family: true,
 	initial: (options) => ({ options: { ...options }, jobs: {} }),
@@ -667,7 +1361,21 @@ function backendJobTask(definition: RuntimeJobDefinition, validate: (ref: Conver
 						sleep: async (ms: number) => {
 							if (!Number.isSafeInteger(ms) || ms < 1 || ms > 3600000)
 								throw new Error("Invalid finite job sleep");
-							await runtime.sleep(runtime.now() + ms, context);
+							// Public invocation timer preserves the existing awaited sleep contract.
+							// The durable in-progress marker still makes a lost invocation unknown.
+							await new Promise<void>((resolve, reject) => {
+								const signal = runtime.signal;
+								const abort = () => {
+									disarm();
+									reject(signal.reason);
+								};
+								const disarm = runtime.setTimer(() => {
+									signal.removeEventListener("abort", abort);
+									resolve();
+								}, ms);
+								signal.addEventListener("abort", abort, { once: true });
+								if (signal.aborted) abort();
+							});
 						},
 					});
 					await definition.run(port);
@@ -709,9 +1417,9 @@ const BackgroundAnchor = defineTask<{}, { phase: "hold"; tick: number }, null>({
 	initial: () => ({ phase: "hold", tick: 0 }),
 	phases: {
 		hold: async (task, runtime, context) => {
-			await runtime.sleep(runtime.now() + 3600000, context);
-			await runtime.commit(
-				() => ({ status: "running", checkpoint: { phase: "hold", tick: task.state.checkpoint.tick + 1 } }),
+			await runtime.sleepUntil(
+				runtime.now() + 3600000,
+				{ phase: "hold", tick: task.state.checkpoint.tick + 1 },
 				context,
 			);
 		},
@@ -808,7 +1516,12 @@ export class DurableAdapter {
 		this.#control = control;
 		this.#options = {
 			...options,
-			inference: options.inference ? structuredClone(options.inference) : undefined,
+			inference: options.inference
+				? {
+						...structuredClone({ models: options.inference.models, policies: options.inference.policies }),
+						compresserSession: options.inference.compresserSession,
+					}
+				: undefined,
 		};
 		this.#rawModels = rawModels;
 	}
@@ -1328,7 +2041,7 @@ export class DurableAdapter {
 								current.active = false;
 							}
 						});
-						return { content: [{ type: "text", text: result }] };
+						return { output: [{ type: "text", text: result }] };
 					},
 				}),
 			),
@@ -2676,7 +3389,7 @@ export class DurableAdapter {
 		try {
 			return await this.#harness.commit(change, BACKGROUND_CONTEXT);
 		} catch (error) {
-			if (!(error instanceof MutationDenied) && !(error instanceof StorageRejected))
+			if (!(error instanceof MutationDenied))
 				this.#failSession(error instanceof Error ? error : new Error(String(error)));
 			throw error;
 		}
@@ -2919,6 +3632,24 @@ export class DurableAdapter {
 				available: true,
 			})),
 		);
+	}
+
+	checkCompresser(): void {
+		const facade = this.#options.inference?.compresserSession;
+		const native = facade && nativeCompresserSessions.get(facade);
+		if (!native) throw new Error("An explicit host-owned Compresser Session is required");
+		native.check();
+	}
+	async converse(
+		input: Omit<GovernedConversation, "reserve">,
+		strategy: { strategyId: string; maxCalls: number },
+	): Promise<InferenceResult> {
+		this.checkCompresser();
+		input.check();
+		const definition = this.#inferenceModels.get(input.request.modelKey);
+		if (!definition) throw new Error("Model is not allowlisted");
+		const native = nativeCompresserSessions.get(this.#options.inference!.compresserSession!)!;
+		return native.run({ ...input, reserve: () => this.#reserveAttempt("auxiliary", strategy) }, definition);
 	}
 
 	async infer(
@@ -3331,7 +4062,7 @@ export class DurableAdapter {
 				await this.refreshCache();
 			})
 			.catch(async (err) => {
-				if (err instanceof MutationDenied || err instanceof StorageRejected) await this.refreshCache();
+				if (err instanceof MutationDenied) await this.refreshCache();
 				else this.#failSession(err instanceof Error ? err : new Error(String(err)));
 			})
 			.finally(() => {

@@ -1,0 +1,13 @@
+✔ WebUI directories: authorized browsing, independent changes and revocation use current resource authority (238.0351ms)
+✔ WebUI workspace: human create/configure/fork stay inside the host-selected profile ceiling (313.2532ms)
+✔ WebUI workspace: views and actions bind to the real human identity and current resource scope (161.844ms)
+✔ WebUI workspace: a removed profile ceiling during creation produces no native member (49.9827ms)
+✔ deterministic HTTP fixtures expose canonical temporary paths, including Windows short-name TEMP aliases (16.1528ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3287.8215

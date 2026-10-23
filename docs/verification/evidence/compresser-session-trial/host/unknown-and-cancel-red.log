@@ -1,0 +1,41 @@
+✔ Compresser repairs a stop and invalid call in the same native trajectory, auditing every real request (748.7397ms)
+✔ Compresser provider errors use the native failed-run boundary without losing earlier analysis (663.5931ms)
+✔ one external Conversation creates independent Compresser Conversations and repeated job admission sends nothing (652.758ms)
+✔ tool tolerance is shared across child Conversations and survives reopen without dispatch (878.3657ms)
+✔ four stop errors seal the Session, preserve the actual reason, and send no fifth request (752.6701ms)
+✔ four provider errors seal the Session, preserve the actual reason, and send no fifth request (788.2108ms)
+✔ Compresser output-length failure with a tool-shaped partial is unresolved, never an adopted tool error (577.6566ms)
+✔ Compresser strict raw and source validation failures are complete-call repairs, not adopted normalized DTOs (864.0443ms)
+✔ a source revocation during Compresser HTTP prevents late adoption and another dispatch (355.1475ms)
+✔ Compresser job and strategy hard budgets remain independent of error tolerances (861.7536ms)
+✔ managed Compresser requests spend auxiliary aggregate quota and never primary quota (623.2517ms)
+✔ one container serves distinct external Sessions and sealing refuses adoption of a previously returned candidate (974.5016ms)
+✔ a sibling seal quarantines an already-in-flight otherwise valid response (709.2357ms)
+✔ multiple output calls in one response are not candidate patches and each actual tool error counts once (494.3595ms)
+✔ cancelling the source job refuses a late result without spending error tolerance or dispatching again (361.4467ms)
+✖ a source audit storage failure after real HTTP seals unknown work without a correction or releasing admission (433.1686ms)
+✔ completed native job state survives reopen without new HTTP and one writer is enforced (421.4776ms)
+ℹ tests 17
+ℹ suites 0
+ℹ pass 16
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 11991.7844
+
+✖ failing tests:
+
+test at packages\agent\test\compresser-session.test.ts:271:1
+✖ a source audit storage failure after real HTTP seals unknown work without a correction or releasing admission (433.1686ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///D:/Projects/pakka/packages/agent/test/compresser-session.test.ts:282:100)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /storage|persist|journal|unknown/i,
+    operator: 'rejects',
+    diff: 'simple'
+  }

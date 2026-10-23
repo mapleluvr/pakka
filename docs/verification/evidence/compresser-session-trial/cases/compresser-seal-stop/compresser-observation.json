@@ -1,0 +1,100 @@
+{
+  "state": {
+    "sessionId": "8efccc53-b8da-44b7-967b-d93194c6ce7b",
+    "status": "sealed",
+    "toolCallingTolerance": 3,
+    "unresolvedErrorTolerance": 4,
+    "toolErrors": 0,
+    "unresolvedErrors": 4,
+    "lastError": {
+      "reason": "No complete submission: stop",
+      "incidentId": "0c4ad854-ecbd-4dc5-bf74-e95a45593556:yield",
+      "conversationId": "8",
+      "jobId": "ee1119ea-24ed-4e04-9d4a-88ff2b0c824c"
+    },
+    "conversations": [
+      {
+        "conversationId": "8",
+        "jobId": "ee1119ea-24ed-4e04-9d4a-88ff2b0c824c",
+        "planId": "mvle97is-mkmjcv8a",
+        "sourceSessionId": "3e71747b-35c8-483b-b191-8f1bfa66b45a",
+        "sourceConversationId": "1",
+        "status": "failed"
+      }
+    ]
+  },
+  "audit": [
+    {
+      "status": "failed",
+      "modelKey": "summary",
+      "reason": "No complete submission: stop",
+      "usageStatus": "known",
+      "usage": {
+        "input": 150,
+        "output": 12,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "totalTokens": 162,
+        "cost": null
+      },
+      "attemptId": "59d6dd0f-9f6e-47b8-984c-08e6cac0a918",
+      "jobId": "ee1119ea-24ed-4e04-9d4a-88ff2b0c824c",
+      "planId": "mvle97is-mkmjcv8a",
+      "maxOutputTokens": 1024
+    },
+    {
+      "status": "failed",
+      "modelKey": "summary",
+      "reason": "No complete submission: stop",
+      "usageStatus": "known",
+      "usage": {
+        "input": 160,
+        "output": 12,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "totalTokens": 172,
+        "cost": null
+      },
+      "attemptId": "20c32233-654f-4e54-8115-87eb4a61e4c8",
+      "jobId": "ee1119ea-24ed-4e04-9d4a-88ff2b0c824c",
+      "planId": "mvle97is-mkmjcv8a",
+      "maxOutputTokens": 1024
+    },
+    {
+      "status": "failed",
+      "modelKey": "summary",
+      "reason": "No complete submission: stop",
+      "usageStatus": "known",
+      "usage": {
+        "input": 170,
+        "output": 12,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "totalTokens": 182,
+        "cost": null
+      },
+      "attemptId": "e9dbd20c-2e4f-4dad-92cc-8375925a30c7",
+      "jobId": "ee1119ea-24ed-4e04-9d4a-88ff2b0c824c",
+      "planId": "mvle97is-mkmjcv8a",
+      "maxOutputTokens": 1024
+    },
+    {
+      "status": "failed",
+      "modelKey": "summary",
+      "reason": "No complete submission: stop",
+      "usageStatus": "known",
+      "usage": {
+        "input": 180,
+        "output": 12,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "totalTokens": 192,
+        "cost": null
+      },
+      "attemptId": "0c4ad854-ecbd-4dc5-bf74-e95a45593556",
+      "jobId": "ee1119ea-24ed-4e04-9d4a-88ff2b0c824c",
+      "planId": "mvle97is-mkmjcv8a",
+      "maxOutputTokens": 1024
+    }
+  ]
+}

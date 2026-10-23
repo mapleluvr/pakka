@@ -1,0 +1,1 @@
+{"format":1,"type":"record","seq":3,"ordinal":4,"payload":{"type":"document","id":13,"content":{"version":1,"kind":"base","value":{"model":{"provider":"pakka-compresser-fad3ce08-b601-41c8-8848-61b426357ffd","modelId":"summary-model"},"thinkingLevel":"off","extensions":["pakka-compresser-fad3ce08-b601-41c8-8848-61b426357ffd"],"tools":["submit_candidate"],"instructions":""}}}}

@@ -1,0 +1,251 @@
+{
+  "state": {
+    "sessionId": "2744f8df-ab6d-4386-a4fc-a526b2c64c26",
+    "status": "open",
+    "toolCallingTolerance": 3,
+    "unresolvedErrorTolerance": 4,
+    "toolErrors": 2,
+    "unresolvedErrors": 1,
+    "lastError": {
+      "reason": "Compaction source/graph/persisted-envelope validation failed: Error: Invalid compaction artifact submission",
+      "incidentId": "aae05f78-5cdd-4ce0-b851-0cd9d7436bdc:tool:30",
+      "conversationId": "8",
+      "jobId": "fd1723ea-2f4f-4025-9432-e71b01784c05"
+    },
+    "conversations": [
+      {
+        "conversationId": "8",
+        "jobId": "fd1723ea-2f4f-4025-9432-e71b01784c05",
+        "planId": "mvle93eo-a64tce7r",
+        "sourceSessionId": "23d1445d-83f7-4ad2-9984-031c31567c65",
+        "sourceConversationId": "1",
+        "status": "completed"
+      }
+    ]
+  },
+  "audit": [
+    {
+      "status": "failed",
+      "modelKey": "summary",
+      "reason": "No complete submission: stop",
+      "usageStatus": "known",
+      "usage": {
+        "input": 150,
+        "output": 12,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "totalTokens": 162,
+        "cost": null
+      },
+      "attemptId": "ab0b5c52-d2e1-4537-8a7d-421cdf9f8982",
+      "jobId": "fd1723ea-2f4f-4025-9432-e71b01784c05",
+      "planId": "mvle93eo-a64tce7r",
+      "maxOutputTokens": 1024
+    },
+    {
+      "status": "failed",
+      "modelKey": "summary",
+      "reason": "Error: Validation failed for tool \"submit_compaction\":\n  - clues: must have required properties clues\n\nReceived arguments:\n{\n  \"summary\": \"## Goal\\nPreserve source decisions, exact identifiers, completed work and pending next actions.\\n\\n## Progress\\nThe fixed local source was checked without changing the original history.\",\n  \"graphs\": [\n    {\n      \"id\": \"g\",\n      \"title\": \"NATIVE-SIDECAR\",\n      \"nodes\": [\n        {\n          \"id\": \"n\",\n          \"label\": \"native source\",\n          \"sourceEntryIds\": [\n            \"19\"\n          ]\n        }\n      ],\n      \"edges\": [],\n      \"annotations\": [\n        {\n          \"nodeIds\": [\n            \"n\"\n          ],\n          \"text\": \"NATIVE-ANNOTATION\",\n          \"sourceEntryIds\": [\n            \"19\"\n          ]\n        }\n      ]\n    }\n  ],\n  \"unresolved\": []\n}",
+      "usageStatus": "known",
+      "usage": {
+        "input": 160,
+        "output": 12,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "totalTokens": 172,
+        "cost": null
+      },
+      "attemptId": "84abe720-7af1-44c0-b4a3-9a455e23580c",
+      "jobId": "fd1723ea-2f4f-4025-9432-e71b01784c05",
+      "planId": "mvle93eo-a64tce7r",
+      "maxOutputTokens": 1024
+    },
+    {
+      "status": "failed",
+      "modelKey": "summary",
+      "reason": "Compaction source/graph/persisted-envelope validation failed: Error: Invalid compaction artifact submission",
+      "usageStatus": "known",
+      "usage": {
+        "input": 170,
+        "output": 12,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "totalTokens": 182,
+        "cost": null
+      },
+      "attemptId": "aae05f78-5cdd-4ce0-b851-0cd9d7436bdc",
+      "jobId": "fd1723ea-2f4f-4025-9432-e71b01784c05",
+      "planId": "mvle93eo-a64tce7r",
+      "maxOutputTokens": 1024
+    },
+    {
+      "status": "completed",
+      "modelKey": "summary",
+      "usageStatus": "known",
+      "usage": {
+        "input": 180,
+        "output": 12,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "totalTokens": 192,
+        "cost": null
+      },
+      "toolCall": {
+        "id": "submission-4",
+        "name": "submit_compaction",
+        "arguments": {
+          "summary": "## Goal\nPreserve source decisions, exact identifiers, completed work and pending next actions.\n\n## Progress\nThe fixed local source was checked without changing the original history.",
+          "graphs": [
+            {
+              "id": "g",
+              "title": "NATIVE-SIDECAR",
+              "nodes": [
+                {
+                  "id": "n",
+                  "label": "native source",
+                  "sourceEntryIds": [
+                    "19"
+                  ]
+                }
+              ],
+              "edges": [],
+              "annotations": [
+                {
+                  "nodeIds": [
+                    "n"
+                  ],
+                  "text": "NATIVE-ANNOTATION",
+                  "sourceEntryIds": [
+                    "19"
+                  ]
+                }
+              ]
+            }
+          ],
+          "clues": [
+            {
+              "text": "NATIVE-CLUE",
+              "sourceEntryIds": [
+                "19"
+              ]
+            }
+          ],
+          "unresolved": []
+        }
+      },
+      "attemptId": "4bedf0ae-b835-4985-bf49-f3890f9758b7",
+      "jobId": "fd1723ea-2f4f-4025-9432-e71b01784c05",
+      "planId": "mvle93eo-a64tce7r",
+      "maxOutputTokens": 1024
+    }
+  ],
+  "records": [
+    {
+      "type": "run",
+      "id": "mvle93ev-ts808rb9",
+      "timestamp": "2026-10-23T19:59:51.175Z",
+      "atHostEntryId": "23",
+      "planId": "mvle93eo-a64tce7r",
+      "attemptIndex": 1,
+      "stepRange": {
+        "from": 2,
+        "to": 6
+      },
+      "windowEntryIds": [
+        "11",
+        "12",
+        "15",
+        "16",
+        "19"
+      ],
+      "windowFingerprint": "c1e93bd22d876991e66f0a7f7b0b26dc6501b9e91a19798b6a3eb4f8861a378a",
+      "windowContentVersions": [
+        "08a99acd226d9ecdf341e39871937246ebb7eddca7ac5fabe00263dfbb23cb84",
+        "e6792727a84a0e1bb74f2008589cfb01c90f813852878550dac413cf8a977d52",
+        "ac3381df04763a886f8a8acfcd9d4e9e3f8d9b9e394f3766182ee44267374348",
+        "5e6b0145d73f99b1e42b68642d50c32ea7439a7a7584b2dfe5b9099f702f0520",
+        "636e8b129ccc906a3b54ed36ed80690a04b3493039958c82104cf5cc86f5bbe9"
+      ],
+      "contextContentVersions": [],
+      "model": {
+        "provider": "host",
+        "id": "summary"
+      },
+      "usage": {
+        "input": 660,
+        "output": 48,
+        "cacheRead": 0,
+        "cacheWrite": 0
+      },
+      "usageStatus": "reported",
+      "outcome": "accepted",
+      "blockId": 1
+    },
+    {
+      "type": "block",
+      "id": "mvle93zs-g68wlkao",
+      "timestamp": "2026-10-23T19:59:51.175Z",
+      "atHostEntryId": "23",
+      "blockId": 1,
+      "originalBlockIds": [
+        "11",
+        "12",
+        "15",
+        "16",
+        "19"
+      ],
+      "text": "## Goal\nPreserve source decisions, exact identifiers, completed work and pending next actions.\n\n## Progress\nThe fixed local source was checked without changing the original history.",
+      "artifacts": {
+        "schemaVersion": 1,
+        "toolCallId": "submission-4",
+        "graphs": [
+          {
+            "id": "g",
+            "title": "NATIVE-SIDECAR",
+            "nodes": [
+              {
+                "id": "n",
+                "label": "native source",
+                "sourceEntryIds": [
+                  "19"
+                ]
+              }
+            ],
+            "edges": [],
+            "annotations": [
+              {
+                "nodeIds": [
+                  "n"
+                ],
+                "text": "NATIVE-ANNOTATION",
+                "sourceEntryIds": [
+                  "19"
+                ]
+              }
+            ]
+          }
+        ],
+        "clues": [
+          {
+            "text": "NATIVE-CLUE",
+            "sourceEntryIds": [
+              "19"
+            ]
+          }
+        ],
+        "unresolved": []
+      },
+      "runId": "mvle93ev-ts808rb9",
+      "verified": true,
+      "sourceFingerprint": "c1e93bd22d876991e66f0a7f7b0b26dc6501b9e91a19798b6a3eb4f8861a378a",
+      "sourceContentVersions": [
+        "08a99acd226d9ecdf341e39871937246ebb7eddca7ac5fabe00263dfbb23cb84",
+        "e6792727a84a0e1bb74f2008589cfb01c90f813852878550dac413cf8a977d52",
+        "ac3381df04763a886f8a8acfcd9d4e9e3f8d9b9e394f3766182ee44267374348",
+        "5e6b0145d73f99b1e42b68642d50c32ea7439a7a7584b2dfe5b9099f702f0520",
+        "636e8b129ccc906a3b54ed36ed80690a04b3493039958c82104cf5cc86f5bbe9"
+      ],
+      "contextContentVersions": []
+    }
+  ]
+}

@@ -66,6 +66,7 @@ export async function ownedBrowser(dir: string, options: { readonly push?: boole
 			env: { ...process.env, HOME: dir, USERPROFILE: dir, LOCALAPPDATA: local, APPDATA: roaming },
 		},
 	);
+	const exited = new Promise<void>((resolve) => processHandle.once("exit", () => resolve()));
 	let stderr = "";
 	const endpoint = await new Promise<string>((resolve, reject) => {
 		const timer = setTimeout(() => {
@@ -379,7 +380,21 @@ export async function ownedBrowser(dir: string, options: { readonly push?: boole
 				await call("Browser.close");
 			} finally {
 				ws.close();
-				processHandle.kill();
+				let deadline: ReturnType<typeof setTimeout> | undefined;
+				try {
+					const clean = await Promise.race([
+						exited.then(() => true),
+						new Promise<false>((resolve) => {
+							deadline = setTimeout(() => resolve(false), 2000);
+						}),
+					]);
+					if (!clean) {
+						processHandle.kill();
+						await exited;
+					}
+				} finally {
+					clearTimeout(deadline);
+				}
 			}
 		},
 	};

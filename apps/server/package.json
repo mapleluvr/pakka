@@ -35,7 +35,7 @@
 		"start": "node dist/main.js"
 	},
 	"dependencies": {
-		"@pakka/agent": "0.5.1",
+		"@pakka/agent": "0.6.0",
 		"@pakka/mas": "0.4.0",
 		"@pakka/mas-devpack": "0.2.0",
 		"@pakka/protocol": "0.1.0"

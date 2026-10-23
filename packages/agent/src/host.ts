@@ -43,6 +43,8 @@ type RuntimeAdapter = {
 	frame: DurableAdapter["frame"];
 	models: DurableAdapter["models"];
 	infer: DurableAdapter["infer"];
+	converse?: DurableAdapter["converse"];
+	checkCompresser?: DurableAdapter["checkCompresser"];
 	storageUnknown?: DurableAdapter["storageUnknown"];
 	journalNamespace?: DurableAdapter["journalNamespace"];
 	readonly busy: boolean;
@@ -114,6 +116,15 @@ class Kernel {
 				},
 				journalNamespace: (strategyId, kind) => this.#adapter.journalNamespace?.(strategyId, kind),
 				models: () => this.#adapter.models(),
+				checkCompresser: () => {
+					if (!this.#adapter.checkCompresser)
+						throw new Error("Conversational auxiliary inference unavailable");
+					this.#adapter.checkCompresser();
+				},
+				converse: (input, strategy) => {
+					if (!this.#adapter.converse) throw new Error("Conversational auxiliary inference unavailable");
+					return this.#adapter.converse(input, strategy);
+				},
 				infer: (request, cap, signal, timeout, check, strategy) =>
 					this.#adapter.infer(request, cap, signal, timeout, check, strategy),
 			},

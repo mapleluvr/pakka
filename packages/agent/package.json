@@ -1,6 +1,6 @@
 {
 	"name": "@pakka/agent",
-	"version": "0.5.1",
+	"version": "0.6.0",
 	"private": true,
 	"type": "module",
 	"exports": {
@@ -13,20 +13,20 @@
 		"dist"
 	],
 	"scripts": {
-		"build": "node ../../scripts/verify-durable-patch.mjs && node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\" && tsc -p tsconfig.json",
+		"build": "node ../../scripts/verify-durable-patch.mjs 1.4.0-pakka.1 && node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\" && tsc -p tsconfig.json",
 		"prepack": "node -e \"const p=require('./package.json');const spec=p.dependencies['@earendil-works/pi-durable'];if(spec.startsWith('file:')||require('./node_modules/@earendil-works/pi-durable/package.json').version!==spec)throw new Error('Use npm run pack:agent from the workspace root to bundle the audited Durable release')\""
 	},
 	"bundleDependencies": [
 		"@earendil-works/pi-durable"
 	],
 	"dependencies": {
-		"@earendil-works/pi-durable": "file:vendor/earendil-works-pi-durable-1.0.3-pakka.1.tgz",
-		"@earendil-works/pi-ai": "1.0.3",
-		"@earendil-works/chord": "1.0.3",
-		"@earendil-works/pi-telemetry": "1.0.3"
+		"@earendil-works/pi-durable": "file:vendor/earendil-works-pi-durable-1.4.0-pakka.1.tgz",
+		"@earendil-works/pi-ai": "1.4.0",
+		"@earendil-works/chord": "1.4.0",
+		"@earendil-works/pi-telemetry": "1.4.0"
 	},
 	"devDependencies": {
-		"@earendil-works/pi-coding-agent": "1.0.3",
-		"@earendil-works/pi-agent-core": "1.0.3"
+		"@earendil-works/pi-coding-agent": "1.4.0",
+		"@earendil-works/pi-agent-core": "1.4.0"
 	}
 }

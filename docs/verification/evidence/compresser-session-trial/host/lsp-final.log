@@ -1,0 +1,28 @@
+Files checked: 22
+Total diagnostics: 12
+Concurrency: 4
+Wait budget: 2500ms
+Outcomes: clean=19, findings=2, unsupported=0, unavailable=0, failed=0, too_large=0, inconclusive=1
+
+Checks not confirmed: 1 (inconclusive/unavailable/unsupported/failed or not started).
+
+19 files confirmed clean, 1 unconfirmed: from a server that cannot confirm clean (push-only, silent-on-clean; e.g. classic typescript-language-server does not publish on a clean re-check). NOT the same as 0 diagnostics.
+
+Auxiliary findings (12):
+D:/Projects/pakka/scripts/consumer-smoke.mjs:13:24: error[ast-grep] (unchecked-throwing-call-js): without try/catch — throws on invalid input
+D:/Projects/pakka-dynamite/scripts/package-smoke.mjs:28:18: error[ast-grep] (unchecked-throwing-call-js): without try/catch — throws on invalid input
+D:/Projects/pakka-dynamite/scripts/package-smoke.mjs:29:15: error[ast-grep] (unchecked-throwing-call-js): without try/catch — throws on invalid input
+D:/Projects/pakka-dynamite/scripts/package-smoke.mjs:31:22: error[ast-grep] (unchecked-throwing-call-js): without try/catch — throws on invalid input
+D:/Projects/pakka-dynamite/scripts/package-smoke.mjs:38:20: error[ast-grep] (unchecked-throwing-call-js): without try/catch — throws on invalid input
+D:/Projects/pakka-dynamite/scripts/package-smoke.mjs:43:49: error[ast-grep] (unchecked-throwing-call-js): without try/catch — throws on invalid input
+D:/Projects/pakka-dynamite/scripts/package-smoke.mjs:50:22: error[ast-grep] (unchecked-throwing-call-js): without try/catch — throws on invalid input
+D:/Projects/pakka-dynamite/scripts/package-smoke.mjs:54:19: error[ast-grep] (unchecked-throwing-call-js): without try/catch — throws on invalid input
+D:/Projects/pakka-dynamite/scripts/package-smoke.mjs:61:14: error[ast-grep] (unchecked-throwing-call-js): without try/catch — throws on invalid input
+D:/Projects/pakka-dynamite/scripts/package-smoke.mjs:95:14: error[ast-grep] (unchecked-throwing-call-js): without try/catch — throws on invalid input
+D:/Projects/pakka-dynamite/scripts/package-smoke.mjs:100:54: error[ast-grep] (unchecked-throwing-call-js): without try/catch — throws on invalid input
+D:/Projects/pakka-dynamite/scripts/package-smoke.mjs:101:57: error[ast-grep] (unchecked-throwing-call-js): without try/catch — throws on invalid input
+
+suppressed by disposition: 3 finding(s) dropped from this result because they're marked false-positive/won't-fix, disabled by `.pi-lens.json` rule policy, or suppressed by an inline `pi-lens-ignore` comment. Not a clean verdict for those locations — they were found, then intentionally hidden.
+
+result ok
+usage tokens=656 elapsed-ms=0 bytes=2623 truncated=false

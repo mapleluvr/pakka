@@ -1,0 +1,30 @@
+✖ deterministic HTTP fixtures expose canonical temporary paths, including Windows short-name TEMP aliases (14.8683ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 859.349
+
+✖ failing tests:
+
+test at packages\agent\test\fixture-paths.test.ts:6:1
+✖ deterministic HTTP fixtures expose canonical temporary paths, including Windows short-name TEMP aliases (14.8683ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\pakka-integration-hhVkjq'
+  - 'C:\\Users\\Administrator\\AppData\\Local\\Temp\\pakka-integration-hhVkjq'
+  
+      at TestContext.<anonymous> (file:///D:/Projects/pakka/packages/agent/test/fixture-paths.test.ts:9:10)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\pakka-integration-hhVkjq',
+    expected: 'C:\\Users\\Administrator\\AppData\\Local\\Temp\\pakka-integration-hhVkjq',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

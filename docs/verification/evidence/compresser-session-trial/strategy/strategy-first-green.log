@@ -1,0 +1,16 @@
+✔ native Compresser production repairs stop/schema/source errors and adopts one atomic P1/P2/P3/P4 candidate (1486.8945ms)
+✔ native Compresser provider failure continues through the native failed-run boundary without an outer retry (1064.6905ms)
+✔ native Compresser Session services several jobs from one external Conversation without sharing its model history (1407.6802ms)
+✔ native Compresser tool tolerance seals the shared container without recreating a fallback Conversation (1066.629ms)
+✔ native Compresser stop tolerance seals the shared container without recreating a fallback Conversation (992.4654ms)
+✔ native Compresser completed sidecars reopen without replay or re-adoption (719.627ms)
+✔ native Compresser source revocation refuses late candidates without another request (596.9293ms)
+✔ native Compresser opt-in rejects text format and legacy fallback instead of silently using a primitive (355.5253ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 8406.9157

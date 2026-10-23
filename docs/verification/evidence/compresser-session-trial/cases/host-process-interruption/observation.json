@@ -1,0 +1,33 @@
+{
+  "stdout": "{\"sessionFile\":\"C:\\\\Users\\\\Administrator\\\\AppData\\\\Local\\\\Temp\\\\pakka-integration-0FYAWN\\\\profile\\\\sessions\\\\9a4cd09c-52a1-4ba7-921a-4d1b1a976b97\\\\main.jsonl\",\"jobId\":\"fad3ce08-b601-41c8-8848-61b426357ffd\"}\n",
+  "stderr": "",
+  "exit": {
+    "code": null,
+    "signal": "SIGTERM"
+  },
+  "state": {
+    "sessionId": "0f7fd343-def7-4a37-9250-c218d30a0d9e",
+    "status": "sealed",
+    "toolCallingTolerance": 3,
+    "unresolvedErrorTolerance": 4,
+    "toolErrors": 0,
+    "unresolvedErrors": 0,
+    "lastError": {
+      "reason": "Unconfirmed Compresser job on reopen; source authority and model effects cannot be replayed",
+      "incidentId": "reopen:fad3ce08-b601-41c8-8848-61b426357ffd",
+      "conversationId": "8",
+      "jobId": "fad3ce08-b601-41c8-8848-61b426357ffd"
+    },
+    "conversations": [
+      {
+        "conversationId": "8",
+        "jobId": "fad3ce08-b601-41c8-8848-61b426357ffd",
+        "planId": "crash-before-response",
+        "sourceSessionId": "9a4cd09c-52a1-4ba7-921a-4d1b1a976b97",
+        "sourceConversationId": "1",
+        "status": "quarantined"
+      }
+    ]
+  },
+  "requestCount": 2
+}

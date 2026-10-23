@@ -1,0 +1,122 @@
+✖ native Compresser production repairs stop/schema/source errors and adopts one atomic P1/P2/P3/P4 candidate (301.2661ms)
+✖ native Compresser provider failure continues through the native failed-run boundary without an outer retry (230.616ms)
+✖ native Compresser Session services several jobs from one external Conversation without sharing its model history (558.5815ms)
+✖ native Compresser tool tolerance seals the shared container without recreating a fallback Conversation (450.3712ms)
+✖ native Compresser stop tolerance seals the shared container without recreating a fallback Conversation (404.3034ms)
+✔ native Compresser completed sidecars reopen without replay or re-adoption (245.4571ms)
+✔ native Compresser source revocation refuses late candidates without another request (237.162ms)
+✖ native Compresser opt-in rejects text format and legacy fallback instead of silently using a primitive (154.106ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 2
+ℹ fail 6
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3177.0455
+
+✖ failing tests:
+
+test at tests\durable-compresser-session.test.mjs:36:1
+✖ native Compresser production repairs stop/schema/source errors and adopts one atomic P1/P2/P3/P4 candidate (301.2661ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  1 !== 4
+  
+      at TestContext.<anonymous> (file:///D:/Projects/pakka-dynamite/tests/durable-compresser-session.test.mjs:52:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 4,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests\durable-compresser-session.test.mjs:74:1
+✖ native Compresser provider failure continues through the native failed-run boundary without an outer retry (230.616ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  1 !== 3
+  
+      at TestContext.<anonymous> (file:///D:/Projects/pakka-dynamite/tests/durable-compresser-session.test.mjs:80:36)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 3,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests\durable-compresser-session.test.mjs:87:1
+✖ native Compresser Session services several jobs from one external Conversation without sharing its model history (558.5815ms)
+  AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+  
+    assert.ok(state.conversations.length >= 2)
+  
+      at TestContext.<anonymous> (file:///D:/Projects/pakka-dynamite/tests/durable-compresser-session.test.mjs:96:44)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at tests\durable-compresser-session.test.mjs:106:38
+✖ native Compresser tool tolerance seals the shared container without recreating a fallback Conversation (450.3712ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  7 !== 3
+  
+      at TestContext.<anonymous> (file:///D:/Projects/pakka-dynamite/tests/durable-compresser-session.test.mjs:113:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 7,
+    expected: 3,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests\durable-compresser-session.test.mjs:106:38
+✖ native Compresser stop tolerance seals the shared container without recreating a fallback Conversation (404.3034ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  7 !== 4
+  
+      at TestContext.<anonymous> (file:///D:/Projects/pakka-dynamite/tests/durable-compresser-session.test.mjs:113:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 7,
+    expected: 4,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests\durable-compresser-session.test.mjs:146:1
+✖ native Compresser opt-in rejects text format and legacy fallback instead of silently using a primitive (154.106ms)
+  AssertionError [ERR_ASSERTION]: Missing expected exception.
+      at TestContext.<anonymous> (file:///D:/Projects/pakka-dynamite/tests/durable-compresser-session.test.mjs:152:11)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /tool|fallback|fixed model/i,
+    operator: 'throws',
+    diff: 'simple'
+  }

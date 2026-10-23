@@ -1,0 +1,46 @@
+✖ Compresser repairs a stop and invalid call in the same native trajectory, auditing every real request (454.3915ms)
+✔ Compresser provider errors use the native failed-run boundary without losing earlier analysis (337.2815ms)
+✔ one external Conversation creates independent Compresser Conversations and repeated job admission sends nothing (322.9215ms)
+✔ tool tolerance is shared across child Conversations and survives reopen without dispatch (451.8291ms)
+✔ four stop errors seal the Session, preserve the actual reason, and send no fifth request (409.585ms)
+✔ four provider errors seal the Session, preserve the actual reason, and send no fifth request (376.4446ms)
+✔ Compresser strict raw and source validation failures are complete-call repairs, not adopted normalized DTOs (370.5611ms)
+✔ a source revocation during Compresser HTTP prevents late adoption and another dispatch (178.5433ms)
+✔ Compresser job and strategy hard budgets remain independent of error tolerances (396.7771ms)
+✔ managed Compresser requests spend auxiliary aggregate quota and never primary quota (337.9745ms)
+✔ one container serves distinct external Sessions and sealing refuses adoption of a previously returned candidate (524.9198ms)
+✔ a sibling seal quarantines an already-in-flight otherwise valid response (400.2705ms)
+✔ completed native job state survives reopen without new HTTP and one writer is enforced (239.8499ms)
+ℹ tests 13
+ℹ suites 0
+ℹ pass 12
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 5596.6565
+
+✖ failing tests:
+
+test at packages\agent\test\compresser-session.test.ts:38:1
+✖ Compresser repairs a stop and invalid call in the same native trajectory, auditing every real request (454.3915ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+  + undefined
+  - [
+  -   '75ecc813-875b-43ff-8fe9-687bb5d2fe7c',
+  -   'bb89a0eb-0ea5-4c53-9302-d94b134ddc47',
+  -   '48d3222f-4a09-4261-9174-ed7830673a9f'
+  - ]
+  
+      at TestContext.<anonymous> (file:///D:/Projects/pakka/packages/agent/test/compresser-session.test.ts:55:10)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: [ '75ecc813-875b-43ff-8fe9-687bb5d2fe7c', 'bb89a0eb-0ea5-4c53-9302-d94b134ddc47', '48d3222f-4a09-4261-9174-ed7830673a9f' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }

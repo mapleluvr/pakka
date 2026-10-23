@@ -1,0 +1,14 @@
+[
+  {
+    "path": "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\pakka-packed-consumer-eB1rjt\\node_modules\\@pakka\\webui\\dist\\main.js",
+    "status": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "path": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\pakka-packed-consumer-eB1rjt\\node_modules\\@pakka\\webui\\dist\\main.js",
+    "status": 1,
+    "stdout": "",
+    "stderr": "WebUI startup/control unconfirmed; check explicit configuration and private owner file.\n"
+  }
+]

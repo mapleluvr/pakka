@@ -2,7 +2,7 @@ import { AsyncLocalStorage } from "node:async_hooks";
 import { randomUUID } from "node:crypto";
 import { ArtifactJournal, copy, freeze, hash, json, type ArtifactIntent } from "./artifact-journal.ts";
 import { applyProjection } from "./strategy-projection.ts";
-import type { AdapterFrame, RunScopeToken } from "./durable-adapter.ts";
+import type { AdapterFrame, RunScopeToken, GovernedConversation } from "./durable-adapter.ts";
 import type {
 	ArtifactScope,
 	ContextFrame,
@@ -10,6 +10,7 @@ import type {
 	Grant,
 	Hook,
 	InferenceAudit,
+	InferenceCallValidator,
 	InferencePolicy,
 	InferenceRequest,
 	InferenceResult,
@@ -48,6 +49,11 @@ interface Ports {
 	storageUnknown(reason: string, sessionId: string): void;
 	journalNamespace?(strategyId: string, kind: string): string | undefined;
 	models(): readonly ModelDTO[];
+	checkCompresser?(): void;
+	converse?(
+		input: Omit<GovernedConversation, "reserve">,
+		strategy: { strategyId: string; maxCalls: number },
+	): Promise<InferenceResult>;
 	infer(
 		request: InferenceRequest,
 		cap: number,
@@ -82,6 +88,7 @@ type JobRecord = Authority & {
 	journal: ArtifactJournal;
 	auditJournal: ArtifactJournal;
 	requireArtifactReceipt: boolean;
+	conversational?: boolean;
 };
 
 /** Expected invalidation before dispatch; distinct from a projector or storage fault. */
@@ -478,6 +485,7 @@ export class StrategyControl {
 			const audit = completion && isJsonObject(completion.audit) ? completion.audit : undefined;
 			if (!reservation || !audit || !["completed", "failed", "quarantined"].includes(audit.status as string))
 				throw new Error("Artifact adoption attempt is not an exact completed job attempt");
+			if (job.conversational && audit.status === "completed") this.#ports.checkCompresser?.();
 			if (
 				records.some(
 					(record) => isJsonObject(record) && record.kind === "adoption" && record.attemptId === attemptId,
@@ -703,10 +711,12 @@ export class StrategyControl {
 			signal: job.controller.signal,
 			check: () => this.#checkJob(job),
 			infer: (request: InferenceRequest) => this.#infer(job, request),
+			converse: (request: InferenceRequest, validateCall?: InferenceCallValidator) =>
+				this.#converse(job, request, validateCall),
 			cancel: (reason = "caller cancellation") => this.#cancelJob(job, reason),
 		});
 	}
-	async #infer(job: JobRecord, original: InferenceRequest): Promise<InferenceResult> {
+	#prepareInference(job: JobRecord, original: InferenceRequest): { request: InferenceRequest; cap: number } {
 		this.#checkJob(job);
 		const request = copy(original),
 			model = this.#ports.models().find((m) => m.key === request.modelKey);
@@ -743,6 +753,10 @@ export class StrategyControl {
 			job.policy.maxOutputTokens,
 			request.maxOutputTokens || job.policy.maxOutputTokens,
 		);
+		return { request, cap };
+	}
+	#beginInference(job: JobRecord, request: InferenceRequest, cap: number): string {
+		this.#checkJob(job);
 		const journal = job.auditJournal,
 			before = journal.read();
 		const calls = before.records.filter(
@@ -767,8 +781,55 @@ export class StrategyControl {
 				leaseId: job.leaseId,
 			},
 		]);
-		if (reservation.status !== "committed") throw new Error("Inference budget storage unknown/conflict");
+		if (reservation.status !== "committed") {
+			this.#ports.storageUnknown("Inference budget storage unknown/conflict", job.sessionId);
+			throw new Error("Inference budget storage unknown/conflict");
+		}
 		job.calls++;
+		return attemptId;
+	}
+	#completeInference(
+		job: JobRecord,
+		attemptId: string,
+		cap: number,
+		output: Omit<InferenceResult, "attemptId">,
+	): InferenceResult {
+		const journal = job.auditJournal;
+		try {
+			this.#checkJob(job);
+		} catch (error) {
+			output = { ...output, status: "quarantined", reason: String(error) };
+		}
+		const result = copy({ ...output, attemptId }),
+			audit: InferenceAudit = { ...result, jobId: job.id, planId: job.planId, maxOutputTokens: cap };
+		try {
+			const after = journal.read();
+			if (
+				after.records.some(
+					(record) =>
+						isJsonObject(record) &&
+						record.kind === "completion" &&
+						isJsonObject(record.audit) &&
+						record.audit.attemptId === attemptId,
+				)
+			)
+				throw new Error("Inference attempt completion already recorded; do not duplicate");
+			const receipt = journal.append(after.version, [
+				{ kind: "completion", audit: JSON.parse(JSON.stringify(audit)) as JsonValue },
+			]);
+			if (receipt.status !== "committed")
+				throw new Error("Inference completion storage unknown; do not retry");
+		} catch (error) {
+			this.#ports.storageUnknown("Inference completion storage unknown: " + String(error), job.sessionId);
+			throw error;
+		}
+		return result;
+	}
+	async #infer(job: JobRecord, original: InferenceRequest): Promise<InferenceResult> {
+		if (job.conversational)
+			throw new Error("A conversational source job cannot switch to single-call retries");
+		const { request, cap } = this.#prepareInference(job, original),
+			attemptId = this.#beginInference(job, request, cap);
 		const signal = AbortSignal.any([job.controller.signal, AbortSignal.timeout(job.policy.timeoutMs)]);
 		let output: Omit<InferenceResult, "attemptId">;
 		try {
@@ -788,25 +849,39 @@ export class StrategyControl {
 				usageStatus: "unknown",
 			};
 		}
-		try {
-			this.#checkJob(job);
-		} catch (error) {
-			output = { ...output, status: "quarantined", reason: String(error) };
-		}
-		const result = copy({ ...output, attemptId }),
-			audit: InferenceAudit = { ...result, jobId: job.id, planId: job.planId, maxOutputTokens: cap };
-		try {
-			const after = journal.read(),
-				receipt = journal.append(after.version, [
-					{ kind: "completion", audit: JSON.parse(JSON.stringify(audit)) as JsonValue },
-				]);
-			if (receipt.status !== "committed")
-				throw new Error("Inference completion storage unknown; do not retry");
-		} catch (error) {
-			this.#ports.storageUnknown("Inference completion storage unknown: " + String(error), job.sessionId);
-			throw error;
-		}
-		return result;
+		return this.#completeInference(job, attemptId, cap, output);
+	}
+	async #converse(
+		job: JobRecord,
+		original: InferenceRequest,
+		validateCall?: InferenceCallValidator,
+	): Promise<InferenceResult> {
+		const { request, cap } = this.#prepareInference(job, original);
+		if (!request.outputTool || (validateCall !== undefined && typeof validateCall !== "function"))
+			throw new Error("Conversational inference requires a declared output tool and optional pure validator");
+		if (!this.#ports.converse) throw new Error("Conversational auxiliary inference unavailable");
+		this.#ports.checkCompresser?.();
+		if (job.calls && !job.conversational) throw new Error("Source job already uses single-call inference");
+		job.conversational = true;
+		return this.#ports.converse(
+			{
+				request,
+				cap,
+				signal: job.controller.signal,
+				timeoutMs: job.policy.timeoutMs,
+				source: {
+					jobId: job.id,
+					planId: job.planId,
+					sessionId: job.sessionId,
+					conversationId: job.conversationId ?? "",
+				},
+				validateCall,
+				check: () => this.#checkJob(job),
+				begin: () => this.#beginInference(job, request, cap),
+				complete: (attemptId, output) => this.#completeInference(job, attemptId, cap, output),
+			},
+			{ strategyId: job.strategyId, maxCalls: job.policy.maxCalls },
+		);
 	}
 	#planSnapshot(plan: ProjectionPlan): ProjectionPlan {
 		if (plan.status === "disabled" || plan.status === "blocked") return freeze({ ...plan });

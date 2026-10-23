@@ -1,6 +1,6 @@
 # Strategy Control API
 
-This is the generic headless `@pakka/agent` boundary for a reviewed strategy. It does not implement Dynamite numbering, window selection, compression quality, fallback order or record schemas. Import only the package root. The value exports are `createHost` and the trusted `createRuntime` bootstrap; all declarations below are type exports from `packages/agent/src/types.ts` through `src/index.ts`.
+This is the generic headless `@pakka/agent` boundary for a reviewed strategy. It does not implement Dynamite numbering, window selection, compression quality, fallback order or record schemas. Import only the package root. The value exports include `createHost`, trusted `createRuntime` and `createCompresserSession` bootstrap factories; all declarations below are type exports from `packages/agent/src/types.ts` through `src/index.ts`.
 
 ## Authority And Frames
 
@@ -9,6 +9,18 @@ The composition root holds `Host`, bootstrap endpoints and credentials. It conne
 `readFrame()` returns one frozen snapshot with raw IDs/parentage, active branch IDs, effective entry/message provenance, system/host-summary boundaries, excluded messages, model metadata, accumulated main-run usage and the strategy/session artifact version. `basis`, job scopes and tool invocation scopes are identity-only capabilities backed by host WeakMaps. Copies and serialized tokens have no authority. A frame basis expires on canonical frame or artifact-version change as well as lifecycle/lease changes. It is not a legacy tree revision.
 
 Source jobs instead bind exact effective target and previous-context fingerprints. Normal unrelated tail growth is allowed. Source/context edits, navigation (including ABA), generation changes, lease revocation, cancellation and unknown storage abort/reject the job. Each explicit `infer()` attempt, provider pre-dispatch callback, completion, scoped artifact operation and job-backed range application checks this authority. The host does not choose or automatically retry/fallback models.
+
+## Native Compresser Service
+
+Trusted bootstrap creates `createCompresserSession({ storageDir, toolCallingTolerance, unresolvedErrorTolerance })`; both tolerances are explicit positive safe integers. Its frozen facade exposes `snapshot(): Promise<CompresserSnapshot>` and idempotent `close()`. Bootstrap can share this same facade through participating Hosts' `inference.compresserSession`. The adapter owns the native Session/storage writer; a copied, forged or closed facade supplies no authority. In source metadata, an empty sourceConversationId denotes the standalone Host root context; managed Conversations carry their explicit ID.
+
+A source job can explicitly call `converse(request, validateCall?)` with a declared output tool. The optional synchronous `InferenceCallValidator` receives a frozen call DTO and returns a diagnostic string or `undefined`; it receives no native handles. A job selects either primitive infer or conversational inference. Same live job/request admission shares one operation; native repair preserves the originating source and transcript rather than rebuilding prompts.
+
+Each native request separately passes the source checks and finite auxiliary budgets and receives a reservation/completion audit. Tool failures require complete matched replacements. Incomplete stops and provider errors admit bounded native steering; shared Session tolerances seal all internal Conversations at the exact count. Per-job hard limits, cancellation and revocation remain terminal host conditions.
+
+A final `InferenceResult.compresser` identifies the internal Session/Conversation, all attempt IDs, `reportedUsage` summed from actual reports, and whether every attempt is known. The ordinary result's `attemptId` remains the final exact artifact-adoption receipt. Native submission failure is not the whole source-job result. Previously adopted artifacts retain their source authority; a seal refuses later successful candidate adoption.
+
+Normal reopen retains policy and completed job metadata. Unconfirmed running work is quarantined and seals the container before scheduling. Writer claims are resolved only by explicit trusted recovery; persisted jobs are not refreshed source capabilities. See [current lifecycle state](../state/compressor-session.md), [trial verification](../verification/COMPRESSER-SESSION-TRIAL.md), and `packages/agent/test/compresser-session.test.ts`.
 
 ## Minimal Usage
 
@@ -110,7 +122,7 @@ A range replacement names a contiguous ordered visible source range, never a sys
 
 If a projector appends its own trigger records, re-read the frame before returning: `const current = binding.readFrame(); return {status: "apply", basis: current.basis, ...};`. The fresh basis is tied to the same live request. Returning the old basis is rejected, not silently rebased. A no-change projector returns `{status: "disabled", basis: frame.basis}` explicitly. Throwing, malformed plans, copied/stale bases, wrong owners, invalid protocol and unknown active storage fail closed before HTTP. A synchronous returned plan is snapshotted before later caller mutation.
 
-An intentional policy refusal returns `{ status: "blocked", basis: frame.basis, reason: "policy denied" }` with no patch/replacement fields. The exact live basis is still required. The version-pinned downstream Durable build settles generation as blocked without an assistant error entry or task fault. After `waitForIdle()`, the input receipt remains `state: "committed"` and gains `generation: { status: "blocked", reason }`; provider calls stay zero and the Host remains ready. Returning block does not undo an admitted input or replay its key. Invalid protocol is still a host failure. This contract is provided by [the downstream source patch](../../patches/pi-durable/1.0.3-pakka.1/README.md), not unmodified upstream 1.0.3.
+An intentional policy refusal returns `{ status: "blocked", basis: frame.basis, reason: "policy denied" }` with no patch/replacement fields. The exact live basis is still required. The version-pinned downstream Durable build settles generation as blocked without an assistant error entry or task fault. After `waitForIdle()`, the input receipt remains `state: "committed"` and gains `generation: { status: "blocked", reason }`; provider calls stay zero and the Host remains ready. Returning block does not undo an admitted input or replay its key. Invalid protocol is still a host failure. This contract is provided by [the downstream source patch](../../patches/pi-durable/1.4.0-pakka.1/README.md), not unmodified upstream 1.4.0.
 
 ## Tools And Lifecycle
 
