@@ -1,0 +1,694 @@
+diff --git a/packages/durable/README.md b/packages/durable/README.md
+index 71aa683..ec101d0 100644
+--- a/packages/durable/README.md
++++ b/packages/durable/README.md
+@@ -619,7 +619,7 @@ const Guard = defineExtension({
+ });
+ ```
+ 
+-- **Generation:** `beforeRequest` (replace the messages of one request), `afterResponse`, `onYield` (continue the run with another user message), and `afterTools` (runs once a round's tools are done).
++- **Generation:** `beforeRequest` (replace the messages of one request, or return `{ block: string }` to settle the run unanswered without a provider call; a replacement may include a synchronous `check` revalidated after hooks and at the final provider payload boundary), `afterResponse`, `onYield` (continue the run with another user message), and `afterTools` (runs once a round's tools are done).
+ - **Tools:** `beforeTool` (block or rewrite arguments) and `afterTool` (replace the result).
+ 
+ To limit a hook to some conversations, select its extension only there, for example with `configure({ extensions: { add: [Guard] } })`.
+diff --git a/packages/durable/docs/spec.md b/packages/durable/docs/spec.md
+index 3e206cf..4dcc5f5 100644
+--- a/packages/durable/docs/spec.md
++++ b/packages/durable/docs/spec.md
+@@ -2937,12 +2937,18 @@ interface HookApi extends DocumentReader {
+ }
+ 
+ interface GenerationHooks {
+-  /** Before every request attempt, including recovery; the result is used for that request only. */
++  /**
++   * Before every request attempt, including recovery; the result is used for that request only.
++   * `block` is an explicit fail-closed policy decision: the refusal adds no provider call or assistant entry;
++   * the run's placed inputs settle unanswered with reason "blocked", and the task completes.
++   * A synchronous `check` is revalidated after hooks and at pi-ai's final onPayload boundary.
++   * Ordinary thrown hook errors retain report-and-continue semantics.
++   */
+   beforeRequest(
+     request: { readonly messages: readonly Message[] },
+     api: HookApi,
+     context: Context,
+-  ): HookResult<{ readonly messages: readonly Message[] }>;
++  ): HookResult<{ readonly messages: readonly Message[]; readonly check?: () => void } | { readonly block: string }>;
+   /** Every terminal provider message, before classification. */
+   afterResponse(message: AssistantMessage, api: HookApi, context: Context): void | Promise<void>;
+   /** A final answer; `continue` appends a user message and continues the run. */
+@@ -4175,7 +4181,7 @@ type GenerationCheckpoint =
+       /** Calls of a sequential round not started yet, in call order. */
+       pending: string[];
+     };
+-type GenerationResult = { entryId: EntryId };
++type GenerationResult = { entryId: EntryId } | { blocked: string };
+ ```
+ 
+ `pi.generation` is version 1 and starts at `{ phase: "prepare", attempt: 1 }`.
+@@ -4229,10 +4235,19 @@ The run's inputs live in `pi.live.run`, not in the task input.
+   as `reasoning` (omitted for `off`), the conversation's persisted provider
+   `sessionId`, and the pinned `streamOptions`, committing throttled partials at
+   most every `settings.progress.partialIntervalMs` (default 100 ms).
+-  Before streaming, the `beforeRequest` chain may
+-  replace the messages for this request only. Recovery resends the same
+-  committed messages with the same pinned model, thinking level, and stream
+-  options, and reruns `beforeRequest`.
++  Before streaming, the `beforeRequest` chain may replace the messages for
++  this request only, or return `{ block }`. The first explicit block stops the
++  chain. Replacements may supply synchronous `check` callbacks, run in hook
++  order after the chain and after the existing `onPayload` callback at the
++  final provider payload boundary. A throwing check is a policy block; ordinary
++  hook exceptions keep report-and-continue semantics. A block atomically
++  settles the run's placed inputs `unanswered` with reason `blocked` and the
++  policy text as detail, clears its live state, leaves its inbox queued, and
++  completes the generation with `{ blocked }` and no assistant entry or retry.
++  Previously committed partials follow the recovery conversion above even
++  when the new attempt is blocked. Recovery resends the same committed messages
++  with the same pinned model, thinking level, and stream options, and reruns
++  `beforeRequest` and its checks.
+ - `afterResponse` observes every terminal message, from `request` or `poll`,
+   before classification; a still deferred result is not terminal.
+ - Before classifying, the handler stops the partial throttle and awaits any
+@@ -4300,8 +4315,8 @@ A tool round starts in the commit that appends the tool-calling answer:
+ 4. `pi.live.tools` receives the round's slots (section 8.2), and `generation` is
+    removed.
+ 
+-Input submissions settle `unanswered` with one of these reasons: `no_model`,
+-`model_error` (detail: provider error text), `aborted`, `faulted` (detail: error
++Input submissions settle `unanswered` with one of these reasons: `blocked`
++(detail: policy text), `no_model`, `model_error` (detail: provider error text), `aborted`, `faulted` (detail: error
+ message), or an orphaning blocked reason (section 5.4). Fault and orphan
+ settlement convert a committed partial into an aborted `pi.assistant` entry,
+ like the abort handler.
+diff --git a/packages/durable/src/harness/generation.ts b/packages/durable/src/harness/generation.ts
+index c8d2679..1fdbd88 100644
+--- a/packages/durable/src/harness/generation.ts
++++ b/packages/durable/src/harness/generation.ts
+@@ -96,7 +96,7 @@ export type GenerationCheckpoint =
+ 			pending: string[];
+ 	  };
+ 
+-export type GenerationResult = { entryId: EntryId };
++export type GenerationResult = { entryId: EntryId } | { blocked: string };
+ 
+ type Runtime = TaskRuntime<GenerationInput, GenerationCheckpoint, GenerationResult, GenerationHooks>;
+ type Next = NextTaskState<GenerationCheckpoint, GenerationResult>;
+@@ -219,10 +219,37 @@ export const GenerationTask = defineTask<GenerationInput, GenerationCheckpoint,
+ 			if (model === undefined) return failNoModel(runtime, ref, context);
+ 			const view = await runtime.context(conversationId, context, { at: cutoff });
+ 			let messages = view.messages;
++			let blocked: string | undefined;
++			const checks: (() => void)[] = [];
+ 			await runtime.hooks.each("beforeRequest", async (hook) => {
++				if (blocked !== undefined) return;
+ 				const replaced = await hook({ messages }, runtime, context);
+-				if (replaced !== undefined) messages = replaced.messages;
++				if (replaced !== undefined) {
++					if ("block" in replaced) blocked = replaced.block;
++					else {
++						messages = replaced.messages;
++						if (replaced.check !== undefined) checks.push(replaced.check);
++					}
++				}
+ 			});
++			const check = () => {
++				for (const guard of checks) {
++					try {
++						guard();
++					} catch (error) {
++						blocked = error instanceof Error ? error.message : String(error);
++						throw error;
++					}
++				}
++			};
++			if (blocked === undefined) {
++				try {
++					check();
++				} catch {
++					// The check records the explicit policy denial; ordinary hook errors still report/continue.
++				}
++			}
++			if (blocked !== undefined) return blockRequest(runtime, blocked, context);
+ 			const options: SimpleStreamOptions = {
+ 				...streamOptions,
+ 				signal: runtime.signal,
+@@ -230,7 +257,22 @@ export const GenerationTask = defineTask<GenerationInput, GenerationCheckpoint,
+ 				sessionId: await ensureProviderSessionId(runtime, context),
+ 				...(thinkingLevel === "off" ? {} : { reasoning: thinkingLevel }),
+ 			};
+-			const message = await streamResponse(runtime, model, messages, options, attempt, context);
++			if (checks.length !== 0) {
++				const previous = options.onPayload;
++				options.onPayload = async (payload, requestModel) => {
++					const replacement = await previous?.(payload, requestModel);
++					check();
++					return replacement;
++				};
++			}
++			let message: AssistantMessage;
++			try {
++				message = await streamResponse(runtime, model, messages, options, attempt, context);
++			} catch (error) {
++				if (blocked !== undefined) return blockRequest(runtime, blocked, context);
++				throw error;
++			}
++			if (blocked !== undefined) return blockRequest(runtime, blocked, context);
+ 			const request = { attempt, compacted, model: ref, cutoff, messages: view.messages };
+ 			await classify(runtime, request, message, context);
+ 		},
+@@ -315,6 +357,14 @@ export const GenerationTask = defineTask<GenerationInput, GenerationCheckpoint,
+ 	},
+ });
+ 
++async function blockRequest(runtime: Runtime, reason: string, context: Context): Promise<void> {
++	await runtime.commit(async (tx): Promise<Next> => {
++		const live = await tx.doc(LiveDoc, runtime.conversationId);
++		endRun(tx, live, runtime.taskId, { status: "unanswered", reason: "blocked", detail: reason });
++		return { status: "terminal", outcome: { status: "completed", result: { blocked: reason } } };
++	}, context);
++}
++
+ /** The calls `callIds` of the assistant entry, in the given order. */
+ async function readCalls(
+ 	runtime: Runtime,
+diff --git a/packages/durable/src/harness/types.ts b/packages/durable/src/harness/types.ts
+index 289b5c4..d5cc07c 100644
+--- a/packages/durable/src/harness/types.ts
++++ b/packages/durable/src/harness/types.ts
+@@ -850,12 +850,18 @@ export type HookResult<T> = T | undefined | Promise<T | undefined>;
+ 
+ /** Hooks of the built-in generation task. */
+ export interface GenerationHooks {
+-	/** Before every request attempt, including recovery; the result is used for that request only. */
++	/**
++	 * Before every request attempt, including recovery; the result is used for that request only.
++	 * `block` is an explicit fail-closed policy decision: the refusal adds no provider call or assistant entry;
++	 * the run's placed inputs settle unanswered with reason "blocked", and the task completes.
++	 * A synchronous `check` is revalidated after hooks and at pi-ai's final onPayload boundary.
++	 * Ordinary thrown hook errors retain report-and-continue semantics.
++	 */
+ 	beforeRequest(
+ 		request: { readonly messages: readonly Message[] },
+ 		api: HookApi,
+ 		context: Context,
+-	): HookResult<{ readonly messages: readonly Message[] }>;
++	): HookResult<{ readonly messages: readonly Message[]; readonly check?: () => void } | { readonly block: string }>;
+ 	/** Every terminal provider message, before classification. */
+ 	afterResponse(message: AssistantMessage, api: HookApi, context: Context): void | Promise<void>;
+ 	/** A final answer; the first `continue` appends a user message and continues the run. */
+diff --git a/packages/durable/test/harness-generation-recovery.test.ts b/packages/durable/test/harness-generation-recovery.test.ts
+index ef104ac..a998cbe 100644
+--- a/packages/durable/test/harness-generation-recovery.test.ts
++++ b/packages/durable/test/harness-generation-recovery.test.ts
+@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
+ import { join } from "node:path";
+ import { DatabaseSync } from "node:sqlite";
+ import { type AssistantMessage, createModels, fauxAssistantMessage, type Message } from "@earendil-works/pi-ai";
+-import { AssistantEntry, type Harness, LiveDoc, type TaskId } from "@earendil-works/pi-durable";
++import { AssistantEntry, defineExtension, GenerationTask, type Harness, hook, LiveDoc, type TaskId } from "@earendil-works/pi-durable";
+ import { afterEach, describe, expect, it } from "vitest";
+ import { openNodeSqliteStorage } from "../src/storage/sqlite/node.ts";
+ import { allEntries, type ChatSetup, chatSetup, openChat, textOf, unanswered, waitFor } from "./chat-support.ts";
+@@ -39,6 +39,81 @@ async function checkpoint(harness: Harness, id: TaskId) {
+ }
+ 
+ describe("generation recovery", () => {
++	it("keeps a blocked settlement and terminal generation across SQLite reopen", async () => {
++		const path = await sqlitePath();
++		const setup = chatSetup();
++		setup.registry.install(
++			defineExtension({
++				name: "policy",
++				hooks: [
++					hook(GenerationTask, {
++						beforeRequest: () => ({ block: "persistent refusal" }),
++					}),
++				],
++			}),
++		);
++		let opened = await open(path, setup);
++		try {
++			const submission = await opened.root.submit({ type: "input", content: "hi" }, context);
++			expect(await submission.wait(context)).toMatchObject({
++				status: "unanswered",
++				reason: "blocked",
++				detail: "persistent refusal",
++			});
++			await opened.harness.close(context);
++			opened = await open(path, setup);
++			opened.harness.resume();
++			expect(await (await opened.harness.submission(submission.id, context))!.wait(context)).toMatchObject({
++				reason: "blocked",
++				detail: "persistent refusal",
++			});
++			expect(setup.faux.state.callCount).toBe(0);
++			expect(await opened.harness.snapshot(LiveDoc, opened.root.id, context)).toEqual({});
++		} finally {
++			await opened.harness.close(context);
++		}
++	});
++
++	it("re-runs authorization for an interrupted request rather than restoring its old guard", async () => {
++		const path = await sqlitePath();
++		const setup = chatSetup();
++		const reached = deferred();
++		let hooks = 0;
++		setup.registry.install(
++			defineExtension({
++				name: "policy",
++				hooks: [
++					hook(GenerationTask, {
++						beforeRequest: async (_request, _api, ctx) => {
++							hooks++;
++							if (hooks === 1) {
++								reached.resolve();
++								await aborted(ctx.abortSignal!);
++							}
++							return { block: "revoked after restart" };
++						},
++					}),
++				],
++			}),
++		);
++		let opened = await open(path, setup);
++		try {
++			const submission = await opened.root.submit({ type: "input", content: "hi" }, context);
++			await reached.promise;
++			await opened.harness.close(context);
++			opened = await open(path, setup);
++			opened.harness.resume();
++			expect(await (await opened.harness.submission(submission.id, context))!.wait(context)).toMatchObject({
++				reason: "blocked",
++				detail: "revoked after restart",
++			});
++			expect(hooks).toBe(2);
++			expect(setup.faux.state.callCount).toBe(0);
++		} finally {
++			await opened.harness.close(context);
++		}
++	});
++
+ 	it("reruns preparation interrupted before its commit", async () => {
+ 		const path = await sqlitePath();
+ 		const setup = chatSetup();
+diff --git a/packages/durable/test/harness-generation.test.ts b/packages/durable/test/harness-generation.test.ts
+index 50bae0a..a17c876 100644
+--- a/packages/durable/test/harness-generation.test.ts
++++ b/packages/durable/test/harness-generation.test.ts
+@@ -17,6 +17,7 @@ import {
+ 	GenerationTask,
+ 	Harness,
+ 	type HarnessSettings,
++	hook,
+ 	LiveDoc,
+ 	type LiveState,
+ 	MemoryStorage,
+@@ -117,6 +118,151 @@ describe("generation", () => {
+ 		await harness.close(context);
+ 	});
+ 
++	it("blocks beforeRequest without dispatching a provider request or faulting the host task", async () => {
++		const setup = chatSetup();
++		setup.faux.setResponses([fauxAssistantMessage("unused")]);
++		setup.registry.install(
++			defineExtension({
++				name: "block-generation",
++				hooks: [hook(GenerationTask, { beforeRequest: () => ({ block: "policy denied" }) })],
++			}),
++		);
++		const { harness, root } = await openChat(new MemoryStorage(), setup);
++		harness.resume();
++		const submission = await root.submit({ type: "input", content: "hi" }, context);
++		await expect(submission.wait(context)).resolves.toMatchObject({
++			status: "unanswered",
++			reason: "blocked",
++			detail: "policy denied",
++		});
++		expect(setup.faux.state.callCount).toBe(0);
++		expect(await live(harness, root)).toEqual({});
++		const task = (await harness.commit((tx) => tx.scanTasks({ conversationId: root.id }, 10), context)).items[0];
++		expect(task?.state).toEqual({
++			status: "terminal",
++			outcome: { status: "completed", result: { blocked: "policy denied" } },
++		});
++		await harness.close(context);
++	});
++
++	it("a first block including an empty reason wins over later hooks and leaves the conversation reusable", async () => {
++		const setup = chatSetup();
++		const storage = new MemoryStorage();
++		let lateHooks = 0;
++		setup.registry.install(
++			defineExtension({
++				name: "first-block",
++				hooks: [hook(GenerationTask, { beforeRequest: () => ({ block: "" }) })],
++			}),
++		);
++		setup.registry.install(
++			defineExtension({
++				name: "later-hook",
++				hooks: [
++					hook(GenerationTask, {
++						beforeRequest: (request) => {
++							lateHooks++;
++							return { messages: request.messages };
++						},
++					}),
++				],
++			}),
++		);
++		const { harness, root } = await openChat(storage, setup);
++		const submission = await root.submit({ type: "input", content: "first" }, context);
++		expect(await submission.wait(context)).toMatchObject({ status: "unanswered", reason: "blocked", detail: "" });
++		expect(lateHooks).toBe(0);
++		expect(setup.faux.state.callCount).toBe(0);
++		expect(await submission.status(context)).toMatchObject({ reason: "blocked", detail: "" });
++		setup.registry.install(defineExtension({ name: "first-block" }));
++		setup.faux.setResponses([fauxAssistantMessage("allowed")]);
++		expect(await (await root.submit({ type: "input", content: "next" }, context)).wait(context)).toMatchObject({
++			status: "done",
++		});
++		expect(setup.faux.state.callCount).toBe(1);
++		await harness.close(context);
++	});
++
++	it("rechecks guards after all hooks so a later revocation cannot dispatch", async () => {
++		const setup = chatSetup();
++		let allowed = true;
++		setup.registry.install(
++			defineExtension({
++				name: "guard",
++				hooks: [
++					hook(GenerationTask, {
++						beforeRequest: (request) => ({
++							messages: request.messages,
++							check: () => {
++								if (!allowed) throw new Error("revoked");
++							},
++						}),
++					}),
++				],
++			}),
++		);
++		setup.registry.install(
++			defineExtension({
++				name: "revocation",
++				hooks: [
++					hook(GenerationTask, {
++						beforeRequest: async () => {
++							allowed = false;
++						},
++					}),
++				],
++			}),
++		);
++		const { harness, root } = await openChat(new MemoryStorage(), setup);
++		expect(await (await root.submit({ type: "input", content: "hi" }, context)).wait(context)).toMatchObject({
++			reason: "blocked",
++			detail: "revoked",
++		});
++		expect(setup.faux.state.callCount).toBe(0);
++		await harness.close(context);
++	});
++
++	it("a payload-time guard rejection settles as blocked instead of provider error", async () => {
++		const setup = chatSetup();
++		let allowed = true;
++		setup.registry.install(
++			defineExtension({
++				name: "payload-guard",
++				hooks: [
++					hook(GenerationTask, {
++						beforeRequest: (request) => ({
++							messages: request.messages,
++							check: () => {
++								if (!allowed) throw new Error("payload revoked");
++							},
++						}),
++					}),
++				],
++			}),
++		);
++		const guarded = {
++			...setup,
++			models: withStream(setup.models, (model, _request, options) => {
++				allowed = false;
++				return {
++					[Symbol.asyncIterator]: async function* () {},
++					result: async () => {
++						await options?.onPayload?.({}, model);
++						return fauxAssistantMessage("must not be reached");
++					},
++				} as ReturnType<Models["streamSimple"]>;
++			}),
++		};
++		const { harness, root } = await openChat(new MemoryStorage(), guarded);
++		expect(await (await root.submit({ type: "input", content: "hi" }, context)).wait(context)).toMatchObject({
++			reason: "blocked",
++			detail: "payload revoked",
++		});
++		expect(setup.faux.state.callCount).toBe(0);
++		expect(setup.reports).toEqual([]);
++		await harness.close(context);
++	});
++
+ 	it("stores partials as deltas and a complete base once nothing is in flight", async () => {
+ 		const setup = chatSetup({ tokensPerSecond: 200, tokenSize: { min: 1, max: 1 } });
+ 		setup.faux.setResponses([fauxAssistantMessage("w".repeat(200))]);
+diff --git a/packages/durable/test/pakka-generation-http.test.ts b/packages/durable/test/pakka-generation-http.test.ts
+new file mode 100644
+index 0000000..ee2b66a
+--- /dev/null
++++ b/packages/durable/test/pakka-generation-http.test.ts
+@@ -0,0 +1,231 @@
++import { createServer } from "node:http";
++import { createModels, createProvider, type Model } from "@earendil-works/pi-ai";
++import { openAICompletionsApi } from "@earendil-works/pi-ai/api/openai-completions.lazy";
++import { BACKGROUND_CONTEXT } from "@earendil-works/chord/context";
++import {
++	createRegistry,
++	defineExtension,
++	GenerationTask,
++	Harness,
++	hook,
++	type GenerationHooks,
++} from "@earendil-works/pi-durable";
++import { MemoryStorage } from "@earendil-works/pi-durable/storage/memory";
++import { describe, expect, test } from "vitest";
++
++const context = BACKGROUND_CONTEXT;
++
++/** Only an explicitly registered loopback provider; no environment credentials or model catalogs. */
++async function fixture(handlers: Partial<GenerationHooks>, beforePayload?: () => Promise<void>) {
++	const requests: { url: string | undefined; body: unknown }[] = [];
++	const failures: unknown[] = [];
++	const server = createServer(async (request, response) => {
++		try {
++			const chunks: Buffer[] = [];
++			for await (const chunk of request) chunks.push(Buffer.from(chunk));
++			requests.push({ url: request.url, body: JSON.parse(Buffer.concat(chunks).toString("utf8")) });
++			response.writeHead(200, { "content-type": "text/event-stream" });
++			for (const choice of [
++				{ index: 0, delta: { role: "assistant", content: "local answer" }, finish_reason: null },
++				{ index: 0, delta: {}, finish_reason: "stop" },
++			]) {
++				response.write(
++					`data: ${JSON.stringify({
++						id: "pakka-local",
++						object: "chat.completion.chunk",
++						created: 1,
++						model: "pakka-policy",
++						choices: [choice],
++					})}\n\n`,
++				);
++			}
++			response.end("data: [DONE]\n\n");
++		} catch (error) {
++			failures.push(error);
++			response.writeHead(500);
++			response.end("local fixture failed");
++		}
++	});
++	await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
++	const address = server.address();
++	if (address === null || typeof address === "string") throw new Error("Missing local server address");
++	const model: Model = {
++		id: "pakka-policy",
++		name: "Pakka local policy",
++		api: "openai-completions",
++		provider: "pakka-local",
++		baseUrl: `http://127.0.0.1:${address.port}/v1`,
++		reasoning: false,
++		input: ["text"],
++		cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
++		contextWindow: 100_000,
++		maxTokens: 1024,
++	};
++	const api = openAICompletionsApi();
++	const models = createModels();
++	models.setProvider(
++		createProvider({
++			id: model.provider,
++			models: [model],
++			auth: { apiKey: { name: "local", resolve: async () => ({ auth: { apiKey: "local-only" } }) } },
++			api: {
++				stream: api.stream,
++				streamSimple: (requestModel, input, options) =>
++					api.streamSimple(requestModel, input, {
++						...options,
++						onPayload: async (payload, payloadModel) => {
++							await beforePayload?.();
++							return options?.onPayload?.(payload, payloadModel);
++						},
++					}),
++			},
++		}),
++	);
++	const registry = createRegistry();
++	registry.install(defineExtension({ name: "pakka-policy", hooks: [hook(GenerationTask, handlers)] }));
++	const reports: unknown[] = [];
++	let harness: Harness | undefined;
++	try {
++		harness = await Harness.open(
++			new MemoryStorage(),
++			{
++				models,
++				registry,
++				settings: { retry: { enabled: false }, compaction: { enabled: false } },
++				onReport: (error) => {
++					reports.push(error);
++				},
++			},
++			context,
++		);
++		const conversation = await harness.root(context, {
++			agent: { model: { provider: model.provider, modelId: model.id } },
++		});
++		return {
++			harness,
++			conversation,
++			requests,
++			reports,
++			failures,
++			close: async () => {
++				try {
++					await harness!.close(context);
++				} finally {
++					await new Promise<void>((resolve, reject) =>
++						server.close((error) => (error ? reject(error) : resolve())),
++					);
++				}
++			},
++		};
++	} catch (error) {
++		try {
++			await harness?.close(context);
++		} finally {
++			await new Promise<void>((resolve) => server.close(() => resolve()));
++		}
++		throw error;
++	}
++}
++
++describe("Pakka generation policy with real loopback HTTP", () => {
++	test("explicit block retains native receipts and idle; allowing a later input really reaches HTTP", async () => {
++		let allowed = false;
++		let decisions = 0;
++		const f = await fixture({
++			beforeRequest: () => {
++				decisions++;
++				return allowed ? undefined : { block: "policy denied" };
++			},
++		});
++		try {
++			const submission = { type: "input", content: "blocked input", requestId: "blocked-once" } as const;
++			const rejected = await f.conversation.submit(submission, context);
++			expect(await rejected.wait(context)).toMatchObject({
++				status: "unanswered",
++				reason: "blocked",
++				detail: "policy denied",
++			});
++			await f.conversation.waitForIdle(context);
++			expect(decisions).toBe(1);
++			expect(f.requests).toHaveLength(0);
++			expect(
++				(await f.conversation.context(context)).entries.filter((entry) => entry.kind === "pi.assistant"),
++			).toHaveLength(0);
++			const duplicate = await f.conversation.submit(submission, context);
++			expect(duplicate.id).toBe(rejected.id);
++			expect(await duplicate.wait(context)).toMatchObject({ status: "unanswered", reason: "blocked" });
++			expect(decisions).toBe(1);
++			allowed = true;
++			const accepted = await f.conversation.submit({ type: "input", content: "allowed input" }, context);
++			expect(await accepted.wait(context)).toMatchObject({ status: "done" });
++			await f.conversation.waitForIdle(context);
++			expect(decisions).toBe(2);
++			expect(f.requests).toHaveLength(1);
++			expect(f.requests[0].url).toBe("/v1/chat/completions");
++			expect(JSON.stringify(f.requests[0].body)).toContain("allowed input");
++			expect(f.reports).toEqual([]);
++			expect(f.failures).toEqual([]);
++		} finally {
++			await f.close();
++		}
++	});
++
++	test("revocation after an awaited provider payload transform blocks before HTTP", async () => {
++		let allowed = true;
++		let payloads = 0;
++		let checks = 0;
++		const f = await fixture(
++			{
++				beforeRequest: ({ messages }) => ({
++					messages,
++					check: () => {
++						checks++;
++						if (!allowed) throw new Error("revoked at payload");
++					},
++				}),
++			},
++			async () => {
++				await Promise.resolve();
++				payloads++;
++				allowed = false;
++			},
++		);
++		try {
++			const accepted = await f.conversation.submit({ type: "input", content: "revoked input" }, context);
++			expect(await accepted.wait(context)).toMatchObject({
++				status: "unanswered",
++				reason: "blocked",
++				detail: "revoked at payload",
++			});
++			await f.conversation.waitForIdle(context);
++			expect(checks).toBe(2);
++			expect(payloads).toBe(1);
++			expect(f.requests).toHaveLength(0);
++			expect(
++				(await f.conversation.context(context)).entries.filter((entry) => entry.kind === "pi.assistant"),
++			).toHaveLength(0);
++			expect(f.failures).toEqual([]);
++		} finally {
++			await f.close();
++		}
++	});
++
++	test("ordinary hook exceptions still report and continue to actual HTTP", async () => {
++		const failure = new Error("observer failed");
++		const f = await fixture({
++			beforeRequest: () => {
++				throw failure;
++			},
++		});
++		try {
++			const accepted = await f.conversation.submit({ type: "input", content: "ordinary hook throw" }, context);
++			expect(await accepted.wait(context)).toMatchObject({ status: "done" });
++			await f.conversation.waitForIdle(context);
++			expect(f.requests).toHaveLength(1);
++			expect(f.reports).toContain(failure);
++			expect(f.failures).toEqual([]);
++		} finally {
++			await f.close();
++		}
++	});
++});

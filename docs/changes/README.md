@@ -2,6 +2,7 @@
 
 完整的形成条件、选择、设计、任务与场景由 [OpenSpec](../../openspec/changes/)维护；本目录只提供摘要和完整引用，不复制第二套变更正文。当前预期见 [state](../state/README.md)，实际差距见[工作入口与领域任务](../OVERVIEW.md)。
 
+- [Durable 1.4.0 补丁与 Verification 选用](durable-1-4-0-and-verification.md)：版本固定的独立补丁、可重建/安装入口与可选验证记录规则。
 - [验证入口与补丁声明](verification-and-patch-state.md)：重复入口清理、视觉生成物本地化、Durable patch state 与验证文档评估。
 - [文档系统](2026-10-21-documentation-system.md)：state-evo、OpenSpec 主记录和备份后清理。
 - [Devin 前端](devin-frontend-adoption.md)：原型为主体、真实接口、Team 和加载边界；完整验收未通过。

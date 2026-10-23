@@ -1,0 +1,21 @@
+{
+	"upstreamVersion": "1.4.0",
+	"upstreamCommit": "4a080252f06caf63a525d7873c5d94d3c23887e0",
+	"patchedVersion": "1.4.0-pakka.1",
+	"repository": "https://github.com/earendil-works/pi.git",
+	"tag": "v1.4.0",
+	"releaseUrl": "https://github.com/earendil-works/pi/releases/tag/v1.4.0",
+	"publishedAt": "2026-10-21T22:44:09.32Z",
+	"registryIntegrity": "sha512-EtIyXH1MBSXdJSkodmy+CYXuwfve3gPrD4GNCZ0XmuRWLPupwRlNQ7fdaXjRcLoKb6SWkT/yEzK+sMmrqvYK+Q==",
+	"buildDevDependencies": {
+		"jsonc-parser": "3.3.1"
+	},
+	"testFiles": [
+		"test/harness-generation.test.ts",
+		"test/harness-generation-recovery.test.ts",
+		"test/harness-inbox.test.ts",
+		"test/harness-tools.test.ts",
+		"test/pakka-generation-http.test.ts"
+	],
+	"consumerTestFiles": ["test/pakka-generation-http.test.ts"]
+}
