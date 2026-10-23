@@ -4,7 +4,7 @@ Pakka 将 Pi 的 Conversation、权限、持久化和 MAS 服务接到可选的 
 
 ## 当前工作
 
-当前评估 [Compresser 会话修复与封存](changes/compressor-repair-session.md)：用户指定以 1.4.0 为基准，[隔离实测](verification/COMPRESSOR-SESSION-1.4-FEASIBILITY.md)确认原生 steer、afterFailedRun 队列边界和持久化足以承载独立容忍值及封存，推荐原生路线而非自建 loop。18/18、51 HTTP 的能力证据不等于生产接入；原 source-job 辅助额度端口、回执/崩溃恢复和单独的 cohort 迁移尚待实现。见[设计](../openspec/changes/add-compressor-repair-session/design.md)与[任务](../openspec/changes/add-compressor-repair-session/tasks.md)；[初轮 1.0.3 证据](verification/COMPRESSOR-SESSION-FEASIBILITY.md)保留其版本范围。
+当前评估 [Compresser 会话修复与封存](changes/compressor-repair-session.md)：Dynamite 维护一个长期 Compresser Session，以多个独立 Conversation 服务容器外的业务 Session／Conversation；一个外部 Conversation 可触发多个压缩 Conversation，不预设数量上限。用户指定以 1.4.0 为基准，[隔离实测](verification/COMPRESSOR-SESSION-1.4-FEASIBILITY.md)确认原生 steer、afterFailedRun 队列边界和持久化足以承载独立容忍值及封存，推荐原生路线而非自建 loop。18/18、51 HTTP 的能力证据不等于生产接入；原 source-job 辅助额度端口、回执/崩溃恢复和单独的 cohort 迁移尚待实现。见[设计](../openspec/changes/add-compressor-repair-session/design.md)与[任务](../openspec/changes/add-compressor-repair-session/tasks.md)；[初轮 1.0.3 证据](verification/COMPRESSOR-SESSION-FEASIBILITY.md)保留其版本范围。
 
 [Dynamite P2/P3/P4 受控 Tool Calling 生产](changes/auxiliary-tool-output.md)的实现及已选执行验证保留在[原任务](../openspec/changes/add-auxiliary-tool-output/tasks.md)和[验证记录](verification/AUXILIARY-TOOL-OUTPUT.md)。两次部分复审保留原始失败；按用户后续指令不再使用 adversarial review，历史未完成协议不改写为通过。
 
