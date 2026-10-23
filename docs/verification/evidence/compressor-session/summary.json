@@ -1,0 +1,238 @@
+{
+  "date": "2026-10-23",
+  "hostSource": "acf49fa6a943f15ac34b4e05e43ca3d3f08238d6",
+  "piDurable": "1.0.3-pakka.1",
+  "piAi": "1.0.3",
+  "chord": "1.0.3",
+  "probe": "12 characterization cases; not a production repair-session implementation",
+  "cases": {
+    "full-rewrite-result": {
+      "requests": 2,
+      "executed": 1,
+      "reports": [],
+      "policy": null,
+      "hookEvents": {
+        "beforeRequest": 2,
+        "afterResponse": 2,
+        "onYield": 0,
+        "afterTools": 2,
+        "beforeTool": 1,
+        "afterTool": 1
+      }
+    },
+    "invalid-schema": {
+      "requests": 2,
+      "executed": 1,
+      "reports": [],
+      "policy": null,
+      "hookEvents": {
+        "beforeRequest": 2,
+        "afterResponse": 2,
+        "onYield": 0,
+        "afterTools": 2,
+        "beforeTool": 1,
+        "afterTool": 1
+      }
+    },
+    "mixed-success": {
+      "requests": 6,
+      "executed": 1,
+      "reports": [],
+      "policy": {
+        "status": "accepted",
+        "toolErrors": 2,
+        "unresolvedErrors": 3,
+        "lastError": {
+          "kind": "unresolvedErrors",
+          "reason": "no-complete-submission:stop:5",
+          "key": "yield:25"
+        },
+        "processed": [
+          "tool:14",
+          "yield:15",
+          "tool:21",
+          "yield:22",
+          "yield:25"
+        ]
+      },
+      "hookEvents": {
+        "beforeRequest": 6,
+        "afterResponse": 6,
+        "onYield": 3,
+        "afterTools": 3,
+        "beforeTool": 1,
+        "afterTool": 1
+      }
+    },
+    "provider-error": {
+      "requests": 3,
+      "executed": 1,
+      "reports": [],
+      "policy": null,
+      "hookEvents": {
+        "beforeRequest": 3,
+        "afterResponse": 3,
+        "onYield": 0,
+        "afterTools": 2,
+        "beforeTool": 1,
+        "afterTool": 1
+      }
+    },
+    "provider-error-threshold": {
+      "requests": 4,
+      "executed": 0,
+      "reports": [],
+      "policy": {
+        "status": "sealed",
+        "toolErrors": 0,
+        "unresolvedErrors": 4,
+        "lastError": {
+          "kind": "unresolvedErrors",
+          "reason": "400: {\"message\":\"provider-failure-4\"}",
+          "key": "provider:23"
+        },
+        "processed": [
+          "provider:10",
+          "provider:15",
+          "provider:19",
+          "provider:23"
+        ]
+      },
+      "hookEvents": {
+        "beforeRequest": 5,
+        "afterResponse": 4,
+        "onYield": 0,
+        "afterTools": 0,
+        "beforeTool": 0,
+        "afterTool": 0
+      }
+    },
+    "strict-raw-guard": {
+      "requests": 2,
+      "executed": 1,
+      "reports": [],
+      "policy": null,
+      "hookEvents": {
+        "beforeRequest": 2,
+        "afterResponse": 2,
+        "onYield": 0,
+        "afterTools": 2,
+        "beforeTool": 2,
+        "afterTool": 1
+      }
+    },
+    "tool-threshold": {
+      "requests": 3,
+      "executed": 0,
+      "reports": [],
+      "policy": {
+        "status": "sealed",
+        "toolErrors": 3,
+        "unresolvedErrors": 0,
+        "lastError": {
+          "kind": "toolErrors",
+          "reason": "<harness>\n[error] Validation failed for tool \"submit_compaction\":\n  - clues: must not have fewer than 1 items\n\nReceived arguments:\n{\n  \"summary\": \"P1-source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary \",\n  \"graphs\": [],\n  \"clues\": [],\n  \"unresolved\": []\n}\n</harness>",
+          "key": "tool:22"
+        },
+        "processed": [
+          "tool:14",
+          "tool:18",
+          "tool:22"
+        ]
+      },
+      "hookEvents": {
+        "beforeRequest": 5,
+        "afterResponse": 3,
+        "onYield": 0,
+        "afterTools": 3,
+        "beforeTool": 0,
+        "afterTool": 0
+      }
+    },
+    "truncated-json": {
+      "requests": 1,
+      "executed": 1,
+      "reports": [],
+      "policy": null,
+      "hookEvents": {
+        "beforeRequest": 1,
+        "afterResponse": 1,
+        "onYield": 0,
+        "afterTools": 1,
+        "beforeTool": 1,
+        "afterTool": 1
+      }
+    },
+    "unknown-tool": {
+      "requests": 2,
+      "executed": 1,
+      "reports": [],
+      "policy": null,
+      "hookEvents": {
+        "beforeRequest": 2,
+        "afterResponse": 2,
+        "onYield": 0,
+        "afterTools": 2,
+        "beforeTool": 1,
+        "afterTool": 1
+      }
+    },
+    "unresolved-threshold": {
+      "requests": 4,
+      "executed": 0,
+      "reports": [],
+      "policy": {
+        "status": "sealed",
+        "toolErrors": 0,
+        "unresolvedErrors": 4,
+        "lastError": {
+          "kind": "unresolvedErrors",
+          "reason": "no-complete-submission:stop:4",
+          "key": "yield:20"
+        },
+        "processed": [
+          "yield:10",
+          "yield:14",
+          "yield:17",
+          "yield:20"
+        ]
+      },
+      "hookEvents": {
+        "beforeRequest": 4,
+        "afterResponse": 4,
+        "onYield": 4,
+        "afterTools": 0,
+        "beforeTool": 0,
+        "afterTool": 0
+      }
+    },
+    "yield-continuation": {
+      "requests": 2,
+      "executed": 1,
+      "reports": [],
+      "policy": null,
+      "hookEvents": {
+        "beforeRequest": 2,
+        "afterResponse": 2,
+        "onYield": 1,
+        "afterTools": 1,
+        "beforeTool": 1,
+        "afterTool": 1
+      }
+    }
+  },
+  "nativeRequests": 31,
+  "pakkaRequests": 2,
+  "pakkaBudget": {
+    "primaryAttempts": 2,
+    "auxiliaryAttempts": 0
+  },
+  "pakkaServerErrors": [],
+  "sourceFingerprints": {
+    "probe-source.mjs.txt": "98c74358e07299ff57b4703bdbcabdf114dbc5c50dab2cabe746e86f25b00c70",
+    "launcher-source.mjs.txt": "a95a9a6fbb2701d363d892e4d3dc3d2a3409378774eba2f93c915d2d30a01d62",
+    "probe.log": "2ef244f4485bedee57c64ce259581a9ffd66a972a4f7d4785b79546631f87e25",
+    "probe-reused-storage-failure.log": "5e02cbd0345cd543c93f938e0a0e3015a959847a8073ba1d6c6a28e2d3954c52"
+  },
+  "totalRequests": 33
+}

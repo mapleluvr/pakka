@@ -1,0 +1,74 @@
+✔ public provider stream observer can block repaired raw JSON before native execution without a custom loop (142.5151ms)
+✔ public persistent context edit gives native schema errors a call-ID-matched complete rewrite directive (109.7012ms)
+✔ Pakka public managed Conversation spends primary quota, not source-job auxiliary quota (554.2248ms)
+✔ native onYield preserves the draft and original submission through complete tool success (72.2752ms)
+✔ native hook coverage: invalid-schema bypasses afterTool but reaches afterTools and preserves matched error result (96.077ms)
+✔ native hook coverage: unknown-tool bypasses afterTool but reaches afterTools and preserves matched error result (76.785ms)
+✔ provider error is a terminal unanswered run; explicit later input can retain the same conversation trajectory (112.095ms)
+✖ tool tolerance 3 seals on the third error with no fourth HTTP and persists across reopen (21.4602ms)
+✖ unresolved tolerance 4 seals at fourth incomplete stop without a fifth HTTP (21.0466ms)
+✖ mixed errors keep separate cumulative counters and valid complete submission terminates without another request (21.0576ms)
+✔ strict raw JSON boundary: pinned native Harness currently adopts a provider-repaired truncated call (characterization) (43.6462ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 8
+ℹ fail 3
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1615.278
+
+✖ failing tests:
+
+test at docs\.temp\durable-compressor-feasibility.mjs:88:1
+✖ tool tolerance 3 seals on the third error with no fourth HTTP and persists across reopen (21.4602ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  0 !== 3
+  
+      at TestContext.<anonymous> (file:///D:/Projects/pakka/docs/.temp/durable-compressor-feasibility.mjs:90:33)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 3,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at docs\.temp\durable-compressor-feasibility.mjs:92:1
+✖ unresolved tolerance 4 seals at fourth incomplete stop without a fifth HTTP (21.0466ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  0 !== 4
+  
+      at TestContext.<anonymous> (file:///D:/Projects/pakka/docs/.temp/durable-compressor-feasibility.mjs:94:64)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 4,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at docs\.temp\durable-compressor-feasibility.mjs:96:1
+✖ mixed errors keep separate cumulative counters and valid complete submission terminates without another request (21.0576ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  0 !== 6
+  
+      at TestContext.<anonymous> (file:///D:/Projects/pakka/docs/.temp/durable-compressor-feasibility.mjs:98:64)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 6,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+exit=1,signal=null

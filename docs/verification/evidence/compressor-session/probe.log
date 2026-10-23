@@ -1,0 +1,22 @@
+✔ public provider stream observer can block repaired raw JSON before native execution without a custom loop (145.6901ms)
+✔ public persistent context edit gives native schema errors a call-ID-matched complete rewrite directive (110.1519ms)
+✔ Pakka public managed Conversation spends primary quota, not source-job auxiliary quota (521.8589ms)
+✔ explicit caller inputs after provider failures can persist unresolved count 4 and the next input is blocked (150.5929ms)
+✔ native onYield preserves the draft and original submission through complete tool success (87.7712ms)
+✔ native hook coverage: invalid-schema bypasses afterTool but reaches afterTools and preserves matched error result (84.263ms)
+✔ native hook coverage: unknown-tool bypasses afterTool but reaches afterTools and preserves matched error result (98.8736ms)
+✔ provider error is a terminal unanswered run; explicit later input can retain the same conversation trajectory (126.4402ms)
+✔ tool tolerance 3 seals on the third error with no fourth HTTP and persists across reopen (177.4264ms)
+✔ unresolved tolerance 4 seals at fourth incomplete stop without a fifth HTTP (137.2067ms)
+✔ mixed errors keep separate cumulative counters and valid complete submission terminates without another request (223.0944ms)
+✔ strict raw JSON boundary: pinned native Harness currently adopts a provider-repaired truncated call (characterization) (48.8688ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 12
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2258.9242
+
+exit=0,signal=null

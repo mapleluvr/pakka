@@ -2,6 +2,7 @@
 
 完整的形成条件、选择、设计、任务与场景由 [OpenSpec](../../openspec/changes/)维护；本目录只提供摘要和完整引用，不复制第二套变更正文。当前预期见 [state](../state/README.md)，实际差距见[工作入口与领域任务](../OVERVIEW.md)。
 
+- [Compresser 会话修复与封存](compressor-repair-session.md)：两类累计错误容忍、轨迹保留和原生基础设施调查；实现路线在报告决策点。
 - [辅助推理 Tool Calling 输出](auxiliary-tool-output.md)：来源绑定的结构化候选生产与独立 Dynamite 产物。
 - [设置路由与本机恢复](webui-navigation-and-local-recovery.md)：登录恢复闭环、可寻址配置和逐页质量的待采用方案。
 - [前端规范与原生行为](webui-frontend-guidelines.md)：采用两份开发指南、直接生产代码参考和第一批可读性/焦点改进。

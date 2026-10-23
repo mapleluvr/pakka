@@ -4,7 +4,9 @@ Pakka 将 Pi 的 Conversation、权限、持久化和 MAS 服务接到可选的 
 
 ## 当前工作
 
-[Dynamite P2/P3/P4 的受控 Tool Calling 生产](changes/auxiliary-tool-output.md)已完成代码及所选执行验证；独立双审被 B 的 provider 路由阻塞，尚未完成接受与归档。实际差距由[任务](../openspec/changes/add-auxiliary-tool-output/tasks.md)、[固定验证记录](verification/AUXILIARY-TOOL-OUTPUT.md)和独立 pakka-dynamite 仓库的 state/计划承接。
+当前调查 [Compresser 会话修复与封存](changes/compressor-repair-session.md)：独立累计容忍值、保留轨迹和达到上限即封存的行为已形成声明。真实 native／Pakka 探针完成；provider error 的原生续跑和辅助额度接入有明确难点，按用户要求先报告再选择实现路线，见[设计](../openspec/changes/add-compressor-repair-session/design.md)、[任务](../openspec/changes/add-compressor-repair-session/tasks.md)及[固定证据](verification/COMPRESSOR-SESSION-FEASIBILITY.md)。
+
+[Dynamite P2/P3/P4 受控 Tool Calling 生产](changes/auxiliary-tool-output.md)的实现及已选执行验证保留在[原任务](../openspec/changes/add-auxiliary-tool-output/tasks.md)和[验证记录](verification/AUXILIARY-TOOL-OUTPUT.md)。两次部分复审保留原始失败；按用户后续指令不再使用 adversarial review，历史未完成协议不改写为通过。
 
 当前为[设置路由、前端调优与本机管理员恢复](changes/webui-navigation-and-local-recovery.md)准备采用方案，见[proposal](../openspec/changes/improve-webui-navigation-and-local-recovery/proposal.md)、[design](../openspec/changes/improve-webui-navigation-and-local-recovery/design.md)和[统一 tasks](../openspec/changes/improve-webui-navigation-and-local-recovery/tasks.md)。提案待确认，恢复入口和新路由尚未实现。
 

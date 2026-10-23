@@ -1,0 +1,18 @@
+import { mkdtempSync, realpathSync, mkdirSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
+import { spawnSync } from 'node:child_process';
+import { randomUUID } from 'node:crypto';
+const root = resolve(new URL('../../', import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1'));
+const base = resolve(root, 'artifacts/compressor-session/native-feasibility');
+const output = join(base, 'run-' + randomUUID());
+mkdirSync(output, { recursive: true });
+writeFileSync(join(base, 'latest-run.txt'), output);
+console.log('OUTPUT=' + output);
+const profile = mkdtempSync(join(realpathSync.native(tmpdir()), 'pakka-compressor-probe-'));
+const env = Object.fromEntries(['PATH','PATHEXT','SystemRoot','WINDIR','COMSPEC'].filter(k => process.env[k]).map(k => [k, process.env[k]]));
+Object.assign(env, { HOME: profile, USERPROFILE: profile, PI_CODING_AGENT_DIR: profile, PI_OFFLINE:'1', DO_NOT_TRACK:'1', NO_COLOR:'1', TEMP: realpathSync.native(tmpdir()), TMP: realpathSync.native(tmpdir()), COMPRESSOR_PROBE_OUTPUT: output });
+const result = spawnSync(process.execPath, ['--experimental-strip-types', '--test', '--test-concurrency=1', 'docs/.temp/durable-compressor-feasibility.mjs'], { cwd: root, env, encoding: 'utf8', timeout: 90000 });
+writeFileSync(join(output, 'probe.log'), (result.stdout ?? '') + (result.stderr ?? '') + '\nexit=' + result.status + ',signal=' + result.signal + '\n');
+process.stdout.write(result.stdout ?? ''); process.stderr.write(result.stderr ?? ''); if (result.error) console.error(result.error);
+process.exitCode = result.status ?? 1;

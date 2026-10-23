@@ -1,0 +1,3631 @@
+{
+  "cases": {
+    "full-rewrite-result": {
+      "requests": [
+        {
+          "model": "local-model",
+          "messages": [
+            {
+              "role": "user",
+              "content": "COMPRESS-SOURCE: fixed-target-with-source-ids"
+            },
+            {
+              "role": "system",
+              "content": "Updated system prompt section \"instructions\":\n\n<instructions>\nCOMPRESSOR ONLY. If a tool fails, rewrite the entire submit_compaction call, preserving all fields.\n</instructions>"
+            }
+          ],
+          "stream": true,
+          "stream_options": {
+            "include_usage": true
+          },
+          "store": false,
+          "max_tokens": 4096,
+          "tools": [
+            {
+              "type": "function",
+              "function": {
+                "name": "submit_compaction",
+                "description": "Submit the entire P1/P2/P3/P4 candidate; after any error rewrite the entire tool call, not a patch.",
+                "parameters": {
+                  "type": "object",
+                  "required": [
+                    "summary",
+                    "graphs",
+                    "clues",
+                    "unresolved"
+                  ],
+                  "properties": {
+                    "summary": {
+                      "type": "string",
+                      "minLength": 80
+                    },
+                    "graphs": {
+                      "type": "array",
+                      "items": {}
+                    },
+                    "clues": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "minItems": 1
+                    },
+                    "unresolved": {
+                      "type": "array",
+                      "items": {}
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          ]
+        },
+        {
+          "model": "local-model",
+          "messages": [
+            {
+              "role": "user",
+              "content": "COMPRESS-SOURCE: fixed-target-with-source-ids"
+            },
+            {
+              "role": "system",
+              "content": "Updated system prompt section \"instructions\":\n\n<instructions>\nCOMPRESSOR ONLY. If a tool fails, rewrite the entire submit_compaction call, preserving all fields.\n</instructions>"
+            },
+            {
+              "role": "assistant",
+              "content": null,
+              "tool_calls": [
+                {
+                  "id": "call-1",
+                  "type": "function",
+                  "function": {
+                    "name": "submit_compaction",
+                    "arguments": "{\"summary\":\"P1-source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary \",\"graphs\":[],\"unresolved\":[]}"
+                  }
+                }
+              ]
+            },
+            {
+              "role": "tool",
+              "content": "<harness>\n[error] Validation failed for tool \"submit_compaction\":\n  - clues: must have required properties clues\n\nReceived arguments:\n{\n  \"summary\": \"P1-source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary \",\n  \"graphs\": [],\n  \"unresolved\": []\n}\n</harness>\nREWRITE ENTIRE submit_compaction: summary, graphs including annotations, clues and unresolved. Do not submit a partial patch.",
+              "tool_call_id": "call-1"
+            }
+          ],
+          "stream": true,
+          "stream_options": {
+            "include_usage": true
+          },
+          "store": false,
+          "max_tokens": 4096,
+          "tools": [
+            {
+              "type": "function",
+              "function": {
+                "name": "submit_compaction",
+                "description": "Submit the entire P1/P2/P3/P4 candidate; after any error rewrite the entire tool call, not a patch.",
+                "parameters": {
+                  "type": "object",
+                  "required": [
+                    "summary",
+                    "graphs",
+                    "clues",
+                    "unresolved"
+                  ],
+                  "properties": {
+                    "summary": {
+                      "type": "string",
+                      "minLength": 80
+                    },
+                    "graphs": {
+                      "type": "array",
+                      "items": {}
+                    },
+                    "clues": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "minItems": 1
+                    },
+                    "unresolved": {
+                      "type": "array",
+                      "items": {}
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "events": [
+        {
+          "event": "beforeRequest"
+        },
+        {
+          "event": "afterResponse",
+          "stopReason": "toolUse",
+          "error": null
+        },
+        {
+          "event": "afterTools",
+          "errors": [
+            "<harness>\n[error] Validation failed for tool \"submit_compaction\":\n  - clues: must have required properties clues\n\nReceived arguments:\n{\n  \"summary\": \"P1-source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary \",\n  \"graphs\": [],\n  \"unresolved\": []\n}\n</harness>"
+          ],
+          "results": [
+            {
+              "role": "toolResult",
+              "toolCallId": "call-1",
+              "toolName": "submit_compaction",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "<harness>\n[error] Validation failed for tool \"submit_compaction\":\n  - clues: must have required properties clues\n\nReceived arguments:\n{\n  \"summary\": \"P1-source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary \",\n  \"graphs\": [],\n  \"unresolved\": []\n}\n</harness>"
+                }
+              ],
+              "isError": true,
+              "timestamp": 1792763622010
+            }
+          ]
+        },
+        {
+          "event": "beforeRequest"
+        },
+        {
+          "event": "afterResponse",
+          "stopReason": "toolUse",
+          "error": null
+        },
+        {
+          "event": "beforeTool",
+          "name": "submit_compaction"
+        },
+        {
+          "event": "afterTool",
+          "name": "submit_compaction",
+          "isError": false
+        },
+        {
+          "event": "afterTools",
+          "errors": [],
+          "results": [
+            {
+              "role": "toolResult",
+              "toolCallId": "call-2",
+              "toolName": "submit_compaction",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "accepted"
+                }
+              ],
+              "isError": false,
+              "timestamp": 1792763622068
+            }
+          ]
+        }
+      ],
+      "reports": [],
+      "executed": [
+        {
+          "summary": "P1-source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary ",
+          "graphs": [],
+          "clues": [
+            "target experience"
+          ],
+          "unresolved": []
+        }
+      ],
+      "policy": null,
+      "provider": {
+        "sessionId": "01a16909-f256-7025-8269-c3113764efa7"
+      },
+      "usage": {
+        "models": {
+          "local/local-model": {
+            "input": 20,
+            "output": 4,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0,
+            "totalTokens": 24,
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            }
+          }
+        },
+        "tools": {}
+      }
+    },
+    "invalid-schema": {
+      "requests": [
+        {
+          "model": "local-model",
+          "messages": [
+            {
+              "role": "user",
+              "content": "COMPRESS-SOURCE: fixed-target-with-source-ids"
+            },
+            {
+              "role": "system",
+              "content": "Updated system prompt section \"instructions\":\n\n<instructions>\nCOMPRESSOR ONLY. If a tool fails, rewrite the entire submit_compaction call, preserving all fields.\n</instructions>"
+            }
+          ],
+          "stream": true,
+          "stream_options": {
+            "include_usage": true
+          },
+          "store": false,
+          "max_tokens": 4096,
+          "tools": [
+            {
+              "type": "function",
+              "function": {
+                "name": "submit_compaction",
+                "description": "Submit the entire P1/P2/P3/P4 candidate; after any error rewrite the entire tool call, not a patch.",
+                "parameters": {
+                  "type": "object",
+                  "required": [
+                    "summary",
+                    "graphs",
+                    "clues",
+                    "unresolved"
+                  ],
+                  "properties": {
+                    "summary": {
+                      "type": "string",
+                      "minLength": 80
+                    },
+                    "graphs": {
+                      "type": "array",
+                      "items": {}
+                    },
+                    "clues": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "minItems": 1
+                    },
+                    "unresolved": {
+                      "type": "array",
+                      "items": {}
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          ]
+        },
+        {
+          "model": "local-model",
+          "messages": [
+            {
+              "role": "user",
+              "content": "COMPRESS-SOURCE: fixed-target-with-source-ids"
+            },
+            {
+              "role": "system",
+              "content": "Updated system prompt section \"instructions\":\n\n<instructions>\nCOMPRESSOR ONLY. If a tool fails, rewrite the entire submit_compaction call, preserving all fields.\n</instructions>"
+            },
+            {
+              "role": "assistant",
+              "content": null,
+              "tool_calls": [
+                {
+                  "id": "call-1",
+                  "type": "function",
+                  "function": {
+                    "name": "submit_compaction",
+                    "arguments": "{\"summary\":\"P1-source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary \",\"graphs\":[],\"unresolved\":[]}"
+                  }
+                }
+              ]
+            },
+            {
+              "role": "tool",
+              "content": "<harness>\n[error] Validation failed for tool \"submit_compaction\":\n  - clues: must have required properties clues\n\nReceived arguments:\n{\n  \"summary\": \"P1-source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary \",\n  \"graphs\": [],\n  \"unresolved\": []\n}\n</harness>",
+              "tool_call_id": "call-1"
+            }
+          ],
+          "stream": true,
+          "stream_options": {
+            "include_usage": true
+          },
+          "store": false,
+          "max_tokens": 4096,
+          "tools": [
+            {
+              "type": "function",
+              "function": {
+                "name": "submit_compaction",
+                "description": "Submit the entire P1/P2/P3/P4 candidate; after any error rewrite the entire tool call, not a patch.",
+                "parameters": {
+                  "type": "object",
+                  "required": [
+                    "summary",
+                    "graphs",
+                    "clues",
+                    "unresolved"
+                  ],
+                  "properties": {
+                    "summary": {
+                      "type": "string",
+                      "minLength": 80
+                    },
+                    "graphs": {
+                      "type": "array",
+                      "items": {}
+                    },
+                    "clues": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "minItems": 1
+                    },
+                    "unresolved": {
+                      "type": "array",
+                      "items": {}
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "events": [
+        {
+          "event": "beforeRequest"
+        },
+        {
+          "event": "afterResponse",
+          "stopReason": "toolUse",
+          "error": null
+        },
+        {
+          "event": "afterTools",
+          "errors": [
+            "<harness>\n[error] Validation failed for tool \"submit_compaction\":\n  - clues: must have required properties clues\n\nReceived arguments:\n{\n  \"summary\": \"P1-source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary \",\n  \"graphs\": [],\n  \"unresolved\": []\n}\n</harness>"
+          ],
+          "results": [
+            {
+              "role": "toolResult",
+              "toolCallId": "call-1",
+              "toolName": "submit_compaction",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "<harness>\n[error] Validation failed for tool \"submit_compaction\":\n  - clues: must have required properties clues\n\nReceived arguments:\n{\n  \"summary\": \"P1-source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary \",\n  \"graphs\": [],\n  \"unresolved\": []\n}\n</harness>"
+                }
+              ],
+              "isError": true,
+              "timestamp": 1792763622876
+            }
+          ]
+        },
+        {
+          "event": "beforeRequest"
+        },
+        {
+          "event": "afterResponse",
+          "stopReason": "toolUse",
+          "error": null
+        },
+        {
+          "event": "beforeTool",
+          "name": "submit_compaction"
+        },
+        {
+          "event": "afterTool",
+          "name": "submit_compaction",
+          "isError": false
+        },
+        {
+          "event": "afterTools",
+          "errors": [],
+          "results": [
+            {
+              "role": "toolResult",
+              "toolCallId": "call-2",
+              "toolName": "submit_compaction",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "accepted"
+                }
+              ],
+              "isError": false,
+              "timestamp": 1792763622913
+            }
+          ]
+        }
+      ],
+      "reports": [],
+      "executed": [
+        {
+          "summary": "P1-source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary ",
+          "graphs": [],
+          "clues": [
+            "target experience"
+          ],
+          "unresolved": []
+        }
+      ],
+      "policy": null,
+      "provider": {
+        "sessionId": "01a16909-f5bb-7025-8269-c31a57888672"
+      },
+      "usage": {
+        "models": {
+          "local/local-model": {
+            "input": 20,
+            "output": 4,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0,
+            "totalTokens": 24,
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            }
+          }
+        },
+        "tools": {}
+      }
+    },
+    "mixed-success": {
+      "requests": [
+        {
+          "model": "local-model",
+          "messages": [
+            {
+              "role": "user",
+              "content": "COMPRESS-SOURCE: fixed-target-with-source-ids"
+            },
+            {
+              "role": "system",
+              "content": "Updated system prompt section \"instructions\":\n\n<instructions>\nCOMPRESSOR ONLY. If a tool fails, rewrite the entire submit_compaction call, preserving all fields.\n</instructions>"
+            }
+          ],
+          "stream": true,
+          "stream_options": {
+            "include_usage": true
+          },
+          "store": false,
+          "max_tokens": 4096,
+          "tools": [
+            {
+              "type": "function",
+              "function": {
+                "name": "submit_compaction",
+                "description": "Submit the entire P1/P2/P3/P4 candidate; after any error rewrite the entire tool call, not a patch.",
+                "parameters": {
+                  "type": "object",
+                  "required": [
+                    "summary",
+                    "graphs",
+                    "clues",
+                    "unresolved"
+                  ],
+                  "properties": {
+                    "summary": {
+                      "type": "string",
+                      "minLength": 80
+                    },
+                    "graphs": {
+                      "type": "array",
+                      "items": {}
+                    },
+                    "clues": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "minItems": 1
+                    },
+                    "unresolved": {
+                      "type": "array",
+                      "items": {}
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          ]
+        },
+        {
+          "model": "local-model",
+          "messages": [
+            {
+              "role": "user",
+              "content": "COMPRESS-SOURCE: fixed-target-with-source-ids"
+            },
+            {
+              "role": "system",
+              "content": "Updated system prompt section \"instructions\":\n\n<instructions>\nCOMPRESSOR ONLY. If a tool fails, rewrite the entire submit_compaction call, preserving all fields.\n</instructions>"
+            },
+            {
+              "role": "assistant",
+              "content": null,
+              "tool_calls": [
+                {
+                  "id": "call-1",
+                  "type": "function",
+                  "function": {
+                    "name": "submit_compaction",
+                    "arguments": "{\"summary\":\"P1-source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary \",\"graphs\":[],\"clues\":[],\"unresolved\":[]}"
+                  }
+                }
+              ]
+            },
+            {
+              "role": "tool",
+              "content": "<harness>\n[error] Validation failed for tool \"submit_compaction\":\n  - clues: must not have fewer than 1 items\n\nReceived arguments:\n{\n  \"summary\": \"P1-source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary \",\n  \"graphs\": [],\n  \"clues\": [],\n  \"unresolved\": []\n}\n</harness>",
+              "tool_call_id": "call-1"
+            }
+          ],
+          "stream": true,
+          "stream_options": {
+            "include_usage": true
+          },
+          "store": false,
+          "max_tokens": 4096,
+          "tools": [
+            {
+              "type": "function",
+              "function": {
+                "name": "submit_compaction",
+                "description": "Submit the entire P1/P2/P3/P4 candidate; after any error rewrite the entire tool call, not a patch.",
+                "parameters": {
+                  "type": "object",
+                  "required": [
+                    "summary",
+                    "graphs",
+                    "clues",
+                    "unresolved"
+                  ],
+                  "properties": {
+                    "summary": {
+                      "type": "string",
+                      "minLength": 80
+                    },
+                    "graphs": {
+                      "type": "array",
+                      "items": {}
+                    },
+                    "clues": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "minItems": 1
+                    },
+                    "unresolved": {
+                      "type": "array",
+                      "items": {}
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          ]
+        },
+        {
+          "model": "local-model",
+          "messages": [
+            {
+              "role": "user",
+              "content": "COMPRESS-SOURCE: fixed-target-with-source-ids"
+            },
+            {
+              "role": "system",
+              "content": "Updated system prompt section \"instructions\":\n\n<instructions>\nCOMPRESSOR ONLY. If a tool fails, rewrite the entire submit_compaction call, preserving all fields.\n</instructions>"
+            },
+            {
+              "role": "assistant",
+              "content": null,
+              "tool_calls": [
+                {
+                  "id": "call-1",
+                  "type": "function",
+                  "function": {
+                    "name": "submit_compaction",
+                    "arguments": "{\"summary\":\"P1-source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary \",\"graphs\":[],\"clues\":[],\"unresolved\":[]}"
+                  }
+                }
+              ]
+            },
+            {
+              "role": "tool",
+              "content": "<harness>\n[error] Validation failed for tool \"submit_compaction\":\n  - clues: must not have fewer than 1 items\n\nReceived arguments:\n{\n  \"summary\": \"P1-source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary \",\n  \"graphs\": [],\n  \"clues\": [],\n  \"unresolved\": []\n}\n</harness>",
+              "tool_call_id": "call-1"
+            },
+            {
+              "role": "assistant",
+              "content": "analysis-2"
+            },
+            {
+              "role": "user",
+              "content": "No complete accepted submission. Rewrite the entire submit_compaction call with all fields."
+            }
+          ],
+          "stream": true,
+          "stream_options": {
+            "include_usage": true
+          },
+          "store": false,
+          "max_tokens": 4096,
+          "tools": [
+            {
+              "type": "function",
+              "function": {
+                "name": "submit_compaction",
+                "description": "Submit the entire P1/P2/P3/P4 candidate; after any error rewrite the entire tool call, not a patch.",
+                "parameters": {
+                  "type": "object",
+                  "required": [
+                    "summary",
+                    "graphs",
+                    "clues",
+                    "unresolved"
+                  ],
+                  "properties": {
+                    "summary": {
+                      "type": "string",
+                      "minLength": 80
+                    },
+                    "graphs": {
+                      "type": "array",
+                      "items": {}
+                    },
+                    "clues": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "minItems": 1
+                    },
+                    "unresolved": {
+                      "type": "array",
+                      "items": {}
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          ]
+        },
+        {
+          "model": "local-model",
+          "messages": [
+            {
+              "role": "user",
+              "content": "COMPRESS-SOURCE: fixed-target-with-source-ids"
+            },
+            {
+              "role": "system",
+              "content": "Updated system prompt section \"instructions\":\n\n<instructions>\nCOMPRESSOR ONLY. If a tool fails, rewrite the entire submit_compaction call, preserving all fields.\n</instructions>"
+            },
+            {
+              "role": "assistant",
+              "content": null,
+              "tool_calls": [
+                {
+                  "id": "call-1",
+                  "type": "function",
+                  "function": {
+                    "name": "submit_compaction",
+                    "arguments": "{\"summary\":\"P1-source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary \",\"graphs\":[],\"clues\":[],\"unresolved\":[]}"
+                  }
+                }
+              ]
+            },
+            {
+              "role": "tool",
+              "content": "<harness>\n[error] Validation failed for tool \"submit_compaction\":\n  - clues: must not have fewer than 1 items\n\nReceived arguments:\n{\n  \"summary\": \"P1-source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary \",\n  \"graphs\": [],\n  \"clues\": [],\n  \"unresolved\": []\n}\n</harness>",
+              "tool_call_id": "call-1"
+            },
+            {
+              "role": "assistant",
+              "content": "analysis-2"
+            },
+            {
+              "role": "user",
+              "content": "No complete accepted submission. Rewrite the entire submit_compaction call with all fields."
+            },
+            {
+              "role": "assistant",
+              "content": null,
+              "tool_calls": [
+                {
+                  "id": "call-3",
+                  "type": "function",
+                  "function": {
+                    "name": "submit_compaction",
+                    "arguments": "{\"summary\":\"P1-source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary \",\"graphs\":[],\"clues\":[],\"unresolved\":[]}"
+                  }
+                }
+              ]
+            },
+            {
+              "role": "tool",
+              "content": "<harness>\n[error] Validation failed for tool \"submit_compaction\":\n  - clues: must not have fewer than 1 items\n\nReceived arguments:\n{\n  \"summary\": \"P1-source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary \",\n  \"graphs\": [],\n  \"clues\": [],\n  \"unresolved\": []\n}\n</harness>",
+              "tool_call_id": "call-3"
+            }
+          ],
+          "stream": true,
+          "stream_options": {
+            "include_usage": true
+          },
+          "store": false,
+          "max_tokens": 4096,
+          "tools": [
+            {
+              "type": "function",
+              "function": {
+                "name": "submit_compaction",
+                "description": "Submit the entire P1/P2/P3/P4 candidate; after any error rewrite the entire tool call, not a patch.",
+                "parameters": {
+                  "type": "object",
+                  "required": [
+                    "summary",
+                    "graphs",
+                    "clues",
+                    "unresolved"
+                  ],
+                  "properties": {
+                    "summary": {
+                      "type": "string",
+                      "minLength": 80
+                    },
+                    "graphs": {
+                      "type": "array",
+                      "items": {}
+                    },
+                    "clues": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "minItems": 1
+                    },
+                    "unresolved": {
+                      "type": "array",
+                      "items": {}
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          ]
+        },
+        {
+          "model": "local-model",
+          "messages": [
+            {
+              "role": "user",
+              "content": "COMPRESS-SOURCE: fixed-target-with-source-ids"
+            },
+            {
+              "role": "system",
+              "content": "Updated system prompt section \"instructions\":\n\n<instructions>\nCOMPRESSOR ONLY. If a tool fails, rewrite the entire submit_compaction call, preserving all fields.\n</instructions>"
+            },
+            {
+              "role": "assistant",
+              "content": null,
+              "tool_calls": [
+                {
+                  "id": "call-1",
+                  "type": "function",
+                  "function": {
+                    "name": "submit_compaction",
+                    "arguments": "{\"summary\":\"P1-source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary \",\"graphs\":[],\"clues\":[],\"unresolved\":[]}"
+                  }
+                }
+              ]
+            },
+            {
+              "role": "tool",
+              "content": "<harness>\n[error] Validation failed for tool \"submit_compaction\":\n  - clues: must not have fewer than 1 items\n\nReceived arguments:\n{\n  \"summary\": \"P1-source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary \",\n  \"graphs\": [],\n  \"clues\": [],\n  \"unresolved\": []\n}\n</harness>",
+              "tool_call_id": "call-1"
+            },
+            {
+              "role": "assistant",
+              "content": "analysis-2"
+            },
+            {
+              "role": "user",
+              "content": "No complete accepted submission. Rewrite the entire submit_compaction call with all fields."
+            },
+            {
+              "role": "assistant",
+              "content": null,
+              "tool_calls": [
+                {
+                  "id": "call-3",
+                  "type": "function",
+                  "function": {
+                    "name": "submit_compaction",
+                    "arguments": "{\"summary\":\"P1-source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary \",\"graphs\":[],\"clues\":[],\"unresolved\":[]}"
+                  }
+                }
+              ]
+            },
+            {
+              "role": "tool",
+              "content": "<harness>\n[error] Validation failed for tool \"submit_compaction\":\n  - clues: must not have fewer than 1 items\n\nReceived arguments:\n{\n  \"summary\": \"P1-source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary \",\n  \"graphs\": [],\n  \"clues\": [],\n  \"unresolved\": []\n}\n</harness>",
+              "tool_call_id": "call-3"
+            },
+            {
+              "role": "assistant",
+              "content": "analysis-4"
+            },
+            {
+              "role": "user",
+              "content": "No complete accepted submission. Rewrite the entire submit_compaction call with all fields."
+            }
+          ],
+          "stream": true,
+          "stream_options": {
+            "include_usage": true
+          },
+          "store": false,
+          "max_tokens": 4096,
+          "tools": [
+            {
+              "type": "function",
+              "function": {
+                "name": "submit_compaction",
+                "description": "Submit the entire P1/P2/P3/P4 candidate; after any error rewrite the entire tool call, not a patch.",
+                "parameters": {
+                  "type": "object",
+                  "required": [
+                    "summary",
+                    "graphs",
+                    "clues",
+                    "unresolved"
+                  ],
+                  "properties": {
+                    "summary": {
+                      "type": "string",
+                      "minLength": 80
+                    },
+                    "graphs": {
+                      "type": "array",
+                      "items": {}
+                    },
+                    "clues": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "minItems": 1
+                    },
+                    "unresolved": {
+                      "type": "array",
+                      "items": {}
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          ]
+        },
+        {
+          "model": "local-model",
+          "messages": [
+            {
+              "role": "user",
+              "content": "COMPRESS-SOURCE: fixed-target-with-source-ids"
+            },
+            {
+              "role": "system",
+              "content": "Updated system prompt section \"instructions\":\n\n<instructions>\nCOMPRESSOR ONLY. If a tool fails, rewrite the entire submit_compaction call, preserving all fields.\n</instructions>"
+            },
+            {
+              "role": "assistant",
+              "content": null,
+              "tool_calls": [
+                {
+                  "id": "call-1",
+                  "type": "function",
+                  "function": {
+                    "name": "submit_compaction",
+                    "arguments": "{\"summary\":\"P1-source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary \",\"graphs\":[],\"clues\":[],\"unresolved\":[]}"
+                  }
+                }
+              ]
+            },
+            {
+              "role": "tool",
+              "content": "<harness>\n[error] Validation failed for tool \"submit_compaction\":\n  - clues: must not have fewer than 1 items\n\nReceived arguments:\n{\n  \"summary\": \"P1-source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary \",\n  \"graphs\": [],\n  \"clues\": [],\n  \"unresolved\": []\n}\n</harness>",
+              "tool_call_id": "call-1"
+            },
+            {
+              "role": "assistant",
+              "content": "analysis-2"
+            },
+            {
+              "role": "user",
+              "content": "No complete accepted submission. Rewrite the entire submit_compaction call with all fields."
+            },
+            {
+              "role": "assistant",
+              "content": null,
+              "tool_calls": [
+                {
+                  "id": "call-3",
+                  "type": "function",
+                  "function": {
+                    "name": "submit_compaction",
+                    "arguments": "{\"summary\":\"P1-source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary \",\"graphs\":[],\"clues\":[],\"unresolved\":[]}"
+                  }
+                }
+              ]
+            },
+            {
+              "role": "tool",
+              "content": "<harness>\n[error] Validation failed for tool \"submit_compaction\":\n  - clues: must not have fewer than 1 items\n\nReceived arguments:\n{\n  \"summary\": \"P1-source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary \",\n  \"graphs\": [],\n  \"clues\": [],\n  \"unresolved\": []\n}\n</harness>",
+              "tool_call_id": "call-3"
+            },
+            {
+              "role": "assistant",
+              "content": "analysis-4"
+            },
+            {
+              "role": "user",
+              "content": "No complete accepted submission. Rewrite the entire submit_compaction call with all fields."
+            },
+            {
+              "role": "assistant",
+              "content": "analysis-5"
+            },
+            {
+              "role": "user",
+              "content": "No complete accepted submission. Rewrite the entire submit_compaction call with all fields."
+            }
+          ],
+          "stream": true,
+          "stream_options": {
+            "include_usage": true
+          },
+          "store": false,
+          "max_tokens": 4096,
+          "tools": [
+            {
+              "type": "function",
+              "function": {
+                "name": "submit_compaction",
+                "description": "Submit the entire P1/P2/P3/P4 candidate; after any error rewrite the entire tool call, not a patch.",
+                "parameters": {
+                  "type": "object",
+                  "required": [
+                    "summary",
+                    "graphs",
+                    "clues",
+                    "unresolved"
+                  ],
+                  "properties": {
+                    "summary": {
+                      "type": "string",
+                      "minLength": 80
+                    },
+                    "graphs": {
+                      "type": "array",
+                      "items": {}
+                    },
+                    "clues": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "minItems": 1
+                    },
+                    "unresolved": {
+                      "type": "array",
+                      "items": {}
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "events": [
+        {
+          "event": "beforeRequest"
+        },
+        {
+          "event": "afterResponse",
+          "stopReason": "toolUse",
+          "error": null
+        },
+        {
+          "event": "afterTools",
+          "errors": [
+            "<harness>\n[error] Validation failed for tool \"submit_compaction\":\n  - clues: must not have fewer than 1 items\n\nReceived arguments:\n{\n  \"summary\": \"P1-source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary \",\n  \"graphs\": [],\n  \"clues\": [],\n  \"unresolved\": []\n}\n</harness>"
+          ],
+          "results": [
+            {
+              "role": "toolResult",
+              "toolCallId": "call-1",
+              "toolName": "submit_compaction",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "<harness>\n[error] Validation failed for tool \"submit_compaction\":\n  - clues: must not have fewer than 1 items\n\nReceived arguments:\n{\n  \"summary\": \"P1-source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary \",\n  \"graphs\": [],\n  \"clues\": [],\n  \"unresolved\": []\n}\n</harness>"
+                }
+              ],
+              "isError": true,
+              "timestamp": 1792763623502
+            }
+          ]
+        },
+        {
+          "event": "beforeRequest"
+        },
+        {
+          "event": "afterResponse",
+          "stopReason": "stop",
+          "error": null
+        },
+        {
+          "event": "onYield",
+          "stopReason": "stop"
+        },
+        {
+          "event": "beforeRequest"
+        },
+        {
+          "event": "afterResponse",
+          "stopReason": "toolUse",
+          "error": null
+        },
+        {
+          "event": "afterTools",
+          "errors": [
+            "<harness>\n[error] Validation failed for tool \"submit_compaction\":\n  - clues: must not have fewer than 1 items\n\nReceived arguments:\n{\n  \"summary\": \"P1-source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary \",\n  \"graphs\": [],\n  \"clues\": [],\n  \"unresolved\": []\n}\n</harness>"
+          ],
+          "results": [
+            {
+              "role": "toolResult",
+              "toolCallId": "call-3",
+              "toolName": "submit_compaction",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "<harness>\n[error] Validation failed for tool \"submit_compaction\":\n  - clues: must not have fewer than 1 items\n\nReceived arguments:\n{\n  \"summary\": \"P1-source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary \",\n  \"graphs\": [],\n  \"clues\": [],\n  \"unresolved\": []\n}\n</harness>"
+                }
+              ],
+              "isError": true,
+              "timestamp": 1792763623564
+            }
+          ]
+        },
+        {
+          "event": "beforeRequest"
+        },
+        {
+          "event": "afterResponse",
+          "stopReason": "stop",
+          "error": null
+        },
+        {
+          "event": "onYield",
+          "stopReason": "stop"
+        },
+        {
+          "event": "beforeRequest"
+        },
+        {
+          "event": "afterResponse",
+          "stopReason": "stop",
+          "error": null
+        },
+        {
+          "event": "onYield",
+          "stopReason": "stop"
+        },
+        {
+          "event": "beforeRequest"
+        },
+        {
+          "event": "afterResponse",
+          "stopReason": "toolUse",
+          "error": null
+        },
+        {
+          "event": "beforeTool",
+          "name": "submit_compaction"
+        },
+        {
+          "event": "afterTool",
+          "name": "submit_compaction",
+          "isError": false
+        },
+        {
+          "event": "afterTools",
+          "errors": [],
+          "results": [
+            {
+              "role": "toolResult",
+              "toolCallId": "call-6",
+              "toolName": "submit_compaction",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "accepted"
+                }
+              ],
+              "isError": false,
+              "timestamp": 1792763623676
+            }
+          ]
+        }
+      ],
+      "reports": [],
+      "executed": [
+        {
+          "summary": "P1-source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary ",
+          "graphs": [],
+          "clues": [
+            "target experience"
+          ],
+          "unresolved": []
+        }
+      ],
+      "policy": {
+        "status": "accepted",
+        "toolErrors": 2,
+        "unresolvedErrors": 3,
+        "lastError": {
+          "kind": "unresolvedErrors",
+          "reason": "no-complete-submission:stop:5",
+          "key": "yield:25"
+        },
+        "processed": [
+          "tool:14",
+          "yield:15",
+          "tool:21",
+          "yield:22",
+          "yield:25"
+        ]
+      },
+      "provider": {
+        "sessionId": "01a16909-f82b-7025-8269-c3251ea53fc8"
+      },
+      "usage": {
+        "models": {
+          "local/local-model": {
+            "input": 60,
+            "output": 12,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0,
+            "totalTokens": 72,
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            }
+          }
+        },
+        "tools": {}
+      }
+    },
+    "provider-error": {
+      "requests": [
+        {
+          "model": "local-model",
+          "messages": [
+            {
+              "role": "user",
+              "content": "COMPRESS-SOURCE: fixed-target-with-source-ids"
+            },
+            {
+              "role": "system",
+              "content": "Updated system prompt section \"instructions\":\n\n<instructions>\nCOMPRESSOR ONLY. If a tool fails, rewrite the entire submit_compaction call, preserving all fields.\n</instructions>"
+            }
+          ],
+          "stream": true,
+          "stream_options": {
+            "include_usage": true
+          },
+          "store": false,
+          "max_tokens": 4096,
+          "tools": [
+            {
+              "type": "function",
+              "function": {
+                "name": "submit_compaction",
+                "description": "Submit the entire P1/P2/P3/P4 candidate; after any error rewrite the entire tool call, not a patch.",
+                "parameters": {
+                  "type": "object",
+                  "required": [
+                    "summary",
+                    "graphs",
+                    "clues",
+                    "unresolved"
+                  ],
+                  "properties": {
+                    "summary": {
+                      "type": "string",
+                      "minLength": 80
+                    },
+                    "graphs": {
+                      "type": "array",
+                      "items": {}
+                    },
+                    "clues": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "minItems": 1
+                    },
+                    "unresolved": {
+                      "type": "array",
+                      "items": {}
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          ]
+        },
+        {
+          "model": "local-model",
+          "messages": [
+            {
+              "role": "user",
+              "content": "COMPRESS-SOURCE: fixed-target-with-source-ids"
+            },
+            {
+              "role": "system",
+              "content": "Updated system prompt section \"instructions\":\n\n<instructions>\nCOMPRESSOR ONLY. If a tool fails, rewrite the entire submit_compaction call, preserving all fields.\n</instructions>"
+            },
+            {
+              "role": "assistant",
+              "content": null,
+              "tool_calls": [
+                {
+                  "id": "call-1",
+                  "type": "function",
+                  "function": {
+                    "name": "submit_compaction",
+                    "arguments": "{\"summary\":\"P1-source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary \",\"graphs\":[],\"clues\":[],\"unresolved\":[]}"
+                  }
+                }
+              ]
+            },
+            {
+              "role": "tool",
+              "content": "<harness>\n[error] Validation failed for tool \"submit_compaction\":\n  - clues: must not have fewer than 1 items\n\nReceived arguments:\n{\n  \"summary\": \"P1-source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary \",\n  \"graphs\": [],\n  \"clues\": [],\n  \"unresolved\": []\n}\n</harness>",
+              "tool_call_id": "call-1"
+            }
+          ],
+          "stream": true,
+          "stream_options": {
+            "include_usage": true
+          },
+          "store": false,
+          "max_tokens": 4096,
+          "tools": [
+            {
+              "type": "function",
+              "function": {
+                "name": "submit_compaction",
+                "description": "Submit the entire P1/P2/P3/P4 candidate; after any error rewrite the entire tool call, not a patch.",
+                "parameters": {
+                  "type": "object",
+                  "required": [
+                    "summary",
+                    "graphs",
+                    "clues",
+                    "unresolved"
+                  ],
+                  "properties": {
+                    "summary": {
+                      "type": "string",
+                      "minLength": 80
+                    },
+                    "graphs": {
+                      "type": "array",
+                      "items": {}
+                    },
+                    "clues": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "minItems": 1
+                    },
+                    "unresolved": {
+                      "type": "array",
+                      "items": {}
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          ]
+        },
+        {
+          "model": "local-model",
+          "messages": [
+            {
+              "role": "user",
+              "content": "COMPRESS-SOURCE: fixed-target-with-source-ids"
+            },
+            {
+              "role": "system",
+              "content": "Updated system prompt section \"instructions\":\n\n<instructions>\nCOMPRESSOR ONLY. If a tool fails, rewrite the entire submit_compaction call, preserving all fields.\n</instructions>"
+            },
+            {
+              "role": "assistant",
+              "content": null,
+              "tool_calls": [
+                {
+                  "id": "call-1",
+                  "type": "function",
+                  "function": {
+                    "name": "submit_compaction",
+                    "arguments": "{\"summary\":\"P1-source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary \",\"graphs\":[],\"clues\":[],\"unresolved\":[]}"
+                  }
+                }
+              ]
+            },
+            {
+              "role": "tool",
+              "content": "<harness>\n[error] Validation failed for tool \"submit_compaction\":\n  - clues: must not have fewer than 1 items\n\nReceived arguments:\n{\n  \"summary\": \"P1-source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary \",\n  \"graphs\": [],\n  \"clues\": [],\n  \"unresolved\": []\n}\n</harness>",
+              "tool_call_id": "call-1"
+            },
+            {
+              "role": "user",
+              "content": "Explicit caller repair after provider-failure-2; preserve previous context."
+            }
+          ],
+          "stream": true,
+          "stream_options": {
+            "include_usage": true
+          },
+          "store": false,
+          "max_tokens": 4096,
+          "tools": [
+            {
+              "type": "function",
+              "function": {
+                "name": "submit_compaction",
+                "description": "Submit the entire P1/P2/P3/P4 candidate; after any error rewrite the entire tool call, not a patch.",
+                "parameters": {
+                  "type": "object",
+                  "required": [
+                    "summary",
+                    "graphs",
+                    "clues",
+                    "unresolved"
+                  ],
+                  "properties": {
+                    "summary": {
+                      "type": "string",
+                      "minLength": 80
+                    },
+                    "graphs": {
+                      "type": "array",
+                      "items": {}
+                    },
+                    "clues": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "minItems": 1
+                    },
+                    "unresolved": {
+                      "type": "array",
+                      "items": {}
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "events": [
+        {
+          "event": "beforeRequest"
+        },
+        {
+          "event": "afterResponse",
+          "stopReason": "toolUse",
+          "error": null
+        },
+        {
+          "event": "afterTools",
+          "errors": [
+            "<harness>\n[error] Validation failed for tool \"submit_compaction\":\n  - clues: must not have fewer than 1 items\n\nReceived arguments:\n{\n  \"summary\": \"P1-source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary \",\n  \"graphs\": [],\n  \"clues\": [],\n  \"unresolved\": []\n}\n</harness>"
+          ],
+          "results": [
+            {
+              "role": "toolResult",
+              "toolCallId": "call-1",
+              "toolName": "submit_compaction",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "<harness>\n[error] Validation failed for tool \"submit_compaction\":\n  - clues: must not have fewer than 1 items\n\nReceived arguments:\n{\n  \"summary\": \"P1-source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary \",\n  \"graphs\": [],\n  \"clues\": [],\n  \"unresolved\": []\n}\n</harness>"
+                }
+              ],
+              "isError": true,
+              "timestamp": 1792763623059
+            }
+          ]
+        },
+        {
+          "event": "beforeRequest"
+        },
+        {
+          "event": "afterResponse",
+          "stopReason": "error",
+          "error": "400: {\"message\":\"provider-failure-2\"}"
+        },
+        {
+          "event": "beforeRequest"
+        },
+        {
+          "event": "afterResponse",
+          "stopReason": "toolUse",
+          "error": null
+        },
+        {
+          "event": "beforeTool",
+          "name": "submit_compaction"
+        },
+        {
+          "event": "afterTool",
+          "name": "submit_compaction",
+          "isError": false
+        },
+        {
+          "event": "afterTools",
+          "errors": [],
+          "results": [
+            {
+              "role": "toolResult",
+              "toolCallId": "call-3",
+              "toolName": "submit_compaction",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "accepted"
+                }
+              ],
+              "isError": false,
+              "timestamp": 1792763623138
+            }
+          ]
+        }
+      ],
+      "reports": [],
+      "executed": [
+        {
+          "summary": "P1-source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary ",
+          "graphs": [],
+          "clues": [
+            "target experience"
+          ],
+          "unresolved": []
+        }
+      ],
+      "policy": null,
+      "provider": {
+        "sessionId": "01a16909-f672-7025-8269-c31fd64c214b"
+      },
+      "usage": {
+        "models": {
+          "local/local-model": {
+            "input": 20,
+            "output": 4,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0,
+            "totalTokens": 24,
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            }
+          }
+        },
+        "tools": {}
+      }
+    },
+    "provider-error-threshold": {
+      "requests": [
+        {
+          "model": "local-model",
+          "messages": [
+            {
+              "role": "user",
+              "content": "Explicit external input 1"
+            },
+            {
+              "role": "system",
+              "content": "Updated system prompt section \"instructions\":\n\n<instructions>\nCOMPRESSOR ONLY. If a tool fails, rewrite the entire submit_compaction call, preserving all fields.\n</instructions>"
+            }
+          ],
+          "stream": true,
+          "stream_options": {
+            "include_usage": true
+          },
+          "store": false,
+          "max_tokens": 4096,
+          "tools": [
+            {
+              "type": "function",
+              "function": {
+                "name": "submit_compaction",
+                "description": "Submit the entire P1/P2/P3/P4 candidate; after any error rewrite the entire tool call, not a patch.",
+                "parameters": {
+                  "type": "object",
+                  "required": [
+                    "summary",
+                    "graphs",
+                    "clues",
+                    "unresolved"
+                  ],
+                  "properties": {
+                    "summary": {
+                      "type": "string",
+                      "minLength": 80
+                    },
+                    "graphs": {
+                      "type": "array",
+                      "items": {}
+                    },
+                    "clues": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "minItems": 1
+                    },
+                    "unresolved": {
+                      "type": "array",
+                      "items": {}
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          ]
+        },
+        {
+          "model": "local-model",
+          "messages": [
+            {
+              "role": "user",
+              "content": "Explicit external input 1"
+            },
+            {
+              "role": "system",
+              "content": "Updated system prompt section \"instructions\":\n\n<instructions>\nCOMPRESSOR ONLY. If a tool fails, rewrite the entire submit_compaction call, preserving all fields.\n</instructions>"
+            },
+            {
+              "role": "user",
+              "content": "Explicit external input 2"
+            }
+          ],
+          "stream": true,
+          "stream_options": {
+            "include_usage": true
+          },
+          "store": false,
+          "max_tokens": 4096,
+          "tools": [
+            {
+              "type": "function",
+              "function": {
+                "name": "submit_compaction",
+                "description": "Submit the entire P1/P2/P3/P4 candidate; after any error rewrite the entire tool call, not a patch.",
+                "parameters": {
+                  "type": "object",
+                  "required": [
+                    "summary",
+                    "graphs",
+                    "clues",
+                    "unresolved"
+                  ],
+                  "properties": {
+                    "summary": {
+                      "type": "string",
+                      "minLength": 80
+                    },
+                    "graphs": {
+                      "type": "array",
+                      "items": {}
+                    },
+                    "clues": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "minItems": 1
+                    },
+                    "unresolved": {
+                      "type": "array",
+                      "items": {}
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          ]
+        },
+        {
+          "model": "local-model",
+          "messages": [
+            {
+              "role": "user",
+              "content": "Explicit external input 1"
+            },
+            {
+              "role": "system",
+              "content": "Updated system prompt section \"instructions\":\n\n<instructions>\nCOMPRESSOR ONLY. If a tool fails, rewrite the entire submit_compaction call, preserving all fields.\n</instructions>"
+            },
+            {
+              "role": "user",
+              "content": "Explicit external input 2"
+            },
+            {
+              "role": "user",
+              "content": "Explicit external input 3"
+            }
+          ],
+          "stream": true,
+          "stream_options": {
+            "include_usage": true
+          },
+          "store": false,
+          "max_tokens": 4096,
+          "tools": [
+            {
+              "type": "function",
+              "function": {
+                "name": "submit_compaction",
+                "description": "Submit the entire P1/P2/P3/P4 candidate; after any error rewrite the entire tool call, not a patch.",
+                "parameters": {
+                  "type": "object",
+                  "required": [
+                    "summary",
+                    "graphs",
+                    "clues",
+                    "unresolved"
+                  ],
+                  "properties": {
+                    "summary": {
+                      "type": "string",
+                      "minLength": 80
+                    },
+                    "graphs": {
+                      "type": "array",
+                      "items": {}
+                    },
+                    "clues": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "minItems": 1
+                    },
+                    "unresolved": {
+                      "type": "array",
+                      "items": {}
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          ]
+        },
+        {
+          "model": "local-model",
+          "messages": [
+            {
+              "role": "user",
+              "content": "Explicit external input 1"
+            },
+            {
+              "role": "system",
+              "content": "Updated system prompt section \"instructions\":\n\n<instructions>\nCOMPRESSOR ONLY. If a tool fails, rewrite the entire submit_compaction call, preserving all fields.\n</instructions>"
+            },
+            {
+              "role": "user",
+              "content": "Explicit external input 2"
+            },
+            {
+              "role": "user",
+              "content": "Explicit external input 3"
+            },
+            {
+              "role": "user",
+              "content": "Explicit external input 4"
+            }
+          ],
+          "stream": true,
+          "stream_options": {
+            "include_usage": true
+          },
+          "store": false,
+          "max_tokens": 4096,
+          "tools": [
+            {
+              "type": "function",
+              "function": {
+                "name": "submit_compaction",
+                "description": "Submit the entire P1/P2/P3/P4 candidate; after any error rewrite the entire tool call, not a patch.",
+                "parameters": {
+                  "type": "object",
+                  "required": [
+                    "summary",
+                    "graphs",
+                    "clues",
+                    "unresolved"
+                  ],
+                  "properties": {
+                    "summary": {
+                      "type": "string",
+                      "minLength": 80
+                    },
+                    "graphs": {
+                      "type": "array",
+                      "items": {}
+                    },
+                    "clues": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "minItems": 1
+                    },
+                    "unresolved": {
+                      "type": "array",
+                      "items": {}
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "events": [
+        {
+          "event": "beforeRequest"
+        },
+        {
+          "event": "afterResponse",
+          "stopReason": "error",
+          "error": "400: {\"message\":\"provider-failure-1\"}"
+        },
+        {
+          "event": "beforeRequest"
+        },
+        {
+          "event": "afterResponse",
+          "stopReason": "error",
+          "error": "400: {\"message\":\"provider-failure-2\"}"
+        },
+        {
+          "event": "beforeRequest"
+        },
+        {
+          "event": "afterResponse",
+          "stopReason": "error",
+          "error": "400: {\"message\":\"provider-failure-3\"}"
+        },
+        {
+          "event": "beforeRequest"
+        },
+        {
+          "event": "afterResponse",
+          "stopReason": "error",
+          "error": "400: {\"message\":\"provider-failure-4\"}"
+        },
+        {
+          "event": "beforeRequest"
+        }
+      ],
+      "reports": [],
+      "executed": [],
+      "policy": {
+        "status": "sealed",
+        "toolErrors": 0,
+        "unresolvedErrors": 4,
+        "lastError": {
+          "kind": "unresolvedErrors",
+          "reason": "400: {\"message\":\"provider-failure-4\"}",
+          "key": "provider:23"
+        },
+        "processed": [
+          "provider:10",
+          "provider:15",
+          "provider:19",
+          "provider:23"
+        ]
+      },
+      "provider": {
+        "sessionId": "01a16909-f4cc-7025-8269-c31606bf0552"
+      },
+      "usage": {
+        "models": {
+          "local/local-model": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "totalTokens": 0,
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            }
+          }
+        },
+        "tools": {}
+      }
+    },
+    "strict-raw-guard": {
+      "requests": [
+        {
+          "model": "local-model",
+          "messages": [
+            {
+              "role": "user",
+              "content": "COMPRESS-SOURCE: fixed-target-with-source-ids"
+            },
+            {
+              "role": "system",
+              "content": "Updated system prompt section \"instructions\":\n\n<instructions>\nCOMPRESSOR ONLY. If a tool fails, rewrite the entire submit_compaction call, preserving all fields.\n</instructions>"
+            }
+          ],
+          "stream": true,
+          "stream_options": {
+            "include_usage": true
+          },
+          "store": false,
+          "max_tokens": 4096,
+          "tools": [
+            {
+              "type": "function",
+              "function": {
+                "name": "submit_compaction",
+                "description": "Submit the entire P1/P2/P3/P4 candidate; after any error rewrite the entire tool call, not a patch.",
+                "parameters": {
+                  "type": "object",
+                  "required": [
+                    "summary",
+                    "graphs",
+                    "clues",
+                    "unresolved"
+                  ],
+                  "properties": {
+                    "summary": {
+                      "type": "string",
+                      "minLength": 80
+                    },
+                    "graphs": {
+                      "type": "array",
+                      "items": {}
+                    },
+                    "clues": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "minItems": 1
+                    },
+                    "unresolved": {
+                      "type": "array",
+                      "items": {}
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          ]
+        },
+        {
+          "model": "local-model",
+          "messages": [
+            {
+              "role": "user",
+              "content": "COMPRESS-SOURCE: fixed-target-with-source-ids"
+            },
+            {
+              "role": "system",
+              "content": "Updated system prompt section \"instructions\":\n\n<instructions>\nCOMPRESSOR ONLY. If a tool fails, rewrite the entire submit_compaction call, preserving all fields.\n</instructions>"
+            },
+            {
+              "role": "assistant",
+              "content": null,
+              "tool_calls": [
+                {
+                  "id": "call-1",
+                  "type": "function",
+                  "function": {
+                    "name": "submit_compaction",
+                    "arguments": "{\"summary\":\"P1-source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary \",\"graphs\":[],\"clues\":[\"target experience\"],\"unresolved\":[]}"
+                  }
+                }
+              ]
+            },
+            {
+              "role": "tool",
+              "content": "<harness>\n[error] Tool call blocked: Incomplete or normalized raw JSON. REWRITE ENTIRE submit_compaction: summary, graphs including annotations, clues and unresolved. Do not submit a partial patch.\n</harness>",
+              "tool_call_id": "call-1"
+            }
+          ],
+          "stream": true,
+          "stream_options": {
+            "include_usage": true
+          },
+          "store": false,
+          "max_tokens": 4096,
+          "tools": [
+            {
+              "type": "function",
+              "function": {
+                "name": "submit_compaction",
+                "description": "Submit the entire P1/P2/P3/P4 candidate; after any error rewrite the entire tool call, not a patch.",
+                "parameters": {
+                  "type": "object",
+                  "required": [
+                    "summary",
+                    "graphs",
+                    "clues",
+                    "unresolved"
+                  ],
+                  "properties": {
+                    "summary": {
+                      "type": "string",
+                      "minLength": 80
+                    },
+                    "graphs": {
+                      "type": "array",
+                      "items": {}
+                    },
+                    "clues": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "minItems": 1
+                    },
+                    "unresolved": {
+                      "type": "array",
+                      "items": {}
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "events": [
+        {
+          "event": "beforeRequest"
+        },
+        {
+          "event": "afterResponse",
+          "stopReason": "toolUse",
+          "error": null
+        },
+        {
+          "event": "beforeTool",
+          "name": "submit_compaction"
+        },
+        {
+          "event": "afterTools",
+          "errors": [
+            "<harness>\n[error] Tool call blocked: Incomplete or normalized raw JSON. REWRITE ENTIRE submit_compaction: summary, graphs including annotations, clues and unresolved. Do not submit a partial patch.\n</harness>"
+          ],
+          "results": [
+            {
+              "role": "toolResult",
+              "toolCallId": "call-1",
+              "toolName": "submit_compaction",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "<harness>\n[error] Tool call blocked: Incomplete or normalized raw JSON. REWRITE ENTIRE submit_compaction: summary, graphs including annotations, clues and unresolved. Do not submit a partial patch.\n</harness>"
+                }
+              ],
+              "isError": true,
+              "timestamp": 1792763621908
+            }
+          ]
+        },
+        {
+          "event": "beforeRequest"
+        },
+        {
+          "event": "afterResponse",
+          "stopReason": "toolUse",
+          "error": null
+        },
+        {
+          "event": "beforeTool",
+          "name": "submit_compaction"
+        },
+        {
+          "event": "afterTool",
+          "name": "submit_compaction",
+          "isError": false
+        },
+        {
+          "event": "afterTools",
+          "errors": [],
+          "results": [
+            {
+              "role": "toolResult",
+              "toolCallId": "call-2",
+              "toolName": "submit_compaction",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "accepted"
+                }
+              ],
+              "isError": false,
+              "timestamp": 1792763621956
+            }
+          ]
+        }
+      ],
+      "reports": [],
+      "executed": [
+        {
+          "summary": "P1-source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary ",
+          "graphs": [],
+          "clues": [
+            "target experience"
+          ],
+          "unresolved": []
+        }
+      ],
+      "policy": null,
+      "provider": {
+        "sessionId": "01a16909-f1d5-7025-8269-c30fa3a3a37e"
+      },
+      "usage": {
+        "models": {
+          "local/local-model": {
+            "input": 20,
+            "output": 4,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0,
+            "totalTokens": 24,
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            }
+          }
+        },
+        "tools": {}
+      }
+    },
+    "tool-threshold": {
+      "requests": [
+        {
+          "model": "local-model",
+          "messages": [
+            {
+              "role": "user",
+              "content": "COMPRESS-SOURCE: fixed-target-with-source-ids"
+            },
+            {
+              "role": "system",
+              "content": "Updated system prompt section \"instructions\":\n\n<instructions>\nCOMPRESSOR ONLY. If a tool fails, rewrite the entire submit_compaction call, preserving all fields.\n</instructions>"
+            }
+          ],
+          "stream": true,
+          "stream_options": {
+            "include_usage": true
+          },
+          "store": false,
+          "max_tokens": 4096,
+          "tools": [
+            {
+              "type": "function",
+              "function": {
+                "name": "submit_compaction",
+                "description": "Submit the entire P1/P2/P3/P4 candidate; after any error rewrite the entire tool call, not a patch.",
+                "parameters": {
+                  "type": "object",
+                  "required": [
+                    "summary",
+                    "graphs",
+                    "clues",
+                    "unresolved"
+                  ],
+                  "properties": {
+                    "summary": {
+                      "type": "string",
+                      "minLength": 80
+                    },
+                    "graphs": {
+                      "type": "array",
+                      "items": {}
+                    },
+                    "clues": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "minItems": 1
+                    },
+                    "unresolved": {
+                      "type": "array",
+                      "items": {}
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          ]
+        },
+        {
+          "model": "local-model",
+          "messages": [
+            {
+              "role": "user",
+              "content": "COMPRESS-SOURCE: fixed-target-with-source-ids"
+            },
+            {
+              "role": "system",
+              "content": "Updated system prompt section \"instructions\":\n\n<instructions>\nCOMPRESSOR ONLY. If a tool fails, rewrite the entire submit_compaction call, preserving all fields.\n</instructions>"
+            },
+            {
+              "role": "assistant",
+              "content": null,
+              "tool_calls": [
+                {
+                  "id": "call-1",
+                  "type": "function",
+                  "function": {
+                    "name": "submit_compaction",
+                    "arguments": "{\"summary\":\"P1-source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary \",\"graphs\":[],\"clues\":[],\"unresolved\":[]}"
+                  }
+                }
+              ]
+            },
+            {
+              "role": "tool",
+              "content": "<harness>\n[error] Validation failed for tool \"submit_compaction\":\n  - clues: must not have fewer than 1 items\n\nReceived arguments:\n{\n  \"summary\": \"P1-source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary \",\n  \"graphs\": [],\n  \"clues\": [],\n  \"unresolved\": []\n}\n</harness>",
+              "tool_call_id": "call-1"
+            }
+          ],
+          "stream": true,
+          "stream_options": {
+            "include_usage": true
+          },
+          "store": false,
+          "max_tokens": 4096,
+          "tools": [
+            {
+              "type": "function",
+              "function": {
+                "name": "submit_compaction",
+                "description": "Submit the entire P1/P2/P3/P4 candidate; after any error rewrite the entire tool call, not a patch.",
+                "parameters": {
+                  "type": "object",
+                  "required": [
+                    "summary",
+                    "graphs",
+                    "clues",
+                    "unresolved"
+                  ],
+                  "properties": {
+                    "summary": {
+                      "type": "string",
+                      "minLength": 80
+                    },
+                    "graphs": {
+                      "type": "array",
+                      "items": {}
+                    },
+                    "clues": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "minItems": 1
+                    },
+                    "unresolved": {
+                      "type": "array",
+                      "items": {}
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          ]
+        },
+        {
+          "model": "local-model",
+          "messages": [
+            {
+              "role": "user",
+              "content": "COMPRESS-SOURCE: fixed-target-with-source-ids"
+            },
+            {
+              "role": "system",
+              "content": "Updated system prompt section \"instructions\":\n\n<instructions>\nCOMPRESSOR ONLY. If a tool fails, rewrite the entire submit_compaction call, preserving all fields.\n</instructions>"
+            },
+            {
+              "role": "assistant",
+              "content": null,
+              "tool_calls": [
+                {
+                  "id": "call-1",
+                  "type": "function",
+                  "function": {
+                    "name": "submit_compaction",
+                    "arguments": "{\"summary\":\"P1-source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary \",\"graphs\":[],\"clues\":[],\"unresolved\":[]}"
+                  }
+                }
+              ]
+            },
+            {
+              "role": "tool",
+              "content": "<harness>\n[error] Validation failed for tool \"submit_compaction\":\n  - clues: must not have fewer than 1 items\n\nReceived arguments:\n{\n  \"summary\": \"P1-source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary \",\n  \"graphs\": [],\n  \"clues\": [],\n  \"unresolved\": []\n}\n</harness>",
+              "tool_call_id": "call-1"
+            },
+            {
+              "role": "assistant",
+              "content": null,
+              "tool_calls": [
+                {
+                  "id": "call-2",
+                  "type": "function",
+                  "function": {
+                    "name": "submit_compaction",
+                    "arguments": "{\"summary\":\"P1-source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary \",\"graphs\":[],\"clues\":[],\"unresolved\":[]}"
+                  }
+                }
+              ]
+            },
+            {
+              "role": "tool",
+              "content": "<harness>\n[error] Validation failed for tool \"submit_compaction\":\n  - clues: must not have fewer than 1 items\n\nReceived arguments:\n{\n  \"summary\": \"P1-source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary \",\n  \"graphs\": [],\n  \"clues\": [],\n  \"unresolved\": []\n}\n</harness>",
+              "tool_call_id": "call-2"
+            }
+          ],
+          "stream": true,
+          "stream_options": {
+            "include_usage": true
+          },
+          "store": false,
+          "max_tokens": 4096,
+          "tools": [
+            {
+              "type": "function",
+              "function": {
+                "name": "submit_compaction",
+                "description": "Submit the entire P1/P2/P3/P4 candidate; after any error rewrite the entire tool call, not a patch.",
+                "parameters": {
+                  "type": "object",
+                  "required": [
+                    "summary",
+                    "graphs",
+                    "clues",
+                    "unresolved"
+                  ],
+                  "properties": {
+                    "summary": {
+                      "type": "string",
+                      "minLength": 80
+                    },
+                    "graphs": {
+                      "type": "array",
+                      "items": {}
+                    },
+                    "clues": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "minItems": 1
+                    },
+                    "unresolved": {
+                      "type": "array",
+                      "items": {}
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "events": [
+        {
+          "event": "beforeRequest"
+        },
+        {
+          "event": "afterResponse",
+          "stopReason": "toolUse",
+          "error": null
+        },
+        {
+          "event": "afterTools",
+          "errors": [
+            "<harness>\n[error] Validation failed for tool \"submit_compaction\":\n  - clues: must not have fewer than 1 items\n\nReceived arguments:\n{\n  \"summary\": \"P1-source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary \",\n  \"graphs\": [],\n  \"clues\": [],\n  \"unresolved\": []\n}\n</harness>"
+          ],
+          "results": [
+            {
+              "role": "toolResult",
+              "toolCallId": "call-1",
+              "toolName": "submit_compaction",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "<harness>\n[error] Validation failed for tool \"submit_compaction\":\n  - clues: must not have fewer than 1 items\n\nReceived arguments:\n{\n  \"summary\": \"P1-source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary \",\n  \"graphs\": [],\n  \"clues\": [],\n  \"unresolved\": []\n}\n</harness>"
+                }
+              ],
+              "isError": true,
+              "timestamp": 1792763623187
+            }
+          ]
+        },
+        {
+          "event": "beforeRequest"
+        },
+        {
+          "event": "afterResponse",
+          "stopReason": "toolUse",
+          "error": null
+        },
+        {
+          "event": "afterTools",
+          "errors": [
+            "<harness>\n[error] Validation failed for tool \"submit_compaction\":\n  - clues: must not have fewer than 1 items\n\nReceived arguments:\n{\n  \"summary\": \"P1-source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary \",\n  \"graphs\": [],\n  \"clues\": [],\n  \"unresolved\": []\n}\n</harness>"
+          ],
+          "results": [
+            {
+              "role": "toolResult",
+              "toolCallId": "call-2",
+              "toolName": "submit_compaction",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "<harness>\n[error] Validation failed for tool \"submit_compaction\":\n  - clues: must not have fewer than 1 items\n\nReceived arguments:\n{\n  \"summary\": \"P1-source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary \",\n  \"graphs\": [],\n  \"clues\": [],\n  \"unresolved\": []\n}\n</harness>"
+                }
+              ],
+              "isError": true,
+              "timestamp": 1792763623231
+            }
+          ]
+        },
+        {
+          "event": "beforeRequest"
+        },
+        {
+          "event": "afterResponse",
+          "stopReason": "toolUse",
+          "error": null
+        },
+        {
+          "event": "afterTools",
+          "errors": [
+            "<harness>\n[error] Validation failed for tool \"submit_compaction\":\n  - clues: must not have fewer than 1 items\n\nReceived arguments:\n{\n  \"summary\": \"P1-source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary \",\n  \"graphs\": [],\n  \"clues\": [],\n  \"unresolved\": []\n}\n</harness>"
+          ],
+          "results": [
+            {
+              "role": "toolResult",
+              "toolCallId": "call-3",
+              "toolName": "submit_compaction",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "<harness>\n[error] Validation failed for tool \"submit_compaction\":\n  - clues: must not have fewer than 1 items\n\nReceived arguments:\n{\n  \"summary\": \"P1-source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary \",\n  \"graphs\": [],\n  \"clues\": [],\n  \"unresolved\": []\n}\n</harness>"
+                }
+              ],
+              "isError": true,
+              "timestamp": 1792763623277
+            }
+          ]
+        },
+        {
+          "event": "beforeRequest"
+        },
+        {
+          "event": "beforeRequest"
+        }
+      ],
+      "reports": [],
+      "executed": [],
+      "policy": {
+        "status": "sealed",
+        "toolErrors": 3,
+        "unresolvedErrors": 0,
+        "lastError": {
+          "kind": "toolErrors",
+          "reason": "<harness>\n[error] Validation failed for tool \"submit_compaction\":\n  - clues: must not have fewer than 1 items\n\nReceived arguments:\n{\n  \"summary\": \"P1-source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary \",\n  \"graphs\": [],\n  \"clues\": [],\n  \"unresolved\": []\n}\n</harness>",
+          "key": "tool:22"
+        },
+        "processed": [
+          "tool:14",
+          "tool:18",
+          "tool:22"
+        ]
+      },
+      "provider": {
+        "sessionId": "01a16909-f6f0-7025-8269-c3209dacaa63"
+      },
+      "usage": {
+        "models": {
+          "local/local-model": {
+            "input": 30,
+            "output": 6,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0,
+            "totalTokens": 36,
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            }
+          }
+        },
+        "tools": {}
+      }
+    },
+    "truncated-json": {
+      "requests": [
+        {
+          "model": "local-model",
+          "messages": [
+            {
+              "role": "user",
+              "content": "COMPRESS-SOURCE: fixed-target-with-source-ids"
+            },
+            {
+              "role": "system",
+              "content": "Updated system prompt section \"instructions\":\n\n<instructions>\nCOMPRESSOR ONLY. If a tool fails, rewrite the entire submit_compaction call, preserving all fields.\n</instructions>"
+            }
+          ],
+          "stream": true,
+          "stream_options": {
+            "include_usage": true
+          },
+          "store": false,
+          "max_tokens": 4096,
+          "tools": [
+            {
+              "type": "function",
+              "function": {
+                "name": "submit_compaction",
+                "description": "Submit the entire P1/P2/P3/P4 candidate; after any error rewrite the entire tool call, not a patch.",
+                "parameters": {
+                  "type": "object",
+                  "required": [
+                    "summary",
+                    "graphs",
+                    "clues",
+                    "unresolved"
+                  ],
+                  "properties": {
+                    "summary": {
+                      "type": "string",
+                      "minLength": 80
+                    },
+                    "graphs": {
+                      "type": "array",
+                      "items": {}
+                    },
+                    "clues": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "minItems": 1
+                    },
+                    "unresolved": {
+                      "type": "array",
+                      "items": {}
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "events": [
+        {
+          "event": "beforeRequest"
+        },
+        {
+          "event": "afterResponse",
+          "stopReason": "toolUse",
+          "error": null
+        },
+        {
+          "event": "beforeTool",
+          "name": "submit_compaction"
+        },
+        {
+          "event": "afterTool",
+          "name": "submit_compaction",
+          "isError": false
+        },
+        {
+          "event": "afterTools",
+          "errors": [],
+          "results": [
+            {
+              "role": "toolResult",
+              "toolCallId": "call-1",
+              "toolName": "submit_compaction",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "accepted"
+                }
+              ],
+              "isError": false,
+              "timestamp": 1792763623725
+            }
+          ]
+        }
+      ],
+      "reports": [],
+      "executed": [
+        {
+          "summary": "P1-source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary ",
+          "graphs": [],
+          "clues": [
+            "target experience"
+          ],
+          "unresolved": []
+        }
+      ],
+      "policy": null,
+      "provider": {
+        "sessionId": "01a16909-f90a-7025-8269-c327e236dcd7"
+      },
+      "usage": {
+        "models": {
+          "local/local-model": {
+            "input": 10,
+            "output": 2,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0,
+            "totalTokens": 12,
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            }
+          }
+        },
+        "tools": {}
+      }
+    },
+    "unknown-tool": {
+      "requests": [
+        {
+          "model": "local-model",
+          "messages": [
+            {
+              "role": "user",
+              "content": "COMPRESS-SOURCE: fixed-target-with-source-ids"
+            },
+            {
+              "role": "system",
+              "content": "Updated system prompt section \"instructions\":\n\n<instructions>\nCOMPRESSOR ONLY. If a tool fails, rewrite the entire submit_compaction call, preserving all fields.\n</instructions>"
+            }
+          ],
+          "stream": true,
+          "stream_options": {
+            "include_usage": true
+          },
+          "store": false,
+          "max_tokens": 4096,
+          "tools": [
+            {
+              "type": "function",
+              "function": {
+                "name": "submit_compaction",
+                "description": "Submit the entire P1/P2/P3/P4 candidate; after any error rewrite the entire tool call, not a patch.",
+                "parameters": {
+                  "type": "object",
+                  "required": [
+                    "summary",
+                    "graphs",
+                    "clues",
+                    "unresolved"
+                  ],
+                  "properties": {
+                    "summary": {
+                      "type": "string",
+                      "minLength": 80
+                    },
+                    "graphs": {
+                      "type": "array",
+                      "items": {}
+                    },
+                    "clues": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "minItems": 1
+                    },
+                    "unresolved": {
+                      "type": "array",
+                      "items": {}
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          ]
+        },
+        {
+          "model": "local-model",
+          "messages": [
+            {
+              "role": "user",
+              "content": "COMPRESS-SOURCE: fixed-target-with-source-ids"
+            },
+            {
+              "role": "system",
+              "content": "Updated system prompt section \"instructions\":\n\n<instructions>\nCOMPRESSOR ONLY. If a tool fails, rewrite the entire submit_compaction call, preserving all fields.\n</instructions>"
+            },
+            {
+              "role": "assistant",
+              "content": null,
+              "tool_calls": [
+                {
+                  "id": "call-1",
+                  "type": "function",
+                  "function": {
+                    "name": "wrong_tool",
+                    "arguments": "{\"summary\":\"P1-source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary \",\"graphs\":[],\"clues\":[\"target experience\"],\"unresolved\":[]}"
+                  }
+                }
+              ]
+            },
+            {
+              "role": "tool",
+              "content": "<harness>\n[error] Tool wrong_tool is not available\n</harness>",
+              "tool_call_id": "call-1"
+            }
+          ],
+          "stream": true,
+          "stream_options": {
+            "include_usage": true
+          },
+          "store": false,
+          "max_tokens": 4096,
+          "tools": [
+            {
+              "type": "function",
+              "function": {
+                "name": "submit_compaction",
+                "description": "Submit the entire P1/P2/P3/P4 candidate; after any error rewrite the entire tool call, not a patch.",
+                "parameters": {
+                  "type": "object",
+                  "required": [
+                    "summary",
+                    "graphs",
+                    "clues",
+                    "unresolved"
+                  ],
+                  "properties": {
+                    "summary": {
+                      "type": "string",
+                      "minLength": 80
+                    },
+                    "graphs": {
+                      "type": "array",
+                      "items": {}
+                    },
+                    "clues": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "minItems": 1
+                    },
+                    "unresolved": {
+                      "type": "array",
+                      "items": {}
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "events": [
+        {
+          "event": "beforeRequest"
+        },
+        {
+          "event": "afterResponse",
+          "stopReason": "toolUse",
+          "error": null
+        },
+        {
+          "event": "afterTools",
+          "errors": [
+            "<harness>\n[error] Tool wrong_tool is not available\n</harness>"
+          ],
+          "results": [
+            {
+              "role": "toolResult",
+              "toolCallId": "call-1",
+              "toolName": "wrong_tool",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "<harness>\n[error] Tool wrong_tool is not available\n</harness>"
+                }
+              ],
+              "isError": true,
+              "timestamp": 1792763622958
+            }
+          ]
+        },
+        {
+          "event": "beforeRequest"
+        },
+        {
+          "event": "afterResponse",
+          "stopReason": "toolUse",
+          "error": null
+        },
+        {
+          "event": "beforeTool",
+          "name": "submit_compaction"
+        },
+        {
+          "event": "afterTool",
+          "name": "submit_compaction",
+          "isError": false
+        },
+        {
+          "event": "afterTools",
+          "errors": [],
+          "results": [
+            {
+              "role": "toolResult",
+              "toolCallId": "call-2",
+              "toolName": "submit_compaction",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "accepted"
+                }
+              ],
+              "isError": false,
+              "timestamp": 1792763623012
+            }
+          ]
+        }
+      ],
+      "reports": [],
+      "executed": [
+        {
+          "summary": "P1-source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary ",
+          "graphs": [],
+          "clues": [
+            "target experience"
+          ],
+          "unresolved": []
+        }
+      ],
+      "policy": null,
+      "provider": {
+        "sessionId": "01a16909-f60f-7025-8269-c31c53f0d7e0"
+      },
+      "usage": {
+        "models": {
+          "local/local-model": {
+            "input": 20,
+            "output": 4,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0,
+            "totalTokens": 24,
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            }
+          }
+        },
+        "tools": {}
+      }
+    },
+    "unresolved-threshold": {
+      "requests": [
+        {
+          "model": "local-model",
+          "messages": [
+            {
+              "role": "user",
+              "content": "COMPRESS-SOURCE: fixed-target-with-source-ids"
+            },
+            {
+              "role": "system",
+              "content": "Updated system prompt section \"instructions\":\n\n<instructions>\nCOMPRESSOR ONLY. If a tool fails, rewrite the entire submit_compaction call, preserving all fields.\n</instructions>"
+            }
+          ],
+          "stream": true,
+          "stream_options": {
+            "include_usage": true
+          },
+          "store": false,
+          "max_tokens": 4096,
+          "tools": [
+            {
+              "type": "function",
+              "function": {
+                "name": "submit_compaction",
+                "description": "Submit the entire P1/P2/P3/P4 candidate; after any error rewrite the entire tool call, not a patch.",
+                "parameters": {
+                  "type": "object",
+                  "required": [
+                    "summary",
+                    "graphs",
+                    "clues",
+                    "unresolved"
+                  ],
+                  "properties": {
+                    "summary": {
+                      "type": "string",
+                      "minLength": 80
+                    },
+                    "graphs": {
+                      "type": "array",
+                      "items": {}
+                    },
+                    "clues": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "minItems": 1
+                    },
+                    "unresolved": {
+                      "type": "array",
+                      "items": {}
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          ]
+        },
+        {
+          "model": "local-model",
+          "messages": [
+            {
+              "role": "user",
+              "content": "COMPRESS-SOURCE: fixed-target-with-source-ids"
+            },
+            {
+              "role": "system",
+              "content": "Updated system prompt section \"instructions\":\n\n<instructions>\nCOMPRESSOR ONLY. If a tool fails, rewrite the entire submit_compaction call, preserving all fields.\n</instructions>"
+            },
+            {
+              "role": "assistant",
+              "content": "INCOMPLETE-DRAFT-1"
+            },
+            {
+              "role": "user",
+              "content": "No complete accepted submission. Rewrite the entire submit_compaction call with all fields."
+            }
+          ],
+          "stream": true,
+          "stream_options": {
+            "include_usage": true
+          },
+          "store": false,
+          "max_tokens": 4096,
+          "tools": [
+            {
+              "type": "function",
+              "function": {
+                "name": "submit_compaction",
+                "description": "Submit the entire P1/P2/P3/P4 candidate; after any error rewrite the entire tool call, not a patch.",
+                "parameters": {
+                  "type": "object",
+                  "required": [
+                    "summary",
+                    "graphs",
+                    "clues",
+                    "unresolved"
+                  ],
+                  "properties": {
+                    "summary": {
+                      "type": "string",
+                      "minLength": 80
+                    },
+                    "graphs": {
+                      "type": "array",
+                      "items": {}
+                    },
+                    "clues": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "minItems": 1
+                    },
+                    "unresolved": {
+                      "type": "array",
+                      "items": {}
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          ]
+        },
+        {
+          "model": "local-model",
+          "messages": [
+            {
+              "role": "user",
+              "content": "COMPRESS-SOURCE: fixed-target-with-source-ids"
+            },
+            {
+              "role": "system",
+              "content": "Updated system prompt section \"instructions\":\n\n<instructions>\nCOMPRESSOR ONLY. If a tool fails, rewrite the entire submit_compaction call, preserving all fields.\n</instructions>"
+            },
+            {
+              "role": "assistant",
+              "content": "INCOMPLETE-DRAFT-1"
+            },
+            {
+              "role": "user",
+              "content": "No complete accepted submission. Rewrite the entire submit_compaction call with all fields."
+            },
+            {
+              "role": "assistant",
+              "content": "INCOMPLETE-DRAFT-2"
+            },
+            {
+              "role": "user",
+              "content": "No complete accepted submission. Rewrite the entire submit_compaction call with all fields."
+            }
+          ],
+          "stream": true,
+          "stream_options": {
+            "include_usage": true
+          },
+          "store": false,
+          "max_tokens": 4096,
+          "tools": [
+            {
+              "type": "function",
+              "function": {
+                "name": "submit_compaction",
+                "description": "Submit the entire P1/P2/P3/P4 candidate; after any error rewrite the entire tool call, not a patch.",
+                "parameters": {
+                  "type": "object",
+                  "required": [
+                    "summary",
+                    "graphs",
+                    "clues",
+                    "unresolved"
+                  ],
+                  "properties": {
+                    "summary": {
+                      "type": "string",
+                      "minLength": 80
+                    },
+                    "graphs": {
+                      "type": "array",
+                      "items": {}
+                    },
+                    "clues": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "minItems": 1
+                    },
+                    "unresolved": {
+                      "type": "array",
+                      "items": {}
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          ]
+        },
+        {
+          "model": "local-model",
+          "messages": [
+            {
+              "role": "user",
+              "content": "COMPRESS-SOURCE: fixed-target-with-source-ids"
+            },
+            {
+              "role": "system",
+              "content": "Updated system prompt section \"instructions\":\n\n<instructions>\nCOMPRESSOR ONLY. If a tool fails, rewrite the entire submit_compaction call, preserving all fields.\n</instructions>"
+            },
+            {
+              "role": "assistant",
+              "content": "INCOMPLETE-DRAFT-1"
+            },
+            {
+              "role": "user",
+              "content": "No complete accepted submission. Rewrite the entire submit_compaction call with all fields."
+            },
+            {
+              "role": "assistant",
+              "content": "INCOMPLETE-DRAFT-2"
+            },
+            {
+              "role": "user",
+              "content": "No complete accepted submission. Rewrite the entire submit_compaction call with all fields."
+            },
+            {
+              "role": "assistant",
+              "content": "INCOMPLETE-DRAFT-3"
+            },
+            {
+              "role": "user",
+              "content": "No complete accepted submission. Rewrite the entire submit_compaction call with all fields."
+            }
+          ],
+          "stream": true,
+          "stream_options": {
+            "include_usage": true
+          },
+          "store": false,
+          "max_tokens": 4096,
+          "tools": [
+            {
+              "type": "function",
+              "function": {
+                "name": "submit_compaction",
+                "description": "Submit the entire P1/P2/P3/P4 candidate; after any error rewrite the entire tool call, not a patch.",
+                "parameters": {
+                  "type": "object",
+                  "required": [
+                    "summary",
+                    "graphs",
+                    "clues",
+                    "unresolved"
+                  ],
+                  "properties": {
+                    "summary": {
+                      "type": "string",
+                      "minLength": 80
+                    },
+                    "graphs": {
+                      "type": "array",
+                      "items": {}
+                    },
+                    "clues": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "minItems": 1
+                    },
+                    "unresolved": {
+                      "type": "array",
+                      "items": {}
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "events": [
+        {
+          "event": "beforeRequest"
+        },
+        {
+          "event": "afterResponse",
+          "stopReason": "stop",
+          "error": null
+        },
+        {
+          "event": "onYield",
+          "stopReason": "stop"
+        },
+        {
+          "event": "beforeRequest"
+        },
+        {
+          "event": "afterResponse",
+          "stopReason": "stop",
+          "error": null
+        },
+        {
+          "event": "onYield",
+          "stopReason": "stop"
+        },
+        {
+          "event": "beforeRequest"
+        },
+        {
+          "event": "afterResponse",
+          "stopReason": "stop",
+          "error": null
+        },
+        {
+          "event": "onYield",
+          "stopReason": "stop"
+        },
+        {
+          "event": "beforeRequest"
+        },
+        {
+          "event": "afterResponse",
+          "stopReason": "stop",
+          "error": null
+        },
+        {
+          "event": "onYield",
+          "stopReason": "stop"
+        }
+      ],
+      "reports": [],
+      "executed": [],
+      "policy": {
+        "status": "sealed",
+        "toolErrors": 0,
+        "unresolvedErrors": 4,
+        "lastError": {
+          "kind": "unresolvedErrors",
+          "reason": "no-complete-submission:stop:4",
+          "key": "yield:20"
+        },
+        "processed": [
+          "yield:10",
+          "yield:14",
+          "yield:17",
+          "yield:20"
+        ]
+      },
+      "provider": {
+        "sessionId": "01a16909-f7a2-7025-8269-c322c61dc969"
+      },
+      "usage": {
+        "models": {
+          "local/local-model": {
+            "input": 40,
+            "output": 8,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0,
+            "totalTokens": 48,
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            }
+          }
+        },
+        "tools": {}
+      }
+    },
+    "yield-continuation": {
+      "requests": [
+        {
+          "model": "local-model",
+          "messages": [
+            {
+              "role": "user",
+              "content": "COMPRESS-SOURCE: fixed-target-with-source-ids"
+            },
+            {
+              "role": "system",
+              "content": "Updated system prompt section \"instructions\":\n\n<instructions>\nCOMPRESSOR ONLY. If a tool fails, rewrite the entire submit_compaction call, preserving all fields.\n</instructions>"
+            }
+          ],
+          "stream": true,
+          "stream_options": {
+            "include_usage": true
+          },
+          "store": false,
+          "max_tokens": 4096,
+          "tools": [
+            {
+              "type": "function",
+              "function": {
+                "name": "submit_compaction",
+                "description": "Submit the entire P1/P2/P3/P4 candidate; after any error rewrite the entire tool call, not a patch.",
+                "parameters": {
+                  "type": "object",
+                  "required": [
+                    "summary",
+                    "graphs",
+                    "clues",
+                    "unresolved"
+                  ],
+                  "properties": {
+                    "summary": {
+                      "type": "string",
+                      "minLength": 80
+                    },
+                    "graphs": {
+                      "type": "array",
+                      "items": {}
+                    },
+                    "clues": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "minItems": 1
+                    },
+                    "unresolved": {
+                      "type": "array",
+                      "items": {}
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          ]
+        },
+        {
+          "model": "local-model",
+          "messages": [
+            {
+              "role": "user",
+              "content": "COMPRESS-SOURCE: fixed-target-with-source-ids"
+            },
+            {
+              "role": "system",
+              "content": "Updated system prompt section \"instructions\":\n\n<instructions>\nCOMPRESSOR ONLY. If a tool fails, rewrite the entire submit_compaction call, preserving all fields.\n</instructions>"
+            },
+            {
+              "role": "assistant",
+              "content": "PRESERVED-DRAFT: graph inference already considered"
+            },
+            {
+              "role": "user",
+              "content": "Still missing P1/P2/P3/P4; call submit_compaction in full."
+            }
+          ],
+          "stream": true,
+          "stream_options": {
+            "include_usage": true
+          },
+          "store": false,
+          "max_tokens": 4096,
+          "tools": [
+            {
+              "type": "function",
+              "function": {
+                "name": "submit_compaction",
+                "description": "Submit the entire P1/P2/P3/P4 candidate; after any error rewrite the entire tool call, not a patch.",
+                "parameters": {
+                  "type": "object",
+                  "required": [
+                    "summary",
+                    "graphs",
+                    "clues",
+                    "unresolved"
+                  ],
+                  "properties": {
+                    "summary": {
+                      "type": "string",
+                      "minLength": 80
+                    },
+                    "graphs": {
+                      "type": "array",
+                      "items": {}
+                    },
+                    "clues": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "minItems": 1
+                    },
+                    "unresolved": {
+                      "type": "array",
+                      "items": {}
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "events": [
+        {
+          "event": "beforeRequest"
+        },
+        {
+          "event": "afterResponse",
+          "stopReason": "stop",
+          "error": null
+        },
+        {
+          "event": "onYield",
+          "stopReason": "stop"
+        },
+        {
+          "event": "beforeRequest"
+        },
+        {
+          "event": "afterResponse",
+          "stopReason": "toolUse",
+          "error": null
+        },
+        {
+          "event": "beforeTool",
+          "name": "submit_compaction"
+        },
+        {
+          "event": "afterTool",
+          "name": "submit_compaction",
+          "isError": false
+        },
+        {
+          "event": "afterTools",
+          "errors": [],
+          "results": [
+            {
+              "role": "toolResult",
+              "toolCallId": "call-2",
+              "toolName": "submit_compaction",
+              "content": [
+                {
+                  "type": "text",
+                  "text": "accepted"
+                }
+              ],
+              "isError": false,
+              "timestamp": 1792763622828
+            }
+          ]
+        }
+      ],
+      "reports": [],
+      "executed": [
+        {
+          "summary": "P1-source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary source-grounded-summary ",
+          "graphs": [],
+          "clues": [
+            "target experience"
+          ],
+          "unresolved": []
+        }
+      ],
+      "policy": null,
+      "provider": {
+        "sessionId": "01a16909-f563-7025-8269-c3183e896a0f"
+      },
+      "usage": {
+        "models": {
+          "local/local-model": {
+            "input": 20,
+            "output": 4,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0,
+            "totalTokens": 24,
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 0
+            }
+          }
+        },
+        "tools": {}
+      }
+    }
+  },
+  "pakkaPublicRuntime": {
+    "requests": [
+      {
+        "model": "local-model",
+        "messages": [
+          {
+            "role": "user",
+            "content": "fixed target"
+          },
+          {
+            "role": "system",
+            "content": "Updated system prompt section \"system\":\n\nPAKKA-SYSTEM\n\nUpdated system prompt section \"instructions\":\n\n<instructions>\nPAKKA-SYSTEM\n</instructions>"
+          }
+        ],
+        "stream": true,
+        "stream_options": {
+          "include_usage": true
+        },
+        "store": false,
+        "max_tokens": 4096,
+        "tools": [
+          {
+            "type": "function",
+            "function": {
+              "name": "submit_compaction",
+              "description": "Synthetic submit",
+              "parameters": {
+                "type": "object",
+                "properties": {}
+              }
+            }
+          }
+        ]
+      },
+      {
+        "model": "local-model",
+        "messages": [
+          {
+            "role": "user",
+            "content": "fixed target"
+          },
+          {
+            "role": "system",
+            "content": "Updated system prompt section \"system\":\n\nPAKKA-SYSTEM\n\nUpdated system prompt section \"instructions\":\n\n<instructions>\nPAKKA-SYSTEM\n</instructions>"
+          },
+          {
+            "role": "assistant",
+            "content": null,
+            "tool_calls": [
+              {
+                "id": "call-1",
+                "type": "function",
+                "function": {
+                  "name": "submit_compaction",
+                  "arguments": "{}"
+                }
+              }
+            ]
+          },
+          {
+            "role": "tool",
+            "content": "candidate received",
+            "tool_call_id": "call-1"
+          }
+        ],
+        "stream": true,
+        "stream_options": {
+          "include_usage": true
+        },
+        "store": false,
+        "max_tokens": 4096,
+        "tools": [
+          {
+            "type": "function",
+            "function": {
+              "name": "submit_compaction",
+              "description": "Synthetic submit",
+              "parameters": {
+                "type": "object",
+                "properties": {}
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "view": {
+      "sessionId": "f0fce9f6-8b60-44ca-952f-6a50389c50f2",
+      "sessionFile": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\pakka-integration-N6HXOU\\profile\\sessions\\f0fce9f6-8b60-44ca-952f-6a50389c50f2\\main.jsonl",
+      "phase": "ready",
+      "conversations": [
+        {
+          "key": "root",
+          "sessionId": "f0fce9f6-8b60-44ca-952f-6a50389c50f2",
+          "conversationId": "1",
+          "incarnation": "ac5c0091-5a5c-4dc7-9c2a-d3ef453afcef",
+          "profile": "default"
+        },
+        {
+          "key": "compressor",
+          "sessionId": "f0fce9f6-8b60-44ca-952f-6a50389c50f2",
+          "conversationId": "8",
+          "incarnation": "7688f5f8-53fc-4a9f-aa42-5aae99c4003e",
+          "profile": "compressor"
+        }
+      ],
+      "limits": {
+        "maxConversations": 2,
+        "maxPrimaryAttempts": 2,
+        "maxAuxiliaryAttempts": 1
+      },
+      "budget": {
+        "primaryAttempts": 2,
+        "auxiliaryAttempts": 0
+      }
+    },
+    "member": {
+      "key": "compressor",
+      "sessionId": "f0fce9f6-8b60-44ca-952f-6a50389c50f2",
+      "conversationId": "8",
+      "incarnation": "7688f5f8-53fc-4a9f-aa42-5aae99c4003e",
+      "profile": "compressor"
+    },
+    "serverErrors": []
+  }
+}
