@@ -78,8 +78,11 @@ export function PrivateCredentials({ client, error }) {
 			if (binding.current === instance) setPending(false);
 		}
 	}
-	return html`<section aria-label="Private provider configuration">
-		<h3>Private provider key</h3>
+	return html`<section
+		class="settings-card settings-native-fields pocket-credentials"
+		aria-label="Private provider configuration"
+	>
+		<h3>Private Provider Key</h3>
 		<p class="pocket-secondary">
 			The key applies to new model requests in this Session. Saved keys are never displayed. Only global
 			administrators can replace or clear it.
@@ -94,6 +97,7 @@ export function PrivateCredentials({ client, error }) {
 			${value.configured ? "Configured" : "Not configured"} · revision ${value.version}
 		</p>`}
 		<form
+			class="pocket-form"
 			onSubmit=${(event) => {
 				event.preventDefault();
 				void change("replace");
@@ -112,23 +116,25 @@ export function PrivateCredentials({ client, error }) {
 					value=${secret}
 					onInput=${(event) => setSecret(event.currentTarget.value)}
 			/></label>
-			<button
-				class="button"
-				data-credential-replace
-				type="submit"
-				disabled=${pending || uncertain || !value || !secret}
-			>
-				Replace provider key
-			</button>
-			<button
-				class="button"
-				data-credential-clear
-				type="button"
-				disabled=${pending || uncertain || !value?.configured}
-				onClick=${() => void change("clear")}
-			>
-				Clear provider key
-			</button>
+			<div class="pocket-form-actions">
+				<button
+					class="button"
+					data-credential-replace
+					type="submit"
+					disabled=${pending || uncertain || !value || !secret}
+				>
+					Replace provider key
+				</button>
+				<button
+					class="button"
+					data-credential-clear
+					type="button"
+					disabled=${pending || uncertain || !value?.configured}
+					onClick=${() => void change("clear")}
+				>
+					Clear provider key
+				</button>
+			</div>
 		</form>
 		${message && html`<p role="status">${message}</p>`}
 		${uncertain &&

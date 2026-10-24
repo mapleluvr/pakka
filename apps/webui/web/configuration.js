@@ -22,15 +22,15 @@ export function Configuration({ target, client, close, error }) {
 			live = false;
 		};
 	}, [target.key, target.incarnation]);
-	return html`<${SettingsPage} title="Conversation settings" category="Workspace" closeLabel="Close settings" close=${close} description="Usage, session limits and your private credentials. Model and directory choices stay in the conversation."><div class="pocket-configuration settings-native">
+	return html`<${SettingsPage} title="Conversation Settings" category="Workspace" closeLabel="Close settings" close=${close} description="Usage, session limits and your private credentials. Model and directory choices stay in the conversation."><div class="pocket-configuration settings-native">
  ${
 		!value
 			? html`<p role="status">Loading settings…</p>`
 			: html`<p data-settings-model>
 						${value.current?.model ?? value.choices.find((row) => row.id === value.ref.profile)?.model}
 					</p>
-					<section class="settings-card settings-data" aria-label="Conversation usage">
-						<h3>Conversation usage</h3>
+					<section class="settings-card settings-data" aria-label="Conversation Usage">
+						<h3>Conversation Usage</h3>
 						<dl>
 							<div>
 								<dt>Input tokens</dt>
@@ -60,9 +60,9 @@ export function Configuration({ target, client, close, error }) {
 					html`<section
 						class="settings-card settings-data"
 						data-session-budget
-						aria-label="Session attempt limits"
+						aria-label="Session Attempt Limits"
 					>
-						<h3>Session attempt limits</h3>
+						<h3>Session Attempt Limits</h3>
 						<dl>
 							<div>
 								<dt>Primary attempts</dt>

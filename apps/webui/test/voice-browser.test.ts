@@ -35,6 +35,32 @@ test(
 			await page.click('[data-conversation="' + target.conversationId + '"]');
 			await page.wait('document.querySelector("[data-action=send]")?.disabled===false');
 			await page.wait('document.querySelector("[data-dictate]")?.disabled===false');
+			assert.deepEqual(
+				await page.evaluate(`(()=>{
+					const node=document.querySelector('[data-dictate]'), box=node.getBoundingClientRect(), icon=getComputedStyle(node.querySelector('svg'));
+					return {label:node.getAttribute('aria-label'),text:node.textContent.trim(),svg:!!node.querySelector('svg path'),icon:{width:parseFloat(icon.width),height:parseFloat(icon.height)},target:box.width>=44&&box.height>=44};
+				})()`),
+				{ label: "Dictate", text: "", svg: true, icon: { width: 24, height: 24 }, target: true },
+				"dictation is an accessible SVG microphone, not a text placeholder",
+			);
+			const screenshots = join(process.env.PAKKA_TEST_ARTIFACTS ?? m.f.root, "voice-screenshots");
+			await mkdir(screenshots, { recursive: true });
+			for (const size of [
+				{ width: 1440, height: 900 },
+				{ width: 390, height: 650 },
+			]) {
+				await page.resize(size);
+				await settleFrontend(page);
+				assert.equal(
+					await page.evaluate(
+						'(()=>{const box=document.querySelector("[data-dictate]").getBoundingClientRect();return box.width>=44&&box.height>=44})()',
+					),
+					true,
+				);
+				await writeFile(join(screenshots, `microphone-${size.width}.png`), await page.screenshot());
+			}
+			await page.resize({ width: 1440, height: 900 });
+			await settleFrontend(page);
 			assert.equal(await page.evaluate("globalThis.__voiceTest.instances.length"), 0);
 			assert.match(
 				String(await page.evaluate('document.querySelector("[data-dictation-help]").textContent')),
@@ -46,6 +72,14 @@ test(
 			);
 			await page.click("[data-dictate]");
 			await page.wait('document.querySelector("[data-dictate]").getAttribute("aria-pressed")==="true"');
+			assert.deepEqual(
+				await page.evaluate(`(()=>{
+					const node=document.querySelector('[data-dictate]');
+					return {label:node.getAttribute('aria-label'),text:node.textContent.trim(),svg:!!node.querySelector('svg path')};
+				})()`),
+				{ label: "Stop dictation", text: "", svg: true },
+				"the listening state remains an icon with an explicit accessible stop action",
+			);
 			await page.evaluate('globalThis.__voiceTest.instances[0].emit([["temporary words",false]])');
 			await page.wait('document.querySelector("textarea[name=message]").value==="Start temporary words end"');
 			await page.evaluate(
@@ -76,11 +110,7 @@ test(
 			assert.match(JSON.stringify(m.f.requests[0]?.messages), /Start settled words final end/);
 			assert.ok(!JSON.stringify(m.f.requests).includes("LATE-STOPPED-RESULT"));
 			assert.equal(await page.evaluate('document.querySelector("textarea[name=message]").value'), "");
-			const screenshots = join(process.env.PAKKA_TEST_ARTIFACTS ?? m.f.root, "voice-screenshots");
-			await mkdir(screenshots, { recursive: true });
-			await page.wait(
-				'(async()=>{await document.fonts.ready;return document.getAnimations().every(each=>each.playState!=="running");})()',
-			);
+			await settleFrontend(page);
 			await writeFile(join(screenshots, "desktop.png"), await page.screenshot());
 		} finally {
 			await browser?.close();

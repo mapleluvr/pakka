@@ -72,6 +72,16 @@ test(
 				await page.click("[data-interface=workspace-memory-memory]");
 				await page.wait('document.querySelector("[data-memory-add]")?.disabled===true');
 			}
+			assert.deepEqual(
+				await owner.evaluate(`(()=>{
+					const select=document.querySelector('[data-memory-scope]'), range=document.createRange();
+					range.selectNodeContents(select.closest('label').firstChild);
+					const label=range.getBoundingClientRect(), field=select.getBoundingClientRect(), button=document.querySelector('[data-memory-add]');
+					return {scopeGap:field.x-label.right>=6||field.y-label.bottom>=6,buttonPadding:parseFloat(getComputedStyle(button).paddingInlineStart)>=8,buttonHeight:button.getBoundingClientRect().height>=36};
+				})()`),
+				{ scopeGap: true, buttonPadding: true, buttonHeight: true },
+				"the public contribution separates its scope label and exposes a styled action",
+			);
 			await sender.type("[data-memory-text]", "APPROVED-BROWSER-MEMORY-CANARY");
 			await sender.wait('document.querySelector("[data-memory-add]")?.disabled===false');
 			await sender.click("[data-memory-add]");

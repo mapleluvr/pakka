@@ -15,6 +15,13 @@
 .workspace-memory p {
 	line-height: 1.6;
 }
+.memory-actions > label {
+	display: inline-flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.5rem;
+	min-width: 0;
+}
 .memory-compose {
 	display: grid;
 	gap: 0.75rem;
@@ -34,6 +41,7 @@
 	font: inherit;
 }
 .workspace-memory select {
+	font: inherit;
 	padding: 0.5rem;
 	background: var(--panel);
 	color: inherit;
@@ -59,10 +67,10 @@
 }
 .memory-meta {
 	color: var(--muted);
-	font-size: 0.875rem;
+	font-size: var(--type-caption-size);
 }
 .memory-state {
-	font-size: 0.8rem;
+	font-size: var(--type-caption-size);
 	padding: 0.25rem 0.5rem;
 	border: 1px solid var(--line);
 	border-radius: 999px;
@@ -86,6 +94,6 @@
 		align-items: flex-start;
 	}
 	.workspace-memory textarea {
-		font-size: 16px;
+		font-size: max(16px, var(--text-size, 0.875rem));
 	}
 }

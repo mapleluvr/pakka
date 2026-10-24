@@ -648,7 +648,7 @@
 	"commands": [
 		{
 			"id": "memory",
-			"title": "Open memory",
+			"title": "Open Memory",
 			"slash": "memory",
 			"interface": "memory"
 		}

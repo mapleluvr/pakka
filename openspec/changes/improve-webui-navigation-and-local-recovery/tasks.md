@@ -53,6 +53,26 @@
 - [ ] 固定精确候选，完成受影响回归、全量检查、独立渲染/a11y 复核和指定 adversarial review，保留失败及未覆盖项。737f2f3 隔离全量 618/616 pass/0 fail/2 skip、独立定向复核已通过；指定双评 B 模型缺失、独立桌面 GUI 工具缺失仍阻塞最终验收。
 - [x] 同步 state/design/delta/changes/OVERVIEW 与固定验证记录；删除临时 HANDOFF 和探针，保持工作树整洁。
 
+### 4.2 主次文字、表单与 SVG 图标整检（2026-10-24）
+
+- [x] 通过真实入口保存默认/长 ID 的 model picker、凭据、Conversation/Fork、Team、设置/插件及窄屏的缺陷证据，补 RED 回归。
+- [x] 修复主次文字粘连、表单标签/字段/动作间距和放大/窄屏换行，保持真实凭据仅写与原生调度语义。
+- [x] 将实际图标位置的字符箭头/符号及折叠标记改为 SVG，使用公共 Icon，保留正常文本与后端语义值。
+- [x] 固定页面/分区及导航标题采用 Title Case，保持用户/模型/第三方自定义内容原文。
+- [x] Dictate 采用 SVG microphone/stop 与 44×44px 命中区，回归浏览器识别生命周期和仅改草稿/显式 Send。
+- [x] 补公共原语与 Memory/Webhooks/Scheduled Inputs 的默认排版，真实消费者验证间距和控件外观。
+- [x] 根据用户截图复现内部直角蓝框，将指示移至外层圆角卡片；桌面/手机实际 pointer/Tab 回归通过，保留键盘可见性。
+- [ ] 直接检查前后截图、运行受影响测试及固定快照门禁；独立评审/GUI 按实有条件记录，不沿用旧 SHA 的视觉结论。
+- [ ] 同步 state、design、delta、changes、验证记录与预览；提交可恢复的完整候选。
+
+### 4.3 Session / Conversation 创建方向（2026-10-24）
+
+- [x] 沿 home → create RPC → catalog → native tx 实检创建关系，确认现有 New Session 实为同 Session 内新 Conversation。
+- [ ] 完成独立创建弹窗与真实 Session 管理的协议/权限/持久化设计，区分 adopted 产品方向和当前单 runtime 实现。
+- [ ] 真正 New Session 与父 Session 内 New Conversation 并立；无父项时预填 Session 并保留两步独立结果和核对身份。
+- [ ] sidebar 按真实 Session/Conversation 归属呈现，并提供只影响导航归类的文件夹；覆盖跨 Session 同 ID、重开、撤权和独立预算。
+- [ ] 用真实运行时验证弹窗、关闭/取消、创建无推理请求、部分成功和 unknown 恢复，再形成可验收候选。
+
 ## 5. 交付与接续
 
 - [ ] 实际执行的开发检查按版本、范围和结果记录；Verification 在选用时安排，跳过只记录一次。

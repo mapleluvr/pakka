@@ -773,7 +773,7 @@
 	"commands": [
 		{
 			"id": "hooks",
-			"title": "Open webhooks",
+			"title": "Open Webhooks",
 			"slash": "webhooks",
 			"interface": "hooks"
 		}

@@ -104,7 +104,7 @@ export function Schedules({ context }) {
 	return html`<section data-workspace-schedules class="workspace-schedules">
 		<link rel="stylesheet" href=${new URL("./schedules.css", import.meta.url).href} />
 		<header>
-			<h2>Scheduled inputs</h2>
+			<h2>Scheduled Inputs</h2>
 			<p>
 				Native durable work, not a page timer. Each occurrence rechecks the creator and current driver before
 				native follow-up admission.
@@ -175,8 +175,7 @@ export function Schedules({ context }) {
 					<header><strong>${row.actorName}</strong><output data-schedule-state>${row.state}</output></header>
 					<pre>${row.text}</pre>
 					<p>
-						Due ${new Date(row.dueAt).toLocaleString()} · ${row.completed}/${row.maxRuns}
-						admitted${row.intervalMs ? " · every " + row.intervalMs / 1000 + "s" : ""}
+						${`Due ${new Date(row.dueAt).toLocaleString()} · ${row.completed}/${row.maxRuns} admitted${row.intervalMs ? " · every " + row.intervalMs / 1000 + "s" : ""}`}
 					</p>
 					${row.deliveryId && html`<small>Native admission: ${row.deliveryId}</small>`}
 					${row.nativeTerminal && html`<small>Native terminal: ${row.nativeTerminal}</small>`}

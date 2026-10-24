@@ -55,6 +55,14 @@ test(
 			}
 			await owner.click("[data-interface=workspace-schedules-schedules]");
 			await owner.wait('document.querySelector("[data-schedule-text]")');
+			assert.equal(
+				await owner.evaluate(`['[data-schedule-delay]','[data-schedule-runs]','[data-schedule-add]'].every(selector=>{
+					const node=document.querySelector(selector);
+					return node.getBoundingClientRect().height>=36 && parseFloat(getComputedStyle(node).paddingInlineStart)>=8;
+				})`),
+				true,
+				"scheduled-input fields and actions use readable public control metrics",
+			);
 			await owner.type("[data-schedule-text]", "ACTUAL-SCHEDULED-BROWSER-WORK");
 			await owner.evaluate('document.querySelector("[data-schedule-delay]").value=""');
 			await owner.type("[data-schedule-delay]", "2");
@@ -68,6 +76,11 @@ test(
 			assert.ok(JSON.stringify(m.f.requests[0]).includes("ACTUAL-SCHEDULED-BROWSER-WORK"));
 			await owner.click("[data-interface=workspace-schedules-schedules]");
 			await owner.wait('document.querySelector("[data-schedule-state]")?.textContent.includes("done")');
+			assert.match(
+				String(await owner.evaluate('document.querySelector("[data-schedule] p").textContent.trim()')),
+				/ · 1\/1 admitted$/u,
+				"native schedule counts and their label remain readable, not concatenated",
+			);
 			await toggleConversations(viewer);
 			await viewer.click("[data-interface=workspace-schedules-schedules]");
 			await viewer.wait('document.querySelector("[data-schedule-state]")');

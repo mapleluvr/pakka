@@ -933,7 +933,14 @@ function GraphView({
 							h(Icon, { name: "close" }),
 						),
 					),
-					h("p", null, `${selectedConnection.from} → ${selectedConnection.to}`),
+					h(
+						"p",
+						{ class: "graph-direction" },
+						h("span", null, selectedConnection.from),
+						h(Icon, { name: "right" }),
+						h("span", { class: "sr-only" }, "to"),
+						h("span", null, selectedConnection.to),
+					),
 					h(
 						"button",
 						{
@@ -1131,7 +1138,8 @@ function GraphView({
 					"div",
 					{ class: "graph-history-meta" },
 					h("strong", null, item.from ?? "Unknown sender"),
-					" → ",
+					h(Icon, { name: "right" }),
+					h("span", { class: "sr-only" }, "to"),
 					h("strong", null, byKey.get(item.to)?.key ?? "Unknown recipient"),
 					h("time", null, item.at === null ? "Time unavailable" : new Date(item.at).toLocaleString()),
 					h("span", null, `${item.mode} · ${item.receipt.status} · ${item.initiator}`),

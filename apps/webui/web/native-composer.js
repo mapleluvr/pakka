@@ -109,8 +109,8 @@ export function NativeComposer({
 	const modes = [
 		{ value: "prompt", label: "Prompt", allowed: canSend },
 		{ value: "steer", label: "Steer", allowed: canDrive },
-		{ value: "followUp", label: "Follow up", allowed: canDrive },
-		{ value: "chat", label: "Team chat", allowed: true },
+		{ value: "followUp", label: "Follow Up", allowed: canDrive },
+		{ value: "chat", label: "Team Chat", allowed: true },
 	];
 	return html`<div class="conversation-composer">
 		${disabled &&

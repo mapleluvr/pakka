@@ -83,7 +83,7 @@ test(
 			await owner.type("textarea[name=sharedNote]", "WINNING-SECOND-NOTE");
 			await owner.click("[data-action=save-note]");
 			await guest.wait(
-				`document.querySelector('[aria-label="Shared notes"]')?.innerText.includes("Changed by another person")`,
+				`document.querySelector('[aria-label="Shared Notes"]')?.innerText.includes("Changed by another person")`,
 			);
 			await guest.click("[data-action=save-note]");
 			await guest.wait('document.querySelector("[role=alert]")?.innerText.includes("changed")');

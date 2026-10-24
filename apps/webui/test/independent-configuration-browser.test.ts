@@ -65,7 +65,7 @@ test(
 			);
 			assert.equal(
 				await page.evaluate(
-					`document.querySelector('[aria-label="Conversation settings"]').textContent.includes("Working directory")`,
+					`document.querySelector('[aria-label="Conversation Settings"]').textContent.includes("Working directory")`,
 				),
 				false,
 			);

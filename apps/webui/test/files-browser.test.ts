@@ -1,11 +1,12 @@
 import { test } from "node:test";
 import { strict as assert } from "node:assert";
-import { readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { execFileSync } from "node:child_process";
 import { runtimeFixture } from "../../../packages/agent/test/runtime-fixture.ts";
 import { startPocket } from "../src/bootstrap.ts";
 import { ownedBrowser } from "./browser.ts";
+import { openAppearance, settleFrontend } from "./frontend-controls.ts";
 import { workspaceFilesExtensionRoot, workspaceFilesService } from "../src/workflows.ts";
 import type { PocketServiceContext } from "@pakka/webui/backend";
 function git(path: string, ...args: string[]) {
@@ -62,6 +63,11 @@ test(
 			await page.wait('document.querySelector("[data-action=signin]")');
 			await click("[data-action=signin]");
 			await page.wait('document.querySelector("[data-conversation]")');
+			await openAppearance(page);
+			await page.evaluate(
+				`(()=>{const field=document.querySelector('[aria-label="Text size"]');field.value='20';field.dispatchEvent(new Event('change',{bubbles:true}));})()`,
+			);
+			await page.click(".back-to-app");
 			await click("[data-conversation]");
 			await page.wait('document.querySelector("[data-interface=workspace-files-files]")');
 			await click("[data-interface=workspace-files-files]");
@@ -70,6 +76,29 @@ test(
 			);
 			await click("[data-files-git]");
 			await page.wait('document.querySelector("[data-current-branch]")?.textContent.includes("main")');
+			const screenshots = join(process.env.PAKKA_TEST_ARTIFACTS ?? m.f.root, "files-screenshots");
+			await mkdir(screenshots, { recursive: true });
+			await settleFrontend(page);
+			await writeFile(join(screenshots, "git-large-desktop.png"), await page.screenshot());
+			assert.deepEqual(
+				await page.evaluate(`(()=>{
+					const field=document.querySelector('[name="branch"]'), style=getComputedStyle(field);
+					return {border:style.borderTopStyle,scales:parseFloat(style.fontSize)>=18};
+				})()`),
+				{ border: "solid", scales: true },
+				"file contribution controls retain their theme border and actual enlarged reading preference",
+			);
+			await page.resize({ width: 390, height: 650 });
+			await settleFrontend(page);
+			await writeFile(join(screenshots, "git-large-mobile.png"), await page.screenshot());
+			assert.equal(
+				await page.evaluate(
+					'document.querySelector("[data-workspace-files]").scrollWidth<=document.querySelector("[data-workspace-files]").clientWidth',
+				),
+				true,
+			);
+			await page.resize({ width: 1440, height: 900 });
+			await settleFrontend(page);
 			await page.evaluate(
 				`(()=>{const n=document.querySelector('[name="branch"]');n.value='ui-work';n.dispatchEvent(new Event('input',{bubbles:true}));})()`,
 			);

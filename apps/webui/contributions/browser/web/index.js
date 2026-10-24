@@ -1,7 +1,7 @@
 import { h } from "preact";
 import { useEffect, useState } from "preact/hooks";
 import htm from "htm";
-import { Button, Notice } from "@pakka/webui/components";
+import { Button, Icon, Notice } from "@pakka/webui/components";
 import { browserCall } from "./client.js";
 const html = htm.bind(h);
 
@@ -84,7 +84,7 @@ export function Browser({ context }) {
 		data-owned-browser
 		style="padding:1rem;max-width:70rem;margin:auto;min-width:0;overflow-wrap:anywhere"
 	>
-		<h2>Project browser</h2>
+		<h2>Project Browser</h2>
 		<p>Isolated host-owned page · ${view?.title || "No page open"}</p>
 		${writable &&
 		html`<form
@@ -154,7 +154,7 @@ export function Browser({ context }) {
 			>
 		</section>`}
 		<details open>
-			<summary>Page text</summary>
+			<summary class="pocket-disclosure"><${Icon} name="chevron" />Page text</summary>
 			<pre data-browser-text style="white-space:pre-wrap;overflow-wrap:anywhere">${view?.text || ""}</pre>
 		</details>
 	</section>`;

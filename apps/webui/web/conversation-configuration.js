@@ -114,7 +114,7 @@ export function ModelPicker(props) {
 						: (current + (event.key === "ArrowDown" ? 1 : rows.length - 1) + rows.length) % rows.length;
 		rows[index]?.focus();
 	}
-	return html`<${Sheet} label="Select model" close=${close} anchor=${document.querySelector("[data-action=model]")}><${Heading} title="Model" label="Close model picker" close=${close}/><div class="pocket-sheet-body pocket-model-picker" onKeyDown=${keys}>
+	return html`<${Sheet} label="Select Model" close=${close} anchor=${document.querySelector("[data-action=model]")}><${Heading} title="Model" label="Close model picker" close=${close}/><div class="pocket-sheet-body pocket-model-picker" onKeyDown=${keys}>
   ${choices.length > 8 && html`<label>Search models<input type="search" aria-label="Search models" value=${query} onInput=${(event) => setQuery(event.currentTarget.value)} /></label>`}
   <div role="listbox" aria-label="Approved models">${filtered.map(
 		(row) =>
@@ -265,7 +265,7 @@ export function DirectoryPicker(props) {
 						</button>`,
 				)}
 		</section>`;
-	return html`<${Sheet} label="Working directory" close=${close}><${Heading} title="Working directory" label="Close directory picker" close=${close}/><div class="pocket-sheet-body pocket-directory-picker">
+	return html`<${Sheet} label="Working Directory" close=${close}><${Heading} title="Working Directory" label="Close directory picker" close=${close}/><div class="pocket-sheet-body pocket-directory-picker">
   <p class="pocket-secondary">Folders on the server, not this phone or browser. Browsing does not change configuration or grant file/tool access. Shortcuts are saved in this browser and cleared on sign out.</p>
   <form class="pocket-directory-location" onSubmit=${(event) => {
 		event.preventDefault();

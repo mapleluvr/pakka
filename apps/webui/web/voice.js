@@ -2,6 +2,7 @@
 // Recognition belongs to the browser. This module only edits a scoped, human-submitted draft.
 import { h } from "preact";
 import htm from "htm";
+import { Icon } from "@pakka/webui/components";
 import { useEffect, useLayoutEffect, useRef, useState } from "preact/hooks";
 
 const html = htm.bind(h);
@@ -252,6 +253,6 @@ export function MicButton({ dictation }) {
 		onMouseDown=${(event) => event.preventDefault()}
 		onClick=${dictation.toggle}
 	>
-		${dictation.listening ? "Stop dictation" : "Dictate"}
+		<${Icon} name=${dictation.listening ? "stop" : "microphone"} />
 	</button>`;
 }

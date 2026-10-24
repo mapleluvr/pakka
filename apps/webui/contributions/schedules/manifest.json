@@ -2,7 +2,7 @@
 	"api": 1,
 	"id": "workspace-schedules",
 	"version": "1.0.0",
-	"title": "Scheduled inputs",
+	"title": "Scheduled Inputs",
 	"facets": {
 		"backend": "backend.mjs",
 		"client": "client.js",
@@ -349,7 +349,7 @@
 	"commands": [
 		{
 			"id": "schedules",
-			"title": "Open scheduled inputs",
+			"title": "Open Scheduled Inputs",
 			"slash": "schedule",
 			"interface": "schedules"
 		}
@@ -357,7 +357,7 @@
 	"interfaces": [
 		{
 			"id": "schedules",
-			"title": "Scheduled inputs",
+			"title": "Scheduled Inputs",
 			"slot": "page",
 			"scope": "conversation",
 			"export": "Schedules",

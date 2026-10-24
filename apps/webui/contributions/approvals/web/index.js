@@ -41,7 +41,7 @@ export function Approvals({ context }) {
 		style="padding:1rem;max-width:60rem;margin:auto;overflow-wrap:anywhere"
 	>
 		<header>
-			<h2>Tool approvals</h2>
+			<h2>Tool Approvals</h2>
 			<p>Each decision applies to the exact pending tool and arguments below.</p>
 		</header>
 		${problem && html`<${Notice}>${problem}<//>`}

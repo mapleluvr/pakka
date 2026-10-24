@@ -2,7 +2,7 @@
 	"api": 1,
 	"id": "workspace-approvals",
 	"version": "1.0.0",
-	"title": "Tool approvals",
+	"title": "Tool Approvals",
 	"facets": {
 		"backend": "backend.mjs",
 		"client": "client.js",
@@ -131,7 +131,7 @@
 	"commands": [
 		{
 			"id": "approvals",
-			"title": "Open tool approvals",
+			"title": "Open Tool Approvals",
 			"slash": "approvals",
 			"interface": "approvals"
 		}
@@ -139,7 +139,7 @@
 	"interfaces": [
 		{
 			"id": "approvals",
-			"title": "Tool approvals",
+			"title": "Tool Approvals",
 			"slot": "page",
 			"scope": "conversation",
 			"export": "Approvals",

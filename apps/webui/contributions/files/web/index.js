@@ -46,7 +46,7 @@ function FileViewer({ file, writable, working, draft, setDraft, status, save, do
 }
 function FileTree({ tree, file, writable, working, upload, openFile }) {
 	return html`<aside class="workspace-file-tree">
-		<h3>Project tree</h3>
+		<h3>Project Tree</h3>
 		${writable &&
 		html`<label class="workspace-file-upload"
 			>Upload file<input data-file-upload type="file" disabled=${working} onChange=${upload}
@@ -88,7 +88,7 @@ function GitView({
 }) {
 	return html`<div class="workspace-files-git">
 		<section>
-			<h3>Changed files</h3>
+			<h3>Changed Files</h3>
 			${!git.changes.length && html`<p>Working tree is clean.</p>`}${git.changes.map(
 				(row) =>
 					html`<button
@@ -130,7 +130,7 @@ function GitView({
 			<p class="secondary">Branch changes require a clean, idle approved workspace.</p>
 		</section>
 		<section>
-			<h3>Isolated worktrees</h3>
+			<h3>Isolated Worktrees</h3>
 			<p class="secondary">
 				Creates a real sibling working tree. This does not silently move the Agent's working directory.
 			</p>
@@ -398,7 +398,7 @@ export function Files({ context }) {
 		<link rel="stylesheet" href=${new URL("./files.css", import.meta.url).href} />
 		<header class="workspace-files-heading">
 			<div>
-				<h2>Files & changes</h2>
+				<h2>Files & Changes</h2>
 				<p>Approved project files. Nothing is sent to the model automatically.</p>
 			</div>
 			<label

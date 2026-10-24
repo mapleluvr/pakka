@@ -48,7 +48,7 @@
 }
 .hook-meta {
 	color: var(--muted);
-	font-size: 0.85rem;
+	font-size: var(--type-caption-size);
 }
 .hook-row {
 	min-width: 0;
@@ -98,7 +98,7 @@
 }
 .hook-delivery code {
 	flex-basis: 100%;
-	font-size: 0.8rem;
+	font-size: var(--type-caption-size);
 	overflow-wrap: anywhere;
 }
 @media (max-width: 600px) {
@@ -107,7 +107,7 @@
 	}
 	.workspace-hooks input:not([type="checkbox"]),
 	.workspace-hooks textarea {
-		font-size: 16px;
+		font-size: max(16px, var(--text-size, 0.875rem));
 	}
 	.hook-actions > * {
 		min-width: 0;

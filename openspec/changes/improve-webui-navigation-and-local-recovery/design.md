@@ -161,6 +161,26 @@ Preferences/Notifications 的对应 href 来自生产注册；Conversation/Peopl
 
 本批次选用独立渲染/a11y/门禁复核及指定 adversarial review。前者核对实际桌面和移动端的可读性、占位中性色、命中区和参考几何；后者在固定快照上保留双方意见和争议。阶段 GUI acceptance 若另选，必须另行提供隔离 Linux 环境，不能用这些检查代替。
 
+### 6.2 2026-10-24 主次文字、表单与 SVG 图标整检
+
+用户手动查看冻结 P0 预览后指出 model ID 与 profile `default` 贴连，要求主动找出同类难读排版；随后要求所有箭头/图标使用 SVG，补报凭据表单的标签、输入和替换/清除按钮粘连，并明确固定标题采用 `People & Invitations` 一类 Title Case、Dictate 应显示麦克风图标而不是文字占位。本批采用这组呈现修正，恢复与设置路由仍保留原确认边界。
+
+真实产品/本地确定性 provider 的桌面与手机取证确认：model 主次文字零间距且同色，凭据 form 缺布局，Team 的 notes version/保存按钮紧贴，Conversation/Fork 相邻字段无间距且分区标题比弹层标题更重。修复针对布局缺失，不通过拼接空格、猜测后端字段或覆盖 reference.css 来遮掩。
+
+进一步实际检查确认公共 Button/Field/Notice/Stack 缺默认呈现，造成扩展动作无 padding、Memory scope 标签贴边、核对说明和按钮连读及 Scheduled Inputs 控件退回灰底默认样式。公共原语补齐默认排版，不通过按插件硬编码其状态或权限来修外观。固定标题逐字修正；用户命名、模型 ID 和第三方自定义标题保持原文。Dictate 的 idle/listening 分别采用共享 SVG microphone/stop，保留浏览器识别、草稿、明确 Send 和生命周期清理的全部既有语义。
+
+采用相对文字角色、明确字段/动作分组和可换行布局，保留完整原生 ID、写密钥的 password 语义及所有 admission/reconciliation 行为。图标整检覆盖快捷键、折叠标记及 MAS DevPack 方向展示；正常文本标点、用户内容与反应数据中的语义值保持原值。验证以各实际入口、默认/大字号和 360×600、390×650、390×844 为矩阵，保存前后截图及实测间距，补真正能在旧候选失败的浏览器回归。实际检查的范围与未覆盖项分别记录，不据有限矩阵宣称穷尽所有界面状态。
+
+用户随后提供首页输入的直角蓝框截图。实测根因是 `.composer-surface:has(textarea:focus-visible)` 对包含提示条、编辑器与工具栏的内部直角容器描边；文本输入经鼠标点击也可匹配 focus-visible，并非仅由 Tab 引起。指示改由具有实际圆角和完整边界的外层 `.composer-card` 承担。回归分别通过真实 pointer、Tab/Shift+Tab 在桌面/手机核对焦点、边界和零模型请求，保留键盘可见性。
+
+### 6.3 Session / Conversation 创建关系调查
+
+用户提出独立 Conversation 创建弹窗，并要求识别 Pi Durable 中 Session 包含 Conversations 的关系，考虑并立 New Session 与 Session 内 New Conversation、无父 Session 时预填并按 New Session → New Conversation 顺序创建，以及 sidebar 文件夹归类。这是超出本轮排版的产品/运行时设计方向，具体服务协议与恢复行为仍由后续设计及任务承接，未以已实现或已验收记账。
+
+当前代码证据：`Frontend` 把 home 的命名 textarea 直接绑定 `App.createConversation`；该方法仅发送 `op:"create"`，`PocketWorkspace.create` 使用单 runtime catalog 的 enroll，原生 adapter 的 `tx.createConversation` 继承同一 runtime 的 sessionId。`startPocket` 只装配一个 `createRuntime`，sidebar 当前用 Sessions 表头展示 Conversation refs。因而现有 New Session 名称没有对应的新 Durable Session 效果。
+
+后续实现应先明确真正的 Session 管理端口和持久注册，再由独立创建弹窗显示父 Session、Conversation 名称以及宿主允许的初始模型/目录。New Session 创建独立存储/额度域；New Conversation 只写选定父 Session。无可用父 Session 时，弹窗预填父 Session，并保留两步各自的原请求/核对身份；第二步失败时准确显示已建立的 Session，而不是重放第一步或释放未知结果。Session 身份、权限、单 writer 与预算都以真实 runtime 为准，文件夹仅承担人类导航归类，不改变 Conversation 原生归属。后续需先验证不同 Session 中同 Conversation ID 的授权隔离、重开与撤权，再扩展 sidebar。
+
 ## 7. 实施检查与决策点
 
 建议开发检查包括真实 Pi/本地确定性 provider 的恢复与 HTTP 回归、发行竞争/故障注入、仓库外 CLI、路由与表单的浏览器回归；每项只报告实际版本和范围。Verification 选用规则见第 1 节，不从前一轮复制跳过记录。

@@ -68,13 +68,13 @@ export function ConversationSettings({
 			if (live.current) setBusy(false);
 		}
 	}
-	return html`<${Sheet} label="Conversation details" close=${close}>
+	return html`<${Sheet} label="Conversation Details" close=${close}>
 			<header><h2>Conversation</h2><button class="pocket-icon-button" aria-label="Close conversation details" onClick=${close}><${Icon} name="close" /></button></header>
 			<div class="pocket-sheet-body">
 				<p>${state.archived ? "Archived" : "Active"} · metadata version ${state.version}/256</p>
 				${state.version >= 256 && html`<p role="status">Metadata capacity reached. Original receipts are retained; no more metadata writes are admitted.</p>`}
 				<p>Archive hides navigation only. It does not cancel admitted work, delete history or revoke access.</p>
-				<form onSubmit=${(event) => {
+				<form class="pocket-form" onSubmit=${(event) => {
 					event.preventDefault();
 					void perform({
 						op: "conversation.set",
@@ -94,6 +94,7 @@ export function ConversationSettings({
 				${
 					canManage &&
 					html`<form
+						class="pocket-form"
 						onSubmit=${(event) => {
 							event.preventDefault();
 							void perform({
@@ -106,7 +107,7 @@ export function ConversationSettings({
 							});
 						}}
 					>
-						<h3>Fork committed history</h3>
+						<h3>Fork Committed History</h3>
 						<label
 							>Fork name<input
 								name="forkName"
@@ -139,7 +140,7 @@ export function ConversationSettings({
 				}
 				${
 					pending &&
-					html`<div role="status">
+					html`<div class="pocket-form" role="status">
 						<p>Result unconfirmed. Reconcile the same original request; do not submit a replacement.</p>
 						${reconciliation && html`<p>${reconciliation}</p>`}
 						<button

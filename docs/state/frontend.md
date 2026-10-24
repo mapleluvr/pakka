@@ -32,6 +32,18 @@ pakka-webui 的对应原生界面行为以 [Devin 离线生产前端](https://gi
 
 模型/cwd 持久化、批准 roots、incarnation 和配置拒绝的详细条件由[开发契约](../development/WEBUI-DEVELOPMENT.md#独立选择模型和-conversation-工作目录)维护。
 
+### 主次文字、表单与 SVG 图标
+
+产品维护的固定页面/分区标题与导航/菜单名称采用 Title Case，例如 `Conversation Settings`、`People & Invitations`、`Commands & Extensions`、`New Session`；保留空格与 `&`。不以 CSS text-transform 伪装标题，不改写用户会话名、模型 ID、原文内容或第三方自定义标题。
+
+Dictate 使用可见 SVG 麦克风，监听时使用 SVG 停止图标；两态保留可访问名称、pressed 状态、浏览器服务说明和至少 44×44px 命中区。语音只改当前草稿，仍由明确 Send 提交。
+
+模型 ID 与 profile、姓名与角色、版本与操作等复合内容具有明确的主次字号、颜色和间距，身份字符串完整保留。模型选择列表以独立行组织主信息和元数据，长 ID 在可用宽度内换行；列表选择标记占独立位置。
+
+凭据、Conversation/Fork 和 Team 表单的标签与字段、相邻字段和相邻操作按钮有独立布局间距。控件随容器宽度换行，360×600、390×650、390×844 及放大文字下保持可读、可达。公共 Button/Field/Notice/Stack 消费者同样具有动作、标签与说明的独立间距及主题化控件；Memory、Webhooks、Scheduled Inputs 等扩展不因缺少私有容器 class 而退回未排版的浏览器默认外观。真实凭据仍为仅写密码输入，版式取证使用隔离测试数据。
+
+产品内充当图标的方向箭头、快捷键、折叠标记和插件关系方向均由 SVG path 绘制；适用处使用共享 Icon。SVG 作为装饰时由所属控件提供可访问名称，独立图标控件具有至少 44×44px 命中区。用户消息、代码、后端语义值与正常文字标点按原内容呈现。
+
 ### Conversation 可观察状态
 
 - 仅以授权 DTO 的 `live.busy`、`live.message`、`live.tools`、`entries` 和输入回执驱动工作呈现。进行中的消息以 `data-live=true`/`message-live` 区分；只有 busy 且存在该消息时，消息列末尾显示紧凑的 Streaming。合法但不支持内联预览的 `image/*` 以中性占位和 MIME 文本保留，不能静默消失；未知 DTO 仍由协议闭锁。
@@ -63,7 +75,7 @@ Team 的动态 `board.css` 节点在加载、成功和失败之间保持同一�
 - 控件支持键盘操作与可见焦点；模态管理 focus trap/return，支持 Escape/Back 及关闭后焦点返回。导航交接后，关闭与清理只作用于所属弹层实例。
 - unknown/pending 操作保留原身份及交互锁；重开后以原 request ID 进行只读核对。
 
-配置页按页面标题、分区标题、控件正文和说明维护相对文字角色，随字体偏好及浏览器基准字号缩放。手机配置控件的触达高度至少为 44px，手机文字输入至少为 16px，并保留更大的阅读偏好。composer 的键盘焦点由输入框或所属输入分组给出可见指示。采用关系和后续差距见[指南变更](../changes/webui-frontend-guidelines.md)及其任务。
+配置页按页面标题、分区标题、控件正文和说明维护相对文字角色，随字体偏好及浏览器基准字号缩放。手机配置控件的触达高度至少为 44px，手机文字输入至少为 16px，并保留更大的阅读偏好。composer 的文本焦点由外层圆角 `.composer-card` 给出可见指示，内部 surface 与 textarea 不重复描边；鼠标点击和 Tab 到达文本输入时均保持完整、未裁切的指示。采用关系和后续差距见[指南变更](../changes/webui-frontend-guidelines.md)及其任务。
 
 ## 可检验条件
 

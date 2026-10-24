@@ -16,15 +16,15 @@
 	margin: 0;
 }
 .workspace-files h2 {
-	font-size: 1.15rem;
+	font-size: var(--type-page-title-size);
 }
 .workspace-files h3 {
-	font-size: 0.9rem;
+	font-size: var(--type-section-title-size);
 }
 .workspace-files p,
 .workspace-files small,
 .workspace-files .secondary {
-	font-size: 0.78rem;
+	font-size: var(--type-caption-size);
 	color: var(--muted);
 	overflow-wrap: anywhere;
 }
@@ -44,7 +44,7 @@
 .workspace-files label {
 	display: grid;
 	gap: 8px;
-	font-size: 0.82rem;
+	font-size: var(--type-ui-size);
 }
 .workspace-files select,
 .workspace-files input,
@@ -75,7 +75,7 @@
 .workspace-files-progress {
 	margin-left: auto;
 	color: var(--muted);
-	font-size: 0.8rem;
+	font-size: var(--type-caption-size);
 }
 .workspace-files-grid {
 	display: grid;
@@ -95,7 +95,7 @@
 }
 .workspace-file-upload input {
 	width: 100%;
-	font-size: 0.72rem;
+	font-size: var(--type-caption-size);
 }
 .workspace-file-tree nav {
 	display: grid;
@@ -146,14 +146,14 @@
 	min-height: 360px;
 	resize: vertical;
 	font-family: "JetBrains Mono", monospace;
-	font-size: 0.8rem;
+	font-size: var(--type-ui-size);
 	line-height: 1.55;
 	tab-size: 4;
 }
 .workspace-file-content output,
 .workspace-files-footer output {
 	color: var(--muted);
-	font-size: 0.8rem;
+	font-size: var(--type-caption-size);
 }
 .workspace-file-image {
 	display: block;
@@ -206,7 +206,7 @@
 	padding: 10px;
 	background: var(--card);
 	border: 1px solid var(--line);
-	font-size: 0.75rem;
+	font-size: var(--type-caption-size);
 	line-height: 1.5;
 }
 .workspace-worktree-form {
@@ -216,7 +216,7 @@
 .workspace-worktree-form label.workspace-force {
 	display: flex;
 	align-items: center;
-	font-size: 0.75rem;
+	font-size: var(--type-caption-size);
 }
 .workspace-force input {
 	flex-shrink: 0;

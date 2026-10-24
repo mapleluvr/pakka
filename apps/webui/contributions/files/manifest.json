@@ -2,7 +2,7 @@
 	"api": 1,
 	"id": "workspace-files",
 	"version": "1.0.0",
-	"title": "Files & changes",
+	"title": "Files & Changes",
 	"facets": {
 		"backend": "backend.mjs",
 		"client": "client.js",
@@ -767,7 +767,7 @@
 	"commands": [
 		{
 			"id": "files",
-			"title": "Open files & changes",
+			"title": "Open Files & Changes",
 			"slash": "files",
 			"interface": "files"
 		}
@@ -775,7 +775,7 @@
 	"interfaces": [
 		{
 			"id": "files",
-			"title": "Files & changes",
+			"title": "Files & Changes",
 			"slot": "page",
 			"scope": "conversation",
 			"export": "Files",

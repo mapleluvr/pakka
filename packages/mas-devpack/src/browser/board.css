@@ -575,6 +575,23 @@
 	color: var(--muted);
 	font-size: 11px;
 }
+.graph-direction {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 8px;
+	overflow-wrap: anywhere;
+}
+.graph-direction > span {
+	min-width: 0;
+}
+.graph-direction .pocket-icon,
+.graph-history-meta > .pocket-icon {
+	flex: none;
+	width: 16px;
+	height: 16px;
+	align-self: center;
+}
 .graph-history-meta strong {
 	color: var(--text);
 	font-weight: 500;

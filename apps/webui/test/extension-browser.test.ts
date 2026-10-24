@@ -33,6 +33,14 @@ test(
 			await page.wait('document.querySelector("[data-interface=hello-home]")');
 			await page.click("[data-interface=hello-home]");
 			await page.wait('document.querySelector("[data-hello-count]")?.textContent === "0"');
+			assert.equal(
+				await page.evaluate(`(()=>{
+					const a=document.querySelector('[data-increment]').getBoundingClientRect(), b=document.querySelector('[data-open-about]').getBoundingClientRect();
+					return a.height>=36 && b.height>=36 && (b.x-a.right>=8||b.y-a.bottom>=8);
+				})()`),
+				true,
+				"an unchanged public Stack/Button consumer has separated, readable actions",
+			);
 			await page.click("[data-increment]");
 			await page.wait('document.querySelector("[data-hello-count]")?.textContent === "1"');
 			assert.equal(await page.evaluate('document.querySelectorAll("[data-conversation]").length'), 0);

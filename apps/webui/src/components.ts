@@ -7,9 +7,14 @@ const iconPaths = {
 	check: ["M5 12l4 4L19 6"],
 	star: ["m12 3 2.8 5.7 6.3.9-4.6 4.4 1.1 6.3-5.6-3-5.6 3 1.1-6.3L3 9.6l6.2-.9Z"],
 	up: ["M12 20V4M5 11l7-7 7 7"],
+	down: ["M12 4v16M5 13l7 7 7-7"],
+	right: ["M4 12h16M13 5l7 7-7 7"],
+	enter: ["M20 4v10H4M10 8l-6 6 6 6"],
+	shift: ["m12 3 9 9h-6v9H9v-9H3Z"],
 	chevron: ["m7 10 5 5 5-5"],
 	close: ["M6 6l12 12M18 6 6 18"],
 	plus: ["M12 4v16M4 12h16"],
+	stop: ["M6 6h12v12H6Z"],
 	reset: ["M3 10a9 9 0 1 1 2.4 8", "M3 4v6h6"],
 	move: ["M12 3v18M3 12h18M9 6l3-3 3 3M18 9l3 3-3 3M15 18l-3 3-3-3M6 15l-3-3 3-3"],
 	minus: ["M4 12h16"],
@@ -18,6 +23,7 @@ const iconPaths = {
 	file: ["M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9Z", "M14 3v6h6"],
 	thumbsUp: ["M7 10H3v11h4Z", "M7 10l4-8a3 3 0 0 1 3 3v4h5a2 2 0 0 1 2 2.4l-1.5 7A3 3 0 0 1 16.6 21H7"],
 	board: ["M3 3h7v7H3ZM14 3h7v7h-7ZM3 14h7v7H3ZM14 14h7v7h-7Z"],
+	microphone: ["M9 6a3 3 0 0 1 6 0v6a3 3 0 0 1-6 0Z", "M5 11v1a7 7 0 0 0 14 0v-1", "M12 19v3M8 22h8"],
 } as const;
 export type IconName = keyof typeof iconPaths;
 
@@ -53,7 +59,11 @@ export function Button({
 }) {
 	return h(
 		"button",
-		{ type: "button", ...props, class: ["button", className].filter(Boolean).join(" ") },
+		{
+			type: "button",
+			...props,
+			class: ["button", "pocket-extension-button", className].filter(Boolean).join(" "),
+		},
 		children,
 	);
 }

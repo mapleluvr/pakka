@@ -224,6 +224,11 @@ test(
 				),
 			);
 			assert.equal(declared.length, 1, "the same call is committed while it is live");
+			assert.equal(
+				await page.evaluate('Boolean(document.querySelector(".tool-card > summary svg path"))'),
+				true,
+				"tool disclosure uses a real SVG arrow, not a browser font marker",
+			);
 			assert.ok(
 				await page.evaluate(
 					`(()=>{const card=document.querySelector('[data-call-id='+JSON.stringify(${JSON.stringify(live.callId)})+']');if(!card)return false;card.open=true;card.__handoffMarker=true;return true})()`,

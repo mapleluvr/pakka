@@ -86,6 +86,45 @@ Product pages SHALL maintain meaningful headings, main/navigation landmarks, key
 - **WHEN** input is admitted, queued, stopped, refused or unconfirmed
 - **THEN** transcript/composer feedback represents the actual owning service state, preserving Prompt/Steer/Follow up placement, request identity and spent budgets
 
+### Requirement: Compound labels and forms retain typographic separation
+
+Product-owned model choices, settings, dialogs and contribution interfaces SHALL visually separate primary labels, secondary identity/status text, form fields and action groups. Full identities SHALL remain available with wrapping or an explicit reading path at the declared phone viewports and larger text settings. Iconography, including direction and keyboard-hint arrows, SHALL use SVG paths with accessible control names; user content and semantic backend values SHALL retain their original text.
+
+#### Scenario: Read an approved model and its profile
+
+- **WHEN** a model picker contains short or long model identifiers and their profile metadata
+- **THEN** primary and secondary text occupy distinct readable roles with space between them and a separate selected indicator, without merging identities or changing the selected configuration
+
+#### Scenario: Operate settings and collaboration forms
+
+- **WHEN** a user reads credential, Conversation/Fork or Team controls at desktop, declared phone viewports or an enlarged text setting
+- **THEN** labels, inputs, adjacent fields, metadata and actions have visible separation and remain operable; credential inspection does not expose saved keys or change password-input semantics
+
+#### Scenario: Read graphical direction or keyboard hints
+
+- **WHEN** a product or bundled contribution presents arrow, disclosure or shortcut iconography
+- **THEN** its graphical marks are SVG paths rather than text glyph substitutes and their control retains an accessible name
+
+#### Scenario: Read product-owned titles
+
+- **WHEN** a fixed product page, section or navigation/menu item is presented
+- **THEN** its owned name uses Title Case, including Conversation Settings, People & Invitations, Commands & Extensions and New Session, without rewriting user identities, model IDs or third-party custom titles
+
+#### Scenario: Operate public content primitives
+
+- **WHEN** a contribution uses public Button, Field, Notice or Stack primitives without private host layout classes
+- **THEN** labels, fields, informational copy and actions have readable spacing and theme-consistent controls, including on the declared phone viewports and larger text settings
+
+#### Scenario: Focus an actual composer editor
+
+- **WHEN** a user focuses the home or Conversation text editor with a pointer or Tab
+- **THEN** its focus indicator follows the complete rounded outer composer card, remains within the viewport, and is not duplicated as an internal rectangular surface or textarea outline
+
+#### Scenario: Identify browser dictation
+
+- **WHEN** supported browser dictation is available or listening
+- **THEN** its control displays the appropriate SVG microphone or stop icon rather than a visible Dictate text placeholder, retains its accessible action/state and at least 44x44px hit area, and still edits only the draft until explicit Send
+
 ### Requirement: Transcript preserves visible native work evidence
 
 The Conversation transcript SHALL distinguish an authorized in-flight message from committed history while that message is busy, and SHALL give every protocol-valid content part a visible rendering or an explicit neutral unpreviewable representation. The UI SHALL NOT silently discard a valid part merely because its MIME type is outside the inline-preview allowlist.

@@ -418,7 +418,7 @@ export function useExtensions({ person, target, csrf, notice, error, navigate, o
 				setPalette(true);
 			}}
 		>
-			Commands & extensions
+			Commands & Extensions
 		</button>`,
 		surface: surface ? html`<${HostInterface} key=${surface.id} instance=${surface} ...${props} />` : null,
 		overlay: overlay
@@ -426,7 +426,7 @@ export function useExtensions({ person, target, csrf, notice, error, navigate, o
 			: palette
 				? palette === "manage"
 					? html`<${SettingsPage} title="Extensions" category="Workspace" description="Installed extensions available to your current identity. Disabling a UI does not cancel accepted work or delete its history." close=${() => setPalette(false)}><section class="settings-section settings-native"><div class="settings-card extension-manager-list">${controls}</div></section></${SettingsPage}>`
-					: html`<${Sheet} variant="palette" label="Commands & extensions" initialFocus='input[aria-label="Find command"]' close=${() => setPalette(false)}>
+					: html`<${Sheet} variant="palette" label="Commands & Extensions" initialFocus='input[aria-label="Find command"]' close=${() => setPalette(false)}>
 						<div class="palette-search"><${Glyph} name="search" /><input aria-label="Find command" value=${query} onInput=${(event) => setQuery(event.currentTarget.value)} placeholder="Find a command or page…" /></div>
 						<div class="palette-body">
 							<div class="palette-caption">Commands</div>
@@ -434,7 +434,7 @@ export function useExtensions({ person, target, csrf, notice, error, navigate, o
 							<div class="palette-caption">Pages</div>${navigation(true, "palette-row", query)}${navigation(false, "palette-row", query)}
 							<button class="palette-row" data-action="manage-extensions" onClick=${() => setPalette("manage")}><${Glyph} name="settings" /><span>Manage extensions…</span></button>
 						</div>
-						<div class="palette-footer"><span><kbd>↑</kbd><kbd>↓</kbd> Navigate</span><button class="palette-footer-right" aria-label="Close commands" onClick=${() => setPalette(false)}><kbd>esc</kbd> Close</button></div>
+						<div class="palette-footer"><span><kbd aria-label="Up arrow"><${Icon} name="up" /></kbd><kbd aria-label="Down arrow"><${Icon} name="down" /></kbd> Navigate</span><button class="palette-footer-right" aria-label="Close commands" onClick=${() => setPalette(false)}><kbd>esc</kbd> Close</button></div>
 					</${Sheet}>`
 				: null,
 	};

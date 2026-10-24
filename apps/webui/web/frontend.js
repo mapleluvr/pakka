@@ -3,6 +3,7 @@
 import { h } from "preact";
 import { useLayoutEffect, useRef, useState } from "preact/hooks";
 import htm from "htm";
+import { Icon } from "@pakka/webui/components";
 const html = htm.bind(h);
 export const Glyph = ({ name, className = "icon" }) =>
 	html`<svg class=${className} aria-hidden="true"><use href=${"#i-" + name} /></svg>`;
@@ -149,11 +150,12 @@ export function Frontend({
 			</div>
 			<nav class="primary-nav" aria-label="Workspace">
 				<button class="nav-row new-session" data-action="home" onClick=${home}>
-					<${Glyph} name="plus" /><span>New session</span><kbd class="row-kbd">Ctrl ⇧ O</kbd>
+					<${Glyph} name="plus" /><span>New Session</span
+					><kbd class="row-kbd" aria-label="Control Shift O">Ctrl <${Icon} name="shift" /> O</kbd>
 				</button>
 				${extensions.workspaceNavigation}${extensions.navigation}
 				<button class="nav-row" data-action="commands" onClick=${() => extensions.openCommands()}>
-					<${Glyph} name="commands" /><span>Commands & extensions</span>
+					<${Glyph} name="commands" /><span>Commands & Extensions</span>
 				</button>
 			</nav>
 			<div class="sessions-area">
@@ -163,7 +165,7 @@ export function Frontend({
 						<button class="icon-btn small touch-only" aria-label="Search sessions" onClick=${search}>
 							<${Glyph} name="search" />
 						</button>
-						<button class="icon-btn small" aria-label="New session" onClick=${home}>
+						<button class="icon-btn small" aria-label="New Session" onClick=${home}>
 							<${Glyph} name="plus" />
 						</button>
 						<button
@@ -304,7 +306,7 @@ export function Frontend({
 							</header>
 							${transcript}${!extensions.page && extensions.surface}${composer}
 						</section>`
-					: html`<section class="home-view" aria-label="New session">
+					: html`<section class="home-view" aria-label="New Session">
 							<div class="hero-block">
 								<div class="hero-head">
 									<div class="wordmark" aria-label="Pakka">
@@ -343,7 +345,7 @@ export function Frontend({
 													<button
 														class="icon-btn"
 														type="button"
-														aria-label="Commands and extensions"
+														aria-label="Commands & Extensions"
 														onClick=${() => extensions.openCommands()}
 													>
 														<${Glyph} name="commands" />
@@ -362,7 +364,7 @@ export function Frontend({
 														><button
 															type="button"
 															class="send-caret"
-															aria-label="New session options"
+															aria-label="New Session options"
 															aria-haspopup="menu"
 															onClick=${(e) => openMenu("new", e)}
 														>
@@ -388,7 +390,7 @@ export function Frontend({
 				</div>
 				${person.role === "admin" &&
 				html`<button class="menu-row" role="menuitem" data-action="people" onClick=${action(showPeople)}>
-					People & invitations
+					People & Invitations
 				</button>`}<button class="menu-row" role="menuitem" data-action="logout" onClick=${action(signOut)}>
 					Sign out
 				</button>`
@@ -409,7 +411,7 @@ export function Frontend({
    ${menu.name === "sessions" && html`<button class="menu-row" role="menuitem" onClick=${action(search)}><${Glyph} name="search" />Search / archived sessions</button><button class="menu-row" role="menuitem" onClick=${action(refresh)}><${Glyph} name="clock" />Refresh sessions</button>`}
    ${
 			menu.name === "new" &&
-			html`<div class="menu-caption">New session</div>
+			html`<div class="menu-caption">New Session</div>
 				<button
 					class="menu-row"
 					role="menuitem"

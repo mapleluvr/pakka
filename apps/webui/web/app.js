@@ -3,6 +3,7 @@ import { render } from "preact";
 import { useEffect, useLayoutEffect, useRef, useState } from "preact/hooks";
 import htm from "htm";
 import { h } from "preact";
+import { Icon } from "@pakka/webui/components";
 import { marked } from "marked";
 import DOMPurify from "dompurify";
 import { createPocketClient } from "@pakka/client/pocket";
@@ -79,7 +80,8 @@ function ToolCard({ call, results, live, orphan, source }) {
 		data-tool-status=${status || undefined}
 		data-tool-error=${result?.isError ? "true" : undefined}
 	>
-		<summary>
+		<summary class="tool-card-head pocket-disclosure">
+			<${Icon} name="chevron" />
 			<span class="tool-name">${name}</span>
 			${status && html`<span class="status-pill" data-tool-pill>${status}</span>`}
 			${result?.isError && html`<span class="status-pill" data-tool-result-error>error</span>`}
@@ -153,7 +155,7 @@ function Message({ message, onDraft, results, live, isLive, source }) {
 						/>`;
 					case "thinking":
 						return html`<details key=${i}>
-							<summary>Reasoning</summary>
+							<summary class="pocket-disclosure"><${Icon} name="chevron" />Reasoning</summary>
 							<pre>${part.text}</pre>
 						</details>`;
 					case "toolCall":
@@ -797,7 +799,7 @@ function App() {
 		},
 		{
 			id: "configuration",
-			title: "Conversation settings",
+			title: "Conversation Settings",
 			category: "Conversation",
 			icon: "settings",
 			disabled: !selected,
@@ -815,7 +817,7 @@ function App() {
 			? [
 					{
 						id: "people",
-						title: "People & invitations",
+						title: "People & Invitations",
 						category: "Workspace",
 						icon: "user",
 						open: () => {
@@ -886,7 +888,7 @@ function App() {
 								${entry?.display
 									? html`<aside class="tool-card">
 											<div class="tool-card-head">
-												${entry.display.kind === "chat" ? "Team chat" : "Card"}
+												${entry.display.kind === "chat" ? "Team Chat" : "Card"}
 											</div>
 											<p>${entry.display.text}</p>
 										</aside>`
@@ -1013,14 +1015,14 @@ function App() {
 				<button class="palette-row" onClick=${() => {
 					openSheet(null);
 					home();
-				}}><${Glyph} name="plus" /><span>New session</span></button>
+				}}><${Glyph} name="plus" /><span>New Session</span></button>
 				<button class="palette-row" data-action="commands" onClick=${() => {
 					openSheet(null);
 					extensions.openCommands();
-				}}><${Glyph} name="commands" /><span>Commands & extensions</span></button>
+				}}><${Glyph} name="commands" /><span>Commands & Extensions</span></button>
 				<button class="palette-row" onClick=${() => openSheet("appearance")}><${Glyph} name="system" /><span>Appearance…</span></button>
 				<label class="palette-row"><input type="checkbox" data-action="show-archived" checked=${showArchived} onChange=${(event) => setShowArchived(event.currentTarget.checked)} />Show archived sessions</label>
-			</div><div class="palette-footer"><span><kbd>↑</kbd><kbd>↓</kbd> Navigate</span><span><kbd>esc</kbd> Close</span><span class="palette-footer-right"><kbd>↵</kbd> Select</span></div>
+			</div><div class="palette-footer"><span><kbd aria-label="Up arrow"><${Icon} name="up" /></kbd><kbd aria-label="Down arrow"><${Icon} name="down" /></kbd> Navigate</span><span><kbd>esc</kbd> Close</span><span class="palette-footer-right"><kbd aria-label="Enter"><${Icon} name="enter" /></kbd> Select</span></div>
 		</${Sheet}>`
 		}
 		${
@@ -1102,7 +1104,7 @@ function App() {
 		}
 		${
 			sheet === "people" &&
-			html`<${SettingsPage} title="People & invitations" label="People and invitations" category="Workspace" icon="user" closeLabel="Close people" close=${() => openSheet(null)} description="People with access, their roles and one-use invitations.">
+			html`<${SettingsPage} title="People & Invitations" label="People & Invitations" category="Workspace" icon="user" closeLabel="Close people" close=${() => openSheet(null)} description="People with access, their roles and one-use invitations.">
 				<div class="settings-card settings-native-fields">
 					${people?.people.map(
 						(p) =>

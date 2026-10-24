@@ -130,18 +130,18 @@ export function Collaboration({ person, target, client, snapshot, updated, notic
 			ref=${dialog}
 			role="dialog"
 			aria-modal="true"
-			aria-label="Team collaboration"
+			aria-label="Team Collaboration"
 			tabIndex="-1"
 		>
 			<header>
-				<h2>Team collaboration</h2>
+				<h2>Team Collaboration</h2>
 				<button class="pocket-icon-button" aria-label="Close collaboration" onClick=${close}>
 					<${Icon} name="close" />
 				</button>
 			</header>
 			<div class="pocket-sheet-body">
 				<p class="pocket-secondary">Human workspace · chat and notes stay outside the model context.</p>
-				<section class="pocket-turns" aria-label="Driver control">
+				<section class="pocket-turns" aria-label="Driver Control">
 					<p data-driver-status>
 						${!driver?.personId
 							? "Open to authorized contributors"
@@ -176,8 +176,8 @@ export function Collaboration({ person, target, client, snapshot, updated, notic
 					!own &&
 					html`<button disabled=${pending} onClick=${() => void driverAction("take")}>Take over</button>`}
 				</section>
-				<section aria-label="Human team chat">
-					<h3>Team chat</h3>
+				<section class="pocket-form" aria-label="Human Team Chat">
+					<h3>Team Chat</h3>
 					<p class="pocket-secondary" data-presence>
 						${snapshot?.presence
 							.map((row) => row.name + (row.state === "typing" ? " is typing" : " is here"))
@@ -239,6 +239,7 @@ export function Collaboration({ person, target, client, snapshot, updated, notic
 						)}
 					</div>
 					<form
+						class="pocket-form"
 						onSubmit=${(event) => {
 							event.preventDefault();
 							const command = {
@@ -294,8 +295,8 @@ export function Collaboration({ person, target, client, snapshot, updated, notic
 						</button>
 					</form>
 				</section>
-				<section aria-label="Shared notes">
-					<h3>Shared notes</h3>
+				<section class="pocket-form" aria-label="Shared Notes">
+					<h3>Shared Notes</h3>
 					<label
 						>Note<textarea
 							name="sharedNote"
@@ -310,8 +311,7 @@ export function Collaboration({ person, target, client, snapshot, updated, notic
 						/>
 					</label>
 					<small
-						>Version
-						${snapshot?.note.version ?? 0}${dirty && snapshot?.note.version !== noteVersion
+						>${"Version " + (snapshot?.note.version ?? 0)}${dirty && snapshot?.note.version !== noteVersion
 							? " · Changed by another person. Reload before saving."
 							: ""}</small
 					>

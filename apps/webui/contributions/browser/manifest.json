@@ -2,7 +2,7 @@
 	"api": 1,
 	"id": "workspace-browser",
 	"version": "1.0.0",
-	"title": "Project browser",
+	"title": "Project Browser",
 	"facets": {
 		"backend": "backend.mjs",
 		"client": "client.js",
@@ -198,7 +198,7 @@
 	"commands": [
 		{
 			"id": "browser",
-			"title": "Open project browser",
+			"title": "Open Project Browser",
 			"slash": "browser",
 			"interface": "browser"
 		}
@@ -206,7 +206,7 @@
 	"interfaces": [
 		{
 			"id": "browser",
-			"title": "Project browser",
+			"title": "Project Browser",
 			"slot": "page",
 			"scope": "conversation",
 			"export": "Browser",
