@@ -51,22 +51,28 @@ const CARD_BOX = `(() => {
 	return { x: r.x, y: r.y, w: r.width, h: r.height };
 })()`;
 
-const STOP_BOX = `(() => {
+const TARGET_BOX = `(() => {
 	const el = document.querySelector("[data-action=stop]");
 	const b = el.getBoundingClientRect();
-	const probe = (dx, dy) => {
-		const hit = document.elementFromPoint(b.left + dx, b.top + dy);
-		return Boolean(hit && hit.closest("[data-action=stop]"));
+	const cx = b.left + b.width / 2;
+	const cy = b.top + b.height / 2;
+	const hit = (x, y) => {
+		const t = document.elementFromPoint(x, y);
+		return Boolean(t && t.closest("[data-action=stop]"));
 	};
+	// Walk outward one pixel at a time so the assertion measures the real hit region
+	// instead of re-deriving the CSS that produced it.
+	const up = (() => { let n = 0; while (n < 40 && hit(cx, b.top - n - 1)) n++; return n; })();
+	const down = (() => { let n = 0; while (n < 40 && hit(cx, b.bottom + n)) n++; return n; })();
+	const left = (() => { let n = 0; while (n < 40 && hit(b.left - n - 1, cy)) n++; return n; })();
+	const right = (() => { let n = 0; while (n < 40 && hit(b.right + n, cy)) n++; return n; })();
 	return {
 		inGroup: Boolean(el.closest(".send-group")),
 		inLeft: Boolean(el.closest(".toolbar-left")),
-		w: b.width,
-		h: b.height,
-		growTop: probe(b.width / 2, -7),
-		growBottom: probe(b.width / 2, b.height + 7),
-		growLeft: probe(-5, b.height / 2),
-		growRight: probe(b.width + 5, b.height / 2),
+		boxW: b.width,
+		boxH: b.height,
+		hitW: left + right + b.width,
+		hitH: up + down + b.height,
 		disabled: el.disabled,
 		busy: el.getAttribute("aria-busy"),
 		label: el.textContent.trim(),
@@ -157,7 +163,7 @@ test(
 					areaDescribed: area.getAttribute("aria-describedby"),
 					pointsAtHint: document.getElementById("submitHint") === el,
 					textX: box.x + parseFloat(getComputedStyle(el).paddingLeft),
-					contentX: card.x + 12 + 12,
+					contentX: document.querySelector("#replyInput").getBoundingClientRect().x,
 					aboveCard: box.bottom <= card.top + 1,
 				};
 			})()`)) as {
@@ -184,8 +190,16 @@ test(
 			const withHint = (await page.evaluate(CARD_BOX)) as { x: number; y: number; w: number; h: number };
 
 			// Prompt mode while generating: Stop and Send never compete for the same click.
-			const promptStop = (await page.evaluate(STOP_BOX)) as Record<string, unknown>;
+			const promptStop = (await page.evaluate(TARGET_BOX)) as Record<string, unknown>;
 			assert.equal(promptStop.inGroup, true, "Stop must live in the primary send group");
+			assert.ok(
+				(promptStop.hitH as number) >= 44,
+				"in-group Stop must reach 44px tall, got " + promptStop.hitH,
+			);
+			assert.ok(
+				(promptStop.hitW as number) >= 44,
+				"in-group Stop must reach 44px wide, got " + promptStop.hitW,
+			);
 			assert.equal(await page.evaluate('document.querySelector("[data-action=send]").disabled'), true);
 
 			// Team chat while the same turn runs: no reason text, and the card must not move.
@@ -193,26 +207,24 @@ test(
 			await page.wait('document.querySelectorAll("[data-submit-hint]").length === 0');
 			const withoutHint = (await page.evaluate(CARD_BOX)) as { x: number; y: number; w: number; h: number };
 			assert.deepEqual(withoutHint, withHint, "the reason line must not shift the composer card");
-			const chatStop = (await page.evaluate(STOP_BOX)) as {
+			const chatStop = (await page.evaluate(TARGET_BOX)) as {
 				inLeft: boolean;
-				w: number;
-				h: number;
-				growTop: boolean;
-				growBottom: boolean;
-				growLeft: boolean;
-				growRight: boolean;
+				boxW: number;
+				boxH: number;
+				hitW: number;
+				hitH: number;
 			};
 			assert.equal(chatStop.inLeft, true, "Team chat keeps Stop out of the circular send group");
 			assert.ok(
-				chatStop.growTop && chatStop.growBottom && chatStop.growLeft && chatStop.growRight,
-				"the Team chat Stop control must still reach a 44px touch target: " + JSON.stringify(chatStop),
+				chatStop.hitW >= 44 && chatStop.hitH >= 44,
+				"the Team chat Stop control must reach 44x44: " + JSON.stringify(chatStop),
 			);
 			assert.equal(await page.evaluate('document.querySelector("[data-action=send]").disabled'), false);
 
 			// Steering while generating is the point of the mode: both controls must stay usable.
 			for (const drive of ["steer", "followUp"]) {
 				await pickMode(drive);
-				const both = (await page.evaluate(STOP_BOX)) as { inGroup: boolean; disabled: boolean };
+				const both = (await page.evaluate(TARGET_BOX)) as { inGroup: boolean; disabled: boolean };
 				assert.equal(both.inGroup, true, drive + " keeps Stop in the send group");
 				assert.equal(both.disabled, false, drive + " keeps Stop clickable");
 				assert.equal(
@@ -225,11 +237,11 @@ test(
 
 			await pickMode("prompt");
 			await page.wait('document.querySelector("[data-submit-hint]")?.dataset.reason === "busy-prompt"');
-			const groupStop = (await page.evaluate(STOP_BOX)) as {
-				w: number;
-				h: number;
-				growTop: boolean;
-				growBottom: boolean;
+			const groupStop = (await page.evaluate(TARGET_BOX)) as {
+				boxW: number;
+				boxH: number;
+				hitW: number;
+				hitH: number;
 				label: string;
 				stopping: string;
 				disabled: boolean;
@@ -237,18 +249,14 @@ test(
 			};
 			assert.equal(groupStop.stopping, "false");
 			assert.equal(groupStop.label, "Stop");
-			assert.ok(groupStop.w >= 40, "Stop must be at least 40px wide, got " + groupStop.w);
-			assert.equal(
-				groupStop.growTop && groupStop.growBottom,
-				true,
-				"Stop must accept a 44px tall touch target",
-			);
+			assert.ok(groupStop.hitW >= 44, "Stop must accept a 44px wide target, got " + groupStop.hitW);
+			assert.ok(groupStop.hitH >= 44, "Stop must accept a 44px tall target, got " + groupStop.hitH);
 
 			// A healthy abort ends the turn in well under a frame, so the latch is only
 			// observable inside the click itself. What is asserted here is the invariant that
 			// matters in that window: a second stop request is refused immediately.
 			await page.click("[data-action=stop]");
-			const immediate = (await page.evaluate(STOP_BOX).catch(() => null)) as {
+			const immediate = (await page.evaluate(TARGET_BOX).catch(() => null)) as {
 				disabled: boolean;
 				label: string;
 				busy: string;

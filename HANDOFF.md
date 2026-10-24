@@ -103,13 +103,14 @@ const disabled =
 要求：
 
 1. 抽出一个纯函数 `submitState({...}) → { disabled, reason }`，`reason` 取四类之一（`read-only` / `working` / `no-view` / `busy-prompt`），无原因时 `null`。
-2. 渲染 `<p class="submit-hint" data-submit-hint data-reason="…">` 于 toolbar 之下（**只在 disabled 且有 reason 时出现**），文案为可执行指引：
-   - `read-only` → "Read-only: 当前身份不能发送"
-   - `working` → "正在处理上一条，完成后可继续"
-   - `busy-prompt` → "会话忙碌中；用 Steer 插话或等完成"
-   - `no-view` → "正在连接会话…"
-3. send 按钮加 `aria-describedby="submitHint"`（id 存在时才加），hint 元素 `id="submitHint" role="status"`。
-4. **不得改变**现有禁用布尔语义（四类判定结果必须与当前 `disabled` 完全一致），只新增原因通道；用测试锁住等价性。
+2. 渲染 `<p class="submit-hint" data-submit-hint data-reason="…">` **于 composer 卡片之上**（卡片底部锚定，内容长在上方，卡片位置不会位移；**只在 disabled 且有 reason 时出现**），文案为可执行指引（全英文，与产品其余文案一致）：
+   - `read-only` → "View only: switch to Team chat to send a message."
+   - `working` → "The previous message is still being submitted."
+   - `busy-prompt` → "This turn is generating: steer it, or wait for it to finish."
+   - `no-view` → "Connecting to the conversation…"
+3. textarea **与** send 按钮同时加 `aria-describedby="submitHint"`（disabled 按钮不可聚焦，只挂 send 会让 SR 用户收不到）；hint 元素 `id="submitHint" role="status"`。
+4. **不得改变**现有禁用布尔语义（四类判定结果必须与当前 `disabled` 完全一致），只新增原因通道；用测试锁住等价性（96 组合，且在页面内 `import("/native-composer.js")` 问被服务的那份模块）。
+5. hint 文字必须与 composer 文本列对齐（`#replyInput` 的实际 x），不得用 CSS 值重算自证。
 
 ### P0-5 Stop 主位 + stopping 态
 
@@ -117,10 +118,15 @@ const disabled =
 
 要求：
 
-1. Stop 移入 `send-group`（与 send 同组，Devin 三主态位置），保留 `pill-btn` 视觉但放入 `.send-group` 内；send 按钮在 busy 时让位（隐藏或禁用，**不可两个都可点**）。
+1. Stop 移入 `send-group`（与 send 同组，Devin 三主态位置）；**模式口径（Kairos F2 裁定后修正）**：
+   - `prompt`：send 与 Stop **互斥**——busy 时 send 禁用，只有 Stop 可点；
+   - `steer` / `followUp`：二者**允许并存**（这两个模式的定义就是“生成中来一句话”，禁 send 等于废掉原生输入）；
+   - `chat`（Team chat）：Stop 退出 send-group，回到 `toolbar-left`（参考 CSS 在 `body[data-mode="ask"]` 下把 send-group 压成 28px 圆形，虽然 pakka 当前不可达，仍避让）。
 2. 点击 Stop → 本地 `stopping=true`：Stop 按钮 `disabled`、文案 "Stopping…"、`aria-busy="true"`；
-   `abort()` 返回/抛错后都要复归（用 `finally`），且**只有 `view.live.busy === false` 才算真正结束**——不得仅凭 abort 请求成功就把界面切成空闲（AGENTS.md：不得因 abort 请求就释放 admission）。
-3. 新增 `data-stopping` 标记供测试与视觉核对。
+   **只有 `view.live.busy === false` 才算真正结束**——不得仅凭 abort 请求成功就把界面切成空闲（AGENTS.md：不得因 abort 请求就释放 admission）。因为 `run()` 吞错，不存在可捕获的 abort 失败，所以不得写 `try/catch` 冒充处理；改为**有界重试**：持续 8s 仍 busy 时按钮变 "Stop again"（`data-stopping="retry"`）可重发 abort。
+3. 新增 `data-stopping` 标记（`false` / `true` / `retry`）供测试与视觉核对。
+4. **健康路径下该状态不可观测**（abort 在 <108ms 内结束、按钮立即移除）：这是正确行为，不得为“看得见”而造假延迟；latch 的真实价值是**同帧重复 Stop 被拒**，测试断言的是这一条。
+5. 命中区：`::after` 外扩到 44×44（send-group 内 28px 高用 `inset:-8px -6px`；chat 的 pill 只有 26px 高，用 `inset:-9px -6px`），并解除 `.send-group{overflow:hidden}` 裁剪；**断言必须用逐像素扫描量真实命中区，不得用 CSS 值重算**。
 
 ### P0-2 流式区分 + 合法 part 显式呈现（app.js，Atnor）
 
@@ -230,3 +236,7 @@ node --test apps/webui/test/input-failure.test.ts
 | Stop 的 44px 命中区被 `.send-group{overflow:hidden}` 裁剪 | 已解决：`.send-group:has(.stop-btn){overflow:visible}` + `::after` 扩边，`elementFromPoint` 实测命中                                                  |
 | abort 失败（`run()` 吞错）会让 stopping 永久卡死          | 已解决：8s 后按钮变 “Stop again”（`data-stopping="retry"`）可重发 abort；真正的解除仍只由 `busy→false`                                                |
 | `body[data-mode="ask"]` 的 28px 圆形 send-group           | 当前不可达（`frontend.js:94` 钉死 `"agent"`），仍做模式分流：`mode==="chat"` 时 Stop 回 `toolbar-left`                                                |
+| stopping 在健康路径不可观测（Kairos F4）                  | 已知并接受：abort <108ms 结束，"Stopping…" 基本看不到；8s 重试只在病态窗口可达。**不得**为此造假延迟；latch 的真实价值是同帧重复 Stop 被拒            |
+| 键盘路径的焦点恢复无断言（Kairos F7）                     | 已实现（仅 `:focus-visible` 时把焦点回落 textarea），但 `apps/webui/test/browser.ts` 无键盘派发 API，**未覆盖**；已避免鼠标点击夺焦                   |
+| composer 另有既有的 20px 位移来源（dictation help 行）    | 与本轮无关（F1 只修了 hint 引起的位移），单列为后续批次事项                                                                                           |
+| `unknown` 回执的清除时机（send 时清）                     | 本阶段不改：属既有 admission 呈现语义，改动需另一轮评估                                                                                               |
