@@ -1,0 +1,57 @@
+diff --git a/apps/webui/test/devin-palette-browser.test.ts b/apps/webui/test/devin-palette-browser.test.ts
+index 7240b82..8de86f0 100644
+--- a/apps/webui/test/devin-palette-browser.test.ts
++++ b/apps/webui/test/devin-palette-browser.test.ts
+@@ -51,7 +51,7 @@ test(
+ 			]) {
+ 				await page.resize(size);
+ 				await settleFrontend(page);
+-				await page.click('[aria-label="Commands and extensions"]');
++				await page.click('[aria-label="Commands & Extensions"]');
+ 				await page.wait('document.querySelector(".palette input")===document.activeElement');
+ 				assert.equal(
+ 					await page.evaluate('Boolean(document.querySelector(".pocket-sheet"))'),
+@@ -68,7 +68,7 @@ test(
+ 				await page.key("Enter");
+ 				await page.wait('!document.querySelector(".palette")');
+ 				assert.equal(m.f.requests.length, 0, "A read command must not send a model request");
+-				await page.click('[aria-label="Commands and extensions"]');
++				await page.click('[aria-label="Commands & Extensions"]');
+ 				await page.wait('document.querySelector(".palette")');
+ 				await writeFile(join(evidence, `commands-${size.width}.png`), await page.screenshot());
+ 				await page.click("[data-action=manage-extensions]");
+@@ -94,7 +94,7 @@ test(
+ 				await settleFrontend(page);
+ 				assert.equal(
+ 					await page.evaluate('document.activeElement?.getAttribute("aria-label")'),
+-					"Commands and extensions",
++					"Commands & Extensions",
+ 					"Handoff preserves the original connected focus-return target",
+ 				);
+ 			}
+diff --git a/apps/webui/test/devin-shell-browser.test.ts b/apps/webui/test/devin-shell-browser.test.ts
+index 574c057..2bf8628 100644
+--- a/apps/webui/test/devin-shell-browser.test.ts
++++ b/apps/webui/test/devin-shell-browser.test.ts
+@@ -92,7 +92,7 @@ test(
+ 					true,
+ 					"Home guidance is fully visible on the phone",
+ 				);
+-				await page.click('[aria-label="Commands and extensions"]');
++				await page.click('[aria-label="Commands & Extensions"]');
+ 				await page.wait('document.querySelector(".palette")?.contains(document.activeElement)');
+ 				await page.key("Escape");
+ 				await page.wait('!document.querySelector(".palette")');
+diff --git a/apps/webui/test/typography-accessibility-browser.test.ts b/apps/webui/test/typography-accessibility-browser.test.ts
+index e237ca9..9b7b702 100644
+--- a/apps/webui/test/typography-accessibility-browser.test.ts
++++ b/apps/webui/test/typography-accessibility-browser.test.ts
+@@ -111,7 +111,7 @@ test("WebUI typography and input accessibility", { timeout: 90000 }, async (t) =
+ 			assert.equal(
+ 				await page.evaluate(`(() => {
+ 				const field=document.activeElement;
+-				return field.matches(':focus-visible') && [field,field.closest('.composer-surface')].some(node => {
++				return field.matches(':focus-visible') && [field,field.closest('.composer-card')].some(node => {
+ 					const style=getComputedStyle(node);
+ 					return style.outlineStyle !== 'none' && parseFloat(style.outlineWidth) >= 2;
+ 				});

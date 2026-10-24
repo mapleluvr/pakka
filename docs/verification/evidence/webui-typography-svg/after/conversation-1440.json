@@ -1,0 +1,36 @@
+{
+  "pointer": {
+    "active": true,
+    "focusVisible": true,
+    "card": {
+      "outline": 2,
+      "style": "solid",
+      "offset": 2,
+      "radius": 16
+    },
+    "surface": {
+      "outline": 0,
+      "shadow": "none"
+    },
+    "inputOutline": 0,
+    "visible": true,
+    "overflow": false
+  },
+  "keyboard": {
+    "active": true,
+    "focusVisible": true,
+    "card": {
+      "outline": 2,
+      "style": "solid",
+      "offset": 2,
+      "radius": 16
+    },
+    "surface": {
+      "outline": 0,
+      "shadow": "none"
+    },
+    "inputOutline": 0,
+    "visible": true,
+    "overflow": false
+  }
+}

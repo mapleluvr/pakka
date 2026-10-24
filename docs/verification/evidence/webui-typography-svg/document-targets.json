@@ -1,0 +1,538 @@
+{
+  "checkedAt": "2026-10-25T02:17:33.8639344+08:00",
+  "scope": "Local target existence only; fragment anchors and external URLs are not asserted",
+  "count": 106,
+  "missing": 0,
+  "targets": [
+    {
+      "source": "docs/OVERVIEW.md",
+      "target": "changes/compressor-repair-session.md",
+      "exists": true
+    },
+    {
+      "source": "docs/OVERVIEW.md",
+      "target": "state/compressor-session.md",
+      "exists": true
+    },
+    {
+      "source": "docs/OVERVIEW.md",
+      "target": "verification/COMPRESSOR-CONVERSATION-ISOLATION.md",
+      "exists": true
+    },
+    {
+      "source": "docs/OVERVIEW.md",
+      "target": "../openspec/changes/add-compressor-repair-session/design.md",
+      "exists": true
+    },
+    {
+      "source": "docs/OVERVIEW.md",
+      "target": "../openspec/changes/add-compressor-repair-session/tasks.md",
+      "exists": true
+    },
+    {
+      "source": "docs/OVERVIEW.md",
+      "target": "verification/COMPRESSOR-SESSION-1.4-FEASIBILITY.md",
+      "exists": true
+    },
+    {
+      "source": "docs/OVERVIEW.md",
+      "target": "verification/COMPRESSOR-SESSION-FEASIBILITY.md",
+      "exists": true
+    },
+    {
+      "source": "docs/OVERVIEW.md",
+      "target": "changes/auxiliary-tool-output.md",
+      "exists": true
+    },
+    {
+      "source": "docs/OVERVIEW.md",
+      "target": "../openspec/changes/add-auxiliary-tool-output/tasks.md",
+      "exists": true
+    },
+    {
+      "source": "docs/OVERVIEW.md",
+      "target": "verification/AUXILIARY-TOOL-OUTPUT.md",
+      "exists": true
+    },
+    {
+      "source": "docs/OVERVIEW.md",
+      "target": "changes/webui-navigation-and-local-recovery.md",
+      "exists": true
+    },
+    {
+      "source": "docs/OVERVIEW.md",
+      "target": "../openspec/changes/improve-webui-navigation-and-local-recovery/tasks.md#41-conversationcomposer-状态可观测性-p02026-10-24",
+      "exists": true
+    },
+    {
+      "source": "docs/OVERVIEW.md",
+      "target": "../openspec/changes/improve-webui-navigation-and-local-recovery/design.md#61-2026-10-24-conversation-状态可观测性批次",
+      "exists": true
+    },
+    {
+      "source": "docs/OVERVIEW.md",
+      "target": "verification/WEBUI-INTERACTION-P0.md",
+      "exists": true
+    },
+    {
+      "source": "docs/OVERVIEW.md",
+      "target": "../openspec/changes/improve-webui-navigation-and-local-recovery/proposal.md",
+      "exists": true
+    },
+    {
+      "source": "docs/OVERVIEW.md",
+      "target": "../openspec/changes/improve-webui-navigation-and-local-recovery/tasks.md",
+      "exists": true
+    },
+    {
+      "source": "docs/OVERVIEW.md",
+      "target": "verification/WEBUI-TYPOGRAPHY-SVG.md",
+      "exists": true
+    },
+    {
+      "source": "docs/OVERVIEW.md",
+      "target": "../openspec/changes/improve-webui-navigation-and-local-recovery/tasks.md#43-session--conversation-创建方向2026-10-24",
+      "exists": true
+    },
+    {
+      "source": "docs/OVERVIEW.md",
+      "target": "changes/webui-frontend-guidelines.md",
+      "exists": true
+    },
+    {
+      "source": "docs/OVERVIEW.md",
+      "target": "../openspec/changes/adopt-webui-frontend-guidelines/tasks.md",
+      "exists": true
+    },
+    {
+      "source": "docs/OVERVIEW.md",
+      "target": "../openspec/changes/correct-webui-settings-and-name/tasks.md",
+      "exists": true
+    },
+    {
+      "source": "docs/OVERVIEW.md",
+      "target": "../openspec/changes/prepare-durable-1-4-0-patch/tasks.md#4-后续产品接入",
+      "exists": true
+    },
+    {
+      "source": "docs/OVERVIEW.md",
+      "target": "state/delivery.md#verification-的选用",
+      "exists": true
+    },
+    {
+      "source": "docs/OVERVIEW.md",
+      "target": "../openspec/changes/streamline-verification-and-patch-state/design.md#验证方法与进一步瘦身",
+      "exists": true
+    },
+    {
+      "source": "docs/OVERVIEW.md",
+      "target": "../openspec/changes/streamline-verification-and-patch-state/tasks.md#4-待决定的后续方案",
+      "exists": true
+    },
+    {
+      "source": "docs/OVERVIEW.md",
+      "target": "state/README.md",
+      "exists": true
+    },
+    {
+      "source": "docs/OVERVIEW.md",
+      "target": "state/durable-patch.md",
+      "exists": true
+    },
+    {
+      "source": "docs/OVERVIEW.md",
+      "target": "../openspec/changes/adopt-devin-frontend/tasks.md",
+      "exists": true
+    },
+    {
+      "source": "docs/OVERVIEW.md",
+      "target": "../openspec/changes/pakka-webui/tasks.md",
+      "exists": true
+    },
+    {
+      "source": "docs/OVERVIEW.md",
+      "target": "development/VERIFICATION.md",
+      "exists": true
+    },
+    {
+      "source": "docs/OVERVIEW.md",
+      "target": "verification/README.md",
+      "exists": true
+    },
+    {
+      "source": "docs/OVERVIEW.md",
+      "target": "README.md",
+      "exists": true
+    },
+    {
+      "source": "docs/OVERVIEW.md",
+      "target": "changes/README.md",
+      "exists": true
+    },
+    {
+      "source": "docs/OVERVIEW.md",
+      "target": "../openspec/changes/",
+      "exists": true
+    },
+    {
+      "source": "docs/OVERVIEW.md",
+      "target": "../openspec/specs/",
+      "exists": true
+    },
+    {
+      "source": "docs/state/frontend.md",
+      "target": "../../openspec/changes/adopt-devin-frontend/specs/devin-frontend/spec.md",
+      "exists": true
+    },
+    {
+      "source": "docs/state/frontend.md",
+      "target": "../changes/devin-frontend-adoption.md",
+      "exists": true
+    },
+    {
+      "source": "docs/state/frontend.md",
+      "target": "../development/FRONTEND-GUIDELINES.md",
+      "exists": true
+    },
+    {
+      "source": "docs/state/frontend.md",
+      "target": "../../openspec/changes/correct-webui-settings-and-name/specs/devin-frontend/spec.md",
+      "exists": true
+    },
+    {
+      "source": "docs/state/frontend.md",
+      "target": "../changes/webui-settings-and-name.md",
+      "exists": true
+    },
+    {
+      "source": "docs/state/frontend.md",
+      "target": "../development/WEBUI-DEVELOPMENT.md#独立选择模型和-conversation-工作目录",
+      "exists": true
+    },
+    {
+      "source": "docs/state/frontend.md",
+      "target": "../../openspec/changes/improve-webui-navigation-and-local-recovery/design.md#61-2026-10-24-conversation-状态可观测性批次",
+      "exists": true
+    },
+    {
+      "source": "docs/state/frontend.md",
+      "target": "mas.md",
+      "exists": true
+    },
+    {
+      "source": "docs/state/frontend.md",
+      "target": "../changes/webui-frontend-guidelines.md",
+      "exists": true
+    },
+    {
+      "source": "docs/state/frontend.md",
+      "target": "delivery.md",
+      "exists": true
+    },
+    {
+      "source": "docs/changes/webui-navigation-and-local-recovery.md",
+      "target": "../../openspec/changes/improve-webui-navigation-and-local-recovery/",
+      "exists": true
+    },
+    {
+      "source": "docs/changes/webui-navigation-and-local-recovery.md",
+      "target": "../../openspec/changes/improve-webui-navigation-and-local-recovery/proposal.md",
+      "exists": true
+    },
+    {
+      "source": "docs/changes/webui-navigation-and-local-recovery.md",
+      "target": "../../openspec/changes/improve-webui-navigation-and-local-recovery/design.md",
+      "exists": true
+    },
+    {
+      "source": "docs/changes/webui-navigation-and-local-recovery.md",
+      "target": "../../openspec/changes/improve-webui-navigation-and-local-recovery/tasks.md",
+      "exists": true
+    },
+    {
+      "source": "docs/changes/webui-navigation-and-local-recovery.md",
+      "target": "../../openspec/changes/improve-webui-navigation-and-local-recovery/specs/authenticated-mas-apps/spec.md",
+      "exists": true
+    },
+    {
+      "source": "docs/changes/webui-navigation-and-local-recovery.md",
+      "target": "../../openspec/changes/improve-webui-navigation-and-local-recovery/specs/devin-frontend/spec.md",
+      "exists": true
+    },
+    {
+      "source": "docs/changes/webui-navigation-and-local-recovery.md",
+      "target": "../../openspec/specs/authenticated-mas-apps/spec.md",
+      "exists": true
+    },
+    {
+      "source": "docs/changes/webui-navigation-and-local-recovery.md",
+      "target": "../../openspec/changes/adopt-devin-frontend/specs/devin-frontend/spec.md",
+      "exists": true
+    },
+    {
+      "source": "docs/changes/webui-navigation-and-local-recovery.md",
+      "target": "../../openspec/changes/correct-webui-settings-and-name/specs/devin-frontend/spec.md",
+      "exists": true
+    },
+    {
+      "source": "docs/changes/webui-navigation-and-local-recovery.md",
+      "target": "../../openspec/changes/adopt-webui-frontend-guidelines/specs/devin-frontend/spec.md",
+      "exists": true
+    },
+    {
+      "source": "docs/changes/webui-navigation-and-local-recovery.md",
+      "target": "../state/frontend.md",
+      "exists": true
+    },
+    {
+      "source": "docs/changes/webui-navigation-and-local-recovery.md",
+      "target": "../state/webui.md",
+      "exists": true
+    },
+    {
+      "source": "docs/changes/webui-navigation-and-local-recovery.md",
+      "target": "../state/runtime.md",
+      "exists": true
+    },
+    {
+      "source": "docs/changes/webui-navigation-and-local-recovery.md",
+      "target": "../development/FRONTEND-GUIDELINES.md",
+      "exists": true
+    },
+    {
+      "source": "docs/changes/webui-navigation-and-local-recovery.md",
+      "target": "../../openspec/changes/improve-webui-navigation-and-local-recovery/design.md#62-2026-10-24-主次文字表单与-svg-图标整检",
+      "exists": true
+    },
+    {
+      "source": "docs/changes/webui-navigation-and-local-recovery.md",
+      "target": "../../openspec/changes/improve-webui-navigation-and-local-recovery/tasks.md#42-主次文字表单与-svg-图标整检2026-10-24",
+      "exists": true
+    },
+    {
+      "source": "docs/changes/webui-navigation-and-local-recovery.md",
+      "target": "../../openspec/changes/improve-webui-navigation-and-local-recovery/specs/devin-frontend/spec.md#requirement-compound-labels-and-forms-retain-typographic-separation",
+      "exists": true
+    },
+    {
+      "source": "docs/changes/webui-navigation-and-local-recovery.md",
+      "target": "../verification/WEBUI-TYPOGRAPHY-SVG.md",
+      "exists": true
+    },
+    {
+      "source": "docs/changes/webui-navigation-and-local-recovery.md",
+      "target": "../../openspec/changes/improve-webui-navigation-and-local-recovery/design.md#63-session--conversation-创建关系调查",
+      "exists": true
+    },
+    {
+      "source": "docs/changes/webui-navigation-and-local-recovery.md",
+      "target": "../../openspec/changes/improve-webui-navigation-and-local-recovery/tasks.md#43-session--conversation-创建方向2026-10-24",
+      "exists": true
+    },
+    {
+      "source": "docs/changes/webui-navigation-and-local-recovery.md",
+      "target": "../../openspec/changes/improve-webui-navigation-and-local-recovery/design.md#61-2026-10-24-conversation-状态可观测性批次",
+      "exists": true
+    },
+    {
+      "source": "docs/changes/webui-navigation-and-local-recovery.md",
+      "target": "../verification/WEBUI-INTERACTION-P0.md",
+      "exists": true
+    },
+    {
+      "source": "docs/changes/webui-navigation-and-local-recovery.md",
+      "target": "../verification/evidence/webui-interaction-p0/review-disposition.md",
+      "exists": true
+    },
+    {
+      "source": "docs/verification/README.md",
+      "target": "../development/VERIFICATION.md",
+      "exists": true
+    },
+    {
+      "source": "docs/verification/README.md",
+      "target": "../OVERVIEW.md",
+      "exists": true
+    },
+    {
+      "source": "docs/verification/README.md",
+      "target": "WEBUI-TYPOGRAPHY-SVG.md",
+      "exists": true
+    },
+    {
+      "source": "docs/verification/README.md",
+      "target": "WEBUI-INTERACTION-P0.md",
+      "exists": true
+    },
+    {
+      "source": "docs/verification/README.md",
+      "target": "DEVIN-FRONTEND-R2.md",
+      "exists": true
+    },
+    {
+      "source": "docs/verification/README.md",
+      "target": "MAS-BOARD-R1.md",
+      "exists": true
+    },
+    {
+      "source": "docs/verification/README.md",
+      "target": "COMPRESSOR-CONVERSATION-ISOLATION.md",
+      "exists": true
+    },
+    {
+      "source": "docs/verification/README.md",
+      "target": "COMPRESSER-SESSION-TRIAL-ISOLATION.md",
+      "exists": true
+    },
+    {
+      "source": "docs/verification/README.md",
+      "target": "COMPRESSOR-SESSION-FEASIBILITY.md",
+      "exists": true
+    },
+    {
+      "source": "docs/verification/README.md",
+      "target": "AUXILIARY-TOOL-OUTPUT.md",
+      "exists": true
+    },
+    {
+      "source": "docs/verification/README.md",
+      "target": "DYNAMITE-PRODUCT-ACCEPTANCE.md",
+      "exists": true
+    },
+    {
+      "source": "docs/verification/README.md",
+      "target": "../../integrations/dynamite/core-m6-pairing.json",
+      "exists": true
+    },
+    {
+      "source": "docs/verification/README.md",
+      "target": "DOCUMENTATION-CLEANUP.md",
+      "exists": true
+    },
+    {
+      "source": "docs/verification/README.md",
+      "target": "../archive/README.md",
+      "exists": true
+    },
+    {
+      "source": "docs/verification/README.md",
+      "target": "../state/durable-patch.md",
+      "exists": true
+    },
+    {
+      "source": "docs/verification/README.md",
+      "target": "../PI-DURABLE-COMPATIBILITY.md",
+      "exists": true
+    },
+    {
+      "source": "docs/verification/WEBUI-TYPOGRAPHY-SVG.md",
+      "target": "../state/frontend.md",
+      "exists": true
+    },
+    {
+      "source": "docs/verification/WEBUI-TYPOGRAPHY-SVG.md",
+      "target": "../../openspec/changes/improve-webui-navigation-and-local-recovery/design.md#62-2026-10-24-主次文字表单与-svg-图标整检",
+      "exists": true
+    },
+    {
+      "source": "docs/verification/WEBUI-TYPOGRAPHY-SVG.md",
+      "target": "../../openspec/changes/improve-webui-navigation-and-local-recovery/specs/devin-frontend/spec.md#requirement-compound-labels-and-forms-retain-typographic-separation",
+      "exists": true
+    },
+    {
+      "source": "docs/verification/WEBUI-TYPOGRAPHY-SVG.md",
+      "target": "../../openspec/changes/improve-webui-navigation-and-local-recovery/tasks.md#42-主次文字表单与-svg-图标整检2026-10-24",
+      "exists": true
+    },
+    {
+      "source": "docs/verification/WEBUI-TYPOGRAPHY-SVG.md",
+      "target": "../changes/webui-navigation-and-local-recovery.md",
+      "exists": true
+    },
+    {
+      "source": "docs/verification/WEBUI-TYPOGRAPHY-SVG.md",
+      "target": "evidence/webui-typography-svg/review-disposition.md",
+      "exists": true
+    },
+    {
+      "source": "docs/verification/WEBUI-TYPOGRAPHY-SVG.md",
+      "target": "evidence/webui-typography-svg/review-probe.json",
+      "exists": true
+    },
+    {
+      "source": "docs/verification/WEBUI-TYPOGRAPHY-SVG.md",
+      "target": "evidence/webui-typography-svg/",
+      "exists": true
+    },
+    {
+      "source": "docs/verification/WEBUI-TYPOGRAPHY-SVG.md",
+      "target": "../../openspec/changes/improve-webui-navigation-and-local-recovery/design.md#63-session--conversation-创建关系调查",
+      "exists": true
+    },
+    {
+      "source": "docs/verification/WEBUI-TYPOGRAPHY-SVG.md",
+      "target": "../../openspec/changes/improve-webui-navigation-and-local-recovery/tasks.md#43-session--conversation-创建方向2026-10-24",
+      "exists": true
+    },
+    {
+      "source": "openspec/changes/improve-webui-navigation-and-local-recovery/design.md",
+      "target": "../../../docs/development/FRONTEND-GUIDELINES.md",
+      "exists": true
+    },
+    {
+      "source": "openspec/changes/improve-webui-navigation-and-local-recovery/design.md",
+      "target": "../../../docs/state/runtime.md",
+      "exists": true
+    },
+    {
+      "source": "docs/verification/evidence/webui-typography-svg/review-disposition.md",
+      "target": "reviewer-a.md",
+      "exists": true
+    },
+    {
+      "source": "docs/verification/evidence/webui-typography-svg/review-disposition.md",
+      "target": "workflow-receipt.json",
+      "exists": true
+    },
+    {
+      "source": "docs/verification/evidence/webui-typography-svg/review-disposition.md",
+      "target": "test-followup.diff",
+      "exists": true
+    },
+    {
+      "source": "docs/verification/evidence/webui-typography-svg/review-disposition.md",
+      "target": "logs/full-005544b-failed.txt",
+      "exists": true
+    },
+    {
+      "source": "docs/verification/evidence/webui-typography-svg/review-disposition.md",
+      "target": "logs/focused-green.txt",
+      "exists": true
+    },
+    {
+      "source": "docs/verification/evidence/webui-typography-svg/review-disposition.md",
+      "target": "logs/full-75e0c97-passed.txt",
+      "exists": true
+    },
+    {
+      "source": "docs/verification/evidence/webui-typography-svg/review-disposition.md",
+      "target": "review-probe.json",
+      "exists": true
+    },
+    {
+      "source": "docs/verification/evidence/webui-typography-svg/review-disposition.md",
+      "target": "logs/review-probe-passed.txt",
+      "exists": true
+    },
+    {
+      "source": "docs/verification/evidence/webui-typography-svg/review-disposition.md",
+      "target": "review-probe.source.txt",
+      "exists": true
+    },
+    {
+      "source": "docs/verification/evidence/webui-typography-svg/review-disposition.md",
+      "target": "logs/review-probe-inline-csp.txt",
+      "exists": true
+    }
+  ]
+}

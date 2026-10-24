@@ -1,0 +1,39 @@
+✖ WebUI browser dictation: caret and final text reach only the draft until a real explicit Send (731.0485ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1677.8285
+
+✖ failing tests:
+
+test at apps\webui\test\voice-browser.test.ts:13:1
+✖ WebUI browser dictation: caret and final text reach only the draft until a real explicit Send (731.0485ms)
+  AssertionError [ERR_ASSERTION]: dictation is an accessible SVG microphone, not a text placeholder
+  + actual - expected
+  
+    {
+      icon: {
+  +     height: 16,
+  +     width: 16
+  -     height: 24,
+  -     width: 24
+      },
+      label: 'Dictate',
+      svg: true,
+      target: true,
+      text: ''
+  
+      at TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/voice-browser.test.ts:38:11)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: { label: 'Dictate', text: '', svg: true, icon: { width: 16, height: 16 }, target: true },
+    expected: { label: 'Dictate', text: '', svg: true, icon: { width: 24, height: 24 }, target: true },
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }

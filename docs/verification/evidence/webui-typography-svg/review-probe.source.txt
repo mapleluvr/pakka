@@ -1,0 +1,61 @@
+import assert from "node:assert/strict";
+import { mkdir, writeFile } from "node:fs/promises";
+import { join } from "node:path";
+import { runtimeFixture } from "../../../packages/agent/test/runtime-fixture.ts";
+import { startPocket } from "../../../apps/webui/src/bootstrap.ts";
+import { ownedBrowser } from "../../../apps/webui/test/browser.ts";
+
+const m = await runtimeFixture();
+await m.runtime.close();
+let app: Awaited<ReturnType<typeof startPocket>> | undefined;
+let browser: Awaited<ReturnType<typeof ownedBrowser>> | undefined;
+try {
+	const root = join(m.f.root, "review-consumer");
+	await mkdir(join(root, "web"), { recursive: true });
+	await writeFile(join(root, "manifest.json"), JSON.stringify({
+		api: 1, id: "review-consumer", version: "1.0.0", title: "Review Consumer",
+		facets: { webui: { entry: "index.js", publicDir: "web" } }, actions: [], commands: [],
+		interfaces: [{ id: "home", title: "Review Consumer", slot: "page", scope: "app", export: "Home", navigation: true }],
+	}));
+	await writeFile(join(root, "web", "probe.css"), ".review-probe button { padding: 4px; min-height: 20px; border-width: 3px; } .review-custom { border-color: rgb(11, 22, 33); }");
+	await writeFile(join(root, "web", "index.js"), `
+		import { h } from "preact";
+		import { Button } from "@pakka/webui/components";
+		export function Home() {
+			return h("section", {class:"review-probe"},
+				h("link", {rel:"stylesheet", href:new URL("probe.css", import.meta.url).href, "data-review-styles":true}),
+				h(Button, {class:"review-custom", "data-review-button":true}, "Public Button"),
+				h("span", {class:"sr-only", "data-review-hidden":true}, "to"));
+		}
+	`);
+	app = await startPocket({ runtime: { ...m.config, dataDir: join(m.f.root, "review-web") }, owner: "Review operator", extensions: [{ root }] });
+	assert.ok(app.initialOwner);
+	browser = await ownedBrowser(join(m.f.root, "review-browser"));
+	const page = await browser.page(app.http.origin + "/#signin=" + app.initialOwner.token);
+	await page.wait('document.querySelector("[data-action=signin]")');
+	await page.click("[data-action=signin]");
+	await page.wait('document.querySelector("[data-interface=review-consumer-home]")');
+	await page.click("[data-interface=review-consumer-home]");
+	await page.wait('document.querySelector("[data-review-button]") && document.querySelector("[data-review-styles]")?.sheet');
+	const measured = await page.evaluate(`(()=>{
+		const button=document.querySelector('[data-review-button]'), s=getComputedStyle(button), h=getComputedStyle(document.querySelector('[data-review-hidden]'));
+		return {classes:[...button.classList], padding:s.padding, minHeight:s.minHeight, borderWidth:s.borderWidth, borderColor:s.borderColor, hidden:{position:h.position,width:h.width,height:h.height,clip:h.clip}, stylesheets:[...document.styleSheets].map(sheet=>sheet.href).filter(Boolean).map(url=>new URL(url).pathname)};
+	})()`) as { classes: string[]; padding: string; minHeight: string; borderWidth: string; borderColor: string; hidden: { position: string; width: string; height: string; clip: string }; stylesheets: string[] };
+	console.log(JSON.stringify(measured, null, 2));
+	assert.ok(measured.classes.includes("review-custom"), "Preact class prop survives the public Button");
+	assert.equal(measured.padding, "4px");
+	assert.equal(measured.minHeight, "20px");
+	assert.equal(measured.borderWidth, "3px");
+	assert.equal(measured.borderColor, "rgb(11, 22, 33)");
+	assert.deepEqual(measured.hidden, { position: "absolute", width: "1px", height: "1px", clip: "rect(0px, 0px, 0px, 0px)" });
+	assert.ok(measured.stylesheets.includes("/reference.css"));
+	assert.equal(m.f.requests.length, 0);
+	assert.equal(m.f.errors.length, 0);
+	const result = { snapshot: "75e0c97ebf6880785938d87bf36247536875167b", operation: "real public extension install, authentication, navigation and CSS measurement", measured, providerRequests: m.f.requests.length, errors: m.f.errors.length, limitations: ["Host utility checked through an ordinary extension; standalone MAS embedding is not claimed or tested."] };
+	await writeFile("docs/verification/evidence/webui-typography-svg/review-probe.json", JSON.stringify(result, null, 2) + "\n");
+	console.log(JSON.stringify(result, null, 2));
+} finally {
+	await browser?.close();
+	await app?.close();
+	await m.close();
+}

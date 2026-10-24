@@ -1,0 +1,155 @@
+▶ WebUI compound labels, settings forms and graphical keyboard hints remain readable
+  ✖ model primary and profile have distinct rows at 1440x900 (87.1557ms)
+  ✖ model primary and profile have distinct rows at 360x600 (359.3946ms)
+  ✖ model primary and profile have distinct rows at 390x650 (190.7821ms)
+  ✖ model primary and profile have distinct rows at 390x844 (74.2915ms)
+  ✖ private credentials keep labels, password input and actions separate at every viewport and larger text (208.2297ms)
+  ✖ Conversation and Fork fields have gaps and subordinate section headings (106.1074ms)
+  ✖ Team metadata, chat fields and note actions are laid out rather than pasted together (190.9659ms)
+  ✔ long names and roles remain readable in People (553.2372ms)
+  ✖ shortcut and palette direction hints use real SVG paths (17.2733ms)
+✖ WebUI compound labels, settings forms and graphical keyboard hints remain readable (2643.158ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 1
+ℹ fail 9
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3634.9469
+
+✖ failing tests:
+
+test at apps\webui\test\typography-spacing-browser.test.ts:46:12
+✖ model primary and profile have distinct rows at 1440x900 (87.1557ms)
+  AssertionError [ERR_ASSERTION]: model/profile must not read as one identifier: {"model":"local-model","primary":{"x":1054.796875,"y":503.578125,"right":1136.34375,"bottom":520.578125,"width":81.546875,"height":17},"secondary":{"x":1136.34375,"y":506.578125,"right":1174.671875,"bottom":520.578125,"width":38.328125,"height":14},"rowWidth":163.875,"listWidth":311,"overflow":false,"primaryColor":"rgba(255, 255, 255, 0.9)","secondaryColor":"rgba(255, 255, 255, 0.9)","weight":700}
+      at TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/typography-spacing-browser.test.ts:62:14)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/typography-spacing-browser.test.ts:46:4)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at apps\webui\test\typography-spacing-browser.test.ts:46:12
+✖ model primary and profile have distinct rows at 360x600 (359.3946ms)
+  AssertionError [ERR_ASSERTION]: model/profile must not read as one identifier: {"model":"local-model","primary":{"x":39,"y":211.78125,"right":120.546875,"bottom":228.78125,"width":81.546875,"height":17},"secondary":{"x":120.546875,"y":214.78125,"right":158.875,"bottom":228.78125,"width":38.328125,"height":14},"rowWidth":163.875,"listWidth":302,"overflow":false,"primaryColor":"rgba(255, 255, 255, 0.9)","secondaryColor":"rgba(255, 255, 255, 0.9)","weight":700}
+      at TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/typography-spacing-browser.test.ts:62:14)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/typography-spacing-browser.test.ts:46:4)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at apps\webui\test\typography-spacing-browser.test.ts:46:12
+✖ model primary and profile have distinct rows at 390x650 (190.7821ms)
+  AssertionError [ERR_ASSERTION]: model/profile must not read as one identifier: {"model":"local-model","primary":{"x":45,"y":261.78125,"right":126.546875,"bottom":278.78125,"width":81.546875,"height":17},"secondary":{"x":126.546875,"y":264.78125,"right":164.875,"bottom":278.78125,"width":38.328125,"height":14},"rowWidth":163.875,"listWidth":326,"overflow":false,"primaryColor":"rgba(255, 255, 255, 0.9)","secondaryColor":"rgba(255, 255, 255, 0.9)","weight":700}
+      at TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/typography-spacing-browser.test.ts:62:14)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/typography-spacing-browser.test.ts:46:4)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at apps\webui\test\typography-spacing-browser.test.ts:46:12
+✖ model primary and profile have distinct rows at 390x844 (74.2915ms)
+  AssertionError [ERR_ASSERTION]: model/profile must not read as one identifier: {"model":"local-model","primary":{"x":45,"y":455.78125,"right":126.546875,"bottom":472.78125,"width":81.546875,"height":17},"secondary":{"x":126.546875,"y":458.78125,"right":164.875,"bottom":472.78125,"width":38.328125,"height":14},"rowWidth":163.875,"listWidth":326,"overflow":false,"primaryColor":"rgba(255, 255, 255, 0.9)","secondaryColor":"rgba(255, 255, 255, 0.9)","weight":700}
+      at TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/typography-spacing-browser.test.ts:62:14)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/typography-spacing-browser.test.ts:46:4)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at apps\webui\test\typography-spacing-browser.test.ts:72:11
+✖ private credentials keep labels, password input and actions separate at every viewport and larger text (208.2297ms)
+  AssertionError [ERR_ASSERTION]: replacement label and field need 4px of real layout separation: {"a":{"x":504,"y":797.9375,"right":649.96875,"bottom":819.9375,"width":145.96875,"height":22},"b":{"x":649.96875,"y":793.9375,"right":849.96875,"bottom":828.125,"width":200,"height":34.1875}}
+      at separate (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/typography-spacing-browser.test.ts:12:9)
+      at TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/typography-spacing-browser.test.ts:86:6)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/typography-spacing-browser.test.ts:72:3)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at apps\webui\test\typography-spacing-browser.test.ts:97:11
+✖ Conversation and Fork fields have gaps and subordinate section headings (106.1074ms)
+  AssertionError [ERR_ASSERTION]: fork field and action need 8px of real layout separation: {"a":{"x":397,"y":661.484375,"right":1043,"bottom":697.484375,"width":646,"height":36},"b":{"x":397,"y":697.484375,"right":520.078125,"bottom":737.484375,"width":123.078125,"height":40}}
+      at separate (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/typography-spacing-browser.test.ts:12:9)
+      at TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/typography-spacing-browser.test.ts:105:5)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/typography-spacing-browser.test.ts:97:3)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at apps\webui\test\typography-spacing-browser.test.ts:111:11
+✖ Team metadata, chat fields and note actions are laid out rather than pasted together (190.9659ms)
+  AssertionError [ERR_ASSERTION]: shared note field and version need 8px of real layout separation: {"a":{"x":397,"y":653.4375,"right":1028,"bottom":768.375,"width":631,"height":114.9375},"b":{"x":397,"y":773.375,"right":465.15625,"bottom":793.375,"width":68.15625,"height":20}}
+      at separate (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/typography-spacing-browser.test.ts:12:9)
+      at TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/typography-spacing-browser.test.ts:124:6)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/typography-spacing-browser.test.ts:111:3)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at apps\webui\test\typography-spacing-browser.test.ts:142:11
+✖ shortcut and palette direction hints use real SVG paths (17.2733ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  0 !== 3
+  
+      at TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/typography-spacing-browser.test.ts:147:12)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/typography-spacing-browser.test.ts:142:3)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 3,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

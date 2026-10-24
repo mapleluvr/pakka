@@ -4,6 +4,7 @@
 
 | 核对对象                       | 记录                                                                                                         |
 | ------------------------------ | ------------------------------------------------------------------------------------------------------------ |
+| WebUI 排版、SVG 与焦点         | [排版整检记录](WEBUI-TYPOGRAPHY-SVG.md)                                                                      |
 | WebUI Conversation/composer P0 | [P0 记录](WEBUI-INTERACTION-P0.md)                                                                           |
 | Devin 接入 R2、固定候选 004    | [R2 记录](DEVIN-FRONTEND-R2.md)                                                                              |
 | MAS Board r1 实现和后续专项    | [MAS 记录](MAS-BOARD-R1.md)                                                                                  |

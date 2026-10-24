@@ -1,0 +1,40 @@
+▶ composer focus follows the rounded outer card for pointer and keyboard input
+  ✔ home 1440px pointer and Tab (162.1836ms)
+  ✔ conversation 1440px pointer and Tab (162.5307ms)
+  ✔ home 390px pointer and Tab (606.4305ms)
+  ✔ conversation 390px pointer and Tab (549.2305ms)
+✔ composer focus follows the rounded outer card for pointer and keyboard input (2903.0656ms)
+✔ Devin palette: keyboard/search and extension settings preserve the dialog handoff on desktop and phone (1973.2902ms)
+✔ Devin frontend: home inherits the selected model; responsive navigation preserves explicit native input (4393.8296ms)
+✔ shared directional and keyboard icons are decorative SVG paths, not font glyphs (0.8177ms)
+✔ shipped core, bundled contribution and MAS direction/shortcut marks contain no Unicode icon substitutes (10.3612ms)
+▶ WebUI typography and input accessibility
+  ✔ configuration text follows a larger root font (25.9865ms)
+  ✔ mobile configuration fields have readable type and touch targets (235.6661ms)
+  ✔ message input keeps readable mobile type (23.4212ms)
+  ✔ message input has a visible keyboard focus indicator (27.0757ms)
+✔ WebUI typography and input accessibility (1885.642ms)
+▶ WebUI compound labels, settings forms and graphical keyboard hints remain readable
+  ✔ owned navigation titles use Title Case (2.9863ms)
+  ✔ model primary and profile have distinct rows at 1440x900 (135.3387ms)
+  ✔ model primary and profile have distinct rows at 360x600 (308.6742ms)
+  ✔ model primary and profile have distinct rows at 390x650 (117.4409ms)
+  ✔ model primary and profile have distinct rows at 390x844 (64.5045ms)
+  ✔ private credentials keep labels, password input and actions separate at every viewport and larger text (560.2134ms)
+  ✔ model identities and metadata also fit with the actual 20px reading preference (144.5569ms)
+  ✔ Conversation and Fork fields have gaps and subordinate section headings (95.5859ms)
+  ✔ Team metadata, chat fields and note actions are laid out rather than pasted together (463.6093ms)
+  ✔ long names and roles remain readable in People (344.0287ms)
+  ✔ shortcut and palette direction hints use real SVG paths (17.8587ms)
+  ✔ public Field/Notice/Button consumers retain spacing without private host styles (362.7809ms)
+✔ WebUI compound labels, settings forms and graphical keyboard hints remain readable (4049.9598ms)
+ℹ {"publicWidth":1440,"label":{"x":300,"y":46.71875,"right":1440,"bottom":74.71875,"width":1140,"height":28},"field":{"x":300,"y":80.71875,"right":1440,"bottom":126.71875,"width":1140,"height":46},"copy":{"x":300,"y":141.71875,"right":870.953125,"bottom":165.71875,"width":570.953125,"height":24},"action":{"x":300,"y":176.71875,"right":381.25,"bottom":220.71875,"width":81.25,"height":44}}
+ℹ {"publicWidth":360,"label":{"x":0,"y":90.71875,"right":360,"bottom":118.71875,"width":360,"height":28},"field":{"x":0,"y":124.71875,"right":360,"bottom":170.71875,"width":360,"height":46},"copy":{"x":0,"y":185.71875,"right":346.25,"bottom":239.71875,"width":346.25,"height":54},"action":{"x":0,"y":250.71875,"right":81.25,"bottom":294.71875,"width":81.25,"height":44}}
+ℹ tests 27
+ℹ suites 0
+ℹ pass 27
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 5415.7967

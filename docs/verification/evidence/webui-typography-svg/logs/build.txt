@@ -1,0 +1,41 @@
+
+> pakka-workspace@0.1.0 build
+> npm run build --workspaces && npm run build:webui --workspace=@pakka/mas-devpack
+
+
+> @pakka/protocol@0.1.0 build
+> tsc -p tsconfig.json
+
+
+> @pakka/agent@0.7.0 build
+> node ../../scripts/verify-durable-patch.mjs 1.4.0-pakka.1 && node -e "require('node:fs').rmSync('dist', { recursive: true, force: true })" && tsc -p tsconfig.json
+
+Verified pi-durable 1.4.0-pakka.1 (7fd9f3310dfa003a9077139a25faf93567922a065461fa3767dd5a1066efa891)
+
+> @pakka/mas@0.4.0 build
+> tsc -p tsconfig.json
+
+
+> @pakka/mas-devpack@0.2.0 build
+> tsc -p tsconfig.json
+
+
+> @pakka/client@0.1.0 build
+> tsc -p tsconfig.json
+
+
+> @pakka/cli@0.1.0 build
+> tsc -p tsconfig.json
+
+
+> @pakka/server@0.5.0 build
+> tsc -p tsconfig.json
+
+
+> @pakka/webui@0.1.0 build
+> tsc -p tsconfig.json
+
+
+> @pakka/mas-devpack@0.2.0 build:webui
+> tsc -p tsconfig.webui.json && node scripts/write-manifest.mjs
+

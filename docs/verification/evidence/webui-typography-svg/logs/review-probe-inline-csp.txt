@@ -1,0 +1,18 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+'6px 10px' !== '4px'
+
+    at file:///D:/Projects/pakka-wt/webui-p0/docs/.temp/typography-icons/review-claims.ts:44:9 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: '6px 10px',
+  expected: '4px',
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.18.0

@@ -62,8 +62,9 @@
 - [x] Dictate 采用 SVG microphone/stop 与 44×44px 命中区，回归浏览器识别生命周期和仅改草稿/显式 Send。
 - [x] 补公共原语与 Memory/Webhooks/Scheduled Inputs 的默认排版，真实消费者验证间距和控件外观。
 - [x] 根据用户截图复现内部直角蓝框，将指示移至外层圆角卡片；桌面/手机实际 pointer/Tab 回归通过，保留键盘可见性。
-- [ ] 直接检查前后截图、运行受影响测试及固定快照门禁；独立评审/GUI 按实有条件记录，不沿用旧 SHA 的视觉结论。
-- [ ] 同步 state、design、delta、changes、验证记录与预览；提交可恢复的完整候选。
+- [x] 直接检查前后截图、运行受影响测试及固定快照开发门禁；产品 005544b、测试补正 75e0c97 的真实浏览器矩阵、27/27 定向及全量 638/636 pass/0 fail/2 skip 已通过；保留原全量 4 fail 和五行测试补正，未外推旧 SHA 的视觉结论。
+- [ ] 指定独立双评及桌面 GUI 验收：A 已完成，A-1 已补正，其余意见与监督者的实测争议均保留；B 指定模型未注册、agent-workspace-linux 不可用，最终验收保持 BLOCKED。
+- [x] 同步 state、design、delta、changes、验证记录与预览；提交可恢复的完整候选。
 
 ### 4.3 Session / Conversation 创建方向（2026-10-24）
 

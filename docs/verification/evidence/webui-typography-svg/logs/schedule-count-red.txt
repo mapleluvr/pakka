@@ -1,0 +1,25 @@
+✖ WebUI automation panel: actual human schedules native work, leaving the interface keeps it alive, a viewer is read-only and cancel fences delivery (3434.2379ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4349.92
+
+✖ failing tests:
+
+test at apps\webui\test\schedules-browser.test.ts:12:1
+✖ WebUI automation panel: actual human schedules native work, leaving the interface keeps it alive, a viewer is read-only and cancel fences delivery (3434.2379ms)
+  AssertionError [ERR_ASSERTION]: native schedule counts and their label remain readable, not concatenated
+      at TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/schedules-browser.test.ts:79:11)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'Due 2026/10/25 01:21:17 · 1/1admitted',
+    expected: / · 1\/1 admitted$/u,
+    operator: 'match',
+    diff: 'simple'
+  }

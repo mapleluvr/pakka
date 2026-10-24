@@ -1,0 +1,10 @@
+{
+  "origin": "http://127.0.0.1:45002",
+  "productCommit": "005544b096a62dacc5c0e7b6920320416ad89156",
+  "httpStatus": 200,
+  "outerFocus": true,
+  "innerFocusRemoved": true,
+  "svgMicrophone": true,
+  "externalModelCalls": 0,
+  "oldPreviewPreserved": "http://127.0.0.1:45001"
+}

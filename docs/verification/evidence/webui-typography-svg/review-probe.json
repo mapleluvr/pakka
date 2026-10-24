@@ -1,0 +1,31 @@
+{
+  "snapshot": "75e0c97ebf6880785938d87bf36247536875167b",
+  "operation": "real public extension install, authentication, navigation and CSS measurement",
+  "measured": {
+    "classes": [
+      "button",
+      "pocket-extension-button",
+      "review-custom"
+    ],
+    "padding": "4px",
+    "minHeight": "20px",
+    "borderWidth": "3px",
+    "borderColor": "rgb(11, 22, 33)",
+    "hidden": {
+      "position": "absolute",
+      "width": "1px",
+      "height": "1px",
+      "clip": "rect(0px, 0px, 0px, 0px)"
+    },
+    "stylesheets": [
+      "/reference.css",
+      "/elements.css",
+      "/pocket/extensions/assets/review-consumer/6d6f6f485e94a8101f588e52007e8ec8b132639c3bea3b67c4a42f9c80dc8abb-ffa636aa-88a6-4d3f-b929-3da097df9a01/probe.css"
+    ]
+  },
+  "providerRequests": 0,
+  "errors": 0,
+  "limitations": [
+    "Host utility checked through an ordinary extension; standalone MAS embedding is not claimed or tested."
+  ]
+}

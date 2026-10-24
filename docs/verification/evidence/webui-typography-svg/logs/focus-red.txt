@@ -1,0 +1,74 @@
+▶ composer focus follows the rounded outer card for pointer and keyboard input
+  ✖ home 1440px pointer and Tab (71.8489ms)
+  ✖ conversation 1440px pointer and Tab (82.9639ms)
+  ✖ home 390px pointer and Tab (1.2923ms)
+  ✖ conversation 390px pointer and Tab (0.5097ms)
+✖ composer focus follows the rounded outer card for pointer and keyboard input (1162.8628ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 0
+ℹ fail 5
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2073.7197
+
+✖ failing tests:
+
+test at apps\webui\test\composer-focus-browser.test.ts:42:13
+✖ home 1440px pointer and Tab (71.8489ms)
+  AssertionError [ERR_ASSERTION]: the internal surface must not draw the rectangular blue outline
+  
+  2 !== 0
+  
+      at TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/composer-focus-browser.test.ts:62:13)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/composer-focus-browser.test.ts:42:5)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at apps\webui\test\composer-focus-browser.test.ts:42:13
+✖ conversation 1440px pointer and Tab (82.9639ms)
+  AssertionError [ERR_ASSERTION]: the internal surface must not draw the rectangular blue outline
+  
+  2 !== 0
+  
+      at TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/composer-focus-browser.test.ts:62:13)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/composer-focus-browser.test.ts:42:5)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at apps\webui\test\composer-focus-browser.test.ts:42:13
+✖ home 390px pointer and Tab (1.2923ms)
+  Error: Browser control not interactable: [aria-label="Toggle conversations"]
+      at Object.click (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/browser.ts:342:13)
+      at async TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/composer-focus-browser.test.ts:52:8)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/composer-focus-browser.test.ts:42:5)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3)
+
+test at apps\webui\test\composer-focus-browser.test.ts:42:13
+✖ conversation 390px pointer and Tab (0.5097ms)
+  Error: Browser control not interactable: [aria-label="Toggle conversations"]
+      at Object.click (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/browser.ts:342:13)
+      at async TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/composer-focus-browser.test.ts:45:8)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/composer-focus-browser.test.ts:42:5)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3)

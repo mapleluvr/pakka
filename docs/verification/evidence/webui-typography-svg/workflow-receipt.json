@@ -1,0 +1,57 @@
+{
+  "version": 1,
+  "workflowRunId": "b6e7361d-3bb7-4dc8-8321-443ccdcf921c",
+  "state": "failed",
+  "createdAt": 1792865202865,
+  "entries": {
+    "a-first-review": {
+      "key": "a-first-review",
+      "agent": "reviewer",
+      "requestedContext": "fresh",
+      "resolvedContext": "fresh",
+      "continuation": {
+        "runIds": [
+          "041e4e82-77ee-4ef3-9317-e259a4a136f2"
+        ]
+      },
+      "latestRunId": "041e4e82-77ee-4ef3-9317-e259a4a136f2",
+      "resumability": {
+        "state": "resumable"
+      }
+    },
+    "b-first-challenge": {
+      "key": "b-first-challenge",
+      "requestedContext": "fresh",
+      "resolvedContext": "fresh",
+      "continuation": {
+        "runIds": []
+      },
+      "resumability": {
+        "state": "not-resumable",
+        "reason": "child produced no run id"
+      }
+    }
+  },
+  "argsDigest": "c87f063ce3870d9e1a7bc9eba51c37dd1f94e840854819df256832a99c145f7c",
+  "workflowChildren": {
+    "version": 1,
+    "parentToolCallId": "call_zBlVf0SbiGqvFJkMhUkPtkO4|fc_0efe4bc63da3fa7a016adcef40040087d28834fb5684cd475f",
+    "workflowRunId": "b6e7361d-3bb7-4dc8-8321-443ccdcf921c",
+    "inventoryComplete": true,
+    "workflowState": "failed",
+    "children": [
+      {
+        "childId": "a-first-review",
+        "state": "completed",
+        "runId": "041e4e82-77ee-4ef3-9317-e259a4a136f2",
+        "agent": "reviewer",
+        "sessionName": "reviewer: ## Review target Review frozen commit 005544b096a62dacc5c...",
+        "model": "Mapleluv-Main/gemini-3.8-flash-high:high"
+      },
+      {
+        "childId": "b-first-challenge",
+        "state": "failed"
+      }
+    ]
+  }
+}

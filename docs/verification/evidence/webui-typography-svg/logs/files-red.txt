@@ -1,0 +1,34 @@
+✖ WebUI files browser: public extension performs actual edits upload diff branch/worktree effects without hidden model input (1501.5816ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2557.7062
+
+✖ failing tests:
+
+test at apps\webui\test\files-browser.test.ts:19:1
+✖ WebUI files browser: public extension performs actual edits upload diff branch/worktree effects without hidden model input (1501.5816ms)
+  AssertionError [ERR_ASSERTION]: file contribution controls retain their theme border and actual enlarged reading preference
+  + actual - expected
+  
+    {
+  +   border: 'none',
+  +   scales: false
+  -   border: 'solid',
+  -   scales: true
+    }
+  
+      at TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/files-browser.test.ts:81:11)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: { border: 'none', scales: false },
+    expected: { border: 'solid', scales: true },
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
