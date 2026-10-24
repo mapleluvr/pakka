@@ -437,6 +437,10 @@ test(
 				{ count: 1, open: true, same: true },
 			);
 			tool.resolve();
+			// Receipt RPC and transcript SSE are independent; done does not order the DOM update.
+			await page.wait(
+				'document.querySelector("[data-call-id=call-partial] [data-tool-output]")?.textContent === "PARTIAL-RESULT"',
+			);
 			await page.wait('document.querySelector(".pocket-receipt")?.textContent.startsWith("done")');
 			assert.equal(
 				await page.evaluate(

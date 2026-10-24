@@ -23,4 +23,6 @@ Kairos 先前 r5 报告未覆盖 receipt 分支，不能抵消 A-1；其后已�
 - [旧产品代码上的四条 RED](5f43d9d/followup-red.txt)：验收 worktree 固定原 SHA，仅覆盖新测试文件后运行；4 tests/0 pass/4 fail/exit 1。结束后恢复测试文件，产品代码及验收树均未遗留改动。这不是旧 SHA 原测试集失败，而是新回归揭示旧代码缺陷。
 - 原 SHA 独立全量：616 tests/614 pass/0 fail/2 skip/exit 0，见 [原始输出](5f43d9d/full-suite.txt)。两个 skip 为既有 Windows/POSIX 条件测试；绿色旧集并未覆盖后来找到的问题。
 - 修复后工作树：A-1 相关 9/9；A-3/A-4 真实新用例 2/2。固定新 SHA 的全量、独立渲染和修复复验结果以 [验证主记录](../../WEBUI-INTERACTION-P0.md) 为准，不沿用旧候选结论。
+- d966f7f 的隔离全量 618/615 pass/1 fail/2 skip，失败原始输出已保留。Atnor 又独立复现 A3 测试竞态（13 次中 4 次）；仅新增真实输出 DOM 等待，保留原 done 等待及精确断言，产品文件不改。[诊断](d966f7f/receipt-before-tool-release-probe.txt) 排除了 gate 未放行时的提前 done，[五次收紧后定点](followup/a3-correct-wait-5-runs.txt) 均过；新 SHA 全量仍需实跑，不能靠定点冲绿。
+- Kairos r6 独立重造三态/partial 卡/真 throw 对照，8图+3JSON 已由父会话实读并逐 SHA-256 复制。Atnor 只读确认 A-1/A-3/A-4 的产品修复；另指出纯文本 Reasoning disclosure 连续性未覆盖，保留 P2，不外推工具卡结论。
 - GUI 的 agent-workspace-linux 入口未提供，独立 GUI 为 BLOCKED；两方 adversarial 为 FAILED/不完整。此处置不是最终验收通过。

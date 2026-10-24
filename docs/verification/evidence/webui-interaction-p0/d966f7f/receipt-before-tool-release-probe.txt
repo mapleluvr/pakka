@@ -1,0 +1,52 @@
+Diagnostic only: product at d966f7fe64bdd9d5651606609b1b6989c670df1e; test temporarily waits for receipt.done before releasing the tool gate. This rejected the early-native-done hypothesis. The diagnostic was removed; it is not the acceptance test.
+
+✖ WebUI transcript: an expanded streamed tool call survives its first committed entry (9088.4536ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 9920.4347
+
+✖ failing tests:
+
+test at apps\webui\test\transcript-parts-browser.test.ts:319:1
+✖ WebUI transcript: an expanded streamed tool call survives its first committed entry (9088.4536ms)
+  Error: Browser condition deadline: document.querySelector(".pocket-receipt")?.textContent.startsWith("done"): Operator
+  New session
+  Ctrl ⇧ O
+  Commands & extensions
+  Sessions
+  Partial tool
+  Recent
+  ADMIN
+  Partial tool
+  C:\Users\Administrator\AppData\Local\Temp\pakka-integration-G13fXe\workspace
+  ·
+  Working
+  You
+  
+  STREAM-A-CALL
+  
+  Use as draft
+  Agent
+  partial_toolrunning
+  {}
+  
+  This turn is generating: steer it, or wait for it to finish.
+  
+  Message
+  Prompt
+  local-model
+  Dictate
+  Stop
+  
+  Browser speech recognition is provided by this browser. Review the draft before sending.
+  
+  placed · catalog-c591
+      at Object.wait (file:///D:/Projects/pakka-wt/webui-p0-acceptance/apps/webui/test/browser.ts:362:12)
+      at async TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0-acceptance/apps/webui/test/transcript-parts-browser.test.ts:439:4)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3)

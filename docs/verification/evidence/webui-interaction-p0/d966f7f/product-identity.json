@@ -1,0 +1,29 @@
+{
+  "productCandidate": "d966f7fe64bdd9d5651606609b1b6989c670df1e",
+  "peer": "Kairos",
+  "peerReport": "intercom seq36/37, 2026-10-24",
+  "parentVerifiedCopyDigests": true,
+  "files": [
+    {
+      "path": "apps\\webui\\web\\app.js",
+      "sha256": "0A910A9295EC3FB33BFAFE5A346474AD2DF6C2BF457A0F4BB09A7F8053FE84B1",
+      "bytes": 41319
+    },
+    {
+      "path": "apps\\webui\\web\\message-parts.js",
+      "sha256": "836FF86DD2C0042E518D4A7E8A325A6140B9F6DB20E5FBA3D11A93DB6FD17A6C",
+      "bytes": 1625
+    },
+    {
+      "path": "apps\\webui\\web\\elements.css",
+      "sha256": "21B5AD2E2B9964E064527930159A031FA5710BBE5547F4AF22002306221FC65B",
+      "bytes": 17125
+    },
+    {
+      "path": "apps\\webui\\web\\native-composer.js",
+      "sha256": "9FACB9BC6CB5BA0B9D83B03A70DEC20EC7FFF47046CF18ACB6AAF05E6B2D9488",
+      "bytes": 7554
+    }
+  ],
+  "scope": "r6 product observations, not GUI or full-suite approval"
+}

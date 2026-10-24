@@ -1,0 +1,48 @@
+{
+  "section": "receipt",
+  "startedAt": "2026-10-24T14:44:44.892Z",
+  "blocked": {
+    "status": "unanswered",
+    "text": "unanswered · catalog-868a blocked Not delivered: policy refused this input. Edit it and send again.",
+    "badgeText": "blocked",
+    "badgeAttr": "blocked",
+    "badgePresent": true,
+    "guidance": "Not delivered: policy refused this input. Edit it and send again.",
+    "hasNonAscii": false,
+    "retryButtons": []
+  },
+  "queued": {
+    "status": "queued",
+    "text": "queued · catalog-b38c Withdraw original input",
+    "badgeText": null,
+    "badgeAttr": null,
+    "badgePresent": false,
+    "guidance": null,
+    "hasNonAscii": false,
+    "retryButtons": [
+      "Withdraw original input"
+    ]
+  },
+  "withdrawn": {
+    "status": "unanswered",
+    "text": "unanswered · catalog-b38c withdrawn Withdrawn before delivery. Send again only when ready.",
+    "badgeText": "withdrawn",
+    "badgeAttr": "aborted",
+    "badgePresent": true,
+    "guidance": "Withdrawn before delivery. Send again only when ready.",
+    "hasNonAscii": false,
+    "retryButtons": []
+  },
+  "withdrawnProviderRequests": 1,
+  "modelError": {
+    "status": "unanswered",
+    "text": "unanswered · catalog-3d3a not delivered Not delivered. Review the input before sending again.",
+    "badgeText": "not delivered",
+    "badgeAttr": "model_error",
+    "badgePresent": true,
+    "guidance": "Not delivered. Review the input before sending again.",
+    "hasNonAscii": false,
+    "retryButtons": []
+  },
+  "finishedAt": "2026-10-24T14:44:48.239Z"
+}

@@ -1,0 +1,21 @@
+Checking formatting...
+All matched files use Prettier code style!
+✔ WebUI failed input: an unavailable recipient refuses new admission while its original receipt and spent attempts remain (253.9103ms)
+✔ WebUI failed input browser: a known refusal explains how to continue without offering a meaningless retry or replaying the original (1311.6032ms)
+✔ WebUI transcript: one real tool keeps its identity, expanded card and result across the live/committed handoff (1084.8304ms)
+✔ WebUI transcript: a native tool error remains identifiable in its collapsed result card (908.8597ms)
+✔ WebUI transcript: an expanded streamed tool call survives its first committed entry (1076.9886ms)
+✔ WebUI transcript: valid image parts and a truncated tool declaration remain visible through real reopen and paging (852.7805ms)
+✔ WebUI transcript: real chunked generation exposes a live Streaming message, then clears it (1001.1621ms)
+✔ WebUI transcript: inherited tool results do not swallow a different live call with the same provider id (929.295ms)
+✔ WebUI receipt: a known policy refusal is blocked, not mislabeled as a permission denial (731.1861ms)
+✔ WebUI receipt: a real host unknown is needs review through a registered Conversation source (704.5416ms)
+✔ WebUI receipt: withdrawing queued input is not described as a policy refusal (857.1426ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 11
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 9162.499

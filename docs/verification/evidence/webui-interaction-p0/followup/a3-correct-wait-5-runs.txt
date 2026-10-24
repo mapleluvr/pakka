@@ -1,0 +1,50 @@
+=== Post-fix A3 RUN 1 / 5 ===
+✔ WebUI transcript: an expanded streamed tool call survives its first committed entry (1164.1741ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2081.4329
+=== Post-fix A3 RUN 2 / 5 ===
+✔ WebUI transcript: an expanded streamed tool call survives its first committed entry (1264.9274ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2212.3305
+=== Post-fix A3 RUN 3 / 5 ===
+✔ WebUI transcript: an expanded streamed tool call survives its first committed entry (1355.4748ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2434.1747
+=== Post-fix A3 RUN 4 / 5 ===
+✔ WebUI transcript: an expanded streamed tool call survives its first committed entry (1368.5806ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2301.0955
+=== Post-fix A3 RUN 5 / 5 ===
+✔ WebUI transcript: an expanded streamed tool call survives its first committed entry (1161.855ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2214.2559

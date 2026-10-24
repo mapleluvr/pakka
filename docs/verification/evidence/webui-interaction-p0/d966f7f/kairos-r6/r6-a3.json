@@ -1,0 +1,103 @@
+{
+  "section": "a3-partial-toolcall",
+  "startedAt": "2026-10-24T14:47:14.846Z",
+  "endpointRequestsStage1": 1,
+  "livePartial": {
+    "ids": [
+      "call-live"
+    ],
+    "cardCount": 1,
+    "marker": null,
+    "open": false,
+    "status": null,
+    "parentTag": "DIV",
+    "parentClass": "message-content",
+    "ancestorChain": [
+      "DIV",
+      "ARTICLE[data-live]",
+      "SECTION",
+      "DIV",
+      "DIV"
+    ],
+    "liveArticles": 1,
+    "entrySections": 2,
+    "outputText": null,
+    "resultRoleBlocks": 0,
+    "summaryText": "blocked_tool"
+  },
+  "livePartialExpanded": {
+    "ids": [
+      "call-live"
+    ],
+    "cardCount": 1,
+    "marker": "live",
+    "open": true,
+    "status": null,
+    "parentTag": "DIV",
+    "parentClass": "message-content",
+    "ancestorChain": [
+      "DIV",
+      "ARTICLE[data-live]",
+      "SECTION",
+      "DIV",
+      "DIV"
+    ],
+    "liveArticles": 1,
+    "entrySections": 2,
+    "outputText": null,
+    "resultRoleBlocks": 0,
+    "summaryText": "blocked_tool"
+  },
+  "endpointRequestsStage2": 1,
+  "afterCommit": {
+    "ids": [
+      "call-live"
+    ],
+    "cardCount": 1,
+    "marker": "live",
+    "open": true,
+    "status": "running",
+    "parentTag": "DIV",
+    "parentClass": "message-content",
+    "ancestorChain": [
+      "DIV",
+      "ARTICLE",
+      "SECTION[data-entry]",
+      "DIV",
+      "DIV"
+    ],
+    "liveArticles": 0,
+    "entrySections": 3,
+    "outputText": null,
+    "resultRoleBlocks": 0,
+    "summaryText": "blocked_toolrunning"
+  },
+  "afterResult": {
+    "ids": [
+      "call-live"
+    ],
+    "cardCount": 1,
+    "marker": "live",
+    "open": true,
+    "status": null,
+    "parentTag": "DIV",
+    "parentClass": "message-content",
+    "ancestorChain": [
+      "DIV",
+      "ARTICLE",
+      "SECTION[data-entry]",
+      "DIV",
+      "DIV"
+    ],
+    "liveArticles": 0,
+    "entrySections": 5,
+    "outputText": "A3-TOOL-OUTPUT",
+    "resultRoleBlocks": 0,
+    "summaryText": "blocked_toolA3-TOOL-OUTPUT"
+  },
+  "endpointRequestsStage3": 2,
+  "runtimeRequestRecords": 0,
+  "followUpVisible": true,
+  "errors": 0,
+  "finishedAt": "2026-10-24T14:47:16.521Z"
+}

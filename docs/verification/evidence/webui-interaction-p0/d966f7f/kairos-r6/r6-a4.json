@@ -1,0 +1,69 @@
+{
+  "section": "a4-tool-error",
+  "startedAt": "2026-10-24T14:47:17.531Z",
+  "throwCase": {
+    "label": "throw",
+    "toolName": "throwing_tool",
+    "stage3": {
+      "cardCount": 1,
+      "ids": [
+        "call-a4"
+      ],
+      "dataToolError": "true",
+      "errorMarkerPresent": true,
+      "errorMarkerText": "error",
+      "errorMarkerColor": "rgb(241, 139, 136)",
+      "errorMarkerFontSize": "10px",
+      "statusPillPresent": false,
+      "statusPillColor": null,
+      "statusPillText": null,
+      "summaryTag": "SUMMARY",
+      "cardOpen": false,
+      "preview": "<harness>",
+      "output": "<harness>\n[error] A4-TOOL-THREW\n</harness>",
+      "outputPresent": true,
+      "errorClass": []
+    },
+    "endpointRequests": 2,
+    "followUpVisible": true,
+    "collapsed": {
+      "open": false,
+      "summaryText": "throwing_toolerror<harness>",
+      "errorMarkerVisibleInSummary": true
+    },
+    "errors": 0
+  },
+  "deniedReturnCase": {
+    "label": "denied-return",
+    "toolName": "denied_tool",
+    "stage3": {
+      "cardCount": 1,
+      "ids": [
+        "call-a4"
+      ],
+      "dataToolError": null,
+      "errorMarkerPresent": false,
+      "errorMarkerText": null,
+      "errorMarkerColor": null,
+      "errorMarkerFontSize": null,
+      "statusPillPresent": false,
+      "statusPillColor": null,
+      "statusPillText": null,
+      "summaryTag": "SUMMARY",
+      "cardOpen": false,
+      "preview": "denied: approval policy refused this action",
+      "output": "denied: approval policy refused this action",
+      "outputPresent": true,
+      "errorClass": []
+    },
+    "endpointRequests": 2,
+    "followUpVisible": true,
+    "collapsed": {
+      "open": false,
+      "summaryText": "denied_tooldenied: approval policy refused this action",
+      "errorMarkerVisibleInSummary": false
+    },
+    "errors": 0
+  },
+  "finishedAt": "2026-10-24T14:47:20.790Z"
+}

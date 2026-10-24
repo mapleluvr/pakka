@@ -2,7 +2,7 @@
 
 ## 候选与范围
 
-- 实施分支：`feat/webui-interaction-p0`；基线 `5295c25`；最终完整候选 SHA 在冻结后记录于此。
+- 实施分支：`feat/webui-interaction-p0`；基线 `5295c25`；产品修复候选 `d966f7fe64bdd9d5651606609b1b6989c670df1e`。后续仅测试/证据提交与门禁结果见下方冻结记录。
 - 变更归属：[improve-webui-navigation-and-local-recovery](../../openspec/changes/improve-webui-navigation-and-local-recovery/) 的 [P0 tasks](../../openspec/changes/improve-webui-navigation-and-local-recovery/tasks.md#41-conversationcomposer-状态可观测性-p02026-10-24)、[设计第 6 节](../../openspec/changes/improve-webui-navigation-and-local-recovery/design.md#61-2026-10-24-conversation-状态可观测性批次) 和 [frontend delta](../../openspec/changes/improve-webui-navigation-and-local-recovery/specs/devin-frontend/spec.md)。[变更摘要](../changes/webui-navigation-and-local-recovery.md) 与 [frontend state](../state/frontend.md) 同步维护。
 - 本切片不改 `reference.css`，不实现 Sessions 行运行状态、Plan mode 或 Goals/Done when。恢复入口和设置路由仍是各自待确认方案。
 
@@ -15,9 +15,9 @@
 - `PocketInputReceipt` 原先丢失 catalog 已有的 `reason`；协议 schema 与 catalog/MAS source 透传已补齐。浏览器只依据 DTO reason 选择文案。reason 是自由文本而非枚举，只有精确 blocked/aborted 字面量分类，其他整句说明或缺省值一律中性 not delivered；缺省属性不造 unspecified。
 - 旧候选独立全量虽通过，A-1/A-3/A-4 仍被真实新回归揭露：回执 badge 与正文不一致、partial toolCall 初次落盘丢展开态、原生工具错误折叠后无明确标识。已先 RED 再修复，完整意见、反驳与失败 workflow 见 [逐项处置](evidence/webui-interaction-p0/review-disposition.md)。
 
-## 当前直接验证
+## 最初工作树直接验证
 
-以下数字属于执行时的工作树，不代替最终固定 SHA 的独立复核：
+以下为最初七条用例的历史记录，不代替新增回归或最终固定 SHA 的独立复核：
 
 | 命令/范围                                                                                        | 结果                                                                                                  |
 | ------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------- |
@@ -27,7 +27,7 @@
 | `openspec validate improve-webui-navigation-and-local-recovery --strict --no-interactive --json` | valid=true，issues=[]。                                                                               |
 | 新用例全量后的最终检查                                                                           | 见下方冻结记录，未完成前不得宣称最终候选通过。                                                        |
 
-七条新用例分别覆盖：
+最初七条用例分别覆盖：
 
 1. 真实阻塞工具的 live/持久声明共存、跨转换单卡、同 DOM 节点和展开态、结果归位及 Streaming 不误显。
 2. 合法 user AVIF 和 tool-result AVIF 的可见中性占位、支持图片保留、真实截断窗口的孤儿结果卡。
@@ -37,12 +37,15 @@
 6. 通过注册的公开 Conversation source 消费真实 Host unknown receipt，显示 needs review 和先核对指引，无自动重放按钮、零 provider 调用。此用例不是主 catalog 存储故障恢复验收。
 7. 真实 queued/withdraw 的 `aborted` 指引，不误称 policy refusal，也不产生新 provider 调用。
 
+复核后新增两条真实用例：工具实际 throw 后折叠卡仍标识 error；partial toolCall 展开后第一次 AssistantEntry 提交保持同一节点及展开态。现有转录/回执文件共有九条用例。
+
 ## 未覆盖与后续边界
 
 - **P0-4 Sessions 行状态**：列表 DTO 只有 version/archived，没有 per-Conversation 运行状态；需独立协议及 server 变更，不能以 busy 猜测代替。
 - **键盘焦点恢复**：实现只在 `:focus-visible` 时回落 textarea；现有 browser harness 的键盘路径尚未提供可重复验收，保留为未覆盖。
 - **主 catalog 存储故障的浏览器 receipt 恢复**：真实故障实验只得到 HTTP generic unknown，未证明能恢复原 receipt。测试中的 unknown 是真实 Host source 回执，不得冒充主 catalog 故障修复。generic unknown 也不得以 transport request ID 冒充 receipt ID。
 - **receipt 清除时机**：本批不改既有 send 时清除策略。
+- **纯文本回合 Reasoning disclosure 连续性（P2）**：当前非工具 live/entry 的键不同，可能重挂载；未独立覆盖展开态，不把工具卡修复外推为该能力已修。
 - **tool-only busy 状态**：不显示 Streaming，因为不存在 live.message；这不是新增 live 文本不可达的借口。
 - 视觉、独立 adversarial 和最终 GUI 结论必须关联精确完整候选，不沿用旧工作树数字。
 
@@ -54,6 +57,14 @@
 
 指定 adversarial workflow 在 A 完成后因 B 模型缺失失败，未形成双方意见或讨论。A 原文及错误完整保留于 [逐项处置](evidence/webui-interaction-p0/review-disposition.md)。独立 GUI 因当前工具无 agent-workspace-linux 入口而 BLOCKED，未用 ownedBrowser 冒充指定桌面。
 
-### 复核修复候选
+### 产品修复候选 d966f7f
 
-修复已通过对应 RED/GREEN，正待冻结新 SHA 和同版本全量/独立渲染复验；不得用原候选的绿色结果替代。两方 adversarial 和指定 GUI 未通过，P0 不作最终验收通过声明。
+完整 SHA：`d966f7fe64bdd9d5651606609b1b6989c670df1e`。build、check、strict 和 30 条受影响门禁通过，见 [冻结前原始输出](evidence/webui-interaction-p0/followup/pre-freeze-checks.txt)。随后隔离 worktree 的完整运行是 **618 tests/615 pass/1 fail/2 skip/exit 1**，见 [完整失败日志](evidence/webui-interaction-p0/d966f7f/full-suite-failed.txt)，不记为全量通过。
+
+唯一失败在 A3 用例最终读取输出：测试只等 receipt.done 就断言 SSE DOM，两个通道没有这个顺序保证。Atnor 独立 13 次运行中 4 次在同一行失败；受控反证在工具 gate 未放行时保持 placed/running、等待 done 超时，排除了 native 提前 done，见 [诊断原始输出](evidence/webui-interaction-p0/d966f7f/receipt-before-tool-release-probe.txt)。修正仅新增具体输出 DOM 条件等待，保留 done 等待和精确 PARTIAL-RESULT 断言；产品代码不改。修后 [五次定点原始输出](evidence/webui-interaction-p0/followup/a3-correct-wait-5-runs.txt) 均通过，不以此替代新 SHA 全量。
+
+Kairos r6 在该 SHA 独立重造三类回执、partial 工具卡三阶段、原生 throw/正常 denied 返回对照。8 张截图与 3 份 JSON 在 [r6 证据目录](evidence/webui-interaction-p0/d966f7f/kairos-r6/)；父会话已逐图/逐 JSON 实读、逐文件 SHA-256 比对后复制。partial 卡阶段 endpoint 数为 1/1/2，保持同节点/open，工具结果归位且正常后续 generation 可见；工具错误有显式 error 文本，denied 普通返回不伪造 isError。此取证通过不代替上面的失败全量，也不代替指定 GUI。
+
+### 纯测试收紧候选
+
+产品文件不变，仅收紧 A3 等待条件；完整 SHA 与新一轮全量结果在冻结后补齐。两方 adversarial 和指定 GUI 仍未完成，P0 不作最终验收通过声明。
