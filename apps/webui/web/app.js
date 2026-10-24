@@ -18,6 +18,7 @@ import {
 } from "./conversation-configuration.js";
 import { Notifications, clearNotifications } from "./notifications.js";
 import { useDictation } from "./voice.js";
+import { describePart } from "./message-parts.js";
 import { Sheet } from "./sheet.js";
 import { ConversationSettings } from "./navigation.js";
 import { Appearance, readAppearance, applyAppearance } from "./appearance.js";
@@ -42,12 +43,88 @@ const markdown = (text) =>
 const label = (ref) => ref.profile + " · " + ref.conversationId.slice(0, 8);
 
 applyAppearance(readAppearance());
-function Message({ message, onDraft }) {
+
+// One call reaches the transcript through three carriers: the `toolCall` part (id), the
+// `toolResult` message (toolCallId) and `live.tools` (callId). A single card resolves all three
+// so a call can never appear twice, and a result whose declaration was truncated still shows.
+function ToolCard({ call, results, live, orphan, source }) {
+	const id = call.callId;
+	const key = id ? callKey(source, id) : undefined;
+	const result = key ? results?.get(key) : undefined;
+	const running = key ? live?.get(key) : undefined;
+	const status = running?.status;
+	const name = call.name ?? result?.toolName ?? "Tool";
+	// A tool result is a message like any other: its content may carry images next to text. Each
+	// part goes through the same describer, so a result never loses a part just because it is not
+	// plain text, and a supported image is shown rather than flattened into a string.
+	const resultParts = (
+		typeof result?.content === "string" ? [{ type: "text", text: result.content }] : (result?.content ?? [])
+	).map((part) => describePart(part));
+	// An empty live output is no output: treating it as present would hide the result parts that
+	// arrived with the committed message.
+	const liveOutput =
+		typeof running?.output === "string" && running.output !== "" ? running.output : undefined;
+	const firstText = resultParts.find((part) => part.kind === "text")?.text;
+	const firstImage = resultParts.find((part) => part.kind === "image");
+	const firstUnrenderable = resultParts.find((part) => part.kind === "unrenderable");
+	const preview =
+		liveOutput ??
+		(firstText ||
+			(firstImage ? "Image result" : undefined) ||
+			(firstUnrenderable?.mime ? `Attachment (${firstUnrenderable.mime})` : undefined));
+	return html`<details
+		class="tool-card"
+		data-call-id=${id || undefined}
+		data-source-conversation=${source || undefined}
+		data-tool-status=${status || undefined}
+		data-tool-error=${result?.isError ? "true" : undefined}
+	>
+		<summary>
+			<span class="tool-name">${name}</span>
+			${status && html`<span class="status-pill" data-tool-pill>${status}</span>`}
+			${orphan && html`<span class="tool-orphan" data-tool-orphan>call not in this view</span>`}
+			${preview ? html`<span class="tool-preview" data-tool-preview>${preview.split("\n")[0]}</span>` : null}
+		</summary>
+		${call.arguments != null &&
+		html`<pre key="arguments" data-tool-arguments>${JSON.stringify(call.arguments, null, 2)}</pre>`}
+		${liveOutput !== undefined && html`<pre key="live-output" data-tool-output>${liveOutput}</pre>`}
+		${liveOutput === undefined &&
+		resultParts.map((part, index) => {
+			switch (part.kind) {
+				case "text":
+					return html`<pre key=${"result-" + index} data-tool-output>${part.text}</pre>`;
+				case "image":
+					return html`<img
+						key=${"result-" + index}
+						class="pocket-image"
+						alt="Tool result attachment"
+						src=${`data:${part.mime};base64,${part.data}`}
+					/>`;
+				default:
+					return html`<p
+						key=${"result-" + index}
+						class="part-unrenderable"
+						data-part-type=${part.type ?? "unknown"}
+						data-part-mime=${part.mime || undefined}
+					>
+						${part.mime
+							? `Attachment (${part.mime}) cannot be previewed here.`
+							: "This part cannot be shown here."}
+					</p>`;
+			}
+		})}
+	</details>`;
+}
+
+function Message({ message, onDraft, results, live, isLive, source }) {
 	const content =
 		typeof message.content === "string" ? [{ type: "text", text: message.content }] : message.content;
+	const parts = (content ?? []).map((part) => describePart(part));
 	return html`<article
-		class=${message.role === "user" ? "message message-user" : "message message-agent"}
+		class=${(message.role === "user" ? "message message-user" : "message message-agent") +
+		(isLive ? " message-live" : "")}
 		data-role=${message.role}
+		data-live=${isLive ? "true" : undefined}
 	>
 		<div class=${"message-avatar " + (message.role === "user" ? "user-avatar" : "agent-avatar")}>
 			<${Glyph}
@@ -65,28 +142,49 @@ function Message({ message, onDraft }) {
 							: (message.toolName ?? "Tool")}
 				</strong>
 			</div>
-			${content.map((part, i) =>
-				part.type === "text"
-					? html`<div key=${i} class="markdown" dangerouslySetInnerHTML=${{ __html: markdown(part.text) }} />`
-					: part.type === "thinking"
-						? html`<details key=${i}>
-								<summary>Reasoning</summary>
-								<pre>${part.thinking}</pre>
-							</details>`
-						: part.type === "toolCall"
-							? html`<details key=${i} class="tool-card">
-									<summary>${part.name}</summary>
-									<pre>${JSON.stringify(part.arguments, null, 2)}</pre>
-								</details>`
-							: part.type === "image" && /^image\/(png|jpeg|webp|gif)$/.test(part.mimeType)
-								? html`<img
-										key=${i}
-										class="pocket-image"
-										alt="Conversation attachment"
-										src=${"data:" + part.mimeType + ";base64," + part.data}
-									/>`
-								: null,
-			)}
+			${parts.map((part, i) => {
+				switch (part.kind) {
+					case "text":
+						return html`<div
+							key=${i}
+							class="markdown"
+							dangerouslySetInnerHTML=${{ __html: markdown(part.text) }}
+						/>`;
+					case "thinking":
+						return html`<details key=${i}>
+							<summary>Reasoning</summary>
+							<pre>${part.text}</pre>
+						</details>`;
+					case "toolCall":
+						return html`<${ToolCard}
+							key=${i}
+							call=${part}
+							results=${results}
+							live=${live}
+							source=${source}
+						/>`;
+					case "image":
+						return html`<img
+							key=${i}
+							class="pocket-image"
+							alt="Conversation attachment"
+							src=${"data:" + part.mime + ";base64," + part.data}
+						/>`;
+					default:
+						// A part that passed protocol validation but cannot be shown must still say
+						// so: rendering nothing is exactly the fail-open shape this replaces.
+						return html`<p
+							key=${i}
+							class="part-unrenderable"
+							data-part-type=${part.type ?? "unknown"}
+							data-part-mime=${part.mime || undefined}
+						>
+							${part.mime
+								? "Attachment (" + part.mime + ") cannot be previewed here."
+								: "This part cannot be shown here."}
+						</p>`;
+				}
+			})}
 			${message.role === "assistant" &&
 			message.errorMessage &&
 			html`<p class="pocket-error" data-message-error>${message.errorMessage}</p>`}
@@ -107,6 +205,23 @@ function Message({ message, onDraft }) {
 		</div>
 	</article>`;
 }
+// A tool call is identified by its Conversation and its call id: an inherited (fork) result and a
+// live call may legitimately share an id across Conversations, and collapsing them would attach
+// one Conversation's output to another's call.
+const callKey = (conversationId, callId) => JSON.stringify([conversationId, callId]);
+const entrySource = (entry) => entry.sourceConversationId ?? entry.conversationId;
+// Receipt wording is driven by the DTO, never inferred: a refusal, a withdrawal and an
+// undelivered input are all `unanswered`, and only the native reason tells them apart.
+const receiptGuidance = (receipt) =>
+	receipt.status === "unknown"
+		? "Result unknown: check before resending. Do not resend blindly."
+		: receipt.status === "unanswered"
+			? receipt.reason === "blocked"
+				? "Not delivered: policy refused this input. Edit it and send again."
+				: receipt.reason === "aborted"
+					? "Withdrawn before delivery. Send again only when ready."
+					: "Not delivered. Review the input before sending again."
+			: null;
 function App() {
 	const [person, setPerson] = useState(null),
 		[refs, setRefs] = useState([]),
@@ -550,6 +665,24 @@ function App() {
 	const allEntries = [
 		...new Map([...historyEntries, ...(view?.entries ?? [])].map((entry) => [entry.id, entry])).values(),
 	];
+	// One call can arrive as a `toolCall` part (id), a `toolResult` message (toolCallId) and a
+	// live tool entry (callId). Index all three before rendering so each call resolves to exactly
+	// one card, and so a result whose declaration was truncated is still shown rather than lost.
+	const toolResults = new Map(),
+		declaredCalls = new Set();
+	for (const entry of allEntries) {
+		const source = entrySource(entry);
+		for (const message of entry.messages) {
+			if (message.role === "toolResult" && message.toolCallId)
+				toolResults.set(callKey(source, message.toolCallId), message);
+			if (Array.isArray(message.content))
+				for (const part of message.content)
+					if (part && part.type === "toolCall" && part.id) declaredCalls.add(callKey(source, part.id));
+		}
+	}
+	const liveTools = new Map(
+		(view?.live.tools ?? []).map((tool) => [callKey(view.ref.conversationId, tool.callId), tool]),
+	);
 	const visibleEntries = allEntries.filter(
 		(entry) =>
 			!find ||
@@ -720,54 +853,100 @@ function App() {
 				</button>`}
 				${!view
 					? html`<p role="status">Connecting…</p>`
-					: visibleEntries.map(
-							(entry) =>
-								html`<section key=${entry.id} data-entry=${entry.id}>
-									${entry.display
-										? html`<aside class="tool-card">
-												<div class="tool-card-head">
-													${entry.display.kind === "chat" ? "Team chat" : "Card"}
-												</div>
-												<p>${entry.display.text}</p>
-											</aside>`
-										: entry.messages.map(
-												(message, index) =>
-													html`<${Message}
+					: visibleEntries.map((entry) => {
+							const source = entrySource(entry);
+							return html`<section key=${entry.id} data-entry=${entry.id}>
+								${entry.display
+									? html`<aside class="tool-card">
+											<div class="tool-card-head">
+												${entry.display.kind === "chat" ? "Team chat" : "Card"}
+											</div>
+											<p>${entry.display.text}</p>
+										</aside>`
+									: entry.messages.map((message, index) =>
+											message.role === "toolResult"
+												? declaredCalls.has(callKey(source, message.toolCallId))
+													? null
+													: html`<${ToolCard}
+															key=${index}
+															call=${{
+																callId: message.toolCallId,
+																name: message.toolName,
+																arguments: null,
+															}}
+															results=${toolResults}
+															live=${liveTools}
+															source=${source}
+															orphan
+														/>`
+												: html`<${Message}
 														key=${index}
 														message=${message}
 														onDraft=${canSend ? useDraft : undefined}
+														results=${toolResults}
+														live=${liveTools}
+														source=${source}
 													/>`,
-											)}
-								</section>`,
-						)}
-				${view?.live.message && html`<${Message} message=${view.live.message} />`}${view?.live.tools.map(
-					(tool) =>
-						html`<div class="tool-card">
-							<div class="tool-card-head">${tool.name} · ${tool.status}</div>
-							${tool.output && html`<pre>${tool.output}</pre>`}
-						</div>`,
-				)}
+										)}
+							</section>`;
+						})}
+				${view?.live.message &&
+				html`<${Message}
+					message=${view.live.message}
+					results=${toolResults}
+					live=${liveTools}
+					source=${view.ref.conversationId}
+					isLive
+				/>`}
+				${(view?.live.tools ?? [])
+					.filter((tool) => !declaredCalls.has(callKey(view.ref.conversationId, tool.callId)))
+					.map(
+						(tool) =>
+							html`<${ToolCard}
+								key=${tool.callId}
+								call=${{ callId: tool.callId, name: tool.name, arguments: null }}
+								results=${toolResults}
+								live=${liveTools}
+								source=${view.ref.conversationId}
+							/>`,
+					)}
+				${view?.live.busy &&
+				view.live.message &&
+				html`<div class="stream-status" data-streaming="true">
+					<span class="status-pill" role="status">Streaming</span>
+				</div>`}
 			</div>
 		</div>`}
 		composer=${html`<${NativeComposer} inputRef=${composer} draft=${draft} setDraft=${setDraft} mode=${mode} setMode=${setMode} canSend=${canSend} canDrive=${canDrive} canInput=${canInput} working=${working} view=${view} send=${send} abort=${() => void run(() => client.request({ op: "abort", target: selected }))} model=${configuration?.current?.model} canConfigure=${configuration?.canConfigure} configureModel=${() => openSheet("model")} dictation=${dictation} suggestions=${extensions.suggestions(draft, () => setDraft(""))}>
 			${
 				receipt &&
-				html`<div class="composer-annotation pocket-receipt" role="status">
-					${receipt.status} ·
-					${receipt.id.slice(0, 12)}${receipt.status === "queued" &&
+				html`<div
+					class="composer-annotation pocket-receipt"
+					role="status"
+					data-receipt-status=${receipt.status}
+				>
+					${`${receipt.status} · ${String(receipt.id).slice(0, 12)}`}${receipt.status === "unanswered" &&
+					html`${" "}<span class="receipt-badge" data-receipt-reason="blocked">blocked</span>${" "}<span
+							class="receipt-guidance"
+							>${receiptGuidance(receipt)}</span
+						>`}${receipt.status === "unknown" &&
+					html`${" "}<span class="receipt-badge" data-receipt-reason="unknown">needs review</span>${" "}<span
+							class="receipt-guidance"
+							>${receiptGuidance(receipt)}</span
+						>`}${receipt.status === "queued" &&
 					canSend &&
-					html`<button
-						class="pill-btn"
-						disabled=${working}
-						onClick=${() =>
-							void run(async () => {
-								const original = receipt,
-									result = await client.request({ op: "withdraw", id: original.id });
-								setReceipt((current) => (current?.id === original.id ? result.receipt : current));
-							})}
-					>
-						Withdraw original input
-					</button>`}
+					html`${" "}<button
+							class="pill-btn"
+							disabled=${working}
+							onClick=${() =>
+								void run(async () => {
+									const original = receipt,
+										result = await client.request({ op: "withdraw", id: original.id });
+									setReceipt((current) => (current?.id === original.id ? result.receipt : current));
+								})}
+						>
+							Withdraw original input
+						</button>`}
 				</div>`
 			}
 			${retry && html`<button class="pill-btn" onClick=${() => void run(() => submit(retry))}>Retry original request</button>`}

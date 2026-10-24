@@ -10,3 +10,5 @@
 - 当前映射：[frontend state](../state/frontend.md)、[webui state](../state/webui.md)、[runtime state](../state/runtime.md)；来源与实施方法见[前端开发规范](../development/FRONTEND-GUIDELINES.md)。
 
 现场认证证据、默认 10 分钟/旧会话撤销的设计理由、单 writer、平台文件保护与未知交付的取舍集中在 design，不由本摘要替代。
+
+2026-10-24 仅采用 [Conversation/composer 状态可观测性 P0](../../openspec/changes/improve-webui-navigation-and-local-recovery/design.md#61-2026-10-24-conversation-状态可观测性批次) 切片：真实 live/part 保形、按来源 Conversation 统一工具卡、禁用/停止原因及 receipt reason 指引。Sessions 行运行状态因 DTO 缺口另待协议变更，恢复入口和设置路由仍待确认。实现候选与独立复核结果见 [P0 验证记录](../verification/WEBUI-INTERACTION-P0.md)，原调查终稿与渲染核对材料保留在调查目录 `D:\Projects\TempProjects\pakka-webui-investig\`。

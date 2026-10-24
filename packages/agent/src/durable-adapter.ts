@@ -2397,9 +2397,15 @@ export class DurableAdapter {
 				total.totalTokens += value.totalTokens;
 				if (value.cost !== null) total.cost = (total.cost ?? 0) + value.cost;
 			}
-			const message = live?.generation?.message
+			let message = live?.generation?.message
 				? transcriptMessage(live.generation.message as AssistantMessage)
 				: undefined;
+			// Native pending describes an in-flight partial, not a terminal assistant outcome.
+			// Pocket uses the optional terminal reason and exposes in-flight state through live.busy.
+			if (message?.role === "assistant" && message.stopReason === "pending") {
+				const { stopReason: _pending, ...inFlight } = message;
+				message = inFlight;
+			}
 			result = {
 				ref,
 				entries: native.entries.slice(start, end).map((entry) => ({

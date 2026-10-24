@@ -102,6 +102,58 @@ button:disabled {
 	margin: 0 auto 4px;
 	padding: 0 29px;
 }
+/* A tool card that is collapsed still has to show what the call returned: the confirmation
+   must not hide behind a click. The preview is one line; the body keeps the full text. */
+.tool-card .tool-preview {
+	margin-left: 8px;
+	min-width: 0;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	font-size: 11px;
+	color: var(--muted);
+}
+.tool-card .tool-name {
+	font-weight: 500;
+}
+.tool-card .tool-orphan {
+	margin-left: 8px;
+	font-size: 11px;
+	color: var(--muted);
+}
+.tool-card[data-tool-error="true"] .tool-preview {
+	color: var(--muted);
+}
+/* A part that passed validation but cannot be shown says so in neutral language: it is a
+   statement of fact, not a warning. */
+.part-unrenderable {
+	margin: 8px 0;
+	padding: 8px 10px;
+	border: 1px solid var(--card-border);
+	border-radius: 8px;
+	font-size: 12px;
+	line-height: 18px;
+	color: var(--muted);
+}
+/* Streaming marker belongs to the message column, not to the head: it must not change the
+   head height or stretch across the list. */
+.stream-status {
+	display: flex;
+	align-self: flex-start;
+	margin: 4px 0 0;
+}
+.receipt-badge {
+	margin-left: 8px;
+	padding: 0 6px;
+	border: 1px solid var(--card-border);
+	border-radius: 6px;
+	font-size: 11px;
+}
+.receipt-guidance {
+	margin-left: 6px;
+	font-size: 11px;
+	color: var(--muted);
+}
 /* Stop shares the primary send slot while a turn is in flight. Steering stays
    available next to it, so stop must never swallow the send button. */
 /* reference.css clips the send group; the Stop hit overlay has to escape that clip to reach

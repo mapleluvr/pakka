@@ -179,6 +179,33 @@ test("WebUI protocol: human resource control selects a profile without accepting
 	assert.throws(() => decodeV1({ version: 1, requestId: "rpc", command: commands[0] }));
 });
 
+test("WebUI protocol: receipt reasons are bounded native data, not browser-inferred state", () => {
+	const response = {
+		version: 2,
+		requestId: "receipt",
+		serverId: "server-a",
+		result: {
+			kind: "receipt",
+			receipt: {
+				id: "receipt-1",
+				requestId: "input-1",
+				actorId: "owner",
+				target: ref,
+				status: "unanswered",
+				reason: "blocked",
+			},
+		},
+	};
+	assert.deepEqual(decodePocketResponse(response, "receipt"), response);
+	for (const reason of [null, 1, {}, "x".repeat(16385)])
+		assert.throws(() =>
+			decodePocketResponse(
+				{ ...response, result: { ...response.result, receipt: { ...response.result.receipt, reason } } },
+				"receipt",
+			),
+		);
+});
+
 // Cursors belong to one authorized stream/resource, not a global cross-Session revision or a serialized capability.
 test("WebUI protocol: resource streams validate incarnation and explicit resnapshot signals", () => {
 	const event = {

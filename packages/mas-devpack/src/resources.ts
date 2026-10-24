@@ -39,6 +39,7 @@ export function masConversations(options: {
 					target: value.target,
 					status: value.status,
 					...(value.entryId ? { entryId: value.entryId } : {}),
+					...(value.reason === undefined ? {} : { reason: value.reason }),
 				});
 			};
 			return Object.freeze<ReturnType<PocketConversationSource["bind"]>>({

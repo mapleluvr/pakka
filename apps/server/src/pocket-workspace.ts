@@ -60,6 +60,7 @@ export interface PocketInputReceipt {
 	readonly target: ConversationRef;
 	readonly status: DeliveryReceipt["status"];
 	readonly entryId?: string;
+	readonly reason?: string;
 }
 export interface PocketConfiguration {
 	readonly ref: ConversationRef;
@@ -440,6 +441,7 @@ export function createPocketWorkspace(options: PocketWorkspaceOptions): PocketWo
 					target: value.target,
 					status: value.status,
 					...(value.entryId ? { entryId: value.entryId } : {}),
+					...(value.reason === undefined ? {} : { reason: value.reason }),
 				});
 			};
 			const ownedReceipt = async (id: string, permission: PocketPermission = "read") => {

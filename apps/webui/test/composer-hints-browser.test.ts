@@ -124,9 +124,7 @@ test(
 			});
 
 			await page.click("[data-action=signin]");
-			await page.wait(
-				"[data-conversation] => true".replace(/.*/, 'document.querySelector("[data-conversation]") !== null'),
-			);
+			await page.wait('document.querySelector("[data-conversation]") !== null');
 			await page.click("[data-conversation]");
 			await page.wait('document.querySelector("textarea")');
 			await page.wait('document.querySelector("[data-action=send]")?.disabled === false');

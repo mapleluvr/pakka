@@ -125,6 +125,8 @@ export interface PocketInputReceipt {
 	readonly target: AgentRef;
 	readonly status: "queued" | "placed" | "done" | "unanswered" | "unknown";
 	readonly entryId?: string;
+	/** Bounded native/catalog reason, when that service provides one; never inferred by the browser. */
+	readonly reason?: string;
 }
 export interface PocketChatMessage {
 	readonly id: string;
@@ -981,13 +983,14 @@ function command(v: unknown): v is PocketCommand {
 }
 function receipt(v: unknown): v is PocketInputReceipt {
 	return (
-		shape(v, ["id", "requestId", "actorId", "target", "status"], ["entryId"]) &&
+		shape(v, ["id", "requestId", "actorId", "target", "status"], ["entryId", "reason"]) &&
 		identity(v.id) &&
 		identity(v.requestId) &&
 		identity(v.actorId) &&
 		ref(v.target) &&
 		["queued", "placed", "done", "unanswered", "unknown"].includes(v.status as string) &&
-		(v.entryId === undefined || entryId(v.entryId))
+		(v.entryId === undefined || entryId(v.entryId)) &&
+		(v.reason === undefined || string(v.reason, 16384))
 	);
 }
 function result(v: unknown): v is PocketResult {

@@ -85,3 +85,55 @@ Product pages SHALL maintain meaningful headings, main/navigation landmarks, key
 
 - **WHEN** input is admitted, queued, stopped, refused or unconfirmed
 - **THEN** transcript/composer feedback represents the actual owning service state, preserving Prompt/Steer/Follow up placement, request identity and spent budgets
+
+### Requirement: Transcript preserves visible native work evidence
+
+The Conversation transcript SHALL distinguish an authorized in-flight message from committed history while that message is busy, and SHALL give every protocol-valid content part a visible rendering or an explicit neutral unpreviewable representation. The UI SHALL NOT silently discard a valid part merely because its MIME type is outside the inline-preview allowlist.
+
+#### Scenario: Follow an in-flight message into history
+
+- **WHEN** the authorized snapshot contains a busy live message and later contains its committed entries
+- **THEN** the live message has a distinct live identity and a compact Streaming indication, which is absent after the live message clears, without changing native input scheduling; the live projection omits the non-terminal native pending stop reason while committed history retains its actual terminal reason
+
+#### Scenario: Receive a valid image without an inline preview
+
+- **WHEN** an authorized message contains a protocol-valid image whose MIME type is not supported for inline preview
+- **THEN** the transcript shows a readable neutral placeholder with the MIME type instead of dropping the part
+
+### Requirement: Tool evidence retains one identity across observation carriers
+
+The transcript SHALL correlate a tool call part's `id`, a live tool's `callId` and a tool result message's `toolCallId` for the same Conversation. It SHALL use one shared card structure for those authorized observations, showing only DTO-provided live status and retaining available arguments and result content. A result whose call declaration is outside the current history window SHALL remain visible as an explicitly marked orphan rather than disappear.
+
+#### Scenario: Observe a call during its live-to-history transition
+
+- **WHEN** the same call is present in both the live tool list and committed assistant content
+- **THEN** only one card represents that Conversation/call identity; its live status is the DTO value, and the subsequent tool result is available from the same card without a separate tool-result message block
+
+#### Scenario: Reuse a provider call id after a fork
+
+- **WHEN** inherited history and a new live call contain the same provider call id under different source Conversations
+- **THEN** each card retains its source identity and its own status and result; neither is suppressed or associated with the other's output
+
+#### Scenario: Read a result whose call declaration is truncated
+
+- **WHEN** the current authorized history window contains a tool result but not its corresponding tool call part
+- **THEN** an orphan card exposes the call identifier, tool name, available result content and the fact that its declaration is outside the current view
+
+### Requirement: Composer feedback identifies the next safe action
+
+Composer feedback SHALL explain an actually unavailable send using the applicable reason, and SHALL keep Stop in the primary sending group for native work. Requested stopping SHALL NOT be presented as completed merely because an abort request returned; only the authoritative live state ends that indication. A bounded retry remains available if busy persists.
+
+#### Scenario: Explain a disabled native input
+
+- **WHEN** the existing view, working, role or Prompt/busy condition disables Send
+- **THEN** an accessible reason associated with both input and Send explains the applicable next action without changing that condition's admission semantics or moving the composer card
+
+#### Scenario: Stop native generation
+
+- **WHEN** a user activates Stop for a busy native turn
+- **THEN** the primary Stop control suppresses duplicate activation and indicates stopping until authorized busy becomes false, with a bounded Stop again action if it does not
+
+#### Scenario: Reconcile an input receipt
+
+- **WHEN** an input receipt is unanswered or unknown
+- **THEN** an unanswered receipt with reason blocked presents blocked with guidance to edit the refused input, a withdrawn input is not mislabeled as policy refusal, and unknown presents needs review with guidance to reconcile before another send; neither is relabeled as a permission denial or treated as confirmation of delivery
