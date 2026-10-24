@@ -9,7 +9,7 @@
 ## 实现前实测及修正
 
 - 首个工具卡测试把 pending 到 running 的合法时序当成固定初始状态；改为等待真实 running，并直接读取同一 Conversation DTO 证明 live/持久声明共存，而非仅看 DOM。
-- 错误形状的 Host 工具返回曾产生 `[object Object]`，不构成“合法图片不可达”证据。图片测试改用公开 Durable API 在隔离目录写合法历史，关闭 writer 后经正常 reopen、授权 HTTP/SSE 和真实 DOM 消费；没有伪造浏览器 DTO 或安装包。
+- 错误形状的 Host 工具返回曾产生 `[object Object]`，不构成“合法图片不可达”证据。图片测试改用公开 Durable API 在隔离目录写合法历史，关闭 writer 后经正常 reopen、授权 HTTP/SSE 和真实 DOM 消费；没有伪造浏览器 DTO 或安装包。unsupported image/avif 验证的是合法 DTO part 的占位保形，不是 AVIF 编解码能力。
 - 可控 SSE 分块暴露 `stopReason:"pending"` 被 Pocket 终态校验拒绝，导致 SSE 中断。live 投影只省略这个非终态字段；历史消息保留真实终态，协议没有新增伪造终态。
 - provider 400 的 `model_error` 不是 policy `blocked`。测试改用实际选中 Conversation 的公开策略 projector 验证 blocked；撤回使用真实 queued/withdraw 路径验证 `aborted`，不混称策略拒绝。
 - `PocketInputReceipt` 原先丢失 catalog 已有的 `reason`；协议 schema 与 catalog/MAS source 透传已补齐。浏览器只依据 DTO reason 选择文案。reason 是自由文本而非枚举，只有精确 blocked/aborted 字面量分类，其他整句说明或缺省值一律中性 not delivered；缺省属性不造 unspecified。
@@ -46,6 +46,7 @@
 - **主 catalog 存储故障的浏览器 receipt 恢复**：真实故障实验只得到 HTTP generic unknown，未证明能恢复原 receipt。测试中的 unknown 是真实 Host source 回执，不得冒充主 catalog 故障修复。generic unknown 也不得以 transport request ID 冒充 receipt ID。
 - **receipt 清除时机**：本批不改既有 send 时清除策略。
 - **纯文本回合 Reasoning disclosure 连续性（P2）**：当前非工具 live/entry 的键不同，可能重挂载；未独立覆盖展开态，不把工具卡修复外推为该能力已修。
+- **同一 Conversation 跨轮重用 provider call ID**：现有回归证明的是不同来源 Conversation 的同 ID 分离，未证明同一来源跨轮重用的归属。当前工具键使用来源/call ID；原生 `createToolTask` 同时接收 entry ID 和 call ID，但尚未实测跨轮重用或证实全局唯一约束，不能由 fork 回归外推为覆盖。
 - **tool-only busy 状态**：不显示 Streaming，因为不存在 live.message；这不是新增 live 文本不可达的借口。
 - 视觉、独立 adversarial 和最终 GUI 结论必须关联精确完整候选，不沿用旧工作树数字。
 
@@ -65,6 +66,12 @@
 
 Kairos r6 在该 SHA 独立重造三类回执、partial 工具卡三阶段、原生 throw/正常 denied 返回对照。8 张截图与 3 份 JSON 在 [r6 证据目录](evidence/webui-interaction-p0/d966f7f/kairos-r6/)；父会话已逐图/逐 JSON 实读、逐文件 SHA-256 比对后复制。partial 卡阶段 endpoint 数为 1/1/2，保持同节点/open，工具结果归位且正常后续 generation 可见；工具错误有显式 error 文本，denied 普通返回不伪造 isError。此取证通过不代替上面的失败全量，也不代替指定 GUI。
 
-### 纯测试收紧候选
+### 已测候选 737f2f3
 
-产品文件不变，仅收紧 A3 等待条件；完整 SHA 与新一轮全量结果在冻结后补齐。两方 adversarial 和指定 GUI 仍未完成，P0 不作最终验收通过声明。
+完整 SHA：`737f2f3a25b225aef8df4705b333b94a1cdd9075`。相对 d966f7f 唯一代码差异是 A3 测试新增 4 行等待（未删除 done 等待或精确断言），其余为文档/证据；产品文件无变更。
+
+隔离验收 worktree 从 clean 的该 SHA 执行 `npm run build`、`npm run check`、`npm test`，**618 tests / 616 pass / 0 fail / 2 skip / exit 0 / duration_ms 442834.0943**。见 [完整输出](evidence/webui-interaction-p0/737f2f3/full-suite.txt) 和 [结构化结果](evidence/webui-interaction-p0/737f2f3/result.json)。两个 skip 是原有 owned-browser 的 POSIX CDP interception 用例在 Windows 不执行，不是新增通过项。
+
+Kairos 独立核对四个产品文件哈希全等于 d966f7f，并复跑 A3 一次通过；r6 的产品证据可沿用（仅沿用 r6，r5 继续绑定原 SHA）。Atnor 只读终核确认精确 +4 行、断言未放宽、产品零改，并报告其 5 轮 11/11 定点均通过；这些定点不冒充父会话的全量。双方意见与身份在 [独立复核记录](evidence/webui-interaction-p0/737f2f3/peer-verification.md)。最后活跃 LSP probe 对改动的测试文件确认 clean；此前 4 文件检查有 2 项 unconfirmed，完整类型检查通过不等同这些 LSP 检查全部确认。
+
+**最终验收仍未通过**：指定双评因 B 模型缺失未完成，指定桌面 GUI 因 agent-workspace-linux 工具缺失 BLOCKED。分支保留完整失败历史及未覆盖项，不合并冒充验收通过。后续需提供可用的 B 模型配置和规定的独立桌面入口，再对精确候选补齐这两项；本次收口仅提交文档/证据，不改已测代码。

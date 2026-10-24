@@ -1,0 +1,39 @@
+{
+  "candidate": "737f2f3a25b225aef8df4705b333b94a1cdd9075",
+  "productCandidate": "d966f7fe64bdd9d5651606609b1b6989c670df1e",
+  "worktree": "D:/Projects/pakka-wt/webui-p0-acceptance",
+  "cleanAtStart": true,
+  "commands": [
+    {
+      "command": "npm run build",
+      "exitCode": 0
+    },
+    {
+      "command": "npm run check",
+      "exitCode": 0
+    },
+    {
+      "command": "npm test",
+      "exitCode": 0,
+      "tests": 618,
+      "pass": 616,
+      "fail": 0,
+      "skipped": 2,
+      "durationMs": 442834.0943
+    }
+  ],
+  "skipped": [
+    {
+      "test": "WebUI owned browser: an already-revoked interception does not seal subsequent authorized reads",
+      "reason": "Controlled POSIX CDP executable; real Chromium isolation remains required on Windows"
+    },
+    {
+      "test": "WebUI owned browser: unknown interception rejection still seals the service",
+      "reason": "Controlled POSIX CDP executable; real Chromium isolation remains required on Windows"
+    }
+  ],
+  "rawOutput": "full-suite.txt",
+  "gui": "blocked: agent-workspace-linux tool unavailable",
+  "adversarial": "incomplete: Reviewer B model unavailable; A review retained",
+  "finalAcceptance": false
+}

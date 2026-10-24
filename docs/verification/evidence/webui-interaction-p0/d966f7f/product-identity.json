@@ -1,7 +1,7 @@
 {
   "productCandidate": "d966f7fe64bdd9d5651606609b1b6989c670df1e",
   "peer": "Kairos",
-  "peerReport": "intercom seq36/37, 2026-10-24",
+  "peerReport": "Kairos intercom 8e31b875-16f4-4e31-8c9a-4ff69fc0c2c7 (2026-10-24T14:52:21.541Z); e64e0fd3-80d9-49e7-9d40-ae02762f1fb0 (2026-10-24T14:55:35.807Z)",
   "parentVerifiedCopyDigests": true,
   "files": [
     {
