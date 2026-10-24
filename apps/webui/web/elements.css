@@ -94,6 +94,57 @@ button:disabled {
 	gap: 8px;
 	flex-wrap: wrap;
 }
+/* Disabled-send reason. Rendered above the composer card so the card keeps its exact
+   reference box AND its bottom-anchored position: the column grows upward, never down. */
+.submit-hint {
+	font-size: 11px;
+	line-height: 16px;
+	margin: 0 auto 4px;
+	padding: 0 24px;
+}
+/* Stop shares the primary send slot while a turn is in flight. Steering stays
+   available next to it, so stop must never swallow the send button. */
+/* reference.css clips the send group; the Stop hit overlay has to escape that clip to reach
+   44px. Only the variant that hosts Stop lifts the clip, and every child stays transparent so
+   the pill background still owns the rounding. */
+.send-group:has(.stop-btn) {
+	overflow: visible;
+}
+.send-group .stop-btn,
+.pill-btn[data-action="stop"] {
+	position: relative;
+}
+.send-group .stop-btn::after,
+.pill-btn[data-action="stop"]::after {
+	content: "";
+	position: absolute;
+	inset: -8px -6px;
+}
+.send-group .stop-btn {
+	height: 28px;
+	padding: 0 10px;
+	border: 0;
+	background: transparent;
+	color: inherit;
+	font-size: 12px;
+	font-weight: 500;
+	display: inline-flex;
+	align-items: center;
+	border-radius: 0;
+	cursor: pointer;
+	position: relative;
+}
+.send-group .stop-btn:hover {
+	filter: brightness(1.06);
+}
+.send-group .stop-btn[disabled] {
+	cursor: default;
+	opacity: 0.62;
+	filter: none;
+}
+.send-group .stop-btn + .send-btn {
+	border-left: 1px solid rgba(255, 255, 255, 0.18);
+}
 .creation-recovery {
 	position: absolute;
 	bottom: 16px;
