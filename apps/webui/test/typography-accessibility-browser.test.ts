@@ -111,7 +111,7 @@ test("WebUI typography and input accessibility", { timeout: 90000 }, async (t) =
 			assert.equal(
 				await page.evaluate(`(() => {
 				const field=document.activeElement;
-				return field.matches(':focus-visible') && [field,field.closest('.composer-surface')].some(node => {
+				return field.matches(':focus-visible') && [field,field.closest('.composer-card')].some(node => {
 					const style=getComputedStyle(node);
 					return style.outlineStyle !== 'none' && parseFloat(style.outlineWidth) >= 2;
 				});

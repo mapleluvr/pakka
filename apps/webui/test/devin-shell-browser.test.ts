@@ -92,7 +92,7 @@ test(
 					true,
 					"Home guidance is fully visible on the phone",
 				);
-				await page.click('[aria-label="Commands and extensions"]');
+				await page.click('[aria-label="Commands & Extensions"]');
 				await page.wait('document.querySelector(".palette")?.contains(document.activeElement)');
 				await page.key("Escape");
 				await page.wait('!document.querySelector(".palette")');

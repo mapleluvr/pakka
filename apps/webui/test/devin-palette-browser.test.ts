@@ -51,7 +51,7 @@ test(
 			]) {
 				await page.resize(size);
 				await settleFrontend(page);
-				await page.click('[aria-label="Commands and extensions"]');
+				await page.click('[aria-label="Commands & Extensions"]');
 				await page.wait('document.querySelector(".palette input")===document.activeElement');
 				assert.equal(
 					await page.evaluate('Boolean(document.querySelector(".pocket-sheet"))'),
@@ -68,7 +68,7 @@ test(
 				await page.key("Enter");
 				await page.wait('!document.querySelector(".palette")');
 				assert.equal(m.f.requests.length, 0, "A read command must not send a model request");
-				await page.click('[aria-label="Commands and extensions"]');
+				await page.click('[aria-label="Commands & Extensions"]');
 				await page.wait('document.querySelector(".palette")');
 				await writeFile(join(evidence, `commands-${size.width}.png`), await page.screenshot());
 				await page.click("[data-action=manage-extensions]");
@@ -94,7 +94,7 @@ test(
 				await settleFrontend(page);
 				assert.equal(
 					await page.evaluate('document.activeElement?.getAttribute("aria-label")'),
-					"Commands and extensions",
+					"Commands & Extensions",
 					"Handoff preserves the original connected focus-return target",
 				);
 			}
