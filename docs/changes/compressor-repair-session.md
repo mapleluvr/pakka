@@ -2,7 +2,7 @@
 
 2026-10-23，用户在真实重试观察之后要求保留 Compresser 轨迹，分别设置工具调用错误与其他未解决错误的容忍次数；任一累计达到上限即封存并报告最后一次原因。3 和 4 是用户示例及本轮实验值，尚未发布为公共 API 默认值。用户明确要求优先考察 Pakka／pi-durable；发现基础设施难点时先报告，再考虑自建 loop。
 
-用户随后澄清容器和基数：Pakka-dynamite 维护一个长期存在的 pi-durable Session，称 Compresser Session；其中的多个 Compresser Conversation 为容器外的业务 Session／Conversation 提供压缩服务。一个外部 Conversation 可以触发多个独立的压缩 Conversation，绑定各自 source job／上下文；不预设 Conversation 数限制。这取代“每个 source job 一个 Session／仅 root Conversation”的建议。既有两类累计容忍与封存仍按 Session 作用域保留，未采用由代理自行提出的 Conversation 级策略变更。
+用户随后澄清容器和基数：Pakka-dynamite 维护一个长期存在的 pi-durable Session，称 Compresser Session；其中的多个 Compresser Conversation 为容器外的业务 Session／Conversation 提供压缩服务。一个外部 Conversation 可以触发多个独立的压缩 Conversation，绑定各自 source job／上下文；不预设 Conversation 数限制。这取代“每个 source job 一个 Session／仅 root Conversation”的建议。当时代理把两类累计容忍与封存误解为 Session 作用域，并据此实施了第一版；这一解释随后被用户明确纠正，见下节记录。
 
 采用的行为条件在[会话状态](../state/compressor-session.md)。完整形成记录位于 [change](../../openspec/changes/add-compressor-repair-session/)、[proposal](../../openspec/changes/add-compressor-repair-session/proposal.md)、[design](../../openspec/changes/add-compressor-repair-session/design.md)、[tasks](../../openspec/changes/add-compressor-repair-session/tasks.md)及全部 [compressor-repair-session delta](../../openspec/changes/add-compressor-repair-session/specs/compressor-repair-session/spec.md)。该新能力尚未归档为主 spec；相关主边界为 [conversation-runtime](../../openspec/specs/conversation-runtime/spec.md)与 [optional-dynamite-product](../../openspec/specs/optional-dynamite-product/spec.md)。已有单次输出由 [add-auxiliary-tool-output](../../openspec/changes/add-auxiliary-tool-output/)及其 [proposal](../../openspec/changes/add-auxiliary-tool-output/proposal.md)、[design](../../openspec/changes/add-auxiliary-tool-output/design.md)、[tasks](../../openspec/changes/add-auxiliary-tool-output/tasks.md)、[全部 delta](../../openspec/changes/add-auxiliary-tool-output/specs/auxiliary-tool-output/spec.md)承接，不被本轮调研隐式替换。
 
@@ -33,3 +33,11 @@ SourceJob.converse 复用原生 inbox/steer/afterFailedRun，逐次经过原辅�
 父审发现共享封存原因会携带另一来源的 schema 错误和候选正文；source 负例及旧安装归档负例都证实 B 的状态、audit 和 failed run 可含 A 正文。原快照及其 64 项功能验收保留，但不作为最终共享服务交付。修正将原始全局诊断限定在可信 bootstrap snapshot，源任务只取得通用共享拒绝，仍保留自身实际错误。相关要求已进入同一 delta 的 Shared diagnostics retain source privacy。
 
 [替代试行记录](../verification/COMPRESSER-SESSION-TRIAL-ISOLATION.md)固定新 hash、source/installed RED/GREEN、596 个宿主通过 / 2 原有跳过、Dynamite 378/378 与新安装 65/65 / 413 HTTP。初始归档和已失败意见没有被改写，新归档实际重跑；SDK 补丁未改。状态、API、tasks 和本地计划同步此边界，当前仍不默认启用新 server 产品。
+
+## 用户纠偏：Conversation 独立计数与原生并发
+
+用户明确错误计数针对单个 Compressor Conversation；任务本来就按原文窗口独立并发，P2/P3 由额外异步机制处理合并。此前共享阈值和 sibling 拒绝是代理的误解，不是用户要求。
+
+当前采用状态、proposal/design/delta 与 tasks §5 一并改为各 Conversation 自有 incidents、两类累计计数、lastError 与 seal。来源 job 的 dispatch/adoption 精确检查自己的记录；其他在途、已返回候选和后续独立任务保留资格。来源审计未知保留该来源 reservation；真正共享存储未知仍闭锁其存储域。重开保留单条封存并停止未确认原生工作后服务新任务；旧 aggregate 文档显式拒绝无依据迁移。
+
+runtime 还修正了逐窗口 await：原生生成并发，提交队列仅负责新 frame/version、独立 blockId 与原子写入，后续 admission 失败也 drain 已启动工作。P2/P3 保持各自产物中的局部图和注释；本轮界定额外 merge 的输入边界，不实现其算法。DTO/文档语义升级为 agent 0.7.0 × Dynamite 0.5.0，SDK 仍为 1.4.0-pakka.1，历史配对不改写。验证由[本轮记录](../verification/COMPRESSOR-CONVERSATION-ISOLATION.md)承接，原始 RED、误实现试行及不再选用的 adversarial review 均保留原范围。

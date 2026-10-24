@@ -1,0 +1,164 @@
+{
+  "state": {
+    "sessionId": "36de773a-2d95-4a4f-9043-cba85921b265",
+    "status": "open",
+    "toolCallingTolerance": 1,
+    "unresolvedErrorTolerance": 4,
+    "lastError": null,
+    "conversations": [
+      {
+        "conversationId": "8",
+        "jobId": "3d461fb1-d9cd-40de-86d9-060c077bc099",
+        "planId": "private-observer",
+        "sourceSessionId": "ee90081e-98c9-4bd1-8d89-2b4250fc87a0",
+        "sourceConversationId": "1",
+        "status": "running",
+        "sealed": false,
+        "toolErrors": 0,
+        "unresolvedErrors": 0,
+        "lastError": null
+      },
+      {
+        "conversationId": "19",
+        "jobId": "70293d13-42fc-4540-9f11-332d8829f6cb",
+        "planId": "private-owner",
+        "sourceSessionId": "3c9bde0c-d875-4513-ac7a-acc3f000e4f8",
+        "sourceConversationId": "1",
+        "status": "failed",
+        "sealed": true,
+        "toolErrors": 1,
+        "unresolvedErrors": 0,
+        "lastError": {
+          "reason": "Error: Validation failed for tool \"submit_candidate\":\n  - text: must have required properties text\n  - privateDraft: schema is false\n  - root: must not have additional properties\n\nReceived arguments:\n{\n  \"privateDraft\": \"SOURCE_A_PRIVATE_CANDIDATE\"\n}",
+          "incidentId": "5e764124-82ad-4dca-ac78-44e1544f7ece:tool:32",
+          "conversationId": "19",
+          "jobId": "70293d13-42fc-4540-9f11-332d8829f6cb"
+        }
+      }
+    ]
+  },
+  "fresh": {
+    "status": "completed",
+    "modelKey": "summary",
+    "usageStatus": "known",
+    "usage": {
+      "input": 10,
+      "output": 2,
+      "cacheRead": 0,
+      "cacheWrite": 0,
+      "totalTokens": 12,
+      "cost": null
+    },
+    "toolCall": {
+      "id": "call-3",
+      "name": "submit_candidate",
+      "arguments": {
+        "text": "OTHER COMPLETE"
+      }
+    },
+    "attemptId": "db24dfe0-9b17-49e8-8682-f53275379fb8",
+    "compresser": {
+      "sessionId": "36de773a-2d95-4a4f-9043-cba85921b265",
+      "conversationId": "35",
+      "attemptIds": [
+        "db24dfe0-9b17-49e8-8682-f53275379fb8"
+      ],
+      "usageStatus": "known",
+      "reportedUsage": {
+        "input": 10,
+        "output": 2,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "totalTokens": 12,
+        "cost": null
+      }
+    }
+  },
+  "late": {
+    "status": "completed",
+    "modelKey": "summary",
+    "usageStatus": "known",
+    "usage": {
+      "input": 10,
+      "output": 2,
+      "cacheRead": 0,
+      "cacheWrite": 0,
+      "totalTokens": 12,
+      "cost": null
+    },
+    "toolCall": {
+      "id": "call-2",
+      "name": "submit_candidate",
+      "arguments": {
+        "text": "OTHER COMPLETE"
+      }
+    },
+    "attemptId": "c3c474c0-3776-4fe8-b7c9-df4e643f8e6b",
+    "compresser": {
+      "sessionId": "36de773a-2d95-4a4f-9043-cba85921b265",
+      "conversationId": "8",
+      "attemptIds": [
+        "c3c474c0-3776-4fe8-b7c9-df4e643f8e6b"
+      ],
+      "usageStatus": "known",
+      "reportedUsage": {
+        "input": 10,
+        "output": 2,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "totalTokens": 12,
+        "cost": null
+      }
+    }
+  },
+  "otherAudit": [
+    {
+      "status": "completed",
+      "modelKey": "summary",
+      "usageStatus": "known",
+      "usage": {
+        "input": 10,
+        "output": 2,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "totalTokens": 12,
+        "cost": null
+      },
+      "toolCall": {
+        "id": "call-2",
+        "name": "submit_candidate",
+        "arguments": {
+          "text": "OTHER COMPLETE"
+        }
+      },
+      "attemptId": "c3c474c0-3776-4fe8-b7c9-df4e643f8e6b",
+      "jobId": "3d461fb1-d9cd-40de-86d9-060c077bc099",
+      "planId": "private-observer",
+      "maxOutputTokens": 256
+    },
+    {
+      "status": "completed",
+      "modelKey": "summary",
+      "usageStatus": "known",
+      "usage": {
+        "input": 10,
+        "output": 2,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "totalTokens": 12,
+        "cost": null
+      },
+      "toolCall": {
+        "id": "call-3",
+        "name": "submit_candidate",
+        "arguments": {
+          "text": "OTHER COMPLETE"
+        }
+      },
+      "attemptId": "db24dfe0-9b17-49e8-8682-f53275379fb8",
+      "jobId": "c078cd38-f471-489f-8d02-fe96400556f2",
+      "planId": "private-blocked",
+      "maxOutputTokens": 256
+    }
+  ]
+}

@@ -1,0 +1,49 @@
+{
+  "sessionId": "8eb114a1-4050-491b-831b-af7ba4a694d7",
+  "durableSessionId": "8eb114a1-4050-491b-831b-af7ba4a694d7",
+  "conversationId": "1",
+  "providerSessionId": "01a16bc1-f9eb-75bd-bb01-4108f2a2b2b1",
+  "sessionFile": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\pakka-integration-POKjag\\profile\\sessions\\8eb114a1-4050-491b-831b-af7ba4a694d7\\main.jsonl",
+  "leafId": "11",
+  "entries": [
+    {
+      "id": "7",
+      "type": "pi.user",
+      "role": "user",
+      "text": "ORIGINAL"
+    },
+    {
+      "id": "10",
+      "type": "pi.system",
+      "role": "system",
+      "text": ""
+    },
+    {
+      "id": "11",
+      "type": "pi.assistant",
+      "role": "assistant",
+      "text": "MAIN"
+    }
+  ],
+  "context": [
+    {
+      "role": "system",
+      "text": ""
+    },
+    {
+      "role": "user",
+      "text": "ORIGINAL"
+    },
+    {
+      "role": "assistant",
+      "text": "MAIN"
+    }
+  ],
+  "autoCompaction": false,
+  "phase": "ready",
+  "busy": false,
+  "epoch": 7,
+  "generation": 0,
+  "branchId": "adc60df4-3cb2-44d9-85af-5dab40c8c25d",
+  "effects": "not-assessed"
+}

@@ -742,3 +742,15 @@ adapter 对其他来源仅返回通用 sealed/unavailable 原因；原任务保�
 替代 agent 0.6.0 SHA-256 `575ec96324ab29542f855c402ee0091f5c27df2aa190c29e8b73dde66024600a`；Dynamite 0.4.0 SHA-256 `eb70791592f8981727d3b26f36a7095e05daa90e8d885abfd9d1e1b302f05242`。宿主 596 passed、0 failed、2 原有跳过；Dynamite 源码 378/378，替代归档外部安装 65/65、413 本地 HTTP、0 非预期 fixture 错误；类型/构建和独立既有产品烟测通过。Node 24.18.0 / Windows / 隔离 profile，不使用付费模型、用户凭据或 adversarial review。
 
 [修正验证与原始证据](verification/COMPRESSER-SESSION-TRIAL-ISOLATION.md)、[新身份](../integrations/dynamite/compresser-trial-pairing.json)和[形成摘要](changes/compressor-repair-session.md)承接完整范围。条目 11 的存储、恢复、provider、CLI alias 和非默认产品装配限制继续有效；不自动清理旧 writer、不重放未知效果、不改为 Conversation 级容忍值。后续改变共享诊断边界时重跑该跨来源负例与精确归档安装矩阵并追加记录。
+
+## 条目 DURABLE-2026-10-24-13：Conversation 级容忍与原生并发纠偏
+
+用户明确两类计数针对单个 Compressor Conversation；独立原文窗口并发，P2/P3 由额外异步机制处理合并。条目 11/12 的 Session 共享计数是代理误解形成的历史实现，不是当前采用的要求。本条追加纠正范围，不改写旧条目的字节、配对或失败证据。
+
+SDK 与生产 cohort 沿用条目 10–12：Durable 1.4.0-pakka.1，归档 SHA-256 `7fd9f3310dfa003a9077139a25faf93567922a065461fa3767dd5a1066efa891`；Pi AI/Chord/Telemetry 与必需 pi-codemode 1.4.0。没有新增 generation 补丁或手改依赖。
+
+新的私有库配对为 agent 0.7.0 SHA-256 `c5c7fffddf9b644426ef86bba6ae03c67f813d68f10eb4f6901a052700047981` × Dynamite 0.5.0 SHA-256 `185fe5b5563e1f89834db80fcf19b29d80dfb55a32ecb9b6d41bd67b68591cdd`。单个 child 独立持久化 incidents、计数、seal 和原因；dispatch/adoption 按自己的 source job 检查。原生窗口生成并发，只有精确回执、版本与 blockId 分配的原子写入串行化。来源局部未知不毒化独立来源；真正共享存储故障仍闭锁共享域。旧 aggregate schema 拒绝无依据迁移。
+
+Windows / Node 24.18.0、独立 profile、真实 localhost provider：宿主 605 passed / 0 failed / 2 原有跳过，聚焦 31/31；Dynamite 381/381，原生生产 12/12；最终归档外部安装 68/68、436 HTTP、0 非预期 fixture 异常。公开声明、类型/构建与相关 OpenSpec strict 通过。真实进程中断后保持旧 writer claim；可信恢复后仅隔离未确认 child，不重放其请求，新的独立授权工作可运行。没有付费模型、用户凭据或 adversarial review。
+
+[当前 state](state/compressor-session.md)、[完整形成记录](changes/compressor-repair-session.md)、[验证与原始证据](verification/COMPRESSOR-CONVERSATION-ISOLATION.md)和[机器配对](../integrations/dynamite/compresser-conversation-pairing.json)承接本条。额外 P2/P3 merge 算法、语义质量、分层衰减/检索、历史 GC/迁移、跨 store 崩溃原子性及新 pair 默认/optional server/worker 激活仍未接受。旧错误计数、共享存储、请求/回执协议或来源授权边界改变时重跑精确归档矩阵并追加记录。

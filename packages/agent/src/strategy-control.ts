@@ -49,7 +49,7 @@ interface Ports {
 	storageUnknown(reason: string, sessionId: string): void;
 	journalNamespace?(strategyId: string, kind: string): string | undefined;
 	models(): readonly ModelDTO[];
-	checkCompresser?(): void;
+	checkCompresser?(jobId: string): void;
 	converse?(
 		input: Omit<GovernedConversation, "reserve">,
 		strategy: { strategyId: string; maxCalls: number },
@@ -485,7 +485,7 @@ export class StrategyControl {
 			const audit = completion && isJsonObject(completion.audit) ? completion.audit : undefined;
 			if (!reservation || !audit || !["completed", "failed", "quarantined"].includes(audit.status as string))
 				throw new Error("Artifact adoption attempt is not an exact completed job attempt");
-			if (job.conversational && audit.status === "completed") this.#ports.checkCompresser?.();
+			if (job.conversational && audit.status === "completed") this.#ports.checkCompresser?.(job.id);
 			if (
 				records.some(
 					(record) => isJsonObject(record) && record.kind === "adoption" && record.attemptId === attemptId,
@@ -860,7 +860,7 @@ export class StrategyControl {
 		if (!request.outputTool || (validateCall !== undefined && typeof validateCall !== "function"))
 			throw new Error("Conversational inference requires a declared output tool and optional pure validator");
 		if (!this.#ports.converse) throw new Error("Conversational auxiliary inference unavailable");
-		this.#ports.checkCompresser?.();
+		this.#ports.checkCompresser?.(job.id);
 		if (job.calls && !job.conversational) throw new Error("Source job already uses single-call inference");
 		job.conversational = true;
 		return this.#ports.converse(

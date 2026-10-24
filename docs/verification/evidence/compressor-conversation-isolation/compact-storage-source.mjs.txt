@@ -1,0 +1,55 @@
+import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { basename, join, relative, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+const sha = value => createHash('sha256').update(value).digest('hex');
+const json = path => JSON.parse(readFileSync(path, 'utf8'));
+const save = (path, value) => writeFileSync(path, JSON.stringify(value, null, 2) + '\n');
+const files = (base, directory = base) => readdirSync(directory, { withFileTypes: true }).flatMap(entry => {
+ const path = join(directory, entry.name); assert.ok(!entry.isSymbolicLink(), 'Evidence must contain regular owned files');
+ return entry.isDirectory() ? files(base, path) : [relative(base, path).replaceAll('\\', '/')];
+});
+export function compactStorageEvidence(targets, { verifyExistingHashes = true } = {}) {
+ const archived = [];
+ for (const { root, cases } of targets) {
+  if (verifyExistingHashes) for (const [path, expected] of Object.entries(json(join(root, 'sha256.json')))) assert.equal(sha(readFileSync(join(root, path))), expected, 'Existing evidence changed: ' + path);
+  for (const name of readdirSync(join(root, cases))) {
+   const directory = join(root, cases, name);
+   const trees = readdirSync(directory, { withFileTypes: true }).filter(entry => entry.isDirectory()).map(entry => entry.name).sort();
+   if (!trees.length) {
+    if (existsSync(join(directory, 'storage-sha256.json'))) archived.push({ cases, name, files: Object.keys(json(join(directory, 'storage-sha256.json'))).length, archiveSha256: sha(readFileSync(join(directory, 'storage.tar.gz'))) });
+    continue;
+   }
+   const original = Object.fromEntries(trees.flatMap(tree => files(directory, join(directory, tree))).sort().map(path => [path, sha(readFileSync(join(directory, path)))]));
+   const scratch = mkdtempSync(join(tmpdir(), 'cc-storage-'));
+   try {
+    for (const tree of trees) cpSync(join(directory, tree), join(scratch, tree), { recursive: true });
+    const archive = join(directory, 'storage.tar.gz');
+    execFileSync('tar', ['-czf', archive, ...trees], { cwd: scratch });
+    const back = join(scratch, 'readback'); mkdirSync(back);
+    execFileSync('tar', ['-xf', archive, '-C', back]);
+    assert.deepEqual(files(back).sort(), Object.keys(original).sort());
+    for (const [path, expected] of Object.entries(original)) assert.equal(sha(readFileSync(join(back, path))), expected, 'Archive readback changed: ' + path);
+    save(join(directory, 'storage-sha256.json'), original);
+    archived.push({ cases, name, files: Object.keys(original).length, archiveSha256: sha(readFileSync(archive)) });
+    // Delete only this run's copied storage trees, after a complete independent readback.
+    for (const tree of trees) rmSync(join(directory, tree), { recursive: true, force: true });
+   } finally { rmSync(scratch, { recursive: true, force: true }); }
+  }
+ }
+ for (const { root } of targets) {
+  const summary = json(join(root, 'summary.json')); summary.storageArchives = { format: 'per-case storage.tar.gz, unchanged original relative paths', integrity: 'storage-sha256.json checked after extraction into a short isolated directory', cases: archived };
+  save(join(root, 'summary.json'), summary);
+  const hashes = Object.fromEntries(files(root).filter(path => path !== 'sha256.json').sort().map(path => [path, sha(readFileSync(join(root, path)))])); save(join(root, 'sha256.json'), hashes);
+ }
+ return archived;
+}
+if (resolve(process.argv[1] ?? '') === fileURLToPath(import.meta.url)) {
+ const host = resolve(fileURLToPath(new URL('../../../', import.meta.url))), strategy = resolve(host, '../pakka-dynamite');
+ const targets = [{ root: join(host, 'docs/verification/evidence/compressor-conversation-isolation'), cases: 'host-cases' }, { root: join(strategy, 'docs/verification/evidence/compressor-conversation-isolation'), cases: 'installed-cases' }];
+ const archived = compactStorageEvidence(targets);
+ console.log(JSON.stringify({ cases: archived.length, originalStorageFiles: archived.reduce((sum, row) => sum + row.files, 0), hostEvidenceFiles: files(targets[0].root).length, strategyEvidenceFiles: files(targets[1].root).length, readbackHashesPassed: true }, null, 2));
+}

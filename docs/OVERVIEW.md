@@ -4,7 +4,8 @@ Pakka 将 Pi 的 Conversation、权限、持久化和 MAS 服务接到可选的 
 
 ## 当前工作
 
-[Compresser 会话修复与封存](changes/compressor-repair-session.md)已进入第一版显式启用试行：Dynamite 0.4.0 × agent 0.6.0 在固定 Durable 1.4.0-pakka.1 上运行一个长期容器，以多个 source-job Conversation 服务容器外的业务 Session／Conversation；一个外部 Conversation 可触发多个压缩 Conversation。原生 steer／失败边界接续保留轨迹，每次请求计入原辅助额度并保留回执；两类 Session 累计错误达到容忍值即封存。真实进程中断后的未确认工作在可信解除旧 writer 锁后重开为 quarantined，不自动重发。见[当前状态](state/compressor-session.md)、[隔离修正后的试行验证](verification/COMPRESSER-SESSION-TRIAL-ISOLATION.md)、[设计](../openspec/changes/add-compressor-repair-session/design.md)与[剩余任务](../openspec/changes/add-compressor-repair-session/tasks.md)。[1.4 能力探针](verification/COMPRESSOR-SESSION-1.4-FEASIBILITY.md)与[初轮 1.0.3 证据](verification/COMPRESSOR-SESSION-FEASIBILITY.md)保留原范围。
+[Compresser 会话修复与封存](changes/compressor-repair-session.md)已按用户纠偏修正为 Conversation 级计数／封存与原生并发：显式试行 Dynamite 0.5.0 × agent 0.7.0 在固定 Durable 1.4.0-pakka.1 上运行一个长期容器，以多个 source-job Conversation 服务容器外的业务 Session／Conversation；一个外部 Conversation 可触发多个压缩 Conversation。原生 steer／失败边界接续保留轨迹，每次请求计入原辅助额度并保留回执；两类错误在各 Compressor Conversation 内独立累计，达到容忍值只封存该条，其他独立任务保留调度与采用资格；跨任务 P2/P3 合并属于额外异步机制。真实进程中断后的未确认工作在可信解除旧 writer 锁后重开为 quarantined，不自动重发。见[当前状态](state/compressor-session.md)、[Conversation 隔离验证](verification/COMPRESSOR-CONVERSATION-ISOLATION.md)、[设计](../openspec/changes/add-compressor-repair-session/design.md)与[剩余任务](../openspec/changes/add-compressor-repair-session/tasks.md)。[1.4 能力探针](verification/COMPRESSOR-SESSION-1.4-FEASIBILITY.md)与[初轮 1.0.3 证据](verification/COMPRESSOR-SESSION-FEASIBILITY.md)保留原范围。
+
 
 [Dynamite P2/P3/P4 受控 Tool Calling 生产](changes/auxiliary-tool-output.md)的实现及已选执行验证保留在[原任务](../openspec/changes/add-auxiliary-tool-output/tasks.md)和[验证记录](verification/AUXILIARY-TOOL-OUTPUT.md)。两次部分复审保留原始失败；按用户后续指令不再使用 adversarial review，历史未完成协议不改写为通过。
 

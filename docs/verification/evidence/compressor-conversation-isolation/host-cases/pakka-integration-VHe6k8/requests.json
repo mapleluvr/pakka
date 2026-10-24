@@ -1,0 +1,193 @@
+[
+  {
+    "model": "local-model",
+    "messages": [
+      {
+        "role": "user",
+        "content": "ORIGINAL"
+      },
+      {
+        "role": "system",
+        "content": "Updated system prompt section \"system\":\n\nPAKKA-SYSTEM\n\nUpdated system prompt section \"instructions\":\n\n<instructions>\nPAKKA-SYSTEM\n</instructions>"
+      }
+    ],
+    "stream": true,
+    "stream_options": {
+      "include_usage": true
+    },
+    "store": false,
+    "max_tokens": 4096
+  },
+  {
+    "model": "summary-model",
+    "messages": [
+      {
+        "role": "system",
+        "content": "<instructions>\n\n</instructions>"
+      },
+      {
+        "role": "user",
+        "content": "JOB-A"
+      }
+    ],
+    "stream": true,
+    "stream_options": {
+      "include_usage": true
+    },
+    "store": false,
+    "max_tokens": 256,
+    "tools": [
+      {
+        "type": "function",
+        "function": {
+          "name": "submit_candidate",
+          "description": "Submit the complete local candidate.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "text": {
+                "type": "string",
+                "minLength": 3
+              }
+            },
+            "required": [
+              "text"
+            ],
+            "additionalProperties": false
+          }
+        }
+      }
+    ]
+  },
+  {
+    "model": "summary-model",
+    "messages": [
+      {
+        "role": "system",
+        "content": "<instructions>\n\n</instructions>"
+      },
+      {
+        "role": "user",
+        "content": "JOB-A"
+      },
+      {
+        "role": "user",
+        "content": "400: {\"message\":\"LOCAL-FAILURE\"}\nPreserve your earlier analysis. Call the submission tool again and REWRITE THE ENTIRE COMPLETE candidate with every required field; never submit a patch or merge with an earlier invalid candidate."
+      }
+    ],
+    "stream": true,
+    "stream_options": {
+      "include_usage": true
+    },
+    "store": false,
+    "max_tokens": 256,
+    "tools": [
+      {
+        "type": "function",
+        "function": {
+          "name": "submit_candidate",
+          "description": "Submit the complete local candidate.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "text": {
+                "type": "string",
+                "minLength": 3
+              }
+            },
+            "required": [
+              "text"
+            ],
+            "additionalProperties": false
+          }
+        }
+      }
+    ]
+  },
+  {
+    "model": "summary-model",
+    "messages": [
+      {
+        "role": "system",
+        "content": "<instructions>\n\n</instructions>"
+      },
+      {
+        "role": "user",
+        "content": "JOB-B"
+      }
+    ],
+    "stream": true,
+    "stream_options": {
+      "include_usage": true
+    },
+    "store": false,
+    "max_tokens": 256,
+    "tools": [
+      {
+        "type": "function",
+        "function": {
+          "name": "submit_candidate",
+          "description": "Submit the complete local candidate.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "text": {
+                "type": "string",
+                "minLength": 3
+              }
+            },
+            "required": [
+              "text"
+            ],
+            "additionalProperties": false
+          }
+        }
+      }
+    ]
+  },
+  {
+    "model": "summary-model",
+    "messages": [
+      {
+        "role": "system",
+        "content": "<instructions>\n\n</instructions>"
+      },
+      {
+        "role": "user",
+        "content": "JOB-B"
+      },
+      {
+        "role": "user",
+        "content": "400: {\"message\":\"LOCAL-FAILURE\"}\nPreserve your earlier analysis. Call the submission tool again and REWRITE THE ENTIRE COMPLETE candidate with every required field; never submit a patch or merge with an earlier invalid candidate."
+      }
+    ],
+    "stream": true,
+    "stream_options": {
+      "include_usage": true
+    },
+    "store": false,
+    "max_tokens": 256,
+    "tools": [
+      {
+        "type": "function",
+        "function": {
+          "name": "submit_candidate",
+          "description": "Submit the complete local candidate.",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "text": {
+                "type": "string",
+                "minLength": 3
+              }
+            },
+            "required": [
+              "text"
+            ],
+            "additionalProperties": false
+          }
+        }
+      }
+    ]
+  }
+]

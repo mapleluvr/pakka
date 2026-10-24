@@ -1,0 +1,45 @@
+✖ source-local unknown completion quarantines only its Conversation and retains the pending reservation (523.7182ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1360.916
+
+✖ failing tests:
+
+test at packages\agent\test\compresser-conversation.test.ts:103:1
+✖ source-local unknown completion quarantines only its Conversation and retains the pending reservation (523.7182ms)
+  AssertionError [ERR_ASSERTION]: reopen preserves the actual source-local unknown diagnostic, counts and seal
+  + actual - expected
+  
+    {
+      conversations: [
+        {
+          conversationId: '8',
+          jobId: 'b2e67b2a-0e54-4bce-9697-a8ee9f428b37',
+          lastError: {
+            conversationId: '8',
+  +         incidentId: 'reopen:b2e67b2a-0e54-4bce-9697-a8ee9f428b37',
+  -         incidentId: '1fa5b53e-5dd4-4864-90ad-213f7291405b',
+            jobId: 'b2e67b2a-0e54-4bce-9697-a8ee9f428b37',
+  +         reason: 'Unconfirmed Compresser job on reopen; source authority and model effects cannot be replayed'
+  -         reason: 'Unconfirmed source completion: Error: Inference completion storage unknown; do not retry'
+          },
+          planId: 'source-unknown',
+          sealed: true,
+          sourceConversationId: '1',
+          sourceSessionId: '31a9c460-4d45-4e53-9f3b-91f6fe5cafd0',
+  
+      at TestContext.<anonymous> (file:///D:/Projects/pakka/packages/agent/test/compresser-conversation.test.ts:133:10)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: { sessionId: 'aa024925-a34d-4fd7-bcde-6df1a13f0f7c', status: 'open', toolCallingTolerance: 2, unresolvedErrorTolerance: 2, lastError: null, conversations: [ [Object], [Object] ] },
+    expected: { sessionId: 'aa024925-a34d-4fd7-bcde-6df1a13f0f7c', status: 'open', toolCallingTolerance: 2, unresolvedErrorTolerance: 2, lastError: null, conversations: [ [Object], [Object] ] },
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }

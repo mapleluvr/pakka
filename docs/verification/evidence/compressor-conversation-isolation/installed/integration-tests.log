@@ -1,0 +1,421 @@
+cwd=C:\Users\Administrator\AppData\Local\Temp\dynamite-packed-consumer-HUIB9s
+TAP version 13
+# Subtest: tool production persists source-bound sidecars atomically, keeps them out of main HTTP, and retains them across reduce/reopen
+ok 1 - tool production persists source-bound sidecars atomically, keeps them out of main HTTP, and retains them across reduce/reopen
+  ---
+  duration_ms: 669.5952
+  type: 'test'
+  ...
+# Subtest: tool output during revocation follows source-job authority
+ok 2 - tool output during revocation follows source-job authority
+  ---
+  duration_ms: 252.821
+  type: 'test'
+  ...
+# Subtest: tool output during source-edit follows source-job authority
+ok 3 - tool output during source-edit follows source-job authority
+  ---
+  duration_ms: 246.7095
+  type: 'test'
+  ...
+# Subtest: tool output during tail-growth follows source-job authority
+ok 4 - tool output during tail-growth follows source-job authority
+  ---
+  duration_ms: 310.509
+  type: 'test'
+  ...
+# Subtest: sidecar reads label edited source stale and preserve original artifact provenance
+ok 5 - sidecar reads label edited source stale and preserve original artifact provenance
+  ---
+  duration_ms: 290.1168
+  type: 'test'
+  ...
+# Subtest: real tool production rejects prose without an active block
+ok 6 - real tool production rejects prose without an active block
+  ---
+  duration_ms: 301.904
+  type: 'test'
+  ...
+# Subtest: real tool production rejects foreign-source without an active block
+ok 7 - real tool production rejects foreign-source without an active block
+  ---
+  duration_ms: 322.7109
+  type: 'test'
+  ...
+# Subtest: real tool production rejects duplicate-call without an active block
+ok 8 - real tool production rejects duplicate-call without an active block
+  ---
+  duration_ms: 265.9821
+  type: 'test'
+  ...
+# Subtest: real tool production rejects truncated without an active block
+ok 9 - real tool production rejects truncated without an active block
+  ---
+  duration_ms: 240.3131
+  type: 'test'
+  ...
+# Subtest: native Compresser production repairs stop/schema/source errors and adopts one atomic P1/P2/P3/P4 candidate
+ok 10 - native Compresser production repairs stop/schema/source errors and adopts one atomic P1/P2/P3/P4 candidate
+  ---
+  duration_ms: 805.2956
+  type: 'test'
+  ...
+# Subtest: native window jobs overlap HTTP (sealed first window) and retain independent local graph candidates
+ok 11 - native window jobs overlap HTTP (sealed first window) and retain independent local graph candidates
+  ---
+  duration_ms: 1024.5368
+  type: 'test'
+  ...
+# Subtest: native window jobs overlap HTTP (complete first window) and retain independent local graph candidates
+ok 12 - native window jobs overlap HTTP (complete first window) and retain independent local graph candidates
+  ---
+  duration_ms: 980.277
+  type: 'test'
+  ...
+# Subtest: native batch keeps started HTTP owned until settled when a later public job admission fails
+ok 13 - native batch keeps started HTTP owned until settled when a later public job admission fails
+  ---
+  duration_ms: 364.7306
+  type: 'test'
+  ...
+# Subtest: native Compresser provider failure continues through the native failed-run boundary without an outer retry
+ok 14 - native Compresser provider failure continues through the native failed-run boundary without an outer retry
+  ---
+  duration_ms: 671.1972
+  type: 'test'
+  ...
+# Subtest: native Compresser Session services several jobs from one external Conversation without sharing its model history
+ok 15 - native Compresser Session services several jobs from one external Conversation without sharing its model history
+  ---
+  duration_ms: 886.982
+  type: 'test'
+  ...
+# Subtest: native Compresser tool tolerance seals only its Conversation without recreating a fallback
+ok 16 - native Compresser tool tolerance seals only its Conversation without recreating a fallback
+  ---
+  duration_ms: 611.8129
+  type: 'test'
+  ...
+# Subtest: native Compresser stop tolerance seals only its Conversation without recreating a fallback
+ok 17 - native Compresser stop tolerance seals only its Conversation without recreating a fallback
+  ---
+  duration_ms: 528.4358
+  type: 'test'
+  ...
+# Subtest: native Compresser completed sidecars reopen without replay or re-adoption
+ok 18 - native Compresser completed sidecars reopen without replay or re-adoption
+  ---
+  duration_ms: 422.5102
+  type: 'test'
+  ...
+# Subtest: native Conversation-local sealing leaves another business Session's candidate adoptable and source-private
+ok 19 - native Conversation-local sealing leaves another business Session's candidate adoptable and source-private
+  ---
+  duration_ms: 822.0767
+  type: 'test'
+  ...
+# Subtest: native Compresser source revocation refuses late candidates without another request
+ok 20 - native Compresser source revocation refuses late candidates without another request
+  ---
+  duration_ms: 298.3605
+  type: 'test'
+  ...
+# Subtest: native Compresser opt-in rejects text format and legacy fallback instead of silently using a primitive
+ok 21 - native Compresser opt-in rejects text format and legacy fallback instead of silently using a primitive
+  ---
+  duration_ms: 190.0052
+  type: 'test'
+  ...
+# Subtest: governed inference: no returned attempt receipt cannot become artifact adoption or poison later main input
+ok 22 - governed inference: no returned attempt receipt cannot become artifact adoption or poison later main input
+  ---
+  duration_ms: 799.8259
+  type: 'test'
+  ...
+# Subtest: Durable MAS: same strategy and principals isolate numbering, records and projection across two Conversations
+ok 23 - Durable MAS: same strategy and principals isolate numbering, records and projection across two Conversations
+  ---
+  duration_ms: 727.9409
+  type: 'test'
+  ...
+# Subtest: Durable MAS: summary spend is strategy+Session, including second Conversation and closed reopen
+ok 24 - Durable MAS: summary spend is strategy+Session, including second Conversation and closed reopen
+  ---
+  duration_ms: 864.6585
+  type: 'test'
+  ...
+# Subtest: Durable head checkpoint and multi-message contribution retain per-entry ordinals and original provenance
+ok 25 - Durable head checkpoint and multi-message contribution retain per-entry ordinals and original provenance
+  ---
+  duration_ms: 306.9903
+  type: 'test'
+  ...
+# Subtest: installed Dynamite numbers Durable messages without changing raw history
+ok 26 - installed Dynamite numbers Durable messages without changing raw history
+  ---
+  duration_ms: 258.5916
+  type: 'test'
+  ...
+# Subtest: installed Dynamite reduce and flush omit the checked source only on wire
+ok 27 - installed Dynamite reduce and flush omit the checked source only on wire
+  ---
+  duration_ms: 235.2704
+  type: 'test'
+  ...
+# Subtest: installed Dynamite compression dispatches cap 64 and adopts a source-bound summary
+ok 28 - installed Dynamite compression dispatches cap 64 and adopts a source-bound summary
+  ---
+  duration_ms: 307.7682
+  type: 'test'
+  ...
+# Subtest: installed Dynamite compression dispatches cap 128 and adopts a source-bound summary
+ok 29 - installed Dynamite compression dispatches cap 128 and adopts a source-bound summary
+  ---
+  duration_ms: 323.551
+  type: 'test'
+  ...
+# Subtest: installed Dynamite reload and reopen rebuild reduction from records, not old scopes
+ok 30 - installed Dynamite reload and reopen rebuild reduction from records, not old scopes
+  ---
+  duration_ms: 432.2394
+  type: 'test'
+  ...
+# Subtest: installed Dynamite cannot acquire projection from artifact-only grants
+ok 31 - installed Dynamite cannot acquire projection from artifact-only grants
+  ---
+  duration_ms: 32.8668
+  type: 'test'
+  ...
+# Subtest: system and context edits align included/excluded bash without raw renumbering or execution
+ok 32 - system and context edits align included/excluded bash without raw renumbering or execution
+  ---
+  duration_ms: 288.4727
+  type: 'test'
+  ...
+# Subtest: default native tool reduction retains IDs names arguments pairing and declarations
+ok 33 - default native tool reduction retains IDs names arguments pairing and declarations
+  ---
+  duration_ms: 386.2472
+  type: 'test'
+  ...
+# Subtest: automatic compression starts after a real projected request and is observable
+ok 34 - automatic compression starts after a real projected request and is observable
+  ---
+  duration_ms: 301.8601
+  type: 'test'
+  ...
+# Subtest: model chain resolves ordered keys and explicit allowlisted session fallback
+ok 35 - model chain resolves ordered keys and explicit allowlisted session fallback
+  ---
+  duration_ms: 328.3495
+  type: 'test'
+  ...
+# Subtest: failed windows reopen at their fixed targets and context rather than growing the plan
+ok 36 - failed windows reopen at their fixed targets and context rather than growing the plan
+  ---
+  duration_ms: 660.5359
+  type: 'test'
+  ...
+# Subtest: text reduction preserves repeated native non-text payloads
+ok 37 - text reduction preserves repeated native non-text payloads
+  ---
+  duration_ms: 200.1049
+  type: 'test'
+  ...
+# Subtest: malformed persisted strategy records fail closed before any provider request
+ok 38 - malformed persisted strategy records fail closed before any provider request
+  ---
+  duration_ms: 241.4379
+  type: 'test'
+  ...
+# Subtest: automatic unavailable model notification cannot escape the request callback
+ok 39 - automatic unavailable model notification cannot escape the request callback
+  ---
+  duration_ms: 277.179
+  type: 'test'
+  ...
+# Subtest: known artifact conflict latch survives configuration and cancellation without inference replay
+ok 40 - known artifact conflict latch survives configuration and cancellation without inference replay
+  ---
+  duration_ms: 259.6466
+  type: 'test'
+  ...
+# Subtest: multiple committed source blocks rebuild in source order on the next wire
+ok 41 - multiple committed source blocks rebuild in source order on the next wire
+  ---
+  duration_ms: 728.5402
+  type: 'test'
+  ...
+# Subtest: multiple candidate context blocks rebuild in source order on the next wire
+ok 42 - multiple candidate context blocks rebuild in source order on the next wire
+  ---
+  duration_ms: 594.6831
+  type: 'test'
+  ...
+# Subtest: invalid committed coverage retires and permits a new valid prefix
+ok 43 - invalid committed coverage retires and permits a new valid prefix
+  ---
+  duration_ms: 498.3201
+  type: 'test'
+  ...
+# Subtest: invalid candidate context coverage is retired before recompression
+ok 44 - invalid candidate context coverage is retired before recompression
+  ---
+  duration_ms: 570.5279
+  type: 'test'
+  ...
+# Subtest: incomplete SSE summaries exhaust without a block
+ok 45 - incomplete SSE summaries exhaust without a block
+  ---
+  duration_ms: 296.1048
+  type: 'test'
+  ...
+# Subtest: incomplete SSE summaries use ordered fallback
+ok 46 - incomplete SSE summaries use ordered fallback
+  ---
+  duration_ms: 380.3426
+  type: 'test'
+  ...
+# Subtest: successful SSE usage is unknown when absent in audit and service
+ok 47 - successful SSE usage is unknown when absent in audit and service
+  ---
+  duration_ms: 251.6198
+  type: 'test'
+  ...
+# Subtest: successful SSE usage is reported when measured in audit and service
+ok 48 - successful SSE usage is reported when measured in audit and service
+  ---
+  duration_ms: 253.95
+  type: 'test'
+  ...
+# Subtest: default service manual reduce and flush affects next payload but not raw history
+ok 49 - default service manual reduce and flush affects next payload but not raw history
+  ---
+  duration_ms: 494.4444
+  type: 'test'
+  ...
+# Subtest: request trigger re-reads its own artifact version and keeps protected tail
+ok 50 - request trigger re-reads its own artifact version and keeps protected tail
+  ---
+  duration_ms: 326.0775
+  type: 'test'
+  ...
+# Subtest: default service cannot install under artifact-only ownership or a non-owner
+ok 51 - default service cannot install under artifact-only ownership or a non-owner
+  ---
+  duration_ms: 39.5053
+  type: 'test'
+  ...
+# Subtest: default compression cap 64 is consumed on wire and auxiliary history stays separate
+ok 52 - default compression cap 64 is consumed on wire and auxiliary history stays separate
+  ---
+  duration_ms: 360.4997
+  type: 'test'
+  ...
+# Subtest: default compression cap 128 is consumed on wire and auxiliary history stays separate
+ok 53 - default compression cap 128 is consumed on wire and auxiliary history stays separate
+  ---
+  duration_ms: 361.6977
+  type: 'test'
+  ...
+# Subtest: summary reduction omits checked range without resurrecting source
+ok 54 - summary reduction omits checked range without resurrecting source
+  ---
+  duration_ms: 325.8684
+  type: 'test'
+  ...
+# Subtest: ordered fallback retains exact target and previous-context framing
+ok 55 - ordered fallback retains exact target and previous-context framing
+  ---
+  duration_ms: 993.6102
+  type: 'test'
+  ...
+# Subtest: default compression edit stops future attempts and never activates late result
+ok 56 - default compression edit stops future attempts and never activates late result
+  ---
+  duration_ms: 271.3916
+  type: 'test'
+  ...
+# Subtest: default compression ABA stops future attempts and never activates late result
+ok 57 - default compression ABA stops future attempts and never activates late result
+  ---
+  duration_ms: 350.3636
+  type: 'test'
+  ...
+# Subtest: default compression reload stops future attempts and never activates late result
+ok 58 - default compression reload stops future attempts and never activates late result
+  ---
+  duration_ms: 280.6171
+  type: 'test'
+  ...
+# Subtest: default compression owner stops future attempts and never activates late result
+ok 59 - default compression owner stops future attempts and never activates late result
+  ---
+  duration_ms: 262.0821
+  type: 'test'
+  ...
+# Subtest: default compression dispose stops future attempts and never activates late result
+ok 60 - default compression dispose stops future attempts and never activates late result
+  ---
+  duration_ms: 247.9141
+  type: 'test'
+  ...
+# Subtest: default compression configure stops future attempts and never activates late result
+ok 61 - default compression configure stops future attempts and never activates late result
+  ---
+  duration_ms: 243.7659
+  type: 'test'
+  ...
+# Subtest: default compression cancel stops future attempts and never activates late result
+ok 62 - default compression cancel stops future attempts and never activates late result
+  ---
+  duration_ms: 241.4431
+  type: 'test'
+  ...
+# Subtest: default compression newSession stops future attempts and never activates late result
+ok 63 - default compression newSession stops future attempts and never activates late result
+  ---
+  duration_ms: 318.0949
+  type: 'test'
+  ...
+# Subtest: ordinary unrelated tail growth during compression is accepted
+ok 64 - ordinary unrelated tail growth during compression is accepted
+  ---
+  duration_ms: 573.0674
+  type: 'test'
+  ...
+# Subtest: completed candidate is invalidated by later source edit
+ok 65 - completed candidate is invalidated by later source edit
+  ---
+  duration_ms: 352.5508
+  type: 'test'
+  ...
+# Subtest: reopen and reload rebuild fresh scopes and retain record and raw identities
+ok 66 - reopen and reload rebuild fresh scopes and retain record and raw identities
+  ---
+  duration_ms: 437.1654
+  type: 'test'
+  ...
+# Subtest: physical artifact write fault after inference never replays or permits projection
+ok 67 - physical artifact write fault after inference never replays or permits projection
+  ---
+  duration_ms: 339.7864
+  type: 'test'
+  ...
+# Subtest: scoped reduce tool uses model attribution and cannot refresh old invocation
+ok 68 - scoped reduce tool uses model attribution and cannot refresh old invocation
+  ---
+  duration_ms: 410.8877
+  type: 'test'
+  ...
+1..68
+# tests 68
+# suites 0
+# pass 68
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 32034.6071
+
+exit=0

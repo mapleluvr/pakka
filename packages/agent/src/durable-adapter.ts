@@ -238,11 +238,8 @@ type CompresserPolicy = {
 	status: "open" | "sealed";
 	toolCallingTolerance: number;
 	unresolvedErrorTolerance: number;
-	toolErrors: number;
-	unresolvedErrors: number;
-	lastError: null | { reason: string; incidentId: string; conversationId: string; jobId: string };
+	lastError: CompresserSnapshot["lastError"];
 	conversations: Record<string, string>;
-	incidents: Record<string, true>;
 };
 type CompresserJobState = {
 	jobId: string;
@@ -253,10 +250,16 @@ type CompresserJobState = {
 	status: "running" | "completed" | "failed" | "quarantined";
 	pendingAttempt: string | null;
 	result: JsonRepresentation<InferenceResult> | null;
+	sealed: boolean;
+	toolErrors: number;
+	unresolvedErrors: number;
+	lastError: CompresserSnapshot["lastError"];
+	incidents: Record<string, true>;
 };
 const CompresserPolicyDoc = defineDoc<CompresserPolicy>({
 	kind: "pakka.compresser",
-	version: 1,
+	version: 2,
+	migrate: () => { throw new MutationDenied("Aggregate Compresser policy requires explicit Conversation-scope migration"); },
 	scope: "session",
 	checkpointWhen: () => true,
 	initial: () => ({
@@ -264,16 +267,14 @@ const CompresserPolicyDoc = defineDoc<CompresserPolicy>({
 		status: "open",
 		toolCallingTolerance: 0,
 		unresolvedErrorTolerance: 0,
-		toolErrors: 0,
-		unresolvedErrors: 0,
 		lastError: null,
 		conversations: {},
-		incidents: {},
 	}),
 });
 const CompresserJobDoc = defineDoc<CompresserJobState>({
 	kind: "pakka.compresser-job",
-	version: 1,
+	version: 2,
+	migrate: () => { throw new MutationDenied("Legacy Compresser job requires explicit Conversation-scope migration"); },
 	scope: "conversation",
 	history: "latest",
 	fork: "initial",
@@ -287,12 +288,17 @@ const CompresserJobDoc = defineDoc<CompresserJobState>({
 		status: "running",
 		pendingAttempt: null,
 		result: null,
+		sealed: false,
+		toolErrors: 0,
+		unresolvedErrors: 0,
+		lastError: null,
+		incidents: {},
 	}),
 });
 type AuxiliaryModel = { model: Model<Api>; apiKey: string; headers?: Record<string, string> };
 const nativeCompresserSessions = new WeakMap<
 	CompresserSession,
-	{ check(): void; run(input: GovernedConversation, model: AuxiliaryModel): Promise<InferenceResult> }
+	{ check(jobId?: string): void; run(input: GovernedConversation, model: AuxiliaryModel): Promise<InferenceResult> }
 >();
 const COMPLETE_REWRITE =
 	"Preserve your earlier analysis. Call the submission tool again and REWRITE THE ENTIRE COMPLETE candidate with every required field; never submit a patch or merge with an earlier invalid candidate.";
@@ -315,8 +321,8 @@ export async function createCompresserSession(
 		registry = createRegistry();
 	let harness: Harness;
 	let closed = false,
-		fatal: string | undefined,
-		sealedReason: string | undefined;
+		fatal: string | undefined;
+	const sealedJobs = new Set<string>();
 	let cached: CompresserPolicy;
 	const active = new Map<
 		string,
@@ -376,33 +382,35 @@ export async function createCompresserSession(
 			for (const [jobId, id] of Object.entries(policy.conversations)) {
 				const job = await tx.doc(CompresserJobDoc, conversationId(id));
 				if (!job.jobId || job.status === "running" || job.pendingAttempt) {
+					const wasQuarantined = job.status === "quarantined";
 					job.status = "quarantined";
-					if (policy.status === "open") {
-						policy.status = "sealed";
-						policy.lastError = {
-							reason:
-								"Unconfirmed Compresser job on reopen; source authority and model effects cannot be replayed",
-							incidentId: "reopen:" + jobId,
-							conversationId: id,
-							jobId,
-						};
-					}
+					job.sealed = true;
+					if (!wasQuarantined || !job.lastError) job.lastError = {
+						reason: "Unconfirmed Compresser job on reopen; source authority and model effects cannot be replayed",
+						incidentId: "reopen:" + jobId,
+						conversationId: id,
+						jobId,
+					};
 				}
+				if (job.sealed) sealedJobs.add(jobId);
 			}
 			return storedJson<CompresserPolicy>(policy);
 		}, BACKGROUND_CONTEXT);
+		// Persisted native work has no refreshed source authority or provider wiring.
+		// Stop it while the Harness is paused before unrelated new jobs can resume.
+		for (const id of Object.values(cached.conversations))
+			await (await harness.conversation(conversationId(id), BACKGROUND_CONTEXT))?.abort(BACKGROUND_CONTEXT);
 	} catch (error) {
 		if (harness!) await harness.close(BACKGROUND_CONTEXT).catch(() => {});
 		await release();
 		throw error;
 	}
-	const guard = () => {
+	const guard = (jobId?: string) => {
 		if (closed) throw new Error("Compresser Session closed");
-		// The shared container may hold another source's raw arguments in its diagnostics.
-		// Only trusted bootstrap snapshot() may inspect that cross-source cause.
-		if (fatal) throw new Error("Compresser Session unavailable after an internal fault");
-		if (sealedReason || cached.status === "sealed")
-			throw new Error("Compresser Session sealed; trusted bootstrap inspection required");
+		// Shared faults may contain another source's diagnostics; expose only a generic refusal.
+		if (fatal || cached.status === "sealed")
+			throw new Error("Compresser Session unavailable after an internal fault");
+		if (jobId && sealedJobs.has(jobId)) throw new Error("Compressor Conversation sealed");
 	};
 	async function commit<T>(change: (tx: Tx) => Promise<T>): Promise<T> {
 		try {
@@ -413,7 +421,7 @@ export async function createCompresserSession(
 		}
 	}
 	async function run(input: GovernedConversation, definition: AuxiliaryModel): Promise<InferenceResult> {
-		guard();
+		guard(input.source.jobId);
 		input.check();
 		const fingerprint = hash([input.source, input.request]),
 			key = input.source.jobId;
@@ -421,7 +429,7 @@ export async function createCompresserSession(
 		if (existing) {
 			if (existing.fingerprint !== fingerprint) throw new Error("Compresser source job request changed");
 			const result = await existing.operation;
-			guard();
+			guard(key);
 			input.check();
 			if (result.toolCall && input.validateCall?.(copy(result.toolCall)) !== undefined)
 				throw new Error("Completed Compresser candidate validation changed");
@@ -439,6 +447,7 @@ export async function createCompresserSession(
 			const outputTool = input.request.outputTool!;
 			const providerId = "pakka-compresser-" + key;
 			let currentAttempt: string | undefined, answer: AssistantMessage | undefined;
+			let localFault: string | undefined;
 			let latest: InferenceResult | undefined,
 				diagnostic: string | undefined,
 				validCall: InferenceResult["toolCall"];
@@ -500,19 +509,34 @@ export async function createCompresserSession(
 				}),
 			);
 			const check = () => {
-				guard();
+				guard(key);
 				input.signal.throwIfAborted();
 				input.check();
 			};
-			async function record(output: Omit<InferenceResult, "attemptId">): Promise<InferenceResult> {
+			async function quarantine(error: unknown) {
+				localFault ??= "Unconfirmed source completion: " + String(error);
+				sealedJobs.add(key);
+				await commit(async (tx) => {
+					const job = await tx.doc(CompresserJobDoc, child.id);
+					job.status = "quarantined";
+					job.sealed = true;
+					job.lastError = { reason: localFault!, incidentId: currentAttempt ?? "source-fault", conversationId: String(child.id), jobId: key };
+					// The pending attempt is retained: an unknown external audit is not a completion/refund.
+				});
+			}
+			async function record(output: Omit<InferenceResult, "attemptId">): Promise<InferenceResult | undefined> {
+				if (localFault) return;
 				if (!currentAttempt) throw new Error("Compresser response lacks an exact request reservation");
 				const attempt = currentAttempt;
-				latest = input.complete(attempt, output);
+				try { latest = input.complete(attempt, output); }
+				catch (error) { await quarantine(error); return; }
 				rounds.push(latest);
 				await commit(async (tx) => {
 					const job = await tx.doc(CompresserJobDoc, child.id);
 					job.pendingAttempt = null;
 					job.result = storedJson<JsonRepresentation<InferenceResult>>(latest!);
+					if (output.status !== "completed" && output.reason !== undefined)
+						job.lastError = { reason: output.reason, incidentId: attempt + ":response", conversationId: String(child.id), jobId: key };
 				});
 				currentAttempt = undefined;
 				return latest;
@@ -545,23 +569,20 @@ export async function createCompresserSession(
 				});
 			}
 			async function incident(kind: "toolErrors" | "unresolvedErrors", reason: string, id: string) {
-				cached = await commit(async (tx) => {
-					const policy = await tx.doc(CompresserPolicyDoc);
-					if (policy.status === "open" && !policy.incidents[id]) {
-						policy.incidents[id] = true;
-						policy[kind]++;
-						policy.lastError = { reason, incidentId: id, conversationId: String(child.id), jobId: key };
-						if (
-							policy.toolErrors >= policy.toolCallingTolerance ||
-							policy.unresolvedErrors >= policy.unresolvedErrorTolerance
-						) {
-							policy.status = "sealed";
-							sealedReason ??= reason;
+				const sealed = await commit(async (tx) => {
+					const job = await tx.doc(CompresserJobDoc, child.id);
+					if (!job.sealed && !job.incidents[id]) {
+						job.incidents[id] = true;
+						job[kind]++;
+						job.lastError = { reason, incidentId: id, conversationId: String(child.id), jobId: key };
+						if (job.toolErrors >= options.toolCallingTolerance || job.unresolvedErrors >= options.unresolvedErrorTolerance) {
+							job.sealed = true;
+							job.status = "failed";
 						}
 					}
-					return storedJson<CompresserPolicy>(policy);
+					return job.sealed;
 				});
-				if (cached.status === "sealed") await finish("failed");
+				if (sealed) sealedJobs.add(key);
 			}
 			async function steer(reason: string, attemptId: string) {
 				check();
@@ -600,6 +621,7 @@ export async function createCompresserSession(
 							isError: true,
 						};
 					const result = await record({ ...output("completed"), toolCall: validCall });
+					if (!result) return { output: [{ type: "text", text: "Source completion is unconfirmed; this Conversation is quarantined." }], isError: true, control: { terminate: true } };
 					check();
 					await api.commit(async (tx) => {
 						checkAuthority(check);
@@ -647,7 +669,7 @@ export async function createCompresserSession(
 								return { messages: request.messages, check };
 							} catch (error) {
 								if (currentAttempt) await record(output("failed", String(error)));
-								await finish(latest?.status === "quarantined" ? "quarantined" : "failed");
+								await finish(localFault || latest?.status === "quarantined" ? "quarantined" : "failed");
 								return { block: String(error) };
 							}
 						},
@@ -663,9 +685,9 @@ export async function createCompresserSession(
 							if (message.stopReason === "error") {
 								const attempt = currentAttempt!,
 									reason = message.errorMessage ?? "Provider request failed";
-								await record(output("failed", reason));
+								if (!(await record(output("failed", reason)))) return;
 								await incident("unresolvedErrors", reason, attempt + ":provider");
-								if (cached.status === "open") await steer(reason, attempt);
+								if (!sealedJobs.has(key)) await steer(reason, attempt);
 								return;
 							}
 							const calls = message.content.filter((p) => p.type === "toolCall");
@@ -703,12 +725,12 @@ export async function createCompresserSession(
 							if (!currentAttempt) return;
 							const attempt = currentAttempt,
 								reason = "No complete submission: " + message.stopReason;
-							await record(output("failed", reason));
+							if (!(await record(output("failed", reason)))) return;
 							await incident("unresolvedErrors", reason, attempt + ":yield");
-							if (cached.status === "open") await steer(reason, attempt);
+							if (!sealedJobs.has(key)) await steer(reason, attempt);
 						},
 						afterTools: async (_assistant, ids) => {
-							if (!currentAttempt) return;
+							if (!currentAttempt || localFault) return;
 							const entries = await commit((tx) =>
 								Promise.all(ids.map((id) => tx.entry(ToolResultEntry, id))),
 							);
@@ -721,7 +743,7 @@ export async function createCompresserSession(
 									? messageText(errors.at(-1)!.model?.[0])
 									: "No complete submission was recorded");
 							const attempt = currentAttempt;
-							await record(output("failed", reason));
+							if (!(await record(output("failed", reason)))) return;
 							for (const entry of errors)
 								await incident("toolErrors", reason, attempt + ":tool:" + entry!.id);
 							if (!errors.length) await incident("unresolvedErrors", reason, attempt + ":empty-tools");
@@ -795,6 +817,7 @@ export async function createCompresserSession(
 				);
 				await submission.wait(BACKGROUND_CONTEXT);
 				await child.waitForIdle(BACKGROUND_CONTEXT);
+				if (localFault) throw new Error(localFault);
 				if (currentAttempt)
 					await record(output("quarantined", "Compresser run ended without a confirmed output"));
 				if (!latest) throw new Error("Compresser ended without an inference reservation");
@@ -830,13 +853,15 @@ export async function createCompresserSession(
 				return latest;
 			} catch (error) {
 				if (currentAttempt || fatal) {
-					const reason = "Unconfirmed Compresser completion: " + String(error);
-					fatal ??= reason;
+					const reason = localFault ?? "Unconfirmed Compresser completion: " + String(error);
+					sealedJobs.add(key);
 					await commit(async (tx) => {
 						const job = await tx.doc(CompresserJobDoc, child.id),
 							policy = await tx.doc(CompresserPolicyDoc);
 						job.status = "quarantined"; // Keep the pending reservation; uncertainty is not a release.
-						if (policy.status === "open") {
+						job.sealed = true;
+						job.lastError = { reason, incidentId: currentAttempt ?? "native-fault", conversationId: String(child.id), jobId: key };
+						if (fatal && policy.status === "open") {
 							policy.status = "sealed";
 							policy.lastError = {
 								reason,
@@ -871,6 +896,10 @@ export async function createCompresserSession(
 						sourceSessionId: job.sourceSessionId,
 						sourceConversationId: job.sourceConversationId,
 						status: job.status,
+						sealed: job.sealed,
+						toolErrors: job.toolErrors,
+						unresolvedErrors: job.unresolvedErrors,
+						lastError: storedJson<CompresserSnapshot["lastError"]>(job.lastError),
 					});
 				}
 				return copy({
@@ -878,8 +907,6 @@ export async function createCompresserSession(
 					status: policy.status,
 					toolCallingTolerance: policy.toolCallingTolerance,
 					unresolvedErrorTolerance: policy.unresolvedErrorTolerance,
-					toolErrors: policy.toolErrors,
-					unresolvedErrors: policy.unresolvedErrors,
 					lastError: storedJson<CompresserSnapshot["lastError"]>(policy.lastError),
 					conversations,
 				});
@@ -3636,17 +3663,17 @@ export class DurableAdapter {
 		);
 	}
 
-	checkCompresser(): void {
+	checkCompresser(jobId?: string): void {
 		const facade = this.#options.inference?.compresserSession;
 		const native = facade && nativeCompresserSessions.get(facade);
 		if (!native) throw new Error("An explicit host-owned Compresser Session is required");
-		native.check();
+		native.check(jobId);
 	}
 	async converse(
 		input: Omit<GovernedConversation, "reserve">,
 		strategy: { strategyId: string; maxCalls: number },
 	): Promise<InferenceResult> {
-		this.checkCompresser();
+		this.checkCompresser(input.source.jobId);
 		input.check();
 		const definition = this.#inferenceModels.get(input.request.modelKey);
 		if (!definition) throw new Error("Model is not allowlisted");

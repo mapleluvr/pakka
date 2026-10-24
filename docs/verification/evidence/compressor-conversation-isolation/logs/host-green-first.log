@@ -1,0 +1,14 @@
+✔ each Compressor Conversation has its own tool allowance, not the sum of successful siblings (1407.0045ms)
+✔ each Compressor Conversation has its own stop allowance, not the sum of successful siblings (1191.8831ms)
+✔ each Compressor Conversation has its own provider allowance, not the sum of successful siblings (1239.3479ms)
+✔ a sealed Conversation leaves sibling native HTTP and subsequent independent admission usable (1094.9665ms)
+✔ a sibling tolerance does not revoke an exact returned candidate's artifact receipt (967.0755ms)
+✔ normal reopen preserves the sealed child but admits a fresh independently authorized Conversation (1085.2615ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 8413.2412

@@ -1,0 +1,74 @@
+{
+  "stdout": "{\"sessionFile\":\"C:\\\\Users\\\\Administrator\\\\AppData\\\\Local\\\\Temp\\\\pakka-integration-bT0ZOT\\\\profile\\\\sessions\\\\720e22ee-c720-4fcb-80d4-efad1456b541\\\\main.jsonl\",\"jobId\":\"84d4bc38-985b-40f9-bdb1-b306f06f01ec\"}\n",
+  "stderr": "",
+  "exit": {
+    "code": null,
+    "signal": "SIGTERM"
+  },
+  "state": {
+    "sessionId": "b4dc4475-5f47-41cf-ad27-da50b0ff63b1",
+    "status": "open",
+    "toolCallingTolerance": 3,
+    "unresolvedErrorTolerance": 4,
+    "lastError": null,
+    "conversations": [
+      {
+        "conversationId": "8",
+        "jobId": "84d4bc38-985b-40f9-bdb1-b306f06f01ec",
+        "planId": "crash-before-response",
+        "sourceSessionId": "720e22ee-c720-4fcb-80d4-efad1456b541",
+        "sourceConversationId": "1",
+        "status": "quarantined",
+        "sealed": true,
+        "toolErrors": 0,
+        "unresolvedErrors": 0,
+        "lastError": {
+          "reason": "Unconfirmed Compresser job on reopen; source authority and model effects cannot be replayed",
+          "incidentId": "reopen:84d4bc38-985b-40f9-bdb1-b306f06f01ec",
+          "conversationId": "8",
+          "jobId": "84d4bc38-985b-40f9-bdb1-b306f06f01ec"
+        }
+      }
+    ]
+  },
+  "after": {
+    "sessionId": "b4dc4475-5f47-41cf-ad27-da50b0ff63b1",
+    "status": "open",
+    "toolCallingTolerance": 3,
+    "unresolvedErrorTolerance": 4,
+    "lastError": null,
+    "conversations": [
+      {
+        "conversationId": "8",
+        "jobId": "84d4bc38-985b-40f9-bdb1-b306f06f01ec",
+        "planId": "crash-before-response",
+        "sourceSessionId": "720e22ee-c720-4fcb-80d4-efad1456b541",
+        "sourceConversationId": "1",
+        "status": "quarantined",
+        "sealed": true,
+        "toolErrors": 0,
+        "unresolvedErrors": 0,
+        "lastError": {
+          "reason": "Unconfirmed Compresser job on reopen; source authority and model effects cannot be replayed",
+          "incidentId": "reopen:84d4bc38-985b-40f9-bdb1-b306f06f01ec",
+          "conversationId": "8",
+          "jobId": "84d4bc38-985b-40f9-bdb1-b306f06f01ec"
+        }
+      },
+      {
+        "conversationId": "19",
+        "jobId": "f032a901-1efe-4022-a2be-d09b06bf39b1",
+        "planId": "fresh-after-crash",
+        "sourceSessionId": "12c52ce5-631d-4e22-9e8f-fc1d8ddf2505",
+        "sourceConversationId": "1",
+        "status": "completed",
+        "sealed": false,
+        "toolErrors": 0,
+        "unresolvedErrors": 0,
+        "lastError": null
+      }
+    ]
+  },
+  "requestCountBeforeFreshWork": 2,
+  "requestCount": 4
+}

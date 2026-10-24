@@ -1,0 +1,274 @@
+cwd=D:\Projects\pakka-dynamite
+[
+  {
+    "id": "@pakka/dynamite@0.5.0",
+    "name": "@pakka/dynamite",
+    "version": "0.5.0",
+    "size": 87768,
+    "unpackedSize": 313503,
+    "shasum": "0dea2a755e55bbde52f310ae9d5f42c5673077c3",
+    "integrity": "sha512-o54eqJK6JeYisCx1bpG6DiXEd3gaCBpxFhEualTGgE87vTnqfWjI/a2uJ76ZL4+jM1XESDZE9G4+aXqIN3FLEA==",
+    "filename": "pakka-dynamite-0.5.0.tgz",
+    "files": [
+      {
+        "path": "README.md",
+        "size": 13865,
+        "mode": 420
+      },
+      {
+        "path": "dist/index.d.ts",
+        "size": 1548,
+        "mode": 420
+      },
+      {
+        "path": "dist/index.js",
+        "size": 597,
+        "mode": 420
+      },
+      {
+        "path": "dist/src/accounting.d.ts",
+        "size": 3006,
+        "mode": 420
+      },
+      {
+        "path": "dist/src/accounting.js",
+        "size": 5973,
+        "mode": 420
+      },
+      {
+        "path": "dist/src/artifacts.d.ts",
+        "size": 1546,
+        "mode": 420
+      },
+      {
+        "path": "dist/src/artifacts.js",
+        "size": 5906,
+        "mode": 420
+      },
+      {
+        "path": "dist/src/compressor.d.ts",
+        "size": 5300,
+        "mode": 420
+      },
+      {
+        "path": "dist/src/compressor.js",
+        "size": 7287,
+        "mode": 420
+      },
+      {
+        "path": "dist/src/config.d.ts",
+        "size": 2894,
+        "mode": 420
+      },
+      {
+        "path": "dist/src/config.js",
+        "size": 9703,
+        "mode": 420
+      },
+      {
+        "path": "dist/src/entries.d.ts",
+        "size": 5109,
+        "mode": 420
+      },
+      {
+        "path": "dist/src/entries.js",
+        "size": 18395,
+        "mode": 420
+      },
+      {
+        "path": "dist/src/pakka-adapter.d.ts",
+        "size": 1886,
+        "mode": 420
+      },
+      {
+        "path": "dist/src/pakka-adapter.js",
+        "size": 20102,
+        "mode": 420
+      },
+      {
+        "path": "dist/src/ports.d.ts",
+        "size": 4825,
+        "mode": 420
+      },
+      {
+        "path": "dist/src/ports.js",
+        "size": 11,
+        "mode": 420
+      },
+      {
+        "path": "dist/src/projection.d.ts",
+        "size": 4841,
+        "mode": 420
+      },
+      {
+        "path": "dist/src/projection.js",
+        "size": 11743,
+        "mode": 420
+      },
+      {
+        "path": "dist/src/protected-tail.d.ts",
+        "size": 2507,
+        "mode": 420
+      },
+      {
+        "path": "dist/src/protected-tail.js",
+        "size": 2615,
+        "mode": 420
+      },
+      {
+        "path": "dist/src/queue.d.ts",
+        "size": 3414,
+        "mode": 420
+      },
+      {
+        "path": "dist/src/queue.js",
+        "size": 5282,
+        "mode": 420
+      },
+      {
+        "path": "dist/src/runtime.d.ts",
+        "size": 5471,
+        "mode": 420
+      },
+      {
+        "path": "dist/src/runtime.js",
+        "size": 53328,
+        "mode": 420
+      },
+      {
+        "path": "dist/src/snapshot.d.ts",
+        "size": 3099,
+        "mode": 420
+      },
+      {
+        "path": "dist/src/snapshot.js",
+        "size": 9135,
+        "mode": 420
+      },
+      {
+        "path": "dist/src/store.d.ts",
+        "size": 7048,
+        "mode": 420
+      },
+      {
+        "path": "dist/src/store.js",
+        "size": 20327,
+        "mode": 420
+      },
+      {
+        "path": "dist/src/summarizer.d.ts",
+        "size": 726,
+        "mode": 420
+      },
+      {
+        "path": "dist/src/summarizer.js",
+        "size": 2621,
+        "mode": 420
+      },
+      {
+        "path": "dist/src/tags.d.ts",
+        "size": 1018,
+        "mode": 420
+      },
+      {
+        "path": "dist/src/tags.js",
+        "size": 2885,
+        "mode": 420
+      },
+      {
+        "path": "dist/src/tokenizer.d.ts",
+        "size": 2210,
+        "mode": 420
+      },
+      {
+        "path": "dist/src/tokenizer.js",
+        "size": 2237,
+        "mode": 420
+      },
+      {
+        "path": "dist/src/tool.d.ts",
+        "size": 2604,
+        "mode": 420
+      },
+      {
+        "path": "dist/src/tool.js",
+        "size": 2733,
+        "mode": 420
+      },
+      {
+        "path": "dist/src/window.d.ts",
+        "size": 4230,
+        "mode": 420
+      },
+      {
+        "path": "dist/src/window.js",
+        "size": 8006,
+        "mode": 420
+      },
+      {
+        "path": "docs/DURABLE-COMPATIBILITY.md",
+        "size": 11451,
+        "mode": 420
+      },
+      {
+        "path": "docs/DURABLE-LIBRARY-ACCEPTANCE.md",
+        "size": 5276,
+        "mode": 420
+      },
+      {
+        "path": "docs/ENGINE-PORTS.md",
+        "size": 13943,
+        "mode": 420
+      },
+      {
+        "path": "docs/state/artifacts.md",
+        "size": 5124,
+        "mode": 420
+      },
+      {
+        "path": "examples/headless.mjs",
+        "size": 3217,
+        "mode": 420
+      },
+      {
+        "path": "examples/local-pakka.mjs",
+        "size": 2707,
+        "mode": 420
+      },
+      {
+        "path": "integrations/pakka/0.2.1-pairing.json",
+        "size": 672,
+        "mode": 420
+      },
+      {
+        "path": "integrations/pakka/0.3.0-pairing.json",
+        "size": 724,
+        "mode": 420
+      },
+      {
+        "path": "integrations/pakka/0.4.0-initial-trial-pairing.json",
+        "size": 812,
+        "mode": 420
+      },
+      {
+        "path": "integrations/pakka/0.4.0-pairing.json",
+        "size": 825,
+        "mode": 420
+      },
+      {
+        "path": "integrations/pakka/pairing.json",
+        "size": 826,
+        "mode": 420
+      },
+      {
+        "path": "package.json",
+        "size": 1893,
+        "mode": 420
+      }
+    ],
+    "entryCount": 51,
+    "bundled": []
+  }
+]
+
+exit=0

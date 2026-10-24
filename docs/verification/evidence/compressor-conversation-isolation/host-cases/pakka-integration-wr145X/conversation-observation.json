@@ -1,0 +1,42 @@
+{
+  "state": {
+    "sessionId": "777f6e1c-5045-4c3e-b5e4-b710ef74f0b3",
+    "status": "open",
+    "toolCallingTolerance": 2,
+    "unresolvedErrorTolerance": 2,
+    "lastError": null,
+    "conversations": [
+      {
+        "conversationId": "8",
+        "jobId": "3fd8ce9d-5ea6-426e-9c00-0b42ac28689e",
+        "planId": "source-unknown",
+        "sourceSessionId": "d62b0170-1ba2-4115-ae74-3ff34016aa8c",
+        "sourceConversationId": "1",
+        "status": "quarantined",
+        "sealed": true,
+        "toolErrors": 0,
+        "unresolvedErrors": 0,
+        "lastError": {
+          "reason": "Unconfirmed source completion: Error: Inference completion storage unknown; do not retry",
+          "incidentId": "e2617bde-de17-4e14-a1fa-ba2933bc69a9",
+          "conversationId": "8",
+          "jobId": "3fd8ce9d-5ea6-426e-9c00-0b42ac28689e"
+        }
+      },
+      {
+        "conversationId": "22",
+        "jobId": "8fb98d56-c3e4-4b78-861f-564aaa15363b",
+        "planId": "healthy-other-source",
+        "sourceSessionId": "08494b19-b16e-427d-8879-5de77d7c00dd",
+        "sourceConversationId": "1",
+        "status": "completed",
+        "sealed": false,
+        "toolErrors": 0,
+        "unresolvedErrors": 0,
+        "lastError": null
+      }
+    ]
+  },
+  "attempt": "e2617bde-de17-4e14-a1fa-ba2933bc69a9",
+  "original": "{\"schema\":\"pakka.journal.v1\",\"sessionId\":\"d62b0170-1ba2-4115-ae74-3ff34016aa8c\",\"namespace\":\"strategy:inference\"}\n{\"id\":\"468ccd8a-f4b2-42ca-be61-945b4f5fe997\",\"version\":1,\"previous\":\"f72c4dad91252799c59ca27927545f01d23c3532d5eb25b77ac867705582fa76\",\"records\":[{\"kind\":\"reservation\",\"jobId\":\"3fd8ce9d-5ea6-426e-9c00-0b42ac28689e\",\"planId\":\"source-unknown\",\"attemptId\":\"e2617bde-de17-4e14-a1fa-ba2933bc69a9\",\"modelKey\":\"summary\",\"cap\":256,\"requireArtifactReceipt\":true,\"sessionId\":\"d62b0170-1ba2-4115-ae74-3ff34016aa8c\",\"strategyId\":\"strategy\",\"principal\":\"owner\",\"leaseId\":\"1616ad80-dc1c-46d6-b616-3261546db8dc\"}],\"checksum\":\"b01d60b086561ea5897dc0721eb756064c10f9aa4fe28211b7bdce533605a1f3\"}\n"
+}

@@ -1,0 +1,38 @@
+✔ each Compressor Conversation has its own tool allowance, not the sum of successful siblings (590.0876ms)
+✔ each Compressor Conversation has its own stop allowance, not the sum of successful siblings (459.1372ms)
+✔ each Compressor Conversation has its own provider allowance, not the sum of successful siblings (428.1953ms)
+✔ a sealed Conversation leaves sibling native HTTP and subsequent independent admission usable (438.9421ms)
+✔ a sibling tolerance does not revoke an exact returned candidate's artifact receipt (336.1718ms)
+✔ source-local unknown completion quarantines only its Conversation and retains the pending reservation (358.5521ms)
+✔ aggregate-counter storage rejects implicit migration instead of resetting or inventing per-Conversation counts (12.5511ms)
+✔ normal reopen preserves the sealed child but admits a fresh independently authorized Conversation (369.6899ms)
+✔ Compresser hard interruption stays writer-locked; after explicit dead-writer recovery, unconfirmed work seals without replay (1175.0778ms)
+✔ Compresser repairs a stop and invalid call in the same native trajectory, auditing every real request (430.0535ms)
+✔ an empty semantic error is still a rejected call, including repeated admission validation (278.8859ms)
+✔ Compresser provider errors use the native failed-run boundary without losing earlier analysis (341.6872ms)
+✔ one external Conversation creates independent Compresser Conversations and repeated job admission sends nothing (342.3566ms)
+✔ tool allowance belongs to each successful child Conversation and survives reopen without dispatch (537.8184ms)
+✔ four stop errors seal their Conversation, preserve the actual reason, and send no fifth request (385.5054ms)
+✔ four provider errors seal their Conversation, preserve the actual reason, and send no fifth request (371.0909ms)
+✔ Compresser HTTP 429 has no hidden provider retries outside the charged native attempts (262.6132ms)
+✔ Compresser HTTP 503 has no hidden provider retries outside the charged native attempts (247.7668ms)
+✔ Compresser output-length failure with a tool-shaped partial is unresolved, never an adopted tool error (277.4447ms)
+✔ Compresser strict raw and source validation failures are complete-call repairs, not adopted normalized DTOs (372.4361ms)
+✔ a source revocation during Compresser HTTP prevents late adoption and another dispatch (172.6475ms)
+✔ Compresser job and strategy hard budgets remain independent of error tolerances (417.3905ms)
+✔ managed Compresser requests spend auxiliary aggregate quota and never primary quota (323.8023ms)
+✔ one container serves distinct external Sessions without a sibling seal revoking an exact returned candidate (500.9958ms)
+✔ Conversation-local sealing keeps another source's candidate private while independent admissions and late results succeed (509.9471ms)
+✔ a sibling seal leaves an already-in-flight valid response usable (343.9486ms)
+✔ multiple output calls in one response are not candidate patches and each actual tool error counts once (243.9298ms)
+✔ cancelling the source job refuses a late result without spending error tolerance or dispatching again (193.6973ms)
+✔ a source audit storage failure after real HTTP seals unknown work without a correction or releasing admission (209.0599ms)
+✔ completed native job state survives reopen without new HTTP and one writer is enforced (227.748ms)
+ℹ tests 30
+ℹ suites 0
+ℹ pass 30
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 13974.7911

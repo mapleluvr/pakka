@@ -1,26 +1,30 @@
+# Compresser Conversations for independent native compression
+
 ## Why
 
-The current optional Dynamite Tool Calling path starts each failed attempt from the original system/user input, without the rejected assistant call or its diagnostic. The operator requires a continuing compressor trajectory with two bounded error categories and a permanently sealed result when either tolerance is reached.
+Compressor repairs need to retain prior analysis and matched tool results rather than repeatedly start from identical source prompts. Independent original-text windows can generate concurrently; one long-lived native Session provides storage and scheduling, while each source job has its own Conversation.
+
+The first trial incorrectly interpreted tolerance/sealing as Session-wide. The operator clarified that each Compressor Conversation independently owns its error counts and seal; these jobs are normally unrelated. P2/P3 cross-task merging belongs to an extra asynchronous mechanism, not the compressor's shared state or generation dependency.
 
 ## What Changes
 
-- Maintain one long-lived pi-durable Compresser Session for Dynamite, containing independent source-job-bound Compresser Conversations serving business Sessions/Conversations outside it. One external Conversation may trigger multiple internal Conversations, without a preset Conversation-count limit.
-- Adopt independently configurable, cumulative per-Compresser-Session `Tool_Calling_Tolerance` and `Unresolved_Error_Tolerance`; use 3 and 4 as the operator's example/probe configuration, not as a silently published API default.
-- Preserve earlier assistant analysis, drafts, failed calls and matched tool results. A failed submission requests one complete replacement containing all required P1/P2/P3/P4 fields; a normal stop without an accepted complete candidate triggers a native correction in the compressor's own trajectory.
-- Seal at the error that reaches either tolerance, retain the trajectory/counters and the last actual error, and reject later dispatch/adoption in that session.
-- Investigate Pakka and pinned public pi-durable infrastructure first. Report lifecycle, authority and error-continuation obstacles before choosing a custom agent loop. The current work establishes this boundary through real local-HTTP characterization and records pending implementation choices.
-- Keep source authority, per-attempt receipts/usage, budgets, cancellation and storage-unknown semantics under the host. Independent adversarial review is not selected following the operator's instruction; existing partial review evidence remains historical.
+- Keep one long-lived adapter-owned Compresser Session, many source-job Conversations and external business Sessions/Conversations outside it; an external Conversation can trigger many compression jobs.
+- Use native tool-result repair, steering and failed-run continuation on the pinned Durable 1.4.0-pakka.1 cohort. Every request stays under original source authority and finite auxiliary budgets.
+- Give each Conversation independent incident deduplication, two cumulative counters, last error and seal. A sibling's tolerance does not cancel work, deny receipts or deny fresh jobs.
+- Restore overlapping native multi-window generation while ordering only shared artifact adoption. Preserve mature window/reduce/projection behavior and complete local P1/P2/P3/P4 submissions.
+- Preserve unknown-effect, revocation and actual shared-storage fault boundaries; quarantine unconfirmed old work without provider replay.
+- Version the changed public snapshot/storage contract and exact private package pair. Aggregate-counter stores without reliable per-Conversation attribution require explicit migration, not silent resets.
 
 ## Capabilities
 
 ### New Capabilities
 
-- `compressor-repair-session`: a Dynamite-owned multi-Conversation service container, external source/job bindings, conversational repair, independent Session-wide error tolerances, retained sealing and governed native-infrastructure selection.
+- compressor-repair-session: one source-bound, native multi-Conversation repair container with independent concurrent jobs and Conversation-local error policy.
 
 ### Modified Capabilities
 
-None. The existing single-call auxiliary inference remains a supported primitive; its archived/main contracts are not rewritten into a conversational API by this investigation.
+None. Single-call auxiliary inference remains a supported primitive. P2/P3 graph merging is a separate mechanism; this correction defines its local-output boundary, not its algorithm.
 
 ## Impact
 
-The future implementation affects `packages/agent/src/{types,strategy-control,durable-adapter}.ts`, the independent `../pakka-dynamite` compressor/runtime/ports and their tests, and versioned package pairing. Production dependencies stay pinned to `pi-durable@1.0.3-pakka.1` during the experiment. Native handles remain adapter-local; the operator has not authorized a custom agent loop or a production dependency upgrade. Related main boundaries are `conversation-runtime` and `optional-dynamite-product`; the existing unarchived single-call addition is `add-auxiliary-tool-output`.
+The adapter, SourceJob admission/adoption guards, frozen snapshot DTOs, Dynamite native batch dispatch and their production/public/installed consumers change. Pi mutable handles stay in durable-adapter.ts. The fixed SDK cohort and downstream patch stay unchanged. The changed DTO/storage is a new private agent 0.7.0 / Dynamite 0.5.0 pair; previous pair artifacts and verification remain historical. No custom agent loop, default server activation, paid models, user credentials or adversarial-review workflow is selected.

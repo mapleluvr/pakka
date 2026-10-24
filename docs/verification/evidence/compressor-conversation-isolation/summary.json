@@ -1,0 +1,392 @@
+{
+  "schema": "pakka.compressor-conversation.verification.v1",
+  "date": "2026-10-24",
+  "node": "v24.18.0",
+  "platform": "win32",
+  "baseline": {
+    "host": "5dcc4cd6f0ae5f644e7f77e60f27b97bfca11a0c",
+    "strategy": "279eb83e2f3077337f69ca6f6e7dbc7003d38334"
+  },
+  "results": {
+    "host": {
+      "tests": 607,
+      "pass": 605,
+      "fail": 0,
+      "skipped": 2,
+      "cancelled": 0,
+      "todo": 0
+    },
+    "hostNative": {
+      "tests": 31,
+      "pass": 31,
+      "fail": 0,
+      "skipped": 0,
+      "cancelled": 0,
+      "todo": 0
+    },
+    "strategy": {
+      "tests": 381,
+      "pass": 381,
+      "fail": 0,
+      "skipped": 0,
+      "cancelled": 0,
+      "todo": 0
+    },
+    "strategyNative": {
+      "tests": 12,
+      "pass": 12,
+      "fail": 0,
+      "skipped": 0,
+      "cancelled": 0,
+      "todo": 0
+    }
+  },
+  "installed": {
+    "tests": {
+      "tests": 68,
+      "pass": 68,
+      "fail": 0,
+      "skipped": 0,
+      "cancelled": 0,
+      "todo": 0
+    },
+    "httpRequests": 436,
+    "unexpectedFixtureErrors": 0,
+    "declarations": "passed"
+  },
+  "archives": [
+    {
+      "name": "@pakka/agent",
+      "version": "0.7.0",
+      "path": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\dynamite-packed-consumer-HUIB9s\\pakka-agent-0.7.0.tgz",
+      "shasum": "f0598e76da67f704f84baf49c2ddc839d061cca8",
+      "sha256": "c5c7fffddf9b644426ef86bba6ae03c67f813d68f10eb4f6901a052700047981",
+      "integrity": "sha512-dYosXO+fv1ZgK9zjQqxWstbHdlUxrwj+RS9s/TyFFI6kPOWYoi57f+ok2gFOROnQfKtDFCW2c2wHDIXsLjDYGw==",
+      "files": 12649
+    },
+    {
+      "name": "@pakka/dynamite",
+      "version": "0.5.0",
+      "path": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\dynamite-packed-consumer-HUIB9s\\pakka-dynamite-0.5.0.tgz",
+      "shasum": "0dea2a755e55bbde52f310ae9d5f42c5673077c3",
+      "sha256": "185fe5b5563e1f89834db80fcf19b29d80dfb55a32ecb9b6d41bd67b68591cdd",
+      "integrity": "sha512-o54eqJK6JeYisCx1bpG6DiXEd3gaCBpxFhEualTGgE87vTnqfWjI/a2uJ76ZL4+jM1XESDZE9G4+aXqIN3FLEA==",
+      "files": 51
+    }
+  ],
+  "compiled": [
+    {
+      "name": "@pakka/agent",
+      "files": 18,
+      "exactMatch": true
+    },
+    {
+      "name": "@pakka/dynamite",
+      "files": 38,
+      "exactMatch": true
+    }
+  ],
+  "sourceFiles": 145,
+  "hostCases": [
+    {
+      "name": "pakka-integration-OWuuJ1",
+      "observations": [
+        "privacy-observation.json"
+      ],
+      "requests": 2
+    },
+    {
+      "name": "pakka-integration-bT0ZOT",
+      "observations": [
+        "crash-observation.json"
+      ],
+      "requests": 4
+    },
+    {
+      "name": "pakka-integration-SeLx9f",
+      "observations": [
+        "shared-fault-observation.json"
+      ],
+      "requests": 2
+    },
+    {
+      "name": "pakka-integration-wr145X",
+      "observations": [
+        "conversation-observation.json"
+      ],
+      "requests": 2
+    },
+    {
+      "name": "pakka-integration-lrumD2",
+      "observations": [
+        "conversation-observation.json"
+      ],
+      "requests": 4
+    },
+    {
+      "name": "pakka-integration-VHe6k8",
+      "observations": [
+        "conversation-observation.json"
+      ],
+      "requests": 5
+    },
+    {
+      "name": "pakka-integration-POKjag",
+      "observations": [
+        "conversation-observation.json"
+      ],
+      "requests": 5
+    },
+    {
+      "name": "pakka-integration-xuNwo4",
+      "observations": [
+        "conversation-observation.json"
+      ],
+      "requests": 5
+    },
+    {
+      "name": "pakka-integration-NboGoB",
+      "observations": [
+        "crash-observation.json"
+      ],
+      "requests": 4
+    },
+    {
+      "name": "pakka-integration-nWVIhk",
+      "observations": [
+        "privacy-observation.json"
+      ],
+      "requests": 2
+    },
+    {
+      "name": "pakka-integration-BVnIAT",
+      "observations": [
+        "crash-observation.json"
+      ],
+      "requests": 2
+    },
+    {
+      "name": "pakka-integration-tlhLFB",
+      "observations": [
+        "conversation-observation.json"
+      ],
+      "requests": 2
+    }
+  ],
+  "strategyCases": [
+    {
+      "name": "compresser-concurrent-windows-complete-TjiC03",
+      "requests": 9
+    },
+    {
+      "name": "compresser-concurrent-windows-sealed-QEoGLq",
+      "requests": 9
+    },
+    {
+      "name": "compresser-invalid-options-Qnh5sZ",
+      "requests": 4
+    },
+    {
+      "name": "compresser-planning-drain-i2cICx",
+      "requests": 5
+    },
+    {
+      "name": "compresser-privacy-observer-NVMDTL",
+      "requests": 5
+    },
+    {
+      "name": "compresser-privacy-owner-SgaYXb",
+      "requests": 5
+    },
+    {
+      "name": "compresser-provider-NzNDhe",
+      "requests": 7
+    },
+    {
+      "name": "compresser-reopen-UHV0sK",
+      "requests": 5
+    },
+    {
+      "name": "compresser-repairs-2hHw49",
+      "requests": 9
+    },
+    {
+      "name": "compresser-revoke-2iEqLa",
+      "requests": 5
+    },
+    {
+      "name": "compresser-seal-stop-VvBxIj",
+      "requests": 8
+    },
+    {
+      "name": "compresser-seal-tool-a1rfzF",
+      "requests": 7
+    },
+    {
+      "name": "compresser-separate-jobs-Vr9skQ",
+      "requests": 10
+    }
+  ],
+  "ledgerPrefix": {
+    "bytes": 49824,
+    "sha256": "6b20beddcb6a2218ae8ffcd98135d8f1b315d0ab8c6fdfc6ef3b8b7f792a6816"
+  },
+  "activation": "explicit-library-only",
+  "semanticQualityOrGraphMergeAccepted": false,
+  "storageArchives": {
+    "format": "per-case storage.tar.gz, unchanged original relative paths",
+    "integrity": "storage-sha256.json checked after extraction into a short isolated directory",
+    "cases": [
+      {
+        "cases": "host-cases",
+        "name": "pakka-integration-bT0ZOT",
+        "files": 43,
+        "archiveSha256": "d095005385912b6b06fc58f3eb56a35779665a7fa671b6af5949bf11a6e52cbe"
+      },
+      {
+        "cases": "host-cases",
+        "name": "pakka-integration-BVnIAT",
+        "files": 25,
+        "archiveSha256": "d5a0a248f2d6a9d29d130b911e0dff1bace785e39111edeab07853f8bad6dea3"
+      },
+      {
+        "cases": "host-cases",
+        "name": "pakka-integration-lrumD2",
+        "files": 38,
+        "archiveSha256": "2fc444bb8237cff8f9bb1415ba05d82ad249c772fb01efb34d8ab1da68fd7205"
+      },
+      {
+        "cases": "host-cases",
+        "name": "pakka-integration-NboGoB",
+        "files": 43,
+        "archiveSha256": "0fc87d128672fc238c08c32095d951765ecee4e580f3d8f8a4e7fa1073faa32a"
+      },
+      {
+        "cases": "host-cases",
+        "name": "pakka-integration-nWVIhk",
+        "files": 38,
+        "archiveSha256": "26536a7005416003df04178aa9ce96ca5a11c53e01077f8b088f1f94ef5a5e95"
+      },
+      {
+        "cases": "host-cases",
+        "name": "pakka-integration-OWuuJ1",
+        "files": 38,
+        "archiveSha256": "3aad734ee49339119a0ad7bd5890c498a14c04794520c199aebc49c53cffacf9"
+      },
+      {
+        "cases": "host-cases",
+        "name": "pakka-integration-POKjag",
+        "files": 32,
+        "archiveSha256": "08d873f3a94440a44aba5152c73803e0d8720f1bcb0458b2ca5faf532b2bfcb5"
+      },
+      {
+        "cases": "host-cases",
+        "name": "pakka-integration-SeLx9f",
+        "files": 27,
+        "archiveSha256": "37be0785a6c3937411a4c9d6fe7d8d9b474950264d8694c2ba4c5396b6a998c1"
+      },
+      {
+        "cases": "host-cases",
+        "name": "pakka-integration-tlhLFB",
+        "files": 33,
+        "archiveSha256": "fce8d20a78b02d88eb35bc53e281ea791f2fabb1166852a1963e105b3fddef2e"
+      },
+      {
+        "cases": "host-cases",
+        "name": "pakka-integration-VHe6k8",
+        "files": 32,
+        "archiveSha256": "b592ce0e6a32ef7823693cf166be17eef2390d6bd6e72fb1828772a9ee347389"
+      },
+      {
+        "cases": "host-cases",
+        "name": "pakka-integration-wr145X",
+        "files": 33,
+        "archiveSha256": "f461a7d5035775e5e4e71edee127b6c140b9865bba8373c5fc15e2fba139661b"
+      },
+      {
+        "cases": "host-cases",
+        "name": "pakka-integration-xuNwo4",
+        "files": 32,
+        "archiveSha256": "be44a1445985d794cbc1073db34afac23b1c02bbc3426ae6c415df5f02e10502"
+      },
+      {
+        "cases": "installed-cases",
+        "name": "compresser-concurrent-windows-complete-TjiC03",
+        "files": 60,
+        "archiveSha256": "68a0c73946ef2f300349ecd49038134ca661013d6f9313279fc4b4d2fb577eac"
+      },
+      {
+        "cases": "installed-cases",
+        "name": "compresser-concurrent-windows-sealed-QEoGLq",
+        "files": 60,
+        "archiveSha256": "98968e7f86ccde1a124591a85851fe949c187129e7db83ed9c13da81af2377d5"
+      },
+      {
+        "cases": "installed-cases",
+        "name": "compresser-invalid-options-Qnh5sZ",
+        "files": 15,
+        "archiveSha256": "1224aacacaa298d88226af37b2a466c5a2ab5a6e86923efcdda0a98bff7a31ea"
+      },
+      {
+        "cases": "installed-cases",
+        "name": "compresser-planning-drain-i2cICx",
+        "files": 36,
+        "archiveSha256": "4d79f4b83b114e7c44e9ceccfe4cd6cf93ccbfda7507f8123e42e1b2b3b9a700"
+      },
+      {
+        "cases": "installed-cases",
+        "name": "compresser-privacy-observer-NVMDTL",
+        "files": 23,
+        "archiveSha256": "eaa5ba2aac3f79635c733828ad1236e240d9e6c9bb99c1f58fab2ed0c4a080d3"
+      },
+      {
+        "cases": "installed-cases",
+        "name": "compresser-privacy-owner-SgaYXb",
+        "files": 42,
+        "archiveSha256": "4ab24321e93e8a3ae001e5ee58be9f5b1f3452708514e9386634eea4a36d1795"
+      },
+      {
+        "cases": "installed-cases",
+        "name": "compresser-provider-NzNDhe",
+        "files": 36,
+        "archiveSha256": "4e1d9d853ec991697449dec94f3af8f37e13ce5c7443f804e926982f13d3e037"
+      },
+      {
+        "cases": "installed-cases",
+        "name": "compresser-reopen-UHV0sK",
+        "files": 36,
+        "archiveSha256": "1761362f22f569a9eec3382af5ad0d69117830bb9181cf35d6ce16c87de11c10"
+      },
+      {
+        "cases": "installed-cases",
+        "name": "compresser-repairs-2hHw49",
+        "files": 36,
+        "archiveSha256": "98bd6073215d2aa66c3c6ba71d5eccc45b0f4b9c3a201a787164fcb1e14e25e8"
+      },
+      {
+        "cases": "installed-cases",
+        "name": "compresser-revoke-2iEqLa",
+        "files": 36,
+        "archiveSha256": "4888a49a9024dbae8457a962b635672fd131887af601a3e8bbd8ea1b749c95c8"
+      },
+      {
+        "cases": "installed-cases",
+        "name": "compresser-seal-stop-VvBxIj",
+        "files": 36,
+        "archiveSha256": "2a4a2d99d2d8b09b5d612bfc62a74e60e8c52647c40f6b2cb81b4d86c6afaad5"
+      },
+      {
+        "cases": "installed-cases",
+        "name": "compresser-seal-tool-a1rfzF",
+        "files": 36,
+        "archiveSha256": "d6ad557388b879602a1a7c8839286c25ff0a7784d6f8f6ab4930cc13648a4c4c"
+      },
+      {
+        "cases": "installed-cases",
+        "name": "compresser-separate-jobs-Vr9skQ",
+        "files": 42,
+        "archiveSha256": "a415a46a76c0ea6cd7880a9b514911793c822dbd69dabfb61682a394663e0d21"
+      }
+    ]
+  }
+}

@@ -1,0 +1,109 @@
+✖ each Compressor Conversation has its own tool allowance, not the sum of successful siblings (753.4463ms)
+✖ each Compressor Conversation has its own stop allowance, not the sum of successful siblings (1498.0334ms)
+✖ each Compressor Conversation has its own provider allowance, not the sum of successful siblings (1533.5832ms)
+✖ a sealed Conversation leaves sibling native HTTP and subsequent independent admission usable (922.3115ms)
+✖ a sibling tolerance does not revoke an exact returned candidate's artifact receipt (952.5436ms)
+✖ normal reopen preserves the sealed child but admits a fresh independently authorized Conversation (781.8292ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 0
+ℹ fail 6
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 7372.0831
+
+✖ failing tests:
+
+test at packages\agent\test\compresser-conversation.test.ts:32:2
+✖ each Compressor Conversation has its own tool allowance, not the sum of successful siblings (753.4463ms)
+  AssertionError [ERR_ASSERTION]: another Conversation's incident cannot consume this job's allowance
+  + actual - expected
+  
+  + 'failed'
+  - 'completed'
+  
+      at TestContext.<anonymous> (file:///D:/Projects/pakka/packages/agent/test/compresser-conversation.test.ts:46:11)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'failed',
+    expected: 'completed',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at packages\agent\test\compresser-conversation.test.ts:32:2
+✖ each Compressor Conversation has its own stop allowance, not the sum of successful siblings (1498.0334ms)
+  AssertionError [ERR_ASSERTION]: another Conversation's incident cannot consume this job's allowance
+  + actual - expected
+  
+  + 'failed'
+  - 'completed'
+  
+      at TestContext.<anonymous> (file:///D:/Projects/pakka/packages/agent/test/compresser-conversation.test.ts:46:11)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'failed',
+    expected: 'completed',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at packages\agent\test\compresser-conversation.test.ts:32:2
+✖ each Compressor Conversation has its own provider allowance, not the sum of successful siblings (1533.5832ms)
+  AssertionError [ERR_ASSERTION]: another Conversation's incident cannot consume this job's allowance
+  + actual - expected
+  
+  + 'failed'
+  - 'completed'
+  
+      at TestContext.<anonymous> (file:///D:/Projects/pakka/packages/agent/test/compresser-conversation.test.ts:46:11)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'failed',
+    expected: 'completed',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at packages\agent\test\compresser-conversation.test.ts:55:1
+✖ a sealed Conversation leaves sibling native HTTP and subsequent independent admission usable (922.3115ms)
+  Error: Compresser Session sealed; trusted bootstrap inspection required
+      at Object.guard [as check] (file:///D:/Projects/pakka/packages/agent/src/durable-adapter.ts:405:10)
+      at DurableAdapter.checkCompresser (file:///D:/Projects/pakka/packages/agent/src/durable-adapter.ts:3643:10)
+      at Object.checkCompresser (file:///D:/Projects/pakka/packages/agent/src/host.ts:122:20)
+      at #converse (file:///D:/Projects/pakka/packages/agent/src/strategy-control.ts:863:32)
+      at Object.converse (file:///D:/Projects/pakka/packages/agent/src/strategy-control.ts:715:19)
+      at TestContext.<anonymous> (file:///D:/Projects/pakka/packages/agent/test/compresser-conversation.test.ts:72:52)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7)
+
+test at packages\agent\test\compresser-conversation.test.ts:85:1
+✖ a sibling tolerance does not revoke an exact returned candidate's artifact receipt (952.5436ms)
+  Error: Compresser Session sealed; trusted bootstrap inspection required
+      at Object.guard [as check] (file:///D:/Projects/pakka/packages/agent/src/durable-adapter.ts:405:10)
+      at DurableAdapter.checkCompresser (file:///D:/Projects/pakka/packages/agent/src/durable-adapter.ts:3643:10)
+      at Object.checkCompresser (file:///D:/Projects/pakka/packages/agent/src/host.ts:122:20)
+      at #validateAdoption (file:///D:/Projects/pakka/packages/agent/src/strategy-control.ts:488:89)
+      at Object.append (file:///D:/Projects/pakka/packages/agent/src/strategy-control.ts:591:61)
+      at TestContext.<anonymous> (file:///D:/Projects/pakka/packages/agent/test/compresser-conversation.test.ts:93:31)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7)
+
+test at packages\agent\test\compresser-conversation.test.ts:99:1
+✖ normal reopen preserves the sealed child but admits a fresh independently authorized Conversation (781.8292ms)
+  Error: Compresser Session sealed; trusted bootstrap inspection required
+      at Object.guard [as check] (file:///D:/Projects/pakka/packages/agent/src/durable-adapter.ts:405:10)
+      at DurableAdapter.checkCompresser (file:///D:/Projects/pakka/packages/agent/src/durable-adapter.ts:3643:10)
+      at Object.checkCompresser (file:///D:/Projects/pakka/packages/agent/src/host.ts:122:20)
+      at #converse (file:///D:/Projects/pakka/packages/agent/src/strategy-control.ts:863:32)
+      at Object.converse (file:///D:/Projects/pakka/packages/agent/src/strategy-control.ts:715:19)
+      at TestContext.<anonymous> (file:///D:/Projects/pakka/packages/agent/test/compresser-conversation.test.ts:109:53)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7)

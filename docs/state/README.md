@@ -8,7 +8,7 @@
 | ---------------------------------- | -------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
 | [产品与范围](product.md)           | 产品组成、用户目标、使用与支持条件           | 本页所链接的领域契约                                                                                             |
 | [Runtime 与 authority](runtime.md) | 模块依赖、身份、调度、持久化关系             | [架构契约](../development/ARCHITECTURE.md)、[公开 API](../reference/README.md)、OpenSpec 领域场景                |
-| [Compresser 会话](compressor-session.md) | 共享服务容器、source-job 修复与 Session 封存 | [会话 delta](../../openspec/changes/add-compressor-repair-session/specs/compressor-repair-session/spec.md) |
+| [Compresser 会话](compressor-session.md) | 共享容器、独立 Conversation 纠错与封存 | [会话 delta](../../openspec/changes/add-compressor-repair-session/specs/compressor-repair-session/spec.md) |
 | [Durable 源补丁](durable-patch.md) | 下游补丁行为、基线、构建与安装产物           | 源补丁、机器身份清单、构建脚本及追加式兼容性账本                                                                 |
 | [MAS](mas.md)                      | 成员、通信、观测及界面贡献的关系             | MAS/Broker/DevPack API 与映射的 OpenSpec 场景                                                                    |
 | [WebUI 服务与扩展](webui.md)       | 人类权限、协作、受控服务、可选 facets        | [WebUI 开发契约](../development/WEBUI-DEVELOPMENT.md)及其领域场景                                                |

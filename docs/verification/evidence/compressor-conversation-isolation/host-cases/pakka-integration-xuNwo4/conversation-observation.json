@@ -1,0 +1,268 @@
+{
+  "state": {
+    "sessionId": "6617616f-b402-4b43-b14a-867ff8568893",
+    "status": "open",
+    "toolCallingTolerance": 2,
+    "unresolvedErrorTolerance": 2,
+    "lastError": null,
+    "conversations": [
+      {
+        "conversationId": "8",
+        "jobId": "249c8f3b-6ca5-4279-9c5d-ef5335f81316",
+        "planId": "first",
+        "sourceSessionId": "b83af0fc-706e-46ee-831f-7466d8054889",
+        "sourceConversationId": "1",
+        "status": "completed",
+        "sealed": false,
+        "toolErrors": 1,
+        "unresolvedErrors": 0,
+        "lastError": {
+          "reason": "Error: Validation failed for tool \"submit_candidate\":\n  - text: must have required properties text\n\nReceived arguments:\n{}",
+          "incidentId": "9476e086-02ac-47b1-8075-19c16f148c9d:tool:21",
+          "conversationId": "8",
+          "jobId": "249c8f3b-6ca5-4279-9c5d-ef5335f81316"
+        }
+      },
+      {
+        "conversationId": "27",
+        "jobId": "84125c4c-948e-407d-928e-6d0635355080",
+        "planId": "second",
+        "sourceSessionId": "b83af0fc-706e-46ee-831f-7466d8054889",
+        "sourceConversationId": "1",
+        "status": "completed",
+        "sealed": false,
+        "toolErrors": 1,
+        "unresolvedErrors": 0,
+        "lastError": {
+          "reason": "Error: Validation failed for tool \"submit_candidate\":\n  - text: must have required properties text\n\nReceived arguments:\n{}",
+          "incidentId": "d1b8117e-67b8-4c8d-869f-2efd787cf20a:tool:40",
+          "conversationId": "27",
+          "jobId": "84125c4c-948e-407d-928e-6d0635355080"
+        }
+      }
+    ]
+  },
+  "requests": [
+    {
+      "model": "local-model",
+      "messages": [
+        {
+          "role": "user",
+          "content": "ORIGINAL"
+        },
+        {
+          "role": "system",
+          "content": "Updated system prompt section \"system\":\n\nPAKKA-SYSTEM\n\nUpdated system prompt section \"instructions\":\n\n<instructions>\nPAKKA-SYSTEM\n</instructions>"
+        }
+      ],
+      "stream": true,
+      "stream_options": {
+        "include_usage": true
+      },
+      "store": false,
+      "max_tokens": 4096
+    },
+    {
+      "model": "summary-model",
+      "messages": [
+        {
+          "role": "system",
+          "content": "<instructions>\n\n</instructions>"
+        },
+        {
+          "role": "user",
+          "content": "JOB-A"
+        }
+      ],
+      "stream": true,
+      "stream_options": {
+        "include_usage": true
+      },
+      "store": false,
+      "max_tokens": 256,
+      "tools": [
+        {
+          "type": "function",
+          "function": {
+            "name": "submit_candidate",
+            "description": "Submit the complete local candidate.",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "text": {
+                  "type": "string",
+                  "minLength": 3
+                }
+              },
+              "required": [
+                "text"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      ]
+    },
+    {
+      "model": "summary-model",
+      "messages": [
+        {
+          "role": "system",
+          "content": "<instructions>\n\n</instructions>"
+        },
+        {
+          "role": "user",
+          "content": "JOB-A"
+        },
+        {
+          "role": "assistant",
+          "content": null,
+          "tool_calls": [
+            {
+              "id": "call-2",
+              "type": "function",
+              "function": {
+                "name": "submit_candidate",
+                "arguments": "{}"
+              }
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "content": "Error: Validation failed for tool \"submit_candidate\":\n  - text: must have required properties text\n\nReceived arguments:\n{}\nPreserve your earlier analysis. Call the submission tool again and REWRITE THE ENTIRE COMPLETE candidate with every required field; never submit a patch or merge with an earlier invalid candidate.",
+          "tool_call_id": "call-2"
+        }
+      ],
+      "stream": true,
+      "stream_options": {
+        "include_usage": true
+      },
+      "store": false,
+      "max_tokens": 256,
+      "tools": [
+        {
+          "type": "function",
+          "function": {
+            "name": "submit_candidate",
+            "description": "Submit the complete local candidate.",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "text": {
+                  "type": "string",
+                  "minLength": 3
+                }
+              },
+              "required": [
+                "text"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      ]
+    },
+    {
+      "model": "summary-model",
+      "messages": [
+        {
+          "role": "system",
+          "content": "<instructions>\n\n</instructions>"
+        },
+        {
+          "role": "user",
+          "content": "JOB-B"
+        }
+      ],
+      "stream": true,
+      "stream_options": {
+        "include_usage": true
+      },
+      "store": false,
+      "max_tokens": 256,
+      "tools": [
+        {
+          "type": "function",
+          "function": {
+            "name": "submit_candidate",
+            "description": "Submit the complete local candidate.",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "text": {
+                  "type": "string",
+                  "minLength": 3
+                }
+              },
+              "required": [
+                "text"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      ]
+    },
+    {
+      "model": "summary-model",
+      "messages": [
+        {
+          "role": "system",
+          "content": "<instructions>\n\n</instructions>"
+        },
+        {
+          "role": "user",
+          "content": "JOB-B"
+        },
+        {
+          "role": "assistant",
+          "content": null,
+          "tool_calls": [
+            {
+              "id": "call-4",
+              "type": "function",
+              "function": {
+                "name": "submit_candidate",
+                "arguments": "{}"
+              }
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "content": "Error: Validation failed for tool \"submit_candidate\":\n  - text: must have required properties text\n\nReceived arguments:\n{}\nPreserve your earlier analysis. Call the submission tool again and REWRITE THE ENTIRE COMPLETE candidate with every required field; never submit a patch or merge with an earlier invalid candidate.",
+          "tool_call_id": "call-4"
+        }
+      ],
+      "stream": true,
+      "stream_options": {
+        "include_usage": true
+      },
+      "store": false,
+      "max_tokens": 256,
+      "tools": [
+        {
+          "type": "function",
+          "function": {
+            "name": "submit_candidate",
+            "description": "Submit the complete local candidate.",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "text": {
+                  "type": "string",
+                  "minLength": 3
+                }
+              },
+              "required": [
+                "text"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

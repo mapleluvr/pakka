@@ -110,8 +110,8 @@ test("Compresser repairs a stop and invalid call in the same native trajectory, 
 		assert.equal(result.compresser?.sessionId, state.sessionId);
 		assert.equal(result.compresser?.conversationId, state.conversations[0].conversationId);
 		assert.equal(state.status, "open");
-		assert.equal(state.toolErrors, 1);
-		assert.equal(state.unresolvedErrors, 1);
+		assert.equal(state.conversations[0].toolErrors, 1);
+		assert.equal(state.conversations[0].unresolvedErrors, 1);
 		assert.equal(state.conversations.length, 1);
 		assert.ok(Object.isFrozen(state));
 		assert.ok(Object.isFrozen(result.toolCall?.arguments));
@@ -137,7 +137,7 @@ test("an empty semantic error is still a rejected call, including repeated admis
 		);
 		const before = f.requests.length;
 		assert.equal(before, 3);
-		assert.equal((await c.snapshot()).toolErrors, 1);
+		assert.equal((await c.snapshot()).conversations[0].toolErrors, 1);
 		await assert.rejects(
 			job.converse(request, () => ""),
 			/validation/i,
@@ -172,7 +172,7 @@ test("Compresser provider errors use the native failed-run boundary without losi
 			b.audit().map((a) => a.status),
 			["failed", "failed", "completed"],
 		);
-		assert.equal((await c.snapshot()).unresolvedErrors, 2);
+		assert.equal((await c.snapshot()).conversations[0].unresolvedErrors, 2);
 	} finally {
 		await f.close();
 		await c.close();
@@ -212,7 +212,7 @@ test("one external Conversation creates independent Compresser Conversations and
 	}
 });
 
-test("tool tolerance is shared across child Conversations and survives reopen without dispatch", async () => {
+test("tool allowance belongs to each successful child Conversation and survives reopen without dispatch", async () => {
 	let n = 0;
 	const f = await fixture({}, (p) =>
 		p.model !== "summary-model"
@@ -226,18 +226,18 @@ test("tool tolerance is shared across child Conversations and survives reopen wi
 		const host = await f.start(policy(f.endpoint, c));
 		await seed(host);
 		const { b, job } = source(host, "first");
-		assert.equal((await job.converse(request)).status, "completed");
+		const firstResult = await job.converse(request);
+		assert.equal(firstResult.status, "completed");
 		const frame = b.readFrame(),
 			next = b.createJob(frame.basis, { planId: "second", targetEntryIds: [target(frame)], maxCalls: 10 });
-		const failed = await next.converse({ ...request, prompt: "SOURCE BETA" });
-		assert.equal(failed.status, "failed");
-		assert.equal(n, 3);
+		const secondResult = await next.converse({ ...request, prompt: "SOURCE BETA" });
+		assert.equal(secondResult.status, "completed");
+		assert.equal(n, 4);
 		const state = await c.snapshot();
-		assert.equal(state.status, "sealed");
-		assert.equal(state.toolErrors, 2);
-		assert.ok(state.lastError?.reason);
+		assert.equal(state.status, "open");
+		assert.deepEqual(state.conversations.map(row => [row.toolErrors, row.sealed]), [[1, false], [1, false]]);
 		const before = f.requests.length;
-		await assert.rejects(job.converse(request), /sealed/i);
+		assert.deepEqual(await job.converse(request), firstResult);
 		await c.close();
 		c = await container(f.root, 2, 4);
 		assert.deepEqual(await c.snapshot(), state);
@@ -249,7 +249,7 @@ test("tool tolerance is shared across child Conversations and survives reopen wi
 });
 
 for (const kind of ["stop", "provider"] as const)
-	test(`four ${kind} errors seal the Session, preserve the actual reason, and send no fifth request`, async () => {
+	test(`four ${kind} errors seal their Conversation, preserve the actual reason, and send no fifth request`, async () => {
 		let n = 0;
 		const f = await fixture({}, (p) => {
 			if (p.model !== "summary-model") return { text: "MAIN" };
@@ -266,11 +266,12 @@ for (const kind of ["stop", "provider"] as const)
 			assert.equal(n, 4);
 			assert.equal(b.audit().length, 4);
 			const state = await c.snapshot();
-			assert.equal(state.status, "sealed");
-			assert.equal(state.unresolvedErrors, 4);
-			assert.equal(state.toolErrors, 0);
-			assert.match(state.lastError!.reason, kind === "provider" ? /LOCAL-FAILURE/ : /complete|submission/i);
-			assert.equal(result.reason, state.lastError!.reason);
+			assert.equal(state.status, "open");
+			assert.equal(state.conversations[0].sealed, true);
+			assert.equal(state.conversations[0].unresolvedErrors, 4);
+			assert.equal(state.conversations[0].toolErrors, 0);
+			assert.match(state.conversations[0].lastError!.reason, kind === "provider" ? /LOCAL-FAILURE/ : /complete|submission/i);
+			assert.equal(result.reason, state.conversations[0].lastError!.reason);
 		} finally {
 			await f.close();
 			await c.close();
@@ -294,9 +295,10 @@ for (const code of [429, 503])
 			assert.equal(n, 2);
 			assert.equal(b.audit().length, n);
 			const state = await c.snapshot();
-			assert.equal(state.status, "sealed");
-			assert.equal(state.unresolvedErrors, 2);
-			assert.equal(state.toolErrors, 0);
+			assert.equal(state.status, "open");
+			assert.equal(state.conversations[0].sealed, true);
+			assert.equal(state.conversations[0].unresolvedErrors, 2);
+			assert.equal(state.conversations[0].toolErrors, 0);
 		} finally {
 			await f.close();
 			await c.close();
@@ -321,8 +323,8 @@ test("Compresser output-length failure with a tool-shaped partial is unresolved,
 		assert.equal(result.status, "completed");
 		assert.equal(n, 2);
 		const state = await c.snapshot();
-		assert.equal(state.unresolvedErrors, 1);
-		assert.equal(state.toolErrors, 0);
+		assert.equal(state.conversations[0].unresolvedErrors, 1);
+		assert.equal(state.conversations[0].toolErrors, 0);
 		assert.equal(b.audit()[0].status, "failed");
 		assert.match(b.audit()[0].reason!, /length/i);
 	} finally {
@@ -354,7 +356,7 @@ test("Compresser strict raw and source validation failures are complete-call rep
 		);
 		assert.equal(result.toolCall?.arguments.text, "COMPLETE");
 		assert.equal(n, 3);
-		assert.equal((await c.snapshot()).toolErrors, 2);
+		assert.equal((await c.snapshot()).conversations[0].toolErrors, 2);
 		assert.deepEqual(
 			b.audit().map((a) => a.status),
 			["failed", "failed", "completed"],
@@ -414,7 +416,8 @@ test("Compresser job and strategy hard budgets remain independent of error toler
 		assert.equal(f.requests.filter((p) => p.model === "summary-model").length, 3);
 		assert.equal(b.audit().length, 3);
 		const state = await c.snapshot();
-		assert.equal(state.unresolvedErrors, 3);
+		assert.equal(state.conversations.find(row => row.jobId === job.id)!.unresolvedErrors, 2);
+		assert.equal(state.conversations.find(row => row.jobId === second.id)!.unresolvedErrors, 1);
 		assert.equal(state.status, "open");
 	} finally {
 		await f.close();
@@ -449,7 +452,7 @@ test("managed Compresser requests spend auxiliary aggregate quota and never prim
 			"a cross-store aggregate denial retains its already committed source-job reservation",
 		);
 		assert.match(b.audit().at(-1)!.reason!, /auxiliary.*budget/i);
-		assert.equal((await c.snapshot()).unresolvedErrors, 2);
+		assert.equal((await c.snapshot()).conversations[0].unresolvedErrors, 2);
 	} finally {
 		await runtime?.close();
 		await f.close();
@@ -457,7 +460,7 @@ test("managed Compresser requests spend auxiliary aggregate quota and never prim
 	}
 });
 
-test("one container serves distinct external Sessions and sealing refuses adoption of a previously returned candidate", async () => {
+test("one container serves distinct external Sessions without a sibling seal revoking an exact returned candidate", async () => {
 	const first = await fixture({}, (p) =>
 		p.model === "summary-model"
 			? { tool: "submit_candidate", args: { text: "COMPLETE" } }
@@ -486,19 +489,17 @@ test("one container serves distinct external Sessions and sealing refuses adopti
 		const other = source(b, "sealing-other-session");
 		assert.equal((await other.job.converse({ ...request, prompt: "SOURCE BETA" })).status, "failed");
 		const state = await c.snapshot();
-		assert.equal(state.status, "sealed");
-		assert.equal(state.toolErrors, 2);
+		assert.equal(state.status, "open");
+		assert.equal(state.conversations.find(row => row.jobId === other.job.id)!.sealed, true);
+		assert.equal(state.conversations.find(row => row.jobId === other.job.id)!.toolErrors, 2);
 		assert.equal(new Set(state.conversations.map((row) => row.sourceSessionId)).size, 2);
-		assert.throws(
-			() =>
-				original.b.artifacts.append(job.scope, {
-					expectedVersion: 0,
-					records: [{ candidate: "must not be adopted" }],
-					attemptIds: [result.attemptId],
-				}),
-			/sealed/i,
-		);
-		assert.equal(original.b.artifacts.read(job.scope).version, 0);
+		const adopted = original.b.artifacts.append(job.scope, {
+			expectedVersion: 0,
+			records: [{ candidate: "independent successful candidate" }],
+			attemptIds: [result.attemptId],
+		});
+		assert.equal(adopted.status, "committed");
+		assert.equal(original.b.artifacts.read(job.scope).version, 1);
 	} finally {
 		await first.close();
 		await second.close();
@@ -506,7 +507,7 @@ test("one container serves distinct external Sessions and sealing refuses adopti
 	}
 });
 
-test("shared sealing keeps another source's candidate private in admission and late-result errors", async () => {
+test("Conversation-local sealing keeps another source's candidate private while independent admissions and late results succeed", async () => {
 	const secret = "SOURCE_A_PRIVATE_CANDIDATE";
 	const entered = deferred(),
 		release = deferred();
@@ -531,7 +532,8 @@ test("shared sealing keeps another source's candidate private in admission and l
 		const observer = source(hostB, "private-observer");
 		pending = observer.job.converse(request);
 		await entered.promise;
-		const rejected = await source(hostA, "private-owner").job.converse(request);
+		const offender = source(hostA, "private-owner");
+		const rejected = await offender.job.converse(request);
 		assert.equal(rejected.status, "failed");
 		assert.match(
 			rejected.reason!,
@@ -539,9 +541,10 @@ test("shared sealing keeps another source's candidate private in admission and l
 			"the originating source retains its actual diagnostic",
 		);
 		const state = await c.snapshot();
-		assert.equal(state.status, "sealed");
+		assert.equal(state.status, "open");
+		assert.equal(state.conversations.find(row => row.jobId === offender.job.id)!.sealed, true);
 		assert.match(
-			state.lastError!.reason,
+			state.conversations.find(row => row.jobId === offender.job.id)!.lastError!.reason,
 			new RegExp(secret),
 			"trusted bootstrap retains the last actual error",
 		);
@@ -551,27 +554,18 @@ test("shared sealing keeps another source's candidate private in admission and l
 			targetEntryIds: [target(frame)],
 			maxCalls: 3,
 		});
-		let admission = "";
-		await assert.rejects(blocked.converse(request), (error) => {
-			admission = String(error);
-			assert.match(admission, /sealed|unavailable/i);
-			assert.doesNotMatch(
-				admission,
-				new RegExp(secret),
-				"another source cannot receive the private seal cause",
-			);
-			return true;
-		});
+		const admission = blocked.converse(request);
 		release.resolve();
-		const late = await pending;
-		assert.equal(late.status, "quarantined");
-		assert.doesNotMatch(JSON.stringify(late), new RegExp(secret));
-		assert.equal(second.requests.filter((p) => p.model === "summary-model").length, 1);
-		assert.equal(observer.b.audit().length, 1, "denied admission spends no new auxiliary attempt");
-		assert.match((await c.snapshot()).lastError!.reason, new RegExp(secret));
+		const fresh = await admission, late = await pending;
+		assert.equal(fresh.status, "completed");
+		assert.equal(late.status, "completed");
+		assert.doesNotMatch(JSON.stringify({ fresh, late, audit: observer.b.audit() }), new RegExp(secret));
+		assert.equal(second.requests.filter((p) => p.model === "summary-model").length, 2);
+		assert.equal(observer.b.audit().length, 2);
+		assert.match((await c.snapshot()).conversations.find(row => row.jobId === offender.job.id)!.lastError!.reason, new RegExp(secret));
 		await writeFile(
 			join(first.root, "privacy-observation.json"),
-			JSON.stringify({ state, admission, late, otherAudit: observer.b.audit() }, null, 2),
+			JSON.stringify({ state, fresh, late, otherAudit: observer.b.audit() }, null, 2),
 		);
 	} finally {
 		release.resolve();
@@ -582,7 +576,7 @@ test("shared sealing keeps another source's candidate private in admission and l
 	}
 });
 
-test("a sibling seal quarantines an already-in-flight otherwise valid response", async () => {
+test("a sibling seal leaves an already-in-flight valid response usable", async () => {
 	const entered = deferred(),
 		release = deferred();
 	const f = await fixture({}, async (p) => {
@@ -605,11 +599,11 @@ test("a sibling seal quarantines an already-in-flight otherwise valid response",
 			sibling = b.createJob(frame.basis, { planId: "seal", targetEntryIds: [target(frame)], maxCalls: 10 });
 		assert.equal((await sibling.converse(request)).status, "failed");
 		release.resolve();
-		assert.equal((await slow).status, "quarantined");
+		assert.equal((await slow).status, "completed");
 		assert.equal(f.requests.filter((p) => p.model === "summary-model").length, 2);
 		assert.equal(
 			(await c.snapshot()).conversations.find((row) => row.jobId === job.id)!.status,
-			"quarantined",
+			"completed",
 		);
 	} finally {
 		release.resolve();
@@ -639,9 +633,10 @@ test("multiple output calls in one response are not candidate patches and each a
 		assert.equal(result.toolCall, undefined);
 		assert.equal(f.requests.filter((p) => p.model === "summary-model").length, 1);
 		const state = await c.snapshot();
-		assert.equal(state.status, "sealed");
-		assert.equal(state.toolErrors, 2);
-		assert.equal(state.unresolvedErrors, 0);
+		assert.equal(state.status, "open");
+		assert.equal(state.conversations[0].sealed, true);
+		assert.equal(state.conversations[0].toolErrors, 2);
+		assert.equal(state.conversations[0].unresolvedErrors, 0);
 		assert.equal(b.audit().length, 1);
 		assert.equal(b.audit()[0].status, "failed");
 	} finally {
@@ -673,8 +668,8 @@ test("cancelling the source job refuses a late result without spending error tol
 		assert.equal(b.audit()[0].status, "quarantined");
 		const state = await c.snapshot();
 		assert.equal(state.status, "open");
-		assert.equal(state.toolErrors, 0);
-		assert.equal(state.unresolvedErrors, 0);
+		assert.equal(state.conversations[0].toolErrors, 0);
+		assert.equal(state.conversations[0].unresolvedErrors, 0);
 		assert.equal(f.requests.filter((p) => p.model === "summary-model").length, 1);
 		await assert.rejects(job.converse(request), /cancel|abort/i);
 	} finally {
@@ -734,10 +729,11 @@ test("a source audit storage failure after real HTTP seals unknown work without 
 		release.resolve();
 		await rejected;
 		const state = await c.snapshot();
-		assert.equal(state.status, "sealed");
+		assert.equal(state.status, "open");
+		assert.equal(state.conversations[0].sealed, true);
 		assert.equal(state.conversations[0].status, "quarantined");
-		assert.equal(state.toolErrors, 0);
-		assert.equal(state.unresolvedErrors, 0);
+		assert.equal(state.conversations[0].toolErrors, 0);
+		assert.equal(state.conversations[0].unresolvedErrors, 0);
 		assert.equal(
 			await readFile(path, "utf8"),
 			matching[0].content,

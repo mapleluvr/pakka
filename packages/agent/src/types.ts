@@ -272,8 +272,7 @@ export interface CompresserSnapshot {
 	readonly status: "open" | "sealed";
 	readonly toolCallingTolerance: number;
 	readonly unresolvedErrorTolerance: number;
-	readonly toolErrors: number;
-	readonly unresolvedErrors: number;
+	/** Only a genuine shared-container fault; model-error accounting belongs to each Conversation. */
 	readonly lastError: null | {
 		readonly reason: string;
 		readonly incidentId: string;
@@ -287,6 +286,10 @@ export interface CompresserSnapshot {
 		readonly sourceSessionId: string;
 		readonly sourceConversationId: string;
 		readonly status: "running" | "completed" | "failed" | "quarantined";
+		readonly sealed: boolean;
+		readonly toolErrors: number;
+		readonly unresolvedErrors: number;
+		readonly lastError: CompresserSnapshot["lastError"];
 	}[];
 }
 /** Bootstrap-only lifecycle facade. Native mutable objects never leave the adapter. */

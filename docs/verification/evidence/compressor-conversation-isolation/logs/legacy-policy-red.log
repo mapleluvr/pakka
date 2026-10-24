@@ -1,0 +1,25 @@
+✖ aggregate-counter storage rejects implicit migration instead of resetting or inventing per-Conversation counts (40.0058ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 904.0244
+
+✖ failing tests:
+
+test at packages\agent\test\compresser-conversation.test.ts:135:1
+✖ aggregate-counter storage rejects implicit migration instead of resetting or inventing per-Conversation counts (40.0058ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///D:/Projects/pakka/packages/agent/test/compresser-conversation.test.ts:142:3)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /migration|version|scope/i,
+    operator: 'rejects',
+    diff: 'simple'
+  }

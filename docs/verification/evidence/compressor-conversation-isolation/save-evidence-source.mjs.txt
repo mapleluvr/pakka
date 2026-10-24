@@ -1,0 +1,116 @@
+import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
+import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
+import { basename, join, relative, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { compactStorageEvidence } from './compact-storage-evidence.mjs';
+
+const host = resolve(fileURLToPath(new URL('../../../', import.meta.url)));
+const strategy = resolve(host, '../pakka-dynamite');
+const evidence = root => join(root, 'docs/verification/evidence/compressor-conversation-isolation');
+const h = evidence(host), d = evidence(strategy);
+for (const path of [h, d]) mkdirSync(path, { recursive: true });
+writeFileSync(join(d, '.gitattributes'), '# Frozen evidence keeps its measured bytes across platform checkouts.\n** -text -whitespace\n');
+const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+const json = path => JSON.parse(readFileSync(path, 'utf8'));
+const save = (path, value) => { mkdirSync(resolve(path, '..'), { recursive: true }); writeFileSync(path, JSON.stringify(value, null, 2) + '\n'); };
+const copy = (source, destination) => { mkdirSync(resolve(destination, '..'), { recursive: true }); cpSync(source, destination, { recursive: true }); };
+const git = (root, ...args) => execFileSync('git', args, { cwd: root, encoding: 'utf8' });
+const parseCounts = path => {
+ const body = readFileSync(path, 'utf8');
+ const result = Object.fromEntries(['tests', 'pass', 'fail', 'skipped', 'cancelled', 'todo'].map(key => {
+  const found = [...body.matchAll(new RegExp('^[#ℹ]\\s*' + key + '\\s+(\\d+)\\s*$', 'gm'))].at(-1);
+  assert.ok(found, 'Missing final count ' + key + ': ' + path); return [key, Number(found[1])];
+ }));
+ assert.equal(result.fail, 0); assert.equal(result.cancelled, 0); return result;
+};
+const results = {
+ host: parseCounts(join(host, 'artifacts/compressor-conversation/host-full-final.log')),
+ hostNative: parseCounts(join(host, 'artifacts/compressor-conversation/host-focused-final.log')),
+ strategy: parseCounts(join(strategy, 'artifacts/compressor-conversation/source-final.log')),
+ strategyNative: parseCounts(join(strategy, 'artifacts/compressor-conversation/native-focused-final.log')),
+};
+assert.equal(results.host.pass, 605); assert.equal(results.host.skipped, 2);
+assert.equal(results.hostNative.pass, 31); assert.equal(results.strategy.pass, 381); assert.equal(results.strategyNative.pass, 12);
+const installed = json(join(strategy, 'artifacts/package-smoke/summary.json'));
+assert.equal(installed.integrationTests.pass, 68); assert.equal(installed.providerRequests, 436); assert.equal(installed.providerErrors, 0);
+assert.equal(installed.tarballs[0].sha256, 'c5c7fffddf9b644426ef86bba6ae03c67f813d68f10eb4f6901a052700047981');
+assert.equal(installed.tarballs[1].sha256, '185fe5b5563e1f89834db80fcf19b29d80dfb55a32ecb9b6d41bd67b68591cdd');
+for (const archive of installed.tarballs) {
+ assert.equal(sha(readFileSync(archive.path)), archive.sha256);
+ copy(archive.path, join(strategy, 'artifacts/compressor-conversation/final', basename(archive.path)));
+}
+const firstInstalled = json(join(strategy, 'artifacts/compressor-conversation/installed-first/summary.json'));
+const baseline = { host: git(host, 'rev-parse', 'HEAD').trim(), strategy: git(strategy, 'rev-parse', 'HEAD').trim() };
+const manifest = { schema: 'pakka.compressor-conversation.source-manifest.v1', baseline, note: 'Exact working-copy bytes measured on Windows; Git checkout EOL normalization can change text byte hashes. Archive hashes identify the actual installed bytes.', files: [] };
+const hostFiles = git(host, 'ls-files', '-z', '--', 'package.json', 'package-lock.json', 'packages/agent', 'packages/mas/package.json', 'packages/mas-devpack/package.json', 'apps/server/package.json', 'apps/webui/package.json', 'scripts/test.mjs', 'scripts/pack-agent.mjs').split('\0').filter(path => path && !path.includes('/vendor/'));
+hostFiles.push('packages/agent/test/compresser-conversation.test.ts');
+const strategyFiles = git(strategy, 'ls-files', '-z', '--', 'src', 'index.ts', 'tests', 'scripts', 'package.json', 'package-lock.json', 'README.md', 'docs/ENGINE-PORTS.md', 'docs/DURABLE-COMPATIBILITY.md', 'docs/state/artifacts.md', 'integrations/pakka').split('\0').filter(Boolean);
+strategyFiles.push('integrations/pakka/0.4.0-pairing.json');
+for (const [repo, root, paths] of [['host', host, hostFiles], ['strategy', strategy, strategyFiles]]) {
+ for (const path of [...new Set(paths)].sort()) {
+  const bytes = readFileSync(join(root, path)); manifest.files.push({ repo, path, bytes: bytes.length, sha256: sha(bytes) });
+ }
+}
+const unpackRoot = join(host, 'artifacts/compressor-conversation/packed-check');
+function files(root, directory = root) {
+ return readdirSync(directory, { withFileTypes: true }).flatMap(entry => {
+  const path = join(directory, entry.name); return entry.isDirectory() ? files(root, path) : [relative(root, path).replaceAll('\\', '/')];
+ });
+}
+const compiled = [];
+for (const [root, archive] of [[host, installed.tarballs[0]], [strategy, installed.tarballs[1]]]) {
+ const directory = join(unpackRoot, archive.name.endsWith('/agent') ? 'host' : 'strategy'); mkdirSync(directory, { recursive: true });
+ execFileSync('tar', ['-xf', archive.path, '-C', directory, 'package/dist']);
+ const dist = join(root, root === host ? 'packages/agent/dist' : 'dist');
+ const packed = join(directory, 'package/dist');
+ assert.deepEqual(files(dist).sort(), files(packed).sort());
+ for (const path of files(dist)) assert.equal(sha(readFileSync(join(dist, path))), sha(readFileSync(join(packed, path))), 'Packed compiled output changed: ' + path);
+ compiled.push({ name: archive.name, files: files(dist).length, exactMatch: true });
+}
+for (const target of [h, d]) { save(join(target, 'source-manifest.json'), manifest); save(join(target, 'installed-summary.json'), installed); save(join(target, 'first-installed-summary.json'), firstInstalled); copy(fileURLToPath(import.meta.url), join(target, 'save-evidence-source.mjs.txt')); }
+for (const [root, target] of [[host, h], [strategy, d]]) {
+ const logs = join(root, 'artifacts/compressor-conversation');
+ for (const name of readdirSync(logs).filter(name => name.endsWith('.log'))) copy(join(logs, name), join(target, 'logs', name));
+}
+for (const target of [h, d]) {
+ for (const name of readdirSync(join(strategy, 'artifacts/package-smoke')).filter(name => name.endsWith('.log'))) copy(join(strategy, 'artifacts/package-smoke', name), join(target, 'installed', name));
+}
+const hostCases = [];
+const rows = readFileSync(join(host, 'artifacts/compresser-session/requests/manifest.jsonl'), 'utf8').trim().split(/\r?\n/).filter(Boolean).map(JSON.parse);
+const observed = new Set();
+for (const row of rows.slice(-600).reverse()) {
+ if (observed.has(row.root)) continue; observed.add(row.root);
+ const observations = ['conversation-observation.json', 'privacy-observation.json', 'crash-observation.json', 'shared-fault-observation.json'].filter(name => existsSync(join(row.root, name)));
+ if (!observations.length) continue;
+ if (observations.includes('privacy-observation.json')) {
+  const data = json(join(row.root, 'privacy-observation.json'));
+  if (data.state?.status !== 'open') continue;
+ }
+ if (hostCases.length >= 12) break;
+ const name = basename(row.root); assert.ok(name.startsWith('pakka-integration-'));
+ const target = join(h, 'host-cases', name); copy(row.directory, target);
+ for (const file of observations) copy(join(row.root, file), join(target, file));
+ hostCases.push({ name, observations, requests: row.requestCount });
+}
+assert.ok(hostCases.some(row => row.observations.includes('shared-fault-observation.json')));
+assert.ok(hostCases.some(row => row.observations.includes('crash-observation.json')));
+assert.ok(hostCases.filter(row => row.observations.includes('conversation-observation.json')).length >= 4);
+const strategyCases = [];
+for (const name of readdirSync(join(installed.evidence, 'dynamite'))) {
+ const source = join(installed.evidence, 'dynamite', name);
+ if (!name.startsWith('compresser-') || !statSync(source).isDirectory()) continue;
+ copy(source, join(d, 'installed-cases', name));
+ strategyCases.push({ name, requests: json(join(source, 'requests.json')).length });
+}
+assert.ok(strategyCases.filter(row => row.name.includes('concurrent-windows')).length === 2);
+assert.ok(strategyCases.some(row => row.name.includes('planning-drain')));
+const ledger = readFileSync(join(host, 'docs/PI-DURABLE-COMPATIBILITY.md'));
+const summary = { schema: 'pakka.compressor-conversation.verification.v1', date: '2026-10-24', node: installed.node, platform: process.platform, baseline, results, installed: { tests: installed.integrationTests, httpRequests: installed.providerRequests, unexpectedFixtureErrors: installed.providerErrors, declarations: installed.declarations }, archives: installed.tarballs, compiled, sourceFiles: manifest.files.length, hostCases, strategyCases, ledgerPrefix: { bytes: ledger.length, sha256: sha(ledger) }, activation: 'explicit-library-only', semanticQualityOrGraphMergeAccepted: false };
+for (const target of [h, d]) {
+ save(join(target, 'summary.json'), summary);
+ copy(fileURLToPath(new URL('./compact-storage-evidence.mjs', import.meta.url)), join(target, 'compact-storage-source.mjs.txt'));
+}
+compactStorageEvidence([{ root: h, cases: 'host-cases' }, { root: d, cases: 'installed-cases' }], { verifyExistingHashes: false });
+console.log(JSON.stringify({ sourceFiles: manifest.files.length, hostCases: hostCases.length, installedCases: strategyCases.length, compiled, hostEvidenceFiles: files(h).length, strategyEvidenceFiles: files(d).length, results, archives: installed.tarballs.map(({ name, sha256 }) => ({ name, sha256 })) }, null, 2));

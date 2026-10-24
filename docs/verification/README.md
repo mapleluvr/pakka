@@ -6,6 +6,7 @@
 | ----------------------------- | ------------------------------------------------------------------------------------------------------------ |
 | Devin 接入 R2、固定候选 004   | [R2 记录](DEVIN-FRONTEND-R2.md)                                                                              |
 | MAS Board r1 实现和后续专项   | [MAS 记录](MAS-BOARD-R1.md)                                                                                  |
+| Compressor Conversation 隔离 | [独立计数、并发与故障域验证](COMPRESSOR-CONVERSATION-ISOLATION.md) |
 | Compresser native 第一版试行 | [隔离修正后的固定配对](COMPRESSER-SESSION-TRIAL-ISOLATION.md) |
 | Compresser native 会话调查 | [固定基础设施刻画](COMPRESSOR-SESSION-FEASIBILITY.md) |
 | Dynamite Tool Calling 库候选  | [受控输出验证](AUXILIARY-TOOL-OUTPUT.md)                                                                     |

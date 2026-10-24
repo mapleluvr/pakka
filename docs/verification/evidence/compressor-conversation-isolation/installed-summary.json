@@ -1,0 +1,67 @@
+{
+  "consumer": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\dynamite-packed-consumer-HUIB9s",
+  "node": "v24.18.0",
+  "integrationTests": {
+    "tests": 68,
+    "pass": 68,
+    "fail": 0,
+    "skipped": 0,
+    "cancelled": 0,
+    "todo": 0
+  },
+  "testFiles": [
+    "durable-artifacts.test.mjs",
+    "durable-compresser-session.test.mjs",
+    "durable-inference-boundary.test.mjs",
+    "durable-managed.test.mjs",
+    "durable.test.mjs",
+    "pakka-boundaries.test.mjs",
+    "pakka-review.test.mjs",
+    "pakka.test.mjs"
+  ],
+  "declarations": "passed",
+  "inventory": {
+    "@earendil-works/pi-coding-agent": [],
+    "@earendil-works/pi-ai": [
+      "1.4.0"
+    ],
+    "@earendil-works/pi-agent-core": [],
+    "@earendil-works/pi-tui": [],
+    "@earendil-works/chord": [
+      "1.4.0"
+    ],
+    "@earendil-works/pi-codemode": [
+      "1.4.0"
+    ],
+    "@earendil-works/pi-mcp": [],
+    "@earendil-works/pi-telemetry": [
+      "1.4.0"
+    ],
+    "@earendil-works/pi-durable": [
+      "1.4.0-pakka.1"
+    ]
+  },
+  "providerRequests": 436,
+  "providerErrors": 0,
+  "tarballs": [
+    {
+      "name": "@pakka/agent",
+      "version": "0.7.0",
+      "path": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\dynamite-packed-consumer-HUIB9s\\pakka-agent-0.7.0.tgz",
+      "shasum": "f0598e76da67f704f84baf49c2ddc839d061cca8",
+      "sha256": "c5c7fffddf9b644426ef86bba6ae03c67f813d68f10eb4f6901a052700047981",
+      "integrity": "sha512-dYosXO+fv1ZgK9zjQqxWstbHdlUxrwj+RS9s/TyFFI6kPOWYoi57f+ok2gFOROnQfKtDFCW2c2wHDIXsLjDYGw==",
+      "files": 12649
+    },
+    {
+      "name": "@pakka/dynamite",
+      "version": "0.5.0",
+      "path": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\dynamite-packed-consumer-HUIB9s\\pakka-dynamite-0.5.0.tgz",
+      "shasum": "0dea2a755e55bbde52f310ae9d5f42c5673077c3",
+      "sha256": "185fe5b5563e1f89834db80fcf19b29d80dfb55a32ecb9b6d41bd67b68591cdd",
+      "integrity": "sha512-o54eqJK6JeYisCx1bpG6DiXEd3gaCBpxFhEualTGgE87vTnqfWjI/a2uJ76ZL4+jM1XESDZE9G4+aXqIN3FLEA==",
+      "files": 51
+    }
+  ],
+  "evidence": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\dynamite-packed-consumer-HUIB9s\\evidence"
+}

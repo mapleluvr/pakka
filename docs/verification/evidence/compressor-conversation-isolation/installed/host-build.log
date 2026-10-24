@@ -1,0 +1,41 @@
+cwd=D:\Projects\pakka
+
+> pakka-workspace@0.1.0 build
+> npm run build --workspaces
+
+
+> @pakka/protocol@0.1.0 build
+> tsc -p tsconfig.json
+
+
+> @pakka/agent@0.5.0 build
+> node ../../scripts/verify-durable-patch.mjs && node -e "require('node:fs').rmSync('dist', { recursive: true, force: true })" && tsc -p tsconfig.json
+
+Verified pi-durable 1.0.3-pakka.1 (535d90fd195a1e9c6c9dc1b22b7f0ca15aac41652bb7d644da616148947bcfa7)
+
+> @pakka/mas@0.4.0 build
+> tsc -p tsconfig.json
+
+
+> @pakka/mas-devpack@0.2.0 build
+> tsc -p tsconfig.json
+
+
+> @pakka/client@0.1.0 build
+> tsc -p tsconfig.json
+
+
+> @pakka/cli@0.1.0 build
+> tsc -p tsconfig.json
+
+
+> @pakka/server@0.4.0 build
+> tsc -p tsconfig.json
+
+npm notice
+npm notice New major version of npm available! 11.16.0 -> 12.2.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.0
+npm notice To update run: npm install -g npm@12.2.0
+npm notice
+
+exit=0

@@ -1,0 +1,246 @@
+{
+  "state": {
+    "sessionId": "2dbc106b-3a6c-44e5-98f9-49fea191ad88",
+    "status": "open",
+    "toolCallingTolerance": 2,
+    "unresolvedErrorTolerance": 2,
+    "lastError": null,
+    "conversations": [
+      {
+        "conversationId": "8",
+        "jobId": "459d4b16-8ead-43ab-a893-81a2e41ca928",
+        "planId": "first",
+        "sourceSessionId": "8eb114a1-4050-491b-831b-af7ba4a694d7",
+        "sourceConversationId": "1",
+        "status": "completed",
+        "sealed": false,
+        "toolErrors": 0,
+        "unresolvedErrors": 1,
+        "lastError": {
+          "reason": "No complete submission: stop",
+          "incidentId": "c6dfb2ff-e633-45b1-92d5-5dadc71f4253:yield",
+          "conversationId": "8",
+          "jobId": "459d4b16-8ead-43ab-a893-81a2e41ca928"
+        }
+      },
+      {
+        "conversationId": "26",
+        "jobId": "4921cdc9-46e4-4b37-b1b4-b34952e21107",
+        "planId": "second",
+        "sourceSessionId": "8eb114a1-4050-491b-831b-af7ba4a694d7",
+        "sourceConversationId": "1",
+        "status": "completed",
+        "sealed": false,
+        "toolErrors": 0,
+        "unresolvedErrors": 1,
+        "lastError": {
+          "reason": "No complete submission: stop",
+          "incidentId": "091bcd93-08ba-41c1-a37f-d7505195cf49:yield",
+          "conversationId": "26",
+          "jobId": "4921cdc9-46e4-4b37-b1b4-b34952e21107"
+        }
+      }
+    ]
+  },
+  "requests": [
+    {
+      "model": "local-model",
+      "messages": [
+        {
+          "role": "user",
+          "content": "ORIGINAL"
+        },
+        {
+          "role": "system",
+          "content": "Updated system prompt section \"system\":\n\nPAKKA-SYSTEM\n\nUpdated system prompt section \"instructions\":\n\n<instructions>\nPAKKA-SYSTEM\n</instructions>"
+        }
+      ],
+      "stream": true,
+      "stream_options": {
+        "include_usage": true
+      },
+      "store": false,
+      "max_tokens": 4096
+    },
+    {
+      "model": "summary-model",
+      "messages": [
+        {
+          "role": "system",
+          "content": "<instructions>\n\n</instructions>"
+        },
+        {
+          "role": "user",
+          "content": "JOB-A"
+        }
+      ],
+      "stream": true,
+      "stream_options": {
+        "include_usage": true
+      },
+      "store": false,
+      "max_tokens": 256,
+      "tools": [
+        {
+          "type": "function",
+          "function": {
+            "name": "submit_candidate",
+            "description": "Submit the complete local candidate.",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "text": {
+                  "type": "string",
+                  "minLength": 3
+                }
+              },
+              "required": [
+                "text"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      ]
+    },
+    {
+      "model": "summary-model",
+      "messages": [
+        {
+          "role": "system",
+          "content": "<instructions>\n\n</instructions>"
+        },
+        {
+          "role": "user",
+          "content": "JOB-A"
+        },
+        {
+          "role": "assistant",
+          "content": "UNFINISHED"
+        },
+        {
+          "role": "user",
+          "content": "No complete submission: stop\nPreserve your earlier analysis. Call the submission tool again and REWRITE THE ENTIRE COMPLETE candidate with every required field; never submit a patch or merge with an earlier invalid candidate."
+        }
+      ],
+      "stream": true,
+      "stream_options": {
+        "include_usage": true
+      },
+      "store": false,
+      "max_tokens": 256,
+      "tools": [
+        {
+          "type": "function",
+          "function": {
+            "name": "submit_candidate",
+            "description": "Submit the complete local candidate.",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "text": {
+                  "type": "string",
+                  "minLength": 3
+                }
+              },
+              "required": [
+                "text"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      ]
+    },
+    {
+      "model": "summary-model",
+      "messages": [
+        {
+          "role": "system",
+          "content": "<instructions>\n\n</instructions>"
+        },
+        {
+          "role": "user",
+          "content": "JOB-B"
+        }
+      ],
+      "stream": true,
+      "stream_options": {
+        "include_usage": true
+      },
+      "store": false,
+      "max_tokens": 256,
+      "tools": [
+        {
+          "type": "function",
+          "function": {
+            "name": "submit_candidate",
+            "description": "Submit the complete local candidate.",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "text": {
+                  "type": "string",
+                  "minLength": 3
+                }
+              },
+              "required": [
+                "text"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      ]
+    },
+    {
+      "model": "summary-model",
+      "messages": [
+        {
+          "role": "system",
+          "content": "<instructions>\n\n</instructions>"
+        },
+        {
+          "role": "user",
+          "content": "JOB-B"
+        },
+        {
+          "role": "assistant",
+          "content": "UNFINISHED"
+        },
+        {
+          "role": "user",
+          "content": "No complete submission: stop\nPreserve your earlier analysis. Call the submission tool again and REWRITE THE ENTIRE COMPLETE candidate with every required field; never submit a patch or merge with an earlier invalid candidate."
+        }
+      ],
+      "stream": true,
+      "stream_options": {
+        "include_usage": true
+      },
+      "store": false,
+      "max_tokens": 256,
+      "tools": [
+        {
+          "type": "function",
+          "function": {
+            "name": "submit_candidate",
+            "description": "Submit the complete local candidate.",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "text": {
+                  "type": "string",
+                  "minLength": 3
+                }
+              },
+              "required": [
+                "text"
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

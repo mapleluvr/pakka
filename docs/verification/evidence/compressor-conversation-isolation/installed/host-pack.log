@@ -1,0 +1,114 @@
+cwd=D:\Projects\pakka
+[
+  {
+    "id": "@pakka/agent@0.5.0",
+    "name": "@pakka/agent",
+    "version": "0.5.0",
+    "size": 42411,
+    "unpackedSize": 211200,
+    "shasum": "186af4c16f21eec174ce61f6061e31a140f8ec3f",
+    "integrity": "sha512-6pycKzqRj7syJ2GRgaM1iMTpZ56WBmAP6HwApjWlQHUoKgWYuRVPd0k1T9gEd7Nt/CMWeAmKtRLWlfVfzSgjHA==",
+    "filename": "pakka-agent-0.5.0.tgz",
+    "files": [
+      {
+        "path": "dist/artifact-journal.d.ts",
+        "size": 1129,
+        "mode": 420
+      },
+      {
+        "path": "dist/artifact-journal.js",
+        "size": 9919,
+        "mode": 420
+      },
+      {
+        "path": "dist/durable-adapter.d.ts",
+        "size": 4570,
+        "mode": 420
+      },
+      {
+        "path": "dist/durable-adapter.js",
+        "size": 93860,
+        "mode": 420
+      },
+      {
+        "path": "dist/host.d.ts",
+        "size": 2059,
+        "mode": 420
+      },
+      {
+        "path": "dist/host.js",
+        "size": 20366,
+        "mode": 420
+      },
+      {
+        "path": "dist/index.d.ts",
+        "size": 119,
+        "mode": 420
+      },
+      {
+        "path": "dist/index.js",
+        "size": 86,
+        "mode": 420
+      },
+      {
+        "path": "dist/journal-migration.d.ts",
+        "size": 1092,
+        "mode": 420
+      },
+      {
+        "path": "dist/journal-migration.js",
+        "size": 8406,
+        "mode": 420
+      },
+      {
+        "path": "dist/runtime.d.ts",
+        "size": 223,
+        "mode": 420
+      },
+      {
+        "path": "dist/runtime.js",
+        "size": 3559,
+        "mode": 420
+      },
+      {
+        "path": "dist/strategy-control.d.ts",
+        "size": 2043,
+        "mode": 420
+      },
+      {
+        "path": "dist/strategy-control.js",
+        "size": 34881,
+        "mode": 420
+      },
+      {
+        "path": "dist/strategy-projection.d.ts",
+        "size": 286,
+        "mode": 420
+      },
+      {
+        "path": "dist/strategy-projection.js",
+        "size": 9076,
+        "mode": 420
+      },
+      {
+        "path": "dist/types.d.ts",
+        "size": 18360,
+        "mode": 420
+      },
+      {
+        "path": "dist/types.js",
+        "size": 11,
+        "mode": 420
+      },
+      {
+        "path": "package.json",
+        "size": 1155,
+        "mode": 420
+      }
+    ],
+    "entryCount": 19,
+    "bundled": []
+  }
+]
+
+exit=0

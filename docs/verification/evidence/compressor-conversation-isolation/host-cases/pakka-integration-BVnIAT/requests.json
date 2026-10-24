@@ -1,0 +1,57 @@
+[
+  {
+    "model": "local-model",
+    "messages": [
+      {
+        "role": "user",
+        "content": "ORIGINAL"
+      }
+    ],
+    "stream": true,
+    "stream_options": {
+      "include_usage": true
+    },
+    "store": false,
+    "max_tokens": 4096
+  },
+  {
+    "model": "summary-model",
+    "messages": [
+      {
+        "role": "system",
+        "content": "<instructions>\n\n</instructions>"
+      },
+      {
+        "role": "user",
+        "content": "FIXED CRASH SOURCE"
+      }
+    ],
+    "stream": true,
+    "stream_options": {
+      "include_usage": true
+    },
+    "store": false,
+    "max_tokens": 256,
+    "tools": [
+      {
+        "type": "function",
+        "function": {
+          "name": "submit_candidate",
+          "description": "Submit a complete candidate",
+          "parameters": {
+            "type": "object",
+            "properties": {
+              "text": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "text"
+            ],
+            "additionalProperties": false
+          }
+        }
+      }
+    ]
+  }
+]

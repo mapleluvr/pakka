@@ -1,0 +1,27 @@
+{
+  "schema": "pakka.dynamite.compresser-trial-pairing.v1",
+  "status": "explicit-library-trial-conversation-isolation-verified",
+  "host": {
+    "package": "@pakka/agent",
+    "version": "0.7.0",
+    "sourceBaseline": "5dcc4cd6f0ae5f644e7f77e60f27b97bfca11a0c",
+    "tarballSha256": "c5c7fffddf9b644426ef86bba6ae03c67f813d68f10eb4f6901a052700047981",
+    "durableVersion": "1.4.0-pakka.1"
+  },
+  "strategy": {
+    "package": "@pakka/dynamite",
+    "version": "0.5.0",
+    "sourceBaseline": "279eb83e2f3077337f69ca6f6e7dbc7003d38334",
+    "tarballSha256": "185fe5b5563e1f89834db80fcf19b29d80dfb55a32ecb9b6d41bd67b68591cdd"
+  },
+  "acceptance": {
+    "installedTests": 68,
+    "httpRequests": 436,
+    "providerErrors": 0,
+    "record": "../../docs/verification/COMPRESSOR-CONVERSATION-ISOLATION.md",
+    "sourceManifest": "../../docs/verification/evidence/compressor-conversation-isolation/source-manifest.json"
+  },
+  "activation": "explicit-bootstrap-only",
+  "supersedes": "./compresser-trial-pairing.json",
+  "historicalPair": "./core-m6-pairing.json"
+}

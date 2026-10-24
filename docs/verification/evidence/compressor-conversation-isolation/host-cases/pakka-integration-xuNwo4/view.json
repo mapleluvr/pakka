@@ -1,0 +1,49 @@
+{
+  "sessionId": "b83af0fc-706e-46ee-831f-7466d8054889",
+  "durableSessionId": "b83af0fc-706e-46ee-831f-7466d8054889",
+  "conversationId": "1",
+  "providerSessionId": "01a16bc1-f7a2-75bd-bb01-4100ebc432b6",
+  "sessionFile": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\pakka-integration-xuNwo4\\profile\\sessions\\b83af0fc-706e-46ee-831f-7466d8054889\\main.jsonl",
+  "leafId": "11",
+  "entries": [
+    {
+      "id": "7",
+      "type": "pi.user",
+      "role": "user",
+      "text": "ORIGINAL"
+    },
+    {
+      "id": "10",
+      "type": "pi.system",
+      "role": "system",
+      "text": ""
+    },
+    {
+      "id": "11",
+      "type": "pi.assistant",
+      "role": "assistant",
+      "text": "MAIN"
+    }
+  ],
+  "context": [
+    {
+      "role": "system",
+      "text": ""
+    },
+    {
+      "role": "user",
+      "text": "ORIGINAL"
+    },
+    {
+      "role": "assistant",
+      "text": "MAIN"
+    }
+  ],
+  "autoCompaction": false,
+  "phase": "ready",
+  "busy": false,
+  "epoch": 7,
+  "generation": 0,
+  "branchId": "f8b85718-cdb6-4aa3-ae6f-3a99c9560808",
+  "effects": "not-assessed"
+}

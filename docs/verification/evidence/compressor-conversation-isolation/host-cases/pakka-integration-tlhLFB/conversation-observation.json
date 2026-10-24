@@ -1,0 +1,42 @@
+{
+  "state": {
+    "sessionId": "a6d948c3-c4f3-4442-a315-0dba2030575b",
+    "status": "open",
+    "toolCallingTolerance": 2,
+    "unresolvedErrorTolerance": 2,
+    "lastError": null,
+    "conversations": [
+      {
+        "conversationId": "8",
+        "jobId": "2916af5e-b540-4c2b-ab17-4b3e04ce3366",
+        "planId": "source-unknown",
+        "sourceSessionId": "50c1ff5c-38b6-4bf3-b912-f374fee5719f",
+        "sourceConversationId": "1",
+        "status": "quarantined",
+        "sealed": true,
+        "toolErrors": 0,
+        "unresolvedErrors": 0,
+        "lastError": {
+          "reason": "Unconfirmed source completion: Error: Inference completion storage unknown; do not retry",
+          "incidentId": "03b3f668-2087-4c16-ac0b-82ae95c224fc",
+          "conversationId": "8",
+          "jobId": "2916af5e-b540-4c2b-ab17-4b3e04ce3366"
+        }
+      },
+      {
+        "conversationId": "22",
+        "jobId": "7f521c75-3a92-4778-9b68-02cf481ac8ef",
+        "planId": "healthy-other-source",
+        "sourceSessionId": "fe04edbe-68aa-452e-93fd-4c4b25e0b1c9",
+        "sourceConversationId": "1",
+        "status": "completed",
+        "sealed": false,
+        "toolErrors": 0,
+        "unresolvedErrors": 0,
+        "lastError": null
+      }
+    ]
+  },
+  "attempt": "03b3f668-2087-4c16-ac0b-82ae95c224fc",
+  "original": "{\"schema\":\"pakka.journal.v1\",\"sessionId\":\"50c1ff5c-38b6-4bf3-b912-f374fee5719f\",\"namespace\":\"strategy:inference\"}\n{\"id\":\"31532282-13a0-4282-8f7e-29f90cc8195a\",\"version\":1,\"previous\":\"c7aa785e4b4111a0357580a6ea347503ef5da8647aabe2416328e5e55bbe41bb\",\"records\":[{\"kind\":\"reservation\",\"jobId\":\"2916af5e-b540-4c2b-ab17-4b3e04ce3366\",\"planId\":\"source-unknown\",\"attemptId\":\"03b3f668-2087-4c16-ac0b-82ae95c224fc\",\"modelKey\":\"summary\",\"cap\":256,\"requireArtifactReceipt\":true,\"sessionId\":\"50c1ff5c-38b6-4bf3-b912-f374fee5719f\",\"strategyId\":\"strategy\",\"principal\":\"owner\",\"leaseId\":\"7581a702-4884-4750-9807-28d5cf33907d\"}],\"checksum\":\"8027f726e95e83b5fb341ec7615ae6dbdfc46736070794e575fc7cf56b1df9b5\"}\n"
+}

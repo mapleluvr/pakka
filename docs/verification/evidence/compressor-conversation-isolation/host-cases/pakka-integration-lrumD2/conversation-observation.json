@@ -1,0 +1,120 @@
+{
+  "state": {
+    "sessionId": "bb837b80-e8e9-49ef-8f08-d84fe0da9a2d",
+    "status": "open",
+    "toolCallingTolerance": 1,
+    "unresolvedErrorTolerance": 2,
+    "lastError": null,
+    "conversations": [
+      {
+        "conversationId": "8",
+        "jobId": "af928bca-d929-4542-8c4b-eb09b9928678",
+        "planId": "slow",
+        "sourceSessionId": "515552e8-fb14-407c-bdbe-9cc3fb8ebe36",
+        "sourceConversationId": "1",
+        "status": "completed",
+        "sealed": false,
+        "toolErrors": 0,
+        "unresolvedErrors": 0,
+        "lastError": null
+      },
+      {
+        "conversationId": "19",
+        "jobId": "c913bd7e-c2d8-4e53-b0d7-5ab6f73b734d",
+        "planId": "bad",
+        "sourceSessionId": "515552e8-fb14-407c-bdbe-9cc3fb8ebe36",
+        "sourceConversationId": "1",
+        "status": "failed",
+        "sealed": true,
+        "toolErrors": 1,
+        "unresolvedErrors": 0,
+        "lastError": {
+          "reason": "Error: Validation failed for tool \"submit_candidate\":\n  - text: must have required properties text\n\nReceived arguments:\n{}",
+          "incidentId": "262933a4-3938-4726-945b-8d624199b85b:tool:32",
+          "conversationId": "19",
+          "jobId": "c913bd7e-c2d8-4e53-b0d7-5ab6f73b734d"
+        }
+      },
+      {
+        "conversationId": "35",
+        "jobId": "72832118-ae2b-43ad-89ed-6ff9075170fb",
+        "planId": "fresh",
+        "sourceSessionId": "515552e8-fb14-407c-bdbe-9cc3fb8ebe36",
+        "sourceConversationId": "1",
+        "status": "completed",
+        "sealed": false,
+        "toolErrors": 0,
+        "unresolvedErrors": 0,
+        "lastError": null
+      }
+    ]
+  },
+  "audit": [
+    {
+      "status": "completed",
+      "modelKey": "summary",
+      "usageStatus": "known",
+      "usage": {
+        "input": 10,
+        "output": 2,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "totalTokens": 12,
+        "cost": null
+      },
+      "toolCall": {
+        "id": "call-2",
+        "name": "submit_candidate",
+        "arguments": {
+          "text": "COMPLETE"
+        }
+      },
+      "attemptId": "7076de21-6781-42ea-87c4-ad02cbdb6cba",
+      "jobId": "af928bca-d929-4542-8c4b-eb09b9928678",
+      "planId": "slow",
+      "maxOutputTokens": 256
+    },
+    {
+      "status": "failed",
+      "modelKey": "summary",
+      "reason": "Error: Validation failed for tool \"submit_candidate\":\n  - text: must have required properties text\n\nReceived arguments:\n{}",
+      "usageStatus": "known",
+      "usage": {
+        "input": 10,
+        "output": 2,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "totalTokens": 12,
+        "cost": null
+      },
+      "attemptId": "262933a4-3938-4726-945b-8d624199b85b",
+      "jobId": "c913bd7e-c2d8-4e53-b0d7-5ab6f73b734d",
+      "planId": "bad",
+      "maxOutputTokens": 256
+    },
+    {
+      "status": "completed",
+      "modelKey": "summary",
+      "usageStatus": "known",
+      "usage": {
+        "input": 10,
+        "output": 2,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "totalTokens": 12,
+        "cost": null
+      },
+      "toolCall": {
+        "id": "call-4",
+        "name": "submit_candidate",
+        "arguments": {
+          "text": "COMPLETE"
+        }
+      },
+      "attemptId": "5aac7300-5897-4082-b679-e97a740feb02",
+      "jobId": "72832118-ae2b-43ad-89ed-6ff9075170fb",
+      "planId": "fresh",
+      "maxOutputTokens": 256
+    }
+  ]
+}

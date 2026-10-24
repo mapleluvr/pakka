@@ -1,0 +1,50 @@
+{
+  "sessionId": "50c1ff5c-38b6-4bf3-b912-f374fee5719f",
+  "durableSessionId": "50c1ff5c-38b6-4bf3-b912-f374fee5719f",
+  "conversationId": "1",
+  "providerSessionId": "01a16ba8-cc6f-74e0-9510-64a5c3e33006",
+  "sessionFile": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\pakka-integration-tlhLFB\\profile\\sessions\\50c1ff5c-38b6-4bf3-b912-f374fee5719f\\main.jsonl",
+  "leafId": "11",
+  "entries": [
+    {
+      "id": "7",
+      "type": "pi.user",
+      "role": "user",
+      "text": "ORIGINAL"
+    },
+    {
+      "id": "10",
+      "type": "pi.system",
+      "role": "system",
+      "text": ""
+    },
+    {
+      "id": "11",
+      "type": "pi.assistant",
+      "role": "assistant",
+      "text": "MAIN"
+    }
+  ],
+  "context": [
+    {
+      "role": "system",
+      "text": ""
+    },
+    {
+      "role": "user",
+      "text": "ORIGINAL"
+    },
+    {
+      "role": "assistant",
+      "text": "MAIN"
+    }
+  ],
+  "autoCompaction": false,
+  "phase": "failed",
+  "busy": false,
+  "epoch": 9,
+  "generation": 0,
+  "branchId": "e43a07d5-95cd-40e7-8bcc-a3be33c2a3a9",
+  "lastError": "Artifact journal storage unknown: Error: EPERM: operation not permitted, open 'C:\\Users\\Administrator\\AppData\\Local\\Temp\\pakka-integration-tlhLFB\\profile\\artifacts\\29d3d1f19ff37cc6ac38044d56f5f679f13266806636a7b3160da968c575056d\\18ec01d2316aa5fcda06a5c3bd07ea268512869e0410792b24a07823addc450f.jsonl'",
+  "effects": "unknown"
+}

@@ -1,0 +1,880 @@
+{
+  "schema": "pakka.compressor-conversation.source-manifest.v1",
+  "baseline": {
+    "host": "5dcc4cd6f0ae5f644e7f77e60f27b97bfca11a0c",
+    "strategy": "279eb83e2f3077337f69ca6f6e7dbc7003d38334"
+  },
+  "note": "Exact working-copy bytes measured on Windows; Git checkout EOL normalization can change text byte hashes. Archive hashes identify the actual installed bytes.",
+  "files": [
+    {
+      "repo": "host",
+      "path": "apps/server/package.json",
+      "bytes": 984,
+      "sha256": "f0769ae14c315bf16ac7408d321b3a578593eecb22ea9c339ae377fe3ee6ed45"
+    },
+    {
+      "repo": "host",
+      "path": "apps/webui/package.json",
+      "bytes": 1484,
+      "sha256": "297149df856ef2c34a96eec98b3c9afc1ce9ced46b649f8a70f952d6a0ccffd2"
+    },
+    {
+      "repo": "host",
+      "path": "package-lock.json",
+      "bytes": 85009,
+      "sha256": "e02b7f38e0160fa482cad5b9ae6768ad4f8d540cb857287a3236484d521eddf2"
+    },
+    {
+      "repo": "host",
+      "path": "package.json",
+      "bytes": 1556,
+      "sha256": "7af8a2886a3a90c19f5781f781f96107cbb8ba212333b572fdfe219c5b503ece"
+    },
+    {
+      "repo": "host",
+      "path": "packages/agent/package.json",
+      "bytes": 1169,
+      "sha256": "d2fc16178671254fa1e1b67047a79b6db416839a1211207779be3e2b4b2fd308"
+    },
+    {
+      "repo": "host",
+      "path": "packages/agent/src/artifact-journal.ts",
+      "bytes": 9271,
+      "sha256": "ad243ca620002924fa66f4452e689ad707c7a22c1b42dc7cac5b41744ede7fed"
+    },
+    {
+      "repo": "host",
+      "path": "packages/agent/src/durable-adapter.ts",
+      "bytes": 154870,
+      "sha256": "93b321a55b58e8ba63d9c053466c97266786b568b065d8f8f07aeaedc31c40cb"
+    },
+    {
+      "repo": "host",
+      "path": "packages/agent/src/host.ts",
+      "bytes": 20195,
+      "sha256": "ae91a7d58ec1b474f7cd83506b264f6a3cc7c6b50287c26381d41f6d38b3acfc"
+    },
+    {
+      "repo": "host",
+      "path": "packages/agent/src/index.ts",
+      "bytes": 217,
+      "sha256": "c589cc18a9186d3bc13ae30d55c237231ddd181ccef5704b59410d677ce67cc6"
+    },
+    {
+      "repo": "host",
+      "path": "packages/agent/src/journal-migration.ts",
+      "bytes": 8143,
+      "sha256": "40014cafafb30bfd3a09dd88004fac35a50f5dce003a417eb515548c6f3f25b5"
+    },
+    {
+      "repo": "host",
+      "path": "packages/agent/src/runtime.ts",
+      "bytes": 4504,
+      "sha256": "e9cc459a84d9a5297f53634d8f0c58c5597def8c0de86c6ca7250f5ede4ef097"
+    },
+    {
+      "repo": "host",
+      "path": "packages/agent/src/strategy-control.ts",
+      "bytes": 38094,
+      "sha256": "374be823d0f457071a15c3a8f91973517bf480164fdb9c026e83ac448a32e97b"
+    },
+    {
+      "repo": "host",
+      "path": "packages/agent/src/strategy-projection.ts",
+      "bytes": 8569,
+      "sha256": "0d866990b891d101292f9d89053ace17d026b3f9620ea83faf6890334478c655"
+    },
+    {
+      "repo": "host",
+      "path": "packages/agent/src/types.ts",
+      "bytes": 28690,
+      "sha256": "bab295af015a35944bae4d0f0ef406e8e6ecd6f3852357a4861f5486935f8ce5"
+    },
+    {
+      "repo": "host",
+      "path": "packages/agent/test/catalog-ownership.test.ts",
+      "bytes": 3929,
+      "sha256": "d6ece018bfaccce5d11c6545e1071b9bbc9d23dac1dd05169385b25239aba69a"
+    },
+    {
+      "repo": "host",
+      "path": "packages/agent/test/compresser-conversation.test.ts",
+      "bytes": 13836,
+      "sha256": "98e25b6ed86b01edf70bb79ff9f2cd540bd1195f9b65ce6af456b04c8c06a415"
+    },
+    {
+      "repo": "host",
+      "path": "packages/agent/test/compresser-crash-child.ts",
+      "bytes": 1712,
+      "sha256": "303ea4f355c46183ef28cda0fd002e0c90493cf83b891a633d3c799258a693cc"
+    },
+    {
+      "repo": "host",
+      "path": "packages/agent/test/compresser-crash.test.ts",
+      "bytes": 4477,
+      "sha256": "c4bd568d6fcb0e0aa70a6c1015cbd37f182e54dc1280319b23cc75f21139d9fd"
+    },
+    {
+      "repo": "host",
+      "path": "packages/agent/test/compresser-session.test.ts",
+      "bytes": 28830,
+      "sha256": "c6f4ae467778e7af4be15a1b786b0abe17567dbe2189ab9af4fbb9c9eee2337a"
+    },
+    {
+      "repo": "host",
+      "path": "packages/agent/test/conversation-observation-safety.test.ts",
+      "bytes": 4429,
+      "sha256": "2ad81fe377fa8b21e26f429bca2097bf04449b32460effa10f7dc05f62cc2125"
+    },
+    {
+      "repo": "host",
+      "path": "packages/agent/test/conversation-observation.test.ts",
+      "bytes": 6821,
+      "sha256": "4d3d5ba815a610b498b68ddcd9680aceb1d1a5429d5cca0af7dd0f573c124f1b"
+    },
+    {
+      "repo": "host",
+      "path": "packages/agent/test/conversation-pagination.test.ts",
+      "bytes": 3294,
+      "sha256": "5451c55620304b4b8e333f16aee88472817b84e02fa95bca0c3956c92755e10e"
+    },
+    {
+      "repo": "host",
+      "path": "packages/agent/test/differential-oracle.test.ts",
+      "bytes": 4445,
+      "sha256": "3de25389926436571d6c31dc2a65b5b79fd579c17d7a17ea59b24e6b332bf3a6"
+    },
+    {
+      "repo": "host",
+      "path": "packages/agent/test/durable-integration.test.ts",
+      "bytes": 8379,
+      "sha256": "ee06d203852bf347cfc63f10c247dd01f159dc88ca6d84429757a4827d489b23"
+    },
+    {
+      "repo": "host",
+      "path": "packages/agent/test/durable-patch-tooling.test.ts",
+      "bytes": 3033,
+      "sha256": "1cfb01fb87f7e1ef5ef0bbfb095139a65b118fe252fe2013967d9a9a00e3446e"
+    },
+    {
+      "repo": "host",
+      "path": "packages/agent/test/fixture-paths.test.ts",
+      "bytes": 509,
+      "sha256": "c81045d26b401c98a5ec0ef016669c0007f51d5da259a81c794ffa65d217ab69"
+    },
+    {
+      "repo": "host",
+      "path": "packages/agent/test/fixture.ts",
+      "bytes": 6902,
+      "sha256": "d58c0be0ce7045ef18f704bb159ef1deeb75ba4e8143a8866b363fc091321ff3"
+    },
+    {
+      "repo": "host",
+      "path": "packages/agent/test/generation-block.test.ts",
+      "bytes": 4936,
+      "sha256": "f6bfa4e398afdf66edd8d9a28faa254536d94cb6df2e07550ecd9dbf50423082"
+    },
+    {
+      "repo": "host",
+      "path": "packages/agent/test/host.test.ts",
+      "bytes": 2935,
+      "sha256": "b0215f6c224cb9c4799f352de5b76f24c7daaf4cd1506a1ee636f399843e49a5"
+    },
+    {
+      "repo": "host",
+      "path": "packages/agent/test/lifecycle-projection.test.ts",
+      "bytes": 2195,
+      "sha256": "71febecb830ac631571c623392353787c1fb98abeed5f4421f0348a1a1934956"
+    },
+    {
+      "repo": "host",
+      "path": "packages/agent/test/lifecycle-queue.test.ts",
+      "bytes": 11573,
+      "sha256": "81856e453ff33486633ce700278e93586fdcfc15d4f773dab8bd42db13a4d707"
+    },
+    {
+      "repo": "host",
+      "path": "packages/agent/test/mas-red.test.ts",
+      "bytes": 4232,
+      "sha256": "f1a5d7734899bb6e8947902ff02f3f5cd278c2f46aaed8cfb7ba7d2fc7048e5f"
+    },
+    {
+      "repo": "host",
+      "path": "packages/agent/test/multi-conversation.test.ts",
+      "bytes": 15716,
+      "sha256": "4691a5a5dda86260a4cc8c3261e7491cf0b01ee46c6dbd997dd60bfbfd799acd"
+    },
+    {
+      "repo": "host",
+      "path": "packages/agent/test/permissions.test.ts",
+      "bytes": 7421,
+      "sha256": "af3388c9b061fae23f94dd3e37e53b025e476abbbaf495a23263e1951ccc0eba"
+    },
+    {
+      "repo": "host",
+      "path": "packages/agent/test/pi-adapter.ts",
+      "bytes": 22078,
+      "sha256": "c720c39fd4997d8a26d44f48cc847998df9ba4052468b3976074c7f8d74d5f17"
+    },
+    {
+      "repo": "host",
+      "path": "packages/agent/test/recovery.test.ts",
+      "bytes": 2891,
+      "sha256": "e63484554c150b5dcb6eef6a910c39b45f31974d18d229fe2fa6d987bce894de"
+    },
+    {
+      "repo": "host",
+      "path": "packages/agent/test/reentrancy.test.ts",
+      "bytes": 1523,
+      "sha256": "3db0951730882f262d3349a483cef15f7bafc8475ed03717f6930e2d6ab1ec0e"
+    },
+    {
+      "repo": "host",
+      "path": "packages/agent/test/runtime-backend-job-progress.test.ts",
+      "bytes": 4191,
+      "sha256": "673d6c66120f45526d06b68336791961887fcd917866b918e0d9d232e35f6cc5"
+    },
+    {
+      "repo": "host",
+      "path": "packages/agent/test/runtime-backend-job-safety.test.ts",
+      "bytes": 2936,
+      "sha256": "0d9ef444109935504683b2ef1208c150d4d6b08727a68c8cea33bdd8a3683788"
+    },
+    {
+      "repo": "host",
+      "path": "packages/agent/test/runtime-backend-jobs.test.ts",
+      "bytes": 8260,
+      "sha256": "331eee4b3b145ba994d889834caa456a939a64a0f69e743c5f28b5ebf2281734"
+    },
+    {
+      "repo": "host",
+      "path": "packages/agent/test/runtime-configuration.test.ts",
+      "bytes": 8161,
+      "sha256": "06710a2728ed1807e1774bcabe102ef58d9dff9216b2f60dfa422e2aa47c3ac4"
+    },
+    {
+      "repo": "host",
+      "path": "packages/agent/test/runtime-context-boundaries.test.ts",
+      "bytes": 7205,
+      "sha256": "3766219c2207a4cbffd421d74fcd3007d594bf0f8a2ceb4fa421de25f0f9a214"
+    },
+    {
+      "repo": "host",
+      "path": "packages/agent/test/runtime-context.test.ts",
+      "bytes": 4365,
+      "sha256": "f63505347deb4a2de6e72dc2989b12c729ea4287b75a7e4b685da8ba0e01ab4c"
+    },
+    {
+      "repo": "host",
+      "path": "packages/agent/test/runtime-fixture.ts",
+      "bytes": 1114,
+      "sha256": "c27e0950fad7b5b884e2c2b555d9a3d909d87a3cffc73cd976825bb95bbe852c"
+    },
+    {
+      "repo": "host",
+      "path": "packages/agent/test/runtime-jobs.test.ts",
+      "bytes": 3773,
+      "sha256": "010b964fa76cad463a01cd8e39aba06c29e5c96e3250f64a20166c3cb0ecd82b"
+    },
+    {
+      "repo": "host",
+      "path": "packages/agent/test/runtime-migration.test.ts",
+      "bytes": 7598,
+      "sha256": "83d5c767da981b1430cef6168fe3ce2e4f7f4b094604b53b02d9f46d8fa64717"
+    },
+    {
+      "repo": "host",
+      "path": "packages/agent/test/runtime-projects.test.ts",
+      "bytes": 5438,
+      "sha256": "e1a9824e430b20ffd996e552d625758653d81ac8110aef7d3433db38cc0b3808"
+    },
+    {
+      "repo": "host",
+      "path": "packages/agent/test/runtime-review.test.ts",
+      "bytes": 6688,
+      "sha256": "1e364317ff99fa567f9ec53398d8d436830c5b0a6f60e398ae3fa9a6be591411"
+    },
+    {
+      "repo": "host",
+      "path": "packages/agent/test/runtime-safety.test.ts",
+      "bytes": 7598,
+      "sha256": "061b1ede426d586a55c7da21f0834c78f79099b242ed40df97de7aca78faa709"
+    },
+    {
+      "repo": "host",
+      "path": "packages/agent/test/runtime-store.test.ts",
+      "bytes": 5013,
+      "sha256": "3fb7d0c0109768d9c31b66fab2a8957af322ae29c4e76197db117a4f66931f01"
+    },
+    {
+      "repo": "host",
+      "path": "packages/agent/test/strategy-adoption.test.ts",
+      "bytes": 6885,
+      "sha256": "66a17721f6641bb17b4fc7b6b4fdb9bfefcca682eec8bd1c2047bdd25b4aa9d1"
+    },
+    {
+      "repo": "host",
+      "path": "packages/agent/test/strategy-boundaries.test.ts",
+      "bytes": 12981,
+      "sha256": "fb86778bc5a8e8677ff91bdc715226b8198808e818dbd22ba03897ff9e0141ef"
+    },
+    {
+      "repo": "host",
+      "path": "packages/agent/test/strategy-checkpoint.test.ts",
+      "bytes": 2400,
+      "sha256": "327776d94250e092eb786f1dea127d36c2fe712ae21a1105f24a29a0095ee432"
+    },
+    {
+      "repo": "host",
+      "path": "packages/agent/test/strategy-fixture.ts",
+      "bytes": 997,
+      "sha256": "07e59881fc64c00e1c494777db624180bdc9729da80c59d8d57cb25a479ffcb1"
+    },
+    {
+      "repo": "host",
+      "path": "packages/agent/test/strategy-inference.test.ts",
+      "bytes": 7332,
+      "sha256": "de46bbd1326dbb66fb1029c738b3f89c9ed694c99c21a3969c126d6be3cace0e"
+    },
+    {
+      "repo": "host",
+      "path": "packages/agent/test/strategy-job-retention.test.ts",
+      "bytes": 2991,
+      "sha256": "5d9b26c59ec3d1e8c5b74ae4302dff4006613a7416b8739495f64157ae6cae08"
+    },
+    {
+      "repo": "host",
+      "path": "packages/agent/test/strategy-omission.test.ts",
+      "bytes": 7959,
+      "sha256": "c047b020c81cad8e1b61718efadf1e98e5f6c32e84d6ca9873dfcf28b1cc7ea0"
+    },
+    {
+      "repo": "host",
+      "path": "packages/agent/test/strategy-output-tool.test.ts",
+      "bytes": 4984,
+      "sha256": "2bb3766df475f86a8f3617be1c9083d23af27df3548329430b660a710d86b243"
+    },
+    {
+      "repo": "host",
+      "path": "packages/agent/test/strategy-provider-results.test.ts",
+      "bytes": 2550,
+      "sha256": "1f7760456edad354f6acabec0bd5fbcda68b425bb0647cb4fbafa4ca5699b330"
+    },
+    {
+      "repo": "host",
+      "path": "packages/agent/test/strategy-rendering.test.ts",
+      "bytes": 5245,
+      "sha256": "f50eaf6b4efad1737b4d7272e0aa232fc1d4ed18827986e6d0baf90877a8282b"
+    },
+    {
+      "repo": "host",
+      "path": "packages/agent/test/strategy-request-gate.test.ts",
+      "bytes": 3090,
+      "sha256": "28d221ef9c6f5005ab6f3a04501359a12796b9506876abcfed9825cf4996a57b"
+    },
+    {
+      "repo": "host",
+      "path": "packages/agent/test/strategy-snapshot-audit.test.ts",
+      "bytes": 2496,
+      "sha256": "827a723fb7083528b3e8c7ce49abce0db2a92e9b81e076a05a11340d9db9b923"
+    },
+    {
+      "repo": "host",
+      "path": "packages/agent/test/strategy-storage-budget.test.ts",
+      "bytes": 12796,
+      "sha256": "1abf4e44890cba51a455846bb02088750bceecc0eda06b69fed3b77e11adc2b4"
+    },
+    {
+      "repo": "host",
+      "path": "packages/agent/test/strategy-transition-storage.test.ts",
+      "bytes": 4069,
+      "sha256": "655577d48dbbc568a2b0139d3cdf9d867126cd29a223578216666f9133380cb3"
+    },
+    {
+      "repo": "host",
+      "path": "packages/agent/test/strategy.test.ts",
+      "bytes": 10568,
+      "sha256": "3504a8b4b86d7f5ffaa03f57e8d5f671faba4e693378f70809bb52db9c859f00"
+    },
+    {
+      "repo": "host",
+      "path": "packages/agent/tsconfig.json",
+      "bytes": 299,
+      "sha256": "5de7b8c8fd754d5dcbb6c542eeecc1b7a78d319b61f56ede3061015877599fe9"
+    },
+    {
+      "repo": "host",
+      "path": "packages/mas-devpack/package.json",
+      "bytes": 1066,
+      "sha256": "3c4516dbf778278b05338e79b9a91905bf11c226a1b20f67adad73cdc51f2064"
+    },
+    {
+      "repo": "host",
+      "path": "packages/mas/package.json",
+      "bytes": 408,
+      "sha256": "0ada9def891b9383927e5e6f60c054a53dffb7813816a1fedf42f96bb0f3df38"
+    },
+    {
+      "repo": "host",
+      "path": "scripts/pack-agent.mjs",
+      "bytes": 2004,
+      "sha256": "680fcdb753ac338311d4eb6e770a90ae8b659b5de2d12ea3cc5cd5d39588b685"
+    },
+    {
+      "repo": "host",
+      "path": "scripts/test.mjs",
+      "bytes": 1600,
+      "sha256": "020267a43c1dda407f185cc39b6493fc1f62bb481a9fafeab53bf0b6a8372aaf"
+    },
+    {
+      "repo": "strategy",
+      "path": "README.md",
+      "bytes": 13865,
+      "sha256": "68d7ebb7d80f501d765c192b3f32ac8fb5ee93eac355af1c1bbf0109eb59b431"
+    },
+    {
+      "repo": "strategy",
+      "path": "docs/DURABLE-COMPATIBILITY.md",
+      "bytes": 11451,
+      "sha256": "3829d1be7057c78eee0ff0c286393b6f91ca69174df15f1f99e4f39b3dd2649b"
+    },
+    {
+      "repo": "strategy",
+      "path": "docs/ENGINE-PORTS.md",
+      "bytes": 13943,
+      "sha256": "de525b22018900d6d740d1f0ff6c696832de2e0b6a1bcfea8d069b1585231c81"
+    },
+    {
+      "repo": "strategy",
+      "path": "docs/state/artifacts.md",
+      "bytes": 5124,
+      "sha256": "f9c820cd3d98c4f5810439a161b33a86ef80c26c78f1991c40ba567265a06534"
+    },
+    {
+      "repo": "strategy",
+      "path": "index.ts",
+      "bytes": 1566,
+      "sha256": "fe6de955683e4277bcdc6a9618d1dc9647fc6c42f3a1e9d89654b7a42bb8e9e6"
+    },
+    {
+      "repo": "strategy",
+      "path": "integrations/pakka/0.2.1-pairing.json",
+      "bytes": 672,
+      "sha256": "8a0e972827c5c787423da0d2db4c37e3f772db9ef7f8d46bc8872e6046474eee"
+    },
+    {
+      "repo": "strategy",
+      "path": "integrations/pakka/0.3.0-pairing.json",
+      "bytes": 724,
+      "sha256": "379f96f3b51da10ec10133951d50c5ce5084edd30b3ff844c4b36f13adf0cc2f"
+    },
+    {
+      "repo": "strategy",
+      "path": "integrations/pakka/0.4.0-initial-trial-pairing.json",
+      "bytes": 812,
+      "sha256": "77067a8ef7dd25011de9f5255b89b315845843aebf48655712f0f35433dd3914"
+    },
+    {
+      "repo": "strategy",
+      "path": "integrations/pakka/0.4.0-pairing.json",
+      "bytes": 825,
+      "sha256": "a56c215a9b18390b81dffabadea38b2ce4ecffe805cf4f7902a66dcaedad792d"
+    },
+    {
+      "repo": "strategy",
+      "path": "integrations/pakka/pairing.json",
+      "bytes": 826,
+      "sha256": "463e96b0476913f2f2fb5c9b98a5468d12dba4442974f0999df227b5ec046a4f"
+    },
+    {
+      "repo": "strategy",
+      "path": "package-lock.json",
+      "bytes": 107346,
+      "sha256": "404760de0849625b93892366ae711dbe1e75a6bc627b5f4997bbf9cd34b183f9"
+    },
+    {
+      "repo": "strategy",
+      "path": "package.json",
+      "bytes": 1893,
+      "sha256": "2a2763e2aea5fda80230dfb824d85f0d453df42615ef686d58ef693bb3916da0"
+    },
+    {
+      "repo": "strategy",
+      "path": "scripts/bootstrap-host.mjs",
+      "bytes": 4339,
+      "sha256": "0f88876a5d5dbee6095e57b358336cf642bdb5717998cd331ac19b921b584df2"
+    },
+    {
+      "repo": "strategy",
+      "path": "scripts/consumer-types.ts",
+      "bytes": 2605,
+      "sha256": "317bdec9871162a3899a477fb4e4bd301d96d8aee5d183cb33313b329a24d72d"
+    },
+    {
+      "repo": "strategy",
+      "path": "scripts/package-smoke.mjs",
+      "bytes": 11668,
+      "sha256": "f20eb9c73d2d75de0b012d3d21ef747c26699384ce39a7a9fe9384f942d21615"
+    },
+    {
+      "repo": "strategy",
+      "path": "scripts/test.mjs",
+      "bytes": 1572,
+      "sha256": "eef44d71eccff9ab224364f4646e0af35418ad930dbb957c277efdf50ebfcd2b"
+    },
+    {
+      "repo": "strategy",
+      "path": "src/accounting.ts",
+      "bytes": 7052,
+      "sha256": "68258d101f4ffb251c184cfdb2482dbf94fff0782de6d71d820d175e2ae7ca0f"
+    },
+    {
+      "repo": "strategy",
+      "path": "src/artifacts.ts",
+      "bytes": 6694,
+      "sha256": "535c526660a61dea17d614306c842d408fd37faab8aa3e93add7dd9f3125e10c"
+    },
+    {
+      "repo": "strategy",
+      "path": "src/compressor.ts",
+      "bytes": 10630,
+      "sha256": "2530cc5e8e86c8f2926501a7969219af80d29229f9ed34e8e9a8337742d3f6e7"
+    },
+    {
+      "repo": "strategy",
+      "path": "src/config.ts",
+      "bytes": 11687,
+      "sha256": "0ca959fba61244381c868d8ae895e875a0a17911d26b31ec47e1b71b69829f08"
+    },
+    {
+      "repo": "strategy",
+      "path": "src/entries.ts",
+      "bytes": 19263,
+      "sha256": "d869082ed3fc57701970e7d3758c3e3894411940f8e94d8229765f30feaa10eb"
+    },
+    {
+      "repo": "strategy",
+      "path": "src/pakka-adapter.ts",
+      "bytes": 20570,
+      "sha256": "d733bcf3419b5eaf894036b1817c6ebe2e24cf0e3ebdbe51e9358cda87d74e39"
+    },
+    {
+      "repo": "strategy",
+      "path": "src/panel.ts",
+      "bytes": 20217,
+      "sha256": "2681b14ea82b297f140ee5e9a6589c090983667e3221e6187e7a75002fef184f"
+    },
+    {
+      "repo": "strategy",
+      "path": "src/ports.ts",
+      "bytes": 4462,
+      "sha256": "0d2f753dd21580e251fbd8e46076b3765fb44283952891e6dcb123d386828b90"
+    },
+    {
+      "repo": "strategy",
+      "path": "src/projection.ts",
+      "bytes": 14732,
+      "sha256": "9d416c88451e3dd2cf4c833219187d6529b300863353dc7c1ba9acefca04385d"
+    },
+    {
+      "repo": "strategy",
+      "path": "src/protected-tail.ts",
+      "bytes": 3424,
+      "sha256": "e2b69f4d97d4323f2b767948ec29f36c08877aa7835fd614cb2b8c24eec737f6"
+    },
+    {
+      "repo": "strategy",
+      "path": "src/queue.ts",
+      "bytes": 6606,
+      "sha256": "35cdf2efe95115be8540678d0823fb258f42cbdeb6d3b702bb37a49232b0270b"
+    },
+    {
+      "repo": "strategy",
+      "path": "src/runtime.ts",
+      "bytes": 51801,
+      "sha256": "be18912fae765350ea388a583486e8974208ec8cf9d0bcebc31ff298451d7f26"
+    },
+    {
+      "repo": "strategy",
+      "path": "src/snapshot.ts",
+      "bytes": 10752,
+      "sha256": "f3508d18f89a6634407790d2ce8d89691da30b349ceb7404d34460a467c5bee4"
+    },
+    {
+      "repo": "strategy",
+      "path": "src/store.ts",
+      "bytes": 24230,
+      "sha256": "604cc6d5bc79fb0711e6d5779f282893bb5dad6a4494d3696e96a96e3b77799a"
+    },
+    {
+      "repo": "strategy",
+      "path": "src/summarizer.ts",
+      "bytes": 3159,
+      "sha256": "781ac35598d1e0e631af0bef2b35741ca87870aa7201f7f9bc26d0290fede0b4"
+    },
+    {
+      "repo": "strategy",
+      "path": "src/tags.ts",
+      "bytes": 3061,
+      "sha256": "a1f68e77517b2cbd49a5cb2bee1b477af130e720e415672cd55278f4274d446d"
+    },
+    {
+      "repo": "strategy",
+      "path": "src/tokenizer.ts",
+      "bytes": 2605,
+      "sha256": "528f0c4e56e0b8f07e54358ea1fc7a81012e58d97984ff951aa3fd7e5df73543"
+    },
+    {
+      "repo": "strategy",
+      "path": "src/tool.ts",
+      "bytes": 3090,
+      "sha256": "2a04c4f7abd0b598b815ed24221cb9e90b9e6f8c75953706aae9344aac816809"
+    },
+    {
+      "repo": "strategy",
+      "path": "src/tui-panel.ts",
+      "bytes": 17538,
+      "sha256": "f772ad451a9b72c5f496ff154c53de87552189630ecb4f9db752a99dee5a9f62"
+    },
+    {
+      "repo": "strategy",
+      "path": "src/tui-select.ts",
+      "bytes": 15199,
+      "sha256": "acc8521ec15beeb2fe8eff0ed2828f9bc97eb371a6c05df75e5f288aca05c238"
+    },
+    {
+      "repo": "strategy",
+      "path": "src/version.ts",
+      "bytes": 133,
+      "sha256": "9208125c1cfd7a02ccbe72b0a73dcac5093e44cd77864cb254722aa32400655e"
+    },
+    {
+      "repo": "strategy",
+      "path": "src/window.ts",
+      "bytes": 9511,
+      "sha256": "fe6020cad613f3596954f6bc104b1166558749119dbf0cd4ab8fadf114f30d7d"
+    },
+    {
+      "repo": "strategy",
+      "path": "tests/accounting.test.mjs",
+      "bytes": 5864,
+      "sha256": "36fd5eac0da686f406bd69137648b2421a180a8862df130cbf58dc296fa51991"
+    },
+    {
+      "repo": "strategy",
+      "path": "tests/artifacts.test.mjs",
+      "bytes": 6189,
+      "sha256": "faa6fc696910547ce9ff84570f76b9b1ab519f0de697f795a5ed40a5b3504052"
+    },
+    {
+      "repo": "strategy",
+      "path": "tests/compressor.test.mjs",
+      "bytes": 6268,
+      "sha256": "f2ffe0eda4b65d7ec81e181f9259ca51ba724d0ff7056915dc70629e1163323a"
+    },
+    {
+      "repo": "strategy",
+      "path": "tests/durable-artifacts.test.mjs",
+      "bytes": 8302,
+      "sha256": "48ca3e6cb8b7be616f23769b83c4a490c366c9620e8ec82dc3445ea469c2460d"
+    },
+    {
+      "repo": "strategy",
+      "path": "tests/durable-compresser-session.test.mjs",
+      "bytes": 18253,
+      "sha256": "025e8ad47b42337649d178c994033ceab7d3ffaab88a7da9187bfbca1346e400"
+    },
+    {
+      "repo": "strategy",
+      "path": "tests/durable-inference-boundary.test.mjs",
+      "bytes": 3044,
+      "sha256": "21cb771df1597cd4cfd6d0f83297b56812c90023bd2fb260184541a08b7f9acc"
+    },
+    {
+      "repo": "strategy",
+      "path": "tests/durable-managed.test.mjs",
+      "bytes": 6509,
+      "sha256": "f58f86859988a977ab3b6358c997bd1266b153547727c82324837de2ba7835f0"
+    },
+    {
+      "repo": "strategy",
+      "path": "tests/durable.test.mjs",
+      "bytes": 8611,
+      "sha256": "b5e7055254b4726ec5b1b543307042b3d836928cd2ceecfd2846b485d0e60832"
+    },
+    {
+      "repo": "strategy",
+      "path": "tests/engine-ports.test.mjs",
+      "bytes": 20877,
+      "sha256": "f028ee985f3b9ac8388ca7f9989a59ce4e4bbe3c9a3a54df4ee6a4097f3fc13c"
+    },
+    {
+      "repo": "strategy",
+      "path": "tests/entries.test.mjs",
+      "bytes": 7157,
+      "sha256": "4a75cfbd8ed55b3c090fe2d97a41e30d40ee116c1aee32a6e7e5352bcac67754"
+    },
+    {
+      "repo": "strategy",
+      "path": "tests/helpers/durable-fixture.mjs",
+      "bytes": 6083,
+      "sha256": "eef8cfa9567a10dd3c1990c4f3e583faf045625eb9f8f9ac862b0c904a761307"
+    },
+    {
+      "repo": "strategy",
+      "path": "tests/helpers/durable-seed.mjs",
+      "bytes": 1484,
+      "sha256": "f9e7538df68ce32b685054d4730d26f3717faa1d98e928cf39cd8929a0b77f33"
+    },
+    {
+      "repo": "strategy",
+      "path": "tests/helpers/fs-config.ts",
+      "bytes": 2717,
+      "sha256": "8454c5016fd3502c9e923249851bce0f115b9d3301c589e8b8496a9fa40239ab"
+    },
+    {
+      "repo": "strategy",
+      "path": "tests/helpers/fs-store.ts",
+      "bytes": 3278,
+      "sha256": "913f7bdefba3ca3f949c3ff838cf3a34b07cca204aa1752ee46d85784a2cbf8e"
+    },
+    {
+      "repo": "strategy",
+      "path": "tests/helpers/pakka-fixture.mjs",
+      "bytes": 5280,
+      "sha256": "bedde8885754581aa7433b97b8a088757fe2a629124fe0ee29492770da9e1059"
+    },
+    {
+      "repo": "strategy",
+      "path": "tests/helpers/pi-summarizer.ts",
+      "bytes": 6864,
+      "sha256": "c1d7843087b18511bb8d3a434f65e42f26054625e20e4fa610f24d2865ed93c5"
+    },
+    {
+      "repo": "strategy",
+      "path": "tests/helpers/pi-view.ts",
+      "bytes": 3929,
+      "sha256": "eaab25486c311ee121719dca162fc32c7edfc9200a6f82b463baa2e38d1945db"
+    },
+    {
+      "repo": "strategy",
+      "path": "tests/helpers/runtime.mjs",
+      "bytes": 4592,
+      "sha256": "161bd0064a52aa56abc5f259ad32ebdb30fca00dc6df9fd53784302e7a7779e3"
+    },
+    {
+      "repo": "strategy",
+      "path": "tests/helpers/store-report.ts",
+      "bytes": 2551,
+      "sha256": "39dd26d74ea2bd07a732d11336b548860064d2f528fa85d07c99bd76c134dd38"
+    },
+    {
+      "repo": "strategy",
+      "path": "tests/pairing-guard.test.mjs",
+      "bytes": 2545,
+      "sha256": "2d8cb4047984e085bd09681a8d6967d8efacc2b9d20dfef099602894fcc34faa"
+    },
+    {
+      "repo": "strategy",
+      "path": "tests/pakka-boundaries.test.mjs",
+      "bytes": 13668,
+      "sha256": "a5fb7101dd7bf8bfdff8fc305ed8c636b55f40812a2993436143bc81b2b6799f"
+    },
+    {
+      "repo": "strategy",
+      "path": "tests/pakka-review.test.mjs",
+      "bytes": 9018,
+      "sha256": "f86e77a91a41809753086cae91beba3c1d18d409ccc4a735f36f1be0622e2cab"
+    },
+    {
+      "repo": "strategy",
+      "path": "tests/pakka.test.mjs",
+      "bytes": 15906,
+      "sha256": "fe0fb62e544a33fef74c2e134da601159b34b43a25c64741e27ea3f7af2beedf"
+    },
+    {
+      "repo": "strategy",
+      "path": "tests/panel.test.mjs",
+      "bytes": 16630,
+      "sha256": "c0042080b1df0a54d8a3cdb0c6cb91d5c89a54049cd6f138926102d887c2e326"
+    },
+    {
+      "repo": "strategy",
+      "path": "tests/pi-adapter.test.mjs",
+      "bytes": 8332,
+      "sha256": "8b19b503af0e4e5d59b534f04b793c9cb313e3e8b8b3ae6327a7a9d0190ea059"
+    },
+    {
+      "repo": "strategy",
+      "path": "tests/projection.test.mjs",
+      "bytes": 17497,
+      "sha256": "4905cf8863d40bd2d05cd81c41ba56a4a7b0c5caa9f48a7a0e7799d6a251464d"
+    },
+    {
+      "repo": "strategy",
+      "path": "tests/queue.test.mjs",
+      "bytes": 7645,
+      "sha256": "35736272fd500a5f9c1c9a9fe0c6a70a50ab32d281f06b3bed25e21bc1a74ad8"
+    },
+    {
+      "repo": "strategy",
+      "path": "tests/reduction.test.mjs",
+      "bytes": 5030,
+      "sha256": "e1b6a5d56bf1b601a5b1f161555efba82a528a47ce3a232ec75040fa2722584e"
+    },
+    {
+      "repo": "strategy",
+      "path": "tests/runtime-safety.test.mjs",
+      "bytes": 5483,
+      "sha256": "9d4999c10bbeedf82d90faed34e3b5b1b5b538ca2d30ffff118a45813df25b49"
+    },
+    {
+      "repo": "strategy",
+      "path": "tests/runtime.test.mjs",
+      "bytes": 54299,
+      "sha256": "1410ccb374e2355d4a624b49f40a82eda9ebc6bac95323e2b2e028952e23ad3b"
+    },
+    {
+      "repo": "strategy",
+      "path": "tests/store.test.mjs",
+      "bytes": 10237,
+      "sha256": "e953eb707fc1aeb52c54bf729e01bc17621b473ba0dcd7db4a2ef4483a9ddb83"
+    },
+    {
+      "repo": "strategy",
+      "path": "tests/summarizer.test.mjs",
+      "bytes": 10563,
+      "sha256": "c4cbdc7b0c449da76f90c6a8472a5990aa07761b3676c89f4218e773c5c25903"
+    },
+    {
+      "repo": "strategy",
+      "path": "tests/tags.test.mjs",
+      "bytes": 2027,
+      "sha256": "518726e4fd38cf3338cd26591072cd34b0f01f42e5cdbc563f45ac926fb1340f"
+    },
+    {
+      "repo": "strategy",
+      "path": "tests/tokenizer.test.mjs",
+      "bytes": 1947,
+      "sha256": "8b3a1a07191004644b2987de238e37bd5e055216afc136007cea10472c9339b6"
+    },
+    {
+      "repo": "strategy",
+      "path": "tests/tui-panel.test.mjs",
+      "bytes": 11536,
+      "sha256": "d2fea78bc5a14ff97437c2477e5f7bfa6e79d469aa093c67ce5affa1ad482843"
+    },
+    {
+      "repo": "strategy",
+      "path": "tests/tui-select.test.mjs",
+      "bytes": 8607,
+      "sha256": "b18d2ff1e4c80dfb2dac8907d861ea2123d7b735a86616fc177a7ec0956de747"
+    },
+    {
+      "repo": "strategy",
+      "path": "tests/window.test.mjs",
+      "bytes": 14108,
+      "sha256": "57289c4e18ce2e2d774ec3df7f978bfd53ceb0245d0cd18c5884621437c67683"
+    }
+  ]
+}

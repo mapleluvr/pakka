@@ -1,0 +1,32 @@
+{
+  "lockedPaths": [
+    "C:\\Users\\Administrator\\AppData\\Local\\Temp\\pakka-integration-SeLx9f\\compresser\\doc-10.jsonl",
+    "C:\\Users\\Administrator\\AppData\\Local\\Temp\\pakka-integration-SeLx9f\\compresser\\doc-11.jsonl",
+    "C:\\Users\\Administrator\\AppData\\Local\\Temp\\pakka-integration-SeLx9f\\compresser\\doc-12.jsonl",
+    "C:\\Users\\Administrator\\AppData\\Local\\Temp\\pakka-integration-SeLx9f\\compresser\\doc-13.jsonl",
+    "C:\\Users\\Administrator\\AppData\\Local\\Temp\\pakka-integration-SeLx9f\\compresser\\doc-14.jsonl",
+    "C:\\Users\\Administrator\\AppData\\Local\\Temp\\pakka-integration-SeLx9f\\compresser\\doc-2.jsonl",
+    "C:\\Users\\Administrator\\AppData\\Local\\Temp\\pakka-integration-SeLx9f\\compresser\\doc-3.jsonl",
+    "C:\\Users\\Administrator\\AppData\\Local\\Temp\\pakka-integration-SeLx9f\\compresser\\doc-4.jsonl",
+    "C:\\Users\\Administrator\\AppData\\Local\\Temp\\pakka-integration-SeLx9f\\compresser\\doc-5.jsonl",
+    "C:\\Users\\Administrator\\AppData\\Local\\Temp\\pakka-integration-SeLx9f\\compresser\\doc-6.jsonl",
+    "C:\\Users\\Administrator\\AppData\\Local\\Temp\\pakka-integration-SeLx9f\\compresser\\doc-7.jsonl",
+    "C:\\Users\\Administrator\\AppData\\Local\\Temp\\pakka-integration-SeLx9f\\compresser\\doc-9.jsonl",
+    "C:\\Users\\Administrator\\AppData\\Local\\Temp\\pakka-integration-SeLx9f\\compresser\\main.jsonl",
+    "C:\\Users\\Administrator\\AppData\\Local\\Temp\\pakka-integration-SeLx9f\\compresser\\task-17.jsonl"
+  ],
+  "sourceAudit": [
+    {
+      "status": "quarantined",
+      "attemptId": "4964f60a-8bb9-4b6a-8e91-559d61bbf2ad",
+      "jobId": "e5b1c173-7fcf-41c2-aa59-34902df5e7c2",
+      "planId": "shared-storage-unknown",
+      "modelKey": "summary",
+      "maxOutputTokens": 256,
+      "usageStatus": "unknown",
+      "reason": "Reserved attempt; completion/outcome unknown"
+    }
+  ],
+  "siblingAudit": [],
+  "siblingRequests": 1
+}

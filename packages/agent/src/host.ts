@@ -116,10 +116,10 @@ class Kernel {
 				},
 				journalNamespace: (strategyId, kind) => this.#adapter.journalNamespace?.(strategyId, kind),
 				models: () => this.#adapter.models(),
-				checkCompresser: () => {
+				checkCompresser: (jobId) => {
 					if (!this.#adapter.checkCompresser)
 						throw new Error("Conversational auxiliary inference unavailable");
-					this.#adapter.checkCompresser();
+					this.#adapter.checkCompresser(jobId);
 				},
 				converse: (input, strategy) => {
 					if (!this.#adapter.converse) throw new Error("Conversational auxiliary inference unavailable");

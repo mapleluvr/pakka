@@ -19,7 +19,7 @@ Pakka-dynamite SHALL maintain one long-lived pi-durable Session named the Compre
 
 - **WHEN** the same source-bound compression job is admitted again
 - **THEN** it retains the existing internal Conversation binding and original receipt identity
-- **AND** the retry does not create a new trajectory or reset Session accounting
+- **AND** the retry does not create a new trajectory or reset that Conversation's accounting
 
 #### Scenario: Conversation cardinality is not an admission quota
 
@@ -42,36 +42,44 @@ Each Compresser Conversation SHALL preserve its fixed host-bound source job and 
 
 ### Requirement: Independent cumulative error tolerances
 
-The Compresser Session SHALL have independently configured positive finite integer Tool_Calling_Tolerance and Unresolved_Error_Tolerance settings. Each categorized incident SHALL increment exactly one cumulative Session counter once, retaining its originating Compresser Conversation and source job identity. Reaching either configured value SHALL seal the Compresser Session immediately, including the incident that reaches it. Interleaving errors across categories and Conversations SHALL retain both counts.
+Each Compressor Conversation SHALL own independent cumulative Tool_Calling_Tolerance and Unresolved_Error_Tolerance counters under explicit positive finite integer settings. An incident SHALL increment exactly one counter once in its originating Conversation. Reaching either configured value SHALL seal only that Conversation immediately. Other Conversations' incidents and outcomes SHALL NOT consume this allowance or reset it.
 
 #### Scenario: Tool threshold is an error count
-- **WHEN** Tool_Calling_Tolerance is 3 and the third tool-submission error occurs
-- **THEN** the tool-error count is 3 and the Compresser Session is sealed before any further provider dispatch
+- **WHEN** a Conversation's tool tolerance is 3 and its third tool-submission error occurs
+- **THEN** that Conversation retains count 3 and seals before its next provider dispatch
+- **AND** independent Conversations remain available under their own allowances
 
 #### Scenario: Other-error threshold is independent
-- **WHEN** Unresolved_Error_Tolerance is 4 and four final stops have produced no accepted candidate
-- **THEN** the unresolved-error count is 4 and the Compresser Session is sealed before any further provider dispatch
-- **AND** those stops have not incremented the tool-error count
+- **WHEN** a Conversation's unresolved tolerance is 4 and four final stops have produced no complete candidate
+- **THEN** that Conversation retains unresolved count 4 and seals before its next dispatch
+- **AND** those stops do not increment its tool-error count
 
 #### Scenario: Interleaved errors and recovery
-- **WHEN** two tool errors and three unresolved errors occur under settings 3 and 4, followed by a valid candidate
-- **THEN** counts remain 2 and 3 and adoption can complete under the original source job
-- **AND** replay of a previously recorded incident does not increment either counter again
+- **WHEN** one Conversation has two tool errors and three unresolved errors below settings 3 and 4, then a valid candidate
+- **THEN** its counts remain 2 and 3 and the candidate may be adopted under its exact source job
+- **AND** replaying a recorded incident changes neither count
 
-#### Scenario: Session counts span independent jobs
+#### Scenario: Siblings have independent allowances
 
-- **WHEN** two Compresser Conversations contribute two and one tool errors respectively under Tool_Calling_Tolerance 3
-- **THEN** the shared tool-error count reaches 3 and the Compresser Session is sealed
-- **AND** a new child Conversation cannot reset the count or authorize further dispatch/adoption
+- **WHEN** two Conversations each repair one tool error under tolerance 2
+- **THEN** both can complete with local count 1 rather than a summed count 2
+- **AND** success, sealing or failure in one does not change the other's counters
 
 ### Requirement: Retained sealed result
 
-Sealing SHALL retain the Session identity, child trajectories, configured settings, both counters and the most recent actual error reason with originating Conversation, source job and incident identity. Normal reopen SHALL preserve the seal. New job admission, commands and late results for any Conversation in a sealed Compresser Session SHALL be rejected at dispatch and adoption. A new Compresser Session after a reached tolerance SHALL require explicit authorized admission.
+A sealed Compressor Conversation SHALL retain its identity, source binding, trajectory, settings, counters and last actual error. Normal reopen SHALL preserve that child's seal. Re-admission of the same job, further dispatch and candidate adoption SHALL check that Conversation's seal. A sibling's tolerance exhaustion SHALL NOT invalidate in-flight work, successful receipts or independently authorized new jobs. Genuine shared storage uncertainty SHALL retain the shared storage failure boundary.
 
-#### Scenario: Reopen sealed compressor
-- **WHEN** the host opens a normally closed sealed session
-- **THEN** the reported counters and last error are retained and inspection performs zero provider requests
-- **AND** an attempted continuation cannot dispatch or adopt a candidate
+#### Scenario: Reopen a container with a sealed child
+
+- **WHEN** a normally closed container with one sealed child is reopened
+- **THEN** that child's counts, last error and seal remain inspectable without provider replay
+- **AND** a fresh authorized independent Conversation can run in the same container
+
+#### Scenario: Sibling seals after a candidate has returned
+
+- **WHEN** source B has an exact successful candidate receipt and source A subsequently reaches its own tolerance
+- **THEN** B can still adopt that candidate under its current source authority and artifact version
+- **AND** A cannot dispatch or adopt through re-admission of its sealed job
 
 ### Requirement: Host-governed requests and effects
 
@@ -93,7 +101,7 @@ Trusted bootstrap SHALL create a single Compresser container facade with explici
 
 - **WHEN** an explicitly enabled tool-format Dynamite service supplies a finite per-job request ceiling
 - **THEN** native corrections remain within that ceiling and the original host auxiliary policy
-- **AND** a failure cannot open the engine's primitive retry/fallback chain to bypass the shared seal
+- **AND** a failure cannot open the engine's primitive retry/fallback chain to bypass its own Conversation's seal
 
 #### Scenario: Required settings survive reopen
 
@@ -103,20 +111,42 @@ Trusted bootstrap SHALL create a single Compresser container facade with explici
 
 ### Requirement: Interrupted work is quarantined
 
-A reopened unconfirmed running or pending Compresser job SHALL be quarantined and seal the container before native scheduling. Writer ownership SHALL require explicit trusted resolution after a process crash. Persisted metadata SHALL NOT refresh lost source authority or automatically replay an unknown model effect.
+Reopened unconfirmed running or pending work SHALL be quarantined in its own Conversation, with native continuations stopped before unrelated work can resume. Writer ownership SHALL require explicit trusted resolution after a process crash. Persisted metadata SHALL NOT restore lost source authority or replay unknown model effects. Source-local uncertainty SHALL NOT alone close a healthy separate Compresser storage; genuinely shared persistence uncertainty SHALL remain fail-closed for that storage.
 
 #### Scenario: Process stops after request dispatch
 
-- **WHEN** the owning process exits after dispatch and trusted recovery has resolved its stale writer claim
-- **THEN** reopening reports the unfinished job as quarantined and the container as sealed
-- **AND** inspection or attempted continuation produces no replayed provider request
+- **WHEN** the owning process exits after dispatch and trusted recovery resolves its stale writer claim
+- **THEN** reopening retains that job as quarantined and sends no replayed provider request
+- **AND** an independently authorized new job can complete without resuming the old job
+
+#### Scenario: Source audit completion is unknown
+
+- **WHEN** source A's external audit persistence fails while the separate Compresser storage remains healthy
+- **THEN** A retains its pending reservation and quarantined Conversation without correction or fabricated refund
+- **AND** an independently authorized source B can continue under its own storage and budget
 
 ### Requirement: Shared diagnostics retain source privacy
 
-A shared Compresser container SHALL retain the last actual error for trusted bootstrap inspection without forwarding its raw cause to unrelated source jobs. Generic seal/fault refusals, late-result status, source audit and failed business artifacts SHALL NOT contain another source's candidate or diagnostic. The originating source SHALL retain its own actual diagnostic.
+The container's trusted bootstrap snapshot SHALL retain each Conversation's own diagnostic. Other sources' status, audit, failed artifacts and model transcripts SHALL NOT contain that diagnostic or candidate. Shared container faults SHALL use generic source-facing refusal messages.
 
 #### Scenario: One source seals while another is in flight
 
-- **WHEN** source A reaches a tolerance with a schema diagnostic containing A's private candidate and source B has an in-flight request
-- **THEN** trusted bootstrap retains A's actual cause while B is quarantined with only a generic refusal
-- **AND** new source-B admissions produce no request or extra reservation and expose none of A's raw cause
+- **WHEN** source A reaches its tolerance with a diagnostic containing a private candidate and source B has an in-flight request
+- **THEN** trusted bootstrap retains A's cause on A's record and B completes under its own policy
+- **AND** B's result, status, audit and artifacts expose none of A's diagnostic
+
+### Requirement: Concurrent local production and separate graph merging
+
+Independent compression windows SHALL generate through independent native Conversations concurrently. Generation SHALL NOT wait for another window's result, repair, validation or P2/P3 merge. Shared artifact appends SHALL preserve atomic source/version/receipt checks and distinct block identities. Each job SHALL supply source-linked local P2 graphs/P3 annotations for a separate asynchronous merge mechanism; global graph state or merge completion SHALL NOT be a generation input dependency or P1-adoption prerequisite.
+
+#### Scenario: Multi-window native compression overlaps
+
+- **WHEN** a native batch has at least two independent source windows and the first provider response remains pending
+- **THEN** another window's provider request is dispatched before the first completes
+- **AND** a sealed window does not cancel valid siblings, whose records retain unique block IDs and their exact receipts
+
+#### Scenario: Local graphs remain independent inputs
+
+- **WHEN** independent jobs submit graph/node identifiers local to their own bundles
+- **THEN** each bundle retains its own annotations and provenance for the separate merge mechanism
+- **AND** compression does not combine the graphs or require a global merge result

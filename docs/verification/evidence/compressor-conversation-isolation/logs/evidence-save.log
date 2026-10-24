@@ -1,0 +1,63 @@
+{
+  "sourceFiles": 145,
+  "hostCases": 12,
+  "installedCases": 13,
+  "compiled": [
+    {
+      "name": "@pakka/agent",
+      "files": 18,
+      "exactMatch": true
+    },
+    {
+      "name": "@pakka/dynamite",
+      "files": 38,
+      "exactMatch": true
+    }
+  ],
+  "hostEvidenceFiles": 497,
+  "strategyEvidenceFiles": 584,
+  "results": {
+    "host": {
+      "tests": 607,
+      "pass": 605,
+      "fail": 0,
+      "skipped": 2,
+      "cancelled": 0,
+      "todo": 0
+    },
+    "hostNative": {
+      "tests": 31,
+      "pass": 31,
+      "fail": 0,
+      "skipped": 0,
+      "cancelled": 0,
+      "todo": 0
+    },
+    "strategy": {
+      "tests": 381,
+      "pass": 381,
+      "fail": 0,
+      "skipped": 0,
+      "cancelled": 0,
+      "todo": 0
+    },
+    "strategyNative": {
+      "tests": 12,
+      "pass": 12,
+      "fail": 0,
+      "skipped": 0,
+      "cancelled": 0,
+      "todo": 0
+    }
+  },
+  "archives": [
+    {
+      "name": "@pakka/agent",
+      "sha256": "c5c7fffddf9b644426ef86bba6ae03c67f813d68f10eb4f6901a052700047981"
+    },
+    {
+      "name": "@pakka/dynamite",
+      "sha256": "185fe5b5563e1f89834db80fcf19b29d80dfb55a32ecb9b6d41bd67b68591cdd"
+    }
+  ]
+}

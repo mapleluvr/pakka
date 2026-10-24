@@ -1,0 +1,24 @@
+✖ source-local unknown completion quarantines only its Conversation and retains the unpaid reservation (634.4915ms)
+✔ aggregate-counter storage rejects implicit migration instead of resetting or inventing per-Conversation counts (26.4616ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 1
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1590.4624
+
+✖ failing tests:
+
+test at packages\agent\test\compresser-conversation.test.ts:103:1
+✖ source-local unknown completion quarantines only its Conversation and retains the unpaid reservation (634.4915ms)
+  Error: Compresser Session unavailable after an internal fault
+      at Object.guard [as check] (file:///D:/Projects/pakka/packages/agent/src/durable-adapter.ts:411:10)
+      at DurableAdapter.checkCompresser (file:///D:/Projects/pakka/packages/agent/src/durable-adapter.ts:3649:10)
+      at Object.checkCompresser (file:///D:/Projects/pakka/packages/agent/src/host.ts:122:20)
+      at #converse (file:///D:/Projects/pakka/packages/agent/src/strategy-control.ts:863:32)
+      at Object.converse (file:///D:/Projects/pakka/packages/agent/src/strategy-control.ts:715:19)
+      at TestContext.<anonymous> (file:///D:/Projects/pakka/packages/agent/test/compresser-conversation.test.ts:126:68)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3)
