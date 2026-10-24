@@ -261,6 +261,203 @@ test(
 );
 
 test(
+	"WebUI transcript: a native tool error remains identifiable in its collapsed result card",
+	{ timeout: 30000 },
+	async () => {
+		const m = await runtimeFixture(
+			{
+				tools: [
+					{
+						name: "failing_tool",
+						description: "Fail before a local effect",
+						parameters: { type: "object", properties: {} },
+						execute: async () => {
+							throw new Error("REAL-TOOL-FAILURE");
+						},
+					},
+				],
+			},
+			undefined,
+			(_payload, n) => (n === 1 ? { tool: "failing_tool" } : { text: "ERROR-OBSERVED" }),
+		);
+		await m.runtime.close();
+		let app: Product | undefined, browser: Browser | undefined;
+		try {
+			app = await startPocket({
+				runtime: { ...m.config, dataDir: join(m.f.root, "failed-tool") },
+				owner: "Operator",
+				initial: [{ name: "Tool error", profile: "default" }],
+			});
+			browser = await ownedBrowser(join(await mkdtemp(join(tmpdir(), "pocket-tool-error-")), "profile"));
+			const page = await openConversation(app, browser);
+			await send(page, "FAIL-A-TOOL");
+			await page.wait('document.querySelector(".tool-card[data-tool-error=true]") !== null');
+			const selectedId = await page.evaluate(
+				'document.querySelector("[data-conversation][aria-current=true]").dataset.conversation',
+			);
+			const ref = app.runtime.view().conversations.find((ref) => ref.conversationId === selectedId)!;
+			const snapshot = await app.runtime.readConversation(ref, allow);
+			assert.ok(
+				snapshot.entries.some((entry) =>
+					entry.messages.some((message) => message.role === "toolResult" && message.isError === true),
+				),
+				"the failed flag is a real native result",
+			);
+			assert.deepEqual(
+				await page.evaluate(
+					`(()=>{const card=document.querySelector('.tool-card[data-tool-error="true"]');return {label:card.querySelector('summary [data-tool-result-error]')?.textContent,collapsed:!card.open}})()`,
+				),
+				{ label: "error", collapsed: true },
+			);
+			assert.equal(m.f.errors.length, 0);
+		} finally {
+			await stopAll(app, browser, m);
+		}
+	},
+);
+
+test(
+	"WebUI transcript: an expanded streamed tool call survives its first committed entry",
+	{ timeout: 30000 },
+	async () => {
+		const generation = deferred(),
+			tool = deferred();
+		const errors: unknown[] = [];
+		let requests = 0;
+		const provider = createServer((request, response) => {
+			void (async () => {
+				for await (const _chunk of request) {
+					/* consume the real request */
+				}
+				const first = ++requests === 1;
+				response.writeHead(200, { "content-type": "text/event-stream" });
+				const write = (delta: object, finishReason: string | null = null) =>
+					response.write(
+						"data: " +
+							JSON.stringify({
+								id: "partial-call",
+								object: "chat.completion.chunk",
+								created: 1,
+								model: "local-model",
+								choices: [{ index: 0, delta, finish_reason: finishReason }],
+							}) +
+							"\n\n",
+					);
+				write({ role: "assistant" });
+				if (first) {
+					write({
+						tool_calls: [
+							{
+								index: 0,
+								id: "call-partial",
+								type: "function",
+								function: { name: "partial_tool", arguments: "{}" },
+							},
+						],
+					});
+					await generation.promise;
+					write({}, "tool_calls");
+				} else {
+					write({ content: "PARTIAL-DONE" });
+					write({}, "stop");
+				}
+				response.end("data: [DONE]\n\n");
+			})().catch((error) => {
+				errors.push(error);
+				response.destroy(error);
+			});
+		});
+		await new Promise<void>((resolve) => provider.listen(0, "127.0.0.1", resolve));
+		const address = provider.address();
+		assert.ok(address && typeof address !== "string");
+		const m = await runtimeFixture({
+			tools: [
+				{
+					name: "partial_tool",
+					description: "Hold the committed native tool",
+					parameters: { type: "object", properties: {} },
+					execute: async () => {
+						await tool.promise;
+						return "PARTIAL-RESULT";
+					},
+				},
+			],
+		});
+		await m.runtime.close();
+		let app: Product | undefined, browser: Browser | undefined;
+		try {
+			app = await startPocket({
+				runtime: {
+					...m.config,
+					endpoint: `http://127.0.0.1:${address.port}/v1`,
+					dataDir: join(m.f.root, "partial-call"),
+				},
+				owner: "Operator",
+				initial: [{ name: "Partial tool", profile: "default" }],
+			});
+			browser = await ownedBrowser(join(await mkdtemp(join(tmpdir(), "pocket-partial-")), "profile"));
+			const page = await openConversation(app, browser);
+			await send(page, "STREAM-A-CALL");
+			await page.wait('document.querySelector(".message-live [data-call-id=call-partial]") !== null');
+			const selectedId = await page.evaluate(
+				'document.querySelector("[data-conversation][aria-current=true]").dataset.conversation',
+			);
+			const ref = app.runtime.view().conversations.find((ref) => ref.conversationId === selectedId)!;
+			const partial = await app.runtime.readConversation(ref, allow);
+			assert.ok(
+				Array.isArray(partial.live.message?.content) &&
+					partial.live.message.content.some((part) => part.type === "toolCall" && part.id === "call-partial"),
+			);
+			assert.equal(
+				partial.live.tools.some((call) => call.callId === "call-partial"),
+				false,
+				"the native tool does not exist before the assistant commit",
+			);
+			await page.evaluate(
+				'(()=>{const card=document.querySelector("[data-call-id=call-partial]");card.open=true;card.__partialMarker=true})()',
+			);
+			generation.resolve();
+			await page.wait(
+				'document.querySelector("[data-call-id=call-partial][data-tool-status=running]") !== null && document.querySelector(".message-live") === null',
+			);
+			const committed = await app.runtime.readConversation(ref, allow);
+			assert.ok(
+				committed.entries.some((entry) =>
+					entry.messages.some(
+						(message) =>
+							Array.isArray(message.content) &&
+							message.content.some((part) => part.type === "toolCall" && part.id === "call-partial"),
+					),
+				),
+			);
+			assert.deepEqual(
+				await page.evaluate(
+					'(()=>{const cards=[...document.querySelectorAll("[data-call-id=call-partial]")];return {count:cards.length,open:cards[0]?.open,same:cards[0]?.__partialMarker===true}})()',
+				),
+				{ count: 1, open: true, same: true },
+			);
+			tool.resolve();
+			await page.wait('document.querySelector(".pocket-receipt")?.textContent.startsWith("done")');
+			assert.equal(
+				await page.evaluate(
+					'document.querySelector("[data-call-id=call-partial] [data-tool-output]")?.textContent',
+				),
+				"PARTIAL-RESULT",
+			);
+			assert.deepEqual(errors, []);
+		} finally {
+			generation.resolve();
+			tool.resolve();
+			await stopAll(app, browser, m);
+			provider.closeAllConnections();
+			await new Promise<void>((resolve, reject) =>
+				provider.close((error) => (error ? reject(error) : resolve())),
+			);
+		}
+	},
+);
+
+test(
 	"WebUI transcript: valid image parts and a truncated tool declaration remain visible through real reopen and paging",
 	{ timeout: 30000 },
 	async () => {
@@ -652,11 +849,12 @@ test(
 			await page.click(".pocket-receipt .pill-btn");
 			await page.wait('document.querySelector(`.pocket-receipt[data-receipt-status="unanswered"]`) !== null');
 			const receipt = (await page.evaluate(
-				`(()=>{const node=document.querySelector('.pocket-receipt');return {badge:node.querySelector('[data-receipt-reason]')?.textContent,guidance:node.querySelector('.receipt-guidance')?.textContent,reason:node.textContent}})()`,
-			)) as { badge?: string; guidance?: string; reason: string };
-			assert.equal(receipt.badge, "blocked");
+				`(()=>{const node=document.querySelector('.pocket-receipt');return {badge:node.querySelector('[data-receipt-reason]')?.textContent,nativeReason:node.querySelector('[data-receipt-reason]')?.dataset.receiptReason,guidance:node.querySelector('.receipt-guidance')?.textContent,reason:node.textContent}})()`,
+			)) as { badge?: string; nativeReason?: string; guidance?: string; reason: string };
+			assert.equal(receipt.badge, "withdrawn");
+			assert.equal(receipt.nativeReason, "aborted");
 			assert.equal(receipt.guidance, "Withdrawn before delivery. Send again only when ready.");
-			assert.doesNotMatch(receipt.reason, /policy refused/);
+			assert.doesNotMatch(receipt.reason, /blocked|policy refused/);
 			assert.equal(m.f.requests.length, 1, "withdrawing a queued input dispatches no new generation");
 		} finally {
 			release.resolve();

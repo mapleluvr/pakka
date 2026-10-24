@@ -12,7 +12,8 @@
 - 错误形状的 Host 工具返回曾产生 `[object Object]`，不构成“合法图片不可达”证据。图片测试改用公开 Durable API 在隔离目录写合法历史，关闭 writer 后经正常 reopen、授权 HTTP/SSE 和真实 DOM 消费；没有伪造浏览器 DTO 或安装包。
 - 可控 SSE 分块暴露 `stopReason:"pending"` 被 Pocket 终态校验拒绝，导致 SSE 中断。live 投影只省略这个非终态字段；历史消息保留真实终态，协议没有新增伪造终态。
 - provider 400 的 `model_error` 不是 policy `blocked`。测试改用实际选中 Conversation 的公开策略 projector 验证 blocked；撤回使用真实 queued/withdraw 路径验证 `aborted`，不混称策略拒绝。
-- `PocketInputReceipt` 原先丢失 catalog 已有的 `reason`；协议 schema 与 catalog/MAS source 透传已补齐。浏览器只依据 DTO reason 选择文案。
+- `PocketInputReceipt` 原先丢失 catalog 已有的 `reason`；协议 schema 与 catalog/MAS source 透传已补齐。浏览器只依据 DTO reason 选择文案。reason 是自由文本而非枚举，只有精确 blocked/aborted 字面量分类，其他整句说明或缺省值一律中性 not delivered；缺省属性不造 unspecified。
+- 旧候选独立全量虽通过，A-1/A-3/A-4 仍被真实新回归揭露：回执 badge 与正文不一致、partial toolCall 初次落盘丢展开态、原生工具错误折叠后无明确标识。已先 RED 再修复，完整意见、反驳与失败 workflow 见 [逐项处置](evidence/webui-interaction-p0/review-disposition.md)。
 
 ## 当前直接验证
 
@@ -47,4 +48,12 @@
 
 ## 冻结候选与独立验收
 
-待冻结后填写：完整 commit、独立渲染/a11y、指定 Computer Use、两方 adversarial、全量测试及格式/类型结果；保留分歧和未通过项，不以汇总“全绿”替代原始结果。
+### 原候选 5f43d9d（已被复核修复取代）
+
+完整 SHA：`5f43d9d1dceced674fff6c565ebf59a9e2ee9cc4`。独立 worktree 的 npm ci、build、npm test 结束，616 tests/614 pass/0 fail/2 skip/exit 0；[原始输出](evidence/webui-interaction-p0/5f43d9d/full-suite.txt) 已保留。Kairos 的 r5 固定 SHA 门禁为 19/19，7 张截图与 2 份 JSON 保存在 [r5 证据目录](evidence/webui-interaction-p0/5f43d9d/kairos-r5/)。其渲染证据只覆盖所述几何/Streaming/工具转换，不证明 receipt 三态已独立运行。
+
+指定 adversarial workflow 在 A 完成后因 B 模型缺失失败，未形成双方意见或讨论。A 原文及错误完整保留于 [逐项处置](evidence/webui-interaction-p0/review-disposition.md)。独立 GUI 因当前工具无 agent-workspace-linux 入口而 BLOCKED，未用 ownedBrowser 冒充指定桌面。
+
+### 复核修复候选
+
+修复已通过对应 RED/GREEN，正待冻结新 SHA 和同版本全量/独立渲染复验；不得用原候选的绿色结果替代。两方 adversarial 和指定 GUI 未通过，P0 不作最终验收通过声明。

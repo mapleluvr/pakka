@@ -1,0 +1,46 @@
+{
+  "commit": "5f43d9d1dceced674fff6c565ebf59a9e2ee9cc4",
+  "section": "scroll",
+  "overflow": {
+    "scrollHeight": 3093,
+    "clientHeight": 656,
+    "overflows": true
+  },
+  "followBefore": {
+    "scrollTop": 2671,
+    "scrollHeight": 3307,
+    "markerBottomGap": 16.27,
+    "lastBottomGap": 16.27
+  },
+  "reading": {
+    "scrollTop": 120,
+    "top": 82.39,
+    "scrollHeight": 3307
+  },
+  "readingAfter": {
+    "scrollTop": 120,
+    "top": 82.39,
+    "sameNode": true,
+    "scrollHeight": 4414
+  },
+  "followAfter": {
+    "scrollTop": 3758,
+    "scrollHeight": 4414,
+    "lastBottomGap": 15.83
+  },
+  "order": {
+    "liveCount": 0,
+    "streamingCount": 0,
+    "messageRoles": [
+      "user",
+      "assistant",
+      "user",
+      "assistant",
+      "user",
+      "assistant",
+      "user",
+      "assistant"
+    ]
+  },
+  "finishedAt": "2026-10-24T13:48:23.945Z"
+}

@@ -114,6 +114,16 @@ The transcript SHALL correlate a tool call part's `id`, a live tool's `callId` a
 - **WHEN** inherited history and a new live call contain the same provider call id under different source Conversations
 - **THEN** each card retains its source identity and its own status and result; neither is suppressed or associated with the other's output
 
+#### Scenario: Keep an expanded streamed tool call through its first commit
+
+- **WHEN** a user expands a tool call in an authorized live message and that message is committed before native tool execution
+- **THEN** the same call card keeps its DOM identity and expanded state through the commit and the later result, without creating another card
+
+#### Scenario: Identify a failed tool result without opening it
+
+- **WHEN** a native tool result has isError true
+- **THEN** its collapsed summary identifies the error with visible text rather than relying on color alone
+
 #### Scenario: Read a result whose call declaration is truncated
 
 - **WHEN** the current authorized history window contains a tool result but not its corresponding tool call part

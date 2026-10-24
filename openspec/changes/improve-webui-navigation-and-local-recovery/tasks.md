@@ -44,10 +44,11 @@
 ### 4.1 Conversation/composer 状态可观测性 P0（2026-10-24）
 
 - [x] 实检授权 DTO 的 live/entries/receipt 可观察字段，固定状态语义与产品文案；Sessions 行运行状态因协议缺口独立排除。
-- [ ] 为 Send 禁用原因、Stop 主位和 stopping latch 保存等价性、可访问性及真实命中区证据。
+- [x] 为 Send 禁用原因、Stop 主位和 stopping latch 保存等价性、可访问性及真实命中区证据。
 - [x] 用真实浏览器覆盖 live 消息、Streaming 和不可内联图片的实际可见占位。
 - [x] 用阻塞工具证明 live/持久声明共存，覆盖工具卡跨转换归一、结果/非文本保留、孤儿及节点连续性。
 - [x] 覆盖 unanswered 的 blocked 指引及 unknown 的 needs review 指引；不更改 receipt 清除和权限语义。
+- [x] 复核后以真实 RED/GREEN 修正非 blocked 的回执徽标、流式 toolCall 初次落盘的展开态、折叠工具错误辨识；保留 A-2 可达性反驳和 A-5 维护性意见。
 - [ ] 固定精确候选，完成受影响回归、全量检查、独立渲染/a11y 复核和指定 adversarial review，保留失败及未覆盖项。
 - [ ] 同步 state/design/delta/changes/OVERVIEW 与固定验证记录；删除临时 HANDOFF 和探针，保持工作树整洁。
 

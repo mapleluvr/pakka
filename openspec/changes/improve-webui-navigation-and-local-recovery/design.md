@@ -153,8 +153,8 @@ Preferences/Notifications 的对应 href 来自生产注册；Conversation/Peopl
 - Stop 位于原生工作发送组，Prompt 的 busy 状态与 Send 互斥；Steer/Follow up 保留可发送能力。stopping 只由授权 `busy=false` 解除，不用 abort 请求成功代替完成；8 秒后可显式再次 Stop。正常快速结束不人为延迟。
 - `live.message` 用 `data-live=true` 和 `message-live` 区分，只有 busy 且存在该消息时才在消息列表末尾显示紧凑 Streaming。原生进行中 `stopReason:"pending"` 是 live 标记而非终态，Pocket live 投影省略该可选终态字段；历史消息保留真实终态，不能通过 SSE 校验失败后不断重连。验证通过但不可内联的 `image/*` 用中性、文本节点占位，保留 MIME；未知原生类型仍由协议闭锁，不能借兜底把无效 DTO 变成可接受输入。
 - 工具三种载体分别取 `toolCall.id`、`live.callId`、`toolResult.toolCallId`，与来源 Conversation 组成键：历史使用 `entry.sourceConversationId ?? entry.conversationId`，live 使用当前 `view.ref.conversationId`。卡片暴露 `data-source-conversation`，声明与 live 共存时只渲染一卡，live 状态按 DTO 原值显示，历史状态不靠推断。结果文本可从同一卡直接看到；完整内容仍在 disclosure 内。结果中的非文本 part 不能因归并被静默省略。
-- 找不到声明的 toolResult 保留孤儿卡并明确声明不在当前视图；跨 fork 不能把不同 Conversation 的同 ID 误合并。历史分页、筛选或 live 更新不应重置已展开卡片。
-- receipt 保留原 DTO 状态、原生 reason 和请求 ID。只有 `reason:"blocked"` 是 policy blocked 及修改输入指引；`aborted` 是撤回，其他未回答（包括 `model_error`）不得误称策略拒绝。unknown 追加 needs review 及先核对再发送的指引。blocked 不等同权限 denied。恢复既有 DeliveryReceipt.reason 到 Pocket DTO 的透传，不从状态或文本猜测原因。本批不改变既有 receipt 清除时机，也不增加服务端不存在的权限原因。
+- 找不到声明的 toolResult 保留孤儿卡并明确声明不在当前视图；跨 fork 不能把不同 Conversation 的同 ID 误合并。历史分页、筛选或 live 更新不应重置已展开卡片。流式 toolCall 初次落盘时，live 与历史采用同一 section 渲染序列和来源/调用键；仅给不同父层的子卡添加 key 无法保留节点。原生 toolResult.isError 为 true 时，折叠摘要保留显式 error 文本，不能只有与正常结果同色的无效规则。
+- receipt 保留原 DTO 状态、原生 reason 和请求 ID。只有 `reason:"blocked"` 是 policy blocked 及修改输入指引；`aborted` 是撤回，其他未回答（包括 `model_error`）不得误称策略拒绝。unknown 追加 needs review 及先核对再发送的指引。blocked 不等同权限 denied。恢复既有 DeliveryReceipt.reason 到 Pocket DTO 的透传，不从状态或文本猜测原因；只有精确 blocked/aborted 字面量分类，其他自由文本或缺省 reason 使用中性 not delivered，缺省时不伪造 data-receipt-reason。本批不改变既有 receipt 清除时机，也不增加服务端不存在的权限原因。
 - `reference.css` 字节、home/conv 卡片几何和既有原生调度均不变。样式仅进入产品附加层 `elements.css`。
 
 验证采用真实 `runtimeFixture`、本地确定性 provider、`ownedBrowser` 和真实 SSE/RPC，不用静态页面或伪造 DTO 代替生产路径。工具 gate 同时证明 live 与已落盘声明的同 callId 前提，再断言跨转换唯一卡片、输出归位和节点连续性。合法非内联图片需实际 DOM 证据；孤儿通过受控历史截断验证。若某状态没有可达的真实生产路径，保留明确的覆盖缺口，不把纯分类函数或 mock 结果称为端到端证据。

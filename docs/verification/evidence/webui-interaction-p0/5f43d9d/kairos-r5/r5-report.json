@@ -1,0 +1,121 @@
+{
+  "commit": "5f43d9d1dceced674fff6c565ebf59a9e2ee9cc4",
+  "startedAt": "2026-10-24T13:46:52.147Z",
+  "geometry": {
+    "home": {
+      "card": {
+        "x": 526,
+        "y": 373,
+        "w": 688,
+        "h": 154
+      },
+      "hero": {
+        "x": 520,
+        "y": 327,
+        "w": 700,
+        "h": 30
+      },
+      "overflow": true
+    },
+    "convIdle": {
+      "card": {
+        "x": 520,
+        "y": 747.2,
+        "w": 700,
+        "h": 116
+      }
+    },
+    "blockedTool": {
+      "cardCount": 1,
+      "ids": [
+        "call-1"
+      ],
+      "sources": [
+        "11"
+      ],
+      "statuses": [
+        "running"
+      ],
+      "order": [
+        "call-1"
+      ],
+      "resultRoleBlocks": 0,
+      "hint": {
+        "reason": "busy-prompt",
+        "text": "This turn is generating: steer it, or wait for it to finish.",
+        "role": "status",
+        "glyphX": 549,
+        "areaX": 549,
+        "belowCard": false
+      },
+      "card": {
+        "x": 520,
+        "y": 724.41,
+        "w": 700,
+        "h": 116
+      },
+      "streaming": false,
+      "liveMessages": 0
+    },
+    "crossWindow": {
+      "liveToolIds": [
+        "call-1"
+      ],
+      "declaredPartIds": [
+        "call-1"
+      ],
+      "bothCarriersSameId": [
+        "call-1"
+      ],
+      "liveBusy": true
+    },
+    "afterLand": {
+      "cardCount": 1,
+      "ids": [
+        "call-1"
+      ],
+      "sameNode": true,
+      "stillOpen": true,
+      "outputs": [
+        "TOOL-OUTPUT"
+      ],
+      "statuses": [
+        "done"
+      ],
+      "resultRoleBlocks": 0
+    }
+  },
+  "streaming": {
+    "during": {
+      "markerText": "Streaming",
+      "markerValue": "true",
+      "markerInMessageList": true,
+      "markerAlignSelf": "flex-start",
+      "markerWidth": 59.42,
+      "pillWidth": 59.42,
+      "pillHeight": 16,
+      "listWidth": 700,
+      "pillColor": "rgb(73, 176, 255)",
+      "liveText": "AgentLIVE-\n",
+      "liveAuthors": 1,
+      "scrollTop": 0,
+      "scrollHeight": 636
+    },
+    "follow": {
+      "bottomGap": 226.36
+    },
+    "reading": {
+      "before": 84.39,
+      "scrollTop": 0
+    },
+    "after": {
+      "streaming": false,
+      "liveMessages": 0,
+      "committed": true,
+      "readingAfter": 84.39,
+      "scrollTop": 0,
+      "bottomGap": 288.36
+    }
+  },
+  "finishedAt": "2026-10-24T13:46:55.063Z"
+}

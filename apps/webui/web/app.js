@@ -82,6 +82,7 @@ function ToolCard({ call, results, live, orphan, source }) {
 		<summary>
 			<span class="tool-name">${name}</span>
 			${status && html`<span class="status-pill" data-tool-pill>${status}</span>`}
+			${result?.isError && html`<span class="status-pill" data-tool-result-error>error</span>`}
 			${orphan && html`<span class="tool-orphan" data-tool-orphan>call not in this view</span>`}
 			${preview ? html`<span class="tool-preview" data-tool-preview>${preview.split("\n")[0]}</span>` : null}
 		</summary>
@@ -157,7 +158,7 @@ function Message({ message, onDraft, results, live, isLive, source }) {
 						</details>`;
 					case "toolCall":
 						return html`<${ToolCard}
-							key=${i}
+							key=${callKey(source, part.callId)}
 							call=${part}
 							results=${results}
 							live=${live}
@@ -210,6 +211,22 @@ function Message({ message, onDraft, results, live, isLive, source }) {
 // one Conversation's output to another's call.
 const callKey = (conversationId, callId) => JSON.stringify([conversationId, callId]);
 const entrySource = (entry) => entry.sourceConversationId ?? entry.conversationId;
+// A streamed call and its first committed assistant entry must occupy the same keyed
+// section, not merely use the same card key beneath two different parents.
+const transcriptKey = (messages, source, entryId) => {
+	for (const message of messages) {
+		const call = Array.isArray(message.content)
+			? message.content.find((part) => part.type === "toolCall" && part.id)
+			: undefined;
+		if (call) return "call:" + callKey(source, call.id);
+	}
+	return entryId === undefined ? "live:" + JSON.stringify(source) : "entry:" + JSON.stringify(entryId);
+};
+const unansweredLabel = (reason) => {
+	if (reason === "blocked") return "blocked";
+	if (reason === "aborted") return "withdrawn";
+	return "not delivered";
+};
 // Receipt wording is driven by the DTO, never inferred: a refusal, a withdrawal and an
 // undelivered input are all `unanswered`, and only the native reason tells them apart.
 const receiptGuidance = (receipt) =>
@@ -690,6 +707,17 @@ function App() {
 				.toLocaleLowerCase()
 				.includes(find.toLocaleLowerCase()),
 	);
+	const transcriptRows = visibleEntries.map((entry) => ({
+		entry,
+		messages: entry.messages,
+		source: entrySource(entry),
+	}));
+	if (view?.live.message)
+		transcriptRows.push({
+			messages: [view.live.message],
+			source: view.ref.conversationId,
+			isLive: true,
+		});
 	const olderCursor =
 		historyCursor === undefined ? (view?.entriesTruncated ? view.olderBeforeId : null) : historyCursor;
 	const canSend = person && person.role !== "viewer",
@@ -853,17 +881,16 @@ function App() {
 				</button>`}
 				${!view
 					? html`<p role="status">Connecting…</p>`
-					: visibleEntries.map((entry) => {
-							const source = entrySource(entry);
-							return html`<section key=${entry.id} data-entry=${entry.id}>
-								${entry.display
+					: transcriptRows.map(({ entry, messages, source, isLive }) => {
+							return html`<section key=${transcriptKey(messages, source, entry?.id)} data-entry=${entry?.id}>
+								${entry?.display
 									? html`<aside class="tool-card">
 											<div class="tool-card-head">
 												${entry.display.kind === "chat" ? "Team chat" : "Card"}
 											</div>
 											<p>${entry.display.text}</p>
 										</aside>`
-									: entry.messages.map((message, index) =>
+									: messages.map((message, index) =>
 											message.role === "toolResult"
 												? declaredCalls.has(callKey(source, message.toolCallId))
 													? null
@@ -886,18 +913,11 @@ function App() {
 														results=${toolResults}
 														live=${liveTools}
 														source=${source}
+														isLive=${isLive}
 													/>`,
 										)}
 							</section>`;
 						})}
-				${view?.live.message &&
-				html`<${Message}
-					message=${view.live.message}
-					results=${toolResults}
-					live=${liveTools}
-					source=${view.ref.conversationId}
-					isLive
-				/>`}
 				${(view?.live.tools ?? [])
 					.filter((tool) => !declaredCalls.has(callKey(view.ref.conversationId, tool.callId)))
 					.map(
@@ -926,10 +946,10 @@ function App() {
 					data-receipt-status=${receipt.status}
 				>
 					${`${receipt.status} · ${String(receipt.id).slice(0, 12)}`}${receipt.status === "unanswered" &&
-					html`${" "}<span class="receipt-badge" data-receipt-reason="blocked">blocked</span>${" "}<span
-							class="receipt-guidance"
-							>${receiptGuidance(receipt)}</span
-						>`}${receipt.status === "unknown" &&
+					html`${" "}<span class="receipt-badge" data-receipt-reason=${receipt.reason}
+							>${unansweredLabel(receipt.reason)}</span
+						>${" "}<span class="receipt-guidance">${receiptGuidance(receipt)}</span>`}${receipt.status ===
+						"unknown" &&
 					html`${" "}<span class="receipt-badge" data-receipt-reason="unknown">needs review</span>${" "}<span
 							class="receipt-guidance"
 							>${receiptGuidance(receipt)}</span

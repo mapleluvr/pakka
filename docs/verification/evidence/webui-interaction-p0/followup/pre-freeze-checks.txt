@@ -1,0 +1,95 @@
+[90mapps/webui/web/app.js[39m 116ms (unchanged)
+[90mapps/webui/web/elements.css[39m 36ms (unchanged)
+apps/webui/test/transcript-parts-browser.test.ts 71ms
+[90mapps/webui/test/input-failure.test.ts[39m 9ms (unchanged)
+[90mdocs/state/frontend.md[39m 29ms (unchanged)
+[90mdocs/verification/WEBUI-INTERACTION-P0.md[39m 8ms (unchanged)
+[90mopenspec/changes/improve-webui-navigation-and-local-recovery/design.md[39m 28ms (unchanged)
+[90mopenspec/changes/improve-webui-navigation-and-local-recovery/specs/devin-frontend/spec.md[39m 11ms (unchanged)
+[90mopenspec/changes/improve-webui-navigation-and-local-recovery/tasks.md[39m 7ms (unchanged)
+
+> pakka-workspace@0.1.0 build
+> npm run build --workspaces && npm run build:webui --workspace=@pakka/mas-devpack
+
+
+> @pakka/protocol@0.1.0 build
+> tsc -p tsconfig.json
+
+
+> @pakka/agent@0.7.0 build
+> node ../../scripts/verify-durable-patch.mjs 1.4.0-pakka.1 && node -e "require('node:fs').rmSync('dist', { recursive: true, force: true })" && tsc -p tsconfig.json
+
+Verified pi-durable 1.4.0-pakka.1 (7fd9f3310dfa003a9077139a25faf93567922a065461fa3767dd5a1066efa891)
+
+> @pakka/mas@0.4.0 build
+> tsc -p tsconfig.json
+
+
+> @pakka/mas-devpack@0.2.0 build
+> tsc -p tsconfig.json
+
+
+> @pakka/client@0.1.0 build
+> tsc -p tsconfig.json
+
+
+> @pakka/cli@0.1.0 build
+> tsc -p tsconfig.json
+
+
+> @pakka/server@0.5.0 build
+> tsc -p tsconfig.json
+
+
+> @pakka/webui@0.1.0 build
+> tsc -p tsconfig.json
+
+
+> @pakka/mas-devpack@0.2.0 build:webui
+> tsc -p tsconfig.webui.json && node scripts/write-manifest.mjs
+
+
+> pakka-workspace@0.1.0 check
+> node scripts/verify-durable-patch.mjs 1.4.0-pakka.1 && tsc --noEmit -p tsconfig.test.json
+
+Verified pi-durable 1.4.0-pakka.1 (7fd9f3310dfa003a9077139a25faf93567922a065461fa3767dd5a1066efa891)
+Change 'improve-webui-navigation-and-local-recovery' is valid
+✔ WebUI approval panel: actual browser decisions release or deny original native effects and viewer cannot decide (3810.2446ms)
+✔ WebUI busy browser: after native admission the user can steer and follow up while original inference is blocked (2035.0879ms)
+✔ WebUI composer: a refused send explains itself in every mode, without moving the card, and Stop owns the primary slot (1999.8122ms)
+✔ reference frontend adoption: original home anatomy, palette, real conversation (3416.3401ms)
+✔ Devin reference: exact pinned LF CSS, protected from checkout/formatting and no legacy stylesheet chain (7.2915ms)
+✔ WebUI history browser: explicit earlier pages remain searchable across live updates without implicit inference (4932.6072ms)
+✔ WebUI failed input: an unavailable recipient refuses new admission while its original receipt and spent attempts remain (1318.3534ms)
+✔ WebUI failed input browser: a known refusal explains how to continue without offering a meaningless retry or replaying the original (1892.2213ms)
+✔ WebUI mobile sidebar: outside click and Escape return to the same conversation without sending the draft (2832.4697ms)
+✔ WebUI transcript: one real tool keeps its identity, expanded card and result across the live/committed handoff (2109.5456ms)
+✔ WebUI transcript: a native tool error remains identifiable in its collapsed result card (1134.043ms)
+✔ WebUI transcript: an expanded streamed tool call survives its first committed entry (1207.4434ms)
+✔ WebUI transcript: valid image parts and a truncated tool declaration remain visible through real reopen and paging (805.1434ms)
+✔ WebUI transcript: real chunked generation exposes a live Streaming message, then clears it (938.549ms)
+✔ WebUI transcript: inherited tool results do not swallow a different live call with the same provider id (946.8705ms)
+✔ WebUI receipt: a known policy refusal is blocked, not mislabeled as a permission denial (743.4228ms)
+✔ WebUI receipt: a real host unknown is needs review through a registered Conversation source (702.8019ms)
+✔ WebUI receipt: withdrawing queued input is not described as a policy refusal (896.6496ms)
+▶ WebUI typography and input accessibility
+  ✔ configuration text follows a larger root font (24.6885ms)
+  ✔ mobile configuration fields have readable type and touch targets (264.8796ms)
+  ✔ message input keeps readable mobile type (10.7888ms)
+  ✔ message input has a visible keyboard focus indicator (28.8652ms)
+✔ WebUI typography and input accessibility (2250.3263ms)
+✔ WebUI protocol: explicit v2 commands are independent of unchanged headless v1 (3.2543ms)
+✔ WebUI protocol: complete sanitized Conversation DTOs are bounded and strictly correlated (1.1448ms)
+✔ WebUI protocol: bounded assistant error history survives both response and event decoding (0.6138ms)
+✔ WebUI protocol: human display, explicit model work and person administration use finite separate commands (0.4469ms)
+✔ WebUI protocol: human resource control selects a profile without accepting a capability or runtime configuration (0.3867ms)
+✔ WebUI protocol: receipt reasons are bounded native data, not browser-inferred state (0.3057ms)
+✔ WebUI protocol: resource streams validate incarnation and explicit resnapshot signals (0.2825ms)
+ℹ tests 30
+ℹ suites 0
+ℹ pass 30
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 11125.4306

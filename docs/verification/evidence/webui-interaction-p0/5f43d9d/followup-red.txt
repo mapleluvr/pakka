@@ -1,0 +1,104 @@
+Product HEAD: 5f43d9d1dceced674fff6c565ebf59a9e2ee9cc4
+Only test files overlaid; app.js/elements.css remain the committed snapshot.
+✖ WebUI failed input browser: a known refusal explains how to continue without offering a meaningless retry or replaying the original (954.9174ms)
+✖ WebUI transcript: a native tool error remains identifiable in its collapsed result card (1092.5337ms)
+✖ WebUI transcript: an expanded streamed tool call survives its first committed entry (955.3638ms)
+✖ WebUI receipt: withdrawing queued input is not described as a policy refusal (880.4979ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 0
+ℹ fail 4
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3747.1883
+
+✖ failing tests:
+
+test at apps\webui\test\input-failure.test.ts:86:1
+✖ WebUI failed input browser: a known refusal explains how to continue without offering a meaningless retry or replaying the original (954.9174ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    {
+  +   reason: 'blocked',
+  +   text: 'blocked'
+  -   reason: 'model_error',
+  -   text: 'not delivered'
+    }
+  
+      at TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0-acceptance/apps/webui/test/input-failure.test.ts:117:11)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: { text: 'blocked', reason: 'blocked' },
+    expected: { text: 'not delivered', reason: 'model_error' },
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at apps\webui\test\transcript-parts-browser.test.ts:263:1
+✖ WebUI transcript: a native tool error remains identifiable in its collapsed result card (1092.5337ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    {
+      collapsed: true,
+  -   label: 'error'
+    }
+  
+      at TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0-acceptance/apps/webui/test/transcript-parts-browser.test.ts:283:11)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: { collapsed: true },
+    expected: { label: 'error', collapsed: true },
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at apps\webui\test\transcript-parts-browser.test.ts:291:1
+✖ WebUI transcript: an expanded streamed tool call survives its first committed entry (955.3638ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    {
+      count: 1,
+  +   open: false,
+  +   same: false
+  -   open: true,
+  -   same: true
+    }
+  
+      at TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0-acceptance/apps/webui/test/transcript-parts-browser.test.ts:405:11)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: { count: 1, open: false, same: false },
+    expected: { count: 1, open: true, same: true },
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at apps\webui\test\transcript-parts-browser.test.ts:793:1
+✖ WebUI receipt: withdrawing queued input is not described as a policy refusal (880.4979ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'blocked'
+  - 'withdrawn'
+  
+      at TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0-acceptance/apps/webui/test/transcript-parts-browser.test.ts:826:11)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'blocked',
+    expected: 'withdrawn',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+RED exitCode=1

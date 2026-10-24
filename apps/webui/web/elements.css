@@ -121,8 +121,8 @@ button:disabled {
 	font-size: 11px;
 	color: var(--muted);
 }
-.tool-card[data-tool-error="true"] .tool-preview {
-	color: var(--muted);
+.tool-card [data-tool-result-error] {
+	color: var(--danger);
 }
 /* A part that passed validation but cannot be shown says so in neutral language: it is a
    statement of fact, not a warning. */

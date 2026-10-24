@@ -1,0 +1,57 @@
+{
+  "version": 1,
+  "workflowRunId": "d0e34e5c-efec-4088-869d-36c5ff5695ad",
+  "state": "failed",
+  "createdAt": 1792849893799,
+  "entries": {
+    "a-first-review": {
+      "key": "a-first-review",
+      "agent": "reviewer",
+      "requestedContext": "fresh",
+      "resolvedContext": "fresh",
+      "continuation": {
+        "runIds": [
+          "51e057c8-e89f-4587-9e7e-cd1b128e3ae9"
+        ]
+      },
+      "latestRunId": "51e057c8-e89f-4587-9e7e-cd1b128e3ae9",
+      "resumability": {
+        "state": "resumable"
+      }
+    },
+    "b-first-challenge": {
+      "key": "b-first-challenge",
+      "requestedContext": "fresh",
+      "resolvedContext": "fresh",
+      "continuation": {
+        "runIds": []
+      },
+      "resumability": {
+        "state": "not-resumable",
+        "reason": "child produced no run id"
+      }
+    }
+  },
+  "argsDigest": "5add212a18cda8df539cc436dcb8746f2047c07aeed5deb8a4dc128f85e4f9d5",
+  "workflowChildren": {
+    "version": 1,
+    "parentToolCallId": "subagent_312_b914c80b",
+    "workflowRunId": "d0e34e5c-efec-4088-869d-36c5ff5695ad",
+    "inventoryComplete": true,
+    "workflowState": "failed",
+    "children": [
+      {
+        "childId": "a-first-review",
+        "state": "completed",
+        "runId": "51e057c8-e89f-4587-9e7e-cd1b128e3ae9",
+        "agent": "reviewer",
+        "sessionName": "reviewer: ## Review target Review the exact committed pakka-webui P...",
+        "model": "Mapleluv-Main/gemini-3.8-flash-high:high"
+      },
+      {
+        "childId": "b-first-challenge",
+        "state": "failed"
+      }
+    ]
+  }
+}

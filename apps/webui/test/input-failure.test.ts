@@ -111,6 +111,11 @@ test(
 			await page.click("[data-action=send]");
 			await page.wait('document.querySelector(".pocket-receipt")?.textContent.includes("unanswered")');
 			const receipt = await page.evaluate('document.querySelector(".pocket-receipt").textContent');
+			const presentation = await page.evaluate(
+				`(()=>{const badge=document.querySelector(".pocket-receipt [data-receipt-reason]");return {text:badge?.textContent,reason:badge?.dataset.receiptReason}})()`,
+			);
+			assert.deepEqual(presentation, { text: "not delivered", reason: "model_error" });
+			assert.doesNotMatch(String(receipt), /blocked|policy refused/);
 			await page.type("textarea[name=message]", "NOT-ADMITTED");
 			// A settled receipt does not imply the later activity snapshot has reached the browser.
 			await page.wait('document.querySelector("[data-action=send]")?.disabled === false');

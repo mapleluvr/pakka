@@ -35,9 +35,9 @@ pakka-webui 的对应原生界面行为以 [Devin 离线生产前端](https://gi
 ### Conversation 可观察状态
 
 - 仅以授权 DTO 的 `live.busy`、`live.message`、`live.tools`、`entries` 和输入回执驱动工作呈现。进行中的消息以 `data-live=true`/`message-live` 区分；只有 busy 且存在该消息时，消息列末尾显示紧凑的 Streaming。合法但不支持内联预览的 `image/*` 以中性占位和 MIME 文本保留，不能静默消失；未知 DTO 仍由协议闭锁。
-- 工具调用在 `toolCall.id`、`live.callId`、`toolResult.toolCallId` 三个载体间与来源 Conversation 组成同一键：历史用 `sourceConversationId ?? conversationId`，live 用当前 Conversation。卡片暴露 `data-source-conversation`，live 与持久声明并存时只显示一卡，live 状态取原 DTO，输出从同卡可读；找不到当前声明的结果保留有标识的孤儿卡。不同 Conversation/fork 的相同 ID 不跨域合并；更新与分页保留已展开卡片。
+- 工具调用在 `toolCall.id`、`live.callId`、`toolResult.toolCallId` 三个载体间与来源 Conversation 组成同一键：历史用 `sourceConversationId ?? conversationId`，live 用当前 Conversation。卡片暴露 `data-source-conversation`，live 与持久声明并存时只显示一卡，live 状态取原 DTO，输出从同卡可读；找不到当前声明的结果保留有标识的孤儿卡。不同 Conversation/fork 的相同 ID 不跨域合并；更新与分页保留已展开卡片，流式 toolCall 初次落盘也维持同型父层及调用键。原生结果 `isError:true` 在折叠卡内仍以显式 error 标记可辨，不靠颜色单独表达。
 - Send 禁用保持原判定并分别说明只读、提交中、视图未就绪和 Prompt 生成中原因。原生 Stop 在发送组主位；停止请求不代替 `busy=false` 的实际结束，持续忙碌提供有界再次停止。Steer/Follow up 的原生调度不被串行化。
-- receipt 保留原生 reason；只有 `reason:"blocked"` 以 blocked 和指导修改输入呈现，`aborted` 表示撤回，其他未回答不冒充 policy refusal。`unknown` 以 needs review 和指导先核对呈现，保留原状态及请求身份。blocked 不是权限 denied。本批不改变回执清除时机。
+- receipt 保留原生 reason；只有 `reason:"blocked"` 以 blocked 和指导修改输入呈现，`aborted` 表示撤回，其他未回答统一中性 not delivered，不从自由文本 reason 猜测 policy refusal 或撤回；reason 缺省时不伪造属性值。`unknown` 以 needs review 和指导先核对呈现，保留原状态及请求身份。blocked 不是权限 denied。本批不改变回执清除时机。
 - Sessions 行运行状态不能由只有 `version`/`archived` 的列表 state 推导；所需协议与服务扩展另行变更。此切片的形成记录与范围见[逐页调优设计](../../openspec/changes/improve-webui-navigation-and-local-recovery/design.md#61-2026-10-24-conversation-状态可观测性批次)。
 
 ## Team
