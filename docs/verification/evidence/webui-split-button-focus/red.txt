@@ -1,0 +1,101 @@
+▶ composer focus follows the rounded outer card for pointer and keyboard input
+  ✔ home 1440px pointer and Tab (116.6168ms)
+  ✖ home 1440px Tab visibly outlines each split button (419.3465ms)
+  ✔ conversation 1440px pointer and Tab (127.7443ms)
+  ✖ conversation 1440px Tab visibly outlines each split button (389.9824ms)
+  ✔ home 390px pointer and Tab (591.4909ms)
+  ✖ home 390px Tab visibly outlines each split button (310.9545ms)
+  ✔ conversation 390px pointer and Tab (574.3924ms)
+  ✖ conversation 390px Tab visibly outlines each split button (327.8248ms)
+  ✖ Stop, Steer Send and mode retain separate focus while a real turn runs (240.6298ms)
+✖ composer focus follows the rounded outer card for pointer and keyboard input (4000.9552ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 4
+ℹ fail 6
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4809.4505
+
+✖ failing tests:
+
+test at apps\webui\test\composer-focus-browser.test.ts:144:14
+✖ home 1440px Tab visibly outlines each split button (419.3465ms)
+  AssertionError [ERR_ASSERTION]: Start conversation: top focus edge must be painted, got 0 accent pixels
+      at TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/composer-focus-browser.test.ts:168:16)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/composer-focus-browser.test.ts:144:6)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at apps\webui\test\composer-focus-browser.test.ts:144:14
+✖ conversation 1440px Tab visibly outlines each split button (389.9824ms)
+  AssertionError [ERR_ASSERTION]: Send: top focus edge must be painted, got 0 accent pixels
+      at TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/composer-focus-browser.test.ts:168:16)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/composer-focus-browser.test.ts:144:6)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at apps\webui\test\composer-focus-browser.test.ts:144:14
+✖ home 390px Tab visibly outlines each split button (310.9545ms)
+  AssertionError [ERR_ASSERTION]: Start conversation: top focus edge must be painted, got 0 accent pixels
+      at TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/composer-focus-browser.test.ts:168:16)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/composer-focus-browser.test.ts:144:6)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at apps\webui\test\composer-focus-browser.test.ts:144:14
+✖ conversation 390px Tab visibly outlines each split button (327.8248ms)
+  AssertionError [ERR_ASSERTION]: Send: top focus edge must be painted, got 0 accent pixels
+      at TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/composer-focus-browser.test.ts:168:16)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/composer-focus-browser.test.ts:144:6)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at apps\webui\test\composer-focus-browser.test.ts:183:12
+✖ Stop, Steer Send and mode retain separate focus while a real turn runs (240.6298ms)
+  AssertionError [ERR_ASSERTION]: Stop: top focus edge must be painted, got 0 accent pixels
+      at TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/composer-focus-browser.test.ts:200:14)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/composer-focus-browser.test.ts:183:4)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }

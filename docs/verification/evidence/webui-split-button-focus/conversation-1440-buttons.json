@@ -1,0 +1,86 @@
+[
+  {
+    "x": 1141,
+    "y": 814.203125,
+    "width": 28,
+    "height": 28,
+    "name": "Send",
+    "visible": true,
+    "pixels": {
+      "top": 13,
+      "bottom": 13,
+      "left": 12,
+      "right": 12
+    }
+  },
+  {
+    "x": 1170,
+    "y": 814.203125,
+    "width": 25,
+    "height": 28,
+    "name": "Input mode",
+    "visible": true,
+    "pixels": {
+      "top": 14,
+      "bottom": 14,
+      "left": 12,
+      "right": 13
+    }
+  },
+  {
+    "x": 1170,
+    "y": 814.203125,
+    "width": 25,
+    "height": 28,
+    "name": "Input mode",
+    "visible": true,
+    "pixels": {
+      "top": 11,
+      "bottom": 11,
+      "left": 12,
+      "right": 12
+    }
+  },
+  {
+    "x": 1141,
+    "y": 814.203125,
+    "width": 28,
+    "height": 28,
+    "name": "Send",
+    "visible": true,
+    "pixels": {
+      "top": 13,
+      "bottom": 13,
+      "left": 14,
+      "right": 12
+    }
+  },
+  {
+    "x": 1170,
+    "y": 814.203125,
+    "width": 25,
+    "height": 28,
+    "name": "Input mode",
+    "visible": true,
+    "pixels": {
+      "top": 14,
+      "bottom": 14,
+      "left": 12,
+      "right": 14
+    }
+  },
+  {
+    "x": 1170,
+    "y": 814.203125,
+    "width": 25,
+    "height": 28,
+    "name": "Input mode",
+    "visible": true,
+    "pixels": {
+      "top": 13,
+      "bottom": 13,
+      "left": 12,
+      "right": 12
+    }
+  }
+]

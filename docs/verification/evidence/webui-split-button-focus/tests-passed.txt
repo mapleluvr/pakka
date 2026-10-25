@@ -1,0 +1,30 @@
+▶ composer focus follows the rounded outer card for pointer and keyboard input
+  ✔ home 1440px pointer and Tab (132.576ms)
+  ✔ home 1440px Tab visibly outlines each split button (491.7666ms)
+  ✔ conversation 1440px pointer and Tab (115.9772ms)
+  ✔ conversation 1440px Tab visibly outlines each split button (457.4189ms)
+  ✔ home 390px pointer and Tab (600.7084ms)
+  ✔ home 390px Tab visibly outlines each split button (383.7414ms)
+  ✔ conversation 390px pointer and Tab (583.8321ms)
+  ✔ conversation 390px Tab visibly outlines each split button (335.9722ms)
+  ✔ Stop, Steer Send and mode retain separate focus while a real turn runs (312.1447ms)
+✔ composer focus follows the rounded outer card for pointer and keyboard input (4871.0037ms)
+✔ WebUI composer: a refused send explains itself in every mode, without moving the card, and Stop owns the primary slot (1529.9216ms)
+✔ reference frontend adoption: original home anatomy, palette, real conversation (3221.4147ms)
+▶ WebUI typography and input accessibility
+  ✔ configuration text follows a larger root font (7.6875ms)
+  ✔ mobile configuration fields have readable type and touch targets (282.6805ms)
+  ✔ message input keeps readable mobile type (10.6939ms)
+  ✔ message input has a visible keyboard focus indicator (13.8546ms)
+✔ WebUI typography and input accessibility (1673.26ms)
+✔ WebUI browser dictation: caret and final text reach only the draft until a real explicit Send (1879.7888ms)
+✔ WebUI browser dictation: resource and sheet replacement, errors and logout discard old callbacks without dispatch (1049.2675ms)
+✔ WebUI browser dictation: absent speech support retains real typed input and a mobile viewer has no model dictation (2415.0756ms)
+ℹ tests 20
+ℹ suites 0
+ℹ pass 20
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 6401.213

@@ -1,0 +1,86 @@
+[
+  {
+    "x": 1147,
+    "y": 486,
+    "width": 28,
+    "height": 28,
+    "name": "Start conversation",
+    "visible": true,
+    "pixels": {
+      "top": 13,
+      "bottom": 14,
+      "left": 12,
+      "right": 12
+    }
+  },
+  {
+    "x": 1176,
+    "y": 486,
+    "width": 25,
+    "height": 28,
+    "name": "New Session options",
+    "visible": true,
+    "pixels": {
+      "top": 14,
+      "bottom": 15,
+      "left": 12,
+      "right": 13
+    }
+  },
+  {
+    "x": 1176,
+    "y": 486,
+    "width": 25,
+    "height": 28,
+    "name": "New Session options",
+    "visible": true,
+    "pixels": {
+      "top": 11,
+      "bottom": 12,
+      "left": 12,
+      "right": 12
+    }
+  },
+  {
+    "x": 1147,
+    "y": 486,
+    "width": 28,
+    "height": 28,
+    "name": "Start conversation",
+    "visible": true,
+    "pixels": {
+      "top": 13,
+      "bottom": 14,
+      "left": 14,
+      "right": 12
+    }
+  },
+  {
+    "x": 1176,
+    "y": 486,
+    "width": 25,
+    "height": 28,
+    "name": "New Session options",
+    "visible": true,
+    "pixels": {
+      "top": 14,
+      "bottom": 15,
+      "left": 12,
+      "right": 14
+    }
+  },
+  {
+    "x": 1176,
+    "y": 486,
+    "width": 25,
+    "height": 28,
+    "name": "New Session options",
+    "visible": true,
+    "pixels": {
+      "top": 13,
+      "bottom": 14,
+      "left": 12,
+      "right": 12
+    }
+  }
+]

@@ -4,6 +4,7 @@
 
 | 核对对象                       | 记录                                                                                                         |
 | ------------------------------ | ------------------------------------------------------------------------------------------------------------ |
+| WebUI 组合发送按钮 Tab 焦点    | [组合按钮焦点记录](WEBUI-SPLIT-BUTTON-FOCUS.md)                                                              |
 | WebUI 排版、SVG 与焦点         | [排版整检记录](WEBUI-TYPOGRAPHY-SVG.md)                                                                      |
 | WebUI Conversation/composer P0 | [P0 记录](WEBUI-INTERACTION-P0.md)                                                                           |
 | Devin 接入 R2、固定候选 004    | [R2 记录](DEVIN-FRONTEND-R2.md)                                                                              |

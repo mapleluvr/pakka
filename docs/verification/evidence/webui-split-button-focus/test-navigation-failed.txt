@@ -1,0 +1,45 @@
+▶ composer focus follows the rounded outer card for pointer and keyboard input
+  ✔ home 1440px pointer and Tab (137.6671ms)
+  ✔ home 1440px Tab visibly outlines each split button (491.7436ms)
+  ✔ conversation 1440px pointer and Tab (117.8856ms)
+  ✔ conversation 1440px Tab visibly outlines each split button (451.6892ms)
+  ✔ home 390px pointer and Tab (604.4973ms)
+  ✔ home 390px Tab visibly outlines each split button (335.2598ms)
+  ✔ conversation 390px pointer and Tab (565.6643ms)
+  ✔ conversation 390px Tab visibly outlines each split button (359.7105ms)
+  ✖ Stop, Steer Send and mode retain separate focus while a real turn runs (306.8416ms)
+✖ composer focus follows the rounded outer card for pointer and keyboard input (4625.9742ms)
+✔ WebUI composer: a refused send explains itself in every mode, without moving the card, and Stop owns the primary slot (1293.2898ms)
+▶ WebUI typography and input accessibility
+  ✔ configuration text follows a larger root font (7.7133ms)
+  ✔ mobile configuration fields have readable type and touch targets (266.3948ms)
+  ✔ message input keeps readable mobile type (12.5096ms)
+  ✔ message input has a visible keyboard focus indicator (15.3962ms)
+✔ WebUI typography and input accessibility (1403.9594ms)
+ℹ tests 16
+ℹ suites 0
+ℹ pass 14
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 5536.3755
+
+✖ failing tests:
+
+test at apps\webui\test\composer-focus-browser.test.ts:167:12
+✖ Stop, Steer Send and mode retain separate focus while a real turn runs (306.8416ms)
+  AssertionError [ERR_ASSERTION]: Native Tab order did not reach .stop-btn
+      at tabTo (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/composer-focus-browser.test.ts:88:12)
+      at async TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/composer-focus-browser.test.ts:186:5)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/composer-focus-browser.test.ts:167:4)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: undefined,
+    operator: 'fail',
+    diff: 'simple'
+  }

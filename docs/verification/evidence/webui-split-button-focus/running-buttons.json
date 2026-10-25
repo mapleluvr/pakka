@@ -1,0 +1,44 @@
+[
+  {
+    "x": 255.609375,
+    "y": 778.609375,
+    "width": 46.390625,
+    "height": 28,
+    "name": "Stop",
+    "visible": true,
+    "pixels": {
+      "top": 12,
+      "bottom": 12,
+      "left": 12,
+      "right": 12
+    }
+  },
+  {
+    "x": 303,
+    "y": 778.609375,
+    "width": 28,
+    "height": 28,
+    "name": "Send",
+    "visible": true,
+    "pixels": {
+      "top": 12,
+      "bottom": 12,
+      "left": 12,
+      "right": 12
+    }
+  },
+  {
+    "x": 332,
+    "y": 778.609375,
+    "width": 25,
+    "height": 28,
+    "name": "Input mode",
+    "visible": true,
+    "pixels": {
+      "top": 14,
+      "bottom": 14,
+      "left": 12,
+      "right": 13
+    }
+  }
+]

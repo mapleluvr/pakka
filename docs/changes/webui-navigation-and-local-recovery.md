@@ -13,6 +13,8 @@
 
 同日补报的首页直角焦点框已定位为内部 surface 的 focus-visible 描边，按真实 pointer/Tab 回归改到外层圆角卡片。用户提出的独立创建弹窗与 Session → Conversation 层级另在 [design §6.3](../../openspec/changes/improve-webui-navigation-and-local-recovery/design.md#63-session--conversation-创建关系调查) 和 [tasks §4.3](../../openspec/changes/improve-webui-navigation-and-local-recovery/tasks.md#43-session--conversation-创建方向2026-10-24) 承接；当前单 runtime 的 create 只创建 Conversation，不能将名称修正当作真实 New Session 已交付。
 
+2026-10-25 后续两个按钮截图暴露发送组的外侧 Tab outline 被胶囊 `overflow:hidden` 裁切，已将各动作描边内移并保留首尾圆角；原卡片编辑器焦点与本修复分别验证。真实 RED/GREEN、空输入和 busy/Steer/Stop 矩阵及本候选门禁见[组合按钮焦点记录](../verification/WEBUI-SPLIT-BUTTON-FOCUS.md)，对应上述 design §6.2、tasks §4.2 与前端 delta。
+
 现场认证证据、默认 10 分钟/旧会话撤销的设计理由、单 writer、平台文件保护与未知交付的取舍集中在 design，不由本摘要替代。
 
 2026-10-24 先采用 [Conversation/composer 状态可观测性 P0](../../openspec/changes/improve-webui-navigation-and-local-recovery/design.md#61-2026-10-24-conversation-状态可观测性批次) 切片：真实 live/part 保形、按来源 Conversation 统一工具卡、禁用/停止原因及 receipt reason 指引。Sessions 行运行状态因 DTO 缺口另待协议变更，恢复入口和设置路由仍待确认。实现候选、复核修复及未完成的双评/GUI 门禁见 [P0 验证记录](../verification/WEBUI-INTERACTION-P0.md) 和 [逐项处置](../verification/evidence/webui-interaction-p0/review-disposition.md)，原调查终稿与渲染核对材料保留在调查目录 `D:\Projects\TempProjects\pakka-webui-investig\`。

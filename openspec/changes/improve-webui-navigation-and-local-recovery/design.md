@@ -173,6 +173,8 @@ Preferences/Notifications 的对应 href 来自生产注册；Conversation/Peopl
 
 用户随后提供首页输入的直角蓝框截图。实测根因是 `.composer-surface:has(textarea:focus-visible)` 对包含提示条、编辑器与工具栏的内部直角容器描边；文本输入经鼠标点击也可匹配 focus-visible，并非仅由 Tab 引起。指示改由具有实际圆角和完整边界的外层 `.composer-card` 承担。回归分别通过真实 pointer、Tab/Shift+Tab 在桌面/手机核对焦点、边界和零模型请求，保留键盘可见性。
 
+2026-10-25 用户另报发送/下拉按钮的 Tab 描边只剩接缝竖线。真实键盘与 PNG 实测确认 `.send-group` 的 `overflow:hidden` 裁掉了通用 `outline-offset:2px` 的外侧描边；该问题独立于编辑器外层卡片焦点。附加样式将各按钮的 2px 描边内移到本按钮边界内，首尾继承胶囊对应圆角，中间按钮保持直边。保留 group 裁切、按钮几何、原始 reference.css 和原生调度；检查首页/Conversation、明暗主题、桌面/手机、空输入与真实 busy/Steer/Stop，并对实际 PNG 四侧采样，避免 computed outline 存在却不可见仍算通过。
+
 ### 6.3 Session / Conversation 创建关系调查
 
 用户提出独立 Conversation 创建弹窗，并要求识别 Pi Durable 中 Session 包含 Conversations 的关系，考虑并立 New Session 与 Session 内 New Conversation、无父 Session 时预填并按 New Session → New Conversation 顺序创建，以及 sidebar 文件夹归类。这是超出本轮排版的产品/运行时设计方向，具体服务协议与恢复行为仍由后续设计及任务承接，未以已实现或已验收记账。

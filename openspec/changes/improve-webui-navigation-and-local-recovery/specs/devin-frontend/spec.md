@@ -120,6 +120,11 @@ Product-owned model choices, settings, dialogs and contribution interfaces SHALL
 - **WHEN** a user focuses the home or Conversation text editor with a pointer or Tab
 - **THEN** its focus indicator follows the complete rounded outer composer card, remains within the viewport, and is not duplicated as an internal rectangular surface or textarea outline
 
+#### Scenario: Tab between split send actions
+
+- **WHEN** keyboard navigation focuses an available Send, Stop or mode button in a composer sending group
+- **THEN** a complete indicator identifies that individual action inside the group clipping boundary, follows its outer rounded end when applicable, and remains visible in idle, empty-input and busy states; Enter/Escape and native input scheduling retain their existing behavior
+
 #### Scenario: Identify browser dictation
 
 - **WHEN** supported browser dictation is available or listening
