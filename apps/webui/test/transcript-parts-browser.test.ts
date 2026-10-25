@@ -730,6 +730,10 @@ test(
 			);
 			gate.resolve();
 			await page.wait('document.querySelector(".pocket-receipt")?.textContent.startsWith("done")');
+			// Receipt RPC completion does not order the independent transcript SSE render.
+			await page.wait(
+				'[...document.querySelectorAll("[data-call-id=call-orphan]")].some(card=>card.querySelector("[data-tool-output]")?.textContent==="LIVE-RESULT"||card.querySelector("[data-tool-preview]")?.textContent==="LIVE-RESULT")',
+			);
 			assert.equal(
 				await page.evaluate(
 					'[...document.querySelectorAll("[data-call-id=call-orphan]")].some(card=>card.querySelector("[data-tool-output]")?.textContent==="LIVE-RESULT"||card.querySelector("[data-tool-preview]")?.textContent==="LIVE-RESULT")',
