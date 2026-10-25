@@ -1,0 +1,9 @@
+{
+  "focusTrapOldBehaviorFailed": true,
+  "baselineViewer": {
+    "baseline": "9d8a92d58215b2782a0c24d6f2f20f7524a3fe7f",
+    "runs": 12,
+    "reproduced": false
+  },
+  "productBytesRestored": true
+}

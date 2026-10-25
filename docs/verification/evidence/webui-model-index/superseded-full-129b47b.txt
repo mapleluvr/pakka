@@ -1,0 +1,1596 @@
+
+> pakka-workspace@0.1.0 test
+> node scripts/test.mjs --test-reporter=tap
+
+TAP version 13
+# Subtest: M5 CLI: actual process uses shared authenticated client for snapshot, creation and native message receipt
+ok 1 - M5 CLI: actual process uses shared authenticated client for snapshot, creation and native message receipt
+  ---
+  duration_ms: 722.1728
+  type: 'test'
+  ...
+# Subtest: M5 server executable: explicit trusted config boots real MAS and returns no model or bearer credentials
+ok 2 - M5 server executable: explicit trusted config boots real MAS and returns no model or bearer credentials
+  ---
+  duration_ms: 733.0515
+  type: 'test'
+  ...
+# Subtest: M5 browser: compiled shared client connects with no Node globals and executes real authenticated admission
+ok 3 - M5 browser: compiled shared client connects with no Node globals and executes real authenticated admission
+  ---
+  duration_ms: 725.9858
+  type: 'test'
+  ...
+# Subtest: Configuration authority: a narrowed project ceiling is rechecked before committing independent cwd
+ok 4 - Configuration authority: a narrowed project ceiling is rechecked before committing independent cwd
+  ---
+  duration_ms: 117.2469
+  type: 'test'
+  ...
+# Subtest: M4 worker: spawn cannot acquire a child's higher-profile communication grant
+ok 5 - M4 worker: spawn cannot acquire a child's higher-profile communication grant
+  ---
+  duration_ms: 960.0356
+  type: 'test'
+  ...
+# Subtest: M4 review: worker without Session service explicitly denies spawn and inbox before effects
+ok 6 - M4 review: worker without Session service explicitly denies spawn and inbox before effects
+  ---
+  duration_ms: 926.1821
+  type: 'test'
+  ...
+# Subtest: M4 worker: approved DevPack profile executes real native temporary spawn in another PID
+ok 7 - M4 worker: approved DevPack profile executes real native temporary spawn in another PID
+  ---
+  duration_ms: 1012.0823
+  type: 'test'
+  ...
+# Subtest: M6 worker: unselected native profile does not inherit root contribution tools
+ok 8 - M6 worker: unselected native profile does not inherit root contribution tools
+  ---
+  duration_ms: 776.4326
+  type: 'test'
+  ...
+# Subtest: product Dynamite: explicit root selection and existing controlled inference configuration are decoded
+ok 9 - product Dynamite: explicit root selection and existing controlled inference configuration are decoded
+  ---
+  duration_ms: 0.924
+  type: 'test'
+  ...
+# Subtest: product Dynamite: dynamic module/profile authority and ambiguous member selection are refused
+ok 10 - product Dynamite: dynamic module/profile authority and ambiguous member selection are refused
+  ---
+  duration_ms: 0.3439
+  type: 'test'
+  ...
+# Subtest: product Dynamite: explicit bounded pressure threshold is preserved rather than silently normalized
+ok 11 - product Dynamite: explicit bounded pressure threshold is preserved rather than silently normalized
+  ---
+  duration_ms: 0.6357
+  type: 'test'
+  ...
+# Subtest: product Dynamite: invalid or unbounded inference and strategy options cannot enter startup
+ok 12 - product Dynamite: invalid or unbounded inference and strategy options cannot enter startup
+  ---
+  duration_ms: 0.4379
+  type: 'test'
+  ...
+# Subtest: M5 HTTP: host-bound source and native admission survive repeated message ID; copied receipt is not authority
+ok 13 - M5 HTTP: host-bound source and native admission survive repeated message ID; copied receipt is not authority
+  ---
+  duration_ms: 380.12
+  type: 'test'
+  ...
+# Subtest: M5 HTTP: four definitive guard families return correlated denied without native effects
+ok 14 - M5 HTTP: four definitive guard families return correlated denied without native effects
+  ---
+  duration_ms: 259.4961
+  type: 'test'
+  ...
+# Subtest: M5 HTTP: opaque admission return-false cannot deny prior real callback effects
+ok 15 - M5 HTTP: opaque admission return-false cannot deny prior real callback effects
+  ---
+  duration_ms: 113.8591
+  type: 'test'
+  ...
+# Subtest: M5 HTTP: opaque admission typed-error cannot deny prior real callback effects
+ok 16 - M5 HTTP: opaque admission typed-error cannot deny prior real callback effects
+  ---
+  duration_ms: 107.254
+  type: 'test'
+  ...
+# Subtest: M5 HTTP: actual native storage-write failure remains unknown rather than typed denial
+ok 17 - M5 HTTP: actual native storage-write failure remains unknown rather than typed denial
+  ---
+  duration_ms: 85.6908
+  type: 'test'
+  ...
+# Subtest: M5 HTTP: invalid wire/version/authority fields and unapproved origins cause zero provider effects
+ok 18 - M5 HTTP: invalid wire/version/authority fields and unapproved origins cause zero provider effects
+  ---
+  duration_ms: 110.4875
+  type: 'test'
+  ...
+# Subtest: M5 HTTP: malformed UTF-8 refuses instead of substituting a model-visible message
+ok 19 - M5 HTTP: malformed UTF-8 refuses instead of substituting a model-visible message
+  ---
+  duration_ms: 74.7045
+  type: 'test'
+  ...
+# Subtest: M5 HTTP: expired issuer credential cannot create effects or be restored by new connection
+ok 20 - M5 HTTP: expired issuer credential cannot create effects or be restored by new connection
+  ---
+  duration_ms: 77.945
+  type: 'test'
+  ...
+# Subtest: M5 HTTP: issuer expiry during awaited admission is rechecked at the native commit boundary
+ok 21 - M5 HTTP: issuer expiry during awaited admission is rechecked at the native commit boundary
+  ---
+  duration_ms: 599.3271
+  type: 'test'
+  ...
+# Subtest: M5 HTTP: queued native withdrawal, owner abort and retire preserve explicit effect boundaries
+ok 22 - M5 HTTP: queued native withdrawal, owner abort and retire preserve explicit effect boundaries
+  ---
+  duration_ms: 216.0901
+  type: 'test'
+  ...
+# Subtest: M5 HTTP: finite transport capacity refuses excess requests before an admission effect
+ok 23 - M5 HTTP: finite transport capacity refuses excess requests before an admission effect
+  ---
+  duration_ms: 107.6066
+  type: 'test'
+  ...
+# Subtest: M5 HTTP: issuer revocation during admission seals pending effect and cannot be renewed by reconnect
+ok 24 - M5 HTTP: issuer revocation during admission seals pending effect and cannot be renewed by reconnect
+  ---
+  duration_ms: 85.7064
+  type: 'test'
+  ...
+# Subtest: Model consumers: finite server bootstrap keeps the approved model through real HTTP delivery
+ok 25 - Model consumers: finite server bootstrap keeps the approved model through real HTTP delivery
+  ---
+  duration_ms: 191.289
+  type: 'test'
+  ...
+# Subtest: Model consumers: a real worker PID receives the exact host-approved model
+ok 26 - Model consumers: a real worker PID receives the exact host-approved model
+  ---
+  duration_ms: 567.0825
+  type: 'test'
+  ...
+# Subtest: WebUI approvals: real native tool allow executes once
+ok 27 - WebUI approvals: real native tool allow executes once
+  ---
+  duration_ms: 312.548
+  type: 'test'
+  ...
+# Subtest: WebUI approvals: real native tool deny has no external effect
+ok 28 - WebUI approvals: real native tool deny has no external effect
+  ---
+  duration_ms: 221.7765
+  type: 'test'
+  ...
+# Subtest: WebUI approvals: aborting the native call seals a late decision and unresolved restore never replays
+ok 29 - WebUI approvals: aborting the native call seals a late decision and unresolved restore never replays
+  ---
+  duration_ms: 176.5076
+  type: 'test'
+  ...
+# Subtest: WebUI approvals: a real external effect followed by callback failure remains unknown
+ok 30 - WebUI approvals: a real external effect followed by callback failure remains unknown
+  ---
+  duration_ms: 206.7382
+  type: 'test'
+  ...
+# Subtest: WebUI approvals: a serialized invocation cannot create an approval or execute a tool
+ok 31 - WebUI approvals: a serialized invocation cannot create an approval or execute a tool
+  ---
+  duration_ms: 90.2705
+  type: 'test'
+  ...
+# Subtest: WebUI approvals: losing the bound interface after committed allow blocks a not-yet-started effect
+ok 32 - WebUI approvals: losing the bound interface after committed allow blocks a not-yet-started effect
+  ---
+  duration_ms: 283.6903
+  type: 'test'
+  ...
+# Subtest: WebUI approvals: revocation after committed allow but before the tool effect denies the late effect
+ok 33 - WebUI approvals: revocation after committed allow but before the tool effect denies the late effect
+  ---
+  duration_ms: 278.8378
+  type: 'test'
+  ...
+# Subtest: WebUI browser network: a real reset after a rejected CONNECT stays connection-local and never reaches the target
+ok 34 - WebUI browser network: a real reset after a rejected CONNECT stays connection-local and never reaches the target
+  ---
+  duration_ms: 32.4507
+  type: 'test'
+  ...
+# Subtest: WebUI browser network: a real approved HTTPS tunnel preserves TLS validation; a foreign CONNECT has no target request
+ok 35 - WebUI browser network: a real approved HTTPS tunnel preserves TLS validation; a foreign CONNECT has no target request
+  ---
+  duration_ms: 29.0732
+  type: 'test'
+  ...
+# Subtest: WebUI owned browser: approved resource configuration is detached from later caller mutation
+ok 36 - WebUI owned browser: approved resource configuration is detached from later caller mutation
+  ---
+  duration_ms: 108.0726
+  type: 'test'
+  ...
+# Subtest: WebUI owned browser: completed click survives writer reopen without another page effect
+ok 37 - WebUI owned browser: completed click survives writer reopen without another page effect
+  ---
+  duration_ms: 623.4125
+  type: 'test'
+  ...
+# Subtest: WebUI owned browser: restored running intent survives writer reopen without another page effect
+ok 38 - WebUI owned browser: restored running intent survives writer reopen without another page effect
+  ---
+  duration_ms: 647.4312
+  type: 'test'
+  ...
+# Subtest: WebUI owned browser: real isolated page controls, actual screenshot decode and viewer/resource checks
+ok 39 - WebUI owned browser: real isolated page controls, actual screenshot decode and viewer/resource checks
+  ---
+  duration_ms: 767.681
+  type: 'test'
+  ...
+# Subtest: WebUI owned browser: disallowed direct navigation redirects subresources and popup never reach another origin
+ok 40 - WebUI owned browser: disallowed direct navigation redirects subresources and popup never reach another origin
+  ---
+  duration_ms: 703.3936
+  type: 'test'
+  ...
+# Subtest: WebUI owned browser: an already-revoked interception does not seal subsequent authorized reads
+ok 41 - WebUI owned browser: an already-revoked interception does not seal subsequent authorized reads # SKIP Controlled POSIX CDP executable; real Chromium isolation remains required on Windows
+  ---
+  duration_ms: 0.1319
+  type: 'test'
+  ...
+# Subtest: WebUI owned browser: unknown interception rejection still seals the service
+ok 42 - WebUI owned browser: unknown interception rejection still seals the service # SKIP Controlled POSIX CDP executable; real Chromium isolation remains required on Windows
+  ---
+  duration_ms: 0.0699
+  type: 'test'
+  ...
+# Subtest: WebUI owned browser: invalidated interfaces and service shutdown seal old clients
+ok 43 - WebUI owned browser: invalidated interfaces and service shutdown seal old clients
+  ---
+  duration_ms: 597.9313
+  type: 'test'
+  ...
+# Subtest: WebUI collaboration: real shared attribution, concurrent note conflict, pins/reactions/quote and no human content in model payload
+ok 44 - WebUI collaboration: real shared attribution, concurrent note conflict, pins/reactions/quote and no human content in model payload
+  ---
+  duration_ms: 197.5822
+  type: 'test'
+  ...
+# Subtest: WebUI collaboration: viewer participation is human-only, presence is ephemeral and resource/identity scopes are checked before publication
+ok 45 - WebUI collaboration: viewer participation is human-only, presence is ephemeral and resource/identity scopes are checked before publication
+  ---
+  duration_ms: 94.1769
+  type: 'test'
+  ...
+# Subtest: WebUI collaboration: real driver CAS controls native input and an expired lease during admission has zero provider effects
+ok 46 - WebUI collaboration: real driver CAS controls native input and an expired lease during admission has zero provider effects
+  ---
+  duration_ms: 88.9013
+  type: 'test'
+  ...
+# Subtest: WebUI collaboration: durable records/driver reopen with the original writer while presence is not restored
+ok 47 - WebUI collaboration: durable records/driver reopen with the original writer while presence is not restored
+  ---
+  duration_ms: 106.2148
+  type: 'test'
+  ...
+# Subtest: WebUI configuration: passive frozen choices and scoped usage hide secrets, peer totals and forbidden profiles
+ok 48 - WebUI configuration: passive frozen choices and scoped usage hide secrets, peer totals and forbidden profiles
+  ---
+  duration_ms: 115.8024
+  type: 'test'
+  ...
+# Subtest: WebUI private configuration: revoke while waiting at the real CAS boundary prevents the late replacement
+ok 49 - WebUI private configuration: revoke while waiting at the real CAS boundary prevents the late replacement
+  ---
+  duration_ms: 98.1195
+  type: 'test'
+  ...
+# Subtest: WebUI private configuration: clearing while the preserved bootstrap callback is awaited rejects its late old key
+ok 50 - WebUI private configuration: clearing while the preserved bootstrap callback is awaited rejects its late old key
+  ---
+  duration_ms: 35.6445
+  type: 'test'
+  ...
+# Subtest: WebUI private configuration: nonzero empty storage is corruption and never reinitializes a secret source
+ok 51 - WebUI private configuration: nonzero empty storage is corruption and never reinitializes a secret source
+  ---
+  duration_ms: 32.3935
+  type: 'test'
+  ...
+# Subtest: WebUI private configuration: a failing host resolver cannot publish its secret error message or send HTTP
+ok 52 - WebUI private configuration: a failing host resolver cannot publish its secret error message or send HTTP
+  ---
+  duration_ms: 75.7142
+  type: 'test'
+  ...
+# Subtest: WebUI private credentials: explicit replace/clear changes real Authorization, never returns a secret and survives normal reopen without fallback
+ok 53 - WebUI private credentials: explicit replace/clear changes real Authorization, never returns a secret and survives normal reopen without fallback
+  ---
+  duration_ms: 354.7965
+  type: 'test'
+  ...
+# Subtest: WebUI directories: authorized browsing, independent changes and revocation use current resource authority
+ok 54 - WebUI directories: authorized browsing, independent changes and revocation use current resource authority
+  ---
+  duration_ms: 153.7834
+  type: 'test'
+  ...
+# Subtest: WebUI files: approved scoped reads and CAS edits have real byte/receipt evidence without model work
+ok 55 - WebUI files: approved scoped reads and CAS edits have real byte/receipt evidence without model work
+  ---
+  duration_ms: 312.1985
+  type: 'test'
+  ...
+# Subtest: WebUI files: traversal hidden data junctions and hard links cannot expose another root
+ok 56 - WebUI files: traversal hidden data junctions and hard links cannot expose another root
+  ---
+  duration_ms: 235.8634
+  type: 'test'
+  ...
+# Subtest: WebUI files: bounded upload and export preserve original bytes and reject overwrite
+ok 57 - WebUI files: bounded upload and export preserve original bytes and reject overwrite
+  ---
+  duration_ms: 246.8953
+  type: 'test'
+  ...
+# Subtest: WebUI files Git: actual changes branches and managed worktrees are bounded native effects
+ok 58 - WebUI files Git: actual changes branches and managed worktrees are bounded native effects
+  ---
+  duration_ms: 2167.5516
+  type: 'test'
+  ...
+# Subtest: WebUI files Git: a real running native input prevents branch changes
+ok 59 - WebUI files Git: a real running native input prevents branch changes
+  ---
+  duration_ms: 358.726
+  type: 'test'
+  ...
+# Subtest: WebUI files Git: native hooks are disabled and unsafe local config is refused
+ok 60 - WebUI files Git: native hooks are disabled and unsafe local config is refused
+  ---
+  duration_ms: 854.551
+  type: 'test'
+  ...
+# Subtest: WebUI files: an opaque host guard cannot forge a definite conflict after its own real effect
+ok 61 - WebUI files: an opaque host guard cannot forge a definite conflict after its own real effect
+  ---
+  duration_ms: 236.3267
+  type: 'test'
+  ...
+# Subtest: WebUI files: restored running intents stay unknown and do not replay disk writes
+ok 62 - WebUI files: restored running intents stay unknown and do not replay disk writes
+  ---
+  duration_ms: 248.5262
+  type: 'test'
+  ...
+# Subtest: WebUI files: committed external-effect receipts reconcile after normal reopen without replay
+ok 63 - WebUI files: committed external-effect receipts reconcile after normal reopen without replay
+  ---
+  duration_ms: 261.8079
+  type: 'test'
+  ...
+# Subtest: WebUI hooks effect boundary: creator invalidation after real intent commit blocks a late native input
+ok 64 - WebUI hooks effect boundary: creator invalidation after real intent commit blocks a late native input
+  ---
+  duration_ms: 181.3268
+  type: 'test'
+  ...
+# Subtest: WebUI hooks effect boundary: extension invalidation after real intent commit blocks a late native input
+ok 65 - WebUI hooks effect boundary: extension invalidation after real intent commit blocks a late native input
+  ---
+  duration_ms: 156.444
+  type: 'test'
+  ...
+# Subtest: WebUI hooks effect boundary: rotation invalidation after real intent commit blocks a late native input
+ok 66 - WebUI hooks effect boundary: rotation invalidation after real intent commit blocks a late native input
+  ---
+  duration_ms: 140.1699
+  type: 'test'
+  ...
+# Subtest: WebUI hooks unknown: a real admission followed by lost confirmation is retained across retries and writer reopen without a second HTTP
+ok 67 - WebUI hooks unknown: a real admission followed by lost confirmation is retained across retries and writer reopen without a second HTTP
+  ---
+  duration_ms: 176.5527
+  type: 'test'
+  ...
+# Subtest: WebUI hooks finite rate: 30 actual native inputs consume the hour quota and the 31st has no effect
+ok 68 - WebUI hooks finite rate: 30 actual native inputs consume the hour quota and the 31st has no effect
+  ---
+  duration_ms: 1816.8145
+  type: 'test'
+  ...
+# Subtest: WebUI hooks finite bytes: oversized raw input has no effect and the exact 5 MiB bound fits the real native text limit
+ok 69 - WebUI hooks finite bytes: oversized raw input has no effect and the exact 5 MiB bound fits the real native text limit
+  ---
+  duration_ms: 132.9075
+  type: 'test'
+  ...
+# Subtest: WebUI hooks authority and copies: viewers and foreign resources cannot create hooks, and later input mutation cannot change signed bytes
+ok 70 - WebUI hooks authority and copies: viewers and foreign resources cannot create hooks, and later input mutation cannot change signed bytes
+  ---
+  duration_ms: 130.8649
+  type: 'test'
+  ...
+# Subtest: WebUI hooks interrupted intent: writer reopen retains unknown without admitting a replacement native input
+ok 71 - WebUI hooks interrupted intent: writer reopen retains unknown without admitting a replacement native input
+  ---
+  duration_ms: 176.1331
+  type: 'test'
+  ...
+# Subtest: WebUI hooks persistent enum: malformed or foreign recorded results fail closed
+ok 72 - WebUI hooks persistent enum: malformed or foreign recorded results fail closed
+  ---
+  duration_ms: 153.243
+  type: 'test'
+  ...
+# Subtest: WebUI hooks persistent association: malformed or foreign recorded results fail closed
+ok 73 - WebUI hooks persistent association: malformed or foreign recorded results fail closed
+  ---
+  duration_ms: 140.3979
+  type: 'test'
+  ...
+# Subtest: WebUI hooks: exact signed bytes admit one native input and changing unsigned delivery metadata cannot replay it
+ok 74 - WebUI hooks: exact signed bytes admit one native input and changing unsigned delivery metadata cannot replay it
+  ---
+  duration_ms: 180.1156
+  type: 'test'
+  ...
+# Subtest: WebUI hooks: generic secret rotation and removal preserve original records while refusing old endpoints
+ok 75 - WebUI hooks: generic secret rotation and removal preserve original records while refusing old endpoints
+  ---
+  duration_ms: 141.2787
+  type: 'test'
+  ...
+# Subtest: WebUI hooks: signed outsider content is ignored by default even when the unsigned event header claims a push
+ok 76 - WebUI hooks: signed outsider content is ignored by default even when the unsigned event header claims a push
+  ---
+  duration_ms: 140.5825
+  type: 'test'
+  ...
+# Subtest: WebUI hooks: normal writer reopen reconciles the original native delivery with retained creator scope and budget
+ok 77 - WebUI hooks: normal writer reopen reconciles the original native delivery with retained creator scope and budget
+  ---
+  duration_ms: 139.0215
+  type: 'test'
+  ...
+# Subtest: WebUI memory corruption: an array-coerced state cannot become a trusted restored mutation
+ok 78 - WebUI memory corruption: an array-coerced state cannot become a trusted restored mutation
+  ---
+  duration_ms: 67.0078
+  type: 'test'
+  ...
+# Subtest: WebUI memory corruption: an array-coerced scope cannot become a trusted restored mutation
+ok 79 - WebUI memory corruption: an array-coerced scope cannot become a trusted restored mutation
+  ---
+  duration_ms: 37.7642
+  type: 'test'
+  ...
+# Subtest: WebUI memory shared namespace: a second approved binding cannot leave the first source's dispatch check stale
+ok 80 - WebUI memory shared namespace: a second approved binding cannot leave the first source's dispatch check stale
+  ---
+  duration_ms: 107.2646
+  type: 'test'
+  ...
+# Subtest: WebUI memory effect boundary: revocation while the real CAS is waiting prevents a new lesson
+ok 81 - WebUI memory effect boundary: revocation while the real CAS is waiting prevents a new lesson
+  ---
+  duration_ms: 99.669
+  type: 'test'
+  ...
+# Subtest: WebUI memory confirmation: losing the real committed CAS result resolves the exact saved request without applying it again
+ok 82 - WebUI memory confirmation: losing the real committed CAS result resolves the exact saved request without applying it again
+  ---
+  duration_ms: 34.1148
+  type: 'test'
+  ...
+# Subtest: WebUI memory native changes: repeated updates are idempotent and a model cannot replace or forget approved context before human approval
+ok 83 - WebUI memory native changes: repeated updates are idempotent and a model cannot replace or forget approved context before human approval
+  ---
+  duration_ms: 475.6171
+  type: 'test'
+  ...
+# Subtest: WebUI memory native tool: a real model invocation creates only an attributed proposal until a human owner approves it
+ok 84 - WebUI memory native tool: a real model invocation creates only an attributed proposal until a human owner approves it
+  ---
+  duration_ms: 293.6271
+  type: 'test'
+  ...
+# Subtest: WebUI memory native authority: forged invocation scopes cannot create a proposal or select a human owner
+ok 85 - WebUI memory native authority: forged invocation scopes cannot create a proposal or select a human owner
+  ---
+  duration_ms: 32.8012
+  type: 'test'
+  ...
+# Subtest: WebUI memory facet isolation: human-only assembly neither advertises a memory tool nor injects approved lessons into actual model input
+ok 86 - WebUI memory facet isolation: human-only assembly neither advertises a memory tool nor injects approved lessons into actual model input
+  ---
+  duration_ms: 63.6922
+  type: 'test'
+  ...
+# Subtest: WebUI memory: approved lessons affect actual profile/project context while sender proposals remain private and inactive
+ok 87 - WebUI memory: approved lessons affect actual profile/project context while sender proposals remain private and inactive
+  ---
+  duration_ms: 333.3873
+  type: 'test'
+  ...
+# Subtest: WebUI memory versions: stale edits preserve the winner, unapproved replacement preserves current context, and original requests never apply twice
+ok 88 - WebUI memory versions: stale edits preserve the winner, unapproved replacement preserves current context, and original requests never apply twice
+  ---
+  duration_ms: 108.1954
+  type: 'test'
+  ...
+# Subtest: WebUI memory recovery: disabled injection preserves lessons and the original mutation across normal writer reopen without resetting spent quota
+ok 89 - WebUI memory recovery: disabled injection preserves lessons and the original mutation across normal writer reopen without resetting spent quota
+  ---
+  duration_ms: 243.1519
+  type: 'test'
+  ...
+# Subtest: WebUI model choices: an approved profile changes the real next provider request and survives normal reopen without refund
+ok 90 - WebUI model choices: an approved profile changes the real next provider request and survives normal reopen without refund
+  ---
+  duration_ms: 298.1667
+  type: 'test'
+  ...
+# Subtest: WebUI model choices: invalid approved model identifiers reject before storage or provider effects
+ok 91 - WebUI model choices: invalid approved model identifiers reject before storage or provider effects
+  ---
+  duration_ms: 34.3753
+  type: 'test'
+  ...
+# Subtest: WebUI notifications: an invalid unsubscribe identity cannot disable a real registered device
+ok 92 - WebUI notifications: an invalid unsubscribe identity cannot disable a real registered device
+  ---
+  duration_ms: 167.3136
+  type: 'test'
+  ...
+# Subtest: WebUI notifications: native event input is captured before asynchronous store preparation
+ok 93 - WebUI notifications: native event input is captured before asynchronous store preparation
+  ---
+  duration_ms: 108.8947
+  type: 'test'
+  ...
+# Subtest: WebUI notifications: revocation after the real dispatch intent commit prevents the actual TLS push
+ok 94 - WebUI notifications: revocation after the real dispatch intent commit prevents the actual TLS push
+  ---
+  duration_ms: 117.9819
+  type: 'test'
+  ...
+# Subtest: WebUI notification audiences: mention preferences cannot notify a different subscribed person
+ok 95 - WebUI notification audiences: mention preferences cannot notify a different subscribed person
+  ---
+  duration_ms: 185.0754
+  type: 'test'
+  ...
+# Subtest: WebUI notifications: real encrypted TLS push, independent VAPID verification, person/resource metadata and unsubscribe
+ok 96 - WebUI notifications: real encrypted TLS push, independent VAPID verification, person/resource metadata and unsubscribe
+  ---
+  duration_ms: 186.4605
+  type: 'test'
+  ...
+# Subtest: WebUI notifications recovery: lost accepted transport remains unknown after retry and normal writer reopen
+ok 97 - WebUI notifications recovery: lost accepted transport remains unknown after retry and normal writer reopen
+  ---
+  duration_ms: 119.9501
+  type: 'test'
+  ...
+# Subtest: WebUI people: invitation expiry is rechecked after session preparation before native commit
+ok 98 - WebUI people: invitation expiry is rechecked after session preparation before native commit
+  ---
+  duration_ms: 74.9006
+  type: 'test'
+  ...
+# Subtest: WebUI people: pending redemption is fenced by invitation revocation before allocation commits
+ok 99 - WebUI people: pending redemption is fenced by invitation revocation before allocation commits
+  ---
+  duration_ms: 48.5405
+  type: 'test'
+  ...
+# Subtest: WebUI people: role changes invalidate old checks and a targeted sign-in preserves the person
+ok 100 - WebUI people: role changes invalidate old checks and a targeted sign-in preserves the person
+  ---
+  duration_ms: 71.2753
+  type: 'test'
+  ...
+# Subtest: WebUI people: uncertain native storage closes authority rather than restoring a bootstrap owner
+ok 101 - WebUI people: uncertain native storage closes authority rather than restoring a bootstrap owner
+  ---
+  duration_ms: 40.9273
+  type: 'test'
+  ...
+# Subtest: WebUI people: session rotation is one-time, persists and replaces both bearer and CSRF
+ok 102 - WebUI people: session rotation is one-time, persists and replaces both bearer and CSRF
+  ---
+  duration_ms: 78.3014
+  type: 'test'
+  ...
+# Subtest: WebUI people: malformed nested persisted identity seals the service without rewriting it
+ok 103 - WebUI people: malformed nested persisted identity seals the service without rewriting it
+  ---
+  duration_ms: 38.816
+  type: 'test'
+  ...
+# Subtest: WebUI people: a redeemed viewer sees only its granted resources and never receives a write grant
+ok 104 - WebUI people: a redeemed viewer sees only its granted resources and never receives a write grant
+  ---
+  duration_ms: 86.3586
+  type: 'test'
+  ...
+# Subtest: WebUI people: concurrent one-time redemption grants exactly one session and retries do not mint invitations
+ok 105 - WebUI people: concurrent one-time redemption grants exactly one session and retries do not mint invitations
+  ---
+  duration_ms: 43.0213
+  type: 'test'
+  ...
+# Subtest: WebUI people: normal writer reopen preserves identity and revocation while old bound checks fail
+ok 106 - WebUI people: normal writer reopen preserves identity and revocation while old bound checks fail
+  ---
+  duration_ms: 61.7902
+  type: 'test'
+  ...
+# Subtest: WebUI people: expired authority and revoked invitations cannot regain scope
+ok 107 - WebUI people: expired authority and revoked invitations cannot regain scope
+  ---
+  duration_ms: 56.2949
+  type: 'test'
+  ...
+# Subtest: WebUI schedules: the declared bounded text limit reaches the actual provider unchanged
+ok 108 - WebUI schedules: the declared bounded text limit reaches the actual provider unchanged
+  ---
+  duration_ms: 316.7371
+  type: 'test'
+  ...
+# Subtest: WebUI schedule authority: resource scopes and viewers cannot register native work or claim a different incarnation
+ok 109 - WebUI schedule authority: resource scopes and viewers cannot register native work or claim a different incarnation
+  ---
+  duration_ms: 107.9753
+  type: 'test'
+  ...
+# Subtest: WebUI schedule authority: current driver handover fences a previously committed due input
+ok 110 - WebUI schedule authority: current driver handover fences a previously committed due input
+  ---
+  duration_ms: 630.1254
+  type: 'test'
+  ...
+# Subtest: WebUI schedule authority: a revoked creator cannot release the next scheduled native input
+ok 111 - WebUI schedule authority: a revoked creator cannot release the next scheduled native input
+  ---
+  duration_ms: 604.5152
+  type: 'test'
+  ...
+# Subtest: WebUI schedule uncertainty: losing a real native admission result cannot re-enter it on retry or receipt reads
+ok 112 - WebUI schedule uncertainty: losing a real native admission result cannot re-enter it on retry or receipt reads
+  ---
+  duration_ms: 386.3466
+  type: 'test'
+  ...
+# Subtest: WebUI schedule uncertainty: an unknown native receipt stops 1-run scheduled work
+ok 113 - WebUI schedule uncertainty: an unknown native receipt stops 1-run scheduled work
+  ---
+  duration_ms: 252.5279
+  type: 'test'
+  ...
+# Subtest: WebUI schedule uncertainty: an unknown native receipt stops 2-run scheduled work
+ok 114 - WebUI schedule uncertainty: an unknown native receipt stops 2-run scheduled work
+  ---
+  duration_ms: 237.4658
+  type: 'test'
+  ...
+# Subtest: WebUI schedules: a finite recurring job uses separate native delivery identities and does not reset its consumed quota
+ok 115 - WebUI schedules: a finite recurring job uses separate native delivery identities and does not reset its consumed quota
+  ---
+  duration_ms: 1391.8741
+  type: 'test'
+  ...
+# Subtest: WebUI schedule cancel boundary: a committed cancel intent fences due effects even while the CAS acknowledgement is held
+ok 116 - WebUI schedule cancel boundary: a committed cancel intent fences due effects even while the CAS acknowledgement is held
+  ---
+  duration_ms: 539.4614
+  type: 'test'
+  ...
+# Subtest: WebUI schedule intent uncertainty: loss after the real intent commit never starts work on the original request retry
+ok 117 - WebUI schedule intent uncertainty: loss after the real intent commit never starts work on the original request retry
+  ---
+  duration_ms: 74.8342
+  type: 'test'
+  ...
+# Subtest: WebUI schedules: a real due native job sends once and request reconciliation never re-enters work
+ok 118 - WebUI schedules: a real due native job sends once and request reconciliation never re-enters work
+  ---
+  duration_ms: 738.2822
+  type: 'test'
+  ...
+# Subtest: WebUI schedules: explicit cancel leaves a native terminal receipt and zero provider effects
+ok 119 - WebUI schedules: explicit cancel leaves a native terminal receipt and zero provider effects
+  ---
+  duration_ms: 198.5017
+  type: 'test'
+  ...
+# Subtest: WebUI schedules recovery: a future checkpoint survives a normal writer reopen and keeps the original job and budget
+ok 120 - WebUI schedules recovery: a future checkpoint survives a normal writer reopen and keeps the original job and budget
+  ---
+  duration_ms: 1384.3979
+  type: 'test'
+  ...
+# Subtest: WebUI workspace: shared resource does not share message authority or allow forged actor/request fields
+ok 121 - WebUI workspace: shared resource does not share message authority or allow forged actor/request fields
+  ---
+  duration_ms: 193.8609
+  type: 'test'
+  ...
+# Subtest: WebUI workspace: normal reopen reattaches original creation/admission without allocating or dispatching again
+ok 122 - WebUI workspace: normal reopen reattaches original creation/admission without allocating or dispatching again
+  ---
+  duration_ms: 136.0655
+  type: 'test'
+  ...
+# Subtest: WebUI workspace: cancelled receipt wait preserves native delivery and an explicit follow-up
+ok 123 - WebUI workspace: cancelled receipt wait preserves native delivery and an explicit follow-up
+  ---
+  duration_ms: 173.7901
+  type: 'test'
+  ...
+# Subtest: WebUI workspace: human create/configure/fork stay inside the host-selected profile ceiling
+ok 124 - WebUI workspace: human create/configure/fork stay inside the host-selected profile ceiling
+  ---
+  duration_ms: 183.1809
+  type: 'test'
+  ...
+# Subtest: WebUI workspace: views and actions bind to the real human identity and current resource scope
+ok 125 - WebUI workspace: views and actions bind to the real human identity and current resource scope
+  ---
+  duration_ms: 98.3528
+  type: 'test'
+  ...
+# Subtest: WebUI workspace: a removed profile ceiling during creation produces no native member
+ok 126 - WebUI workspace: a removed profile ceiling during creation produces no native member
+  ---
+  duration_ms: 34.5978
+  type: 'test'
+  ...
+# Subtest: M6 product: an explicitly unselected profile advertises no inherited DevPack tools
+ok 127 - M6 product: an explicitly unselected profile advertises no inherited DevPack tools
+  ---
+  duration_ms: 249.3248
+  type: 'test'
+  ...
+# Subtest: M6 product: executable trusted bootstrap installs optional tools without amplifying model-created descendants
+ok 128 - M6 product: executable trusted bootstrap installs optional tools without amplifying model-created descendants
+  ---
+  duration_ms: 1023.7855
+  type: 'test'
+  ...
+# Subtest: M6 product: normal closed reopen preserves real admission and spent quota without hidden replay
+ok 129 - M6 product: normal closed reopen preserves real admission and spent quota without hidden replay
+  ---
+  duration_ms: 249.2775
+  type: 'test'
+  ...
+# Subtest: M6 product: explicit normal reopen retains authorized dynamic descendants without rewriting the bootstrap roots
+ok 130 - M6 product: explicit normal reopen retains authorized dynamic descendants without rewriting the bootstrap roots
+  ---
+  duration_ms: 415.4879
+  type: 'test'
+  ...
+# Subtest: M6 product: task-bound model-created member cannot receive work after its creating tool task ends
+ok 131 - M6 product: task-bound model-created member cannot receive work after its creating tool task ends
+  ---
+  duration_ms: 312.1296
+  type: 'test'
+  ...
+# Subtest: M6 product: temporary model-created member cannot receive work after its creating tool task ends
+ok 132 - M6 product: temporary model-created member cannot receive work after its creating tool task ends
+  ---
+  duration_ms: 307.1281
+  type: 'test'
+  ...
+# Subtest: M6 product: background member survives its creating tool and requires explicit owner retirement
+ok 133 - M6 product: background member survives its creating tool and requires explicit owner retirement
+  ---
+  duration_ms: 529.6278
+  type: 'test'
+  ...
+# Subtest: M6 product: RPC profile-changing grants are refused before storage when model contributions are enabled
+ok 134 - M6 product: RPC profile-changing grants are refused before storage when model contributions are enabled
+  ---
+  duration_ms: 31.1804
+  type: 'test'
+  ...
+# Subtest: M3 review: invalid reserved Session identity is refused at manager construction: ../../outside-reservation
+ok 135 - M3 review: invalid reserved Session identity is refused at manager construction: ../../outside-reservation
+  ---
+  duration_ms: 21.0838
+  type: 'test'
+  ...
+# Subtest: M3 review: invalid reserved Session identity is refused at manager construction: not-a-uuid
+ok 136 - M3 review: invalid reserved Session identity is refused at manager construction: not-a-uuid
+  ---
+  duration_ms: 7.6366
+  type: 'test'
+  ...
+# Subtest: M3 review: invalid reserved Session identity is refused at manager construction: 91383703-b5ca-441c-81de-72b487a3e2bg
+ok 137 - M3 review: invalid reserved Session identity is refused at manager construction: 91383703-b5ca-441c-81de-72b487a3e2bg
+  ---
+  duration_ms: 5.6558
+  type: 'test'
+  ...
+# Subtest: M3 review: invalid reserved Session identity is refused at manager construction: 91383703-b5ca-441c-81de-72b487a3e2bA
+ok 138 - M3 review: invalid reserved Session identity is refused at manager construction: 91383703-b5ca-441c-81de-72b487a3e2bA
+  ---
+  duration_ms: 6.1725
+  type: 'test'
+  ...
+# Subtest: M3 workers: two real isolated processes admit A2A and graceful reopen preserves identity/dedup
+ok 139 - M3 workers: two real isolated processes admit A2A and graceful reopen preserves identity/dedup
+  ---
+  duration_ms: 1471.7024
+  type: 'test'
+  ...
+# Subtest: M3 workers: controlled process exit and duplicate writer cannot affect a surviving peer
+ok 140 - M3 workers: controlled process exit and duplicate writer cannot affect a surviving peer
+  ---
+  duration_ms: 1413.0434
+  type: 'test'
+  ...
+# Subtest: M3 workers: capacity rejects allocation before starting an extra process
+ok 141 - M3 workers: capacity rejects allocation before starting an extra process
+  ---
+  duration_ms: 412.4888
+  type: 'test'
+  ...
+# Subtest: M3 workers: private IPC rejects unsupported protocol, copied generation and unapproved lifetime
+ok 142 - M3 workers: private IPC rejects unsupported protocol, copied generation and unapproved lifetime
+  ---
+  duration_ms: 421.3354
+  type: 'test'
+  ...
+# Subtest: WebUI appearance: font and size survive reload without sending the draft, with mobile Send beside input mode
+ok 143 - WebUI appearance: font and size survive reload without sending the draft, with mobile Send beside input mode
+  ---
+  duration_ms: 1879.8957
+  type: 'test'
+  ...
+# Subtest: WebUI approval panel: actual browser decisions release or deny original native effects and viewer cannot decide
+ok 144 - WebUI approval panel: actual browser decisions release or deny original native effects and viewer cannot decide
+  ---
+  duration_ms: 2990.2357
+  type: 'test'
+  ...
+# Subtest: WebUI browser contribution: actual UI controls owned page, real frame renders, mobile viewer cannot act
+    # Subtest: recorded wrapper cannot resolve an unconfirmed native browser action
+    ok 1 - recorded wrapper cannot resolve an unconfirmed native browser action
+      ---
+      duration_ms: 143.9554
+      type: 'test'
+      ...
+    1..1
+ok 145 - WebUI browser contribution: actual UI controls owned page, real frame renders, mobile viewer cannot act
+  ---
+  duration_ms: 3424.8621
+  type: 'test'
+  ...
+# Subtest: Browser input driver: Enter activates a plain native button, not only synthetic key handlers
+ok 146 - Browser input driver: Enter activates a plain native button, not only synthetic key handlers
+  ---
+  duration_ms: 547.6381
+  type: 'test'
+  ...
+# Subtest: Browser discovery: explicit executable is canonical and a broken override never falls back
+ok 147 - Browser discovery: explicit executable is canonical and a broken override never falls back
+  ---
+  duration_ms: 5.2503
+  type: 'test'
+  ...
+# Subtest: Browser discovery: PATH finds a real executable and rejects a nonexecutable candidate
+ok 148 - Browser discovery: PATH finds a real executable and rejects a nonexecutable candidate
+  ---
+  duration_ms: 4.5308
+  type: 'test'
+  ...
+# Subtest: WebUI browser: actual adopted workbench, invitation and two isolated users respect live server visibility
+ok 149 - WebUI browser: actual adopted workbench, invitation and two isolated users respect live server visibility
+  ---
+  duration_ms: 1950.3654
+  type: 'test'
+  ...
+# Subtest: WebUI busy browser: after native admission the user can steer and follow up while original inference is blocked
+ok 150 - WebUI busy browser: after native admission the user can steer and follow up while original inference is blocked
+  ---
+  duration_ms: 1167.5068
+  type: 'test'
+  ...
+# Subtest: WebUI collaboration browser: attributed human work, driver handoff and scoped mobile live updates
+ok 151 - WebUI collaboration browser: attributed human work, driver handoff and scoped mobile live updates
+  ---
+  duration_ms: 2719.2263
+  type: 'test'
+  ...
+# Subtest: WebUI collaboration HTTP: scoped attributed events, viewer participation and definite note conflict
+ok 152 - WebUI collaboration HTTP: scoped attributed events, viewer participation and definite note conflict
+  ---
+  duration_ms: 328.7004
+  type: 'test'
+  ...
+# Subtest: WebUI collaboration: a real late read cannot reopen or populate another Conversation
+ok 153 - WebUI collaboration: a real late read cannot reopen or populate another Conversation
+  ---
+  duration_ms: 896.6536
+  type: 'test'
+  ...
+# Subtest: composer focus follows the rounded outer card for pointer and keyboard input
+    # Subtest: home 1440px pointer and Tab
+    ok 1 - home 1440px pointer and Tab
+      ---
+      duration_ms: 130.5853
+      type: 'test'
+      ...
+    # Subtest: home 1440px Tab visibly outlines each split button
+    ok 2 - home 1440px Tab visibly outlines each split button
+      ---
+      duration_ms: 463.5351
+      type: 'test'
+      ...
+    # Subtest: conversation 1440px pointer and Tab
+    ok 3 - conversation 1440px pointer and Tab
+      ---
+      duration_ms: 119.7499
+      type: 'test'
+      ...
+    # Subtest: conversation 1440px Tab visibly outlines each split button
+    ok 4 - conversation 1440px Tab visibly outlines each split button
+      ---
+      duration_ms: 398.8317
+      type: 'test'
+      ...
+    # Subtest: home 390px pointer and Tab
+    ok 5 - home 390px pointer and Tab
+      ---
+      duration_ms: 602.9017
+      type: 'test'
+      ...
+    # Subtest: home 390px Tab visibly outlines each split button
+    ok 6 - home 390px Tab visibly outlines each split button
+      ---
+      duration_ms: 336.7055
+      type: 'test'
+      ...
+    # Subtest: conversation 390px pointer and Tab
+    ok 7 - conversation 390px pointer and Tab
+      ---
+      duration_ms: 577.9734
+      type: 'test'
+      ...
+    # Subtest: conversation 390px Tab visibly outlines each split button
+    ok 8 - conversation 390px Tab visibly outlines each split button
+      ---
+      duration_ms: 319.8039
+      type: 'test'
+      ...
+    # Subtest: Stop, Steer Send and mode retain separate focus while a real turn runs
+    ok 9 - Stop, Steer Send and mode retain separate focus while a real turn runs
+      ---
+      duration_ms: 345.6958
+      type: 'test'
+      ...
+    1..9
+ok 154 - composer focus follows the rounded outer card for pointer and keyboard input
+  ---
+  duration_ms: 4215.9635
+  type: 'test'
+  ...
+# Subtest: WebUI composer: a refused send explains itself in every mode, without moving the card, and Stop owns the primary slot
+ok 155 - WebUI composer: a refused send explains itself in every mode, without moving the card, and Stop owns the primary slot
+  ---
+  duration_ms: 927.5115
+  type: 'test'
+  ...
+# Subtest: WebUI executable: trusted ESM root composes the real optional Agent and WebUI facets
+ok 156 - WebUI executable: trusted ESM root composes the real optional Agent and WebUI facets
+  ---
+  duration_ms: 1951.471
+  type: 'test'
+  ...
+# Subtest: WebUI ESM configuration: finite source selection, malformed exports, opaque failures and redacted output
+ok 157 - WebUI ESM configuration: finite source selection, malformed exports, opaque failures and redacted output
+  ---
+  duration_ms: 2299.4374
+  type: 'test'
+  ...
+# Subtest: WebUI configuration browser: compact model choice changes provider input while mobile viewer cannot configure or read Session totals
+ok 158 - WebUI configuration browser: compact model choice changes provider input while mobile viewer cannot configure or read Session totals
+  ---
+  duration_ms: 1992.3456
+  type: 'test'
+  ...
+# D:\\Projects\\pakka-wt\\webui-p0\\artifacts\\integration\\settings-screenshots
+# Subtest: WebUI settings recovery: lost configure response locks mutations and explicit workspace reload only reads the new incarnation
+ok 159 - WebUI settings recovery: lost configure response locks mutations and explicit workspace reload only reads the new incarnation
+  ---
+  duration_ms: 993.6639
+  type: 'test'
+  ...
+# Subtest: WebUI settings recovery: a real delayed response from the old resource cannot populate the replacement sheet
+ok 160 - WebUI settings recovery: a real delayed response from the old resource cannot populate the replacement sheet
+  ---
+  duration_ms: 825.1266
+  type: 'test'
+  ...
+# Subtest: Home create lost before-send: navigation and reconciliation never replace an uncertain admission
+ok 161 - Home create lost before-send: navigation and reconciliation never replace an uncertain admission
+  ---
+  duration_ms: 838.0693
+  type: 'test'
+  ...
+# Subtest: Home create lost after-commit: navigation and reconciliation never replace an uncertain admission
+ok 162 - Home create lost after-commit: navigation and reconciliation never replace an uncertain admission
+  ---
+  duration_ms: 833.1958
+  type: 'test'
+  ...
+# Subtest: WebUI private settings browser: explicit replacement and clear affect actual provider auth without round-tripping or browser persistence
+ok 163 - WebUI private settings browser: explicit replacement and clear affect actual provider auth without round-tripping or browser persistence
+  ---
+  duration_ms: 2138.4841
+  type: 'test'
+  ...
+# D:\\Projects\\pakka-wt\\webui-p0\\artifacts\\integration\\private-settings-screenshots
+# Subtest: WebUI private settings recovery: a lost committed response clears the input and only reads state before another explicit change
+ok 164 - WebUI private settings recovery: a lost committed response clears the input and only reads state before another explicit change
+  ---
+  duration_ms: 1048.6489
+  type: 'test'
+  ...
+# Subtest: WebUI private HTTP: real product preserves the host resolver, scopes replace/clear, never returns secrets and reopens cleared
+ok 165 - WebUI private HTTP: real product preserves the host resolver, scopes replace/clear, never returns secrets and reopens cleared
+  ---
+  duration_ms: 550.002
+  type: 'test'
+  ...
+# Subtest: reference frontend adoption: original home anatomy, palette, real conversation
+ok 166 - reference frontend adoption: original home anatomy, palette, real conversation
+  ---
+  duration_ms: 2407.1804
+  type: 'test'
+  ...
+# Subtest: Devin palette: keyboard/search and extension settings preserve the dialog handoff on desktop and phone
+ok 167 - Devin palette: keyboard/search and extension settings preserve the dialog handoff on desktop and phone
+  ---
+  duration_ms: 1320.3219
+  type: 'test'
+  ...
+# Subtest: Devin reference: exact pinned LF CSS, protected from checkout/formatting and no legacy stylesheet chain
+ok 168 - Devin reference: exact pinned LF CSS, protected from checkout/formatting and no legacy stylesheet chain
+  ---
+  duration_ms: 3.2443
+  type: 'test'
+  ...
+# Subtest: Devin frontend: home inherits the selected model; responsive navigation preserves explicit native input
+ok 169 - Devin frontend: home inherits the selected model; responsive navigation preserves explicit native input
+  ---
+  duration_ms: 3574.8372
+  type: 'test'
+  ...
+# Subtest: WebUI error history: a cleared-credential failure stays readable after restart without replay
+ok 170 - WebUI error history: a cleared-credential failure stays readable after restart without replay
+  ---
+  duration_ms: 1138.8774
+  type: 'test'
+  ...
+# Subtest: WebUI SSE: normal large frame handles backpressure and remains subscribed for the next real commit
+ok 171 - WebUI SSE: normal large frame handles backpressure and remains subscribed for the next real commit
+  ---
+  duration_ms: 214.1309
+  type: 'test'
+  ...
+# Subtest: WebUI SSE: initial scoped snapshot and subsequent committed update cross the same real authorization boundary
+ok 172 - WebUI SSE: initial scoped snapshot and subsequent committed update cross the same real authorization boundary
+  ---
+  duration_ms: 258.9199
+  type: 'test'
+  ...
+# Subtest: WebUI SSE: reconnect with stale cursor explicitly resnapshots current authorized state
+ok 173 - WebUI SSE: reconnect with stale cursor explicitly resnapshots current authorized state
+  ---
+  duration_ms: 87.6084
+  type: 'test'
+  ...
+# Subtest: WebUI executable starts through the symlinked npm bin path without exposing the owner token
+ok 174 - WebUI executable starts through the symlinked npm bin path without exposing the owner token
+  ---
+  duration_ms: 612.6741
+  type: 'test'
+  ...
+# Subtest: Importing the WebUI executable does not start it
+ok 175 - Importing the WebUI executable does not start it
+  ---
+  duration_ms: 448.8861
+  type: 'test'
+  ...
+# Subtest: Extension browser: unchanged GUI-only and settings packages use public slots, one Preact, shared slash/button dispatch and private state
+ok 176 - Extension browser: unchanged GUI-only and settings packages use public slots, one Preact, shared slash/button dispatch and private state
+  ---
+  duration_ms: 1583.4489
+  type: 'test'
+  ...
+# Subtest: Extension client: original-result reads reject a different extension, request or actor without replay
+ok 177 - Extension client: original-result reads reject a different extension, request or actor without replay
+  ---
+  duration_ms: 37.3476
+  type: 'test'
+  ...
+# Subtest: Extension client: lost/malformed or mismatched response stays unknown and does not replay a write
+ok 178 - Extension client: lost/malformed or mismatched response stays unknown and does not replay a write
+  ---
+  duration_ms: 6.8925
+  type: 'test'
+  ...
+# Subtest: Extension product config: explicit trusted roots/facets survive finite decoding; arbitrary runtime/service injection is refused
+ok 179 - Extension product config: explicit trusted roots/facets survive finite decoding; arbitrary runtime/service injection is refused
+  ---
+  duration_ms: 1.4779
+  type: 'test'
+  ...
+# Subtest: Extension contract: GUI-only registration is inert, closed and frozen without backend/model requirements
+ok 180 - Extension contract: GUI-only registration is inert, closed and frozen without backend/model requirements
+  ---
+  duration_ms: 1.1209
+  type: 'test'
+  ...
+# Subtest: Extension contract: unsafe paths, unbounded schemas and missing command handlers cannot become registrations
+ok 181 - Extension contract: unsafe paths, unbounded schemas and missing command handlers cannot become registrations
+  ---
+  duration_ms: 0.4631
+  type: 'test'
+  ...
+# Subtest: Extension contract: per-action finite input rejects unknown fields and oversized/nested non-JSON values
+ok 182 - Extension contract: per-action finite input rejects unknown fields and oversized/nested non-JSON values
+  ---
+  duration_ms: 1.0612
+  type: 'test'
+  ...
+# Subtest: Extension backend: actual scoped CAS setting and display-only card are reconciled; private user setting never becomes model input
+ok 183 - Extension backend: actual scoped CAS setting and display-only card are reconciled; private user setting never becomes model input
+  ---
+  duration_ms: 211.6177
+  type: 'test'
+  ...
+# Subtest: Extension backend: a real native effect then failure remains unknown and identical retry never re-enters the handler
+ok 184 - Extension backend: a real native effect then failure remains unknown and identical retry never re-enters the handler
+  ---
+  duration_ms: 138.3287
+  type: 'test'
+  ...
+# Subtest: Extension backend: viewer cannot mutate and stale generations or modified assets are refused
+ok 185 - Extension backend: viewer cannot mutate and stale generations or modified assets are refused
+  ---
+  duration_ms: 92.779
+  type: 'test'
+  ...
+# Subtest: Extension backend: normal writer reopen reconciles done/unknown records and user settings without re-executing native effects
+ok 186 - Extension backend: normal writer reopen reconciles done/unknown records and user settings without re-executing native effects
+  ---
+  duration_ms: 188.4218
+  type: 'test'
+  ...
+# Subtest: Extension backend: revocation while a declared service awaits prevents the later controlled display effect
+ok 187 - Extension backend: revocation while a declared service awaits prevents the later controlled display effect
+  ---
+  duration_ms: 98.7081
+  type: 'test'
+  ...
+# Subtest: Extension backend: user settings and operation receipts cannot be read using another authorized person's session
+ok 188 - Extension backend: user settings and operation receipts cannot be read using another authorized person's session
+  ---
+  duration_ms: 97.4633
+  type: 'test'
+  ...
+# Subtest: Extension HTTP: current person/resource/CSRF bind calls and accepted assets; viewer and private paths have no effect
+ok 189 - Extension HTTP: current person/resource/CSRF bind calls and accepted assets; viewer and private paths have no effect
+  ---
+  duration_ms: 363.9555
+  type: 'test'
+  ...
+# Subtest: Extension HTTP: real effect with lost handler result stays unknown through public client; disable seals old generation
+ok 190 - Extension HTTP: real effect with lost handler result stays unknown through public client; disable seals old generation
+  ---
+  duration_ms: 294.7928
+  type: 'test'
+  ...
+# Subtest: Extension ingress: an approved non-MAS service verifies exact raw bytes without Cookie authority or model dispatch
+ok 191 - Extension ingress: an approved non-MAS service verifies exact raw bytes without Cookie authority or model dispatch
+  ---
+  duration_ms: 138.6386
+  type: 'test'
+  ...
+# Subtest: Extension ingress: finite bodies, declared service, transport Origin and signatures fail before any target write
+ok 192 - Extension ingress: finite bodies, declared service, transport Origin and signatures fail before any target write
+  ---
+  duration_ms: 114.2407
+  type: 'test'
+  ...
+# Subtest: Extension ingress: closing a backend generation blocks a waiting real disk effect and prevents a later invocation
+ok 193 - Extension ingress: closing a backend generation blocks a waiting real disk effect and prevents a later invocation
+  ---
+  duration_ms: 156.4139
+  type: 'test'
+  ...
+# Subtest: Extension ingress: a finite deadline returns unknown and a late handler cannot write after its live check expires
+ok 194 - Extension ingress: a finite deadline returns unknown and a late handler cannot write after its live check expires
+  ---
+  duration_ms: 139.8457
+  type: 'test'
+  ...
+# Subtest: Extension ingress: mutating the host's original route cannot expand its approved bound or replace its handler
+ok 195 - Extension ingress: mutating the host's original route cannot expand its approved bound or replace its handler
+  ---
+  duration_ms: 87.7303
+  type: 'test'
+  ...
+# Subtest: Extension initialization: failed import stays unavailable across native writer reopen until explicit reload
+ok 196 - Extension initialization: failed import stays unavailable across native writer reopen until explicit reload
+  ---
+  duration_ms: 177.2278
+  type: 'test'
+  ...
+# Subtest: Extension initialization: writer closes after a real HTTP effect while import is pending; reopen does not re-enter or await it
+ok 197 - Extension initialization: writer closes after a real HTTP effect while import is pending; reopen does not re-enter or await it
+  ---
+  duration_ms: 69.2829
+  type: 'test'
+  ...
+# Subtest: Extension interface: old callbacks cannot close/notify/reopen a replacement; disable removes only its public UI
+ok 198 - Extension interface: old callbacks cannot close/notify/reopen a replacement; disable removes only its public UI
+  ---
+  duration_ms: 2894.9133
+  type: 'test'
+  ...
+# Subtest: WebUI service assembly: trusted factory receives the existing writer/identity and original owner on normal reopen
+ok 199 - WebUI service assembly: trusted factory receives the existing writer/identity and original owner on normal reopen
+  ---
+  duration_ms: 153.1176
+  type: 'test'
+  ...
+# Subtest: Extension staging: a batch identity/command collision is rejected before any backend module effect
+ok 200 - Extension staging: a batch identity/command collision is rejected before any backend module effect
+  ---
+  duration_ms: 118.6631
+  type: 'test'
+  ...
+# Subtest: Extension staging: a failed backend import seals the registration as unknown until explicit successful reload
+ok 201 - Extension staging: a failed backend import seals the registration as unknown until explicit successful reload
+  ---
+  duration_ms: 121.5131
+  type: 'test'
+  ...
+# Subtest: Extension staging: repeated enable/disable retains a finite discoverable generation and refuses public junctions
+ok 202 - Extension staging: repeated enable/disable retains a finite discoverable generation and refuses public junctions
+  ---
+  duration_ms: 184.2221
+  type: 'test'
+  ...
+# Subtest: Extension facets: a client-only entry is served without loading backend or requiring a Web interface
+ok 203 - Extension facets: a client-only entry is served without loading backend or requiring a Web interface
+  ---
+  duration_ms: 65.2964
+  type: 'test'
+  ...
+# Subtest: Extension facets: persisted disable does not execute its backend on host reopen
+ok 204 - Extension facets: persisted disable does not execute its backend on host reopen
+  ---
+  duration_ms: 107.2954
+  type: 'test'
+  ...
+# Subtest: WebUI files browser: real edit conflicts keep drafts while a mobile viewer decodes an image without write authority
+ok 205 - WebUI files browser: real edit conflicts keep drafts while a mobile viewer decodes an image without write authority
+  ---
+  duration_ms: 2256.0137
+  type: 'test'
+  ...
+# Subtest: WebUI files browser: public extension performs actual edits upload diff branch/worktree effects without hidden model input
+ok 206 - WebUI files browser: public extension performs actual edits upload diff branch/worktree effects without hidden model input
+  ---
+  duration_ms: 4786.6932
+  type: 'test'
+  ...
+# Subtest: WebUI file contribution: disable after real intent commit prevents a late disk effect
+ok 207 - WebUI file contribution: disable after real intent commit prevents a late disk effect
+  ---
+  duration_ms: 208.8956
+  type: 'test'
+  ...
+# Subtest: WebUI file contribution: abort after real intent commit prevents a late disk effect
+ok 208 - WebUI file contribution: abort after real intent commit prevents a late disk effect
+  ---
+  duration_ms: 155.9114
+  type: 'test'
+  ...
+# Subtest: WebUI history browser: explicit earlier pages remain searchable across live updates without implicit inference
+ok 209 - WebUI history browser: explicit earlier pages remain searchable across live updates without implicit inference
+  ---
+  duration_ms: 2427.4116
+  type: 'test'
+  ...
+# Subtest: WebUI hooks browser: human setup, signed real HTTP, key rotation, private mobile viewer and removal use ordinary extension slots
+ok 210 - WebUI hooks browser: human setup, signed real HTTP, key rotation, private mobile viewer and removal use ordinary extension slots
+  ---
+  duration_ms: 2309.989
+  type: 'test'
+  ...
+# D:\\Projects\\pakka-wt\\webui-p0\\artifacts\\integration\\hook-screenshots
+# Subtest: WebUI hooks busy product: native queued input survives completed HTTP and extension disable while new ingress is refused
+ok 211 - WebUI hooks busy product: native queued input survives completed HTTP and extension disable while new ingress is refused
+  ---
+  duration_ms: 353.2589
+  type: 'test'
+  ...
+# Subtest: WebUI hooks private read: a real setup response delayed across panel replacement cannot reveal a key in the new instance
+ok 212 - WebUI hooks private read: a real setup response delayed across panel replacement cannot reveal a key in the new instance
+  ---
+  duration_ms: 1057.4698
+  type: 'test'
+  ...
+# Subtest: WebUI hooks recovery: lost response is checked read-only after panel reopen without creating another hook
+ok 213 - WebUI hooks recovery: lost response is checked read-only after panel reopen without creating another hook
+  ---
+  duration_ms: 1121.9862
+  type: 'test'
+  ...
+# Subtest: WebUI hooks recovery: lost handler is checked read-only after panel reopen without creating another hook
+ok 214 - WebUI hooks recovery: lost handler is checked read-only after panel reopen without creating another hook
+  ---
+  duration_ms: 1050.3382
+  type: 'test'
+  ...
+# Subtest: WebUI hooks mobile operator: generic setup fits the real phone view without persisting its secret address or triggering a model
+ok 215 - WebUI hooks mobile operator: generic setup fits the real phone view without persisting its secret address or triggering a model
+  ---
+  duration_ms: 2089.781
+  type: 'test'
+  ...
+# D:\\Projects\\pakka-wt\\webui-p0\\artifacts\\integration\\hook-screenshots
+# Subtest: WebUI HTTP: real cookie workbench negotiates v2, records human card, admits native work and recovers its receipt
+ok 216 - WebUI HTTP: real cookie workbench negotiates v2, records human card, admits native work and recovers its receipt
+  ---
+  duration_ms: 251.6978
+  type: 'test'
+  ...
+# Subtest: WebUI HTTP: authentication, host/origin/CSRF and finite envelopes fence the real native effects
+ok 217 - WebUI HTTP: authentication, host/origin/CSRF and finite envelopes fence the real native effects
+  ---
+  duration_ms: 120.841
+  type: 'test'
+  ...
+# Subtest: WebUI HTTP: one-time invited viewer receives only its authorized resource and cannot drive or retain revoked access
+ok 218 - WebUI HTTP: one-time invited viewer receives only its authorized resource and cannot drive or retain revoked access
+  ---
+  duration_ms: 148.5857
+  type: 'test'
+  ...
+# Subtest: WebUI CSP: import maps execute with LF, CRLF and CR source newlines
+ok 219 - WebUI CSP: import maps execute with LF, CRLF and CR source newlines
+  ---
+  duration_ms: 885.0875
+  type: 'test'
+  ...
+# Subtest: Conversation configuration browser: compact model picker and title-only directory navigation remain independent on 3:5 mobile
+ok 220 - Conversation configuration browser: compact model picker and title-only directory navigation remain independent on 3:5 mobile
+  ---
+  duration_ms: 2372.2676
+  type: 'test'
+  ...
+# Subtest: WebUI failed input: an unavailable recipient refuses new admission while its original receipt and spent attempts remain
+ok 221 - WebUI failed input: an unavailable recipient refuses new admission while its original receipt and spent attempts remain
+  ---
+  duration_ms: 239.9156
+  type: 'test'
+  ...
+# Subtest: WebUI failed input browser: a known refusal explains how to continue without offering a meaningless retry or replaying the original
+ok 222 - WebUI failed input browser: a known refusal explains how to continue without offering a meaningless retry or replaying the original
+  ---
+  duration_ms: 1166.4272
+  type: 'test'
+  ...
+# Subtest: WebUI executable: explicit config starts real product and writes its owner link only to the designated private file
+ok 223 - WebUI executable: explicit config starts real product and writes its owner link only to the designated private file
+  ---
+  duration_ms: 588.7103
+  type: 'test'
+  ...
+# Subtest: WebUI executable: unknown configuration, unsafe proxy shortcut and existing owner file fail before storage or provider effects
+ok 224 - WebUI executable: unknown configuration, unsafe proxy shortcut and existing owner file fail before storage or provider effects
+  ---
+  duration_ms: 1542.2393
+  type: 'test'
+  ...
+# Subtest: MAS facet removal: the fixed approved profile set reopens, explicit owner configuration removes current tools and preserves original history/receipt
+ok 225 - MAS facet removal: the fixed approved profile set reopens, explicit owner configuration removes current tools and preserves original history/receipt
+  ---
+  duration_ms: 487.6957
+  type: 'test'
+  ...
+# Subtest: MAS Board: busy native steer/follow-up and confirmed abort keep the persistent member
+ok 226 - MAS Board: busy native steer/follow-up and confirmed abort keep the persistent member
+  ---
+  duration_ms: 1945.6223
+  type: 'test'
+  ...
+# Subtest: MAS Agent controls are a separate dismissible sheet at 1440x900
+ok 227 - MAS Agent controls are a separate dismissible sheet at 1440x900
+  ---
+  duration_ms: 1336.1592
+  type: 'test'
+  ...
+# Subtest: MAS Agent controls are a separate dismissible sheet at 360x600
+ok 228 - MAS Agent controls are a separate dismissible sheet at 360x600
+  ---
+  duration_ms: 1890.4909
+  type: 'test'
+  ...
+# Subtest: MAS Agent controls are a separate dismissible sheet at 390x650
+ok 229 - MAS Agent controls are a separate dismissible sheet at 390x650
+  ---
+  duration_ms: 1919.6899
+  type: 'test'
+  ...
+# Subtest: MAS retired Agents can be hidden and restored across reload without losing exchanges or history
+ok 230 - MAS retired Agents can be hidden and restored across reload without losing exchanges or history
+  ---
+  duration_ms: 1556.643
+  type: 'test'
+  ...
+# Subtest: MAS controls preserve a lost-response operation across panel reopen and reconcile without resending
+ok 231 - MAS controls preserve a lost-response operation across panel reopen and reconcile without resending
+  ---
+  duration_ms: 1107.2443
+  type: 'test'
+  ...
+# Subtest: MAS Board: server-filtered mobile reader; removing UI preserves admitted work, members, history and normal reopen
+ok 232 - MAS Board: server-filtered mobile reader; removing UI preserves admitted work, members, history and normal reopen
+  ---
+  duration_ms: 3098.7692
+  type: 'test'
+  ...
+# Subtest: MAS Board: public plugin observes real model-created child and human controls retain its native lifetime/owner
+ok 233 - MAS Board: public plugin observes real model-created child and human controls retain its native lifetime/owner
+  ---
+  duration_ms: 2900.9373
+  type: 'test'
+  ...
+# Subtest: MAS frontend adoption: one workspace header, Graph/Activity/Agents and contextual inspector
+ok 234 - MAS frontend adoption: one workspace header, Graph/Activity/Agents and contextual inspector
+  ---
+  duration_ms: 1547.1671
+  type: 'test'
+  ...
+# Subtest: MAS resources: common Conversation navigation preserves MAS ownership, model admission and current read scope
+ok 235 - MAS resources: common Conversation navigation preserves MAS ownership, model admission and current read scope
+  ---
+  duration_ms: 352.2415
+  type: 'test'
+  ...
+# Subtest: Team waits for its stylesheet and fails closed when it is loaded
+ok 236 - Team waits for its stylesheet and fails closed when it is loaded
+  ---
+  duration_ms: 1217.159
+  type: 'test'
+  ...
+# Subtest: Team waits for its stylesheet and fails closed when it is failed
+ok 237 - Team waits for its stylesheet and fails closed when it is failed
+  ---
+  duration_ms: 751.9199
+  type: 'test'
+  ...
+# Subtest: WebUI memory browser: real sender proposal, owner approval, preserved conflict draft, current provider context and mobile read-only view
+ok 238 - WebUI memory browser: real sender proposal, owner approval, preserved conflict draft, current provider context and mobile read-only view
+  ---
+  duration_ms: 4035.7099
+  type: 'test'
+  ...
+# D:\\Projects\\pakka-wt\\webui-p0\\artifacts\\integration\\memory-screenshots
+# Subtest: WebUI memory recovery: a lost browser-response is resolved from the original committed mutation without another write
+ok 239 - WebUI memory recovery: a lost browser-response is resolved from the original committed mutation without another write
+  ---
+  duration_ms: 1080.9114
+  type: 'test'
+  ...
+# Subtest: WebUI memory recovery: a lost backend-response is resolved from the original committed mutation without another write
+ok 240 - WebUI memory recovery: a lost backend-response is resolved from the original committed mutation without another write
+  ---
+  duration_ms: 1005.9772
+  type: 'test'
+  ...
+# Subtest: WebUI mobile sidebar: outside click and Escape return to the same conversation without sending the draft
+ok 241 - WebUI mobile sidebar: outside click and Escape return to the same conversation without sending the draft
+  ---
+  duration_ms: 2164.4693
+  type: 'test'
+  ...
+# Subtest: Approved directory roots: host JSON admits project trees without combination profiles and refuses changed recovery authority
+ok 242 - Approved directory roots: host JSON admits project trees without combination profiles and refuses changed recovery authority
+  ---
+  duration_ms: 182.7741
+  type: 'test'
+  ...
+# Subtest: WebUI model configuration: approved JSON profiles reach the real product provider; extra credential/endpoint fields stay rejected
+ok 243 - WebUI model configuration: approved JSON profiles reach the real product provider; extra credential/endpoint fields stay rejected
+  ---
+  duration_ms: 158.7075
+  type: 'test'
+  ...
+# Subtest: Model index: small catalogs support fuzzy input, cyclic navigation, empty results and cancellation
+ok 244 - Model index: small catalogs support fuzzy input, cyclic navigation, empty results and cancellation
+  ---
+  duration_ms: 803.9533
+  type: 'test'
+  ...
+# Subtest: Model index: long lists retain visible input/index and ranked keyboard confirmation reaches the real provider
+ok 245 - Model index: long lists retain visible input/index and ranked keyboard confirmation reaches the real provider
+  ---
+  duration_ms: 1697.8064
+  type: 'test'
+  ...
+# Subtest: Model picker: larger approved catalog is searchable and keyboard selection changes neither cwd nor provider budget
+ok 246 - Model picker: larger approved catalog is searchable and keyboard selection changes neither cwd nor provider budget
+  ---
+  duration_ms: 815.0852
+  type: 'test'
+  ...
+# Subtest: WebUI navigation browser: rename/archive/search/restore, reviewed resend, real fork and keyboard history have actual subsequent effects
+ok 247 - WebUI navigation browser: rename/archive/search/restore, reviewed resend, real fork and keyboard history have actual subsequent effects
+  ---
+  duration_ms: 1556.5086
+  type: 'test'
+  ...
+# Subtest: WebUI metadata single writer: competing CAS admits one; finite capacity preserves original receipts and never prunes/replays
+ok 248 - WebUI metadata single writer: competing CAS admits one; finite capacity preserves original receipts and never prunes/replays
+  ---
+  duration_ms: 1644.8328
+  type: 'test'
+  ...
+# Subtest: WebUI navigation metadata: real HTTP CAS, original receipts, archive/restore and current role/resource boundaries
+ok 249 - WebUI navigation metadata: real HTTP CAS, original receipts, archive/restore and current role/resource boundaries
+  ---
+  duration_ms: 386.4697
+  type: 'test'
+  ...
+# Subtest: WebUI navigation metadata: malformed fields, stale incarnation and revoked actors cannot mutate state
+ok 250 - WebUI navigation metadata: malformed fields, stale incarnation and revoked actors cannot mutate state
+  ---
+  duration_ms: 233.2287
+  type: 'test'
+  ...
+# Subtest: WebUI original-operation lookup is read-only: absent and committed metadata/create/fork never re-enter a mutation
+ok 251 - WebUI original-operation lookup is read-only: absent and committed metadata/create/fork never re-enter a mutation
+  ---
+  duration_ms: 261.6544
+  type: 'test'
+  ...
+# Subtest: WebUI metadata browser lost before-send: closed/reopened sheet only reads original result, never repeats or replaces the mutation
+ok 252 - WebUI metadata browser lost before-send: closed/reopened sheet only reads original result, never repeats or replaces the mutation
+  ---
+  duration_ms: 774.95
+  type: 'test'
+  ...
+# Subtest: WebUI metadata browser lost after-commit: closed/reopened sheet only reads original result, never repeats or replaces the mutation
+ok 253 - WebUI metadata browser lost after-commit: closed/reopened sheet only reads original result, never repeats or replaces the mutation
+  ---
+  duration_ms: 788.0742
+  type: 'test'
+  ...
+# Subtest: WebUI navigation normal reopen: metadata and original receipt persist without rewriting history, effects or spent attempts
+ok 254 - WebUI navigation normal reopen: metadata and original receipt persist without rewriting history, effects or spent attempts
+  ---
+  duration_ms: 169.3189
+  type: 'test'
+  ...

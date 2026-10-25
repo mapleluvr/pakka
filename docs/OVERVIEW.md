@@ -12,6 +12,8 @@ Pakka 将 Pi 的 Conversation、权限、持久化和 MAS 服务接到可选的 
 
 用户实查后的 [排版、SVG、标题与焦点整检](verification/WEBUI-TYPOGRAPHY-SVG.md)已固定产品及测试候选；真实浏览器覆盖主次文字、凭据、扩展公共原语、麦克风与外层圆角焦点，全量 638/636 pass/0 fail/2 skip。后续发送组 Tab 描边被裁到接缝的问题另见[组合按钮焦点修正](verification/WEBUI-SPLIT-BUTTON-FOCUS.md)，已覆盖真实像素四侧与受影响输入路径。A 原文及监督者逐项实测已封存；旧候选的指定 B 模型未注册、独立桌面工具缺失保留原 BLOCKED。2026-10-25 操作者取消本会话后续独立复核，组合按钮候选按自检与实际回归记录交付，已停止工作流。用户提出的独立创建弹窗及 Session → Conversation 关系由 [创建方向任务](../openspec/changes/improve-webui-navigation-and-local-recovery/tasks.md#43-session--conversation-创建方向2026-10-24) 承接，当前单 runtime 的 create 仍为新 Conversation。
 
+按用户指定的 Pi TUI `/model` 交互，Model Selection 已加入常驻模糊检索、保留输入焦点的循环候选索引、Enter/Escape 与位置计数；保持批准 catalog 和模型独立配置边界。候选、真实 provider/浏览器结果和预览见[模型索引记录](verification/WEBUI-MODEL-INDEX.md)，由[统一 tasks §4.4](../openspec/changes/improve-webui-navigation-and-local-recovery/tasks.md#44-model-selection-检索索引2026-10-25)承接；不混入 Session 创建与设置路由。
+
 设置直达、命名及[规范采用与首批排版/焦点改进](changes/webui-frontend-guidelines.md)已实现；结果留在[指南 tasks](../openspec/changes/adopt-webui-frontend-guidelines/tasks.md)和[设置 tasks](../openspec/changes/correct-webui-settings-and-name/tasks.md)。后续队列由上述统一 tasks 承接。
 
 生产 package.json/lock 已选择 Pi AI/Chord/Telemetry `1.4.0` 与捆绑的 Durable `1.4.0-pakka.1`；[cohort 任务](../openspec/changes/prepare-durable-1-4-0-patch/tasks.md#4-后续产品接入)和追加兼容性账本记录本次接入与存储范围。开发 verification 的选用见[交付声明](state/delivery.md#verification-的选用)。

@@ -1,0 +1,64 @@
+TAP version 13
+# Subtest: WebUI transcript: one real tool keeps its identity, expanded card and result across the live/committed handoff
+ok 1 - WebUI transcript: one real tool keeps its identity, expanded card and result across the live/committed handoff
+  ---
+  duration_ms: 991.4599
+  type: 'test'
+  ...
+# Subtest: WebUI transcript: a native tool error remains identifiable in its collapsed result card
+ok 2 - WebUI transcript: a native tool error remains identifiable in its collapsed result card
+  ---
+  duration_ms: 840.977
+  type: 'test'
+  ...
+# Subtest: WebUI transcript: an expanded streamed tool call survives its first committed entry
+ok 3 - WebUI transcript: an expanded streamed tool call survives its first committed entry
+  ---
+  duration_ms: 1070.0238
+  type: 'test'
+  ...
+# Subtest: WebUI transcript: valid image parts and a truncated tool declaration remain visible through real reopen and paging
+ok 4 - WebUI transcript: valid image parts and a truncated tool declaration remain visible through real reopen and paging
+  ---
+  duration_ms: 765.8735
+  type: 'test'
+  ...
+# Subtest: WebUI transcript: real chunked generation exposes a live Streaming message, then clears it
+ok 5 - WebUI transcript: real chunked generation exposes a live Streaming message, then clears it
+  ---
+  duration_ms: 983.8399
+  type: 'test'
+  ...
+# Subtest: WebUI transcript: inherited tool results do not swallow a different live call with the same provider id
+ok 6 - WebUI transcript: inherited tool results do not swallow a different live call with the same provider id
+  ---
+  duration_ms: 1126.5374
+  type: 'test'
+  ...
+# Subtest: WebUI receipt: a known policy refusal is blocked, not mislabeled as a permission denial
+ok 7 - WebUI receipt: a known policy refusal is blocked, not mislabeled as a permission denial
+  ---
+  duration_ms: 951.1438
+  type: 'test'
+  ...
+# Subtest: WebUI receipt: a real host unknown is needs review through a registered Conversation source
+ok 8 - WebUI receipt: a real host unknown is needs review through a registered Conversation source
+  ---
+  duration_ms: 819.2774
+  type: 'test'
+  ...
+# Subtest: WebUI receipt: withdrawing queued input is not described as a policy refusal
+ok 9 - WebUI receipt: withdrawing queued input is not described as a policy refusal
+  ---
+  duration_ms: 940.9865
+  type: 'test'
+  ...
+1..9
+# tests 9
+# suites 0
+# pass 9
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 9304.2601

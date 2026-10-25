@@ -1,0 +1,227 @@
+TAP version 13
+# Subtest: composer focus follows the rounded outer card for pointer and keyboard input
+    # Subtest: home 1440px pointer and Tab
+    ok 1 - home 1440px pointer and Tab
+      ---
+      duration_ms: 125.7488
+      type: 'test'
+      ...
+    # Subtest: home 1440px Tab visibly outlines each split button
+    ok 2 - home 1440px Tab visibly outlines each split button
+      ---
+      duration_ms: 461.9871
+      type: 'test'
+      ...
+    # Subtest: conversation 1440px pointer and Tab
+    ok 3 - conversation 1440px pointer and Tab
+      ---
+      duration_ms: 103.7474
+      type: 'test'
+      ...
+    # Subtest: conversation 1440px Tab visibly outlines each split button
+    ok 4 - conversation 1440px Tab visibly outlines each split button
+      ---
+      duration_ms: 401.137
+      type: 'test'
+      ...
+    # Subtest: home 390px pointer and Tab
+    ok 5 - home 390px pointer and Tab
+      ---
+      duration_ms: 640.4163
+      type: 'test'
+      ...
+    # Subtest: home 390px Tab visibly outlines each split button
+    ok 6 - home 390px Tab visibly outlines each split button
+      ---
+      duration_ms: 334.1454
+      type: 'test'
+      ...
+    # Subtest: conversation 390px pointer and Tab
+    ok 7 - conversation 390px pointer and Tab
+      ---
+      duration_ms: 581.4288
+      type: 'test'
+      ...
+    # Subtest: conversation 390px Tab visibly outlines each split button
+    ok 8 - conversation 390px Tab visibly outlines each split button
+      ---
+      duration_ms: 343.1434
+      type: 'test'
+      ...
+    # Subtest: Stop, Steer Send and mode retain separate focus while a real turn runs
+    ok 9 - Stop, Steer Send and mode retain separate focus while a real turn runs
+      ---
+      duration_ms: 301.9154
+      type: 'test'
+      ...
+    1..9
+ok 1 - composer focus follows the rounded outer card for pointer and keyboard input
+  ---
+  duration_ms: 4244.9931
+  type: 'test'
+  ...
+# Subtest: WebUI configuration browser: compact model choice changes provider input while mobile viewer cannot configure or read Session totals
+ok 2 - WebUI configuration browser: compact model choice changes provider input while mobile viewer cannot configure or read Session totals
+  ---
+  duration_ms: 1956.7704
+  type: 'test'
+  ...
+# D:\\Projects\\pakka-wt\\webui-p0\\docs\\.temp\\model-index\\final\\settings-screenshots
+# Subtest: WebUI settings recovery: lost configure response locks mutations and explicit workspace reload only reads the new incarnation
+ok 3 - WebUI settings recovery: lost configure response locks mutations and explicit workspace reload only reads the new incarnation
+  ---
+  duration_ms: 982.0813
+  type: 'test'
+  ...
+# Subtest: WebUI settings recovery: a real delayed response from the old resource cannot populate the replacement sheet
+ok 4 - WebUI settings recovery: a real delayed response from the old resource cannot populate the replacement sheet
+  ---
+  duration_ms: 874.602
+  type: 'test'
+  ...
+# Subtest: Extension browser: unchanged GUI-only and settings packages use public slots, one Preact, shared slash/button dispatch and private state
+ok 5 - Extension browser: unchanged GUI-only and settings packages use public slots, one Preact, shared slash/button dispatch and private state
+  ---
+  duration_ms: 1582.9269
+  type: 'test'
+  ...
+# Subtest: Extension product config: explicit trusted roots/facets survive finite decoding; arbitrary runtime/service injection is refused
+ok 6 - Extension product config: explicit trusted roots/facets survive finite decoding; arbitrary runtime/service injection is refused
+  ---
+  duration_ms: 1.2275
+  type: 'test'
+  ...
+# Subtest: Extension interface: old callbacks cannot close/notify/reopen a replacement; disable removes only its public UI
+ok 7 - Extension interface: old callbacks cannot close/notify/reopen a replacement; disable removes only its public UI
+  ---
+  duration_ms: 2875.1085
+  type: 'test'
+  ...
+# Subtest: Conversation configuration browser: compact model picker and title-only directory navigation remain independent on 3:5 mobile
+ok 8 - Conversation configuration browser: compact model picker and title-only directory navigation remain independent on 3:5 mobile
+  ---
+  duration_ms: 2347.4418
+  type: 'test'
+  ...
+# Subtest: Model index: small catalogs support fuzzy input, cyclic navigation, empty results and cancellation
+ok 9 - Model index: small catalogs support fuzzy input, cyclic navigation, empty results and cancellation
+  ---
+  duration_ms: 864.0972
+  type: 'test'
+  ...
+# Subtest: Model index: long lists retain visible input/index and ranked keyboard confirmation reaches the real provider
+not ok 10 - Model index: long lists retain visible input/index and ranked keyboard confirmation reaches the real provider
+  ---
+  duration_ms: 991.7729
+  type: 'test'
+  location: 'D:\\Projects\\pakka-wt\\webui-p0\\apps\\webui\\test\\model-index-browser.test.ts:154:1'
+  failureType: 'testCodeFailure'
+  error: 'input and position stay visible: {"row":{"x":1044.796875,"y":357.375,"right":1370.796875,"bottom":428.375,"width":326,"height":71},"list":{"x":1044.796875,"y":227.375,"right":1370.796875,"bottom":428,"width":326,"height":200.625},"input":{"x":1044.796875,"y":146.1875,"right":1370.796875,"bottom":186.578125,"width":326,"height":40.390625},"position":{"x":1329.359375,"y":198.578125,"right":1370.796875,"bottom":215.375,"width":41.4375,"height":16.796875},"scroll":536,"inputFont":16,"captionFonts":[13,12,12],"overflow":false,"ink":"rgb(73, 176, 255) 3px 0px 0px 0px inset","viewport":{"width":360,"height":600}}'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/model-index-browser.test.ts:208:14
+    async withPicker (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/model-index-browser.test.ts:42:3)
+    async TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/model-index-browser.test.ts:158:3)
+    async Test.run (node:internal/test_runner/test:1332:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:911:7)
+  ...
+# Subtest: Model picker: larger approved catalog is searchable and keyboard selection changes neither cwd nor provider budget
+ok 11 - Model picker: larger approved catalog is searchable and keyboard selection changes neither cwd nor provider budget
+  ---
+  duration_ms: 831.3799
+  type: 'test'
+  ...
+# Subtest: WebUI compound labels, settings forms and graphical keyboard hints remain readable
+    # Subtest: owned navigation titles use Title Case
+    ok 1 - owned navigation titles use Title Case
+      ---
+      duration_ms: 1.2513
+      type: 'test'
+      ...
+    # Subtest: model primary and profile have distinct rows at 1440x900
+    ok 2 - model primary and profile have distinct rows at 1440x900
+      ---
+      duration_ms: 94.3276
+      type: 'test'
+      ...
+    # Subtest: model primary and profile have distinct rows at 360x600
+    ok 3 - model primary and profile have distinct rows at 360x600
+      ---
+      duration_ms: 302.0524
+      type: 'test'
+      ...
+    # Subtest: model primary and profile have distinct rows at 390x650
+    ok 4 - model primary and profile have distinct rows at 390x650
+      ---
+      duration_ms: 83.8392
+      type: 'test'
+      ...
+    # Subtest: model primary and profile have distinct rows at 390x844
+    ok 5 - model primary and profile have distinct rows at 390x844
+      ---
+      duration_ms: 66.8251
+      type: 'test'
+      ...
+    # Subtest: private credentials keep labels, password input and actions separate at every viewport and larger text
+    ok 6 - private credentials keep labels, password input and actions separate at every viewport and larger text
+      ---
+      duration_ms: 497.0457
+      type: 'test'
+      ...
+    # Subtest: model identities and metadata also fit with the actual 20px reading preference
+    ok 7 - model identities and metadata also fit with the actual 20px reading preference
+      ---
+      duration_ms: 128.5864
+      type: 'test'
+      ...
+    # Subtest: Conversation and Fork fields have gaps and subordinate section headings
+    ok 8 - Conversation and Fork fields have gaps and subordinate section headings
+      ---
+      duration_ms: 97.9799
+      type: 'test'
+      ...
+    # Subtest: Team metadata, chat fields and note actions are laid out rather than pasted together
+    ok 9 - Team metadata, chat fields and note actions are laid out rather than pasted together
+      ---
+      duration_ms: 470.6432
+      type: 'test'
+      ...
+    # Subtest: long names and roles remain readable in People
+    ok 10 - long names and roles remain readable in People
+      ---
+      duration_ms: 347.7594
+      type: 'test'
+      ...
+    # Subtest: shortcut and palette direction hints use real SVG paths
+    ok 11 - shortcut and palette direction hints use real SVG paths
+      ---
+      duration_ms: 30.1192
+      type: 'test'
+      ...
+    # Subtest: public Field/Notice/Button consumers retain spacing without private host styles
+    ok 12 - public Field/Notice/Button consumers retain spacing without private host styles
+      ---
+      duration_ms: 383.9332
+      type: 'test'
+      ...
+    1..12
+ok 12 - WebUI compound labels, settings forms and graphical keyboard hints remain readable
+  ---
+  duration_ms: 3311.9059
+  type: 'test'
+  ...
+# {"publicWidth":1440,"label":{"x":300,"y":46.71875,"right":1440,"bottom":74.71875,"width":1140,"height":28},"field":{"x":300,"y":80.71875,"right":1440,"bottom":126.71875,"width":1140,"height":46},"copy":{"x":300,"y":141.71875,"right":870.953125,"bottom":165.71875,"width":570.953125,"height":24},"action":{"x":300,"y":176.71875,"right":381.25,"bottom":220.71875,"width":81.25,"height":44}}
+# {"publicWidth":360,"label":{"x":0,"y":90.71875,"right":360,"bottom":118.71875,"width":360,"height":28},"field":{"x":0,"y":124.71875,"right":360,"bottom":170.71875,"width":360,"height":46},"copy":{"x":0,"y":185.71875,"right":346.25,"bottom":239.71875,"width":346.25,"height":54},"action":{"x":0,"y":250.71875,"right":81.25,"bottom":294.71875,"width":81.25,"height":44}}
+1..12
+# tests 33
+# suites 0
+# pass 32
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 28614.886

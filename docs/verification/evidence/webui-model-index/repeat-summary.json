@@ -1,0 +1,110 @@
+[
+  {
+    "candidate": "129b47bb29b0cc04c27e2a1664266541eeeba807",
+    "name": "model-repeat-1",
+    "pass": 2,
+    "fail": 0
+  },
+  {
+    "candidate": "129b47bb29b0cc04c27e2a1664266541eeeba807",
+    "name": "model-repeat-2",
+    "pass": 2,
+    "fail": 0
+  },
+  {
+    "candidate": "129b47bb29b0cc04c27e2a1664266541eeeba807",
+    "name": "model-repeat-3",
+    "pass": 2,
+    "fail": 0
+  },
+  {
+    "candidate": "129b47bb29b0cc04c27e2a1664266541eeeba807",
+    "name": "model-repeat-4",
+    "pass": 2,
+    "fail": 0
+  },
+  {
+    "candidate": "129b47bb29b0cc04c27e2a1664266541eeeba807",
+    "name": "configuration-ready-1",
+    "pass": 1,
+    "fail": 0
+  },
+  {
+    "candidate": "129b47bb29b0cc04c27e2a1664266541eeeba807",
+    "name": "configuration-ready-2",
+    "pass": 1,
+    "fail": 0
+  },
+  {
+    "candidate": "129b47bb29b0cc04c27e2a1664266541eeeba807",
+    "name": "configuration-ready-3",
+    "pass": 1,
+    "fail": 0
+  },
+  {
+    "candidate": "129b47bb29b0cc04c27e2a1664266541eeeba807",
+    "name": "configuration-ready-4",
+    "pass": 1,
+    "fail": 0
+  },
+  {
+    "candidate": "129b47bb29b0cc04c27e2a1664266541eeeba807",
+    "name": "configuration-ready-5",
+    "pass": 1,
+    "fail": 0
+  },
+  {
+    "candidate": "129b47bb29b0cc04c27e2a1664266541eeeba807",
+    "name": "configuration-ready-6",
+    "pass": 1,
+    "fail": 0
+  },
+  {
+    "candidate": "129b47bb29b0cc04c27e2a1664266541eeeba807",
+    "name": "configuration-ready-7",
+    "pass": 1,
+    "fail": 0
+  },
+  {
+    "candidate": "129b47bb29b0cc04c27e2a1664266541eeeba807",
+    "name": "configuration-ready-8",
+    "pass": 1,
+    "fail": 0
+  },
+  {
+    "candidate": "89117e4124a7b4115b7f6cce9efc58e41c42a70a",
+    "name": "fork-ready-1",
+    "pass": 1,
+    "fail": 0
+  },
+  {
+    "candidate": "89117e4124a7b4115b7f6cce9efc58e41c42a70a",
+    "name": "fork-ready-2",
+    "pass": 1,
+    "fail": 0
+  },
+  {
+    "candidate": "89117e4124a7b4115b7f6cce9efc58e41c42a70a",
+    "name": "fork-ready-3",
+    "pass": 1,
+    "fail": 0
+  },
+  {
+    "candidate": "89117e4124a7b4115b7f6cce9efc58e41c42a70a",
+    "name": "fork-ready-4",
+    "pass": 1,
+    "fail": 0
+  },
+  {
+    "candidate": "89117e4124a7b4115b7f6cce9efc58e41c42a70a",
+    "name": "fork-ready-5",
+    "pass": 1,
+    "fail": 0
+  },
+  {
+    "candidate": "89117e4124a7b4115b7f6cce9efc58e41c42a70a",
+    "name": "fork-ready-6",
+    "pass": 1,
+    "fail": 0
+  }
+]

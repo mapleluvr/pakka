@@ -1,0 +1,34 @@
+{
+  "observedAt": "2026-10-25T06:53:06.586Z",
+  "candidate": "89117e4124a7b4115b7f6cce9efc58e41c42a70a",
+  "productCandidate": "4b17434f37df1833a5d115f665e2f62b17966148",
+  "productBytesUnchanged": true,
+  "origin": "http://127.0.0.1:45005",
+  "homeStatus": 200,
+  "assets": [
+    {
+      "path": "conversation-configuration.js",
+      "status": 200,
+      "bytes": 15993,
+      "sha256": "213107042ee30f9b07c4f4b1f5c29defd795f9e6608cef5c9fc4bd682475d827",
+      "matchesWorkingTree": true
+    },
+    {
+      "path": "elements.css",
+      "status": 200,
+      "bytes": 24891,
+      "sha256": "34ad58d524bd75548f15ab3763ad730ebe1fac00d60f3f6252bb698ac555863a",
+      "matchesWorkingTree": true
+    },
+    {
+      "path": "sheet.js",
+      "status": 200,
+      "bytes": 4622,
+      "sha256": "74dd9dda0c67239b2e94a6113d4aa426873467222ca61227e497925e50bb17d4",
+      "matchesWorkingTree": true
+    }
+  ],
+  "provider": "local deterministic preview; no external model calls",
+  "browserProfile": "D:\\Projects\\pakka-wt\\webui-p0\\docs\\.temp\\operator-preview-model-index-4b17434\\browser-profile",
+  "browserLaunchRequested": true
+}

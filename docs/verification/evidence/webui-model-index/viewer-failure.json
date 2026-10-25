@@ -1,0 +1,39 @@
+{
+  "nodes": [
+    {
+      "selector": ".sidebar",
+      "rect": {
+        "x": -306,
+        "y": 0,
+        "width": 300,
+        "height": 650
+      },
+      "display": "flex",
+      "visibility": "visible",
+      "opacity": "1"
+    },
+    {
+      "selector": ".conversation-menu",
+      "missing": true
+    },
+    {
+      "selector": "[data-action=\"settings\"]",
+      "missing": true
+    },
+    {
+      "selector": "[aria-label=\"Conversation options\"]",
+      "rect": {
+        "x": 332.859375,
+        "y": 39.09375,
+        "width": 28,
+        "height": 28
+      },
+      "hit": "<use href=\"#i-more\"></use>",
+      "display": "inline-flex",
+      "visibility": "visible",
+      "opacity": "1",
+      "disabled": false
+    }
+  ],
+  "animations": []
+}

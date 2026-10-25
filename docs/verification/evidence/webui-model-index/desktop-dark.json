@@ -1,0 +1,47 @@
+{
+  "row": {
+    "x": 1044.796875,
+    "y": 657.171875,
+    "right": 1355.796875,
+    "bottom": 728.171875,
+    "width": 311,
+    "height": 71
+  },
+  "list": {
+    "x": 1044.796875,
+    "y": 523.171875,
+    "right": 1370.796875,
+    "bottom": 728,
+    "width": 326,
+    "height": 204.828125
+  },
+  "input": {
+    "x": 1044.796875,
+    "y": 446.1875,
+    "right": 1370.796875,
+    "bottom": 482.375,
+    "width": 326,
+    "height": 36.1875
+  },
+  "position": {
+    "x": 1329.359375,
+    "y": 494.375,
+    "right": 1370.796875,
+    "bottom": 511.171875,
+    "width": 41.4375,
+    "height": 16.796875
+  },
+  "scroll": 532,
+  "inputFont": 13,
+  "captionFonts": [
+    13,
+    12,
+    12
+  ],
+  "overflow": false,
+  "ink": "rgb(73, 176, 255) 3px 0px 0px 0px inset",
+  "viewport": {
+    "width": 1440,
+    "height": 900
+  }
+}

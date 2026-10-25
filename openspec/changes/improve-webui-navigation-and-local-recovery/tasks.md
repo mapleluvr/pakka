@@ -81,8 +81,8 @@
 - [x] 直接核对 Pi 1.4.0 TUI `/model` 的模糊检索、输入焦点、循环高亮、Enter/Escape 与位置计数，采用并同步 state/design/delta。
 - [x] 为小列表检索、模糊排序、输入焦点/候选索引、循环与滚动、空结果/取消/IME 以及真实模型选择补失败回归；原基线两项 RED、字号与旧焦点 trap 反证保留，IME 仅为 DOM composition-event guard，不冒充 OS 输入法实操。
 - [x] 实现检索索引和键盘交互，保留当前模型独立标记、触屏选择及现有 busy/权限/unknown 配置边界；候选键盘浏览不切配置，真实 provider 请求已确认只在明确选择后使用新模型。
-- [ ] 在真实本地 provider/HTTP/浏览器上验证桌面、手机、大字号和明暗主题；运行受影响回归、构建、类型、格式与 strict，保存实际证据。定向 33/33、新索引连续 4 轮及 Viewer 就绪路径 8 轮已通过，完整候选及耐久证据待封存。
-- [ ] 提交完整候选并更新隔离预览；按操作者本会话指令仅作自检与实际回归，不再启动独立复核。
+- [x] 真实本地 provider/HTTP/浏览器覆盖桌面、手机、大字号、明暗及受影响配置；33/33、额外 transcript 9/9，最终 `89117e4` 全量 645/643 pass/0 fail/2 skip。build/check/格式/strict 通过；原基线 RED、字号/关闭/焦点反证、Viewer/resize/fork 测试修正和原失败全量都在[版本记录](../../../docs/verification/WEBUI-MODEL-INDEX.md)封存。
+- [x] 产品 `4b17434` 与 test-only `89117e4` 已提交，后者仅补原 fork 用例的实际 SSE 输出等待，产品零 diff；隔离预览 `http://127.0.0.1:45005` 使用独立数据/profile/local responder，资源字节已核对。按操作者本会话指令仅作自检与实际回归，不启动独立复核；既有受阻记录不改为通过。
 
 ## 5. 交付与接续
 

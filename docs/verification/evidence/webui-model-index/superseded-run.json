@@ -1,0 +1,11 @@
+{
+  "candidate": "129b47bb29b0cc04c27e2a1664266541eeeba807",
+  "taskId": "326033eb",
+  "command": "npm test -- --test-reporter=tap",
+  "status": "stopped-and-superseded",
+  "terminationObservation": "bg_kill returned killed 326033eb",
+  "reason": "The Model Selection close target measured 36x36px. A local 44x44px correction requires a new frozen candidate and a complete new run.",
+  "conclusion": "No full-suite pass or failure conclusion for this stopped run.",
+  "replacementCandidate": "4b17434f37df1833a5d115f665e2f62b17966148",
+  "replacementTaskId": "1d4221a6"
+}

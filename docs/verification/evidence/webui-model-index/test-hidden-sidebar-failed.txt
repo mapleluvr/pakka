@@ -1,0 +1,39 @@
+TAP version 13
+# Subtest: Model index: small catalogs support fuzzy input, cyclic navigation, empty results and cancellation
+ok 1 - Model index: small catalogs support fuzzy input, cyclic navigation, empty results and cancellation
+  ---
+  duration_ms: 749.7558
+  type: 'test'
+  ...
+# Subtest: Model index: long lists retain visible input/index and ranked keyboard confirmation reaches the real provider
+not ok 2 - Model index: long lists retain visible input/index and ranked keyboard confirmation reaches the real provider
+  ---
+  duration_ms: 1126.0896
+  type: 'test'
+  location: 'D:\\Projects\\pakka-wt\\webui-p0\\apps\\webui\\test\\model-index-browser.test.ts:103:1'
+  failureType: 'testCodeFailure'
+  error: 'Browser control not interactable: [data-conversation]'
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    Object.click (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/browser.ts:342:13)
+    async file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/model-index-browser.test.ts:165:3
+    async withPicker (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/model-index-browser.test.ts:42:3)
+    async TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/model-index-browser.test.ts:104:2)
+    async Test.run (node:internal/test_runner/test:1332:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:911:7)
+  ...
+# Subtest: Model picker: larger approved catalog is searchable and keyboard selection changes neither cwd nor provider budget
+ok 3 - Model picker: larger approved catalog is searchable and keyboard selection changes neither cwd nor provider budget
+  ---
+  duration_ms: 761.787
+  type: 'test'
+  ...
+1..3
+# tests 3
+# suites 0
+# pass 2
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 4193.9007

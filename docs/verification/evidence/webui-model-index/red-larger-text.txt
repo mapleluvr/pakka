@@ -1,0 +1,36 @@
+TAP version 13
+# Subtest: Model index: small catalogs support fuzzy input, cyclic navigation, empty results and cancellation
+ok 1 - Model index: small catalogs support fuzzy input, cyclic navigation, empty results and cancellation
+  ---
+  duration_ms: 732.389
+  type: 'test'
+  ...
+# Subtest: Model index: long lists retain visible input/index and ranked keyboard confirmation reaches the real provider
+not ok 2 - Model index: long lists retain visible input/index and ranked keyboard confirmation reaches the real provider
+  ---
+  duration_ms: 1013.7323
+  type: 'test'
+  location: 'D:\\Projects\\pakka-wt\\webui-p0\\apps\\webui\\test\\model-index-browser.test.ts:104:1'
+  failureType: 'testCodeFailure'
+  error: 'search labels, index and keyboard hints respect larger text'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/model-index-browser.test.ts:142:28
+    async withPicker (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/model-index-browser.test.ts:43:3)
+    async TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/model-index-browser.test.ts:105:2)
+    async Test.run (node:internal/test_runner/test:1332:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:911:7)
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 1
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2506.8712

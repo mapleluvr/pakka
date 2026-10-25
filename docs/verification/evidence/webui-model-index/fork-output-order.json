@@ -1,0 +1,7 @@
+{
+  "candidate": "4b17434f37df1833a5d115f665e2f62b17966148",
+  "receipt": "done",
+  "outputImmediatelyAfterReceipt": false,
+  "outputAfterActualDomWait": true,
+  "noDtoInjection": true
+}

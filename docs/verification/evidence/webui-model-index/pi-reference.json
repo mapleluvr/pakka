@@ -1,0 +1,23 @@
+[
+  {
+    "version": "1.4.0",
+    "path": "D:/Pi/runtime/agent/install/releases/1.4.0/node_modules/@earendil-works/pi-coding-agent/dist/modes/interactive/components/model-selector.js",
+    "sha256": "b1ab2e6efd1511f70f32a1c1530f01c782aa0e661ab9ead6e38a1c3735b667eb",
+    "bytes": 15778,
+    "usage": "Read-only interaction reference; not imported by production"
+  },
+  {
+    "version": "1.4.0",
+    "path": "D:/Pi/runtime/agent/install/releases/1.4.0/node_modules/@earendil-works/pi-coding-agent/dist/modes/interactive/model-search.js",
+    "sha256": "5fbe3c08cc30c21fe38bfb3a86bb790b020b8c4a2fec8e14e57419560f790a92",
+    "bytes": 650,
+    "usage": "Read-only interaction reference; not imported by production"
+  },
+  {
+    "version": "1.4.0",
+    "path": "D:/Pi/runtime/agent/install/releases/1.4.0/node_modules/@earendil-works/pi-tui/dist/fuzzy.js",
+    "sha256": "f873c8e2d808d215e57942ac325b9e635bde9632526d25b56b4eef253362b91b",
+    "bytes": 3747,
+    "usage": "Read-only interaction reference; not imported by production"
+  }
+]

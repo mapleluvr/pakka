@@ -15,7 +15,7 @@
 
 2026-10-25 后续两个按钮截图暴露发送组的外侧 Tab outline 被胶囊 `overflow:hidden` 裁切，已将各动作描边内移并保留首尾圆角；原卡片编辑器焦点与本修复分别验证。真实 RED/GREEN、空输入和 busy/Steer/Stop 矩阵及本候选门禁见[组合按钮焦点记录](../verification/WEBUI-SPLIT-BUTTON-FOCUS.md)，对应上述 design §6.2、tasks §4.2 与前端 delta。
 
-2026-10-25 用户另要求 Model Selection 具有 Pi TUI `/model` 的检索索引体验；本批采用常驻模糊检索、候选循环高亮、Enter 确认、Escape 返回及位置计数，保持模型独立配置边界。直接来源、适配取舍与采用条件见 [design §6.4](../../openspec/changes/improve-webui-navigation-and-local-recovery/design.md#64-2026-10-25-model-selection-检索索引)、[tasks §4.4](../../openspec/changes/improve-webui-navigation-and-local-recovery/tasks.md#44-model-selection-检索索引2026-10-25) 和[模型索引 delta](../../openspec/changes/improve-webui-navigation-and-local-recovery/specs/devin-frontend/spec.md#requirement-approved-model-selection-has-a-searchable-keyboard-index)。
+2026-10-25 用户另要求 Model Selection 具有 Pi TUI `/model` 的检索索引体验；本批采用常驻模糊检索、候选循环高亮、Enter 确认、Escape 返回及位置计数，保持模型独立配置边界。直接来源、适配取舍与采用条件见 [design §6.4](../../openspec/changes/improve-webui-navigation-and-local-recovery/design.md#64-2026-10-25-model-selection-检索索引)、[tasks §4.4](../../openspec/changes/improve-webui-navigation-and-local-recovery/tasks.md#44-model-selection-检索索引2026-10-25) 和[模型索引 delta](../../openspec/changes/improve-webui-navigation-and-local-recovery/specs/devin-frontend/spec.md#requirement-approved-model-selection-has-a-searchable-keyboard-index)。精确候选、真实 provider/浏览器回归、失败修正与预览见[模型索引验证记录](../verification/WEBUI-MODEL-INDEX.md)。
 
 现场认证证据、默认 10 分钟/旧会话撤销的设计理由、单 writer、平台文件保护与未知交付的取舍集中在 design，不由本摘要替代。
 
