@@ -360,9 +360,7 @@ export function createPocketWorkspace(options: PocketWorkspaceOptions): PocketWo
 					if (saved.inherit) check("manage", saved.inherit);
 					if (
 						inheritedConfiguration &&
-						(!runtime
-							.profileChoices()
-							.some((row) => ceiling().includes(row.id) && row.model === inheritedConfiguration!.model) ||
+						(!runtime.profileChoices().some((row) => row.model === inheritedConfiguration!.model) ||
 							!directoryWithin(inheritedConfiguration.cwd, roots()))
 					)
 						denied();
@@ -394,12 +392,7 @@ export function createPocketWorkspace(options: PocketWorkspaceOptions): PocketWo
 						if (provider && !provider.canManage(inheritedRef)) denied();
 						const inherited = await runtime.configuration(inheritedRef);
 						inheritedConfiguration = inherited;
-						if (
-							!runtime
-								.profileChoices()
-								.some((row) => ceiling().includes(row.id) && row.model === inherited.model)
-						)
-							denied();
+						if (!runtime.profileChoices().some((row) => row.model === inherited.model)) denied();
 						await resolveDirectory(inherited.cwd, roots());
 						authorize();
 					}
@@ -570,19 +563,19 @@ export function createPocketWorkspace(options: PocketWorkspaceOptions): PocketWo
 					authorize();
 					const provider = await resource(ref, authorize);
 					const snapshot = await runtime.readConversation(ref, authorize, { limit: 1 });
-					const person = current(),
-						ceiling = options.profileCeiling(person);
-					if (!Array.isArray(ceiling) || ceiling.length > 64 || !ceiling.every(key))
-						throw new Error("Invalid profile ceiling");
-					const choices = runtime.profileChoices().filter((row) => ceiling.includes(row.id));
+					const models = new Map<string, { id: string; model: string }>();
+					for (const { id, model } of runtime.profileChoices())
+						if (!models.has(model)) models.set(model, { id, model });
+					const choices = [...models.values()];
 					const view = runtime.view();
 					const configuration = await runtime.configuration(ref);
 					authorize();
+					const person = current();
 					return frozen({
 						ref,
 						current: configuration,
 						choices,
-						canConfigure: ["admin", "driver"].includes(person.role) && (!provider || provider.canManage(ref)),
+						canConfigure: person.role === "admin" && (!provider || provider.canManage(ref)),
 						usage: snapshot.usage,
 						session:
 							person.role === "admin" && person.resources === "*"
@@ -629,9 +622,7 @@ export function createPocketWorkspace(options: PocketWorkspaceOptions): PocketWo
 								if (validatedCwd !== undefined && !directoryWithin(validatedCwd, roots())) denied();
 								if (
 									change?.model !== undefined &&
-									!runtime
-										.profileChoices()
-										.some((row) => ceiling().includes(row.id) && row.model === change.model)
+									!runtime.profileChoices().some((row) => row.model === change.model)
 								)
 									denied();
 							};

@@ -15,6 +15,8 @@ pakka-webui 的登录拒绝只显示通用提示；当唯一管理员退出后�
 - 将前一条指南变更中的后续工作统一接到本 tasks，保留它已经完成的首批结果。
 - Session/Conversation 创建另由 design §6.3/tasks §4.3 记录待采用方向：独立配置向导、真实父子关系与 New Session / New Conversation，以及 Sort Per Session / Default 导航分组；文档澄清不表示多 Session 或文件夹能力已交付。
 
+- 2026-10-25 按用户纠偏采用模型权限精简：单独模型选择使用已配置 provider 的模型目录，不叠加逐模型或逐 Session 白名单；完整 Agent 预设的工具/指令授权保持独立。检查配置提示与真实写权限、目录边界及创建/文件夹草案中的重复授权，见 design §6.5/tasks §4.5。
+
 ## Capabilities
 
 ### New Capabilities
@@ -28,8 +30,8 @@ pakka-webui 的登录拒绝只显示通用提示；当唯一管理员退出后�
 
 ## Impact
 
-- 目标：apps/webui 的 CLI、bootstrap、HTTP shell 路由、浏览器页面、服务端 people 认证状态与持久化封装，以及 packages/agent 的受限维护端口。
+- 目标：apps/webui 的 CLI、bootstrap、HTTP shell 路由、浏览器页面、服务端 people 认证状态与持久化封装，以及 packages/agent 的受限维护端口。模型精简切片修改 apps/server 的 workspace 模型目录/配置/继承与能力提示，保持有限协议和原生调度。
 - 浏览器 RPC 仍使用原授权协议；恢复发行仅由本机可信 CLI 触发，浏览器通过现有 exchange 兑换凭证。
 - 认证持久化格式需要兼容当前 schema 1，并为发行记录提供与会话变化同次提交的版本化数据；旧数据升级与回退条件在实施时说明。
 - 当前 Pi 1.0.3 cohort 和下游补丁保持各自现状；独立的 1.4.0 patch 任务与本轮分开。
-- 本提案等待用户确认。state 正文在采用时更新，本轮文档齐备不代表恢复入口或新路由已经实现。
+- 恢复入口、新路由与 Session 创建仍保持各自采用状态。§6.5 的模型权限纠偏已由用户明确要求；对应 state、契约与任务同步，文档齐备不代替行为验证。

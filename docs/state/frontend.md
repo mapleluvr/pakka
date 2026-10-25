@@ -22,7 +22,7 @@ pakka-webui 的对应原生界面行为以 [Devin 离线生产前端](https://gi
 | 首页 composer      | 创建并打开真实 Conversation；显式 Send 提交模型输入；创建结果未确认时保持原请求核对状态                                 |
 | Conversation head  | 实际标题和下方 cwd；管理动作收进精简 options                                                                            |
 | 消息与工具         | 参考 message/avatar/byline/tool-card 结构，接入原生 history/live/receipt；保留 live、合法不可预览 part 和工具跨载体身份 |
-| 模型按钮           | 列出宿主批准、当前角色可配置的模型；已有工作或队列时拒绝变更                                                            |
+| 模型按钮           | 列出服务已配置 provider 的可用模型；Conversation 配置权限与 busy 条件决定能否应用                                       |
 | cwd                | 入口为 Conversation 标题下的当前路径；选择器限定批准目录，仅 Use this directory 明确应用所选目录                        |
 | Send caret         | 工作输入使用原生 Prompt/Steer/Follow up 调度；Team chat 使用独立的人类协作通道                                          |
 | Palette            | 会话搜索、命令、主题和导航共用参考层级，保留键盘与焦点行为                                                              |
@@ -30,9 +30,9 @@ pakka-webui 的对应原生界面行为以 [Devin 离线生产前端](https://gi
 
 设置页的 Conversation 分类在选中会话后可用，人员管理入口按管理员权限呈现。手机分类栏支持横向滚动。Back to app 返回原页面并保留会话和未发送草稿。详细场景及命名契约见[设置与命名 delta](../../openspec/changes/correct-webui-settings-and-name/specs/devin-frontend/spec.md)，采用记录见[变更摘要](../changes/webui-settings-and-name.md)。
 
-模型/cwd 持久化、批准 roots、incarnation 和配置拒绝的详细条件由[开发契约](../development/WEBUI-DEVELOPMENT.md#独立选择模型和-conversation-工作目录)维护。
+模型目录按模型 ID 去重，只发布首个配置标识和模型 ID；拥有 Conversation 配置权限的人可选择目录中的任一模型。有限响应容纳现有 JSON 的默认模型加 64 项附加配置，最多 65 个不同模型；更大目录不由当前有限 WebUI 协议承诺。整组 Agent 预设的工具/指令授权独立于模型选择。模型/cwd 持久化、服务器目录 roots、incarnation 和配置拒绝的详细条件由[开发契约](../development/WEBUI-DEVELOPMENT.md#独立选择模型和-conversation-工作目录)维护。
 
-Model Selection 为所有批准列表提供检索框，覆盖模型 ID 和批准配置标识；检索忽略大小写，空格与 `/` 分隔的词各自按顺序字符匹配，并将更紧密的匹配排在前面。打开时定位当前模型，输入查询后定位首个匹配；上下键循环移动候选高亮，搜索框保持输入焦点，Enter 明确确认，Escape 关闭并返回模型入口。候选位置/匹配总数始终可见，空结果为 0 / 0，当前已应用模型有独立标记。列表滚动保留搜索入口与位置反馈，触屏可直接选择。检索、移动和取消只改变本地呈现；明确选择后仍由原配置命令核验权限、busy 和 unknown。详细场景及形成记录见[模型索引 delta](../../openspec/changes/improve-webui-navigation-and-local-recovery/specs/devin-frontend/spec.md#requirement-approved-model-selection-has-a-searchable-keyboard-index)与[设计 §6.4](../../openspec/changes/improve-webui-navigation-and-local-recovery/design.md#64-2026-10-25-model-selection-检索索引)。
+Model Selection 为可用模型列表提供检索框，覆盖模型 ID 和配置标识；检索忽略大小写，空格与 `/` 分隔的词各自按顺序字符匹配，并将更紧密的匹配排在前面。打开时定位当前模型，输入查询后定位首个匹配；上下键循环移动候选高亮，搜索框保持输入焦点，Enter 明确确认，Escape 关闭并返回模型入口。候选位置/匹配总数始终可见，空结果为 0 / 0，当前已应用模型有独立标记。列表滚动保留搜索入口与位置反馈，触屏可直接选择。检索、移动和取消只改变本地呈现；明确选择后仍由原配置命令核验权限、busy 和 unknown。详细场景及形成记录见[模型索引 delta](../../openspec/changes/improve-webui-navigation-and-local-recovery/specs/devin-frontend/spec.md#requirement-model-selection-has-a-searchable-keyboard-index)与[设计 §6.4](../../openspec/changes/improve-webui-navigation-and-local-recovery/design.md#64-2026-10-25-model-selection-检索索引)。
 
 ### 主次文字、表单与 SVG 图标
 

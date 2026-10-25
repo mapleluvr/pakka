@@ -607,7 +607,7 @@ function configuration(v: unknown): v is PocketConfiguration {
 		!ref(v.ref) ||
 		typeof v.canConfigure !== "boolean" ||
 		!Array.isArray(v.choices) ||
-		v.choices.length > 64 ||
+		v.choices.length > 65 ||
 		!v.choices.every(
 			(choice) =>
 				shape(choice, ["id", "model"], ["cwd"]) &&

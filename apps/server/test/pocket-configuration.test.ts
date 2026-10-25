@@ -4,13 +4,17 @@ import { runtimeFixture } from "../../../packages/agent/test/runtime-fixture.ts"
 import { createPocketPeople } from "../src/pocket-people.ts";
 import { createPocketWorkspace } from "../src/pocket-workspace.ts";
 
-// A settings page that displays raw bootstrap configuration would leak credentials or profiles outside the person's ceiling.
-test("WebUI configuration: passive frozen choices and scoped usage hide secrets, peer totals and forbidden profiles", async () => {
+// Model availability is public to an authorized resource reader; preset details, credentials and peer usage are not.
+test("WebUI configuration: frozen model catalogue and scoped usage hide preset details, secrets and peer totals", async () => {
 	const m = await runtimeFixture({
 		apiKey: "PRIVATE-SETTINGS-KEY",
 		profiles: [
 			{ id: "alternate", model: "alternate-model", cwd: process.cwd() },
-			{ id: "secret-profile", model: "PRIVATE-MODEL-CANARY" },
+			{
+				id: "internal-preset",
+				model: "configured-other-model",
+				systemPrompt: "PRIVATE-PRESET-INSTRUCTIONS",
+			},
 		],
 	});
 	try {
@@ -28,8 +32,9 @@ test("WebUI configuration: passive frozen choices and scoped usage hide secrets,
 		const owner = await client.configuration(ref);
 		assert.ok(Object.isFrozen(owner) && Object.isFrozen(owner.choices));
 		assert.deepEqual(owner.choices, [
-			{ id: "default", model: "local-model", cwd: m.f.cwd },
-			{ id: "alternate", model: "alternate-model", cwd: process.cwd() },
+			{ id: "default", model: "local-model" },
+			{ id: "alternate", model: "alternate-model" },
+			{ id: "internal-preset", model: "configured-other-model" },
 		]);
 		assert.equal(owner.canConfigure, true);
 		assert.deepEqual(owner.session?.budget, { primaryAttempts: 0, auxiliaryAttempts: 0 });
@@ -43,12 +48,17 @@ test("WebUI configuration: passive frozen choices and scoped usage hide secrets,
 		const viewerSession = await people.redeem(invite.token, "Viewer"),
 			viewer = await people.authenticate(viewerSession.token);
 		const limited = await workspace.bind(viewer).configuration(ref);
+		assert.deepEqual(limited.choices, [
+			{ id: "default", model: "local-model" },
+			{ id: "alternate", model: "alternate-model" },
+			{ id: "internal-preset", model: "configured-other-model" },
+		]);
 		assert.equal(limited.canConfigure, false);
 		assert.equal(limited.session, null);
 		assert.equal(limited.usage.cost, null);
 		assert.doesNotMatch(
 			JSON.stringify([owner, limited]),
-			/PRIVATE-SETTINGS-KEY|PRIVATE-MODEL-CANARY|secret-profile|endpoint|apiKey/,
+			/PRIVATE-SETTINGS-KEY|PRIVATE-PRESET-INSTRUCTIONS|endpoint|apiKey|systemPrompt/,
 		);
 		const foreign = await client.create({ requestId: "foreign", name: "Private", profile: "default" });
 		await assert.rejects(workspace.bind(viewer).configuration(foreign), /denied/i);

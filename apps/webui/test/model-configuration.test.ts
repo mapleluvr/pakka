@@ -45,7 +45,7 @@ test("Approved directory roots: host JSON admits project trees without combinati
 });
 
 // Strict JSON startup must preserve the chosen model all the way into the actual product Runtime.
-test("WebUI model configuration: approved JSON profiles reach the real product provider; extra credential/endpoint fields stay rejected", async () => {
+test("WebUI model configuration: configured JSON models reach the real product provider; extra credential/endpoint fields stay rejected", async () => {
 	const m = await runtimeFixture();
 	let app: Awaited<ReturnType<typeof startPocket>> | undefined, context: PocketServiceContext | undefined;
 	try {
@@ -79,9 +79,9 @@ test("WebUI model configuration: approved JSON profiles reach the real product p
 		assert.ok(app.initialOwner);
 		const client = context.workspace.bind(await context.people.authenticate(app.initialOwner.token)),
 			ref = (await client.list())[0]!;
-		assert.equal(
-			(await client.configuration(ref)).choices.find((choice) => choice.id === "alternate")?.cwd,
-			process.cwd(),
+		assert.deepEqual(
+			(await client.configuration(ref)).choices.find((choice) => choice.id === "alternate"),
+			{ id: "alternate", model: "alternate-local-model" },
 		);
 		const sent = await client.submit(ref, {
 			requestId: "json-model",

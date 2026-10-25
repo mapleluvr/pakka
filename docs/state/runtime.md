@@ -26,6 +26,6 @@ Pi 集成使用公开 API。下游 [Durable 源补丁](durable-patch.md)为 gene
 | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Host、策略、admission、失败与存储      | [架构](../development/ARCHITECTURE.md)、[策略 API](../reference/STRATEGY-API.md)                                                                                                |
 | Managed Runtime、多 Conversation、预算 | [Runtime API](../reference/RUNTIME-API.md)、[基础场景](../../openspec/specs/conversation-runtime/spec.md)                                                                       |
-| 批准模型与 WebUI 配置边界              | [Runtime 场景补充](../../openspec/changes/pakka-webui/specs/conversation-runtime/spec.md)、[配置契约](../development/WEBUI-DEVELOPMENT.md#独立选择模型和-conversation-工作目录) |
+| 模型目录、Agent 预设与 WebUI 配置边界  | [Runtime 场景补充](../../openspec/changes/pakka-webui/specs/conversation-runtime/spec.md)、[配置契约](../development/WEBUI-DEVELOPMENT.md#独立选择模型和-conversation-工作目录) |
 | HTTP/browser 与独立的人类认证接口      | [应用领域规范](../../openspec/specs/authenticated-mas-apps/spec.md)、[WebUI 桥接补充](../../openspec/changes/pakka-webui/specs/authenticated-mas-apps/spec.md)                  |
 | 单 writer、包依赖与支持范围            | [仓库规范](../development/MONOREPO-CONVENTIONS.md)、[支持矩阵](../guides/MAS-PRODUCT-SUPPORT.md)                                                                                |

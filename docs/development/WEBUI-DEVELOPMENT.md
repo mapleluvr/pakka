@@ -130,7 +130,7 @@ Verification 的选用与记录按[通用方法](VERIFICATION.md#选用与记录
 
 ### 独立选择模型和 Conversation 工作目录
 
-模型入口位于消息输入区，点击紧凑的模型按钮选择**宿主批准且当前角色可配置的模型**。当前模型置顶；所有列表都提供搜索，支持按模型 ID 或批准配置标识进行不区分大小写的多词模糊检索（空格或 `/` 分词、词内字符有序匹配）。选择器参考 Pi TUI `/model` 的输入焦点、上下键循环、高亮候选、Enter 确认、Escape 关闭及位置/匹配总数反馈；实际已应用模型有独立标记。检索和键盘移动不提交配置，空结果下 Enter 无效果，中文等输入法组合期间不把 Enter 当作选择。当前 headless 集成仍是同一 OpenAI-completions provider 下的批准模型，不虚构多供应商登录、Thinking 档位或自动模型发现。
+模型入口位于消息输入区，点击紧凑的模型按钮选择**已配置 provider 的可用模型**。具有 Conversation 配置权限的人可选择目录内任一模型；该目录由 `runtime.model` 与 `runtime.profiles[].model` 派生，模型-only 路径不使用逐模型/逐 Session ACL，也不要求在顶层 `profiles` 再声明一遍。候选按模型 ID 去重，保留首次出现顺序和首个配置标识，只发布标识与模型 ID，不携带另一个预设的 cwd、工具或指令。有限响应最多 65 项，对齐 JSON 的默认模型加 64 个附加配置；第 66 项仍拒绝。HTTP server 与客户端应一起更新，旧的 64 上限客户端不能读取 65 项；此处不扩展为无限 headless 模型目录。当前模型置顶；所有列表都提供搜索，支持按模型 ID 或配置标识进行不区分大小写的多词模糊检索（空格或 `/` 分词、词内字符有序匹配）。选择器参考 Pi TUI `/model` 的输入焦点、上下键循环、高亮候选、Enter 确认、Escape 关闭及位置/匹配总数反馈；实际已应用模型有独立标记。检索和键盘移动不提交配置，空结果下 Enter 无效果，中文等输入法组合期间不把 Enter 当作选择。当前 headless 集成仍是同一 OpenAI-completions provider 下的已配置模型，不虚构多供应商登录、Thinking 档位或自动模型发现。
 
 工作目录入口**只在 Conversation 标题下方**，Settings 不提供目录变更入口。点击当前服务器路径打开目录选择器：
 
@@ -141,7 +141,7 @@ Verification 的选用与记录按[通用方法](VERIFICATION.md#选用与记录
 
 Pi Durable 公开 configure 支持 model/cwd 局部修改。Pakka 使用这个接口将二者分别持久化：换模型只更新模型，换目录只更新 cwd。成功应用会更换 incarnation、撤销旧绑定，保留历史和已花额度；不搬文件、不重放工作。已有工作或队列未清空时拒绝切换，不自动取消工作。未知结果只能读取当前配置核对，不自动重试。Viewer 可查看当前模型和路径，但不能打开配置菜单、浏览服务器目录或修改它们。
 
-默认使用 `runtime.cwd` 及批准 profile 的目录作为可浏览根目录。可通过可选的 `runtime.cwdRoots` 一次批准项目根树，新子项目无需新增“模型 × 目录”profile。下面是需合并进完整启动配置的片段，不能代替 endpoint、凭据、limits 等其他必需字段：
+目录浏览沿用服务器 roots 约束：默认使用 `runtime.cwd` 及整组 Agent 预设允许的目录作为可浏览根目录。可通过可选的 `runtime.cwdRoots` 一次批准项目根树，新子项目无需新增“模型 × 目录”profile。下面是需合并进完整启动配置的片段，不能代替 endpoint、凭据、limits 等其他必需字段：
 
 ```json
 {
@@ -151,20 +151,18 @@ Pi Durable 公开 configure 支持 model/cwd 局部修改。Pakka 使用这个�
 		"profiles": [
 			{
 				"id": "alternate-model",
-				"model": "approved-model-id",
-				"systemPrompt": "Approved alternate preset."
+				"model": "alternate-model-id"
 			}
 		]
-	},
-	"profiles": ["default", "alternate-model"]
+	}
 }
 ```
 
-`cwdRoots` 是宿主批准的全局目录位置，当前能够管理 Conversation 的角色可在其中选择；未显式配置时，仅从该角色的批准 profile 推导位置。它支持 JSON、ESM 与 worker 配置，必须是现有绝对目录。路径为**运行服务器上的路径**，不是手机本地路径，也不构成文件系统沙箱。Files & changes 的 roots 是独立批准的权限，切换 cwd 不会扩大它们。
+`cwdRoots` 是宿主批准的全局目录位置，当前能够管理 Conversation 的角色可在其中选择；未显式配置时，从该角色可使用的整组 Agent 预设推导位置。它支持 JSON、ESM 与 worker 配置，必须是现有绝对目录。路径为**运行服务器上的路径**，不是手机本地路径，也不构成文件系统沙箱。Files & changes 的 roots 是独立批准的权限，切换 cwd 不会扩大它们。
 
 现存 Session 的 profile/limits/显式 cwdRoots 身份仍锁定，重开必须保持原声明；不能改配置文件后静默扩大旧工作权限。旧 Session 未配置 cwdRoots 时仍可正常重开，并使用原批准目录内的子目录，不要求迁移为组合 profile。正常重开从原生 Conversation 配置恢复实际模型、目录及额度，而非从基础 profile 猜测。
 
-基础 profile 与旧的整组 configure API 保留为兼容的宿主控制面预设；新 WebUI 不用它们实现单独的模型/目录选择。
+基础 profile、顶层 `profiles`/服务端 `profileCeiling` 与整组 configure API 用于完整 Agent 预设的工具/指令权限；单独模型选择不据此筛选或改变预设。未知模型仍按服务配置目录拒绝；`canConfigure` 与实际 `manage` 资源写权限一致，目录读取、凭据及扩展安装继续各自处理真实效果。
 
 ## 10. 分阶段 Computer Use 实操验收
 

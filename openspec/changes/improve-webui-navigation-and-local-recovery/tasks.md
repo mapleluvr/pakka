@@ -86,6 +86,14 @@
 - [x] 真实本地 provider/HTTP/浏览器覆盖桌面、手机、大字号、明暗及受影响配置；33/33、额外 transcript 9/9，最终 `89117e4` 全量 645/643 pass/0 fail/2 skip。build/check/格式/strict 通过；原基线 RED、字号/关闭/焦点反证、Viewer/resize/fork 测试修正和原失败全量都在[版本记录](../../../docs/verification/WEBUI-MODEL-INDEX.md)封存。
 - [x] 产品 `4b17434` 与 test-only `89117e4` 已提交，后者仅补原 fork 用例的实际 SSE 输出等待，产品零 diff；隔离预览 `http://127.0.0.1:45005` 使用独立数据/profile/local responder，资源字节已核对。按操作者本会话指令仅作自检与实际回归，不启动独立复核；既有受阻记录不改为通过。
 
+### 4.5 模型与相关权限精简（2026-10-25）
+
+- [x] 按用户纠偏区分可用模型目录、整组 Agent 预设权限与真实资源隔离；将创建草案中的“获准初始模型”改为普通初始模型选择，记录相关权限审计。
+- [x] 以真实 JSON 产品启动/本地 provider 取得模型目录、单独选择/继承/重开以及能力提示的 3 项 RED；重复项和实际 HTTP 65 项出口另有 RED。原日志在[本轮记录](../../../docs/verification/WEBUI-MODEL-PERMISSIONS.md)保留，不使用伪造 DTO。
+- [x] 移除模型-only 路径与 Agent profile ceiling 的重复授权，模型目录去重且只发布配置标识/模型 ID；未知模型拒绝与整组预设工具/指令限制保留。有限响应容纳 default + 64 项 JSON 配置，仍拒绝第 66 项。
+- [x] 修正 canConfigure 与实际 manage 写权限矛盾；最终受影响 27/27，覆盖只读/发送/driver/管理员、撤权、目录、整组预设及配置恢复。未扩大现有角色写权限。
+- [ ] 完成受影响及全量回归、build/check/格式/strict，将真实日志和权限审计封存在正式记录；只按当前会话指令做自检，不安排独立复核。
+
 ## 5. 交付与接续
 
 - [ ] 实际执行的开发检查按版本、范围和结果记录；Verification 在选用时安排，跳过只记录一次。

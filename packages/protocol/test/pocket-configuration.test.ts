@@ -58,6 +58,28 @@ const envelope = {
 	requestId: "settings",
 	result: { kind: "configuration", configuration: view },
 };
+
+test("Model catalogue protocol: default plus 64 configured models fits the finite response; a 66th is rejected", () => {
+	const choices = Array.from({ length: 65 }, (_, index) => ({
+		id: "configured-" + index,
+		model: "model-" + index,
+	}));
+	const response = { ...envelope, result: { kind: "configuration", configuration: { ...view, choices } } };
+	assert.deepEqual(decodePocketResponse(response, "settings"), response);
+	assert.throws(() =>
+		decodePocketResponse(
+			{
+				...response,
+				result: {
+					kind: "configuration",
+					configuration: { ...view, choices: [...choices, { id: "excess", model: "excess-model" }] },
+				},
+			},
+			"settings",
+		),
+	);
+});
+
 test("WebUI settings protocol: exact scoped metadata and unknown cost are accepted; secret fields and malformed quotas fail closed", () => {
 	const request = { version: 2, requestId: "settings", command: { op: "configuration", target: ref } };
 	assert.deepEqual(decodePocketRequest(request), request);

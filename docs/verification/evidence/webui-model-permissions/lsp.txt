@@ -1,0 +1,55 @@
+Files checked: 6
+Total diagnostics: 41
+Concurrency: 3
+Wait budget: 2500ms
+Outcomes: clean=3, findings=2, unsupported=0, unavailable=0, failed=0, too_large=0, inconclusive=1
+
+Checks not confirmed: 1 (inconclusive/unavailable/unsupported/failed or not started).
+
+3 files confirmed clean, 1 unconfirmed: from a server that cannot confirm clean (push-only, silent-on-clean; e.g. classic typescript-language-server does not publish on a clean re-check). NOT the same as 0 diagnostics.
+
+Auxiliary findings (41):
+D:/Projects/pakka-wt/webui-p0/apps/server/src/pocket-workspace.ts:365:23: warning[ast-grep] (no-non-null-assertion): Non-null assertion '!' used — prefer explicit null checks or optional chaining
+D:/Projects/pakka-wt/webui-p0/apps/server/src/pocket-workspace.ts:420:53: warning[ast-grep] (no-non-null-assertion): Non-null assertion '!' used — prefer explicit null checks or optional chaining
+D:/Projects/pakka-wt/webui-p0/apps/server/src/pocket-workspace.ts:427:13: warning[ast-grep] (no-non-null-assertion): Non-null assertion '!' used — prefer explicit null checks or optional chaining
+D:/Projects/pakka-wt/webui-p0/apps/server/src/pocket-workspace.ts:558:30: hint[ast-grep] (no-await-expression-member): (await expr).prop — do not rewrite to await expr.prop (that reads .prop off the unresolved promise). Keep the parens, or destructure first: const x = await expr; x.prop
+D:/Projects/pakka-wt/webui-p0/apps/server/src/pocket-workspace.ts:167:2: warning[ast-grep] (ts-double-negation): !!value to coerce boolean - use Boolean(value) or truthiness directly
+D:/Projects/pakka-wt/webui-p0/apps/server/src/pocket-workspace.ts:169:30: warning[ast-grep] (ts-double-negation): !!value to coerce boolean - use Boolean(value) or truthiness directly
+D:/Projects/pakka-wt/webui-p0/apps/server/src/pocket-workspace.ts:188:13: warning[ast-grep] (ts-double-negation): !!value to coerce boolean - use Boolean(value) or truthiness directly
+D:/Projects/pakka-wt/webui-p0/apps/server/src/pocket-workspace.ts:148:17: hint[ast-grep] (no-unknown-parameters): Parameter typed 'unknown' — decode it at the I/O boundary instead of leaving it unparsed
+D:/Projects/pakka-wt/webui-p0/apps/server/src/pocket-workspace.ts:150:18: hint[ast-grep] (no-unknown-parameters): Parameter typed 'unknown' — decode it at the I/O boundary instead of leaving it unparsed
+D:/Projects/pakka-wt/webui-p0/apps/server/src/pocket-workspace.ts:166:24: hint[ast-grep] (no-unknown-parameters): Parameter typed 'unknown' — decode it at the I/O boundary instead of leaving it unparsed
+D:/Projects/pakka-wt/webui-p0/apps/server/src/pocket-workspace.ts:168:26: hint[ast-grep] (no-unknown-parameters): Parameter typed 'unknown' — decode it at the I/O boundary instead of leaving it unparsed
+D:/Projects/pakka-wt/webui-p0/apps/server/src/pocket-workspace.ts:149:2: hint[ast-grep] (no-runtime-typeof): Runtime 'typeof' check — decode/parse the value at its I/O boundary, then branch on the domain value
+D:/Projects/pakka-wt/webui-p0/apps/server/src/pocket-workspace.ts:156:11: hint[ast-grep] (no-runtime-typeof): Runtime 'typeof' check — decode/parse the value at its I/O boundary, then branch on the domain value
+D:/Projects/pakka-wt/webui-p0/apps/server/src/pocket-workspace.ts:167:13: hint[ast-grep] (no-runtime-typeof): Runtime 'typeof' check — decode/parse the value at its I/O boundary, then branch on the domain value
+D:/Projects/pakka-wt/webui-p0/apps/server/src/pocket-workspace.ts:169:2: hint[ast-grep] (no-runtime-typeof): Runtime 'typeof' check — decode/parse the value at its I/O boundary, then branch on the domain value
+D:/Projects/pakka-wt/webui-p0/apps/server/src/pocket-workspace.ts:179:5: hint[ast-grep] (no-runtime-typeof): Runtime 'typeof' check — decode/parse the value at its I/O boundary, then branch on the domain value
+D:/Projects/pakka-wt/webui-p0/apps/server/src/pocket-workspace.ts:244:5: hint[ast-grep] (no-runtime-typeof): Runtime 'typeof' check — decode/parse the value at its I/O boundary, then branch on the domain value
+D:/Projects/pakka-wt/webui-p0/apps/server/src/pocket-workspace.ts:338:6: hint[ast-grep] (no-runtime-typeof): Runtime 'typeof' check — decode/parse the value at its I/O boundary, then branch on the domain value
+D:/Projects/pakka-wt/webui-p0/apps/server/src/pocket-workspace.ts:487:6: hint[ast-grep] (no-runtime-typeof): Runtime 'typeof' check — decode/parse the value at its I/O boundary, then branch on the domain value
+D:/Projects/pakka-wt/webui-p0/apps/server/src/pocket-workspace.ts:508:8: hint[ast-grep] (no-runtime-typeof): Runtime 'typeof' check — decode/parse the value at its I/O boundary, then branch on the domain value
+D:/Projects/pakka-wt/webui-p0/apps/server/src/pocket-workspace.ts:511:8: hint[ast-grep] (no-runtime-typeof): Runtime 'typeof' check — decode/parse the value at its I/O boundary, then branch on the domain value
+D:/Projects/pakka-wt/webui-p0/apps/server/src/pocket-workspace.ts:273:5: hint[ast-grep] (no-conditional-empty-object-spread): Conditional empty-object spread — use an explicit if/else to omit fields
+D:/Projects/pakka-wt/webui-p0/apps/server/src/pocket-workspace.ts:349:7: hint[ast-grep] (no-conditional-empty-object-spread): Conditional empty-object spread — use an explicit if/else to omit fields
+D:/Projects/pakka-wt/webui-p0/apps/server/src/pocket-workspace.ts:420:9: hint[ast-grep] (no-conditional-empty-object-spread): Conditional empty-object spread — use an explicit if/else to omit fields
+D:/Projects/pakka-wt/webui-p0/apps/server/src/pocket-workspace.ts:421:9: hint[ast-grep] (no-conditional-empty-object-spread): Conditional empty-object spread — use an explicit if/else to omit fields
+D:/Projects/pakka-wt/webui-p0/apps/server/src/pocket-workspace.ts:443:6: hint[ast-grep] (no-conditional-empty-object-spread): Conditional empty-object spread — use an explicit if/else to omit fields
+D:/Projects/pakka-wt/webui-p0/apps/server/src/pocket-workspace.ts:444:6: hint[ast-grep] (no-conditional-empty-object-spread): Conditional empty-object spread — use an explicit if/else to omit fields
+D:/Projects/pakka-wt/webui-p0/apps/server/src/pocket-workspace.ts:45:8: hint[ast-grep] (large-class): Large class detected — consider splitting responsibilities
+D:/Projects/pakka-wt/webui-p0/apps/server/src/pocket-workspace.ts:183:3: warning[ast-grep] (throw-new-error): Use new Error() not Error() — explicit construction is clearer
+D:/Projects/pakka-wt/webui-p0/apps/server/src/pocket-workspace.ts:225:29: warning[ast-grep] (throw-new-error): Use new Error() not Error() — explicit construction is clearer
+D:/Projects/pakka-wt/webui-p0/apps/server/src/pocket-workspace.ts:516:8: warning[ast-grep] (throw-new-error): Use new Error() not Error() — explicit construction is clearer
+D:/Projects/pakka-wt/webui-p0/apps/server/src/pocket-workspace.ts:530:34: warning[ast-grep] (throw-new-error): Use new Error() not Error() — explicit construction is clearer
+D:/Projects/pakka-wt/webui-p0/apps/server/src/pocket-workspace.ts:562:19: warning[ast-grep] (throw-new-error): Use new Error() not Error() — explicit construction is clearer
+D:/Projects/pakka-wt/webui-p0/apps/server/src/pocket-workspace.ts:592:16: warning[ast-grep] (throw-new-error): Use new Error() not Error() — explicit construction is clearer
+D:/Projects/pakka-wt/webui-p0/apps/server/src/pocket-workspace.ts:597:16: warning[ast-grep] (throw-new-error): Use new Error() not Error() — explicit construction is clearer
+D:/Projects/pakka-wt/webui-p0/apps/server/src/pocket-workspace.ts:193:8: warning[ast-grep] (no-flag-argument): Flag argument — a boolean parameter the function branches on. Split into two functions.
+D:/Projects/pakka-wt/webui-p0/apps/server/src/pocket-workspace.ts:276:9: warning[ast-grep] (no-flag-argument): Flag argument — a boolean parameter the function branches on. Split into two functions.
+D:/Projects/pakka-wt/webui-p0/apps/server/src/pocket-workspace.ts:325:19: warning[ast-grep] (no-flag-argument): Flag argument — a boolean parameter the function branches on. Split into two functions.
+D:/Projects/pakka-wt/webui-p0/apps/server/src/pocket-workspace.ts:472:27: warning[ast-grep] (no-flag-argument): Flag argument — a boolean parameter the function branches on. Split into two functions.
+D:/Projects/pakka-wt/webui-p0/apps/webui/web/conversation-configuration.js:294:5: hint[ast-grep] (no-conditional-empty-object-spread-js): Conditional empty-object spread — use an explicit if/else to omit fields
+D:/Projects/pakka-wt/webui-p0/apps/webui/web/conversation-configuration.js:154:28: warning[ast-grep] (prefer-keyboard-event-key-js): Use event.key instead of event.keyCode/.which — keyCode is deprecated
+
+result ok
+usage tokens=2177 elapsed-ms=0 bytes=8705 truncated=false

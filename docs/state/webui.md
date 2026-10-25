@@ -2,7 +2,7 @@
 
 ## 人类身份与资源
 
-pakka-webui 的人类身份与权限由服务端绑定，浏览器请求按该绑定解释。邀请消费、session/role、资源 scope、当前 driver 和 Agent profile ceiling 共同约束读取与效果。
+pakka-webui 的人类身份与权限由服务端绑定，浏览器请求按该绑定解释。邀请消费、登录 session/role、资源 scope 与当前 driver 分别约束读取和相应效果；整组 Agent profile ceiling 约束工具/指令预设。单独选择模型共用 Conversation 配置权限，模型目录取服务端已配置 provider 的模型，发布内容为配置标识和模型 ID。
 
 发现、HTTP/RPC、SSE、assets、历史、查询、导出和操作核对在序列化前按当前授权过滤。撤权停止后续读写与事件发布；已发布字节处于接收端。模型密钥通过独立的受控凭据命令提交、保存和解析；输入提交后清空，状态读取返回版本与 configured。表单回填、通用 settings、URL、浏览器持久存储、模型历史和广播对已存模型密钥仅读取公开配置状态。
 

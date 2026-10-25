@@ -86,13 +86,40 @@ Product pages SHALL maintain meaningful headings, main/navigation landmarks, key
 - **WHEN** input is admitted, queued, stopped, refused or unconfirmed
 - **THEN** transcript/composer feedback represents the actual owning service state, preserving Prompt/Steer/Follow up placement, request identity and spent budgets
 
-### Requirement: Approved model selection has a searchable keyboard index
+### Requirement: Model selection uses a configured catalogue rather than per-model grants
 
-Every approved model list SHALL expose a search input over model IDs and approved profile IDs. Search SHALL ignore case, require every whitespace- or slash-separated token to match ordered characters, and rank closer matches first. The picker SHALL initially highlight the current model, reset to the first match on query edits, wrap candidate navigation with Up/Down while retaining search focus, confirm with Enter, and cancel with Escape and return focus. The applied model marker SHALL remain distinct from the highlighted candidate. Position and matching total SHALL remain visible, including 0 / 0 for an empty result, and navigation SHALL keep the active row visible. Pointer selection SHALL remain available.
+The model catalogue SHALL contain unique model identifiers configured for the service's current provider, retain their first-appearance order and first configuration identifier, and SHALL publish only each configuration identifier and model identifier. A person authorized to configure a Conversation SHALL be able to select any model in that catalogue through the model-only operation. Full Agent preset ceilings SHALL govern full preset creation/configuration, not model-only selection or inheritance. Model selection SHALL preserve the Conversation's tools, instructions and cwd; ordinary model configuration SHALL retain resource authorization, busy, incarnation, budget and unknown-result checks.
 
-#### Scenario: Search a small approved catalog
+#### Scenario: A model is configured outside the selectable full presets
 
-- **WHEN** the user opens a picker with eight or fewer approved models and enters partial or separated search terms
+- **WHEN** the service has configured another model but that model's full Agent preset is outside the person's full-preset ceiling
+- **THEN** the model remains visible and selectable without another model grant, while applying that full Agent preset remains denied
+- **AND** the next real provider request uses the selected model without applying the other preset's instructions, tools or cwd
+
+#### Scenario: Inherit and reopen a separately selected model
+
+- **WHEN** an authorized person creates a Conversation inheriting a separately selected model and normally reopens its Session
+- **THEN** the selected model and cwd, original full preset, original receipts and spent budgets survive without duplicate model dispatch or a new model permission
+
+#### Scenario: A maximum valid JSON catalogue remains readable
+
+- **WHEN** the JSON product configuration defines 64 additional distinct models alongside the default model
+- **THEN** the authenticated configuration response contains all 65 models and both the HTTP server and client decode it successfully without a model request
+- **AND** the finite configuration decoder still rejects a 66th choice rather than silently truncating the catalogue or creating model grants
+
+#### Scenario: Model metadata and configuration capability reflect their actual purpose
+
+- **WHEN** a person reads model choices and their Conversation configuration capability
+- **THEN** model choices omit preset cwd, tools, instructions, endpoint and credentials, and canConfigure agrees with the same resource write authority used by configuration commands
+- **AND** an unknown model, stale resource, revoked person or unauthorized configuration is rejected without a model request
+
+### Requirement: Model selection has a searchable keyboard index
+
+Every configured model list SHALL expose a search input over model IDs and configuration identifiers. Search SHALL ignore case, require every whitespace- or slash-separated token to match ordered characters, and rank closer matches first. The picker SHALL initially highlight the current model, reset to the first match on query edits, wrap candidate navigation with Up/Down while retaining search focus, confirm with Enter, and cancel with Escape and return focus. The applied model marker SHALL remain distinct from the highlighted candidate. Position and matching total SHALL remain visible, including 0 / 0 for an empty result, and navigation SHALL keep the active row visible. Pointer selection SHALL remain available.
+
+#### Scenario: Search a small configured catalog
+
+- **WHEN** the user opens a picker with eight or fewer configured models and enters partial or separated search terms
 - **THEN** the search input and matching candidates are available immediately, with the first match highlighted and an accurate position/total, while configuration and model dispatch remain unchanged
 
 #### Scenario: Navigate and explicitly apply a model
@@ -109,7 +136,7 @@ Every approved model list SHALL expose a search input over model IDs and approve
 
 Product-owned model choices, settings, dialogs and contribution interfaces SHALL visually separate primary labels, secondary identity/status text, form fields and action groups. Full identities SHALL remain available with wrapping or an explicit reading path at the declared phone viewports and larger text settings. Iconography, including direction and keyboard-hint arrows, SHALL use SVG paths with accessible control names; user content and semantic backend values SHALL retain their original text.
 
-#### Scenario: Read an approved model and its profile
+#### Scenario: Read a configured model and its identifier
 
 - **WHEN** a model picker contains short or long model identifiers and their profile metadata
 - **THEN** primary and secondary text occupy distinct readable roles with space between them and a separate selected indicator, without merging identities or changing the selected configuration

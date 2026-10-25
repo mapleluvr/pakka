@@ -15,7 +15,11 @@ test(
 			apiKey: "PRIVATE-SETTINGS-CANARY",
 			profiles: [
 				{ id: "alternate", model: "alternate-model", cwd: process.cwd(), systemPrompt: "ALT-INSTRUCTION" },
-				{ id: "hidden", model: "PRIVATE-HIDDEN-MODEL" },
+				{
+					id: "restricted-preset",
+					model: "configured-only-model",
+					systemPrompt: "PRIVATE-PRESET-INSTRUCTION-CANARY",
+				},
 			],
 		});
 		let app: Awaited<ReturnType<typeof startPocket>> | undefined,
@@ -44,7 +48,7 @@ test(
 			assert.equal(await owner.evaluate('Boolean(document.querySelector("[data-session-budget]"))'), true);
 			assert.equal(
 				await owner.evaluate(
-					'document.body.innerText.includes("PRIVATE-HIDDEN-MODEL")||document.body.innerText.includes("PRIVATE-SETTINGS-CANARY")',
+					'document.body.innerText.includes("PRIVATE-PRESET-INSTRUCTION-CANARY")||document.body.innerText.includes("PRIVATE-SETTINGS-CANARY")',
 				),
 				false,
 			);
@@ -55,7 +59,7 @@ test(
 				await owner.evaluate(
 					'[...document.querySelectorAll("[data-pick-model]")].map(row=>row.dataset.pickModel)',
 				),
-				["local-model", "alternate-model"],
+				["local-model", "alternate-model", "configured-only-model"],
 			);
 			assert.equal(m.f.requests.length, 0);
 			await owner.click("[data-pick-model=alternate-model]");

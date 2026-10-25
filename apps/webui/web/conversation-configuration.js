@@ -89,7 +89,7 @@ function Heading({ title, label, close }) {
 		</button>
 	</header>`;
 }
-// Search only the approved catalog, with ordered characters and independent tokens.
+// Search the configured model catalog, with ordered characters and independent tokens.
 function modelMatches(choices, query) {
 	const tokens = query
 		.toLowerCase()

@@ -17,7 +17,7 @@ Pakka 提供受控 Pi 运行时、MAS 服务与可选 pakka-webui Web 工作台�
 
 普通 Conversation 可独立使用，MAS 界面作为可选贡献安装。pakka-webui 面向多人、远程与手机使用，通过受控服务提供原生输入、历史/工具显示、独立模型与工作目录选择，以及邀请、权限、协作、项目文件/Git、审批、浏览器、记忆、定时输入、Webhook、通知和可选语音能力。
 
-- 模型配置选择宿主批准的引用；endpoint、凭据、配置模块和 Agent profile ceiling 由受信任宿主配置。
+- 模型配置使用服务端已配置 provider 的可用模型目录，共用 Conversation 的配置权限。endpoint、凭据、配置模块与整组 Agent 预设由受信任宿主配置；整组预设的工具/指令授权与单独模型选择分别处理。
 - 人类侧聊、显示卡片、导航和查看各自处理呈现与协作；明确发送的工作进入原生受控输入。
 - local、LAN、tailnet 与公网 tunnel 按各自的传输和认证条件使用。headless v1 使用 loopback 专用令牌接口，WebUI 使用独立的人类认证与受控服务。
 - 普通 Conversation 的生命周期区分归档、恢复与删除；MAS 成员退休按成员寿命契约停止接纳并处理已接纳工作。

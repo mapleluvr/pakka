@@ -9,7 +9,7 @@ import { conversationAction, toggleConversations, newConversation } from "./fron
 
 // Real UI choices must independently reach the provider/current cwd, preserve drafts, and survive page reload.
 test(
-	"Conversation configuration browser: compact model picker and title-only directory navigation remain independent on 3:5 mobile",
+	"Conversation configuration browser: configured models need no preset grant and remain independent of title-only directories on 3:5 mobile",
 	{ timeout: 60000 },
 	async () => {
 		const m = await runtimeFixture();
@@ -30,7 +30,8 @@ test(
 					],
 				},
 				owner: "Owner",
-				profiles: ["default", "alternate"],
+				// The alternate model is available without granting its full Agent preset.
+				profiles: ["default"],
 				initial: [{ name: "Independent", profile: "default" }],
 			});
 			browser = await ownedBrowser(join(m.f.root, "independent-browser"));
