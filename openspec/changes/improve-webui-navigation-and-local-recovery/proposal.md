@@ -13,6 +13,7 @@ pakka-webui 的登录拒绝只显示通用提示；当唯一管理员退出后�
 - 按真实页面分批完善表单语义、错误与焦点、长内容阅读、会话反馈和响应式细节。继续采用已保存指南与 Devin 生产参考。
 - 2026-10-24 指挥交接后，先行实施 Conversation/composer 状态可观测性 P0：live/part 保形、工具跨载体归卡、禁用/停止反馈和 blocked/needs review 指引。该切片仅消费现有 DTO，不表示本提案其余范围已获采用。
 - 将前一条指南变更中的后续工作统一接到本 tasks，保留它已经完成的首批结果。
+- Session/Conversation 创建另由 design §6.3/tasks §4.3 记录待采用方向：独立配置向导、真实父子关系与 New Session / New Conversation，以及 Sort Per Session / Default 导航分组；文档澄清不表示多 Session 或文件夹能力已交付。
 
 ## Capabilities
 

@@ -13,6 +13,8 @@
 
 同日补报的首页直角焦点框已定位为内部 surface 的 focus-visible 描边，按真实 pointer/Tab 回归改到外层圆角卡片。用户提出的独立创建弹窗与 Session → Conversation 层级另在 [design §6.3](../../openspec/changes/improve-webui-navigation-and-local-recovery/design.md#63-session--conversation-创建关系调查) 和 [tasks §4.3](../../openspec/changes/improve-webui-navigation-and-local-recovery/tasks.md#43-session--conversation-创建方向2026-10-24) 承接；当前单 runtime 的 create 只创建 Conversation，不能将名称修正当作真实 New Session 已交付。
 
+2026-10-25 用户再次要求澄清首页命名交互及两种 sidebar 模式。本轮在上述 design/tasks 记录澄清候选：New Session 与指定父项的 New Conversation 分开；清单确认没有可用父项时预填 Session 草稿，明确确认后顺序创建并保留部分成功/unknown；Sort Per Session 按原生归属分组，Default 按用户文件夹分组，归类不迁移资源。工作区认证、Durable 存储、Conversation 配置、cwd 与文件夹分别建模。个人持久化文件夹等细节仍为建议，Session 管理/权限/迁移协议继续待定；本轮未改采用状态、state 声明或产品实现。
+
 2026-10-25 后续两个按钮截图暴露发送组的外侧 Tab outline 被胶囊 `overflow:hidden` 裁切，已将各动作描边内移并保留首尾圆角；原卡片编辑器焦点与本修复分别验证。真实 RED/GREEN、空输入和 busy/Steer/Stop 矩阵及本候选门禁见[组合按钮焦点记录](../verification/WEBUI-SPLIT-BUTTON-FOCUS.md)，对应上述 design §6.2、tasks §4.2 与前端 delta。
 
 2026-10-25 用户另要求 Model Selection 具有 Pi TUI `/model` 的检索索引体验；本批采用常驻模糊检索、候选循环高亮、Enter 确认、Escape 返回及位置计数，保持模型独立配置边界。直接来源、适配取舍与采用条件见 [design §6.4](../../openspec/changes/improve-webui-navigation-and-local-recovery/design.md#64-2026-10-25-model-selection-检索索引)、[tasks §4.4](../../openspec/changes/improve-webui-navigation-and-local-recovery/tasks.md#44-model-selection-检索索引2026-10-25) 和[模型索引 delta](../../openspec/changes/improve-webui-navigation-and-local-recovery/specs/devin-frontend/spec.md#requirement-approved-model-selection-has-a-searchable-keyboard-index)。精确候选、真实 provider/浏览器回归、失败修正与预览见[模型索引验证记录](../verification/WEBUI-MODEL-INDEX.md)。
