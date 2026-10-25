@@ -1,0 +1,161 @@
+{
+  "candidate": "08924574ad4ccc8f6cb94a612185329be8c88bac",
+  "baseline": "d12640e12085410bd850000c2d0f1fd5543bd786",
+  "checks": {
+    "productAndTestsUnchangedSinceCandidate": true,
+    "localLinkTargetsChecked": 99,
+    "sourceHashRepresentation": "git-blob"
+  },
+  "sources": [
+    {
+      "path": "apps/webui/web/elements.css",
+      "representation": "git-blob",
+      "bytes": 22613,
+      "sha256": "9f97cf8dfd38914e575cc16076a92599d9a9e1909b3ce424890b155cb27db6d2"
+    },
+    {
+      "path": "apps/webui/test/composer-focus-browser.test.ts",
+      "representation": "git-blob",
+      "bytes": 10529,
+      "sha256": "d3f77781c023c3075e08d7102a1817bf78e63d93917dc6bfc36636a0727d778f"
+    },
+    {
+      "path": "apps/webui/web/reference.css",
+      "representation": "git-blob",
+      "bytes": 33738,
+      "sha256": "084adce8bc6e1feab314b301f57ddac0bab5081cfa08d1c911addece9bdb9974"
+    }
+  ],
+  "files": [
+    {
+      "path": "after-home-1440-dark-caret.png",
+      "bytes": 903,
+      "sha256": "aa94f4167ac25be336f01d66f0bd4174419a4e5c12452a6d9a4cbd7533857847"
+    },
+    {
+      "path": "after-home-1440-dark-send.png",
+      "bytes": 984,
+      "sha256": "f9fc6b3635c22e884315f132bd0430583b9fe5a233e25697e1e8eb03d1cd5442"
+    },
+    {
+      "path": "after-home-390-dark-empty-caret.png",
+      "bytes": 850,
+      "sha256": "c0e7b6c764709dd47563fa7894a57b9c4a9cb079d264fcd42b63a12aeca42630"
+    },
+    {
+      "path": "after-home-390-light-caret.png",
+      "bytes": 983,
+      "sha256": "3f72ad370c1ade3a68fc997d1ddd72bc014e866afce8e26cb390a433feddee1f"
+    },
+    {
+      "path": "after-home-390-light-send.png",
+      "bytes": 1020,
+      "sha256": "8b9d3692c2512eb989cafa28e192cda0ca10acec210c640a47d33a2a7a6b65ac"
+    },
+    {
+      "path": "after-running-send-btn.png",
+      "bytes": 382,
+      "sha256": "cf4da886afbb26a03865ea6714bf27c8d9e5422a17661771b7b17e595c6e67cc"
+    },
+    {
+      "path": "after-running-send-caret.png",
+      "bytes": 899,
+      "sha256": "9b8082359f583ab2332bd1d80bb9e23c9ebeb18d18fc94a48426ed003acd4730"
+    },
+    {
+      "path": "after-running-stop-btn.png",
+      "bytes": 1394,
+      "sha256": "122554e4386204ed02d442c1526622ac0f5b6518567a94749c63f392afaec666"
+    },
+    {
+      "path": "before-home-1440-dark-caret.png",
+      "bytes": 708,
+      "sha256": "17e1690371c64e587760f6fc2432673e146827c3a4c62a1aaf2aca4cc488ae39"
+    },
+    {
+      "path": "before-home-1440-dark-send.png",
+      "bytes": 675,
+      "sha256": "9e63f97072bcd20af19e8400133d955df8d49e11be0920816d80f0d3f19781c3"
+    },
+    {
+      "path": "build.txt",
+      "bytes": 927,
+      "sha256": "d0178804667a98a57a144a907e7ebe52353fd1ffdc0694b618c710a7b98228b8"
+    },
+    {
+      "path": "check.txt",
+      "bytes": 230,
+      "sha256": "46fd6177c4e91b62c1602b3ec14c90c976e4c02d913f127990da2db2bbe13df7"
+    },
+    {
+      "path": "conversation-1440-buttons.json",
+      "bytes": 1322,
+      "sha256": "d4b85d41a84a51a85fcd140b305adf99f2b92b2f9550fb7d0630e55aa5717433"
+    },
+    {
+      "path": "conversation-390-buttons.json",
+      "bytes": 1310,
+      "sha256": "b7ac7be9239f436184baf5abe8501a006f457b6b36133972f08cc03542227b54"
+    },
+    {
+      "path": "format.txt",
+      "bytes": 727,
+      "sha256": "0dadbd049a1008e43fa0779f4ecbc916cb96647ed08236cabd1197d417c8b6a8"
+    },
+    {
+      "path": "home-1440-buttons.json",
+      "bytes": 1344,
+      "sha256": "381e8033ae35e862503f00e83411fd9efc1601a780f9a7cd4f745f85b044dbbb"
+    },
+    {
+      "path": "home-390-buttons.json",
+      "bytes": 1338,
+      "sha256": "a236b6c29ddae03a05d49eae23d9471c441e399214ca770a54d3d4c7c5bb4a06"
+    },
+    {
+      "path": "preview.json",
+      "bytes": 617,
+      "sha256": "db1beaada8cb2b3566ca35b2f19f42748cfe95e1d159edd5aa26378c35ccd9d4"
+    },
+    {
+      "path": "red.txt",
+      "bytes": 5230,
+      "sha256": "9092e670abaacc5fda704074cb86a3a3e4ebc66025a8420487abf69ce9846b11"
+    },
+    {
+      "path": "review-stopped.json",
+      "bytes": 853,
+      "sha256": "5f73576128f08313b92a4355e3c168d6c4c60d46454a10ff0e4b9d4feca338f8"
+    },
+    {
+      "path": "running-buttons.json",
+      "bytes": 667,
+      "sha256": "8085d6a5a3288163b9519039ecb44eb346796322c7627bf47c0dd9cfd557db71"
+    },
+    {
+      "path": "strict.txt",
+      "bytes": 63,
+      "sha256": "3387e56465c0ac8689be1319d916f1ca546bae707a1fa2cb0efdddd3930c80ef"
+    },
+    {
+      "path": "test-navigation-failed.txt",
+      "bytes": 2421,
+      "sha256": "c6135a0c7a3d4f3ac48801a1a7093a0262cf97c7ea82e94a99a7ce1c1eac7c4c"
+    },
+    {
+      "path": "tests-passed.txt",
+      "bytes": 1895,
+      "sha256": "64bad4b99ed5e26e055e6453ce06a11501d81ce074bf2a1379a8eeaee0d76b6a"
+    },
+    {
+      "path": "user-buttonshot.png",
+      "bytes": 1059,
+      "sha256": "98f56da5d66f36b597a82b57550b971bad2fe7aa0c5eb5462006450321ac7dcd"
+    },
+    {
+      "path": "user-buttonshot2.png",
+      "bytes": 1018,
+      "sha256": "2cf580319d10b6af5d440ff6c972ce19f338dedd88024fd0877497a64720ab36"
+    }
+  ]
+}

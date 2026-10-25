@@ -6,7 +6,7 @@
 
 ## 固定范围与结果
 
-产品/测试候选：本轮修复提交后回填固定 SHA；随后仅更新验证与评审记录。构建及类型检查通过，受影响测试 **20 tests / 20 pass / 0 fail / 0 skip**，OpenSpec strict 通过。
+产品/测试候选：`08924574ad4ccc8f6cb94a612185329be8c88bac`（父版本 `d12640e12085410bd850000c2d0f1fd5543bd786`）；后续记录提交不改产品或测试。构建及类型检查通过，受影响测试 **20 tests / 20 pass / 0 fail / 0 skip**，OpenSpec strict 通过。
 
 - 真实 `startPocket` → 登录 → 原生 pointer/Tab/Shift+Tab → PNG；不注入页面结构或替换按钮。像素断言分别采样当前按钮四侧，防止只有 computed outline 而实际被裁掉仍算通过。
 - 首页与 Conversation：1440×900、390×900，dark/light；启用的 Send、模式与空输入时模式按钮均有完整四侧描边。
@@ -17,6 +17,8 @@
 
 ## 验收边界
 
-本轮未重跑全仓套件；旧候选 75e0c97 的 638/636 pass/0 fail/2 skip 不外推为本候选结果。指定双评与独立桌面 GUI 的状态将按本轮实际结果补记；当前未宣称最终验收通过。`agent-workspace-linux` 入口仍未发现，浏览器证据不代替它。
+本轮未重跑全仓套件；旧候选 75e0c97 的 638/636 pass/0 fail/2 skip 不外推为本候选结果。操作者于 2026-10-25 明确取消本会话后续独立复核，已记入 session note #48；本轮指定工作流 `f8eaff70-5bc6-437a-99de-2747b8d1ea43` 已停止，见[原始停止回执](evidence/webui-split-button-focus/review-stopped.json)。没有完成的评审意见，也未将取消记为通过。旧候选的 B 启动失败与独立桌面工具缺失仍保留原事实，本轮未执行独立桌面 GUI 验收。
+
+修复预览为 **http://127.0.0.1:45003**，使用独立数据、浏览器 profile 和本地确定性 responder；旧预览数据保持原目录。HTTP 与实际 CSS 字节核对见[预览记录](evidence/webui-split-button-focus/preview.json)，文件哈希见[证据清单](evidence/webui-split-button-focus/manifest.json)。
 
 实施归属及全部关联规范在[变更摘要](../changes/webui-navigation-and-local-recovery.md)、[design §6.2](../../openspec/changes/improve-webui-navigation-and-local-recovery/design.md#62-2026-10-24-主次文字表单与-svg-图标整检)、[前端 delta](../../openspec/changes/improve-webui-navigation-and-local-recovery/specs/devin-frontend/spec.md#scenario-tab-between-split-send-actions) 和 [tasks §4.2](../../openspec/changes/improve-webui-navigation-and-local-recovery/tasks.md#42-主次文字表单与-svg-图标整检2026-10-24)。Session/Conversation 创建改造仍由独立任务承接。

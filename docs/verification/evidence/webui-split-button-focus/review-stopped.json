@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "workflowRunId": "f8eaff70-5bc6-437a-99de-2747b8d1ea43",
+  "state": "stopped",
+  "createdAt": 1792900334210,
+  "entries": {
+    "a-first-review": {
+      "key": "a-first-review",
+      "continuation": {
+        "runIds": []
+      },
+      "resumability": {
+        "state": "not-resumable",
+        "reason": "child produced no run id"
+      }
+    }
+  },
+  "argsDigest": "b8647202320a8fb8a9fae0cb3437a75d745be48276c76ee73c88dc01d8dce333",
+  "workflowChildren": {
+    "version": 1,
+    "parentToolCallId": "call_63fecd49e14645c9bf13ae2cb46c5213|fc_0efe4bc63da3fa7a016add7c3fc54c87d28ba40b215d3e0205",
+    "workflowRunId": "f8eaff70-5bc6-437a-99de-2747b8d1ea43",
+    "inventoryComplete": true,
+    "workflowState": "stopped",
+    "children": [
+      {
+        "childId": "a-first-review",
+        "state": "stopped"
+      }
+    ]
+  }
+}

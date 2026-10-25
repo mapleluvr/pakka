@@ -1,0 +1,13 @@
+{
+  "observedAt": "2026-10-25T03:57:06.133Z",
+  "candidate": "08924574ad4ccc8f6cb94a612185329be8c88bac",
+  "origin": "http://127.0.0.1:45003",
+  "homeStatus": 200,
+  "cssStatus": 200,
+  "cssMatchesWorkingTree": true,
+  "cssSha256": "89c32b2af3f13f51b06952373dcdc58a789d60ea5349b8407ceae2b21ed7e8c1",
+  "provider": "local deterministic preview; no external model calls",
+  "dataDirectory": "D:\\Projects\\pakka-wt\\webui-p0\\docs\\.temp\\operator-preview-0892457\\data",
+  "browserProfile": "D:\\Projects\\pakka-wt\\webui-p0\\docs\\.temp\\operator-preview-0892457\\browser-profile",
+  "browserLaunchRequested": true
+}
