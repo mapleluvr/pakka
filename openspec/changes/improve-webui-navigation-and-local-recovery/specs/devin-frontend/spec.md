@@ -86,6 +86,25 @@ Product pages SHALL maintain meaningful headings, main/navigation landmarks, key
 - **WHEN** input is admitted, queued, stopped, refused or unconfirmed
 - **THEN** transcript/composer feedback represents the actual owning service state, preserving Prompt/Steer/Follow up placement, request identity and spent budgets
 
+### Requirement: Approved model selection has a searchable keyboard index
+
+Every approved model list SHALL expose a search input over model IDs and approved profile IDs. Search SHALL ignore case, require every whitespace- or slash-separated token to match ordered characters, and rank closer matches first. The picker SHALL initially highlight the current model, reset to the first match on query edits, wrap candidate navigation with Up/Down while retaining search focus, confirm with Enter, and cancel with Escape and return focus. The applied model marker SHALL remain distinct from the highlighted candidate. Position and matching total SHALL remain visible, including 0 / 0 for an empty result, and navigation SHALL keep the active row visible. Pointer selection SHALL remain available.
+
+#### Scenario: Search a small approved catalog
+
+- **WHEN** the user opens a picker with eight or fewer approved models and enters partial or separated search terms
+- **THEN** the search input and matching candidates are available immediately, with the first match highlighted and an accurate position/total, while configuration and model dispatch remain unchanged
+
+#### Scenario: Navigate and explicitly apply a model
+
+- **WHEN** the user moves through a long or filtered list with arrow keys and confirms a candidate with Enter or a pointer
+- **THEN** the active candidate stays visible with its matching index, and only the explicit confirmation invokes the existing authorized model-only configuration path
+
+#### Scenario: Cancel or compose search text
+
+- **WHEN** the user cancels, presses Enter with no match, or uses Enter to complete IME composition
+- **THEN** no model configuration is submitted, and cancellation restores focus to the model trigger; busy, permissions and unknown reconciliation retain their existing service contract
+
 ### Requirement: Compound labels and forms retain typographic separation
 
 Product-owned model choices, settings, dialogs and contribution interfaces SHALL visually separate primary labels, secondary identity/status text, form fields and action groups. Full identities SHALL remain available with wrapping or an explicit reading path at the declared phone viewports and larger text settings. Iconography, including direction and keyboard-hint arrows, SHALL use SVG paths with accessible control names; user content and semantic backend values SHALL retain their original text.

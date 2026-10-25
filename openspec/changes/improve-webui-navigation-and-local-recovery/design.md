@@ -183,6 +183,14 @@ Preferences/Notifications 的对应 href 来自生产注册；Conversation/Peopl
 
 后续实现应先明确真正的 Session 管理端口和持久注册，再由独立创建弹窗显示父 Session、Conversation 名称以及宿主允许的初始模型/目录。New Session 创建独立存储/额度域；New Conversation 只写选定父 Session。无可用父 Session 时，弹窗预填父 Session，并保留两步各自的原请求/核对身份；第二步失败时准确显示已建立的 Session，而不是重放第一步或释放未知结果。Session 身份、权限、单 writer 与预算都以真实 runtime 为准，文件夹仅承担人类导航归类，不改变 Conversation 原生归属。后续需先验证不同 Session 中同 Conversation ID 的授权隔离、重开与撤权，再扩展 sidebar。
 
+### 6.4 2026-10-25 Model Selection 检索索引
+
+用户要求在 Model Selection 加入类似 Pi coding agent TUI `/model` 的索引体验。直接阅读本机 Pi 1.4.0 的 `ModelSelectorComponent`、`getModelSelectorSearchText` 和公开 `fuzzyFilter` 实现，确认其搜索输入始终存在；非空检索重置候选、上下键循环、Enter 确认、Escape 取消、当前模型独立标记及长列表位置计数。它没有行号数字快捷选择。本批将这些交互关系适配到浏览器搜索 combobox/listbox，并对所有列表显示位置计数。
+
+此前 WebUI 只在超过 8 个批准模型时提供连续子串搜索，默认焦点落在关闭按钮，上下键移到行按钮后不能继续直接输入查询。本批采用常驻检索、词内有序字符匹配和紧密匹配优先；多词按空格或 `/` 分隔，覆盖真实模型与批准 profile 标识。候选高亮与已应用模型分别呈现；保留鼠标/触屏和原有配置命令、权限、busy、unknown 处理。候选滚动限定在列表，搜索入口和位置反馈可达；IME 组合按文本输入处理。
+
+Pi 是本用户请求指定的交互来源；外观继续使用现有 Pakka Sheet、SVG Icon、主次文字和主题 tokens，不修改固定 reference.css，不导入 Pi 私有模块，不扩展模型发现、供应商认证或配置协议。测试先验证上述可观察差距，再经真实 runtime/本地 provider、HTTP 和浏览器操作确认选择后的实际模型。独立复核按用户当前会话指令不再安排。
+
 ## 7. 实施检查与决策点
 
 建议开发检查包括真实 Pi/本地确定性 provider 的恢复与 HTTP 回归、发行竞争/故障注入、仓库外 CLI、路由与表单的浏览器回归；每项只报告实际版本和范围。Verification 选用规则见第 1 节，不从前一轮复制跳过记录。

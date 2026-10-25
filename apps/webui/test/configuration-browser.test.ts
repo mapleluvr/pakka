@@ -84,9 +84,11 @@ test(
 			await viewer.wait('document.querySelector("[data-conversation]")');
 			await toggleConversations(viewer);
 			await viewer.click("[data-conversation]");
-			await conversationAction(viewer, "settings", {
-				beforePress: () => viewer.wait('document.querySelector(".pocket-status")?.textContent==="Ready"'),
-			});
+			await viewer.wait(
+				'document.querySelector(".pocket-status")?.textContent==="Ready"&&document.querySelector("[data-action=cwd]")?.title===' +
+					JSON.stringify(m.f.cwd),
+			);
+			await conversationAction(viewer, "settings");
 			await viewer.wait('document.querySelector("[data-cost]")');
 			assert.equal(await viewer.evaluate('document.querySelector("[data-action=model]").disabled'), true);
 			assert.equal(await viewer.evaluate('document.querySelector("[data-action=cwd]").disabled'), true);

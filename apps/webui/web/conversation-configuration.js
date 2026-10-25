@@ -1,5 +1,5 @@
 import { h } from "preact";
-import { useEffect, useRef, useState } from "preact/hooks";
+import { useEffect, useId, useLayoutEffect, useRef, useState } from "preact/hooks";
 import htm from "htm";
 import { Icon } from "@pakka/webui/components";
 import { Sheet } from "./sheet.js";
@@ -89,53 +89,116 @@ function Heading({ title, label, close }) {
 		</button>
 	</header>`;
 }
+// Search only the approved catalog, with ordered characters and independent tokens.
+function modelMatches(choices, query) {
+	const tokens = query
+		.toLowerCase()
+		.split(/[\s/]+/)
+		.filter(Boolean);
+	if (!tokens.length) return choices;
+	function score(token, text) {
+		const contiguous = text.indexOf(token);
+		if (contiguous >= 0) return contiguous + (text.length - token.length) / 100;
+		let previous = -1,
+			gaps = 0;
+		for (const character of token) {
+			const next = text.indexOf(character, previous + 1);
+			if (next < 0) return Infinity;
+			gaps += next - previous - 1;
+			previous = next;
+		}
+		return 20 + gaps + text.length / 100;
+	}
+	return choices
+		.map((row) => ({
+			row,
+			score: tokens.reduce(
+				(total, token) =>
+					total + Math.min(score(token, row.model.toLowerCase()), score(token, row.id.toLowerCase())),
+				0,
+			),
+		}))
+		.filter((match) => Number.isFinite(match.score))
+		.sort((a, b) => a.score - b.score)
+		.map((match) => match.row);
+}
 export function ModelPicker(props) {
 	const { value, busy, close } = props,
 		[query, setQuery] = useState(""),
+		[index, setIndex] = useState(0),
+		input = useRef(null),
+		list = useRef(null),
+		listId = useId(),
 		change = useChange(props);
 	const current = value.current?.model ?? value.choices.find((row) => row.id === value.ref.profile)?.model;
 	const choices = [...new Map(value.choices.map((row) => [row.model, row])).values()].sort(
 		(a, b) => Number(b.model === current) - Number(a.model === current),
 	);
-	const filtered = choices.filter((row) =>
-		(row.model + " " + row.id).toLocaleLowerCase().includes(query.toLocaleLowerCase()),
-	);
-	function keys(event) {
-		if (!["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) return;
-		const rows = [...event.currentTarget.querySelectorAll("[data-pick-model]")];
-		if (!rows.length) return;
-		event.preventDefault();
-		const current = rows.indexOf(document.activeElement),
-			index =
-				event.key === "Home"
-					? 0
-					: event.key === "End"
-						? rows.length - 1
-						: (current + (event.key === "ArrowDown" ? 1 : rows.length - 1) + rows.length) % rows.length;
-		rows[index]?.focus();
+	const filtered = modelMatches(choices, query),
+		selected = Math.min(index, filtered.length - 1),
+		blocked = busy || change.pending || change.uncertain || !value.canConfigure;
+	useLayoutEffect(() => {
+		const row = list.current?.children[selected];
+		if (!row) return;
+		const bounds = list.current.getBoundingClientRect(),
+			rect = row.getBoundingClientRect();
+		if (rect.top < bounds.top) list.current.scrollTop -= bounds.top - rect.top;
+		else if (rect.bottom > bounds.bottom) list.current.scrollTop += rect.bottom - bounds.bottom;
+	}, [query, selected]);
+	function choose(row) {
+		if (!row || blocked) return;
+		if (row.model === current) close();
+		else void change.apply({ model: row.model });
 	}
-	return html`<${Sheet} label="Select Model" close=${close} anchor=${document.querySelector("[data-action=model]")}><${Heading} title="Model" label="Close model picker" close=${close}/><div class="pocket-sheet-body pocket-model-picker" onKeyDown=${keys}>
-  ${choices.length > 8 && html`<label>Search models<input type="search" aria-label="Search models" value=${query} onInput=${(event) => setQuery(event.currentTarget.value)} /></label>`}
-  <div role="listbox" aria-label="Approved models">${filtered.map(
-		(row) =>
+	function keys(event) {
+		if (event.isComposing || event.keyCode === 229) {
+			event.stopPropagation();
+			return;
+		}
+		if (event.key === "Enter" && event.target === input.current) {
+			event.preventDefault();
+			choose(filtered[selected]);
+			return;
+		}
+		if (!["ArrowDown", "ArrowUp"].includes(event.key)) return;
+		event.preventDefault();
+		if (filtered.length)
+			setIndex((selected + (event.key === "ArrowDown" ? 1 : filtered.length - 1)) % filtered.length);
+		input.current?.focus({ preventScroll: true });
+	}
+	return html`<${Sheet} label="Select Model" close=${close} anchor=${document.querySelector("[data-action=model]")} initialFocus="[data-model-search]"><${Heading} title="Model Selection" label="Close model picker" close=${close}/><div class="pocket-sheet-body pocket-model-picker" onKeyDown=${keys}>
+  <label class="pocket-model-search">Search Models<input ref=${input} data-model-search type="search" role="combobox" aria-label="Search models" placeholder="Search by model or profile" aria-autocomplete="list" aria-expanded="true" aria-controls=${listId} aria-activedescendant=${selected >= 0 ? listId + "-" + selected : undefined} autocomplete="off" spellcheck="false" value=${query} onInput=${(
+		event,
+	) => {
+		setQuery(event.currentTarget.value);
+		setIndex(0);
+	}} /></label>
+  <div class="pocket-model-index pocket-secondary"><span>Approved Models</span><span data-model-position role="status" aria-label="Model position">${selected + 1} / ${filtered.length}</span></div>
+  <div ref=${list} id=${listId} role="listbox" aria-label="Approved models">${filtered.map(
+		(row, position) =>
 			html`<button
 				type="button"
 				role="option"
+				id=${listId + "-" + position}
 				class="pocket-choice-row"
 				key=${row.model}
 				data-pick-model=${row.model}
-				aria-selected=${row.model === current}
-				disabled=${busy || change.pending || change.uncertain || !value.canConfigure}
-				onClick=${() => {
-					if (row.model !== current) void change.apply({ model: row.model });
-					else close();
-				}}
+				data-current-model=${row.model === current ? "" : undefined}
+				aria-selected=${position === selected}
+				tabindex=${position === selected ? 0 : -1}
+				disabled=${blocked}
+				onFocus=${() => setIndex(position)}
+				onClick=${() => choose(row)}
 			>
-				<span><strong>${row.model}</strong><small>${row.id}</small></span
+				<span
+					><strong>${row.model}</strong><small>${row.id}</small>${row.model === current &&
+					html`<span class="sr-only">Current model</span>`}</span
 				>${row.model === current && html`<${Icon} name="check" />`}
 			</button>`,
 	)}</div>
-  ${!filtered.length && html`<p role="status">No matching approved models.</p>`}<p class="pocket-secondary">Changes only the model for this conversation. Directory, instructions and tools stay unchanged.</p>${busy && html`<p role="status">Wait for current work and queued inputs to finish.</p>`}${change.status}
+  ${!filtered.length && html`<p role="status">No matching approved models.</p>`}
+  <div class="pocket-model-keys pocket-secondary" aria-hidden="true"><span><${Icon} name="up"/><${Icon} name="down"/> Navigate</span><span><${Icon} name="enter"/> Select</span><span><kbd>Esc</kbd> Close</span></div>
+  <p class="pocket-secondary">Changes only the model for this conversation. Directory, instructions and tools stay unchanged.</p>${busy && html`<p role="status">Wait for current work and queued inputs to finish.</p>`}${change.status}
  </div></${Sheet}>`;
 }
 const placeKey = (person, server) => "pakka.directories." + server + "." + person.id;

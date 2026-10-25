@@ -32,6 +32,8 @@ pakka-webui 的对应原生界面行为以 [Devin 离线生产前端](https://gi
 
 模型/cwd 持久化、批准 roots、incarnation 和配置拒绝的详细条件由[开发契约](../development/WEBUI-DEVELOPMENT.md#独立选择模型和-conversation-工作目录)维护。
 
+Model Selection 为所有批准列表提供检索框，覆盖模型 ID 和批准配置标识；检索忽略大小写，空格与 `/` 分隔的词各自按顺序字符匹配，并将更紧密的匹配排在前面。打开时定位当前模型，输入查询后定位首个匹配；上下键循环移动候选高亮，搜索框保持输入焦点，Enter 明确确认，Escape 关闭并返回模型入口。候选位置/匹配总数始终可见，空结果为 0 / 0，当前已应用模型有独立标记。列表滚动保留搜索入口与位置反馈，触屏可直接选择。检索、移动和取消只改变本地呈现；明确选择后仍由原配置命令核验权限、busy 和 unknown。详细场景及形成记录见[模型索引 delta](../../openspec/changes/improve-webui-navigation-and-local-recovery/specs/devin-frontend/spec.md#requirement-approved-model-selection-has-a-searchable-keyboard-index)与[设计 §6.4](../../openspec/changes/improve-webui-navigation-and-local-recovery/design.md#64-2026-10-25-model-selection-检索索引)。
+
 ### 主次文字、表单与 SVG 图标
 
 产品维护的固定页面/分区标题与导航/菜单名称采用 Title Case，例如 `Conversation Settings`、`People & Invitations`、`Commands & Extensions`、`New Session`；保留空格与 `&`。不以 CSS text-transform 伪装标题，不改写用户会话名、模型 ID、原文内容或第三方自定义标题。

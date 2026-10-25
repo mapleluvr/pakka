@@ -365,10 +365,59 @@ button:disabled {
 }
 /* Compound labels and forms keep identities, metadata and actions in separate layout
    slots. These Pakka-owned surfaces do not alter the frozen reference stylesheet. */
+.pocket-sheet:has(.pocket-model-picker) {
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+}
+.pocket-model-picker {
+	min-height: 0;
+}
+.pocket-model-picker > :not([role="listbox"]) {
+	flex: none;
+}
 .pocket-model-picker [role="listbox"] {
 	display: grid;
+	grid-auto-rows: max-content;
 	gap: 4px;
 	min-width: 0;
+	min-height: 0;
+	overflow-y: auto;
+	overscroll-behavior: contain;
+}
+.pocket-model-index {
+	display: flex;
+	justify-content: space-between;
+	gap: 12px;
+}
+.pocket-model-index [data-model-position] {
+	font-variant-numeric: tabular-nums;
+}
+.pocket-model-keys,
+.pocket-model-keys > span {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+}
+.pocket-model-keys {
+	flex-wrap: wrap;
+	column-gap: 12px;
+}
+.pocket-model-keys kbd {
+	font: inherit;
+}
+.pocket-sheet .pocket-model-search {
+	font-size: var(--type-ui-size);
+}
+.pocket-model-picker > .pocket-secondary {
+	font-size: var(--type-caption-size);
+}
+.pocket-sheet .pocket-model-search input {
+	width: 100%;
+	font-size: max(16px, var(--type-ui-size));
+}
+.pocket-model-picker .pocket-choice-row[aria-selected="true"] {
+	box-shadow: inset 3px 0 var(--accent);
 }
 .pocket-model-picker .pocket-choice-row {
 	display: flex;

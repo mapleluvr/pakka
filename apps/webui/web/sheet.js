@@ -96,7 +96,7 @@ export function Sheet({ label, close, children, anchor, initialFocus, variant = 
 			...panel.current.querySelectorAll(
 				'button:not(:disabled),input:not(:disabled),select:not(:disabled),textarea:not(:disabled),a[href],summary,[tabindex="0"]',
 			),
-		].filter((node) => !node.hidden && node.getClientRects().length);
+		].filter((node) => node.tabIndex >= 0 && !node.hidden && node.getClientRects().length);
 		if (!nodes.length) {
 			event.preventDefault();
 			panel.current.focus();
