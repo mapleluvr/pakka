@@ -1,0 +1,161 @@
+{
+  "baselineCommit": "d6199a38371446a912abe315f3d2da366cb3ed01",
+  "candidateCommit": "f4ed91c057ec375d53b61aa53628b42623fef3fd",
+  "node": "v24.18.0",
+  "fullCommand": "npm test -- --test-reporter=tap",
+  "fullExitCode": 0,
+  "totals": {
+    "tests": 650,
+    "pass": 648,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 2,
+    "todo": 0
+  },
+  "skipLines": [
+    "ok 41 - WebUI owned browser: an already-revoked interception does not seal subsequent authorized reads # SKIP Controlled POSIX CDP executable; real Chromium isolation remains required on Windows",
+    "ok 42 - WebUI owned browser: unknown interception rejection still seals the service # SKIP Controlled POSIX CDP executable; real Chromium isolation remains required on Windows"
+  ],
+  "affected": {
+    "tests": 27,
+    "pass": 27,
+    "fail": 0,
+    "log": "affected-r3.log"
+  },
+  "historicalEvidence": "RED and intermediate logs retain their own working-tree stages as described in WEBUI-MODEL-PERMISSIONS.md; they are not all claimed to use the final candidate.",
+  "byteContract": "docs/verification/evidence/** is -text -whitespace; hashes cover archived raw bytes. Source hashes cover exact candidate Git blobs, not PowerShell-rendered text.",
+  "localFileTargetsChecked": 162,
+  "source": [
+    {
+      "path": "apps/server/src/pocket-workspace.ts",
+      "gitBlob": "4888099c9265f19bffe915ed6d05a426a28f275c",
+      "gitBlobBytes": 27391,
+      "gitBlobSha256": "0f9f9619047ec42ae749494a43477ceca690627d8f61f9835f807a4cbb299770"
+    },
+    {
+      "path": "apps/server/test/pocket-configuration.test.ts",
+      "gitBlob": "a0a907be63d4d4f022d1fb081ed08f89c66aa404",
+      "gitBlobBytes": 3176,
+      "gitBlobSha256": "b5aad5218d0ebda819b14bba2f7a6e317006a3ab9430fabce7df42f32b7d1ee7"
+    },
+    {
+      "path": "apps/webui/test/configuration-browser.test.ts",
+      "gitBlob": "4cfb00ea7d89230278b3667e7a283886b9dcb1cf",
+      "gitBlobBytes": 6086,
+      "gitBlobSha256": "c921736269d2228f64ced1801c206394edeaacf49b0e74a43415436b18c8067f"
+    },
+    {
+      "path": "apps/webui/test/independent-configuration-browser.test.ts",
+      "gitBlob": "7e1372cc8d049b4e9cbb6377d1c39870c3b5fa71",
+      "gitBlobBytes": 7745,
+      "gitBlobSha256": "86a60c38eea9f685922a291b08d07353796871479ef72d5d447e027e532cae80"
+    },
+    {
+      "path": "apps/webui/test/model-catalog-permissions.test.ts",
+      "gitBlob": "6ff9d2f60b053dcc5c8ec7ba98480d38eadfa884",
+      "gitBlobBytes": 7751,
+      "gitBlobSha256": "c6b3d7303f8c5e78253ca28c0fd0409babd04e4a31d9c2cef4f1bba276ad5d64"
+    },
+    {
+      "path": "apps/webui/test/model-configuration.test.ts",
+      "gitBlob": "c5cc92deac94045cd8d343aef697b67e2ca9db2a",
+      "gitBlobBytes": 3856,
+      "gitBlobSha256": "8dca027a795bceeb224e1b8f7a88a7cc95a898ec8dd29c995464af79e7c7922f"
+    },
+    {
+      "path": "apps/webui/web/conversation-configuration.js",
+      "gitBlob": "9f1dfe74adbb706ab61cb5407cd46779734a4fdc",
+      "gitBlobBytes": 15566,
+      "gitBlobSha256": "551ceb90df123e12d88cef35bd527f27e30bb470b143980a7974447ecad9b427"
+    },
+    {
+      "path": "packages/protocol/src/pocket.ts",
+      "gitBlob": "759029bccc39f33eaf86158b18ba2b136f71bcd5",
+      "gitBlobBytes": 40220,
+      "gitBlobSha256": "3995bb5e2b7934bb109e53a7f27680ce674d44b8d18b5f5ea0c522162df60642"
+    },
+    {
+      "path": "packages/protocol/test/pocket-configuration.test.ts",
+      "gitBlob": "66fecdb089b0c8dca1a7f68127da0529252da2c2",
+      "gitBlobBytes": 4729,
+      "gitBlobSha256": "a5b42d2d6d0c5c043a34728f04de93dd8b14478372e1bc9df641d781830b2038"
+    }
+  ],
+  "evidence": [
+    {
+      "path": "affected-r2.log",
+      "bytes": 7008,
+      "sha256": "8fd4eb5f767ac8817ee3616bed91427ed0cb6f1f5042b0943d9fcf4a3b0d9a11"
+    },
+    {
+      "path": "affected-r3.log",
+      "bytes": 8211,
+      "sha256": "d4b0251e017cbc7bfee1eeeee0afcb3043f55c8e8836b68d73bffb187839a2c8"
+    },
+    {
+      "path": "affected.log",
+      "bytes": 7734,
+      "sha256": "e6adeb34aca9a29b2ce500f07f1c71410d30f20499f06847e4718528bbd82e98"
+    },
+    {
+      "path": "build-r3.log",
+      "bytes": 927,
+      "sha256": "d0178804667a98a57a144a907e7ebe52353fd1ffdc0694b618c710a7b98228b8"
+    },
+    {
+      "path": "capacity-red.log",
+      "bytes": 3985,
+      "sha256": "c9f7572a5835ec5ec0a65fdcc27977df7096457953699bea47ee1038d9648143"
+    },
+    {
+      "path": "check-r3.log",
+      "bytes": 230,
+      "sha256": "46fd6177c4e91b62c1602b3ec14c90c976e4c02d913f127990da2db2bbe13df7"
+    },
+    {
+      "path": "dedup-red.log",
+      "bytes": 2302,
+      "sha256": "9275dcf880d7d7eb0e31a3401cf717fa2fb4719bfaaaadb9763af613c5dcf34a"
+    },
+    {
+      "path": "format-check-r3.log",
+      "bytes": 68,
+      "sha256": "f20510a9da4717c51c4cffee6d0dd88d6c9a723d0a83711d01216f5b48961283"
+    },
+    {
+      "path": "full.log",
+      "bytes": 170301,
+      "sha256": "595c27f296876cf3902d8ec851883da69061f8dc2b2774d2ca46270dcddaed02"
+    },
+    {
+      "path": "green.log",
+      "bytes": 991,
+      "sha256": "07ed1dae92975d958726e5a9d2b601783831160317feac73ac98c4b81f435b80"
+    },
+    {
+      "path": "legacy-expectations.log",
+      "bytes": 3361,
+      "sha256": "051f04ad6a2e39feeb639e9f7069c98e2eee84325d3538fd4ae2cbc4c8124e12"
+    },
+    {
+      "path": "lsp-r3.txt",
+      "bytes": 544,
+      "sha256": "89bac75e9bc49f5c026422a96225df17aa5fc98e671c285279265bdc6b1c6661"
+    },
+    {
+      "path": "lsp.txt",
+      "bytes": 8774,
+      "sha256": "16c276982c55c8f5f01f923a8554f281c93b36c3ffa4d774d6c9536f4b9670fb"
+    },
+    {
+      "path": "red-d6199a3.log",
+      "bytes": 16136,
+      "sha256": "4cbdf2dc0c6f57de7e7571974d329ba32f5d8c3decf61266e2d40dcdb4366cc5"
+    },
+    {
+      "path": "strict-r3.log",
+      "bytes": 63,
+      "sha256": "3387e56465c0ac8689be1319d916f1ca546bae707a1fa2cb0efdddd3930c80ef"
+    }
+  ]
+}

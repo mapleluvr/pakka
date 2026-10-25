@@ -1,0 +1,149 @@
+TAP version 13
+# Subtest: Configuration authority: a narrowed project ceiling is rechecked before committing independent cwd
+ok 1 - Configuration authority: a narrowed project ceiling is rechecked before committing independent cwd
+  ---
+  duration_ms: 104.1832
+  type: 'test'
+  ...
+# Subtest: WebUI configuration: frozen model catalogue and scoped usage hide preset details, secrets and peer totals
+ok 2 - WebUI configuration: frozen model catalogue and scoped usage hide preset details, secrets and peer totals
+  ---
+  duration_ms: 141.4594
+  type: 'test'
+  ...
+# Subtest: WebUI directories: authorized browsing, independent changes and revocation use current resource authority
+ok 3 - WebUI directories: authorized browsing, independent changes and revocation use current resource authority
+  ---
+  duration_ms: 164.7663
+  type: 'test'
+  ...
+# Subtest: WebUI model choices: an approved profile changes the real next provider request and survives normal reopen without refund
+ok 4 - WebUI model choices: an approved profile changes the real next provider request and survives normal reopen without refund
+  ---
+  duration_ms: 263.768
+  type: 'test'
+  ...
+# Subtest: WebUI model choices: invalid approved model identifiers reject before storage or provider effects
+ok 5 - WebUI model choices: invalid approved model identifiers reject before storage or provider effects
+  ---
+  duration_ms: 33.6035
+  type: 'test'
+  ...
+# Subtest: WebUI workspace: shared resource does not share message authority or allow forged actor/request fields
+ok 6 - WebUI workspace: shared resource does not share message authority or allow forged actor/request fields
+  ---
+  duration_ms: 148.3968
+  type: 'test'
+  ...
+# Subtest: WebUI workspace: normal reopen reattaches original creation/admission without allocating or dispatching again
+ok 7 - WebUI workspace: normal reopen reattaches original creation/admission without allocating or dispatching again
+  ---
+  duration_ms: 106.4879
+  type: 'test'
+  ...
+# Subtest: WebUI workspace: cancelled receipt wait preserves native delivery and an explicit follow-up
+ok 8 - WebUI workspace: cancelled receipt wait preserves native delivery and an explicit follow-up
+  ---
+  duration_ms: 154.3667
+  type: 'test'
+  ...
+# Subtest: WebUI workspace: human create/configure/fork stay inside the host-selected profile ceiling
+ok 9 - WebUI workspace: human create/configure/fork stay inside the host-selected profile ceiling
+  ---
+  duration_ms: 185.2779
+  type: 'test'
+  ...
+# Subtest: WebUI workspace: views and actions bind to the real human identity and current resource scope
+ok 10 - WebUI workspace: views and actions bind to the real human identity and current resource scope
+  ---
+  duration_ms: 104.6896
+  type: 'test'
+  ...
+# Subtest: WebUI workspace: a removed profile ceiling during creation produces no native member
+ok 11 - WebUI workspace: a removed profile ceiling during creation produces no native member
+  ---
+  duration_ms: 37.3296
+  type: 'test'
+  ...
+# Subtest: WebUI configuration browser: compact model choice changes provider input while mobile viewer cannot configure or read Session totals
+ok 12 - WebUI configuration browser: compact model choice changes provider input while mobile viewer cannot configure or read Session totals
+  ---
+  duration_ms: 2119.2025
+  type: 'test'
+  ...
+# D:\\Projects\\pakka-wt\\webui-p0\\docs\\.temp\\model-permissions\\artifacts\\settings-screenshots
+# Subtest: WebUI settings recovery: lost configure response locks mutations and explicit workspace reload only reads the new incarnation
+ok 13 - WebUI settings recovery: lost configure response locks mutations and explicit workspace reload only reads the new incarnation
+  ---
+  duration_ms: 1022.4121
+  type: 'test'
+  ...
+# Subtest: WebUI settings recovery: a real delayed response from the old resource cannot populate the replacement sheet
+ok 14 - WebUI settings recovery: a real delayed response from the old resource cannot populate the replacement sheet
+  ---
+  duration_ms: 770.0944
+  type: 'test'
+  ...
+# Subtest: Conversation configuration browser: configured models need no preset grant and remain independent of title-only directories on 3:5 mobile
+ok 15 - Conversation configuration browser: configured models need no preset grant and remain independent of title-only directories on 3:5 mobile
+  ---
+  duration_ms: 2374.1718
+  type: 'test'
+  ...
+# Subtest: Model catalogue: unique configured models are visible without a second WebUI model allowlist or preset cwd metadata
+ok 16 - Model catalogue: unique configured models are visible without a second WebUI model allowlist or preset cwd metadata
+  ---
+  duration_ms: 149.6996
+  type: 'test'
+  ...
+# Subtest: Model catalogue: model-only selection and inheritance reach the real provider and survive reopen without changing Agent presets
+ok 17 - Model catalogue: model-only selection and inheritance reach the real provider and survive reopen without changing Agent presets
+  ---
+  duration_ms: 278.3704
+  type: 'test'
+  ...
+# Subtest: Model catalogue: configuration hints agree with existing resource write authority
+ok 18 - Model catalogue: configuration hints agree with existing resource write authority
+  ---
+  duration_ms: 152.3714
+  type: 'test'
+  ...
+# Subtest: Approved directory roots: host JSON admits project trees without combination profiles and refuses changed recovery authority
+ok 19 - Approved directory roots: host JSON admits project trees without combination profiles and refuses changed recovery authority
+  ---
+  duration_ms: 206.5918
+  type: 'test'
+  ...
+# Subtest: WebUI model configuration: configured JSON models reach the real product provider; extra credential/endpoint fields stay rejected
+ok 20 - WebUI model configuration: configured JSON models reach the real product provider; extra credential/endpoint fields stay rejected
+  ---
+  duration_ms: 179.2627
+  type: 'test'
+  ...
+# Subtest: Model index: small catalogs support fuzzy input, cyclic navigation, empty results and cancellation
+ok 21 - Model index: small catalogs support fuzzy input, cyclic navigation, empty results and cancellation
+  ---
+  duration_ms: 1045.8662
+  type: 'test'
+  ...
+# Subtest: Model index: long lists retain visible input/index and ranked keyboard confirmation reaches the real provider
+ok 22 - Model index: long lists retain visible input/index and ranked keyboard confirmation reaches the real provider
+  ---
+  duration_ms: 1832.2951
+  type: 'test'
+  ...
+# Subtest: Model picker: larger approved catalog is searchable and keyboard selection changes neither cwd nor provider budget
+ok 23 - Model picker: larger approved catalog is searchable and keyboard selection changes neither cwd nor provider budget
+  ---
+  duration_ms: 945.4309
+  type: 'test'
+  ...
+1..23
+# tests 23
+# suites 0
+# pass 23
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 25221.3561

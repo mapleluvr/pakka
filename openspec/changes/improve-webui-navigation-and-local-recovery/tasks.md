@@ -92,7 +92,7 @@
 - [x] 以真实 JSON 产品启动/本地 provider 取得模型目录、单独选择/继承/重开以及能力提示的 3 项 RED；重复项和实际 HTTP 65 项出口另有 RED。原日志在[本轮记录](../../../docs/verification/WEBUI-MODEL-PERMISSIONS.md)保留，不使用伪造 DTO。
 - [x] 移除模型-only 路径与 Agent profile ceiling 的重复授权，模型目录去重且只发布配置标识/模型 ID；未知模型拒绝与整组预设工具/指令限制保留。有限响应容纳 default + 64 项 JSON 配置，仍拒绝第 66 项。
 - [x] 修正 canConfigure 与实际 manage 写权限矛盾；最终受影响 27/27，覆盖只读/发送/driver/管理员、撤权、目录、整组预设及配置恢复。未扩大现有角色写权限。
-- [ ] 完成受影响及全量回归、build/check/格式/strict，将真实日志和权限审计封存在正式记录；只按当前会话指令做自检，不安排独立复核。
+- [x] 候选 `f4ed91c` 的最终受影响 27/27、全量 650/648 pass/0 fail/2 skip、build/check/格式/strict 通过；真实 RED/中间失败/最终日志及权限审计封存在[版本记录](../../../docs/verification/WEBUI-MODEL-PERMISSIONS.md)。仅按当前会话指令自检，不安排独立复核，原预览/认证/数据不动。
 
 ## 5. 交付与接续
 

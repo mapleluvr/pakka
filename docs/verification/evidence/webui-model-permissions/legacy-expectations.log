@@ -1,0 +1,95 @@
+TAP version 13
+# Subtest: WebUI configuration: passive frozen choices and scoped usage hide secrets, peer totals and forbidden profiles
+not ok 1 - WebUI configuration: passive frozen choices and scoped usage hide secrets, peer totals and forbidden profiles
+  ---
+  duration_ms: 77.5841
+  type: 'test'
+  location: 'D:\\Projects\\pakka-wt\\webui-p0\\apps\\server\\test\\pocket-configuration.test.ts:8:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    
+      [
+        {
+    -     cwd: 'C:\\Users\\Administrator\\AppData\\Local\\Temp\\pakka-integration-1jxW91\\workspace',
+          id: 'default',
+          model: 'local-model'
+        },
+        {
+    -     cwd: 'D:\\Projects\\pakka-wt\\webui-p0',
+          id: 'alternate',
+          model: 'alternate-model'
+        },
+    +   {
+    +     id: 'secret-profile',
+    +     model: 'PRIVATE-MODEL-CANARY'
+    +   }
+      ]
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+    0:
+      id: 'default'
+      model: 'local-model'
+      cwd: 'C:\\Users\\Administrator\\AppData\\Local\\Temp\\pakka-integration-1jxW91\\workspace'
+    1:
+      id: 'alternate'
+      model: 'alternate-model'
+      cwd: 'D:\\Projects\\pakka-wt\\webui-p0'
+  actual:
+    0:
+      id: 'default'
+      model: 'local-model'
+    1:
+      id: 'alternate'
+      model: 'alternate-model'
+    2:
+      id: 'secret-profile'
+      model: 'PRIVATE-MODEL-CANARY'
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/server/test/pocket-configuration.test.ts:30:10)
+    async Test.run (node:internal/test_runner/test:1332:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3)
+  ...
+# Subtest: Approved directory roots: host JSON admits project trees without combination profiles and refuses changed recovery authority
+ok 2 - Approved directory roots: host JSON admits project trees without combination profiles and refuses changed recovery authority
+  ---
+  duration_ms: 153.4127
+  type: 'test'
+  ...
+# Subtest: WebUI model configuration: approved JSON profiles reach the real product provider; extra credential/endpoint fields stay rejected
+not ok 3 - WebUI model configuration: approved JSON profiles reach the real product provider; extra credential/endpoint fields stay rejected
+  ---
+  duration_ms: 80.4837
+  type: 'test'
+  location: 'D:\\Projects\\pakka-wt\\webui-p0\\apps\\webui\\test\\model-configuration.test.ts:48:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + undefined
+    - 'D:\\Projects\\pakka-wt\\webui-p0'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'D:\\Projects\\pakka-wt\\webui-p0'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/model-configuration.test.ts:82:10)
+    process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    async Test.run (node:internal/test_runner/test:1332:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:911:7)
+  ...
+1..3
+# tests 3
+# suites 0
+# pass 1
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1935.698

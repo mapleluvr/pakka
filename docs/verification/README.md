@@ -4,6 +4,7 @@
 
 | 核对对象                       | 记录                                                                                                         |
 | ------------------------------ | ------------------------------------------------------------------------------------------------------------ |
+| WebUI 模型目录与权限精简       | [模型权限记录](WEBUI-MODEL-PERMISSIONS.md)                                                                   |
 | Model Selection 检索索引      | [模型索引记录](WEBUI-MODEL-INDEX.md)                                                                        |
 | WebUI 组合发送按钮 Tab 焦点    | [组合按钮焦点记录](WEBUI-SPLIT-BUTTON-FOCUS.md)                                                              |
 | WebUI 排版、SVG 与焦点         | [排版整检记录](WEBUI-TYPOGRAPHY-SVG.md)                                                                      |

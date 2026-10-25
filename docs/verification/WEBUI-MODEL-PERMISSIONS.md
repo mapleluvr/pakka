@@ -35,7 +35,9 @@ Envelope 维持 v2。server/client 一起构建；旧的 64 项客户端读取 6
 
 ## 固定候选与全量
 
-候选待固定；当前仅完成受影响回归，全量尚未记为通过。完整命令为 `npm test -- --test-reporter=tap`，使用仓库自带的隔离环境 runner；该全量结果将绑定后续固定 SHA。
+产品/测试固定于 `f4ed91c057ec375d53b61aa53628b42623fef3fd`。同 SHA 执行 `npm test -- --test-reporter=tap`，由仓库自带 runner 隔离环境；[全量原日志](evidence/webui-model-permissions/full.log)为 **650 tests / 648 pass / 0 fail / 2 skip，exit 0**。两项跳过均为既有 Windows 不运行的 POSIX CDP 控制程序用例，没有跳过本轮模型功能。
+
+[证据 manifest](evidence/webui-model-permissions/manifest.json)绑定固定候选的 9 个产品/测试 Git blob 和 15 个原始证据文件，逐项记录字节数及 SHA-256；raw bytes 按仓库 `.gitattributes` 保留。最终文档/证据提交相对该候选的 `apps/`、`packages/` 为零 diff，不用文档提交冒充另一份未经测试的实现。
 
 - [build](evidence/webui-model-permissions/build-r3.log)、[check](evidence/webui-model-permissions/check-r3.log)、[格式](evidence/webui-model-permissions/format-check-r3.log)、[OpenSpec strict](evidence/webui-model-permissions/strict-r3.log) 均通过；另有 whitespace 检查。
 - 主动 LSP 首轮 6 路径为 3 clean / 2 findings / 1 inconclusive，41 项辅助风格提示见[原输出](evidence/webui-model-permissions/lsp.txt)；最终 4 路径为 1 clean / 3 inconclusive，见[最终输出](evidence/webui-model-permissions/lsp-r3.txt)。silent-on-clean 不等于全路径干净，不能宣称零 LSP 错误门禁；TypeScript 全仓 check 的通过单独记录。

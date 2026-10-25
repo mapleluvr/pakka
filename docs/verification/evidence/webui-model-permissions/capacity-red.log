@@ -1,0 +1,83 @@
+TAP version 13
+# Subtest: Model catalogue: unique configured models are visible without a second WebUI model allowlist or preset cwd metadata
+ok 1 - Model catalogue: unique configured models are visible without a second WebUI model allowlist or preset cwd metadata
+  ---
+  duration_ms: 118.7802
+  type: 'test'
+  ...
+# Subtest: Model catalogue: the maximum JSON configuration publishes all 65 unique models through real authenticated HTTP
+not ok 2 - Model catalogue: the maximum JSON configuration publishes all 65 unique models through real authenticated HTTP
+  ---
+  duration_ms: 129.6777
+  type: 'test'
+  location: 'D:\\Projects\\pakka-wt\\webui-p0\\apps\\webui\\test\\model-catalog-permissions.test.ts:84:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    {"version":2,"requestId":"catalog-capacity","serverId":"548dd0cc-e753-46ea-922e-9e6d87b7cb6a","error":{"code":"UNKNOWN","outcome":"unknown","message":"WebUI operation outcome unconfirmed"}}
+    
+    500 !== 200
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 200
+  actual: 500
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/model-catalog-permissions.test.ts:106:10)
+    process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    async Test.run (node:internal/test_runner/test:1332:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:911:7)
+  ...
+# Subtest: Model catalogue: model-only selection and inheritance reach the real provider and survive reopen without changing Agent presets
+ok 3 - Model catalogue: model-only selection and inheritance reach the real provider and survive reopen without changing Agent presets
+  ---
+  duration_ms: 213.9494
+  type: 'test'
+  ...
+# Subtest: Model catalogue: configuration hints agree with existing resource write authority
+ok 4 - Model catalogue: configuration hints agree with existing resource write authority
+  ---
+  duration_ms: 121.0158
+  type: 'test'
+  ...
+# Subtest: Independent configuration protocol: only explicit model/cwd changes and bounded directory navigation are accepted
+ok 5 - Independent configuration protocol: only explicit model/cwd changes and bounded directory navigation are accepted
+  ---
+  duration_ms: 2.513
+  type: 'test'
+  ...
+# Subtest: Model catalogue protocol: default plus 64 configured models fits the finite response; a 66th is rejected
+not ok 6 - Model catalogue protocol: default plus 64 configured models fits the finite response; a 66th is rejected
+  ---
+  duration_ms: 0.2379
+  type: 'test'
+  location: 'D:\\Projects\\pakka-wt\\webui-p0\\packages\\protocol\\test\\pocket-configuration.test.ts:62:1'
+  failureType: 'testCodeFailure'
+  error: 'Invalid finite WebUI protocol'
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    decode (file:///D:/Projects/pakka-wt/webui-p0/packages/protocol/src/pocket.ts:1146:9)
+    decodePocketResponse (file:///D:/Projects/pakka-wt/webui-p0/packages/protocol/src/pocket.ts:1172:9)
+    TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/packages/protocol/test/pocket-configuration.test.ts:65:19)
+    Test.runInAsyncScope (node:async_hooks:227:14)
+    Test.run (node:internal/test_runner/test:1325:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:911:18)
+    Test.postRun (node:internal/test_runner/test:1465:19)
+    Test.run (node:internal/test_runner/test:1390:12)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3)
+  ...
+# Subtest: WebUI settings protocol: exact scoped metadata and unknown cost are accepted; secret fields and malformed quotas fail closed
+ok 7 - WebUI settings protocol: exact scoped metadata and unknown cost are accepted; secret fields and malformed quotas fail closed
+  ---
+  duration_ms: 0.4661
+  type: 'test'
+  ...
+1..7
+# tests 7
+# suites 0
+# pass 5
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1631.3632

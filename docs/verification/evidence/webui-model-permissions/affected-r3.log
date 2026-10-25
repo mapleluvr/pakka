@@ -1,0 +1,173 @@
+TAP version 13
+# Subtest: Configuration authority: a narrowed project ceiling is rechecked before committing independent cwd
+ok 1 - Configuration authority: a narrowed project ceiling is rechecked before committing independent cwd
+  ---
+  duration_ms: 116.6426
+  type: 'test'
+  ...
+# Subtest: WebUI configuration: frozen model catalogue and scoped usage hide preset details, secrets and peer totals
+ok 2 - WebUI configuration: frozen model catalogue and scoped usage hide preset details, secrets and peer totals
+  ---
+  duration_ms: 117.9476
+  type: 'test'
+  ...
+# Subtest: WebUI directories: authorized browsing, independent changes and revocation use current resource authority
+ok 3 - WebUI directories: authorized browsing, independent changes and revocation use current resource authority
+  ---
+  duration_ms: 157.6123
+  type: 'test'
+  ...
+# Subtest: WebUI model choices: an approved profile changes the real next provider request and survives normal reopen without refund
+ok 4 - WebUI model choices: an approved profile changes the real next provider request and survives normal reopen without refund
+  ---
+  duration_ms: 253.2004
+  type: 'test'
+  ...
+# Subtest: WebUI model choices: invalid approved model identifiers reject before storage or provider effects
+ok 5 - WebUI model choices: invalid approved model identifiers reject before storage or provider effects
+  ---
+  duration_ms: 31.4166
+  type: 'test'
+  ...
+# Subtest: WebUI workspace: shared resource does not share message authority or allow forged actor/request fields
+ok 6 - WebUI workspace: shared resource does not share message authority or allow forged actor/request fields
+  ---
+  duration_ms: 182.387
+  type: 'test'
+  ...
+# Subtest: WebUI workspace: normal reopen reattaches original creation/admission without allocating or dispatching again
+ok 7 - WebUI workspace: normal reopen reattaches original creation/admission without allocating or dispatching again
+  ---
+  duration_ms: 133.6867
+  type: 'test'
+  ...
+# Subtest: WebUI workspace: cancelled receipt wait preserves native delivery and an explicit follow-up
+ok 8 - WebUI workspace: cancelled receipt wait preserves native delivery and an explicit follow-up
+  ---
+  duration_ms: 175.9294
+  type: 'test'
+  ...
+# Subtest: WebUI workspace: human create/configure/fork stay inside the host-selected profile ceiling
+ok 9 - WebUI workspace: human create/configure/fork stay inside the host-selected profile ceiling
+  ---
+  duration_ms: 171.3714
+  type: 'test'
+  ...
+# Subtest: WebUI workspace: views and actions bind to the real human identity and current resource scope
+ok 10 - WebUI workspace: views and actions bind to the real human identity and current resource scope
+  ---
+  duration_ms: 86.5944
+  type: 'test'
+  ...
+# Subtest: WebUI workspace: a removed profile ceiling during creation produces no native member
+ok 11 - WebUI workspace: a removed profile ceiling during creation produces no native member
+  ---
+  duration_ms: 38.9878
+  type: 'test'
+  ...
+# Subtest: WebUI configuration browser: compact model choice changes provider input while mobile viewer cannot configure or read Session totals
+ok 12 - WebUI configuration browser: compact model choice changes provider input while mobile viewer cannot configure or read Session totals
+  ---
+  duration_ms: 1928.0549
+  type: 'test'
+  ...
+# D:\\Projects\\pakka-wt\\webui-p0\\docs\\.temp\\model-permissions\\artifacts\\settings-screenshots
+# Subtest: WebUI settings recovery: lost configure response locks mutations and explicit workspace reload only reads the new incarnation
+ok 13 - WebUI settings recovery: lost configure response locks mutations and explicit workspace reload only reads the new incarnation
+  ---
+  duration_ms: 913.5408
+  type: 'test'
+  ...
+# Subtest: WebUI settings recovery: a real delayed response from the old resource cannot populate the replacement sheet
+ok 14 - WebUI settings recovery: a real delayed response from the old resource cannot populate the replacement sheet
+  ---
+  duration_ms: 774.4314
+  type: 'test'
+  ...
+# Subtest: Conversation configuration browser: configured models need no preset grant and remain independent of title-only directories on 3:5 mobile
+ok 15 - Conversation configuration browser: configured models need no preset grant and remain independent of title-only directories on 3:5 mobile
+  ---
+  duration_ms: 2298.2651
+  type: 'test'
+  ...
+# Subtest: Model catalogue: unique configured models are visible without a second WebUI model allowlist or preset cwd metadata
+ok 16 - Model catalogue: unique configured models are visible without a second WebUI model allowlist or preset cwd metadata
+  ---
+  duration_ms: 116.6228
+  type: 'test'
+  ...
+# Subtest: Model catalogue: the maximum JSON configuration publishes all 65 unique models through real authenticated HTTP
+ok 17 - Model catalogue: the maximum JSON configuration publishes all 65 unique models through real authenticated HTTP
+  ---
+  duration_ms: 114.1307
+  type: 'test'
+  ...
+# Subtest: Model catalogue: model-only selection and inheritance reach the real provider and survive reopen without changing Agent presets
+ok 18 - Model catalogue: model-only selection and inheritance reach the real provider and survive reopen without changing Agent presets
+  ---
+  duration_ms: 191.6455
+  type: 'test'
+  ...
+# Subtest: Model catalogue: configuration hints agree with existing resource write authority
+ok 19 - Model catalogue: configuration hints agree with existing resource write authority
+  ---
+  duration_ms: 111.9005
+  type: 'test'
+  ...
+# Subtest: Approved directory roots: host JSON admits project trees without combination profiles and refuses changed recovery authority
+ok 20 - Approved directory roots: host JSON admits project trees without combination profiles and refuses changed recovery authority
+  ---
+  duration_ms: 153.3632
+  type: 'test'
+  ...
+# Subtest: WebUI model configuration: configured JSON models reach the real product provider; extra credential/endpoint fields stay rejected
+ok 21 - WebUI model configuration: configured JSON models reach the real product provider; extra credential/endpoint fields stay rejected
+  ---
+  duration_ms: 138.3564
+  type: 'test'
+  ...
+# Subtest: Model index: small catalogs support fuzzy input, cyclic navigation, empty results and cancellation
+ok 22 - Model index: small catalogs support fuzzy input, cyclic navigation, empty results and cancellation
+  ---
+  duration_ms: 722.1688
+  type: 'test'
+  ...
+# Subtest: Model index: long lists retain visible input/index and ranked keyboard confirmation reaches the real provider
+ok 23 - Model index: long lists retain visible input/index and ranked keyboard confirmation reaches the real provider
+  ---
+  duration_ms: 1574.5406
+  type: 'test'
+  ...
+# Subtest: Model picker: larger approved catalog is searchable and keyboard selection changes neither cwd nor provider budget
+ok 24 - Model picker: larger approved catalog is searchable and keyboard selection changes neither cwd nor provider budget
+  ---
+  duration_ms: 749.4007
+  type: 'test'
+  ...
+# Subtest: Independent configuration protocol: only explicit model/cwd changes and bounded directory navigation are accepted
+ok 25 - Independent configuration protocol: only explicit model/cwd changes and bounded directory navigation are accepted
+  ---
+  duration_ms: 2.4224
+  type: 'test'
+  ...
+# Subtest: Model catalogue protocol: default plus 64 configured models fits the finite response; a 66th is rejected
+ok 26 - Model catalogue protocol: default plus 64 configured models fits the finite response; a 66th is rejected
+  ---
+  duration_ms: 0.37
+  type: 'test'
+  ...
+# Subtest: WebUI settings protocol: exact scoped metadata and unknown cost are accepted; secret fields and malformed quotas fail closed
+ok 27 - WebUI settings protocol: exact scoped metadata and unknown cost are accepted; secret fields and malformed quotas fail closed
+  ---
+  duration_ms: 0.4356
+  type: 'test'
+  ...
+1..27
+# tests 27
+# suites 0
+# pass 27
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 22787.6421

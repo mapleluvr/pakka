@@ -1,0 +1,280 @@
+
+> pakka-workspace@0.1.0 test
+> node scripts/test.mjs --test-name-pattern=Model catalogue:
+
+✔ apps\cli\test\cli.test.ts (858.1455ms)
+✔ apps\server\test\bootstrap.test.ts (813.6858ms)
+✔ apps\server\test\browser.test.ts (808.4498ms)
+✔ apps\server\test\configuration-authority.test.ts (804.277ms)
+✔ apps\server\test\devpack-grants.test.ts (795.1451ms)
+✔ apps\server\test\devpack-refusal.test.ts (867.2724ms)
+✔ apps\server\test\devpack-worker.test.ts (875.3611ms)
+✔ apps\server\test\dynamite-config.test.ts (427.6904ms)
+✔ apps\server\test\http.test.ts (822.0823ms)
+✔ apps\server\test\model-consumers.test.ts (812.2891ms)
+✔ apps\server\test\pocket-approvals.test.ts (799.8782ms)
+✔ apps\server\test\pocket-browser-network-reset.test.ts (115.6522ms)
+✔ apps\server\test\pocket-browser-network.test.ts (113.9449ms)
+✔ apps\server\test\pocket-browser.test.ts (810.4916ms)
+✔ apps\server\test\pocket-collaboration.test.ts (819.4823ms)
+✔ apps\server\test\pocket-configuration.test.ts (794.0719ms)
+✔ apps\server\test\pocket-credentials-boundaries.test.ts (805.2794ms)
+✔ apps\server\test\pocket-credentials.test.ts (812.0806ms)
+✔ apps\server\test\pocket-directories.test.ts (787.2578ms)
+✔ apps\server\test\pocket-files.test.ts (812.1672ms)
+✔ apps\server\test\pocket-hooks-boundaries.test.ts (829.4093ms)
+✔ apps\server\test\pocket-hooks-persistence.test.ts (810.8713ms)
+✔ apps\server\test\pocket-hooks.test.ts (814.9446ms)
+✔ apps\server\test\pocket-memory-boundaries.test.ts (802.1057ms)
+✔ apps\server\test\pocket-memory-native-changes.test.ts (822.0893ms)
+✔ apps\server\test\pocket-memory-native.test.ts (815.1174ms)
+✔ apps\server\test\pocket-memory.test.ts (809.5684ms)
+✔ apps\server\test\pocket-model-profile.test.ts (827.7591ms)
+✔ apps\server\test\pocket-notifications.test.ts (807.2605ms)
+✔ apps\server\test\pocket-people-boundaries.test.ts (821.9239ms)
+✔ apps\server\test\pocket-people-persistence.test.ts (813.9058ms)
+✔ apps\server\test\pocket-people.test.ts (806.2467ms)
+✔ apps\server\test\pocket-schedules-boundaries.test.ts (816.811ms)
+✔ apps\server\test\pocket-schedules-persistence.test.ts (797.9471ms)
+✔ apps\server\test\pocket-schedules.test.ts (841.2406ms)
+✔ apps\server\test\pocket-workspace-recovery.test.ts (855.2701ms)
+✔ apps\server\test\pocket-workspace.test.ts (840.4688ms)
+✔ apps\server\test\product.test.ts (829.0377ms)
+✔ apps\server\test\worker-validation.test.ts (867.7699ms)
+✔ apps\server\test\workers.test.ts (854.0275ms)
+✔ apps\webui\test\appearance-browser.test.ts (846.855ms)
+✔ apps\webui\test\approvals-browser.test.ts (856.4506ms)
+✔ apps\webui\test\browser-contribution.test.ts (850.0265ms)
+✔ apps\webui\test\browser-input.test.ts (90.6183ms)
+✔ apps\webui\test\browser-launch.test.ts (91.9515ms)
+✔ apps\webui\test\browser.test.ts (822.5486ms)
+✔ apps\webui\test\busy-browser.test.ts (832.5433ms)
+✔ apps\webui\test\collaboration-browser.test.ts (878.9134ms)
+✔ apps\webui\test\collaboration-http.test.ts (840.3692ms)
+✔ apps\webui\test\collaboration-late.test.ts (849.6721ms)
+✔ apps\webui\test\composer-focus-browser.test.ts (844.2682ms)
+✔ apps\webui\test\composer-hints-browser.test.ts (851.7144ms)
+✔ apps\webui\test\composition-main.test.ts (808.7714ms)
+✔ apps\webui\test\composition-validation.test.ts (788.4417ms)
+✔ apps\webui\test\configuration-browser.test.ts (851.7977ms)
+✔ apps\webui\test\configuration-recovery.test.ts (834.5908ms)
+✔ apps\webui\test\creation-recovery-browser.test.ts (838.5518ms)
+✔ apps\webui\test\credentials-browser.test.ts (865.9757ms)
+✔ apps\webui\test\credentials-http.test.ts (835.9978ms)
+✔ apps\webui\test\devin-adoption-browser.test.ts (821.9763ms)
+✔ apps\webui\test\devin-palette-browser.test.ts (855.4382ms)
+✔ apps\webui\test\devin-reference.test.ts (88.2122ms)
+✔ apps\webui\test\devin-shell-browser.test.ts (847.1186ms)
+✔ apps\webui\test\error-history.test.ts (834.4305ms)
+✔ apps\webui\test\events-backpressure.test.ts (840.0911ms)
+✔ apps\webui\test\events.test.ts (833.6906ms)
+✔ apps\webui\test\executable-bin.test.ts (810.0804ms)
+✔ apps\webui\test\extension-browser.test.ts (865.6893ms)
+✔ apps\webui\test\extension-client.test.ts (124.9578ms)
+✔ apps\webui\test\extension-config.test.ts (491.184ms)
+✔ apps\webui\test\extension-contract.test.ts (96.3528ms)
+✔ apps\webui\test\extension-host.test.ts (944.0038ms)
+✔ apps\webui\test\extension-http.test.ts (840.7772ms)
+✔ apps\webui\test\extension-ingress.test.ts (832.4674ms)
+✔ apps\webui\test\extension-initialization.test.ts (821.1509ms)
+✔ apps\webui\test\extension-instance.test.ts (838.8306ms)
+✔ apps\webui\test\extension-service-assembly.test.ts (865.0636ms)
+✔ apps\webui\test\extension-staging.test.ts (852.7345ms)
+✔ apps\webui\test\files-boundaries.test.ts (845.077ms)
+✔ apps\webui\test\files-browser.test.ts (858.5201ms)
+✔ apps\webui\test\files-effect-boundary.test.ts (793.1348ms)
+✔ apps\webui\test\history-browser.test.ts (848.7939ms)
+✔ apps\webui\test\hooks-browser.test.ts (893.0951ms)
+✔ apps\webui\test\hooks-busy.test.ts (856.4851ms)
+✔ apps\webui\test\hooks-read-boundary.test.ts (861.9033ms)
+✔ apps\webui\test\hooks-recovery.test.ts (835.9761ms)
+✔ apps\webui\test\http.test.ts (861.9241ms)
+✔ apps\webui\test\importmap-browser.test.ts (853.9965ms)
+✔ apps\webui\test\independent-configuration-browser.test.ts (844.0592ms)
+✔ apps\webui\test\input-failure.test.ts (831.563ms)
+✔ apps\webui\test\main.test.ts (792.6688ms)
+✔ apps\webui\test\mas-agent-removal.test.ts (835.7677ms)
+✔ apps\webui\test\mas-board-busy.test.ts (856.8619ms)
+✔ apps\webui\test\mas-board-presentation.test.ts (847.6587ms)
+✔ apps\webui\test\mas-board-recovery.test.ts (857.4335ms)
+✔ apps\webui\test\mas-board-removal.test.ts (846.4389ms)
+✔ apps\webui\test\mas-board.test.ts (868.4103ms)
+✔ apps\webui\test\mas-devin-adoption.test.ts (892.9506ms)
+✔ apps\webui\test\mas-resource-navigation.test.ts (940.5311ms)
+✔ apps\webui\test\mas-stylesheet-browser.test.ts (915.8054ms)
+✔ apps\webui\test\memory-browser.test.ts (856.7212ms)
+✔ apps\webui\test\memory-recovery.test.ts (831.8144ms)
+✔ apps\webui\test\mobile-sidebar.test.ts (834.1511ms)
+✖ Model catalogue: configured models are visible without a second WebUI model allowlist or preset cwd metadata (128.1055ms)
+✖ Model catalogue: model-only selection and inheritance reach the real provider and survive reopen without changing Agent presets (84.3856ms)
+✖ Model catalogue: configuration hints agree with existing resource write authority (119.8966ms)
+✔ apps\webui\test\model-configuration.test.ts (842.198ms)
+✔ apps\webui\test\model-index-browser.test.ts (844.4627ms)
+✔ apps\webui\test\model-picker-browser.test.ts (863.3925ms)
+✔ apps\webui\test\navigation-browser.test.ts (848.2854ms)
+✔ apps\webui\test\navigation-capacity.test.ts (840.6709ms)
+✔ apps\webui\test\navigation-http.test.ts (851.818ms)
+✔ apps\webui\test\navigation-reconcile.test.ts (843.6369ms)
+✔ apps\webui\test\navigation-recovery-browser.test.ts (861.963ms)
+✔ apps\webui\test\navigation-reopen.test.ts (860.8068ms)
+✔ apps\webui\test\notification-navigation-browser.test.ts (830.0219ms)
+✔ apps\webui\test\notifications-browser.test.ts (855.645ms)
+✔ apps\webui\test\notifications-http.test.ts (859.7572ms)
+✔ apps\webui\test\notifications-main.test.ts (801.1194ms)
+✔ apps\webui\test\product.test.ts (859.0532ms)
+✔ apps\webui\test\qr.test.ts (880.5462ms)
+✔ apps\webui\test\remote.test.ts (851.897ms)
+✔ apps\webui\test\schedules-browser.test.ts (840.6286ms)
+✔ apps\webui\test\schedules-recovery.test.ts (837.9756ms)
+✔ apps\webui\test\service-lifecycle.test.ts (850.9661ms)
+✔ apps\webui\test\settings-navigation-browser.test.ts (836.8454ms)
+✔ apps\webui\test\short-sidebar.test.ts (826.5422ms)
+✔ apps\webui\test\svg-iconography.test.ts (89.7582ms)
+✔ apps\webui\test\transcript-parts-browser.test.ts (861.5487ms)
+✔ apps\webui\test\typography-accessibility-browser.test.ts (850.9537ms)
+✔ apps\webui\test\typography-spacing-browser.test.ts (845.2349ms)
+✔ apps\webui\test\voice-browser.test.ts (838.404ms)
+✔ apps\webui\test\workspace-http.test.ts (829.5874ms)
+✔ packages\agent\test\catalog-ownership.test.ts (804.4982ms)
+✔ packages\agent\test\compresser-conversation.test.ts (796.0975ms)
+✔ packages\agent\test\compresser-crash.test.ts (789.8003ms)
+✔ packages\agent\test\compresser-session.test.ts (801.7174ms)
+✔ packages\agent\test\conversation-observation-safety.test.ts (788.9956ms)
+✔ packages\agent\test\conversation-observation.test.ts (820.9357ms)
+✔ packages\agent\test\conversation-pagination.test.ts (780.8923ms)
+✔ packages\agent\test\differential-oracle.test.ts (799.9996ms)
+✔ packages\agent\test\durable-integration.test.ts (802.2574ms)
+✔ packages\agent\test\durable-patch-tooling.test.ts (92.3797ms)
+✔ packages\agent\test\fixture-paths.test.ts (786.7864ms)
+✔ packages\agent\test\generation-block.test.ts (817.0399ms)
+✔ packages\agent\test\host.test.ts (795.1975ms)
+✔ packages\agent\test\lifecycle-projection.test.ts (797.0619ms)
+✔ packages\agent\test\lifecycle-queue.test.ts (795.1595ms)
+✔ packages\agent\test\mas-red.test.ts (802.5778ms)
+✔ packages\agent\test\multi-conversation.test.ts (803.0628ms)
+✔ packages\agent\test\permissions.test.ts (785.4788ms)
+✔ packages\agent\test\recovery.test.ts (808.1056ms)
+✔ packages\agent\test\reentrancy.test.ts (811.5125ms)
+✔ packages\agent\test\runtime-backend-job-progress.test.ts (810.0026ms)
+✔ packages\agent\test\runtime-backend-job-safety.test.ts (807.7942ms)
+✔ packages\agent\test\runtime-backend-jobs.test.ts (792.7468ms)
+✔ packages\agent\test\runtime-configuration.test.ts (824.0156ms)
+✔ packages\agent\test\runtime-context-boundaries.test.ts (805.9669ms)
+✔ packages\agent\test\runtime-context.test.ts (792.1196ms)
+✔ packages\agent\test\runtime-jobs.test.ts (798.9322ms)
+✔ packages\agent\test\runtime-migration.test.ts (801.4861ms)
+✔ packages\agent\test\runtime-projects.test.ts (829.4688ms)
+✔ packages\agent\test\runtime-review.test.ts (803.5353ms)
+✔ packages\agent\test\runtime-safety.test.ts (801.341ms)
+✔ packages\agent\test\runtime-store.test.ts (803.2201ms)
+✔ packages\agent\test\strategy-adoption.test.ts (791.9783ms)
+✔ packages\agent\test\strategy-boundaries.test.ts (810.8133ms)
+✔ packages\agent\test\strategy-checkpoint.test.ts (780.2664ms)
+✔ packages\agent\test\strategy-inference.test.ts (813.4319ms)
+✔ packages\agent\test\strategy-job-retention.test.ts (790.2072ms)
+✔ packages\agent\test\strategy-omission.test.ts (783.8066ms)
+✔ packages\agent\test\strategy-output-tool.test.ts (804.7067ms)
+✔ packages\agent\test\strategy-provider-results.test.ts (788.1218ms)
+✔ packages\agent\test\strategy-rendering.test.ts (822.5593ms)
+✔ packages\agent\test\strategy-request-gate.test.ts (791.5064ms)
+✔ packages\agent\test\strategy-snapshot-audit.test.ts (789.315ms)
+✔ packages\agent\test\strategy-storage-budget.test.ts (782.8251ms)
+✔ packages\agent\test\strategy-transition-storage.test.ts (797.8526ms)
+✔ packages\agent\test\strategy.test.ts (812.9992ms)
+✔ packages\client\test\client.test.ts (890.9688ms)
+✔ packages\client\test\pocket-configuration.test.ts (122.7966ms)
+✔ packages\client\test\pocket-credentials.test.ts (116.8894ms)
+✔ packages\client\test\pocket-notifications.test.ts (132.012ms)
+✔ packages\client\test\pocket.test.ts (136.4276ms)
+✔ packages\mas-devpack\test\activity-provider.test.ts (829.3277ms)
+✔ packages\mas-devpack\test\boundaries.test.ts (798.9129ms)
+✔ packages\mas-devpack\test\devpack.test.ts (797.3858ms)
+✔ packages\mas-devpack\test\inbox.test.ts (801.6904ms)
+✔ packages\mas-devpack\test\observations.test.ts (835.7365ms)
+✔ packages\mas-devpack\test\owner.test.ts (789.6555ms)
+✔ packages\mas-devpack\test\profile-facets.test.ts (820.0801ms)
+✔ packages\mas-devpack\test\session-tools.test.ts (800.0202ms)
+✔ packages\mas-devpack\test\workbench-reply.test.ts (825.3681ms)
+✔ packages\mas-devpack\test\workbench.test.ts (817.3066ms)
+✔ packages\mas\test\approved-sessions.test.ts (789.6507ms)
+✔ packages\mas\test\authority.test.ts (805.3355ms)
+✔ packages\mas\test\broker-decoder.test.ts (807.3216ms)
+✔ packages\mas\test\broker-review.test.ts (805.9438ms)
+✔ packages\mas\test\broker.test.ts (808.1383ms)
+✔ packages\mas\test\composed-authority.test.ts (793.8109ms)
+✔ packages\mas\test\control.test.ts (815.7994ms)
+✔ packages\mas\test\mas.test.ts (784.0866ms)
+✔ packages\mas\test\observations.test.ts (819.638ms)
+✔ packages\mas\test\session-contention.test.ts (794.3102ms)
+✔ packages\mas\test\unknown.test.ts (809.5359ms)
+✔ packages\protocol\test\codec.test.ts (89.6611ms)
+✔ packages\protocol\test\pocket-collaboration.test.ts (108.4099ms)
+✔ packages\protocol\test\pocket-configuration.test.ts (104.4086ms)
+✔ packages\protocol\test\pocket-credentials.test.ts (101.2847ms)
+✔ packages\protocol\test\pocket-navigation.test.ts (101.0599ms)
+✔ packages\protocol\test\pocket-notifications.test.ts (104.6013ms)
+✔ packages\protocol\test\pocket.test.ts (100.6868ms)
+ℹ tests 212
+ℹ suites 0
+ℹ pass 209
+ℹ fail 3
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 158884.946
+
+✖ failing tests:
+
+test at apps\webui\test\model-catalog-permissions.test.ts:63:1
+✖ Model catalogue: configured models are visible without a second WebUI model allowlist or preset cwd metadata (128.1055ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    [
+      {
+  +     cwd: 'C:\\Users\\Administrator\\AppData\\Local\\Temp\\pakka-integration-y8z2yM\\workspace',
+        id: 'default',
+        model: 'local-model'
+      },
+  -   {
+  -     id: 'alternate-preset',
+  -     model: 'catalog-local-model'
+  -   }
+    ]
+  
+      at TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/model-catalog-permissions.test.ts:66:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ { id: 'default', model: 'local-model', cwd: 'C:\\Users\\Administrator\\AppData\\Local\\Temp\\pakka-integration-y8z2yM\\workspace' } ],
+    expected: [ { id: 'default', model: 'local-model' }, { id: 'alternate-preset', model: 'catalog-local-model' } ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at apps\webui\test\model-catalog-permissions.test.ts:78:1
+✖ Model catalogue: model-only selection and inheritance reach the real provider and survive reopen without changing Agent presets (84.3856ms)
+  Error: WebUI workspace authority denied
+      at denied (file:///D:/Projects/pakka-wt/webui-p0/apps/server/dist/pocket-workspace.js:20:11)
+      at authorize (file:///D:/Projects/pakka-wt/webui-p0/apps/server/dist/pocket-workspace.js:425:29)
+      at file:///D:/Projects/pakka-wt/webui-p0/apps/server/dist/pocket-workspace.js:427:21
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+
+test at apps\webui\test\model-catalog-permissions.test.ts:141:1
+✖ Model catalogue: configuration hints agree with existing resource write authority (119.8966ms)
+  AssertionError [ERR_ASSERTION]: driver
+  
+  true !== false
+  
+      at TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/model-catalog-permissions.test.ts:154:11)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
