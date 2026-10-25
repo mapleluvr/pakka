@@ -370,6 +370,10 @@ button:disabled {
 	flex-direction: column;
 	overflow: hidden;
 }
+.pocket-sheet:has(.pocket-model-picker) > header .pocket-icon-button {
+	min-width: 44px;
+	min-height: 44px;
+}
 .pocket-model-picker {
 	min-height: 0;
 }

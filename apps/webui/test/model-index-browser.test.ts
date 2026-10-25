@@ -75,6 +75,13 @@ test(
 					true,
 					"even a three-model catalog has an immediately available search index",
 				);
+				const closeSize = (await page.evaluate(
+					'(()=>{const r=document.querySelector(".pocket-sheet > header button").getBoundingClientRect();return {width:r.width,height:r.height}})()',
+				)) as { width: number; height: number };
+				assert.ok(
+					closeSize.width >= 44 && closeSize.height >= 44,
+					`the standalone Close icon has a 44px hit target: ${JSON.stringify(closeSize)}`,
+				);
 				await position(page, "1 / 3");
 				await page.key("ArrowUp");
 				await position(page, "3 / 3");
