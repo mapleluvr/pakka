@@ -40,7 +40,7 @@ test(
 				'document.querySelector("[data-conversation][aria-current=true]").dataset.conversation',
 			);
 			await toggleConversations(page);
-			await page.click('[aria-label="Session options"]');
+			await page.click('[aria-label="Conversation list options"]');
 			assert.equal(await page.evaluate('document.body.classList.contains("drawer-open")'), true);
 			await page.key("Escape");
 			await settleFrontend(page);

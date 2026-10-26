@@ -85,10 +85,12 @@ export async function masInputMode(page: FrontendPage, mode: "prompt" | "steer" 
 export async function newConversation(page: FrontendPage, name: string) {
 	await backFromSettings(page);
 	await sidebarReady(page);
-	await page.click('[data-action="home"]');
-	await page.wait('document.querySelector("#composerInput")');
+	await page.click('.primary-nav [data-action="new-conversation"]');
+	await page.wait('document.querySelector("[data-creation-form] input[name=name]")');
 	await settleFrontend(page);
-	await page.type("#composerInput", name, { replace: true });
-	await page.click("[data-home-create]");
-	await page.wait('document.querySelector(".conversation-view")');
+	await page.type('[data-creation-form] input[name="name"]', name, { replace: true });
+	await page.click("[data-create-confirm]");
+	await page.wait(
+		`!document.querySelector("[data-creation-form]") && document.querySelector(".pocket-title")?.textContent===${JSON.stringify(name)} && document.querySelector(".pocket-status")?.textContent==="Ready"`,
+	);
 }

@@ -89,6 +89,7 @@ export interface PocketCollaboration {
 }
 export interface PocketCollaborationOptions {
 	readonly runtime: Runtime;
+	readonly runtimeFor?: (ref: ConversationRef) => Runtime;
 	readonly people: PocketPeople;
 	readonly namespace: string;
 	readonly now?: () => number;
@@ -233,7 +234,7 @@ export function createPocketCollaboration(options: PocketCollaborationOptions): 
 	return value;
 }
 async function open(
-	{ runtime, people, namespace }: PocketCollaborationOptions,
+	{ runtime, people, namespace, runtimeFor = () => runtime }: PocketCollaborationOptions,
 	now: () => number,
 ): Promise<PocketCollaboration> {
 	const store = runtime.store({ namespace, maxBytes: MAX_BYTES }),
@@ -258,9 +259,9 @@ async function open(
 		permission: "read" | "send" | "steer" | "manage" = "read",
 	) => {
 		ready();
-		people.check(actor, permission, ref.conversationId);
+		people.check(actor, permission, people.resourceId(ref));
 		if (
-			!runtime
+			!runtimeFor(ref)
 				.view()
 				.conversations.some((r) =>
 					["key", "sessionId", "conversationId", "incarnation", "profile"].every(
@@ -287,10 +288,10 @@ async function open(
 		}
 	};
 	const row = (draft: State, ref: ConversationRef) => {
-		let found = draft.resources.find((r) => r.id === ref.conversationId);
+		let found = draft.resources.find((r) => r.id === people.resourceId(ref));
 		if (!found) {
 			found = {
-				id: ref.conversationId,
+				id: people.resourceId(ref),
 				version: 0,
 				messages: [],
 				note: { version: 0, text: "", authorId: null, updatedAt: null },
@@ -300,7 +301,7 @@ async function open(
 		}
 		return found;
 	};
-	const existing = (ref: ConversationRef) => state.resources.find((r) => r.id === ref.conversationId);
+	const existing = (ref: ConversationRef) => state.resources.find((r) => r.id === people.resourceId(ref));
 	async function mutate<T>(
 		actor: PocketAuthority,
 		ref: ConversationRef,
@@ -348,10 +349,10 @@ async function open(
 		return publicMessage;
 	};
 	const checkDriver = (actorId: string, ref: ConversationRef) => {
-		if (pendingDriver.has(ref.conversationId)) throw new Error("Driver transition pending");
+		if (pendingDriver.has(people.resourceId(ref))) throw new Error("Driver transition pending");
 		const d = existing(ref)?.driver;
 		if (d?.personId) {
-			people.authorizePerson(d.personId, "steer", ref.conversationId);
+			people.authorizePerson(d.personId, "steer", people.resourceId(ref));
 			if (d.personId !== actorId || d.expiresAt === null || d.expiresAt <= time())
 				throw new Error("Current driver lease denied or expired");
 		}
@@ -361,9 +362,9 @@ async function open(
 		checkInput: (actor: PocketAuthority, ref: ConversationRef) => checkDriver(read(actor, ref).id, ref),
 		checkScheduledInput: (actorId: string, ref: ConversationRef) => {
 			ready();
-			people.authorizePerson(actorId, "steer", ref.conversationId);
+			people.authorizePerson(actorId, "steer", people.resourceId(ref));
 			if (
-				!runtime
+				!runtimeFor(ref)
 					.view()
 					.conversations.some((row) =>
 						["key", "sessionId", "conversationId", "incarnation", "profile"].every(
@@ -383,18 +384,19 @@ async function open(
 					await refresh();
 					const found = existing(saved) ?? row({ schema: 1, sessionId, resources: [] }, saved),
 						presence: PocketPresence[] = [];
-					for (const [id, entry] of live.get(saved.conversationId) ?? []) {
+					for (const [id, entry] of live.get(people.resourceId(saved)) ?? []) {
 						try {
 							entry.check();
 							if (entry.value.expiresAt <= time()) throw new Error("Expired presence");
 							presence.push(entry.value);
 						} catch {
-							live.get(saved.conversationId)?.delete(id);
+							live.get(people.resourceId(saved))?.delete(id);
 						}
 					}
 					read(actor, saved);
 					return frozen({
 						conversationId: saved.conversationId,
+						...(saved.sessionId === sessionId ? {} : { sessionId: saved.sessionId }),
 						version: found.version,
 						messages: found.messages.map(viewMessage),
 						note: found.note,
@@ -420,7 +422,7 @@ async function open(
 							mentions: [...(input.mentions ?? [])].sort(),
 						},
 						digest = fingerprint(saved),
-						key = "chat-" + fingerprint([ref.conversationId, person.id, saved.requestId]).slice(0, 40);
+						key = "chat-" + fingerprint([people.resourceId(ref), person.id, saved.requestId]).slice(0, 40);
 					const result = await mutate(actor, ref, "read", (r) => {
 						const prior = r.messages.find((m) => m.authorId === person.id && m.requestId === saved.requestId);
 						if (prior) {
@@ -430,7 +432,8 @@ async function open(
 						if (r.messages.length >= MAX_MESSAGES) throw new Error("Human chat capacity exceeded");
 						if (saved.quoteId && !r.messages.some((m) => m.id === saved.quoteId))
 							throw new Error("Unknown quote in this resource");
-						for (const mention of saved.mentions) people.authorizePerson(mention, "read", ref.conversationId);
+						for (const mention of saved.mentions)
+							people.authorizePerson(mention, "read", people.resourceId(ref));
 						const message: Message = {
 							...saved,
 							id: key,
@@ -524,7 +527,7 @@ async function open(
 					const saved = { ...input };
 					read(actor, ref, "steer");
 					if (saved.action === "take") read(actor, ref, "manage");
-					const key = ref.conversationId;
+					const key = people.resourceId(ref);
 					pendingDriver.set(key, (pendingDriver.get(key) ?? 0) + 1);
 					return mutate(actor, ref, "steer", (r) => {
 						const who = people.current(actor).id;
@@ -561,10 +564,10 @@ async function open(
 						!["here", "typing", "away", "leave"].includes(input.state)
 					)
 						throw new Error("Invalid presence");
-					let entries = live.get(ref.conversationId);
+					let entries = live.get(people.resourceId(ref));
 					if (!entries) {
 						entries = new Map();
-						live.set(ref.conversationId, entries);
+						live.set(people.resourceId(ref), entries);
 					}
 					if (input.state === "away" || input.state === "leave") entries.delete(person.id);
 					else {

@@ -65,6 +65,7 @@ export interface PocketNotifications {
 }
 export interface PocketNotificationsOptions {
 	readonly runtime: Runtime;
+	readonly runtimeFor?: (target: Pick<ConversationRef, "sessionId">) => Runtime;
 	readonly people: PocketPeople;
 	readonly namespace: string;
 	/** Exact HTTPS origins approved by the host, not caller-supplied fetch destinations. */
@@ -439,7 +440,10 @@ export async function createPocketNotifications(
 	};
 	const currentRef = (target: ConversationRef) => {
 		ready();
-		if (!ref(target) || !runtime.view().conversations.some((row) => same(row, target))) return denied();
+		if (!ref(target)) return denied();
+		const source = options.runtimeFor?.(target) ?? runtime;
+		if (source.view().phase !== "ready" || !source.view().conversations.some((row) => same(row, target)))
+			return denied();
 	};
 	async function load() {
 		ready();
@@ -495,7 +499,7 @@ export async function createPocketNotifications(
 						row.actorId === actorId &&
 						row.active &&
 						!blocked.has(row.id) &&
-						row.resources.includes(target.conversationId),
+						row.resources.includes(people.resourceId(target)),
 				)
 				.map((row) => ({ id: row.id, subscriptionKey: hash(row.subscription) })),
 		});
@@ -508,12 +512,12 @@ export async function createPocketNotifications(
 		if (
 			!device.active ||
 			blocked.has(device.id) ||
-			!device.resources.includes(target.conversationId) ||
+			!device.resources.includes(people.resourceId(target)) ||
 			!prefs(state, device.actorId)[eventKind]
 		)
 			return false;
 		try {
-			people.authorizePerson(device.actorId, "read", target.conversationId);
+			people.authorizePerson(device.actorId, "read", people.resourceId(target));
 			return true;
 		} catch {
 			return false;
@@ -647,7 +651,7 @@ export async function createPocketNotifications(
 			const actorId = people.current(actor).id;
 			const authorize = (target: ConversationRef) => {
 				currentRef(target);
-				people.check(actor, "read", target.conversationId);
+				people.check(actor, "read", people.resourceId(target));
 				check();
 			};
 			const mutate = (
@@ -703,9 +707,9 @@ export async function createPocketNotifications(
 								hash(row.subscription) === hash(saved),
 						);
 						if (existing) {
-							if (!existing.resources.includes(target.conversationId)) {
+							if (!existing.resources.includes(people.resourceId(target))) {
 								if (existing.resources.length >= 64) throw Error("Notification resource capacity exhausted");
-								existing.resources.push(target.conversationId);
+								existing.resources.push(people.resourceId(target));
 							}
 							return;
 						}
@@ -724,7 +728,7 @@ export async function createPocketNotifications(
 							actorId,
 							subscription: saved,
 							active: true,
-							resources: [target.conversationId],
+							resources: [people.resourceId(target)],
 						});
 					});
 				},
@@ -744,7 +748,9 @@ export async function createPocketNotifications(
 					const { requestId, deviceId } = input;
 					const saved = (await load()).value?.devices.find(
 						(row) =>
-							row.id === deviceId && row.actorId === actorId && row.resources.includes(target.conversationId),
+							row.id === deviceId &&
+							row.actorId === actorId &&
+							row.resources.includes(people.resourceId(target)),
 					);
 					authorize(target);
 					if (!saved) return denied();
@@ -791,7 +797,7 @@ export async function createPocketNotifications(
 						device = state?.devices.find((row) => row.id === deviceId && row.actorId === actorId);
 					if (!event || !device || !event.deliveries.some((row) => row.deviceId === device.id) || !state)
 						return denied();
-					const target = runtime
+					const target = (options.runtimeFor?.(event.target) ?? runtime)
 						.view()
 						.conversations.find(
 							(row) =>

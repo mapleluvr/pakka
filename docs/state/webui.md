@@ -8,6 +8,12 @@ pakka-webui 的人类身份与权限由服务端绑定，浏览器请求按该�
 
 人类 presence、side chat、notes、pins/reactions 和 turn-taking 各自处理 scope、冲突与持久性。明确发送动作把选定内容送入模型；SSE 重连使用当前 incarnation、cursor、snapshot 恢复读取并核对原操作。mutation 的接纳使用独立的显式请求和原请求身份。
 
+## Session 管理与个人导航
+
+一个 WebUI 身份可管理多个真实 Durable Session；每项各有独立 storage、writer、Runtime 和原生预算，服务按完整 Session/Conversation 地址路由。New Session 复用现有创建权限，稳定原请求登记与 native ready 确认分别核对；unknown 不自动初始化、解锁或重放。已有单 Session 的资源 grant 不向另一个 Session 的同号 Conversation 扩权。
+
+个人单层文件夹和 Sort Per Session / Default 偏好在控制 Session 的每人 namespace 中持久化，只整理当前可读资源，不改变原生归属或新增 ACL。具体命令、有限容量、重开与恢复边界见[开发契约](../development/WEBUI-DEVELOPMENT.md#session-管理创建与个人导航)，界面见[前端声明](frontend.md#创建与导航)。
+
 ## 服务与可选 facets
 
 宿主拥有认证、namespace、路由/实例、focus、generation、权限检查、受控操作和有限持久化服务。可信扩展可分别提供 Agent、Backend、WebUI、Client facets：

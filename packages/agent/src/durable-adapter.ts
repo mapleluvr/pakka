@@ -2907,6 +2907,14 @@ export class DurableAdapter {
 					if (lifetime !== "persistent" && taskId === undefined)
 						throw new Error("Native task invocation required");
 					json(s.data);
+					const configuration = s.configuration === undefined ? undefined : copy(s.configuration);
+					if (configuration !== undefined) {
+						if (!configuration || typeof configuration !== "object" || Array.isArray(configuration) || !Object.keys(configuration).length || Object.keys(configuration).some(key => !["model", "cwd"].includes(key)))
+							throw new Error("Invalid initial configuration");
+						if (configuration.model !== undefined && ![...this.#managedReady().profiles.values()].some(row => row.model === configuration.model))
+							throw new Error("Unconfigured initial model");
+						if (configuration.cwd !== undefined) approvedDirectory(configuration.cwd, this.#managedReady().cwdRoots);
+					}
 					return {
 						key: s.key,
 						profile,
@@ -2917,6 +2925,7 @@ export class DurableAdapter {
 						invocation: s.invocation,
 						fork: s.fork ? copy(s.fork) : undefined,
 						inherit: s.inherit ? copy(s.inherit) : undefined,
+						configuration,
 					};
 				});
 				const committed = await this.#persist(async (tx) => {
@@ -3024,6 +3033,8 @@ export class DurableAdapter {
 							instructions: profile.systemPrompt,
 							cwd: profile.cwd,
 							...(inherited.get(spec.key) ?? {}),
+							...(spec.configuration?.model === undefined ? {} : { model: { provider: "pakka-provider-" + hash(profile.endpoint).slice(0, 12), modelId: spec.configuration.model } }),
+							...(spec.configuration?.cwd === undefined ? {} : { cwd: approvedDirectory(spec.configuration.cwd, this.#managedReady().cwdRoots) }),
 						});
 						const ref = {
 							key: resourceKey,

@@ -18,8 +18,8 @@ pakka-webui 的对应原生界面行为以 [Devin 离线生产前端](https://gi
 | ------------------ | ----------------------------------------------------------------------------------------------------------------------- |
 | 组织/账号菜单      | 显示当前人类；提供获准的 People/invite/settings 与退出                                                                  |
 | Primary navigation | 由已安装的工作区页面与通用命令入口组成                                                                                  |
-| Sessions           | 真实列表、选择和当前 incarnation；搜索/归档/刷新进入 palette 或 options                                                 |
-| 首页 composer      | 创建并打开真实 Conversation；显式 Send 提交模型输入；创建结果未确认时保持原请求核对状态                                 |
+| Conversations      | 当前授权列表；Sort Per Session 按真实 Session 分组，Default 按个人文件夹分组；选择保持完整资源身份                      |
+| 首页               | 展示工作区开始入口；New Session / New Conversation 打开独立配置向导，名称不占用消息输入区                               |
 | Conversation head  | 实际标题和下方 cwd；管理动作收进精简 options                                                                            |
 | 消息与工具         | 参考 message/avatar/byline/tool-card 结构，接入原生 history/live/receipt；保留 live、合法不可预览 part 和工具跨载体身份 |
 | 模型按钮           | 列出服务已配置 provider 的可用模型；Conversation 配置权限与 busy 条件决定能否应用                                       |
@@ -33,6 +33,12 @@ pakka-webui 的对应原生界面行为以 [Devin 离线生产前端](https://gi
 模型目录按模型 ID 去重，只发布首个配置标识和模型 ID；拥有 Conversation 配置权限的人可选择目录中的任一模型。有限响应容纳现有 JSON 的默认模型加 64 项附加配置，最多 65 个不同模型；更大目录不由当前有限 WebUI 协议承诺。整组 Agent 预设的工具/指令授权独立于模型选择。模型/cwd 持久化、服务器目录 roots、incarnation 和配置拒绝的详细条件由[开发契约](../development/WEBUI-DEVELOPMENT.md#独立选择模型和-conversation-工作目录)维护。
 
 Model Selection 为可用模型列表提供检索框，覆盖模型 ID 和配置标识；检索忽略大小写，空格与 `/` 分隔的词各自按顺序字符匹配，并将更紧密的匹配排在前面。打开时定位当前模型，输入查询后定位首个匹配；上下键循环移动候选高亮，搜索框保持输入焦点，Enter 明确确认，Escape 关闭并返回模型入口。候选位置/匹配总数始终可见，空结果为 0 / 0，当前已应用模型有独立标记。列表滚动保留搜索入口与位置反馈，触屏可直接选择。检索、移动和取消只改变本地呈现；明确选择后仍由原配置命令核验权限、busy 和 unknown。详细场景及形成记录见[模型索引 delta](../../openspec/changes/improve-webui-navigation-and-local-recovery/specs/devin-frontend/spec.md#requirement-model-selection-has-a-searchable-keyboard-index)与[设计 §6.4](../../openspec/changes/improve-webui-navigation-and-local-recovery/design.md#64-2026-10-25-model-selection-检索索引)。
+
+### 创建与导航
+
+New Session 创建独立的 Durable 存储与提交域，New Conversation 在确认的父 Session 内创建资源。向导提供名称、父项、初始模型与服务器工作目录，打开/取消仅改变表单草稿。Session 清单确认没有可用父项时预填待建 Session，显式确认后按 Session → Conversation 顺序创建；部分成功保留父项，unknown 保留原请求并先核对。成功打开 Conversation 后，明确 Send 才提交模型输入。
+
+Sidebar 的 Sort Per Session 表达原生父子归属；Default 使用当前人的持久单层文件夹和未分类组。每个 Conversation 至多归入一个个人文件夹，删除文件夹后回到未分类；切换视图和归类仅改变个人导航元数据。读取、选择、SSE 与资源授权同时绑定 Session 和 Conversation，名称或裸 Conversation ID 不授予跨 Session 访问。详细创建、持久化、恢复和实施状态见[创建设计](../../openspec/changes/improve-webui-navigation-and-local-recovery/design.md#63-session--conversation-创建关系调查)及[任务](../../openspec/changes/improve-webui-navigation-and-local-recovery/tasks.md#43-session--conversation-创建方向2026-10-24)。
 
 ### 主次文字、表单与 SVG 图标
 

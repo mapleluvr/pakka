@@ -164,6 +164,20 @@ Pi Durable 公开 configure 支持 model/cwd 局部修改。Pakka 使用这个�
 
 基础 profile、顶层 `profiles`/服务端 `profileCeiling` 与整组 configure API 用于完整 Agent 预设的工具/指令权限；单独模型选择不据此筛选或改变预设。未知模型仍按服务配置目录拒绝；`canConfigure` 与实际 `manage` 资源写权限一致，目录读取、凭据及扩展安装继续各自处理真实效果。
 
+### Session 管理、创建与个人导航
+
+创建不复用首页消息框：New Session / New Conversation 使用独立配置向导。`session.list` 对有创建权限者返回的 defaults 与 `creation.directories` 是只读草稿来源，不创建资源、不发送模型输入，也不增加模型授权。`session.list / session.create / session.lookup` 分别读取当前授权父项、以稳定 requestId 创建、只读核对原 `{requestId,name,cwd}`；清单失败不被转换为空清单。
+
+管理目录位于控制 Session 的 `pocket.sessions` namespace，最多 31 个新增 Session，加已有控制 Session 最多 32 项。它先持久记录保留的 Session ID 和 unknown，再以公开 `createRuntime` 打开独立 storage/writer，原生初始化和 ready 注册均确认后才发布。重开沿原 ID、目录与固定宿主预算配置，不自动清理 writer claim、重做 unknown 初始化或重放输入；现有预算消费不重置。已确认子存储无法重开时本轮实现使工作区启动失败，不伪装为空目录。它不是跨 Session 的 Runtime、总预算域或进程隔离。
+
+`create` 在明确的 sessionId 内创建 Conversation；可选 `configuration: {model?,cwd?}` 与创建同次原生提交，不替换整组 Agent 预设。没有可用父项时，确认执行 Session → Conversation 两步，保留各自原请求；父项成功后不因第二步失败重建或删除。请求未知时仅 lookup，明确确认才接续第二步。当前页面中关闭/重开保留待核对身份；整页刷新后恢复未确认创建草稿不是本轮已验证能力。
+
+读取、SSE、协作、通知、扩展服务与 Native 操作按完整 Session/Conversation 地址选择所属 Runtime。资源 grant 同样区分两级身份；原单 Session 裸 ID 兼容授权只代表原控制 Session，不向同号的新 Session 扩权。receipt/wait/withdraw 保留原生 receipt ID，sessionId 作为单独寻址字段；客户端同时核对响应父项，不用重编码的 ID 冒充新原生回执。
+
+有限 envelope 仍为 v2，server、静态前端与 `@pakka/client` / `@pakka/protocol` 必须成套更新：新增字段和完整资源键不承诺旧的单 Session decoder 可读取。旧单 Session grant 的归属兼容不等于旧 UI 或旧有限响应 decoder 的兼容；不保留旧首页创建分支。
+
+`navigation.read / navigation.update / navigation.lookup` 在控制 Session 的每人独立 namespace 保存单层个人文件夹与视图。每人最多 32 个文件夹、256 条归类，更新使用版本 CAS 与最近 16 个原请求结果；过期请求也不能绕过版本重做。分组为 Sort Per Session 或 Default，Conversation 至多归入一个文件夹，删除只回到 Unclassified；归类需当前 read 权限，不要求 manage 或新文件夹 ACL。授权读取过滤隐藏资源，但无关编辑保留它们的已有归类。unknown 先核对，不自动重发。
+
 ## 10. 分阶段 Computer Use 实操验收
 
 本节描述选用独立 Computer Use 验证时的执行方式。阶段目标、逐项通过条件和项目约束由所属任务确定；GUI 实操与源码检查、两方 adversarial review 分别执行和留证。

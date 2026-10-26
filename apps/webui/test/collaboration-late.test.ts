@@ -46,7 +46,9 @@ test(
 			);
 			await conversationAction(page, "collaboration");
 			await page.wait("window.__held===true");
-			await page.click("[data-conversation]:nth-child(2)");
+			await page.click(
+				`[data-session=${JSON.stringify(refs[1]!.sessionId)}][data-conversation=${JSON.stringify(refs[1]!.conversationId)}]`,
+			);
 			await page.wait(
 				'document.querySelector(".pocket-title").innerText==="Second resource" && document.querySelector("main").innerText.includes("SECOND-RESOURCE-COMMITTED-READY")',
 			);

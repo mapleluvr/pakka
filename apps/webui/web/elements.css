@@ -1128,3 +1128,258 @@ details[open] > .pocket-disclosure > .pocket-icon:first-child {
 		flex-wrap: wrap;
 	}
 }
+
+/* Creation is its own configuration surface, never an alternate composer mode. */
+.pocket-sheet:has(> .creation-body) {
+	width: 640px;
+}
+.pocket-sheet:has(> .creation-body) > header {
+	position: sticky;
+	top: 0;
+	z-index: 1;
+	background: var(--menu);
+}
+.pocket-sheet:has(> .creation-body) > header .pocket-icon-button,
+.creation-body .pocket-icon-button {
+	width: 44px;
+	height: 44px;
+	min-width: 44px;
+	min-height: 44px;
+	flex-shrink: 0;
+}
+.creation-body,
+.creation-body form,
+.creation-fields,
+.creation-parent {
+	min-width: 0;
+	gap: 16px;
+}
+.creation-body form,
+.creation-fields,
+.creation-parent {
+	display: grid;
+}
+.creation-fields {
+	margin: 0;
+	padding: 0;
+	border: 0;
+}
+.creation-body .creation-field {
+	display: flex;
+	flex-direction: column;
+	align-items: stretch;
+	gap: 8px;
+	min-width: 0;
+	font-size: var(--type-ui-size);
+	color: var(--muted);
+}
+.creation-field :is(input, select),
+.creation-config-button {
+	min-width: 0;
+	width: 100%;
+	min-height: 44px;
+	padding: 10px 12px;
+	border: 1px solid var(--border);
+	border-radius: 8px;
+	background: var(--input-bg);
+	color: var(--text);
+	font: inherit;
+	font-size: var(--type-ui-size);
+	line-height: 1.5;
+}
+.creation-config-button {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) 24px;
+	align-items: center;
+	gap: 12px;
+	text-align: left;
+}
+.creation-config-button > span {
+	min-width: 0;
+	overflow-wrap: anywhere;
+	display: -webkit-box;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 3;
+	overflow: hidden;
+}
+.creation-config-button:hover {
+	background: var(--hover);
+}
+.creation-location {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) 44px;
+	align-items: center;
+	gap: 8px;
+}
+.creation-parent {
+	padding: 16px;
+	border: 1px solid var(--border);
+	border-radius: 10px;
+	background: var(--hover);
+}
+.creation-parent code,
+.creation-reconciliation code,
+.navigation-reconciliation code {
+	font-size: var(--type-caption-size);
+	overflow-wrap: anywhere;
+}
+.creation-body .creation-check {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	min-height: 44px;
+	font-size: var(--type-ui-size);
+}
+.creation-check input {
+	width: 18px;
+	height: 18px;
+	flex-shrink: 0;
+	accent-color: var(--accent);
+}
+.creation-body p {
+	margin: 0;
+	font-size: var(--type-ui-size);
+	font-weight: 400;
+	line-height: 1.6;
+}
+.creation-parent > p,
+.creation-body .pocket-secondary {
+	color: var(--muted);
+}
+.creation-actions {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: flex-end;
+	gap: 12px;
+}
+.home-create-card .pocket-icon-button {
+	width: 44px;
+	height: 44px;
+}
+.home-create-card .creation-actions svg {
+	width: 24px;
+	height: 24px;
+	flex-shrink: 0;
+}
+.creation-actions :is(.button, .pill-btn) {
+	min-width: 44px;
+	min-height: 44px;
+	padding: 10px 14px;
+	font-size: var(--type-ui-size);
+	line-height: 1.5;
+	white-space: normal;
+}
+.creation-reconciliation,
+.navigation-reconciliation {
+	display: grid;
+	gap: 12px;
+	min-width: 0;
+}
+
+/* Both sidebar modes project the same authorized references and personal metadata. */
+.personal-navigation {
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+	min-height: 0;
+	min-width: 0;
+}
+.navigation-tools {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 4px 8px 12px;
+}
+.navigation-tools > label {
+	flex: 1;
+	min-width: 0;
+}
+.navigation-tools select {
+	width: 100%;
+	min-width: 0;
+	min-height: 44px;
+	padding: 8px 10px;
+	font-size: var(--type-ui-size);
+	color: var(--text);
+	background: var(--input-bg);
+	border: 1px solid var(--border);
+	border-radius: 8px;
+}
+.personal-navigation .session-list {
+	flex: 1;
+	min-height: 0;
+	min-width: 0;
+}
+.sidebar-conversation-group {
+	min-width: 0;
+	margin-bottom: 12px;
+}
+.sidebar-conversation-group > header {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	padding: 0 4px;
+	min-height: 44px;
+}
+.sidebar-conversation-group h3 {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	flex: 1;
+	min-width: 0;
+	margin: 0;
+	color: var(--muted);
+	font-size: var(--type-group-label-size);
+	font-weight: 500;
+	line-height: 1.5;
+	overflow-wrap: anywhere;
+}
+.sidebar-conversation-group h3 .pocket-icon {
+	flex-shrink: 0;
+}
+.personal-navigation .icon-btn {
+	width: 44px;
+	height: 44px;
+	min-width: 44px;
+	min-height: 44px;
+	flex-shrink: 0;
+	padding: 10px;
+	border-radius: 8px;
+	outline-offset: -3px;
+}
+.sidebar-conversation-row {
+	display: flex;
+	align-items: stretch;
+	min-width: 0;
+}
+.sidebar-conversation-row .session-row {
+	flex: 1;
+	min-width: 0;
+	min-height: 48px;
+}
+.sidebar-conversation-label {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	min-width: 0;
+}
+.sidebar-conversation-label .session-title {
+	font-size: var(--type-ui-size);
+	white-space: normal;
+	overflow-wrap: anywhere;
+}
+.sidebar-parent,
+.navigation-status {
+	font-size: var(--type-caption-size);
+	font-weight: 400;
+	color: var(--muted);
+	line-height: 1.5;
+	overflow-wrap: anywhere;
+}
+.navigation-status {
+	padding: 8px;
+	margin: 0;
+}
+.personal-navigation .navigation-reconciliation {
+	padding: 8px;
+}

@@ -39,6 +39,7 @@ export interface ExtensionSource {
 }
 export interface ExtensionHostOptions {
 	readonly runtime: Runtime;
+	readonly runtimeFor?: (target: Pick<ConversationRef, "sessionId">) => Runtime;
 	readonly people: PocketPeople;
 	readonly workspace: PocketWorkspace;
 	readonly sources: readonly ExtensionSource[];
@@ -509,9 +510,10 @@ export async function createExtensionHost(options: ExtensionHostOptions): Promis
 	) => {
 		current(actor);
 		if (target) {
-			if (!runtime.view().conversations.some((ref) => sameRef(ref, target))) return refuse();
 			try {
-				people.check(actor, permission, target.conversationId);
+				const source = options.runtimeFor?.(target) ?? runtime;
+				if (!source.view().conversations.some((ref) => sameRef(ref, target))) return refuse();
+				people.check(actor, permission, people.resourceId(target));
 			} catch {
 				return refuse();
 			}
@@ -846,7 +848,7 @@ export async function createExtensionHost(options: ExtensionHostOptions): Promis
 				return JSON.stringify([
 					input.extension,
 					scope,
-					scope === "user" ? person.id : scope === "resource" ? target!.conversationId : "*",
+					scope === "user" ? person.id : scope === "resource" ? people.resourceId(target!) : "*",
 					key,
 				]);
 			};

@@ -2,7 +2,13 @@ import { createHash } from "node:crypto";
 import { readdir, readFile, lstat } from "node:fs/promises";
 import { join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
-import { createRuntime, type RuntimeOptions, type JsonObject } from "@pakka/agent";
+import {
+	createRuntime,
+	type Runtime,
+	type ConversationRef,
+	type RuntimeOptions,
+	type JsonObject,
+} from "@pakka/agent";
 import {
 	createPocketPeople,
 	createPocketWorkspace,
@@ -15,8 +21,10 @@ import {
 	type PocketSession,
 } from "@pakka/server/pocket";
 import { createPocketHttp, type PocketHttpOptions } from "./http.ts";
+import { createPersonalNavigation } from "./navigation.ts";
 import { createExtensionHost, type ExtensionSource } from "./extension-host.ts";
 import type { ExtensionService, PocketServiceContext } from "./backend.ts";
+import { createManagedSessions, type ManagedSessions } from "./sessions.ts";
 import { observeNotifications } from "./notification-monitor.ts";
 export type { PocketServiceContext } from "./backend.ts";
 export interface PocketProductOptions {
@@ -138,19 +146,27 @@ export async function startPocket(options: PocketProductOptions) {
 			return credentials.resolve();
 		},
 	});
+	let sessions: ManagedSessions | undefined;
+	const runtimeFor = (ref: Pick<ConversationRef, "sessionId">): Runtime => {
+		if (ref.sessionId === runtime.view().sessionId) return runtime;
+		if (!sessions) throw Error("Managed Session directory unavailable");
+		return sessions.runtimeFor(ref);
+	};
 	let http: Awaited<ReturnType<typeof createPocketHttp>> | undefined,
 		notifications: PocketNotifications | undefined,
-		monitor: { close(): Promise<void> } | undefined,
 		services: Readonly<Record<string, ExtensionService>> | undefined,
 		servicesDisposed = false;
+	const monitors: { close(): Promise<void> }[] = [];
 	async function releaseServices() {
 		if (servicesDisposed) return;
 		servicesDisposed = true;
 		let failed = false;
-		try {
-			await monitor?.close();
-		} catch {
-			failed = true;
+		for (const monitor of monitors) {
+			try {
+				await monitor.close();
+			} catch {
+				failed = true;
+			}
 		}
 		try {
 			await notifications?.dispose();
@@ -164,12 +180,27 @@ export async function startPocket(options: PocketProductOptions) {
 				failed = true;
 			}
 		}
+		try {
+			await sessions?.close();
+		} catch {
+			failed = true;
+		}
 		if (failed) throw Error("WebUI service shutdown unconfirmed");
 	}
 	try {
-		const people = await createPocketPeople({ runtime, namespace: "pocket.people" }),
-			collaboration = await createPocketCollaboration({ runtime, people, namespace: "pocket.collaboration" }),
-			workspace = createPocketWorkspace({
+		const people = await createPocketPeople({
+				runtime,
+				namespace: "pocket.people",
+				resources: () => (sessions?.runtimes() ?? [runtime]).flatMap((value) => value.view().conversations),
+			}),
+			collaboration = await createPocketCollaboration({
+				runtime,
+				runtimeFor,
+				people,
+				namespace: "pocket.collaboration",
+			});
+		const workspaceFor = (runtime: Runtime) =>
+			createPocketWorkspace({
 				runtime,
 				people,
 				catalog: { namespace: "pocket.workspace", maxDeliveries: 512, maxPending: 32 },
@@ -178,6 +209,8 @@ export async function startPocket(options: PocketProductOptions) {
 				// Native jobs retain the creator, not a browser session; enforce the same current driver lease.
 				beforeScheduledInput: (actorId, ref) => collaboration.checkScheduledInput(actorId, ref),
 			});
+		const rootWorkspace = workspaceFor(runtime);
+		let workspace = rootWorkspace;
 		credentials = await createPocketCredentials({
 			runtime,
 			people,
@@ -234,6 +267,34 @@ export async function startPocket(options: PocketProductOptions) {
 				);
 			ownerId = data.ownerId;
 		}
+		sessions = await createManagedSessions({
+			runtime,
+			people,
+			workspace: rootWorkspace,
+			workspaceFor,
+			profiles,
+			open: async ({ id, cwd, reopen }) => {
+				const child = await createRuntime({
+					...options.runtime,
+					dataDir: options.runtime.dataDir,
+					cwd,
+					cwdRoots: runtime.directoryRoots(profiles),
+					reservedSessionId: id,
+					reopenSessionFile: reopen ? join(options.runtime.dataDir, "sessions", id, "main.jsonl") : undefined,
+					resolveApiKey: () => credentials!.resolve(),
+				});
+				if (notifications) {
+					try {
+						monitors.push(await observeNotifications(child, notifications));
+					} catch (failure) {
+						await child.close();
+						throw failure;
+					}
+				}
+				return child;
+			},
+		});
+		workspace = sessions.workspace;
 		notifications = await createPocketNotifications({
 			endpointOrigins: [
 				"https://fcm.googleapis.com",
@@ -242,10 +303,12 @@ export async function startPocket(options: PocketProductOptions) {
 			],
 			...options.notifications,
 			runtime,
+			runtimeFor,
 			people,
 			namespace: "pocket.notifications",
 		});
-		monitor = await observeNotifications(runtime, notifications);
+		for (const source of sessions.runtimes())
+			monitors.push(await observeNotifications(source, notifications));
 		services =
 			typeof options.extensionServices === "function"
 				? await options.extensionServices(
@@ -261,6 +324,7 @@ export async function startPocket(options: PocketProductOptions) {
 		}
 		const extensions = await createExtensionHost({
 			runtime,
+			runtimeFor,
 			people,
 			workspace,
 			sources: options.extensions ?? [],
@@ -271,6 +335,8 @@ export async function startPocket(options: PocketProductOptions) {
 			runtime,
 			people,
 			workspace,
+			sessions,
+			navigation: createPersonalNavigation({ runtime, people, workspace }),
 			collaboration,
 			credentials,
 			notifications,
@@ -282,6 +348,7 @@ export async function startPocket(options: PocketProductOptions) {
 			runtime,
 			people,
 			workspace,
+			sessions,
 			collaboration,
 			extensions,
 			http,

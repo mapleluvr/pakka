@@ -27,7 +27,9 @@ import {
 } from "@pakka/server/pocket";
 import type { PocketCommand, PocketErrorCode } from "@pakka/protocol/pocket";
 import type { ExtensionHost } from "./backend.ts";
+import { SessionCreationConflict, SessionCreationRefused, type ManagedSessions } from "./sessions.ts";
 import { ExtensionRefusal } from "./extension-host.ts";
+import { NavigationRefusal, type PersonalNavigation } from "./navigation.ts";
 import { decodeExtensionRequest, decodeExtensionResponse } from "./extension-rpc.ts";
 import { decodeValue, publicPath } from "./extension.ts";
 
@@ -35,6 +37,8 @@ export interface PocketHttpOptions {
 	readonly runtime: Runtime;
 	readonly people: PocketPeople;
 	readonly workspace: PocketWorkspace;
+	readonly sessions?: ManagedSessions;
+	readonly navigation?: PersonalNavigation;
 	readonly collaboration?: PocketCollaboration;
 	readonly credentials?: PocketCredentials;
 	readonly notifications?: PocketNotifications;
@@ -275,31 +279,31 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 			case "configuration":
 			case "read":
 				permission = "read";
-				resource = command.target.conversationId;
+				resource = people.resourceId(command.target);
 				break;
 			case "collaboration.read":
 			case "collaboration.post":
 			case "collaboration.react":
 			case "collaboration.presence":
 				permission = "read";
-				resource = command.target.conversationId;
+				resource = people.resourceId(command.target);
 				break;
 			case "collaboration.note":
 			case "collaboration.pin":
 				permission = "send";
-				resource = command.target.conversationId;
+				resource = people.resourceId(command.target);
 				break;
 			case "collaboration.driver":
 				permission = command.input.action === "take" ? "manage" : "steer";
-				resource = command.target.conversationId;
+				resource = people.resourceId(command.target);
 				break;
 			case "display":
 				permission = "send";
-				resource = command.target.conversationId;
+				resource = people.resourceId(command.target);
 				break;
 			case "submit":
 				permission = command.input.mode === "prompt" ? "send" : "steer";
-				resource = command.target.conversationId;
+				resource = people.resourceId(command.target);
 				break;
 			case "abort":
 			case "conversation.set":
@@ -307,8 +311,11 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 			case "configure.agent":
 			case "directory.list":
 				permission = "manage";
-				resource = command.target.conversationId;
+				resource = people.resourceId(command.target);
 				break;
+			case "creation.directories":
+			case "session.create":
+			case "session.lookup":
 			case "create":
 			case "fork":
 				permission = "create";
@@ -329,7 +336,7 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 		guard(() => {
 			people.current(a);
 			if (permission) people.check(a, permission, resource);
-			if (command.op === "fork") people.check(a, "manage", command.target.conversationId);
+			if (command.op === "fork") people.check(a, "manage", people.resourceId(command.target));
 			if (command.op === "submit") options.collaboration?.checkInput(a, command.target);
 		});
 	}
@@ -403,15 +410,84 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 					person: people.current(a),
 					sessionId: runtime.view().sessionId,
 				};
+			case "navigation.read":
+			case "navigation.update":
+			case "navigation.lookup": {
+				if (!options.navigation) throw new Refusal(404, "UNSUPPORTED", true);
+				try {
+					if (command.op === "navigation.read")
+						return { kind: "navigation", view: await options.navigation.read(a) };
+					if (command.op === "navigation.lookup")
+						return {
+							kind: "navigation.operation",
+							receipt: await options.navigation.lookup(a, command.original),
+						};
+					return { kind: "navigation.updated", receipt: await options.navigation.update(a, command.input) };
+				} catch (error) {
+					if (error instanceof NavigationRefusal)
+						throw new Refusal(
+							error.code === "CONFLICT" ? 409 : error.code === "FORBIDDEN" ? 403 : 400,
+							error.code,
+							true,
+						);
+					throw error;
+				}
+			}
+			case "session.list": {
+				if (!options.sessions) throw new Refusal(404, "UNSUPPORTED", true);
+				const sessions = await options.sessions.list(a);
+				let canCreate = true;
+				try {
+					people.check(a, "create");
+				} catch {
+					canCreate = false;
+				}
+				const defaults = canCreate ? await options.sessions.defaults(a) : undefined;
+				guard(() => people.current(a));
+				if (canCreate) guard(() => people.check(a, "create"));
+				return { kind: "sessions", sessions, canCreate, ...(defaults ? { defaults } : {}) };
+			}
+			case "session.create":
+			case "session.lookup": {
+				if (!options.sessions) throw new Refusal(404, "UNSUPPORTED", true);
+				const input = command.op === "session.create" ? command : command.original;
+				const saved = { requestId: input.requestId, name: input.name, cwd: input.cwd };
+				try {
+					const session = await options.sessions[command.op === "session.create" ? "create" : "lookup"](
+						a,
+						saved,
+					);
+					return { kind: "managed.session", requestId: input.requestId, session };
+				} catch (error) {
+					if (error instanceof SessionCreationConflict) throw new Refusal(409, "CONFLICT", true);
+					if (error instanceof SessionCreationRefused) throw new Refusal(403, "FORBIDDEN", true);
+					throw error;
+				}
+			}
 			case "list": {
 				const rows = await client.navigation();
+				const distinct = new Set(rows.map((row) => row.ref.conversationId)).size === rows.length;
 				return {
 					kind: "list",
 					conversations: rows.map((row) => row.ref),
-					titles: Object.fromEntries(rows.map((row) => [row.ref.conversationId, row.name])),
-					states: Object.fromEntries(
-						rows.map((row) => [row.ref.conversationId, { version: row.version, archived: row.archived }]),
-					),
+					navigation: rows.map((row) => ({
+						ref: row.ref,
+						name: row.name,
+						version: row.version,
+						archived: row.archived,
+						...(row.resourceId === undefined ? {} : { resourceId: row.resourceId }),
+					})),
+					...(distinct
+						? {
+								titles: Object.fromEntries(rows.map((row) => [row.ref.conversationId, row.name])),
+								states: Object.fromEntries(
+									rows.map((row) => [
+										row.ref.conversationId,
+										{ version: row.version, archived: row.archived },
+									]),
+								),
+							}
+						: {}),
 				};
 			}
 			case "notification.status":
@@ -446,6 +522,12 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 						requestId: original.requestId,
 						name: original.name,
 						profile: original.profile,
+						...(original.op === "create" && original.sessionId !== undefined
+							? { sessionId: original.sessionId }
+							: {}),
+						...(original.op === "create" && original.configuration !== undefined
+							? { configuration: original.configuration }
+							: {}),
 						...(original.op === "fork" ? { entryId: original.entryId } : {}),
 					};
 					return {
@@ -502,7 +584,18 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 						requestId: command.requestId,
 						name: command.name,
 						profile: command.profile,
+						...(command.sessionId === undefined ? {} : { sessionId: command.sessionId }),
+						...(command.configuration === undefined ? {} : { configuration: command.configuration }),
 						...(command.inherit ? { inherit: command.inherit } : {}),
+					}),
+				};
+			case "creation.directories":
+				if (!options.sessions) throw new Refusal(404, "UNSUPPORTED");
+				return {
+					kind: "creation.directories",
+					view: await options.sessions.directories(a, {
+						...(command.path === undefined ? {} : { path: command.path }),
+						...(command.places === undefined ? {} : { places: command.places }),
 					}),
 				};
 			case "directory.list":
@@ -548,11 +641,11 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 					throw failure;
 				}
 			case "receipt":
-				return { kind: "receipt", receipt: await client.receipt(command.id) };
+				return { kind: "receipt", receipt: await client.receipt(command.id, command.sessionId) };
 			case "wait":
-				return { kind: "receipt", receipt: await client.wait(command.id, signal) };
+				return { kind: "receipt", receipt: await client.wait(command.id, signal, command.sessionId) };
 			case "withdraw":
-				return { kind: "receipt", receipt: await client.withdraw(command.id) };
+				return { kind: "receipt", receipt: await client.withdraw(command.id, command.sessionId) };
 			case "abort":
 				await client.abort(command.target);
 				return { kind: "updated" };
@@ -763,7 +856,9 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 					)
 						throw new Refusal(400, "INVALID_REQUEST");
 					const target = resource
-						? runtime.view().conversations.find((ref) => ref.conversationId === resource)
+						? (options.sessions?.runtimes() ?? [runtime])
+								.flatMap((value) => value.view().conversations)
+								.find((ref) => people.resourceId(ref) === resource)
 						: undefined;
 					if (resource && !target) throw new Refusal(403, "FORBIDDEN");
 					try {
@@ -820,18 +915,29 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 					} catch {
 						throw new Refusal(403, "FORBIDDEN");
 					}
-					guard(() => people.check(a, "read", entry.target.conversationId));
+					guard(() => people.check(a, "read", people.resourceId(entry.target)));
 					send(res, 200, entry);
 					return;
 				}
 				if (req.method === "GET" && url.pathname === "/pocket/events") {
 					const a = await actor(req),
-						id = url.searchParams.get("conversationId");
-					if (!id || !identity(id) || [...url.searchParams.keys()].some((key) => key !== "conversationId"))
+						conversationId = url.searchParams.get("conversationId"),
+						sessionId = url.searchParams.get("sessionId") ?? runtime.view().sessionId;
+					if (
+						!conversationId ||
+						!identity(conversationId) ||
+						!identity(sessionId) ||
+						url.searchParams.getAll("conversationId").length !== 1 ||
+						url.searchParams.getAll("sessionId").length > 1 ||
+						[...url.searchParams.keys()].some((key) => !["conversationId", "sessionId"].includes(key))
+					)
 						throw new Refusal(400, "INVALID_REQUEST");
-					guard(() => people.check(a, "read", id));
-					const ref = runtime.view().conversations.find((ref) => ref.conversationId === id);
+					const ref = (options.sessions?.runtimes() ?? [runtime])
+						.flatMap((value) => value.view().conversations)
+						.find((ref) => ref.sessionId === sessionId && ref.conversationId === conversationId);
 					if (!ref) throw new Refusal(403, "FORBIDDEN");
+					const id = people.resourceId(ref);
+					guard(() => people.check(a, "read", id));
 					streams.add(res);
 					res.once("close", () => streams.delete(res));
 					res.writeHead(200, {

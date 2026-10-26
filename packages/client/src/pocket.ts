@@ -40,6 +40,36 @@ function correlated(command: PocketCommand, result: PocketResult, personId?: str
 	switch (command.op) {
 		case "hello":
 			return result.kind === "hello";
+		case "navigation.read":
+			return result.kind === "navigation";
+		case "navigation.update":
+			return (
+				result.kind === "navigation.updated" &&
+				result.receipt.requestId === command.input.requestId &&
+				result.receipt.version === command.input.expectedVersion + 1
+			);
+		case "navigation.lookup":
+			return (
+				result.kind === "navigation.operation" &&
+				(result.receipt === null ||
+					(result.receipt.requestId === command.original.requestId &&
+						result.receipt.version === command.original.expectedVersion + 1))
+			);
+		case "session.list":
+			return result.kind === "sessions";
+		case "session.create":
+			return (
+				result.kind === "managed.session" &&
+				result.requestId === command.requestId &&
+				result.session !== null &&
+				result.session.name === command.name.trim()
+			);
+		case "session.lookup":
+			return (
+				result.kind === "managed.session" &&
+				result.requestId === command.original.requestId &&
+				(result.session === null || result.session.name === command.original.name.trim())
+			);
 		case "list":
 			return result.kind === "list";
 		case "notification.status":
@@ -49,6 +79,8 @@ function correlated(command: PocketCommand, result: PocketResult, personId?: str
 			return result.kind === "notification" && sameRef(command.target, result.target);
 		case "configuration":
 			return result.kind === "configuration" && sameRef(command.target, result.configuration.ref);
+		case "creation.directories":
+			return result.kind === "creation.directories";
 		case "directory.list":
 			return result.kind === "directories" && sameRef(command.target, result.target);
 		case "configure.agent":
@@ -102,7 +134,12 @@ function correlated(command: PocketCommand, result: PocketResult, personId?: str
 				result.metadata.archived === command.input.archived
 			);
 		case "create":
-			return result.kind === "reference" && result.ref.profile === command.profile;
+			return (
+				result.kind === "reference" &&
+				result.ref.profile === command.profile &&
+				(command.sessionId === undefined || result.ref.sessionId === command.sessionId) &&
+				(command.inherit === undefined || result.ref.sessionId === command.inherit.sessionId)
+			);
 		case "configure":
 			return (
 				result.kind === "reference" &&
@@ -129,7 +166,9 @@ function correlated(command: PocketCommand, result: PocketResult, personId?: str
 		case "collaboration.driver":
 		case "collaboration.presence":
 			return (
-				result.kind === "collaboration" && result.snapshot.conversationId === command.target.conversationId
+				result.kind === "collaboration" &&
+				result.snapshot.conversationId === command.target.conversationId &&
+				(result.snapshot.sessionId === undefined || result.snapshot.sessionId === command.target.sessionId)
 			);
 		case "display":
 			return (
@@ -151,6 +190,7 @@ function correlated(command: PocketCommand, result: PocketResult, personId?: str
 			return (
 				result.kind === "receipt" &&
 				result.receipt.id === command.id &&
+				(command.sessionId === undefined || result.receipt.target.sessionId === command.sessionId) &&
 				(!personId || result.receipt.actorId === personId)
 			);
 		case "invite":

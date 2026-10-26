@@ -22,10 +22,15 @@ export function useConversationConfiguration(target, person, client, error) {
 		return () => {
 			live = false;
 		};
-	}, [target?.incarnation, target?.key, person?.id]);
-	return value?.ref.key === target?.key && value?.ref.incarnation === target?.incarnation ? value : null;
+	}, [target?.sessionId, target?.conversationId, target?.incarnation, target?.key, person?.id]);
+	return value?.ref.sessionId === target?.sessionId &&
+		value?.ref.conversationId === target?.conversationId &&
+		value?.ref.key === target?.key &&
+		value?.ref.incarnation === target?.incarnation
+		? value
+		: null;
 }
-function useChange({ target, client, applied, error }, onSuccess) {
+function useChange({ target, client, applied, error, draftChange }, onSuccess) {
 	const [pending, setPending] = useState(false),
 		[uncertain, setUncertain] = useState(false),
 		live = useRef(true);
@@ -39,6 +44,11 @@ function useChange({ target, client, applied, error }, onSuccess) {
 		if (pending || uncertain) return;
 		setPending(true);
 		try {
+			if (draftChange) {
+				onSuccess?.();
+				await draftChange(change);
+				return;
+			}
 			const result = await client.request({ op: "configure.agent", target, change });
 			if (!live.current) return;
 			onSuccess?.();
@@ -130,7 +140,7 @@ export function ModelPicker(props) {
 		list = useRef(null),
 		listId = useId(),
 		change = useChange(props);
-	const current = value.current?.model ?? value.choices.find((row) => row.id === value.ref.profile)?.model;
+	const current = value.current?.model ?? value.choices.find((row) => row.id === value.ref?.profile)?.model;
 	const choices = [...new Map(value.choices.map((row) => [row.model, row])).values()].sort(
 		(a, b) => Number(b.model === current) - Number(a.model === current),
 	);
@@ -166,15 +176,15 @@ export function ModelPicker(props) {
 			setIndex((selected + (event.key === "ArrowDown" ? 1 : filtered.length - 1)) % filtered.length);
 		input.current?.focus({ preventScroll: true });
 	}
-	return html`<${Sheet} label="Select Model" close=${close} anchor=${document.querySelector("[data-action=model]")} initialFocus="[data-model-search]"><${Heading} title="Model Selection" label="Close model picker" close=${close}/><div class="pocket-sheet-body pocket-model-picker" onKeyDown=${keys}>
-  <label class="pocket-model-search">Search Models<input ref=${input} data-model-search type="search" role="combobox" aria-label="Search models" placeholder="Search by model or profile" aria-autocomplete="list" aria-expanded="true" aria-controls=${listId} aria-activedescendant=${selected >= 0 ? listId + "-" + selected : undefined} autocomplete="off" spellcheck="false" value=${query} onInput=${(
+	return html`<${Sheet} label="Select Model" close=${close} anchor=${props.anchor === undefined ? document.querySelector("[data-action=model]") : props.anchor} initialFocus="[data-model-search]"><${Heading} title="Model Selection" label="Close model picker" close=${close}/><div class="pocket-sheet-body pocket-model-picker" onKeyDown=${keys}>
+  <label class="pocket-model-search">Search Models<input ref=${input} data-model-search type="search" role="combobox" aria-label="Search models" placeholder="Search by model or configuration" aria-autocomplete="list" aria-expanded="true" aria-controls=${listId} aria-activedescendant=${selected >= 0 ? listId + "-" + selected : undefined} autocomplete="off" spellcheck="false" value=${query} onInput=${(
 		event,
 	) => {
 		setQuery(event.currentTarget.value);
 		setIndex(0);
 	}} /></label>
-  <div class="pocket-model-index pocket-secondary"><span>Approved Models</span><span data-model-position role="status" aria-label="Model position">${selected + 1} / ${filtered.length}</span></div>
-  <div ref=${list} id=${listId} role="listbox" aria-label="Approved models">${filtered.map(
+  <div class="pocket-model-index pocket-secondary"><span>Configured Models</span><span data-model-position role="status" aria-label="Model position">${selected + 1} / ${filtered.length}</span></div>
+  <div ref=${list} id=${listId} role="listbox" aria-label="Configured models">${filtered.map(
 		(row, position) =>
 			html`<button
 				type="button"
@@ -183,7 +193,8 @@ export function ModelPicker(props) {
 				class="pocket-choice-row"
 				key=${row.model}
 				data-pick-model=${row.model}
-				data-current-model=${row.model === current ? "" : undefined}
+				data-current-model=${!props.draftChange && row.model === current ? "" : undefined}
+				data-draft-model=${props.draftChange && row.model === current ? "" : undefined}
 				aria-selected=${position === selected}
 				tabindex=${position === selected ? 0 : -1}
 				disabled=${blocked}
@@ -192,13 +203,15 @@ export function ModelPicker(props) {
 			>
 				<span
 					><strong>${row.model}</strong><small>${row.id}</small>${row.model === current &&
-					html`<span class="sr-only">Current model</span>`}</span
+					html`<span class="sr-only"
+						>${props.draftChange ? "Selected initial model" : "Current model"}</span
+					>`}</span
 				>${row.model === current && html`<${Icon} name="check" />`}
 			</button>`,
 	)}</div>
-  ${!filtered.length && html`<p role="status">No matching approved models.</p>`}
+  ${!filtered.length && html`<p role="status">No matching configured models.</p>`}
   <div class="pocket-model-keys pocket-secondary" aria-hidden="true"><span><${Icon} name="up"/><${Icon} name="down"/> Navigate</span><span><${Icon} name="enter"/> Select</span><span><kbd>Esc</kbd> Close</span></div>
-  <p class="pocket-secondary">Changes only the model for this conversation. Directory, instructions and tools stay unchanged.</p>${busy && html`<p role="status">Wait for current work and queued inputs to finish.</p>`}${change.status}
+  <p class="pocket-secondary">${props.draftChange ? "Selects the initial model in this draft. Nothing is created or sent until you confirm creation." : "Changes only the model for this conversation. Directory, instructions and tools stay unchanged."}</p>${busy && html`<p role="status">Wait for current work and queued inputs to finish.</p>`}${change.status}
  </div></${Sheet}>`;
 }
 const placeKey = (person, server) => "pakka.directories." + server + "." + person.id;
@@ -288,12 +301,13 @@ export function DirectoryPicker(props) {
 		const operation = ++generation.current;
 		setLoading(true);
 		try {
-			const result = await client.request({
-				op: "directory.list",
-				target,
-				...(next ? { path: next } : {}),
+			const input = {
+				...(next ? { path: next } : props.draftChange ? { path: value.current.cwd } : {}),
 				places: [...new Set([...known.current.favorites, ...known.current.recent])].slice(0, 32),
-			});
+			};
+			const result = props.loadDirectories
+				? await props.loadDirectories(input)
+				: await client.request({ op: "directory.list", target, ...input });
 			if (!live.current || operation !== generation.current) return;
 			setView(result.view);
 			setPath(result.view.path);

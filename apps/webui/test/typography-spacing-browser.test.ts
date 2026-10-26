@@ -99,9 +99,9 @@ test(
 			await t.test("owned navigation titles use Title Case", async () => {
 				assert.deepEqual(
 					await page.evaluate(
-						`['[data-action=home] > span','[data-action=commands] > span'].map(selector=>document.querySelector(selector).textContent)`,
+						`['.primary-nav [data-action=new-session] > span','.primary-nav [data-action=new-conversation] > span','[data-action=commands] > span'].map(selector=>document.querySelector(selector).textContent)`,
 					),
-					["New Session", "Commands & Extensions"],
+					["New Session", "New Conversation", "Commands & Extensions"],
 				);
 			});
 			const boxes = async (selectors: readonly string[]) =>

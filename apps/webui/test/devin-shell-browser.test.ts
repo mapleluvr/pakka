@@ -10,12 +10,13 @@ import {
 	toggleConversations,
 	openAppearance,
 	organizationAction,
+	newConversation,
 } from "./frontend-controls.ts";
 
 // Geometry belongs to devin-adoption-browser; this consumer catches lost native
 // configuration inheritance and accidental submission from home/navigation.
 test(
-	"Devin frontend: home inherits the selected model; responsive navigation preserves explicit native input",
+	"Devin frontend: the creation dialog inherits the selected model; responsive navigation preserves explicit native input",
 	{ timeout: 60000 },
 	async () => {
 		const m = await runtimeFixture({ profiles: [{ id: "alternate", model: "alternate-model" }] });
@@ -56,9 +57,7 @@ test(
 			await page.wait(
 				'document.querySelector("[data-action=model]")?.textContent.includes("alternate-model") && !document.querySelector("[role=dialog]")',
 			);
-			await page.click('[data-action="home"]');
-			await page.type("#composerInput", "Real new work");
-			await page.click("[data-home-create]");
+			await newConversation(page, "Real new work");
 			await page.wait('document.querySelector(".pocket-status")?.textContent==="Ready"');
 			assert.match(
 				String(await page.evaluate('document.querySelector(".pocket-title").textContent')),
@@ -82,12 +81,12 @@ test(
 			]) {
 				await page.resize(size);
 				await settleFrontend(page);
-				await toggleConversations(page);
-				await page.click('[data-action="home"]');
+				await page.navigate(app.http.origin);
+				await page.wait('document.querySelector(".home-create-card")');
 				await settleFrontend(page);
 				assert.equal(
 					await page.evaluate(
-						`(()=>{const n=document.querySelector("#composerCard .notice-text"),b=n.getBoundingClientRect(),r=document.createRange();r.selectNodeContents(n);return document.documentElement.scrollWidth<=innerWidth&&[...r.getClientRects()].every(p=>p.left>=b.left&&p.right<=b.right&&p.top>=b.top&&p.bottom<=b.bottom);})()`,
+						`(()=>{const n=document.querySelector(".home-create-card > p"),b=n.getBoundingClientRect(),r=document.createRange();r.selectNodeContents(n);return document.documentElement.scrollWidth<=innerWidth&&[...r.getClientRects()].every(p=>p.left>=b.left&&p.right<=b.right&&p.top>=b.top&&p.bottom<=b.bottom);})()`,
 					),
 					true,
 					"Home guidance is fully visible on the phone",

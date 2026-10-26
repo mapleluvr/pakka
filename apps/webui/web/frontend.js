@@ -4,6 +4,8 @@ import { h } from "preact";
 import { useLayoutEffect, useRef, useState } from "preact/hooks";
 import htm from "htm";
 import { Icon } from "@pakka/webui/components";
+import { resourceKey } from "./resource-identity.js";
+import { ConversationGroups } from "./conversation-groups.js";
 const html = htm.bind(h);
 export const Glyph = ({ name, className = "icon" }) =>
 	html`<svg class=${className} aria-hidden="true"><use href=${"#i-" + name} /></svg>`;
@@ -59,7 +61,15 @@ export function Frontend({
 	collapsed,
 	drawerToggle,
 	dismissDrawer,
-	home,
+	newSession,
+	newConversation,
+	sessions,
+	canCreate,
+	workspaceSessionId,
+	resourceIds,
+	client,
+	error,
+	stopInput,
 	choose,
 	search,
 	historyFind,
@@ -69,13 +79,7 @@ export function Frontend({
 	showCollaboration,
 	refresh,
 	signOut,
-	canDrive,
 	configuration,
-	newName,
-	setNewName,
-	createConversation,
-	working,
-	creationAttempt,
 	children,
 	transcript,
 	composer,
@@ -89,7 +93,7 @@ export function Frontend({
 		setMenu(null);
 		fn();
 	};
-	const title = (ref) => titles[ref.conversationId] ?? ref.profile + " · " + ref.conversationId.slice(0, 8);
+	const title = (ref) => titles[resourceKey(ref)] ?? ref.profile + " · " + ref.conversationId.slice(0, 8);
 	useLayoutEffect(() => {
 		document.body.dataset.view = extensions.page ? "workspace" : selected ? "conversation" : "home";
 		document.body.dataset.mode = "agent";
@@ -99,7 +103,7 @@ export function Frontend({
 			document.body.classList.remove("drawer-open", "sidebar-collapsed");
 		};
 	}, [drawer, collapsed, selected?.key, extensions.page]);
-	const sessionRows = refs.filter((ref) => !states[ref.conversationId]?.archived);
+	const sessionRows = refs.filter((ref) => !states[resourceKey(ref)]?.archived);
 	return html`<div
 		class="app-shell"
 		onKeyDown=${(e) => {
@@ -149,8 +153,21 @@ export function Frontend({
 				</div>
 			</div>
 			<nav class="primary-nav" aria-label="Workspace">
-				<button class="nav-row new-session" data-action="home" onClick=${home}>
-					<${Glyph} name="plus" /><span>New Session</span
+				<button
+					class="nav-row new-session"
+					data-action="new-session"
+					disabled=${!canCreate}
+					onClick=${newSession}
+				>
+					<${Glyph} name="plus" /><span>New Session</span>
+				</button>
+				<button
+					class="nav-row"
+					data-action="new-conversation"
+					disabled=${!canCreate}
+					onClick=${() => newConversation()}
+				>
+					<${Glyph} name="message" /><span>New Conversation</span
 					><kbd class="row-kbd" aria-label="Control Shift O">Ctrl <${Icon} name="shift" /> O</kbd>
 				</button>
 				${extensions.workspaceNavigation}${extensions.navigation}
@@ -160,17 +177,22 @@ export function Frontend({
 			</nav>
 			<div class="sessions-area">
 				<div class="sessions-heading">
-					<span>Sessions</span>
+					<span>Conversations</span>
 					<div class="sessions-actions">
-						<button class="icon-btn small touch-only" aria-label="Search sessions" onClick=${search}>
+						<button class="icon-btn small touch-only" aria-label="Search conversations" onClick=${search}>
 							<${Glyph} name="search" />
 						</button>
-						<button class="icon-btn small" aria-label="New Session" onClick=${home}>
+						<button
+							class="icon-btn small"
+							aria-label="New Conversation"
+							disabled=${!canCreate}
+							onClick=${() => newConversation()}
+						>
 							<${Glyph} name="plus" />
 						</button>
 						<button
 							class="icon-btn small"
-							aria-label="Session options"
+							aria-label="Conversation list options"
 							aria-haspopup="menu"
 							aria-expanded=${menu?.name === "sessions"}
 							onClick=${(e) => openMenu("sessions", e)}
@@ -179,20 +201,22 @@ export function Frontend({
 						</button>
 					</div>
 				</div>
-				<nav aria-label="Conversations" class="session-list">
-					${sessionRows.map(
-						(ref) =>
-							html`<button
-								class="session-row"
-								data-conversation=${ref.conversationId}
-								aria-current=${selected?.key === ref.key ? "true" : "false"}
-								onClick=${() => choose(ref)}
-							>
-								<span class="session-dot"></span><span class="session-title">${title(ref)}</span>
-							</button>`,
-					)}
-				</nav>
-				${!sessionRows.length && html`<p class="empty-sessions">No sessions</p>`}
+				<${ConversationGroups}
+					key=${JSON.stringify([person.id, workspaceSessionId])}
+					person=${person}
+					workspaceSessionId=${workspaceSessionId}
+					refs=${sessionRows}
+					resourceIds=${resourceIds}
+					sessions=${sessions}
+					selected=${selected}
+					title=${title}
+					choose=${choose}
+					newConversation=${newConversation}
+					canCreate=${canCreate}
+					client=${client}
+					error=${error}
+					stopInput=${stopInput}
+				/>
 				<button class="nav-row recent-row" onClick=${search}>
 					<${Glyph} name="clock" /><span>Recent</span><${Glyph} name="chevron-right" className="icon chev" />
 				</button>
@@ -306,76 +330,44 @@ export function Frontend({
 							</header>
 							${transcript}${!extensions.page && extensions.surface}${composer}
 						</section>`
-					: html`<section class="home-view" aria-label="New Session">
+					: html`<section class="home-view" aria-label="Workspace Home">
 							<div class="hero-block">
 								<div class="hero-head">
 									<div class="wordmark" aria-label="Pakka">
 										<${Glyph} name="logo" className="logo-mark" /><span class="wordmark-text">Pakka</span>
 									</div>
-									<div class="segmented" role="tablist" aria-label="Session type">
+									<div class="segmented" role="tablist" aria-label="Conversation Mode">
 										<button role="tab" aria-selected="true">Agent</button>
 									</div>
 								</div>
-								<form class="composer-card" id="composerCard" onSubmit=${createConversation}>
-									<div class="composer-surface">
-										<div class="notice-bar">
-											<span class="notice-text"
-												>${canDrive
-													? "Create a conversation to begin."
-													: "Select a conversation to view its history."}</span
-											><button type="button" class="notice-link" onClick=${search}>Sessions</button>
-										</div>
-										<div class="composer-body">
-											<label class="sr-only" for="composerInput">Conversation name</label>
-											<div class="composer-editor">
-												<textarea
-													id="composerInput"
-													aria-label="Conversation name"
-													rows="2"
-													spellcheck="false"
-													maxlength="80"
-													placeholder="Name a conversation…"
-													value=${newName}
-													disabled=${!canDrive || working || Boolean(creationAttempt)}
-													onInput=${(e) => setNewName(e.currentTarget.value)}
-												></textarea>
-											</div>
-											<div class="composer-toolbar">
-												<div class="toolbar-left">
-													<button
-														class="icon-btn"
-														type="button"
-														aria-label="Commands & Extensions"
-														onClick=${() => extensions.openCommands()}
-													>
-														<${Glyph} name="commands" />
-													</button>
-												</div>
-												<div class="toolbar-right">
-													<div class="send-group" data-empty=${!newName.trim()}>
-														<button
-															class="send-btn"
-															data-home-create
-															type="submit"
-															aria-label="Start conversation"
-															disabled=${!canDrive || working || Boolean(creationAttempt) || !newName.trim()}
-														>
-															<${Glyph} name="arrow-up" /></button
-														><button
-															type="button"
-															class="send-caret"
-															aria-label="New Session options"
-															aria-haspopup="menu"
-															onClick=${(e) => openMenu("new", e)}
-														>
-															<${Glyph} name="chevron-down" />
-														</button>
-													</div>
-												</div>
-											</div>
-										</div>
+								<section class="home-create-card" aria-label="Create Conversation">
+									<h1>Start a Conversation</h1>
+									<p>
+										${canCreate
+											? "Choose a Session, model and working directory in the creation dialog. Send work only after the Conversation is ready."
+											: "Select a Conversation from the sidebar to view its history."}
+									</p>
+									<div class="creation-actions">
+										${canCreate &&
+										html`<button
+												type="button"
+												class="button primary"
+												data-action="new-conversation"
+												onClick=${() => newConversation()}
+											>
+												<${Glyph} name="message" />New Conversation</button
+											><button type="button" class="pill-btn" data-action="new-session" onClick=${newSession}>
+												<${Glyph} name="plus" />New Session
+											</button>`}<button
+											type="button"
+											class="pocket-icon-button"
+											aria-label="Commands & Extensions"
+											onClick=${() => extensions.openCommands()}
+										>
+											<${Glyph} name="commands" />
+										</button>
 									</div>
-								</form>
+								</section>
 							</div>
 						</section>`}
 			${recovery}${notice}
@@ -408,18 +400,8 @@ export function Frontend({
 				</div>
 				<div class="menu-caption">Filters loaded messages only</div>`
 		}
-   ${menu.name === "sessions" && html`<button class="menu-row" role="menuitem" onClick=${action(search)}><${Glyph} name="search" />Search / archived sessions</button><button class="menu-row" role="menuitem" onClick=${action(refresh)}><${Glyph} name="clock" />Refresh sessions</button>`}
-   ${
-			menu.name === "new" &&
-			html`<div class="menu-caption">New Session</div>
-				<button
-					class="menu-row"
-					role="menuitem"
-					onClick=${action(() => document.querySelector("#composerInput")?.focus())}
-				>
-					Name a conversation, then Send work inside
-				</button>`
-		}
+   ${menu.name === "sessions" && html`<button class="menu-row" role="menuitem" onClick=${action(search)}><${Glyph} name="search" />Search / Archived Conversations</button><button class="menu-row" role="menuitem" onClick=${action(refresh)}><${Glyph} name="clock" />Refresh Conversations</button>`}
+
    ${menu.name === "conversation" && html`<button class="menu-row" role="menuitem" data-action="conversation" onClick=${action(() => openSheet("conversation"))}>Conversation</button><button class="menu-row" role="menuitem" data-action="settings" onClick=${action(() => openSheet("configuration"))}>Settings</button><button class="menu-row" role="menuitem" data-action="notifications" onClick=${action(() => openSheet("notifications"))}>Notifications</button><button class="menu-row" role="menuitem" data-action="collaboration" onClick=${action(showCollaboration)}>Team</button>`}
   </${Menu}>`}
 		${children}

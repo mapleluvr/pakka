@@ -177,9 +177,9 @@ Preferences/Notifications 的对应 href 来自生产注册；Conversation/Peopl
 
 ### 6.3 Session / Conversation 创建关系调查
 
-用户提出独立 Conversation 创建弹窗，并要求识别 Pi Durable 中 Session 包含 Conversations 的关系。2026-10-25 用户再次指出首页 `Name a conversation` 与创建配置混用，要求澄清并立 New Session / Session 内 New Conversation、首次预填父 Session，以及 `Sort Per Session` / `Default` 两种 sidebar 模式。本节记录这一方向的澄清候选；本轮没有修改产品代码，也未将候选细节记为已采用、已实现或已验收。
+用户提出独立 Conversation 创建弹窗，并要求识别 Pi Durable 中 Session 包含 Conversations 的关系。2026-10-25 用户再次指出首页 `Name a conversation` 与创建配置混用，要求澄清并立 New Session / Session 内 New Conversation、首次预填父 Session，以及 `Sort Per Session` / `Default` 两种 sidebar 模式。本节最初记录澄清候选。用户随后明确要求删除首页命名复用路径，并授权“创建方案已有那就开始执行”；本轮采用并实施下述创建与导航方向。采用不等于实现或验收完成，具体差距由 tasks §4.3 和本地工作计划承接。
 
-当前代码证据：`Frontend` 把 home 的命名 textarea 直接绑定 `App.createConversation`；该方法仅发送 `op:"create"`，`PocketWorkspace.create` 使用单 runtime catalog 的 enroll，原生 adapter 的 `tx.createConversation` 继承同一 runtime 的 sessionId。`startPocket` 只装配一个 `createRuntime`，sidebar 当前用 Sessions 表头展示 Conversation refs。因而现有 New Session 名称没有对应的新 Durable Session 效果。
+实施前基线证据：`Frontend` 把 home 的命名 textarea 直接绑定 `App.createConversation`；该方法仅发送 `op:"create"`，`PocketWorkspace.create` 使用单 runtime catalog 的 enroll，原生 adapter 的 `tx.createConversation` 继承同一 runtime 的 sessionId。`startPocket` 只装配一个 `createRuntime`，sidebar 当前用 Sessions 表头展示 Conversation refs。因而现有 New Session 名称没有对应的新 Durable Session 效果。
 
 #### 概念与当前缺口
 
@@ -187,7 +187,7 @@ Preferences/Notifications 的对应 href 来自生产注册；Conversation/Peopl
 - 用户文件夹是导航元数据，与上述原生父子关系正交。浏览器登录 session、cwd、独立进程也分别是其他边界。新建 Durable Session 不能用新名称、新文件夹或再次完整启动一个有独立登录身份的 WebUI 来替代；它也不自动提供进程隔离。
 - 当前命名 textarea 是创建表单，不是向模型发送首条消息；把它放在 composer 的外形中，让创建、命名与聊天混淆。现有 create 还可能继承来源 Conversation 的配置，却没有专门的创建配置确认步骤。仅换 placeholder 或按钮名称不足以闭合这一缺口。
 
-#### 建议的创建交互
+#### 创建交互
 
 | 入口             | 弹窗/向导表达的对象                                                                                | 确认后的效果                                                           |
 | ---------------- | -------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
@@ -198,9 +198,9 @@ Preferences/Notifications 的对应 href 来自生产注册；Conversation/Peopl
 
 仅在 WebUI 管理的 Session 授权清单成功读取，且没有可作为父项的 Session 时，在同一创建向导预填一个待建 Session，让用户看到并可编辑它，再显式确认 `New Session → New Conversation in that Session`。预填是表单草稿，不是打开弹窗就创建后台资源。加载、读取失败或无权获知清单不能当作“没有 Session”；引导不绕过创建权限，也不静默把未纳管的底层 bootstrap/root 当作用户已创建的 Session。
 
-两步创建保留各自的原请求/核对身份。Session 已确认建立、Conversation 失败时呈现部分成功，并针对该 Session 接续第二步；未知结果先核对，不自动重建 Session，不声称跨存储原子回滚。具体管理协议、现有人类身份/资源权限的复用、可编辑的 Session 级配置及首次 Conversation 策略仍待设计采用；模型与相关权限的精简按 §6.5 的用户纠偏采用。
+两步创建保留各自的原请求/核对身份。Session 已确认建立、Conversation 失败时呈现部分成功，并针对该 Session 接续第二步；未知结果先核对，不自动重建 Session，不声称跨存储原子回滚。管理协议、持久注册及现有人类身份/资源权限的复用按下面实施决定采用。New Session 可选择是否创建首个 Conversation；各 Session 继承宿主固定的有限预算配置，不在浏览器另设额度开关。模型与相关权限的精简按 §6.5 的用户纠偏采用。
 
-#### 建议的 sidebar 两种投影
+#### Sidebar 两种投影
 
 | 模式原文         | 分组                                                      | 原生数据效果          |
 | ---------------- | --------------------------------------------------------- | --------------------- |
@@ -209,11 +209,20 @@ Preferences/Notifications 的对应 href 来自生产注册；Conversation/Peopl
 
 两者使用同一批当前授权的 Conversation 引用。文件夹可以归纳来自不同 Session 的 Conversations；行项目保留识别实际父 Session 的读取路径。切换模式、移动文件夹归类和删除文件夹均只改变导航，不迁移 transcript、cwd、权限或额度，也不删除原生 Conversation/Session。文件夹不是磁盘 cwd，更不是另一种 Session。
 
-首版可采用个人持久化文件夹/视图偏好；这是设计建议，不把共享文件夹、ACL 继承、多重归类或多级目录擅自纳入已采用范围。原生归属引用必须至少区分 Session / Conversation，并继续绑定适用 incarnation；显示名称或裸 conversationId 不足以跨 Session 寻址。服务授权在返回分组与元数据前完成，不让名称和数量泄漏不可读资源。
+首版采用个人持久化文件夹与视图偏好，文件夹为单层、每个 Conversation 至多归入一个文件夹；删除文件夹后其条目回到未分类。个人元数据放在工作区控制 Session 的独立 user namespace，经现有当前人身份访问，所有角色均可整理自己可读的 Conversation；不要求资源写权限，不建立另一套 ACL。有限契约支持每人 32 个文件夹、256 条归类，与现有 256 项导航响应对齐；更新用版本 CAS、原始请求及最近 16 项幂等结果，过期旧请求不得通过版本检查再次创建。unknown 只读核对原请求；读取当前导航可明确接续个人呈现编辑，不声称旧操作已完成，不自动重发。隐藏或撤权的资源归类不从存储删除，只在授权读取时过滤；其他个人元数据编辑不得覆盖这些未返回条目。共享文件夹、多重归类和多级目录不是本次已采用行为，文件夹不增加 ACL 或改变资源权限。原生归属引用必须至少区分 Session / Conversation，并继续绑定适用 incarnation；显示名称或裸 conversationId 不足以跨 Session 寻址。服务授权在返回分组与元数据前完成，不让名称和数量泄漏不可读资源。
 
-#### 实施前仍需落实
+#### 本轮实施决定与验证顺序
 
-真正的 Session 管理端口、持久注册与当前 WebUI 身份如何跨已纳管 Session 授权；单 writer、独立存储与 Pakka 预算配置/已消费额度的保留；现有单 runtime 数据如何识别并登记；文件夹元数据的持久归属及删除语义。先以真实 runtime 验证两个 Session、跨 Session 同 Conversation ID、重开/撤权与两步部分成功，再实现 sidebar。独立弹窗与模式标签不能冒充这些运行时能力。
+- 工作区身份与启动控制 Session 保留。已有持久 Conversation 的单 runtime 登记为实际 Session；空的 bootstrap/root 不冒充用户创建的 Session。
+- 通过公开 createRuntime / reservedSessionId 创建真实独立存储，每个 Session 一个 writer。Session 管理端口持久记录原始请求、服务端保留的 Session ID、配置与 ready/unknown；原请求核对只读取已记录结果，不自动重建或解锁未知 writer。控制端口按 Session 显式解析 Runtime，不伪装成一个跨 Session 的 Runtime/预算域。
+- 所有寻址、导航状态、SSE 与资源授权使用完整 Session/Conversation 身份；已有单 Session 资源授权仍只对应原 Session，同 ID 不向新 Session 扩权。模型选择沿用 §6.5，Session 创建使用现有创建权限，不增加逐 Session 模型许可。
+- 创建向导独立于首页 composer，New Session / New Conversation 统一走该向导；删除首页命名分支和旧快捷键路径。打开/取消仅改草稿；名称、父 Session、模型与 cwd 经明确确认后创建，创建不提交推理。
+- 原子性只覆盖各自 Durable 提交。Session 建立与 Conversation 建立分别保持原请求；已建父项在后一步失败后保持可见，未知先读原身份，不自动重发或删除。
+- 先取得真实产品 HTTP 与浏览器 RED，再实现 Session 管理/重开、独立配置、两种 sidebar 投影和个人元数据。覆盖两个 Session、同 Conversation ID、权限/撤权、额度、部分成功、响应丢失、键盘/手机与主题字号；按本会话 note48 不安排独立复核。
+
+#### 实现与验证定位
+
+Session 管理、个人导航与有限命令的具体字段和容量见 [WebUI 开发契约](../../../docs/development/WEBUI-DEVELOPMENT.md#session-管理创建与个人导航)。服务在控制 Session 中保留注册和原请求，再打开独立 Runtime/storage；只有原生初始化和 ready 注册都确认后才发布。未知初始化保留占位，不自动重开或抢占 writer；已确认子存储重开失败时当前工作区启动失败，不静默遗漏该存储。创建请求在当前页面实例关闭/重开弹窗后仍可核对；浏览器整页刷新后的未确认创建草稿恢复不在本轮已验证范围内。实际两个 Session、同号 Conversation、原额度/回执、权限与两步丢响应由真实 provider/HTTP/浏览器回归约束；固定候选、全量和未覆盖边界在版本验证记录中单独封存。
 
 ### 6.4 2026-10-25 Model Selection 检索索引
 

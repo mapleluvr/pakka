@@ -74,7 +74,7 @@ test(
 				true,
 				"Settings remains visible and hit-testable",
 			);
-			await page.click("[data-conversation]:last-child");
+			await page.click(".sidebar-conversation-row:last-child [data-conversation]");
 			await page.wait('document.querySelector(".pocket-status")?.textContent==="Ready"');
 			await settleFrontend(page);
 			await toggleConversations(page);
@@ -96,7 +96,7 @@ test(
 			await page.click('[aria-label="Close Example preferences"]');
 			await settleFrontend(page);
 			await toggleConversations(page);
-			await page.click("[data-conversation]:last-child");
+			await page.click(".sidebar-conversation-row:last-child [data-conversation]");
 			await page.wait('document.querySelector(".pocket-status")?.textContent==="Ready"');
 			await settleFrontend(page);
 			await page.type("textarea[name=message]", "KEEP-SIDEBAR-DRAFT");

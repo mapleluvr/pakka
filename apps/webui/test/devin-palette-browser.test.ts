@@ -34,7 +34,7 @@ test(
 			const page = await browser.page(app.http.origin + "/#signin=" + app.initialOwner.token);
 			await page.wait('document.querySelector("[data-action=signin]")');
 			await page.click("[data-action=signin]");
-			await page.wait('document.querySelector("#composerInput")');
+			await page.wait('document.querySelector(".home-create-card [data-action=new-conversation]")');
 			await settleFrontend(page);
 			await page.evaluate(
 				`(()=>{globalThis.sheetHistory=[];for(const name of ['pushState','replaceState','back']){const original=history[name].bind(history);history[name]=(...args)=>{globalThis.sheetHistory.push({op:name,before:history.state?.pakkaSheet??null,after:args[0]?.pakkaSheet??null});return original(...args);};}addEventListener('popstate',()=>globalThis.sheetHistory.push({op:'popstate',state:history.state?.pakkaSheet??null}));})()`,

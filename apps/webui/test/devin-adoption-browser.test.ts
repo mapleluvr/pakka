@@ -11,7 +11,7 @@ import { ownedBrowser } from "./browser.ts";
 // Expected geometry is hand-copied from the independently run reference,
 // docs/.../final/reference-runtime-check.json, NOT calculated by our renderer.
 test(
-	"reference frontend adoption: original home anatomy, palette, real conversation",
+	"reference frontend adoption: retained reference chrome, explicit creation without home naming, palette and real conversation",
 	{ timeout: 60000 },
 	async () => {
 		const m = await runtimeFixture();
@@ -36,22 +36,29 @@ test(
 			await page.wait(
 				'[...document.querySelectorAll("link[rel=stylesheet]")].every(e=>e.sheet) && document.fonts.status === "loaded"',
 			);
-			const shape = await page.evaluate(
+			const shape = (await page.evaluate(
 				`(()=>{const b=s=>{const el=document.querySelector(s);if(!el)return null;const r=el.getBoundingClientRect();return {x:r.x,y:r.y,w:r.width,h:r.height}};return {newSession:b('.primary-nav .new-session'),hero:b('.hero-head'),card:b('#composerCard'),toolbar:b('#composerCard .composer-toolbar'),editor:document.querySelector('#composerInput')?.tagName ?? null,overflow:document.documentElement.scrollWidth>innerWidth}})()`,
-			);
+			)) as {
+				newSession: unknown;
+				hero: { x: number; y: number; w: number; h: number };
+				card: unknown;
+				toolbar: unknown;
+				editor: unknown;
+				overflow: boolean;
+			};
 			await writeFile(join(evidence, "home-desktop.png"), await page.screenshot());
 			await writeFile(join(evidence, "home-desktop.json"), JSON.stringify(shape, null, 2));
 			assert.deepEqual(
-				shape,
+				{ ...shape, hero: { x: shape.hero.x, w: shape.hero.w, h: shape.hero.h } },
 				{
 					newSession: { x: 8, y: 44, w: 278, h: 30 },
-					hero: { x: 520, y: 327, w: 700, h: 30 },
-					card: { x: 526, y: 373, w: 688, h: 154 },
-					toolbar: { x: 539, y: 486, w: 662, h: 28 },
-					editor: "TEXTAREA",
+					hero: { x: 520, w: 700, h: 30 },
+					card: null,
+					toolbar: null,
+					editor: null,
 					overflow: false,
 				},
-				"the frontend must retain reference geometry, not the old WebUI silhouette",
+				"retained reference chrome keeps its geometry; creation must not reuse the home composer",
 			);
 			await page.click('[data-action="search-conversations"]');
 			await page.wait('document.querySelector(".palette[role=dialog]")?.contains(document.activeElement)');
@@ -79,12 +86,33 @@ test(
 				);
 				await page.click('[aria-label="Toggle conversations"]');
 				await page.wait('document.querySelector(".sidebar").getBoundingClientRect().x === 0');
-				await page.click('[data-action="home"]');
+				await page.key("Escape");
 				await page.wait('document.querySelector(".sidebar").getBoundingClientRect().right < 0');
+				await page.navigate(app.http.origin);
+				await page.wait('document.querySelector(".home-create-card")');
 				const mobile = await page.evaluate(
-					`(()=>{const r=document.querySelector('#composerCard').getBoundingClientRect();return {x:r.x,w:r.width,h:r.height,overflow:document.documentElement.scrollWidth>innerWidth}})()`,
+					`(()=>{const r=document.querySelector('.home-create-card').getBoundingClientRect();return {x:r.x,w:r.width,h:r.height,overflow:document.documentElement.scrollWidth>innerWidth}})()`,
 				);
-				assert.deepEqual(mobile, { x: 22, w: size.width - 44, h: 154, overflow: false });
+				assert.ok(
+					mobile &&
+						typeof mobile === "object" &&
+						"x" in mobile &&
+						"w" in mobile &&
+						"h" in mobile &&
+						"overflow" in mobile,
+				);
+				assert.equal(mobile.overflow, false);
+				assert.ok(
+					Number(mobile.x) >= 0 && Number(mobile.x) + Number(mobile.w) <= size.width,
+					"creation actions fit the actual phone viewport",
+				);
+				assert.ok(Number(mobile.h) >= 44);
+				assert.equal(
+					await page.evaluate(
+						'Boolean(document.querySelector("#composerCard,#composerInput,[data-home-create]"))',
+					),
+					false,
+				);
 				await writeFile(join(evidence, `home-${size.width}.png`), await page.screenshot());
 			}
 			await page.resize({ width: 1440, height: 900 });

@@ -2,6 +2,52 @@
 
 ## ADDED Requirements
 
+### Requirement: Dedicated creation distinguishes native Sessions and Conversations
+
+New Session SHALL create a real independent Durable storage and commit domain under the existing WebUI identity. New Conversation SHALL create within the explicitly selected Session. Both entries SHALL use a dedicated configuration dialog, exposing the name, parent where applicable, configured model and server cwd without another model grant. The homepage SHALL provide creation entry actions rather than an inline conversation-naming composer. Creation SHALL not submit model input.
+
+#### Scenario: Open and cancel creation
+
+- **WHEN** a person opens either creation entry and cancels or presses Escape before confirming
+- **THEN** focus returns to the entry, existing work and message drafts remain intact, and no native Session, Conversation or inference request is created
+- **AND** the homepage and keyboard shortcuts contain no parallel inline naming flow
+
+#### Scenario: No managed parent exists
+
+- **WHEN** the authorized Session list has successfully loaded and contains no usable parent
+- **THEN** New Conversation prefills an editable Session draft and explicitly confirms Session creation followed by Conversation creation
+- **AND** loading, denial or a failed list read is not treated as an empty list
+
+#### Scenario: Keep the confirmed parent after a later failure
+
+- **WHEN** Session creation succeeds but Conversation creation fails or returns unknown
+- **THEN** the confirmed Session remains visible and is reused for the second step, each operation retains its own original request identity, and unknown results are reconciled without automatic resubmission
+
+### Requirement: Managed Sessions preserve native identity and authorization
+
+Managed Session registration SHALL persist the original request, server-reserved Session identity and confirmed or unknown creation status. Reopening SHALL use the same storage and existing writer protection. Resource lookup, authorization, configuration, budgets, SSE and UI identity SHALL include the parent Session, including when native Conversation identifiers collide. Existing single-Session grants SHALL remain scoped to their original Session.
+
+#### Scenario: Independent Sessions contain colliding Conversation identifiers
+
+- **WHEN** two managed native Sessions contain the same Conversation identifier
+- **THEN** their creation, history, selected configuration, input receipts, budgets and navigation resolve only the requested full resource
+- **AND** granting one Conversation does not grant its same-ID peer or disclose that peer's name or history
+
+#### Scenario: A creation response is lost
+
+- **WHEN** a committed Session or Conversation response is lost, or its result cannot be confirmed
+- **THEN** the dialog preserves the original request and offers read-only lookup; a missing or unknown result does not trigger another native creation or unlock an unknown writer
+
+### Requirement: Sidebar projections separate parentage from personal folders
+
+Sort Per Session SHALL group authorized Conversations by their actual native parent. Default SHALL group the same resources by the person's persistent single-level folders with an Unclassified group. Folder creation, renaming, deletion, moving and view preference SHALL modify personal navigation only, use current identity and bounded versioned requests, and SHALL not create another ACL or alter native storage, permissions, cwd or spent budgets.
+
+#### Scenario: Change projection and move a Conversation
+
+- **WHEN** a person changes projection or assigns an authorized Conversation to a folder
+- **THEN** the grouping persists for that person after reopen while the native parent, transcript, configuration, receipts and budgets remain unchanged
+- **AND** deleting the folder moves its entries to Unclassified without deleting native resources
+
 ### Requirement: Settings pages have native addressable navigation
 
 Settings SHALL use explicit page routes and category anchors whose hrefs identify the destination, following the corresponding offline Devin production navigation. Category visibility SHALL reflect current Pakka permissions and capabilities, and the active category SHALL derive from the route. Settings pages SHALL own page focus and history independently of modal dialog lifecycle.

@@ -22,6 +22,8 @@ import {
 } from "./pocket-directories.ts";
 
 export interface PocketCreate {
+	readonly sessionId?: string;
+	readonly configuration?: ConversationConfigurationChange;
 	readonly requestId: string;
 	readonly name: string;
 	readonly profile: string;
@@ -35,6 +37,8 @@ export interface PocketNavigation {
 	readonly name: string;
 	readonly version: number;
 	readonly archived: boolean;
+	/** Existing resource scope; absent on legacy/source rows until composed by a multi-Session directory. */
+	readonly resourceId?: string;
 }
 export interface PocketMetadataInput {
 	readonly requestId: string;
@@ -97,9 +101,9 @@ export interface PocketWorkspaceClient {
 		input: { readonly requestId: string; readonly kind: "chat" | "card"; readonly text: string },
 	): Promise<DisplayReceipt>;
 	submit(ref: ConversationRef, input: PocketInput): Promise<PocketInputReceipt>;
-	receipt(id: string): Promise<PocketInputReceipt>;
-	wait(id: string, signal?: AbortSignal): Promise<PocketInputReceipt>;
-	withdraw(id: string): Promise<PocketInputReceipt>;
+	receipt(id: string, sessionId?: string): Promise<PocketInputReceipt>;
+	wait(id: string, signal?: AbortSignal, sessionId?: string): Promise<PocketInputReceipt>;
+	withdraw(id: string, sessionId?: string): Promise<PocketInputReceipt>;
 	abort(ref: ConversationRef): Promise<void>;
 }
 export interface PocketConversationSource {
@@ -215,7 +219,7 @@ export function createPocketWorkspace(options: PocketWorkspaceOptions): PocketWo
 		return found;
 	};
 	const checkScheduledInput = (actorId: string, ref: ConversationRef) => {
-		people.authorizePerson(actorId, "steer", ref.conversationId);
+		people.authorizePerson(actorId, "steer", people.resourceId(ref));
 		if (options.beforeInput && !options.beforeScheduledInput)
 			throw new Error("Scheduled collaboration authority is not configured");
 		options.beforeScheduledInput?.(actorId, ref);
@@ -301,7 +305,7 @@ export function createPocketWorkspace(options: PocketWorkspaceOptions): PocketWo
 				return undefined;
 			};
 			const check = (permission: PocketPermission, ref?: ConversationRef) =>
-				people.check(actor, permission, ref?.conversationId);
+				people.check(actor, permission, ref && people.resourceId(ref));
 			const profileCheck = (profile: string) => {
 				const person = current();
 				const allowed = options.profileCeiling(person);
@@ -332,9 +336,18 @@ export function createPocketWorkspace(options: PocketWorkspaceOptions): PocketWo
 				if (
 					!input ||
 					Object.keys(input).some(
-						(k) => !["requestId", "name", "profile", ...(source ? ["entryId"] : ["inherit"])].includes(k),
+						(k) =>
+							![
+								"requestId",
+								"name",
+								"profile",
+								"sessionId",
+								"configuration",
+								...(source ? ["entryId"] : ["inherit"]),
+							].includes(k),
 					) ||
 					!key(input.requestId) ||
+					(input.sessionId !== undefined && input.sessionId !== runtime.view().sessionId) ||
 					typeof input.name !== "string" ||
 					!input.name.trim() ||
 					input.name.length > 80 ||
@@ -346,6 +359,10 @@ export function createPocketWorkspace(options: PocketWorkspaceOptions): PocketWo
 						requestId: input.requestId,
 						name: input.name.trim(),
 						profile: input.profile,
+						...(input.sessionId === undefined ? {} : { sessionId: input.sessionId }),
+						...(input.configuration === undefined
+							? {}
+							: { configuration: structuredClone(input.configuration) }),
 						...(input.inherit ? { inherit: structuredClone(input.inherit) } : {}),
 					}),
 					from = source ? structuredClone(source) : undefined,
@@ -353,9 +370,16 @@ export function createPocketWorkspace(options: PocketWorkspaceOptions): PocketWo
 				const fingerprint = hash({ ...saved, source: from ?? null, entryId: entryId ?? null }),
 					id = "human-" + hash([personId, saved.requestId]).slice(0, 40);
 				let inheritedConfiguration: { model: string; cwd: string } | undefined;
+				let initialDirectory: string | undefined;
 				const authorize = () => {
 					check("create");
 					profileCheck(saved.profile);
+					if (initialDirectory !== undefined && !directoryWithin(initialDirectory, roots())) denied();
+					if (
+						saved.configuration?.model !== undefined &&
+						!runtime.profileChoices().some((row) => row.model === saved.configuration!.model)
+					)
+						denied();
 					if (from) check("manage", from);
 					if (saved.inherit) check("manage", saved.inherit);
 					if (
@@ -396,6 +420,9 @@ export function createPocketWorkspace(options: PocketWorkspaceOptions): PocketWo
 						await resolveDirectory(inherited.cwd, roots());
 						authorize();
 					}
+					if (saved.configuration?.cwd !== undefined)
+						initialDirectory = await resolveDirectory(saved.configuration.cwd, roots());
+					authorize();
 					const rows = await catalog.enroll(
 						[
 							{
@@ -412,6 +439,7 @@ export function createPocketWorkspace(options: PocketWorkspaceOptions): PocketWo
 								},
 								...(from ? { fork: { source: from, entryId: entryId! } } : {}),
 								...(saved.inherit ? { inherit: saved.inherit } : {}),
+								...(saved.configuration ? { configuration: saved.configuration } : {}),
 							},
 						],
 						authorize,
@@ -453,7 +481,7 @@ export function createPocketWorkspace(options: PocketWorkspaceOptions): PocketWo
 					(row) =>
 						row.data.kind === "pocket-workspace" &&
 						row.data.phase === "active" &&
-						(person.resources === "*" || person.resources.includes(row.ref.conversationId)),
+						(person.resources === "*" || person.resources.includes(people.resourceId(row.ref))),
 				);
 				for (const row of rows) check("read", row.ref);
 				const external: PocketNavigation[] = [];
@@ -660,7 +688,9 @@ export function createPocketWorkspace(options: PocketWorkspaceOptions): PocketWo
 						if (
 							!entry.sourceConversationId ||
 							person.resources === "*" ||
-							person.resources.includes(entry.sourceConversationId)
+							person.resources.includes(
+								people.resourceId({ sessionId: saved.sessionId, conversationId: entry.sourceConversationId }),
+							)
 						)
 							return entry;
 						// An explicit native fork copies history, not a read grant to its source resource.
@@ -717,11 +747,13 @@ export function createPocketWorkspace(options: PocketWorkspaceOptions): PocketWo
 						),
 					);
 				},
-				receipt: async (id: string) => {
+				receipt: async (id: string, sessionId?: string) => {
+					if (sessionId !== undefined && sessionId !== runtime.view().sessionId) return denied();
 					const provider = await receiptProvider(id);
 					return provider ? provider.receipt(id) : receiptCheck(await ownedReceipt(id));
 				},
-				wait: async (id: string, signal?: AbortSignal) => {
+				wait: async (id: string, signal?: AbortSignal, sessionId?: string) => {
+					if (sessionId !== undefined && sessionId !== runtime.view().sessionId) return denied();
 					const provider = await receiptProvider(id);
 					if (provider) return provider.wait(id, signal);
 					const value = await ownedReceipt(id);
@@ -731,7 +763,8 @@ export function createPocketWorkspace(options: PocketWorkspaceOptions): PocketWo
 					};
 					return receiptCheck(await catalog.wait(id, authorize, signal));
 				},
-				withdraw: async (id: string) => {
+				withdraw: async (id: string, sessionId?: string) => {
+					if (sessionId !== undefined && sessionId !== runtime.view().sessionId) return denied();
 					const provider = await receiptProvider(id);
 					if (provider) return provider.withdraw(id);
 					const value = await ownedReceipt(id, "send");

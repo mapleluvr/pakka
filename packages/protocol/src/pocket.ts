@@ -4,6 +4,45 @@ import type { AgentRef } from "./index.ts";
 export type { AgentRef } from "./index.ts";
 export const POCKET_VERSION = 2 as const;
 export const POCKET_MAX_BYTES = 2 * 1024 * 1024;
+export interface PocketManagedSession {
+	readonly id: string;
+	readonly name: string;
+	readonly cwd?: string;
+	readonly status: "ready" | "unknown" | "unavailable";
+}
+export interface PocketSessionCreation {
+	readonly requestId: string;
+	readonly name: string;
+	readonly cwd: string;
+}
+export interface PocketCreationDefaults {
+	readonly profile: string;
+	readonly model: string;
+	readonly cwd: string;
+	readonly choices: readonly { readonly id: string; readonly model: string }[];
+}
+export interface PocketPersonalNavigation {
+	readonly version: number;
+	readonly mode: "default" | "session";
+	readonly folders: readonly { readonly id: string; readonly name: string }[];
+	readonly assignments: Readonly<Record<string, string>>;
+}
+export type PocketNavigationAction =
+	| { readonly kind: "mode"; readonly mode: "default" | "session" }
+	| { readonly kind: "folder.create"; readonly name: string }
+	| { readonly kind: "folder.rename"; readonly folderId: string; readonly name: string }
+	| { readonly kind: "folder.delete"; readonly folderId: string }
+	| { readonly kind: "assign"; readonly resourceId: string; readonly folderId: string | null };
+export interface PocketNavigationUpdate {
+	readonly requestId: string;
+	readonly expectedVersion: number;
+	readonly action: PocketNavigationAction;
+}
+export interface PocketNavigationReceipt {
+	readonly requestId: string;
+	readonly version: number;
+	readonly folderId?: string;
+}
 export type PocketRole = "viewer" | "sender" | "driver" | "admin";
 export type PocketResources = "*" | readonly string[];
 export interface PocketPerson {
@@ -113,6 +152,7 @@ export interface PocketNavigation {
 	readonly name: string;
 	readonly version: number;
 	readonly archived: boolean;
+	readonly resourceId?: string;
 }
 export interface PocketCredentialStatus {
 	readonly version: number;
@@ -142,6 +182,8 @@ export interface PocketChatMessage {
 }
 export interface PocketCollaborationView {
 	readonly conversationId: string;
+	/** Child Sessions provide their native parent identity; legacy root responses remain valid. */
+	readonly sessionId?: string;
 	readonly version: number;
 	readonly messages: readonly PocketChatMessage[];
 	readonly note: {
@@ -242,6 +284,8 @@ export type PocketNotificationCommand =
 export type PocketOriginalCommand =
 	| {
 			readonly op: "create";
+			readonly sessionId?: string;
+			readonly configuration?: { readonly model?: string; readonly cwd?: string };
 			readonly requestId: string;
 			readonly name: string;
 			readonly profile: string;
@@ -266,9 +310,19 @@ export type PocketOriginalCommand =
 			readonly entryId: string;
 	  };
 export type PocketCommand =
+	| { readonly op: "navigation.read" }
+	| { readonly op: "navigation.update"; readonly input: PocketNavigationUpdate }
+	| { readonly op: "navigation.lookup"; readonly original: PocketNavigationUpdate }
+	| { readonly op: "session.list" }
+	| ({ readonly op: "session.create" } & PocketSessionCreation)
+	| {
+			readonly op: "session.lookup";
+			readonly original: { readonly op: "session.create" } & PocketSessionCreation;
+	  }
 	| PocketNotificationCommand
 	| PocketCollaborationCommand
 	| { readonly op: "configuration"; readonly target: AgentRef }
+	| { readonly op: "creation.directories"; readonly path?: string; readonly places?: readonly string[] }
 	| { readonly op: "credential.status" }
 	| {
 			readonly op: "credential.replace";
@@ -318,7 +372,7 @@ export type PocketCommand =
 				readonly mode: "prompt" | "steer" | "followUp";
 			};
 	  }
-	| { readonly op: "receipt" | "wait" | "withdraw"; readonly id: string }
+	| { readonly op: "receipt" | "wait" | "withdraw"; readonly id: string; readonly sessionId?: string }
 	| { readonly op: "abort"; readonly target: AgentRef }
 	| {
 			readonly op: "invite";
@@ -341,6 +395,20 @@ export interface PocketRequest {
 	readonly command: PocketCommand;
 }
 export type PocketResult =
+	| { readonly kind: "navigation"; readonly view: PocketPersonalNavigation }
+	| { readonly kind: "navigation.updated"; readonly receipt: PocketNavigationReceipt }
+	| { readonly kind: "navigation.operation"; readonly receipt: PocketNavigationReceipt | null }
+	| {
+			readonly kind: "sessions";
+			readonly sessions: readonly PocketManagedSession[];
+			readonly canCreate: boolean;
+			readonly defaults?: PocketCreationDefaults;
+	  }
+	| {
+			readonly kind: "managed.session";
+			readonly requestId: string;
+			readonly session: PocketManagedSession | null;
+	  }
 	| {
 			readonly kind: "hello";
 			readonly versions: readonly [2];
@@ -352,6 +420,7 @@ export type PocketResult =
 			readonly conversations: readonly AgentRef[];
 			readonly titles?: Readonly<Record<string, string>>;
 			readonly states?: Readonly<Record<string, { readonly version: number; readonly archived: boolean }>>;
+			readonly navigation?: readonly PocketNavigation[];
 	  }
 	| { readonly kind: "metadata"; readonly requestId: string; readonly metadata: PocketNavigation }
 	| {
@@ -369,6 +438,7 @@ export type PocketResult =
 	| { readonly kind: "reference"; readonly ref: AgentRef }
 	| { readonly kind: "configuration"; readonly configuration: PocketConfiguration }
 	| { readonly kind: "directories"; readonly target: AgentRef; readonly view: PocketDirectoryView }
+	| { readonly kind: "creation.directories"; readonly view: PocketDirectoryView }
 	| { readonly kind: "notification"; readonly target: AgentRef; readonly status: PocketNotificationStatus }
 	| { readonly kind: "credential"; readonly status: PocketCredentialStatus }
 	| { readonly kind: "collaboration"; readonly snapshot: PocketCollaborationView }
@@ -647,8 +717,9 @@ const reactionEmoji = (v: unknown): boolean =>
 	typeof v === "string" && ["👍", "👎", "❤️", "🎉", "👀", "✅"].includes(v);
 function collaboration(v: unknown): v is PocketCollaborationView {
 	if (
-		!shape(v, ["conversationId", "version", "messages", "note", "driver", "presence"]) ||
+		!shape(v, ["conversationId", "version", "messages", "note", "driver", "presence"], ["sessionId"]) ||
 		!identity(v.conversationId) ||
+		(v.sessionId !== undefined && !identity(v.sessionId)) ||
 		!integer(v.version)
 	)
 		return false;
@@ -832,6 +903,69 @@ function notificationCommand(
 		return false;
 	}
 }
+function navigationName(v: unknown): v is string {
+	return string(v, 80) && !!v.trim() && !/[\x00-\x1f\x7f]/.test(v);
+}
+function navigationUpdate(v: unknown): v is PocketNavigationUpdate {
+	if (
+		!shape(v, ["requestId", "expectedVersion", "action"]) ||
+		!identity(v.requestId) ||
+		!integer(v.expectedVersion, 0, Number.MAX_SAFE_INTEGER - 1) ||
+		!record(v.action)
+	)
+		return false;
+	const action = v.action;
+	switch (action.kind) {
+		case "mode":
+			return shape(action, ["kind", "mode"]) && ["default", "session"].includes(String(action.mode));
+		case "folder.create":
+			return shape(action, ["kind", "name"]) && navigationName(action.name);
+		case "folder.rename":
+			return (
+				shape(action, ["kind", "folderId", "name"]) &&
+				identity(action.folderId) &&
+				navigationName(action.name)
+			);
+		case "folder.delete":
+			return shape(action, ["kind", "folderId"]) && identity(action.folderId);
+		case "assign":
+			return (
+				shape(action, ["kind", "resourceId", "folderId"]) &&
+				identity(action.resourceId) &&
+				(action.folderId === null || identity(action.folderId))
+			);
+		default:
+			return false;
+	}
+}
+function personalNavigation(v: unknown): v is PocketPersonalNavigation {
+	if (
+		!shape(v, ["version", "mode", "folders", "assignments"]) ||
+		!integer(v.version) ||
+		!["default", "session"].includes(String(v.mode)) ||
+		!Array.isArray(v.folders) ||
+		v.folders.length > 32 ||
+		!v.folders.every((row) => shape(row, ["id", "name"]) && identity(row.id) && navigationName(row.name)) ||
+		!record(v.assignments) ||
+		Object.keys(v.assignments).length > 256
+	)
+		return false;
+	const ids = new Set(v.folders.map((row) => row.id));
+	return (
+		ids.size === v.folders.length &&
+		Object.entries(v.assignments).every(
+			([key, folder]) => identity(key) && typeof folder === "string" && ids.has(folder),
+		)
+	);
+}
+function navigationReceipt(v: unknown): v is PocketNavigationReceipt {
+	return (
+		shape(v, ["requestId", "version"], ["folderId"]) &&
+		identity(v.requestId) &&
+		integer(v.version, 1) &&
+		(v.folderId === undefined || identity(v.folderId))
+	);
+}
 function command(v: unknown): v is PocketCommand {
 	if (!record(v)) return false;
 	if (typeof v.op === "string" && v.op.startsWith("notification.")) return notificationCommand(v);
@@ -844,7 +978,30 @@ function command(v: unknown): v is PocketCommand {
 				["conversation.set", "create", "fork"].includes(String(v.original.op)) &&
 				command(v.original)
 			);
+		case "navigation.read":
+			return shape(v, ["op"]);
+		case "navigation.update":
+			return shape(v, ["op", "input"]) && navigationUpdate(v.input);
+		case "navigation.lookup":
+			return shape(v, ["op", "original"]) && navigationUpdate(v.original);
+		case "session.create":
+			return (
+				shape(v, ["op", "requestId", "name", "cwd"]) &&
+				identity(v.requestId) &&
+				string(v.name, 80) &&
+				!!v.name.trim() &&
+				!/[\x00-\x1f\x7f]/.test(v.name) &&
+				configurationText(v.cwd, 8192)
+			);
+		case "session.lookup":
+			return (
+				shape(v, ["op", "original"]) &&
+				record(v.original) &&
+				v.original.op === "session.create" &&
+				command(v.original)
+			);
 		case "hello":
+		case "session.list":
 		case "list":
 		case "people":
 		case "session.rotate":
@@ -852,7 +1009,13 @@ function command(v: unknown): v is PocketCommand {
 			return shape(v, ["op"]);
 		case "create":
 			return (
-				shape(v, ["op", "requestId", "name", "profile"], ["inherit"]) &&
+				shape(v, ["op", "requestId", "name", "profile"], ["inherit", "sessionId", "configuration"]) &&
+				(v.sessionId === undefined || identity(v.sessionId)) &&
+				(v.configuration === undefined ||
+					(shape(v.configuration, [], ["model", "cwd"]) &&
+						Object.keys(v.configuration).length > 0 &&
+						(v.configuration.model === undefined || configurationText(v.configuration.model, 256)) &&
+						(v.configuration.cwd === undefined || configurationText(v.configuration.cwd, 8192)))) &&
 				(v.inherit === undefined || ref(v.inherit)) &&
 				identity(v.requestId) &&
 				identity(v.profile) &&
@@ -868,6 +1031,15 @@ function command(v: unknown): v is PocketCommand {
 				Object.keys(v.change).length > 0 &&
 				(v.change.model === undefined || configurationText(v.change.model, 256)) &&
 				(v.change.cwd === undefined || configurationText(v.change.cwd, 8192))
+			);
+		case "creation.directories":
+			return (
+				shape(v, ["op"], ["path", "places"]) &&
+				(v.path === undefined || configurationText(v.path, 8192)) &&
+				(v.places === undefined ||
+					(Array.isArray(v.places) &&
+						v.places.length <= 32 &&
+						v.places.every((path) => configurationText(path, 8192))))
 			);
 		case "directory.list":
 			return (
@@ -956,6 +1128,11 @@ function command(v: unknown): v is PocketCommand {
 		case "receipt":
 		case "wait":
 		case "withdraw":
+			return (
+				shape(v, ["op", "id"], ["sessionId"]) &&
+				identity(v.id) &&
+				(v.sessionId === undefined || identity(v.sessionId))
+			);
 		case "invite.revoke":
 		case "person.revoke":
 			return shape(v, ["op", "id"]) && identity(v.id);
@@ -993,9 +1170,70 @@ function receipt(v: unknown): v is PocketInputReceipt {
 		(v.reason === undefined || string(v.reason, 16384))
 	);
 }
+function navigation(v: unknown): v is PocketNavigation {
+	return (
+		shape(v, ["ref", "name", "version", "archived"], ["resourceId"]) &&
+		ref(v.ref) &&
+		string(v.name, 80) &&
+		!!v.name.trim() &&
+		!/[\x00-\x1f\x7f]/.test(v.name) &&
+		integer(v.version, 0, 256) &&
+		typeof v.archived === "boolean" &&
+		(v.resourceId === undefined || identity(v.resourceId))
+	);
+}
+function managedSession(v: unknown): v is PocketManagedSession {
+	return (
+		shape(v, ["id", "name", "status"], ["cwd"]) &&
+		identity(v.id) &&
+		string(v.name, 80) &&
+		!!v.name.trim() &&
+		!/[\x00-\x1f\x7f]/.test(v.name) &&
+		["ready", "unknown", "unavailable"].includes(String(v.status)) &&
+		(v.cwd === undefined || configurationText(v.cwd, 8192))
+	);
+}
+function creationDefaults(v: unknown): v is PocketCreationDefaults {
+	return (
+		shape(v, ["profile", "model", "cwd", "choices"]) &&
+		identity(v.profile) &&
+		configurationText(v.model, 256) &&
+		configurationText(v.cwd, 8192) &&
+		Array.isArray(v.choices) &&
+		v.choices.length > 0 &&
+		v.choices.length <= 65 &&
+		v.choices.every(
+			(row) => shape(row, ["id", "model"]) && identity(row.id) && configurationText(row.model, 256),
+		) &&
+		new Set(v.choices.map((row) => row.model)).size === v.choices.length &&
+		v.choices.some((row) => row.model === v.model)
+	);
+}
 function result(v: unknown): v is PocketResult {
 	if (!record(v)) return false;
 	switch (v.kind) {
+		case "navigation":
+			return shape(v, ["kind", "view"]) && personalNavigation(v.view);
+		case "navigation.updated":
+			return shape(v, ["kind", "receipt"]) && navigationReceipt(v.receipt);
+		case "navigation.operation":
+			return shape(v, ["kind", "receipt"]) && (v.receipt === null || navigationReceipt(v.receipt));
+		case "sessions":
+			return (
+				shape(v, ["kind", "sessions", "canCreate"], ["defaults"]) &&
+				Array.isArray(v.sessions) &&
+				v.sessions.length <= 32 &&
+				v.sessions.every(managedSession) &&
+				new Set(v.sessions.map((row) => row.id)).size === v.sessions.length &&
+				typeof v.canCreate === "boolean" &&
+				(v.canCreate ? creationDefaults(v.defaults) : v.defaults === undefined)
+			);
+		case "managed.session":
+			return (
+				shape(v, ["kind", "requestId", "session"]) &&
+				identity(v.requestId) &&
+				(v.session === null || managedSession(v.session))
+			);
 		case "hello":
 			return (
 				shape(v, ["kind", "versions", "person", "sessionId"]) &&
@@ -1007,7 +1245,16 @@ function result(v: unknown): v is PocketResult {
 			);
 		case "list":
 			return (
-				shape(v, ["kind", "conversations"], ["titles", "states"]) &&
+				shape(v, ["kind", "conversations"], ["titles", "states", "navigation"]) &&
+				(v.navigation === undefined ||
+					(Array.isArray(v.navigation) &&
+						v.navigation.length <= 256 &&
+						v.navigation.length === (Array.isArray(v.conversations) ? v.conversations.length : -1) &&
+						v.navigation.every(navigation) &&
+						v.navigation.every(
+							(row, index) =>
+								JSON.stringify(row.ref) === JSON.stringify((v.conversations as AgentRef[])[index]),
+						))) &&
 				Array.isArray(v.conversations) &&
 				v.conversations.length <= 256 &&
 				v.conversations.every(ref) &&
@@ -1042,7 +1289,8 @@ function result(v: unknown): v is PocketResult {
 			return (
 				shape(v, ["kind", "requestId", "metadata"]) &&
 				identity(v.requestId) &&
-				shape(v.metadata, ["ref", "name", "version", "archived"]) &&
+				shape(v.metadata, ["ref", "name", "version", "archived"], ["resourceId"]) &&
+				(v.metadata.resourceId === undefined || identity(v.metadata.resourceId)) &&
 				ref(v.metadata.ref) &&
 				string(v.metadata.name, 80) &&
 				!!v.metadata.name.trim() &&
@@ -1061,6 +1309,8 @@ function result(v: unknown): v is PocketResult {
 				integer(v.status.version) &&
 				typeof v.status.configured === "boolean"
 			);
+		case "creation.directories":
+			return shape(v, ["kind", "view"]) && directoryView(v.view);
 		case "directories":
 			return shape(v, ["kind", "target", "view"]) && ref(v.target) && directoryView(v.view);
 		case "configuration":

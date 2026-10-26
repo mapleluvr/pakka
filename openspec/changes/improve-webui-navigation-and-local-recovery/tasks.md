@@ -72,10 +72,10 @@
 
 - [x] 沿 home → create RPC → catalog → native tx 实检创建关系，确认现有 New Session 实为同 Session 内新 Conversation。
 - [x] 2026-10-25 按用户再次纠偏澄清候选：专用配置弹窗、WebUI 工作区与真实 Session/Conversation、首次预填的草稿/两步效果，以及 Sort Per Session / Default 的正交分组；只完成设计记录，不标记运行时或 UI 已实现。
-- [ ] 完成独立创建弹窗与真实 Session 管理的协议/权限/持久化设计，区分 adopted 产品方向和当前单 runtime 实现。
-- [ ] 真正 New Session 与父 Session 内 New Conversation 并立；无父项时预填 Session 并保留两步独立结果和核对身份。
-- [ ] 定稿文件夹元数据归属、视图偏好持久化与未分类/删除文件夹行为；个人/共享、多重归类和多级目录按明确采用范围处理。
-- [ ] sidebar 提供 Sort Per Session（真实 Session → Conversations）与 Default（用户文件夹 → Conversations）；跨 Session 引用、授权、重开和原预算按真实关系核验，分组切换/移动不迁移原生资源。
+- [x] 完成独立创建弹窗与真实 Session 管理的协议/权限/持久化设计，区分 adopted 产品方向和实施前单 runtime 基线。
+- [x] 真正 New Session 与父 Session 内 New Conversation 并立；无父项时预填 Session 并保留两步独立结果和核对身份。
+- [x] 定稿文件夹元数据归属、视图偏好持久化与未分类/删除文件夹行为；采用个人单层、每项至多一个文件夹，不增加 ACL。
+- [x] sidebar 提供 Sort Per Session（真实 Session → Conversations）与 Default（用户文件夹 → Conversations）；跨 Session 引用、授权、重开和原预算按真实关系核验，分组切换/移动不迁移原生资源。
 - [ ] 用真实运行时验证弹窗、关闭/取消、创建无推理请求、部分成功和 unknown 恢复，再形成可验收候选。
 
 ### 4.4 Model Selection 检索索引（2026-10-25）

@@ -100,17 +100,12 @@ test(
 			for (const width of [1440, 390]) {
 				await page.resize({ width, height: 900 });
 				await settleFrontend(page);
-				for (const view of ["home", "conversation"]) {
+				for (const view of ["conversation"]) {
 					await t.test(`${view} ${width}px pointer and Tab`, async () => {
-						if (view === "conversation") {
-							if (width < 768) await toggleConversations(page);
-							await page.click("[data-conversation]");
-							await page.wait('document.querySelector("#replyInput")');
-						} else if (await page.evaluate('!!document.querySelector("#replyInput")')) {
-							if (width < 768) await toggleConversations(page);
-							await page.click('[data-action="home"]');
-							await page.wait('document.querySelector("#composerInput")');
-						}
+						// Home creation is now a configuration dialog, not another composer.
+						if (width < 768) await toggleConversations(page);
+						await page.click("[data-conversation]");
+						await page.wait('document.querySelector("#replyInput")');
 						await settleFrontend(page);
 						await page.click("textarea");
 						const pointer = await inspect();

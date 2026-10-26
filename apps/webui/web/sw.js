@@ -104,7 +104,12 @@ self.addEventListener("notificationclick", (event) => {
 			try {
 				const data = await entry(event.notification.data);
 				if (!data) return;
-				const url = self.location.origin + "/#conversation=" + encodeURIComponent(data.target.conversationId);
+				const url =
+					self.location.origin +
+					"/#conversation=" +
+					encodeURIComponent(data.target.conversationId) +
+					"&session=" +
+					encodeURIComponent(data.target.sessionId);
 				const clients = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
 				const client = clients.find((row) => {
 					try {

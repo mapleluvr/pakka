@@ -47,7 +47,9 @@ bootstrap 必须给出三项正的有限整数配额。额外 profile 接受允�
 
 pakka-webui 保留宿主已有 resolver 作为初始来源，仅全局管理员的专用 replace/clear 操作建立覆盖；clear 后正常重开仍不回退原值。已解析凭据或已开始的请求不会被 retroactive 撤销，已准备的调用不因凭据失败退还额度。服务端私密存储和备份必须按凭据数据保护：清除当前来源不承诺物理擦除持久历史或加密。
 
-`runtime.profileChoices()` 只向受信任宿主返回冻结的 `{ id, model }[]`，不包含 instructions、工具代码或密钥。人类 API 在它之上按当前 profile ceiling 过滤；该列表本身不是授予配置权限。
+`runtime.profileChoices()` 只向受信任宿主返回冻结的 `{ id, model }[]`，不包含 instructions、工具代码或密钥。WebUI 模型目录按 model ID 去重后发布标识和模型，不叠加逐模型名单；该列表本身不是授予配置权限，整组 Agent 预设的工具/指令 ceiling 另行约束。
+
+受控 catalog 的 `CatalogEnroll.configuration?: { model?: string; cwd?: string }` 将初始模型/目录与新 Conversation 在同一原生提交中建立，不通过创建后再配置实现。非空对象只允许这两个字段：模型必须来自该 Runtime 已配置目录，cwd 必须通过原有目录 roots；它不替换基础预设的工具或 instructions，不接纳首条模型输入。WebUI 创建端口另以原请求身份和指纹核对参数，不将创建后配置当作创建的原子效果。
 
 ## 受信任的当前上下文贡献（P5 开发快照）
 

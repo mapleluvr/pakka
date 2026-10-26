@@ -112,6 +112,8 @@ export type {
 	PocketCredentialWrite,
 	PocketCredentialClient,
 } from "./pocket-credentials.js";
+export { resolveDirectory, listDirectories } from "./pocket-directories.js";
+export type { PocketDirectories } from "./pocket-directories.js";
 export { createPocketWorkspace, PocketMetadataConflict } from "./pocket-workspace.js";
 export type {
 	PocketWorkspace,

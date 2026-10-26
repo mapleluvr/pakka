@@ -568,6 +568,8 @@ export interface CatalogSnapshot {
 	readonly members: readonly CatalogMember[];
 }
 export interface CatalogEnroll extends ConversationSpec {
+	/** Initial model/cwd, committed with the new Conversation; does not replace the base preset. */
+	readonly configuration?: ConversationConfigurationChange;
 	/** Inherit model/cwd only, without changing the approved base profile's tools or instructions. */
 	readonly inherit?: ConversationRef;
 	readonly data: JsonObject;

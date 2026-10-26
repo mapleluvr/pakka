@@ -1,5 +1,5 @@
 import { createHash, randomBytes, randomUUID, timingSafeEqual } from "node:crypto";
-import type { JsonObject, Runtime } from "@pakka/agent";
+import type { ConversationRef, JsonObject, Runtime } from "@pakka/agent";
 
 export type PocketRole = "viewer" | "sender" | "driver" | "admin";
 export type PocketPermission =
@@ -49,9 +49,11 @@ export interface PocketPeople {
 	authenticate(token: string): Promise<PocketAuthority>;
 	/** Identity-bound synchronous checks for trusted services at publication/commit time. */
 	current(actor: PocketAuthority): PocketPerson;
-	check(actor: PocketAuthority, permission: PocketPermission, conversationId?: string): void;
+	/** Existing Conversation grant identity; child Sessions cannot alias a bare native ID. */
+	resourceId(ref: Pick<ConversationRef, "sessionId" | "conversationId">): string;
+	check(actor: PocketAuthority, permission: PocketPermission, resourceId?: string): void;
 	/** Trusted service recheck of a persisted originating person. This issues no browser session/capability. */
-	authorizePerson(id: string, permission: PocketPermission, conversationId?: string): PocketPerson;
+	authorizePerson(id: string, permission: PocketPermission, resourceId?: string): PocketPerson;
 	invite(
 		actor: PocketAuthority,
 		input: PocketInviteInput,
@@ -74,6 +76,8 @@ export interface PocketPeopleOptions {
 	readonly runtime: Runtime;
 	readonly namespace: string;
 	readonly sessionTtlMs?: number;
+	/** Trusted directory of registered native Sessions; no grants are implied by registration. */
+	readonly resources?: () => readonly ConversationRef[];
 	/** Trusted clock, primarily for deterministic issuer-expiry tests. */
 	readonly now?: () => number;
 }
@@ -114,7 +118,15 @@ const permissions: Readonly<Record<PocketRole, readonly PocketPermission[]>> = {
 };
 const opened = new WeakMap<
 	Runtime,
-	Map<string, { ttl: number; now: () => number; value: Promise<PocketPeople> }>
+	Map<
+		string,
+		{
+			ttl: number;
+			now: () => number;
+			resources: PocketPeopleOptions["resources"];
+			value: Promise<PocketPeople>;
+		}
+	>
 >();
 const digest = (text: string) => createHash("sha256").update(text).digest("hex");
 const secret = () => randomBytes(32).toString("base64url");
@@ -293,11 +305,12 @@ export function createPocketPeople(options: PocketPeopleOptions): Promise<Pocket
 	}
 	const prior = map.get(options.namespace);
 	if (prior) {
-		if (prior.ttl !== ttl || prior.now !== now) throw new Error("WebUI people owner options conflict");
+		if (prior.ttl !== ttl || prior.now !== now || prior.resources !== options.resources)
+			throw new Error("WebUI people owner options conflict");
 		return prior.value;
 	}
 	const value = openPeople(options, ttl, now);
-	map.set(options.namespace, { ttl, now, value });
+	map.set(options.namespace, { ttl, now, resources: options.resources, value });
 	return value;
 }
 async function openPeople(
@@ -312,6 +325,13 @@ async function openPeople(
 		version = -1,
 		available = true,
 		tail: Promise<unknown> = Promise.resolve();
+	const availableResources = () => options.resources?.() ?? runtime.view().conversations;
+	const resourceId = (ref: Pick<ConversationRef, "sessionId" | "conversationId">) => {
+		if (!isId(ref.sessionId) || !isId(ref.conversationId)) return deny();
+		return ref.sessionId === sessionId
+			? ref.conversationId
+			: "resource-" + digest(JSON.stringify([ref.sessionId, ref.conversationId]));
+	};
 	const bindings = new WeakMap<PocketAuthority, string>(),
 		blockedPeople = new Set<string>(),
 		blockedSessions = new Set<string>(),
@@ -358,7 +378,7 @@ async function openPeople(
 		if (["read", "send", "steer", "manage"].includes(permission)) {
 			if (
 				!resource ||
-				!runtime.view().conversations.some((ref) => ref.conversationId === resource) ||
+				!availableResources().some((ref) => resourceId(ref) === resource) ||
 				(p.resources !== "*" && !p.resources.includes(resource))
 			)
 				return deny();
@@ -389,7 +409,7 @@ async function openPeople(
 	}
 	function scope(resources: PocketResources): "*" | string[] {
 		if (!isScope(resources)) throw new Error("Invalid WebUI resource scope");
-		const approved = new Set(runtime.view().conversations.map((ref) => ref.conversationId));
+		const approved = new Set(availableResources().map(resourceId));
 		if (resources !== "*" && resources.some((id) => !approved.has(id))) return deny();
 		return resources === "*" ? "*" : [...resources].sort();
 	}
@@ -459,6 +479,7 @@ async function openPeople(
 			if (!id) return deny();
 			return personView(sessionFor(id).p);
 		},
+		resourceId,
 		check: (actor: PocketAuthority, permission: PocketPermission, resource?: string) => {
 			bound(actor, permission, resource);
 		},
