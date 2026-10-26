@@ -1,0 +1,72 @@
+TAP version 13
+# Subtest: Session creation: authenticated creation makes independent native Sessions and opens Conversations in the chosen parent without inference
+not ok 1 - Session creation: authenticated creation makes independent native Sessions and opens Conversations in the chosen parent without inference
+  ---
+  duration_ms: 145.5461
+  type: 'test'
+  location: 'D:\\Projects\\pakka-wt\\webui-p0\\apps\\webui\\test\\session-creation.test.ts:36:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    {"version":2,"requestId":"71c32720-ad91-4696-9b4f-d7130160af06","serverId":"b2e614c0-8242-437d-8b8b-ca211bb7b485","error":{"code":"INVALID_REQUEST","outcome":"denied","message":"WebUI request refused"}}
+    
+    400 !== 200
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 200
+  actual: 400
+  operator: 'strictEqual'
+  stack: |-
+    file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/session-creation.test.ts:30:10
+    process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    async TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/session-creation.test.ts:43:17)
+    async Test.run (node:internal/test_runner/test:1332:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3)
+  ...
+# Subtest: Conversation creation browser: New Session opens a dedicated configuration dialog and cancel leaves neither a home naming form nor native effects
+not ok 2 - Conversation creation browser: New Session opens a dedicated configuration dialog and cancel leaves neither a home naming form nor native effects
+  ---
+  duration_ms: 768.0568
+  type: 'test'
+  location: 'D:\\Projects\\pakka-wt\\webui-p0\\apps\\webui\\test\\session-creation.test.ts:81:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    
+      {
+    +   hasConfiguration: false,
+    +   hasName: false,
+    +   open: false
+    -   hasConfiguration: true,
+    -   hasName: true,
+    -   name: 'New Session',
+    -   open: true
+      }
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+    open: true
+    name: 'New Session'
+    hasName: true
+    hasConfiguration: true
+  actual:
+    open: false
+    hasName: false
+    hasConfiguration: false
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/session-creation.test.ts:97:10)
+    async Test.run (node:internal/test_runner/test:1332:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:911:7)
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 0
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1802.1815

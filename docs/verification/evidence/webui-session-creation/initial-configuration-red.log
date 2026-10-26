@@ -1,0 +1,41 @@
+TAP version 13
+# Subtest: Catalog initial configuration: explicit model/cwd are committed with creation without applying another Agent preset
+not ok 1 - Catalog initial configuration: explicit model/cwd are committed with creation without applying another Agent preset
+  ---
+  duration_ms: 87.6994
+  type: 'test'
+  location: 'D:\\Projects\\pakka-wt\\webui-p0\\packages\\agent\\test\\catalog-initial-configuration.test.ts:6:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    
+      {
+        cwd: 'C:\\Users\\Administrator\\AppData\\Local\\Temp\\pakka-integration-1xtUYd\\workspace',
+    +   model: 'local-model'
+    -   model: 'alternate-creation-model'
+      }
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+    model: 'alternate-creation-model'
+    cwd: 'C:\\Users\\Administrator\\AppData\\Local\\Temp\\pakka-integration-1xtUYd\\workspace'
+  actual:
+    model: 'local-model'
+    cwd: 'C:\\Users\\Administrator\\AppData\\Local\\Temp\\pakka-integration-1xtUYd\\workspace'
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/packages/agent/test/catalog-initial-configuration.test.ts:13:10)
+    async Test.run (node:internal/test_runner/test:1332:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 949.434

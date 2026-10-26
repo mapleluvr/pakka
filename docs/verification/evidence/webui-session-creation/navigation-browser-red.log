@@ -1,0 +1,44 @@
+TAP version 13
+# Subtest: Sidebar navigation browser: Session and personal-folder projections preserve real Conversation identity and survive reload
+not ok 1 - Sidebar navigation browser: Session and personal-folder projections preserve real Conversation identity and survive reload
+  ---
+  duration_ms: 8858.4362
+  type: 'test'
+  location: 'D:\\Projects\\pakka-wt\\webui-p0\\apps\\webui\\test\\navigation-browser.test.ts:16:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Browser condition deadline: document.querySelector("[data-navigation-mode]") && !document.querySelector("[data-navigation-mode]").disabled: Owner
+    New Session
+    New Conversation
+    Ctrl
+    O
+    Commands & Extensions
+    Conversations
+    Conversation A
+    Conversation B
+    Recent
+    ADMIN
+    Pakka
+    Agent
+    Start a Conversation
+    
+    Choose a Session, model and working directory in the creation dialog. Send work only after the Conversation is ready.
+    
+    New Conversation
+    New Session
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    Object.wait (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/browser.ts:362:12)
+    async TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/navigation-browser.test.ts:39:3)
+    async Test.run (node:internal/test_runner/test:1332:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 9711.5233

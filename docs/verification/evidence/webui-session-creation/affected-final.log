@@ -1,0 +1,308 @@
+TAP version 13
+# Subtest: WebUI collaboration: a real late read cannot reopen or populate another Conversation
+ok 1 - WebUI collaboration: a real late read cannot reopen or populate another Conversation
+  ---
+  duration_ms: 871.7367
+  type: 'test'
+  ...
+# Subtest: composer focus follows the rounded outer card for pointer and keyboard input
+    # Subtest: conversation 1440px pointer and Tab
+    ok 1 - conversation 1440px pointer and Tab
+      ---
+      duration_ms: 106.2295
+      type: 'test'
+      ...
+    # Subtest: conversation 1440px Tab visibly outlines each split button
+    ok 2 - conversation 1440px Tab visibly outlines each split button
+      ---
+      duration_ms: 424.7357
+      type: 'test'
+      ...
+    # Subtest: conversation 390px pointer and Tab
+    ok 3 - conversation 390px pointer and Tab
+      ---
+      duration_ms: 549.5984
+      type: 'test'
+      ...
+    # Subtest: conversation 390px Tab visibly outlines each split button
+    ok 4 - conversation 390px Tab visibly outlines each split button
+      ---
+      duration_ms: 321.8247
+      type: 'test'
+      ...
+    # Subtest: Stop, Steer Send and mode retain separate focus while a real turn runs
+    ok 5 - Stop, Steer Send and mode retain separate focus while a real turn runs
+      ---
+      duration_ms: 298.1173
+      type: 'test'
+      ...
+    1..5
+ok 2 - composer focus follows the rounded outer card for pointer and keyboard input
+  ---
+  duration_ms: 2653.3137
+  type: 'test'
+  ...
+# Subtest: Conversation creation browser: the dedicated form creates its explicit parent and uses the chosen initial model and directory only after confirmation
+ok 3 - Conversation creation browser: the dedicated form creates its explicit parent and uses the chosen initial model and directory only after confirmation
+  ---
+  duration_ms: 1146.1429
+  type: 'test'
+  ...
+# Subtest: Conversation dialog lost before-send: navigation and reconciliation never replace an uncertain admission
+ok 4 - Conversation dialog lost before-send: navigation and reconciliation never replace an uncertain admission
+  ---
+  duration_ms: 880.7522
+  type: 'test'
+  ...
+# Subtest: Conversation dialog lost after-commit: navigation and reconciliation never replace an uncertain admission
+ok 5 - Conversation dialog lost after-commit: navigation and reconciliation never replace an uncertain admission
+  ---
+  duration_ms: 859.0599
+  type: 'test'
+  ...
+# Subtest: Two-step creation loses session.create response: the native parent survives and is never created twice
+ok 6 - Two-step creation loses session.create response: the native parent survives and is never created twice
+  ---
+  duration_ms: 831.5537
+  type: 'test'
+  ...
+# Subtest: Two-step creation loses create response: the native parent survives and is never created twice
+ok 7 - Two-step creation loses create response: the native parent survives and is never created twice
+  ---
+  duration_ms: 804.7724
+  type: 'test'
+  ...
+# Subtest: reference frontend adoption: retained reference chrome, explicit creation without home naming, palette and real conversation
+ok 8 - reference frontend adoption: retained reference chrome, explicit creation without home naming, palette and real conversation
+  ---
+  duration_ms: 2511.6121
+  type: 'test'
+  ...
+# Subtest: Devin palette: keyboard/search and extension settings preserve the dialog handoff on desktop and phone
+ok 9 - Devin palette: keyboard/search and extension settings preserve the dialog handoff on desktop and phone
+  ---
+  duration_ms: 1239.8965
+  type: 'test'
+  ...
+# Subtest: Devin frontend: the creation dialog inherits the selected model; responsive navigation preserves explicit native input
+ok 10 - Devin frontend: the creation dialog inherits the selected model; responsive navigation preserves explicit native input
+  ---
+  duration_ms: 2603.6242
+  type: 'test'
+  ...
+# Subtest: MAS Board: busy native steer/follow-up and confirmed abort keep the persistent member
+ok 11 - MAS Board: busy native steer/follow-up and confirmed abort keep the persistent member
+  ---
+  duration_ms: 1871.2569
+  type: 'test'
+  ...
+# Subtest: MAS Agent controls are a separate dismissible sheet at 1440x900
+ok 12 - MAS Agent controls are a separate dismissible sheet at 1440x900
+  ---
+  duration_ms: 1289.0056
+  type: 'test'
+  ...
+# Subtest: MAS Agent controls are a separate dismissible sheet at 360x600
+ok 13 - MAS Agent controls are a separate dismissible sheet at 360x600
+  ---
+  duration_ms: 1826.0957
+  type: 'test'
+  ...
+# Subtest: MAS Agent controls are a separate dismissible sheet at 390x650
+ok 14 - MAS Agent controls are a separate dismissible sheet at 390x650
+  ---
+  duration_ms: 1890.1747
+  type: 'test'
+  ...
+# Subtest: MAS retired Agents can be hidden and restored across reload without losing exchanges or history
+ok 15 - MAS retired Agents can be hidden and restored across reload without losing exchanges or history
+  ---
+  duration_ms: 1514.9888
+  type: 'test'
+  ...
+# Subtest: MAS Board: server-filtered mobile reader; removing UI preserves admitted work, members, history and normal reopen
+ok 16 - MAS Board: server-filtered mobile reader; removing UI preserves admitted work, members, history and normal reopen
+  ---
+  duration_ms: 3118.9127
+  type: 'test'
+  ...
+# Subtest: MAS Board: public plugin observes real model-created child and human controls retain its native lifetime/owner
+ok 17 - MAS Board: public plugin observes real model-created child and human controls retain its native lifetime/owner
+  ---
+  duration_ms: 3086.6071
+  type: 'test'
+  ...
+# Subtest: Team waits for its stylesheet and fails closed when it is loaded
+ok 18 - Team waits for its stylesheet and fails closed when it is loaded
+  ---
+  duration_ms: 1127.7491
+  type: 'test'
+  ...
+# Subtest: Team waits for its stylesheet and fails closed when it is failed
+ok 19 - Team waits for its stylesheet and fails closed when it is failed
+  ---
+  duration_ms: 719.7468
+  type: 'test'
+  ...
+# Subtest: WebUI mobile sidebar: outside click and Escape return to the same conversation without sending the draft
+ok 20 - WebUI mobile sidebar: outside click and Escape return to the same conversation without sending the draft
+  ---
+  duration_ms: 2099.6948
+  type: 'test'
+  ...
+# Subtest: Personal navigation: cross-Session folders and grouping persist, delete only ungroups, and original edits never duplicate
+ok 21 - Personal navigation: cross-Session folders and grouping persist, delete only ungroups, and original edits never duplicate
+  ---
+  duration_ms: 525.3276
+  type: 'test'
+  ...
+# Subtest: Personal navigation: no folder ACL, independent people, and existing resource authorization before assignment
+ok 22 - Personal navigation: no folder ACL, independent people, and existing resource authorization before assignment
+  ---
+  duration_ms: 409.982
+  type: 'test'
+  ...
+# Subtest: Sidebar navigation browser: Session and personal-folder projections preserve real Conversation identity and survive reload
+ok 23 - Sidebar navigation browser: Session and personal-folder projections preserve real Conversation identity and survive reload
+  ---
+  duration_ms: 1456.7699
+  type: 'test'
+  ...
+# Subtest: Creation dialog layout: phone and desktop, 20px light/dark, nested pickers and keyboard focus keep complete controls without a home composer
+ok 24 - Creation dialog layout: phone and desktop, 20px light/dark, nested pickers and keyboard focus keep complete controls without a home composer
+  ---
+  duration_ms: 3889.3743
+  type: 'test'
+  ...
+# Subtest: Session creation: authenticated creation makes independent native Sessions and opens Conversations in the chosen parent without inference
+ok 25 - Session creation: authenticated creation makes independent native Sessions and opens Conversations in the chosen parent without inference
+  ---
+  duration_ms: 658.1497
+  type: 'test'
+  ...
+# Subtest: Session authorization: a Conversation grant never reads its same-ID peer or parent metadata in another Session
+ok 26 - Session authorization: a Conversation grant never reads its same-ID peer or parent metadata in another Session
+  ---
+  duration_ms: 235.4274
+  type: 'test'
+  ...
+# Subtest: Conversation creation browser: New Session opens a dedicated configuration dialog and cancel leaves neither a home naming form nor native effects
+ok 27 - Conversation creation browser: New Session opens a dedicated configuration dialog and cancel leaves neither a home naming form nor native effects
+  ---
+  duration_ms: 678.6709
+  type: 'test'
+  ...
+# Subtest: WebUI short sidebar: sessions remain usable and extensions stay reachable through the palette
+ok 28 - WebUI short sidebar: sessions remain usable and extensions stay reachable through the palette
+  ---
+  duration_ms: 3158.5028
+  type: 'test'
+  ...
+# Subtest: WebUI compound labels, settings forms and graphical keyboard hints remain readable
+    # Subtest: owned navigation titles use Title Case
+    ok 1 - owned navigation titles use Title Case
+      ---
+      duration_ms: 1.5131
+      type: 'test'
+      ...
+    # Subtest: model primary and profile have distinct rows at 1440x900
+    ok 2 - model primary and profile have distinct rows at 1440x900
+      ---
+      duration_ms: 87.0336
+      type: 'test'
+      ...
+    # Subtest: model primary and profile have distinct rows at 360x600
+    ok 3 - model primary and profile have distinct rows at 360x600
+      ---
+      duration_ms: 303.8545
+      type: 'test'
+      ...
+    # Subtest: model primary and profile have distinct rows at 390x650
+    ok 4 - model primary and profile have distinct rows at 390x650
+      ---
+      duration_ms: 67.0488
+      type: 'test'
+      ...
+    # Subtest: model primary and profile have distinct rows at 390x844
+    ok 5 - model primary and profile have distinct rows at 390x844
+      ---
+      duration_ms: 66.9109
+      type: 'test'
+      ...
+    # Subtest: private credentials keep labels, password input and actions separate at every viewport and larger text
+    ok 6 - private credentials keep labels, password input and actions separate at every viewport and larger text
+      ---
+      duration_ms: 496.4951
+      type: 'test'
+      ...
+    # Subtest: model identities and metadata also fit with the actual 20px reading preference
+    ok 7 - model identities and metadata also fit with the actual 20px reading preference
+      ---
+      duration_ms: 159.3935
+      type: 'test'
+      ...
+    # Subtest: Conversation and Fork fields have gaps and subordinate section headings
+    ok 8 - Conversation and Fork fields have gaps and subordinate section headings
+      ---
+      duration_ms: 88.7656
+      type: 'test'
+      ...
+    # Subtest: Team metadata, chat fields and note actions are laid out rather than pasted together
+    ok 9 - Team metadata, chat fields and note actions are laid out rather than pasted together
+      ---
+      duration_ms: 466.7404
+      type: 'test'
+      ...
+    # Subtest: long names and roles remain readable in People
+    ok 10 - long names and roles remain readable in People
+      ---
+      duration_ms: 333.2268
+      type: 'test'
+      ...
+    # Subtest: shortcut and palette direction hints use real SVG paths
+    ok 11 - shortcut and palette direction hints use real SVG paths
+      ---
+      duration_ms: 22.3311
+      type: 'test'
+      ...
+    # Subtest: public Field/Notice/Button consumers retain spacing without private host styles
+    ok 12 - public Field/Notice/Button consumers retain spacing without private host styles
+      ---
+      duration_ms: 356.7596
+      type: 'test'
+      ...
+    1..12
+ok 29 - WebUI compound labels, settings forms and graphical keyboard hints remain readable
+  ---
+  duration_ms: 3249.9298
+  type: 'test'
+  ...
+# {"publicWidth":1440,"label":{"x":300,"y":46.71875,"right":1440,"bottom":74.71875,"width":1140,"height":28},"field":{"x":300,"y":80.71875,"right":1440,"bottom":126.71875,"width":1140,"height":46},"copy":{"x":300,"y":141.71875,"right":870.953125,"bottom":165.71875,"width":570.953125,"height":24},"action":{"x":300,"y":176.71875,"right":381.25,"bottom":220.71875,"width":81.25,"height":44}}
+# {"publicWidth":360,"label":{"x":0,"y":90.71875,"right":360,"bottom":118.71875,"width":360,"height":28},"field":{"x":0,"y":124.71875,"right":360,"bottom":170.71875,"width":360,"height":46},"copy":{"x":0,"y":185.71875,"right":346.25,"bottom":239.71875,"width":346.25,"height":54},"action":{"x":0,"y":250.71875,"right":81.25,"bottom":294.71875,"width":81.25,"height":44}}
+# Subtest: Catalog initial configuration: explicit model/cwd are committed with creation without applying another Agent preset
+ok 30 - Catalog initial configuration: explicit model/cwd are committed with creation without applying another Agent preset
+  ---
+  duration_ms: 103.1684
+  type: 'test'
+  ...
+# Subtest: WebUI Session correlation: a same-ID receipt or team snapshot from another parent is rejected
+ok 31 - WebUI Session correlation: a same-ID receipt or team snapshot from another parent is rejected
+  ---
+  duration_ms: 42.7313
+  type: 'test'
+  ...
+# Subtest: WebUI Session selectors: receipt reads keep the native ID and carry a separate parent Session
+ok 32 - WebUI Session selectors: receipt reads keep the native ID and carry a separate parent Session
+  ---
+  duration_ms: 2.1031
+  type: 'test'
+  ...
+1..32
+# tests 49
+# suites 0
+# pass 49
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 65706.7689

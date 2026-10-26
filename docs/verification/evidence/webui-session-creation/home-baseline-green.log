@@ -1,0 +1,58 @@
+TAP version 13
+# Subtest: Conversation creation browser: the dedicated form creates its explicit parent and uses the chosen initial model and directory only after confirmation
+ok 1 - Conversation creation browser: the dedicated form creates its explicit parent and uses the chosen initial model and directory only after confirmation
+  ---
+  duration_ms: 996.9595
+  type: 'test'
+  ...
+# Subtest: Conversation dialog lost before-send: navigation and reconciliation never replace an uncertain admission
+ok 2 - Conversation dialog lost before-send: navigation and reconciliation never replace an uncertain admission
+  ---
+  duration_ms: 856.2918
+  type: 'test'
+  ...
+# Subtest: Conversation dialog lost after-commit: navigation and reconciliation never replace an uncertain admission
+ok 3 - Conversation dialog lost after-commit: navigation and reconciliation never replace an uncertain admission
+  ---
+  duration_ms: 819.8233
+  type: 'test'
+  ...
+# Subtest: Two-step creation loses session.create response: the native parent survives and is never created twice
+ok 4 - Two-step creation loses session.create response: the native parent survives and is never created twice
+  ---
+  duration_ms: 857.3083
+  type: 'test'
+  ...
+# Subtest: Two-step creation loses create response: the native parent survives and is never created twice
+ok 5 - Two-step creation loses create response: the native parent survives and is never created twice
+  ---
+  duration_ms: 789.0394
+  type: 'test'
+  ...
+# Subtest: reference frontend adoption: retained reference chrome, explicit creation without home naming, palette and real conversation
+ok 6 - reference frontend adoption: retained reference chrome, explicit creation without home naming, palette and real conversation
+  ---
+  duration_ms: 2461.1641
+  type: 'test'
+  ...
+# {"homeActions":[{"action":"new-conversation","display":"flex","gap":8,"centerDelta":0.75},{"action":"new-session","display":"flex","gap":8,"centerDelta":0.75}],"theme":"dark","size":14,"width":1440}
+# {"homeActions":[{"action":"new-conversation","display":"flex","gap":8,"centerDelta":0.75},{"action":"new-session","display":"flex","gap":8,"centerDelta":0.75}],"theme":"dark","size":14,"width":360}
+# {"homeActions":[{"action":"new-conversation","display":"flex","gap":8,"centerDelta":0.75},{"action":"new-session","display":"flex","gap":8,"centerDelta":0.75}],"theme":"dark","size":14,"width":390}
+# {"homeActions":[{"action":"new-conversation","display":"flex","gap":8,"centerDelta":0.921875},{"action":"new-session","display":"flex","gap":8,"centerDelta":0.921875}],"theme":"light","size":20,"width":1440}
+# {"homeActions":[{"action":"new-conversation","display":"flex","gap":8,"centerDelta":0.921875},{"action":"new-session","display":"flex","gap":8,"centerDelta":0.921875}],"theme":"light","size":20,"width":360}
+# {"homeActions":[{"action":"new-conversation","display":"flex","gap":8,"centerDelta":0.921875},{"action":"new-session","display":"flex","gap":8,"centerDelta":0.921875}],"theme":"light","size":20,"width":390}
+# Subtest: Creation dialog layout: phone and desktop, 20px light/dark, nested pickers and keyboard focus keep complete controls without a home composer
+ok 7 - Creation dialog layout: phone and desktop, 20px light/dark, nested pickers and keyboard focus keep complete controls without a home composer
+  ---
+  duration_ms: 3908.0868
+  type: 'test'
+  ...
+1..7
+# tests 7
+# suites 0
+# pass 7
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 13695.4239

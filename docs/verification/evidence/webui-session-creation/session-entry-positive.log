@@ -1,0 +1,17 @@
+TAP version 13
+# {"newSessionWithoutConversation":"PASS","newSessionWithFirstConversation":"PASS","independentParents":2,"conversations":1,"modelRequests":0}
+# Subtest: docs\\.temp\\session-creation\\session-entry-positive.mjs
+ok 1 - docs\\.temp\\session-creation\\session-entry-positive.mjs
+  ---
+  duration_ms: 1659.2331
+  type: 'test'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1664.3987

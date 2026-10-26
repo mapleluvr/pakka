@@ -1,0 +1,1082 @@
+
+> pakka-workspace@0.1.0 test
+> node scripts/test.mjs
+
+✔ M5 CLI: actual process uses shared authenticated client for snapshot, creation and native message receipt (676.7679ms)
+✔ M5 server executable: explicit trusted config boots real MAS and returns no model or bearer credentials (694.1323ms)
+✔ M5 browser: compiled shared client connects with no Node globals and executes real authenticated admission (623.6723ms)
+✔ Configuration authority: a narrowed project ceiling is rechecked before committing independent cwd (100.2671ms)
+✔ M4 worker: spawn cannot acquire a child's higher-profile communication grant (870.6018ms)
+✔ M4 review: worker without Session service explicitly denies spawn and inbox before effects (789.6582ms)
+✔ M4 worker: approved DevPack profile executes real native temporary spawn in another PID (786.7433ms)
+✔ M6 worker: unselected native profile does not inherit root contribution tools (596.0794ms)
+✔ product Dynamite: explicit root selection and existing controlled inference configuration are decoded (0.9166ms)
+✔ product Dynamite: dynamic module/profile authority and ambiguous member selection are refused (0.3258ms)
+✔ product Dynamite: explicit bounded pressure threshold is preserved rather than silently normalized (0.6387ms)
+✔ product Dynamite: invalid or unbounded inference and strategy options cannot enter startup (0.5181ms)
+✔ M5 HTTP: host-bound source and native admission survive repeated message ID; copied receipt is not authority (216.4817ms)
+✔ M5 HTTP: four definitive guard families return correlated denied without native effects (244.2202ms)
+✔ M5 HTTP: opaque admission return-false cannot deny prior real callback effects (119.8803ms)
+✔ M5 HTTP: opaque admission typed-error cannot deny prior real callback effects (103.0001ms)
+✔ M5 HTTP: actual native storage-write failure remains unknown rather than typed denial (85.6948ms)
+✔ M5 HTTP: invalid wire/version/authority fields and unapproved origins cause zero provider effects (94.3346ms)
+✔ M5 HTTP: malformed UTF-8 refuses instead of substituting a model-visible message (70.6523ms)
+✔ M5 HTTP: expired issuer credential cannot create effects or be restored by new connection (81.8226ms)
+✔ M5 HTTP: issuer expiry during awaited admission is rechecked at the native commit boundary (594.3747ms)
+✔ M5 HTTP: queued native withdrawal, owner abort and retire preserve explicit effect boundaries (221.1742ms)
+✔ M5 HTTP: finite transport capacity refuses excess requests before an admission effect (106.2394ms)
+✔ M5 HTTP: issuer revocation during admission seals pending effect and cannot be renewed by reconnect (78.1296ms)
+✔ Model consumers: finite server bootstrap keeps the approved model through real HTTP delivery (191.1387ms)
+✔ Model consumers: a real worker PID receives the exact host-approved model (555.9503ms)
+✔ WebUI approvals: real native tool allow executes once (327.4235ms)
+✔ WebUI approvals: real native tool deny has no external effect (217.305ms)
+✔ WebUI approvals: aborting the native call seals a late decision and unresolved restore never replays (186.0106ms)
+✔ WebUI approvals: a real external effect followed by callback failure remains unknown (222.8444ms)
+✔ WebUI approvals: a serialized invocation cannot create an approval or execute a tool (84.5892ms)
+✔ WebUI approvals: losing the bound interface after committed allow blocks a not-yet-started effect (273.7135ms)
+✔ WebUI approvals: revocation after committed allow but before the tool effect denies the late effect (284.203ms)
+✔ WebUI browser network: a real reset after a rejected CONNECT stays connection-local and never reaches the target (31.9626ms)
+✔ WebUI browser network: a real approved HTTPS tunnel preserves TLS validation; a foreign CONNECT has no target request (31.8087ms)
+✔ WebUI owned browser: approved resource configuration is detached from later caller mutation (107.3576ms)
+✔ WebUI owned browser: completed click survives writer reopen without another page effect (614.7568ms)
+✔ WebUI owned browser: restored running intent survives writer reopen without another page effect (624.6208ms)
+✔ WebUI owned browser: real isolated page controls, actual screenshot decode and viewer/resource checks (653.8753ms)
+✔ WebUI owned browser: disallowed direct navigation redirects subresources and popup never reach another origin (631.6614ms)
+﹣ WebUI owned browser: an already-revoked interception does not seal subsequent authorized reads (0.1477ms) # Controlled POSIX CDP executable; real Chromium isolation remains required on Windows
+﹣ WebUI owned browser: unknown interception rejection still seals the service (0.0555ms) # Controlled POSIX CDP executable; real Chromium isolation remains required on Windows
+✔ WebUI owned browser: invalidated interfaces and service shutdown seal old clients (528.8989ms)
+✔ WebUI collaboration: real shared attribution, concurrent note conflict, pins/reactions/quote and no human content in model payload (203.2341ms)
+✔ WebUI collaboration: viewer participation is human-only, presence is ephemeral and resource/identity scopes are checked before publication (102.0466ms)
+✔ WebUI collaboration: real driver CAS controls native input and an expired lease during admission has zero provider effects (95.004ms)
+✔ WebUI collaboration: durable records/driver reopen with the original writer while presence is not restored (108.812ms)
+✔ WebUI configuration: frozen model catalogue and scoped usage hide preset details, secrets and peer totals (116.191ms)
+✔ WebUI private configuration: revoke while waiting at the real CAS boundary prevents the late replacement (79.8078ms)
+✔ WebUI private configuration: clearing while the preserved bootstrap callback is awaited rejects its late old key (37.3046ms)
+✔ WebUI private configuration: nonzero empty storage is corruption and never reinitializes a secret source (41.9361ms)
+✔ WebUI private configuration: a failing host resolver cannot publish its secret error message or send HTTP (75.5933ms)
+✔ WebUI private credentials: explicit replace/clear changes real Authorization, never returns a secret and survives normal reopen without fallback (293.1997ms)
+✔ WebUI directories: authorized browsing, independent changes and revocation use current resource authority (138.311ms)
+✔ WebUI files: approved scoped reads and CAS edits have real byte/receipt evidence without model work (310.5444ms)
+✔ WebUI files: traversal hidden data junctions and hard links cannot expose another root (248.407ms)
+✔ WebUI files: bounded upload and export preserve original bytes and reject overwrite (256.5231ms)
+✔ WebUI files Git: actual changes branches and managed worktrees are bounded native effects (2174.9783ms)
+✔ WebUI files Git: a real running native input prevents branch changes (360.994ms)
+✔ WebUI files Git: native hooks are disabled and unsafe local config is refused (859.5965ms)
+✔ WebUI files: an opaque host guard cannot forge a definite conflict after its own real effect (246.3694ms)
+✔ WebUI files: restored running intents stay unknown and do not replay disk writes (264.965ms)
+✔ WebUI files: committed external-effect receipts reconcile after normal reopen without replay (277.8619ms)
+✔ WebUI hooks effect boundary: creator invalidation after real intent commit blocks a late native input (176.675ms)
+✔ WebUI hooks effect boundary: extension invalidation after real intent commit blocks a late native input (147.5824ms)
+✔ WebUI hooks effect boundary: rotation invalidation after real intent commit blocks a late native input (148.2117ms)
+✔ WebUI hooks unknown: a real admission followed by lost confirmation is retained across retries and writer reopen without a second HTTP (171.532ms)
+✔ WebUI hooks finite rate: 30 actual native inputs consume the hour quota and the 31st has no effect (1929.8969ms)
+✔ WebUI hooks finite bytes: oversized raw input has no effect and the exact 5 MiB bound fits the real native text limit (138.2889ms)
+✔ WebUI hooks authority and copies: viewers and foreign resources cannot create hooks, and later input mutation cannot change signed bytes (136.0966ms)
+✔ WebUI hooks interrupted intent: writer reopen retains unknown without admitting a replacement native input (181.3557ms)
+✔ WebUI hooks persistent enum: malformed or foreign recorded results fail closed (157.1025ms)
+✔ WebUI hooks persistent association: malformed or foreign recorded results fail closed (144.5461ms)
+✔ WebUI hooks: exact signed bytes admit one native input and changing unsigned delivery metadata cannot replay it (185.1252ms)
+✔ WebUI hooks: generic secret rotation and removal preserve original records while refusing old endpoints (144.7135ms)
+✔ WebUI hooks: signed outsider content is ignored by default even when the unsigned event header claims a push (137.7069ms)
+✔ WebUI hooks: normal writer reopen reconciles the original native delivery with retained creator scope and budget (142.1329ms)
+✔ WebUI memory corruption: an array-coerced state cannot become a trusted restored mutation (66.1773ms)
+✔ WebUI memory corruption: an array-coerced scope cannot become a trusted restored mutation (38.3557ms)
+✔ WebUI memory shared namespace: a second approved binding cannot leave the first source's dispatch check stale (103.3522ms)
+✔ WebUI memory effect boundary: revocation while the real CAS is waiting prevents a new lesson (99.2095ms)
+✔ WebUI memory confirmation: losing the real committed CAS result resolves the exact saved request without applying it again (43.3254ms)
+✔ WebUI memory native changes: repeated updates are idempotent and a model cannot replace or forget approved context before human approval (463.2863ms)
+✔ WebUI memory native tool: a real model invocation creates only an attributed proposal until a human owner approves it (288.2472ms)
+✔ WebUI memory native authority: forged invocation scopes cannot create a proposal or select a human owner (32.7192ms)
+✔ WebUI memory facet isolation: human-only assembly neither advertises a memory tool nor injects approved lessons into actual model input (65.1168ms)
+✔ WebUI memory: approved lessons affect actual profile/project context while sender proposals remain private and inactive (322.3768ms)
+✔ WebUI memory versions: stale edits preserve the winner, unapproved replacement preserves current context, and original requests never apply twice (102.4485ms)
+✔ WebUI memory recovery: disabled injection preserves lessons and the original mutation across normal writer reopen without resetting spent quota (221.6746ms)
+✔ WebUI model choices: an approved profile changes the real next provider request and survives normal reopen without refund (268.8428ms)
+✔ WebUI model choices: invalid approved model identifiers reject before storage or provider effects (30.9672ms)
+✔ WebUI notifications: an invalid unsubscribe identity cannot disable a real registered device (118.3611ms)
+✔ WebUI notifications: native event input is captured before asynchronous store preparation (78.5787ms)
+✔ WebUI notifications: revocation after the real dispatch intent commit prevents the actual TLS push (99.3175ms)
+✔ WebUI notification audiences: mention preferences cannot notify a different subscribed person (125.3322ms)
+✔ WebUI notifications: real encrypted TLS push, independent VAPID verification, person/resource metadata and unsubscribe (127.0077ms)
+✔ WebUI notifications recovery: lost accepted transport remains unknown after retry and normal writer reopen (86.5466ms)
+✔ WebUI people: invitation expiry is rechecked after session preparation before native commit (62.956ms)
+✔ WebUI people: pending redemption is fenced by invitation revocation before allocation commits (40.0372ms)
+✔ WebUI people: role changes invalidate old checks and a targeted sign-in preserves the person (60.2982ms)
+✔ WebUI people: uncertain native storage closes authority rather than restoring a bootstrap owner (32.9407ms)
+✔ WebUI people: session rotation is one-time, persists and replaces both bearer and CSRF (68.8402ms)
+✔ WebUI people: malformed nested persisted identity seals the service without rewriting it (36.8859ms)
+✔ WebUI people: a redeemed viewer sees only its granted resources and never receives a write grant (83.7208ms)
+✔ WebUI people: concurrent one-time redemption grants exactly one session and retries do not mint invitations (41.4712ms)
+✔ WebUI people: normal writer reopen preserves identity and revocation while old bound checks fail (56.8957ms)
+✔ WebUI people: expired authority and revoked invitations cannot regain scope (43.7921ms)
+✔ WebUI schedules: the declared bounded text limit reaches the actual provider unchanged (307.3784ms)
+✔ WebUI schedule authority: resource scopes and viewers cannot register native work or claim a different incarnation (94.1264ms)
+✔ WebUI schedule authority: current driver handover fences a previously committed due input (604.972ms)
+✔ WebUI schedule authority: a revoked creator cannot release the next scheduled native input (604.2611ms)
+✔ WebUI schedule uncertainty: losing a real native admission result cannot re-enter it on retry or receipt reads (382.6283ms)
+✔ WebUI schedule uncertainty: an unknown native receipt stops 1-run scheduled work (251.4317ms)
+✔ WebUI schedule uncertainty: an unknown native receipt stops 2-run scheduled work (257.7557ms)
+✔ WebUI schedules: a finite recurring job uses separate native delivery identities and does not reset its consumed quota (1402.5516ms)
+✔ WebUI schedule cancel boundary: a committed cancel intent fences due effects even while the CAS acknowledgement is held (501.669ms)
+✔ WebUI schedule intent uncertainty: loss after the real intent commit never starts work on the original request retry (51.4842ms)
+✔ WebUI schedules: a real due native job sends once and request reconciliation never re-enters work (712.3207ms)
+✔ WebUI schedules: explicit cancel leaves a native terminal receipt and zero provider effects (200.9784ms)
+✔ WebUI schedules recovery: a future checkpoint survives a normal writer reopen and keeps the original job and budget (1318.3391ms)
+✔ WebUI workspace: shared resource does not share message authority or allow forged actor/request fields (146.1648ms)
+✔ WebUI workspace: normal reopen reattaches original creation/admission without allocating or dispatching again (102.4454ms)
+✔ WebUI workspace: cancelled receipt wait preserves native delivery and an explicit follow-up (141.8246ms)
+✔ WebUI workspace: human create/configure/fork stay inside the host-selected profile ceiling (172.501ms)
+✔ WebUI workspace: views and actions bind to the real human identity and current resource scope (86.0718ms)
+✔ WebUI workspace: a removed profile ceiling during creation produces no native member (31.5913ms)
+✔ M6 product: an explicitly unselected profile advertises no inherited DevPack tools (198.5558ms)
+✔ M6 product: executable trusted bootstrap installs optional tools without amplifying model-created descendants (869.2168ms)
+✔ M6 product: normal closed reopen preserves real admission and spent quota without hidden replay (207.8429ms)
+✔ M6 product: explicit normal reopen retains authorized dynamic descendants without rewriting the bootstrap roots (321.5141ms)
+✔ M6 product: task-bound model-created member cannot receive work after its creating tool task ends (246.3004ms)
+✔ M6 product: temporary model-created member cannot receive work after its creating tool task ends (269.6254ms)
+✔ M6 product: background member survives its creating tool and requires explicit owner retirement (455.1333ms)
+✔ M6 product: RPC profile-changing grants are refused before storage when model contributions are enabled (27.2616ms)
+✔ M3 review: invalid reserved Session identity is refused at manager construction: ../../outside-reservation (17.0083ms)
+✔ M3 review: invalid reserved Session identity is refused at manager construction: not-a-uuid (6.0194ms)
+✔ M3 review: invalid reserved Session identity is refused at manager construction: 91383703-b5ca-441c-81de-72b487a3e2bg (4.3215ms)
+✔ M3 review: invalid reserved Session identity is refused at manager construction: 91383703-b5ca-441c-81de-72b487a3e2bA (3.8597ms)
+✔ M3 workers: two real isolated processes admit A2A and graceful reopen preserves identity/dedup (1486.8318ms)
+✔ M3 workers: controlled process exit and duplicate writer cannot affect a surviving peer (1426.0711ms)
+✔ M3 workers: capacity rejects allocation before starting an extra process (428.1586ms)
+✔ M3 workers: private IPC rejects unsupported protocol, copied generation and unapproved lifetime (433.777ms)
+✔ WebUI appearance: font and size survive reload without sending the draft, with mobile Send beside input mode (1822.5631ms)
+✔ WebUI approval panel: actual browser decisions release or deny original native effects and viewer cannot decide (2963.3979ms)
+▶ WebUI browser contribution: actual UI controls owned page, real frame renders, mobile viewer cannot act
+  ✔ recorded wrapper cannot resolve an unconfirmed native browser action (146.1161ms)
+✔ WebUI browser contribution: actual UI controls owned page, real frame renders, mobile viewer cannot act (3355.6743ms)
+✔ Browser input driver: Enter activates a plain native button, not only synthetic key handlers (506.0328ms)
+✔ Browser discovery: explicit executable is canonical and a broken override never falls back (5.7174ms)
+✔ Browser discovery: PATH finds a real executable and rejects a nonexecutable candidate (4.6091ms)
+✔ WebUI browser: actual adopted workbench, invitation and two isolated users respect live server visibility (1950.0668ms)
+✔ WebUI busy browser: after native admission the user can steer and follow up while original inference is blocked (1115.8526ms)
+✔ WebUI collaboration browser: attributed human work, driver handoff and scoped mobile live updates (2548.008ms)
+✔ WebUI collaboration HTTP: scoped attributed events, viewer participation and definite note conflict (320.3899ms)
+✖ WebUI collaboration: a real late read cannot reopen or populate another Conversation (762.1934ms)
+▶ composer focus follows the rounded outer card for pointer and keyboard input
+  ✖ home 1440px pointer and Tab (1.4246ms)
+  ✖ home 1440px Tab visibly outlines each split button (1.0136ms)
+  ✔ conversation 1440px pointer and Tab (164.57ms)
+  ✔ conversation 1440px Tab visibly outlines each split button (426.3071ms)
+  ✖ home 390px pointer and Tab (232.0246ms)
+  ✖ home 390px Tab visibly outlines each split button (5.5045ms)
+  ✖ conversation 390px pointer and Tab (0.8197ms)
+  ✖ conversation 390px Tab visibly outlines each split button (4.4247ms)
+  ✖ Stop, Steer Send and mode retain separate focus while a real turn runs (4.6036ms)
+✖ composer focus follows the rounded outer card for pointer and keyboard input (1731.9811ms)
+✔ WebUI composer: a refused send explains itself in every mode, without moving the card, and Stop owns the primary slot (897.0773ms)
+✖ WebUI executable: trusted ESM root composes the real optional Agent and WebUI facets (9116.9344ms)
+✔ WebUI ESM configuration: finite source selection, malformed exports, opaque failures and redacted output (2409.8239ms)
+✔ WebUI configuration browser: compact model choice changes provider input while mobile viewer cannot configure or read Session totals (1879.6753ms)
+ℹ D:\Projects\pakka-wt\webui-p0\artifacts\integration\settings-screenshots
+✔ WebUI settings recovery: lost configure response locks mutations and explicit workspace reload only reads the new incarnation (908.3575ms)
+✔ WebUI settings recovery: a real delayed response from the old resource cannot populate the replacement sheet (765.4214ms)
+✔ Conversation creation browser: the dedicated form creates its explicit parent and uses the chosen initial model and directory only after confirmation (1009.0251ms)
+✔ Conversation dialog lost before-send: navigation and reconciliation never replace an uncertain admission (854.5526ms)
+✔ Conversation dialog lost after-commit: navigation and reconciliation never replace an uncertain admission (789.2958ms)
+✔ Two-step creation loses session.create response: the native parent survives and is never created twice (826.1622ms)
+✔ Two-step creation loses create response: the native parent survives and is never created twice (792.9457ms)
+✔ WebUI private settings browser: explicit replacement and clear affect actual provider auth without round-tripping or browser persistence (2109.5671ms)
+ℹ D:\Projects\pakka-wt\webui-p0\artifacts\integration\private-settings-screenshots
+✔ WebUI private settings recovery: a lost committed response clears the input and only reads state before another explicit change (953.3232ms)
+✔ WebUI private HTTP: real product preserves the host resolver, scopes replace/clear, never returns secrets and reopens cleared (480.8755ms)
+✖ reference frontend adoption: original home anatomy, palette, real conversation (694.3788ms)
+✖ Devin palette: keyboard/search and extension settings preserve the dialog handoff on desktop and phone (8620.8608ms)
+✔ Devin reference: exact pinned LF CSS, protected from checkout/formatting and no legacy stylesheet chain (3.157ms)
+✖ Devin frontend: home inherits the selected model; responsive navigation preserves explicit native input (702.5094ms)
+✔ WebUI error history: a cleared-credential failure stays readable after restart without replay (1019.2273ms)
+✔ WebUI SSE: normal large frame handles backpressure and remains subscribed for the next real commit (175.0482ms)
+✔ WebUI SSE: initial scoped snapshot and subsequent committed update cross the same real authorization boundary (216.1212ms)
+✔ WebUI SSE: reconnect with stale cursor explicitly resnapshots current authorized state (70.0272ms)
+✔ WebUI executable starts through the symlinked npm bin path without exposing the owner token (604.6674ms)
+✔ Importing the WebUI executable does not start it (388.8659ms)
+✔ Extension browser: unchanged GUI-only and settings packages use public slots, one Preact, shared slash/button dispatch and private state (1367.1683ms)
+✔ Extension client: original-result reads reject a different extension, request or actor without replay (36.3772ms)
+✔ Extension client: lost/malformed or mismatched response stays unknown and does not replay a write (5.5324ms)
+✔ Extension product config: explicit trusted roots/facets survive finite decoding; arbitrary runtime/service injection is refused (1.3035ms)
+✔ Extension contract: GUI-only registration is inert, closed and frozen without backend/model requirements (1.0793ms)
+✔ Extension contract: unsafe paths, unbounded schemas and missing command handlers cannot become registrations (0.8391ms)
+✔ Extension contract: per-action finite input rejects unknown fields and oversized/nested non-JSON values (1.0176ms)
+✔ Extension backend: actual scoped CAS setting and display-only card are reconciled; private user setting never becomes model input (197.7703ms)
+✔ Extension backend: a real native effect then failure remains unknown and identical retry never re-enters the handler (126.7831ms)
+✔ Extension backend: viewer cannot mutate and stale generations or modified assets are refused (77.2801ms)
+✔ Extension backend: normal writer reopen reconciles done/unknown records and user settings without re-executing native effects (166.8016ms)
+✔ Extension backend: revocation while a declared service awaits prevents the later controlled display effect (87.1611ms)
+✔ Extension backend: user settings and operation receipts cannot be read using another authorized person's session (86.625ms)
+✔ Extension HTTP: current person/resource/CSRF bind calls and accepted assets; viewer and private paths have no effect (374.6968ms)
+✔ Extension HTTP: real effect with lost handler result stays unknown through public client; disable seals old generation (309.1294ms)
+✔ Extension ingress: an approved non-MAS service verifies exact raw bytes without Cookie authority or model dispatch (123.2191ms)
+✔ Extension ingress: finite bodies, declared service, transport Origin and signatures fail before any target write (108.497ms)
+✔ Extension ingress: closing a backend generation blocks a waiting real disk effect and prevents a later invocation (143.212ms)
+✔ Extension ingress: a finite deadline returns unknown and a late handler cannot write after its live check expires (126.5747ms)
+✔ Extension ingress: mutating the host's original route cannot expand its approved bound or replace its handler (71.8796ms)
+✔ Extension initialization: failed import stays unavailable across native writer reopen until explicit reload (117.8827ms)
+✔ Extension initialization: writer closes after a real HTTP effect while import is pending; reopen does not re-enter or await it (65.314ms)
+✔ Extension interface: old callbacks cannot close/notify/reopen a replacement; disable removes only its public UI (2858.7638ms)
+✔ WebUI service assembly: trusted factory receives the existing writer/identity and original owner on normal reopen (140.0644ms)
+✔ Extension staging: a batch identity/command collision is rejected before any backend module effect (111.85ms)
+✔ Extension staging: a failed backend import seals the registration as unknown until explicit successful reload (114.3829ms)
+✔ Extension staging: repeated enable/disable retains a finite discoverable generation and refuses public junctions (184.9581ms)
+✔ Extension facets: a client-only entry is served without loading backend or requiring a Web interface (61.4984ms)
+✔ Extension facets: persisted disable does not execute its backend on host reopen (99.9031ms)
+✔ WebUI files browser: real edit conflicts keep drafts while a mobile viewer decodes an image without write authority (2128.3623ms)
+✔ WebUI files browser: public extension performs actual edits upload diff branch/worktree effects without hidden model input (4652.3813ms)
+✔ WebUI file contribution: disable after real intent commit prevents a late disk effect (179.1631ms)
+✔ WebUI file contribution: abort after real intent commit prevents a late disk effect (145.0085ms)
+✔ WebUI history browser: explicit earlier pages remain searchable across live updates without implicit inference (2204.9714ms)
+✔ WebUI hooks browser: human setup, signed real HTTP, key rotation, private mobile viewer and removal use ordinary extension slots (2230.2402ms)
+ℹ D:\Projects\pakka-wt\webui-p0\artifacts\integration\hook-screenshots
+✔ WebUI hooks busy product: native queued input survives completed HTTP and extension disable while new ingress is refused (339.2112ms)
+✔ WebUI hooks private read: a real setup response delayed across panel replacement cannot reveal a key in the new instance (1002.0961ms)
+✔ WebUI hooks recovery: lost response is checked read-only after panel reopen without creating another hook (1005.7645ms)
+✔ WebUI hooks recovery: lost handler is checked read-only after panel reopen without creating another hook (974.8163ms)
+✔ WebUI hooks mobile operator: generic setup fits the real phone view without persisting its secret address or triggering a model (1979.3372ms)
+ℹ D:\Projects\pakka-wt\webui-p0\artifacts\integration\hook-screenshots
+✔ WebUI HTTP: real cookie workbench negotiates v2, records human card, admits native work and recovers its receipt (240.4305ms)
+✔ WebUI HTTP: authentication, host/origin/CSRF and finite envelopes fence the real native effects (118.7053ms)
+✔ WebUI HTTP: one-time invited viewer receives only its authorized resource and cannot drive or retain revoked access (113.4432ms)
+✔ WebUI CSP: import maps execute with LF, CRLF and CR source newlines (827.4729ms)
+✔ Conversation configuration browser: configured models need no preset grant and remain independent of title-only directories on 3:5 mobile (2218.9614ms)
+✔ WebUI failed input: an unavailable recipient refuses new admission while its original receipt and spent attempts remain (201.276ms)
+✔ WebUI failed input browser: a known refusal explains how to continue without offering a meaningless retry or replaying the original (1042.1148ms)
+✔ WebUI executable: explicit config starts real product and writes its owner link only to the designated private file (599.7901ms)
+✔ WebUI executable: unknown configuration, unsafe proxy shortcut and existing owner file fail before storage or provider effects (1615.3038ms)
+✔ MAS facet removal: the fixed approved profile set reopens, explicit owner configuration removes current tools and preserves original history/receipt (438.9058ms)
+✖ MAS Board: busy native steer/follow-up and confirmed abort keep the persistent member (8717.6287ms)
+✖ MAS Agent controls are a separate dismissible sheet at 1440x900 (8792.8367ms)
+✖ MAS Agent controls are a separate dismissible sheet at 360x600 (8626.4662ms)
+✖ MAS Agent controls are a separate dismissible sheet at 390x650 (8657.945ms)
+✖ MAS retired Agents can be hidden and restored across reload without losing exchanges or history (8662.7263ms)
+✖ MAS controls preserve a lost-response operation across panel reopen and reconcile without resending (8716.0372ms)
+✖ MAS Board: server-filtered mobile reader; removing UI preserves admitted work, members, history and normal reopen (8669.5088ms)
+✖ MAS Board: public plugin observes real model-created child and human controls retain its native lifetime/owner (8710.9042ms)
+✖ MAS frontend adoption: one workspace header, Graph/Activity/Agents and contextual inspector (8648.793ms)
+✔ MAS resources: common Conversation navigation preserves MAS ownership, model admission and current read scope (294.2879ms)
+✖ Team waits for its stylesheet and fails closed when it is loaded (8687.1201ms)
+✖ Team waits for its stylesheet and fails closed when it is failed (8629.3778ms)
+✔ WebUI memory browser: real sender proposal, owner approval, preserved conflict draft, current provider context and mobile read-only view (4056.1788ms)
+ℹ D:\Projects\pakka-wt\webui-p0\artifacts\integration\memory-screenshots
+✔ WebUI memory recovery: a lost browser-response is resolved from the original committed mutation without another write (1032.9831ms)
+✔ WebUI memory recovery: a lost backend-response is resolved from the original committed mutation without another write (1088.033ms)
+✖ WebUI mobile sidebar: outside click and Escape return to the same conversation without sending the draft (1350.0144ms)
+✔ Model catalogue: unique configured models are visible without a second WebUI model allowlist or preset cwd metadata (135.9129ms)
+✔ Model catalogue: the maximum JSON configuration publishes all 65 unique models through real authenticated HTTP (126.2523ms)
+✔ Model catalogue: model-only selection and inheritance reach the real provider and survive reopen without changing Agent presets (215.756ms)
+✔ Model catalogue: configuration hints agree with existing resource write authority (124.0361ms)
+✔ Approved directory roots: host JSON admits project trees without combination profiles and refuses changed recovery authority (165.5236ms)
+✔ WebUI model configuration: configured JSON models reach the real product provider; extra credential/endpoint fields stay rejected (149.23ms)
+✔ Model index: small catalogs support fuzzy input, cyclic navigation, empty results and cancellation (742.6084ms)
+✔ Model index: long lists retain visible input/index and ranked keyboard confirmation reaches the real provider (1645.0885ms)
+✔ Model picker: larger approved catalog is searchable and keyboard selection changes neither cwd nor provider budget (762.4456ms)
+✔ WebUI navigation browser: rename/archive/search/restore, reviewed resend, real fork and keyboard history have actual subsequent effects (1656.3103ms)
+✔ WebUI metadata single writer: competing CAS admits one; finite capacity preserves original receipts and never prunes/replays (1518.3678ms)
+✔ WebUI navigation metadata: real HTTP CAS, original receipts, archive/restore and current role/resource boundaries (358.5522ms)
+✔ WebUI navigation metadata: malformed fields, stale incarnation and revoked actors cannot mutate state (218.2098ms)
+✔ WebUI original-operation lookup is read-only: absent and committed metadata/create/fork never re-enter a mutation (264.8551ms)
+✔ WebUI metadata browser lost before-send: closed/reopened sheet only reads original result, never repeats or replaces the mutation (729.3975ms)
+✔ WebUI metadata browser lost after-commit: closed/reopened sheet only reads original result, never repeats or replaces the mutation (754.1864ms)
+✔ WebUI navigation normal reopen: metadata and original receipt persist without rewriting history, effects or spent attempts (162.5433ms)
+✔ Personal navigation: cross-Session folders and grouping persist, delete only ungroups, and original edits never duplicate (566.3665ms)
+✔ Personal navigation: no folder ACL, independent people, and existing resource authorization before assignment (359.2525ms)
+✔ WebUI notification links select visible conversation history in an already open document without replaying input (883.6965ms)
+✔ WebUI notification worker: real native display resolves only current cookie/device/resource metadata and closes after logout (2011.2919ms)
+ℹ D:\Projects\pakka-wt\webui-p0\artifacts\integration\notification-screenshots
+✔ WebUI notifications HTTP: real product native completion, device registration, current cookie metadata and resource revocation (587.0392ms)
+✔ WebUI executable notification bounds: malformed push authority is rejected before storage or provider effects (866.4073ms)
+✔ Sidebar navigation browser: Session and personal-folder projections preserve real Conversation identity and survive reload (1436.5947ms)
+✔ WebUI product: actual assets and approved workspace run without MAS, then reopen the same identity and admission (224.7485ms)
+✔ WebUI invitation: independently decoded actual QR opens the same one-use local invitation (153.6264ms)
+✔ WebUI remote: actual TLS proxy uses exact trusted peer/origin and secure cookies; direct/plain/spoofed access is rejected (178.5428ms)
+✔ WebUI automation panel: actual human schedules native work, leaving the interface keeps it alive, a viewer is read-only and cancel fences delivery (4096.7412ms)
+ℹ D:\Projects\pakka-wt\webui-p0\artifacts\integration\schedules-screenshots
+✔ WebUI schedule panel recovery: losing an admitted response survives interface replacement and read-only reconciliation never schedules twice (2964.5205ms)
+✔ WebUI services: normal product close releases host-owned listeners (115.8281ms)
+✔ WebUI services: failed registration releases host-owned listeners (68.597ms)
+✔ Creation dialog layout: phone and desktop, 20px light/dark, nested pickers and keyboard focus keep complete controls without a home composer (4030.8384ms)
+✔ Session creation: authenticated creation makes independent native Sessions and opens Conversations in the chosen parent without inference (677.8751ms)
+✔ Session authorization: a Conversation grant never reads its same-ID peer or parent metadata in another Session (250.0563ms)
+✔ Conversation creation browser: New Session opens a dedicated configuration dialog and cancel leaves neither a home naming form nor native effects (682.1228ms)
+✔ Settings: one click opens configuration pages and Back returns to the conversation (1489.7688ms)
+✖ WebUI short sidebar: sessions remain usable and extensions stay reachable through the palette (1084.6991ms)
+✔ shared directional and keyboard icons are decorative SVG paths, not font glyphs (0.5882ms)
+✔ shipped core, bundled contribution and MAS direction/shortcut marks contain no Unicode icon substitutes (9.0812ms)
+✔ WebUI transcript: one real tool keeps its identity, expanded card and result across the live/committed handoff (921.3498ms)
+✔ WebUI transcript: a native tool error remains identifiable in its collapsed result card (855.6379ms)
+✔ WebUI transcript: an expanded streamed tool call survives its first committed entry (1050.2216ms)
+✔ WebUI transcript: valid image parts and a truncated tool declaration remain visible through real reopen and paging (781.3151ms)
+✔ WebUI transcript: real chunked generation exposes a live Streaming message, then clears it (945.675ms)
+✔ WebUI transcript: inherited tool results do not swallow a different live call with the same provider id (1042.3025ms)
+✔ WebUI receipt: a known policy refusal is blocked, not mislabeled as a permission denial (728.0654ms)
+✔ WebUI receipt: a real host unknown is needs review through a registered Conversation source (706.5841ms)
+✔ WebUI receipt: withdrawing queued input is not described as a policy refusal (891.4841ms)
+▶ WebUI typography and input accessibility
+  ✔ configuration text follows a larger root font (14.8619ms)
+  ✔ mobile configuration fields have readable type and touch targets (261.3102ms)
+  ✔ message input keeps readable mobile type (8.3119ms)
+  ✔ message input has a visible keyboard focus indicator (12.8679ms)
+✔ WebUI typography and input accessibility (1070.5035ms)
+▶ WebUI compound labels, settings forms and graphical keyboard hints remain readable
+  ✖ owned navigation titles use Title Case (1.0566ms)
+  ✔ model primary and profile have distinct rows at 1440x900 (85.4377ms)
+  ✔ model primary and profile have distinct rows at 360x600 (297.855ms)
+  ✔ model primary and profile have distinct rows at 390x650 (67.92ms)
+  ✔ model primary and profile have distinct rows at 390x844 (69.3944ms)
+  ✔ private credentials keep labels, password input and actions separate at every viewport and larger text (564.1278ms)
+  ✔ model identities and metadata also fit with the actual 20px reading preference (164.4624ms)
+  ✔ Conversation and Fork fields have gaps and subordinate section headings (98.2991ms)
+  ✔ Team metadata, chat fields and note actions are laid out rather than pasted together (467.0294ms)
+  ✔ long names and roles remain readable in People (348.2028ms)
+  ✔ shortcut and palette direction hints use real SVG paths (24.2507ms)
+  ✔ public Field/Notice/Button consumers retain spacing without private host styles (354.823ms)
+✖ WebUI compound labels, settings forms and graphical keyboard hints remain readable (3295.1062ms)
+ℹ {"publicWidth":1440,"label":{"x":300,"y":46.71875,"right":1440,"bottom":74.71875,"width":1140,"height":28},"field":{"x":300,"y":80.71875,"right":1440,"bottom":126.71875,"width":1140,"height":46},"copy":{"x":300,"y":141.71875,"right":870.953125,"bottom":165.71875,"width":570.953125,"height":24},"action":{"x":300,"y":176.71875,"right":381.25,"bottom":220.71875,"width":81.25,"height":44}}
+ℹ {"publicWidth":360,"label":{"x":0,"y":90.71875,"right":360,"bottom":118.71875,"width":360,"height":28},"field":{"x":0,"y":124.71875,"right":360,"bottom":170.71875,"width":360,"height":46},"copy":{"x":0,"y":185.71875,"right":346.25,"bottom":239.71875,"width":346.25,"height":54},"action":{"x":0,"y":250.71875,"right":81.25,"bottom":294.71875,"width":81.25,"height":44}}
+✔ WebUI browser dictation: caret and final text reach only the draft until a real explicit Send (1364.2589ms)
+✔ WebUI browser dictation: resource and sheet replacement, errors and logout discard old callbacks without dispatch (884.0465ms)
+✔ WebUI browser dictation: absent speech support retains real typed input and a mobile viewer has no model dictation (2198.8654ms)
+✔ WebUI HTTP workspace: human create/configure/fork preserve approved config and real inherited model history (375.7909ms)
+✔ Catalog initial configuration: explicit model/cwd are committed with creation without applying another Agent preset (78.4126ms)
+✔ M2: temporary ownership uses actual tool task and respects the native background boundary (230.892ms)
+✔ M2: task-bound ownership uses actual tool task and respects the native background boundary (182.8654ms)
+✔ M2: background ownership uses actual tool task and respects the native background boundary (192.9986ms)
+✔ each Compressor Conversation has its own tool allowance, not the sum of successful siblings (531.9752ms)
+✔ each Compressor Conversation has its own stop allowance, not the sum of successful siblings (481.2719ms)
+✔ each Compressor Conversation has its own provider allowance, not the sum of successful siblings (444.52ms)
+✔ a sealed Conversation leaves sibling native HTTP and subsequent independent admission usable (436.8871ms)
+✔ a sibling tolerance does not revoke an exact returned candidate's artifact receipt (335.9284ms)
+✔ source-local unknown completion quarantines only its Conversation and retains the pending reservation (381.1399ms)
+✔ genuine shared Compresser storage uncertainty refuses every source without another provider dispatch (236.1829ms)
+✔ aggregate-counter storage rejects implicit migration instead of resetting or inventing per-Conversation counts (14.5156ms)
+✔ normal reopen preserves the sealed child but admits a fresh independently authorized Conversation (415.0215ms)
+✔ Compresser hard interruption stays writer-locked; after explicit dead-writer recovery, only unconfirmed work seals without replay while fresh work can run (1222.2495ms)
+✔ Compresser repairs a stop and invalid call in the same native trajectory, auditing every real request (407.7566ms)
+✔ an empty semantic error is still a rejected call, including repeated admission validation (277.6941ms)
+✔ Compresser provider errors use the native failed-run boundary without losing earlier analysis (331.6726ms)
+✔ one external Conversation creates independent Compresser Conversations and repeated job admission sends nothing (320.366ms)
+✔ tool allowance belongs to each successful child Conversation and survives reopen without dispatch (484.0644ms)
+✔ four stop errors seal their Conversation, preserve the actual reason, and send no fifth request (362.9858ms)
+✔ four provider errors seal their Conversation, preserve the actual reason, and send no fifth request (368.5867ms)
+✔ Compresser HTTP 429 has no hidden provider retries outside the charged native attempts (245.9725ms)
+✔ Compresser HTTP 503 has no hidden provider retries outside the charged native attempts (241.7503ms)
+✔ Compresser output-length failure with a tool-shaped partial is unresolved, never an adopted tool error (266.157ms)
+✔ Compresser strict raw and source validation failures are complete-call repairs, not adopted normalized DTOs (367.264ms)
+✔ a source revocation during Compresser HTTP prevents late adoption and another dispatch (177.7825ms)
+✔ Compresser job and strategy hard budgets remain independent of error tolerances (395.175ms)
+✔ managed Compresser requests spend auxiliary aggregate quota and never primary quota (304.8639ms)
+✔ one container serves distinct external Sessions without a sibling seal revoking an exact returned candidate (480.4102ms)
+✔ Conversation-local sealing keeps another source's candidate private while independent admissions and late results succeed (487.2653ms)
+✔ a sibling seal leaves an already-in-flight valid response usable (316.5909ms)
+✔ multiple output calls in one response are not candidate patches and each actual tool error counts once (231.7458ms)
+✔ cancelling the source job refuses a late result without spending error tolerance or dispatching again (200.197ms)
+✔ a source audit storage failure after real HTTP seals unknown work without a correction or releasing admission (201.1897ms)
+✔ completed native job state survives reopen without new HTTP and one writer is enforced (214.8382ms)
+✔ WebUI read: revocation during native watch cleanup prevents publishing the acquired snapshot (52.9488ms)
+✔ WebUI display: concurrent retry has one committed entry; actor and namespace are independent (41.205ms)
+✔ WebUI display: chat/card writes during a real native tool do not join or replace the run's inputs (155.914ms)
+✔ WebUI display: invalid shapes, oversized records and expired scope are rejected without commits (29.2377ms)
+✔ WebUI port: committed transcript is scoped, frozen, sanitized and passive (178.52ms)
+✔ WebUI port: display records are idempotent after reopen and absent from real provider payloads (93.1016ms)
+✔ WebUI port: read and passive write recheck authority at their publication/commit boundary (42.8828ms)
+✔ WebUI port: a real native tool's live and committed activity is observable without new work (118.3921ms)
+✔ WebUI observation: finite earlier pages keep exact order across a new committed append (90.0849ms)
+✔ WebUI observation: foreign boundaries and unbounded options are refused without effects (48.9885ms)
+✔ A-11: Differential trace compares durable and oracle backends on identical scenario (146.1591ms)
+✔ A-11: Differential tool invocation compares execution count and provider request sequence (133.8746ms)
+✔ A-11: Differential projection replacement aligns request payload across backends (163.0101ms)
+✔ DurableAdapter is the default runtime created by createHost() (49.5486ms)
+✔ A-06: Generation gate blocks provider dispatch with providerCalls = 0 (138.0645ms)
+✔ A-05 & F-15: Two strategies independently append to separate artifact namespaces (95.0047ms)
+✔ A-04: Projection plan with summary: null omits source range without placeholder and preserves raw history (106.9523ms)
+✔ A-07: Tool execution occurs exactly once without duplicate side effects (105.5687ms)
+✔ A-03: Submission idempotency prevents second execution on identical payload (61.8061ms)
+✔ concurrent initial submissions do not let waitForIdle return before dispatch (1057.0654ms)
+✔ Durable entry frames preserve linear parentage (68.1579ms)
+✔ context views retain entries beyond Durable scan page size (40672.7656ms)
+✔ Durable verifier keeps the production version as its default (67.0631ms)
+✔ Durable verifier selects an explicitly requested patch version (58.7112ms)
+✔ Durable verifier detects tampering in the selected version independently (108.9717ms)
+✔ Durable verifier rejects a patch version containing path traversal (59.1887ms)
+✔ deterministic HTTP fixtures expose canonical temporary paths, including Windows short-name TEMP aliases (16.5441ms)
+✔ explicit generation block persists a committed input without HTTP and leaves the host reusable (140.383ms)
+✔ blocking a post-tool generation settles placed steering inputs without another HTTP call (123.4825ms)
+✔ a blocked generation remains settled after close and reopen without hidden replay (98.5316ms)
+✔ construction isolates discovery and exposes no mutable runtime (48.281ms)
+✔ input identity deduplicates through real HTTP and physical persistence (77.4352ms)
+✔ host input transform and handled run before transfer, unsupported commands fail closed (56.8054ms)
+✔ reload during an awaited projection: revoked blocks dispatch without losing the failure boundary (152.1529ms)
+✔ reload during an awaited projection: unknown blocks dispatch without losing the failure boundary (92.058ms)
+✔ prepared steering enters after tools and follow-up remains in native run (218.1118ms)
+✔ cancel only this principal's queued objects and allow released identity retry (168.8375ms)
+✔ cancel after drain before append preserves identities (reload=false) (152.3479ms)
+✔ cancel after drain before append preserves identities (reload=true) (144.6224ms)
+✔ reload revokes before waiting for active tool and rejects concurrent transition (124.8205ms)
+✔ session replacement releases pending queue and does not carry it into new session (147.9717ms)
+✔ host ABA invalidates capability even with original leaf and count restored (80.1146ms)
+✔ preparation crossing replacement cannot transfer into new scope (73.7443ms)
+✔ tool side effect then disk failure fails closed and does not replay committed input (67.6725ms)
+✔ M2: configuration and membership are atomic; rejected batch has no partial members (96.6097ms)
+✔ M2: native admission shares fingerprint commit, retries conflict and reopen does not dispatch (145.7794ms)
+✔ M2: late revoked guard, forged reference and unproven task ownership reject with zero effects (60.0323ms)
+✔ M1: two concurrent Conversations have one storage and independent contexts/provider identity (201.3214ms)
+✔ M1: equal strategy IDs use independent physical journals and projection permits (310.612ms)
+✔ M1: Conversation creation quota and unknown profiles refuse without effects (52.8659ms)
+✔ M1: one failed/disposed Conversation does not close its peer or Harness (137.6656ms)
+✔ M1: local reload does not wait for or invalidate another Conversation's pending HTTP (87.4754ms)
+✔ M1: native tool invocation authority is routed by asking Conversation, not by tool name (283.4684ms)
+✔ M1: fork publishes a new resource reference and leaves peer identity/capabilities intact (237.5906ms)
+✔ M1: managed restore reopens the active fork and child journals without inspection HTTP (210.1284ms)
+✔ M1: competing primary dispatches reserve one shared durable quota without implicit retries (145.8507ms)
+✔ exact hook ownership denies artifact-only writes and owner cut reaches HTTP (144.6415ms)
+✔ edit validates target before intent append and changes only provider projection (103.6852ms)
+✔ async policy approval is invalidated by owner revocation before commit (63.1279ms)
+✔ async policy cannot authorize a snapshot invalidated by new input (93.4609ms)
+✔ delegated policy sees immutable proposal and records actual owning strategy (59.1196ms)
+✔ capability forgery and invalid proposals are refused without appends (69.4734ms)
+✔ multi-hook conflict does not claim the free hook or leak mutable claims (32.9299ms)
+✔ failed storage cannot be re-enabled by reload; explicit fresh session recovers (219.8858ms)
+✔ old suspended preparation cannot hold the new session admission slot (95.5954ms)
+✔ queued observer replacement cannot run before actual core handoff (206.1248ms)
+✔ WebUI job progress: initial empty checkpoint preserves unknown after a real effect and never repeats it (144.2286ms)
+✔ WebUI job progress: reordered nested object keys preserves unknown after a real effect and never repeats it (108.4359ms)
+✔ WebUI job progress: equivalent JSON zero preserves unknown after a real effect and never repeats it (112.3188ms)
+✔ WebUI jobs: unapproved programs and extra authority/configuration fields are rejected before execution (53.4661ms)
+✔ WebUI jobs: concurrent retries share one native execution and options conflicts do not poison the Session (53.9374ms)
+✔ WebUI job port: cancelled wait retains native work and explicit abort produces a terminal receipt (89.365ms)
+✔ WebUI job port: uncheckpointed interrupted execution reopens as unknown without replay (80.8075ms)
+✔ WebUI job port: committed checkpoint continues once and retained completed receipt survives another reopen (87.0555ms)
+✔ WebUI job port: late authority revocation stops the approved checkpoint/effect path (50.953ms)
+✔ Independent configuration: actual provider, tool cwd and instructions remain independent across reopen (381.5976ms)
+✔ Independent configuration: active native work and follow-up retain admission when a change is refused (162.5445ms)
+✔ Independent configuration: unapproved model, missing directory and symlink escape cannot change a conversation (46.3737ms)
+✔ Runtime context authority: state changed during real credential resolution blocks HTTP and retains the prepared attempt (116.9194ms)
+✔ Runtime context validity: an asynchronous check cannot silently allow a provider request (48.1792ms)
+✔ Runtime context decode: extra output authority blocks actual HTTP (48.7222ms)
+✔ Runtime context decode: missing current text blocks actual HTTP (46.0555ms)
+✔ Runtime context decode: over-limit text blocks actual HTTP (50.0253ms)
+✔ Runtime context privacy: opaque render errors block the request without publishing private source content (46.6347ms)
+✔ Runtime context privacy: opaque check errors block the request without publishing private source content (58.6692ms)
+✔ Runtime context registry: mutable startup arrays cannot expand profile scope or replace the approved renderer (180.8703ms)
+✔ Runtime context bootstrap: unknown profiles and duplicate sources fail before opening native storage (29.2397ms)
+✔ Runtime context: actual provider payload follows the selected profile and current source without changing raw history (232.7861ms)
+✔ Runtime context: source failure blocks actual provider dispatch instead of keeping previously rendered text (49.7845ms)
+✔ Runtime context: definition identity is retained across reopen and a changed version cannot silently replace it (97.2602ms)
+✔ M1: reload quarantines one Conversation's late job without invalidating a peer (269.5173ms)
+✔ M1: deactivate quarantines one Conversation's late job without invalidating a peer (202.2548ms)
+✔ M1: edit quarantines one Conversation's late job without invalidating a peer (232.9906ms)
+✔ M1: fork quarantines one Conversation's late job without invalidating a peer (200.333ms)
+✔ M1: explicit legacy mapping preserves source/journal transactions/adoption and spent slots (247.0938ms)
+✔ M1: legacy tool rounds cannot be migrated into a reset primary budget (128.9811ms)
+✔ M1: implicit legacy migration refuses without dispatch or source rewrite (80.241ms)
+✔ M1: wrong-identity legacy migration refuses without dispatch or source rewrite (84.3256ms)
+✔ M1: unknown-journal legacy migration refuses without dispatch or source rewrite (76.4247ms)
+✔ M1: pending-intent legacy migration refuses without dispatch or source rewrite (77.1157ms)
+✔ M1: fork-history legacy migration refuses without dispatch or source rewrite (89.2276ms)
+✔ Runtime project profiles: real tool reads follow the selected cwd and persist across a normal reopen (469.5308ms)
+✔ Runtime project profiles: invalid or missing cwd is refused before opening storage (28.8993ms)
+✔ M1 review: InferencePolicy.maxCalls bounds a strategy across Conversations/forks/reopen (306.7256ms)
+✔ M1 review: post-fork prompt tools are current and idle followUp is explicitly refused (185.0046ms)
+✔ M1 review: damaged Conversation artifact storage seals its shared Session (72.0565ms)
+✔ M1 review: foreign jobScope in a peer projection is rejected before HTTP (164.3726ms)
+✔ M1: Session auxiliary quota is shared across equal strategy IDs and retained after cancellation/reopen (249.1231ms)
+✔ M1: unknown shared storage seals every local member but not another Session (107.1327ms)
+✔ M1: another runtime cannot open a live writer's same storage (29.0781ms)
+✔ M1: legacy host cannot bypass a managed runtime's persistent quotas (31.5465ms)
+✔ M1: queued cancellation stays unknown until an exact durable withdrawal receipt (179.1183ms)
+✔ M3 store: concurrent CAS, frozen state and restart preserve exact committed version (67.8231ms)
+✔ M3 store: non-JSON, capacity and revoked authority reject without advancing state (30.6774ms)
+✔ M3 store: unknown physical commit seals only its owned Session (63.8453ms)
+✔ M3 runtime: explicit reserved storage identity is create-once and only reopens explicitly (53.2246ms)
+✔ invalid nonexistent adoption changes neither artifact bytes nor intent (140.1875ms)
+✔ invalid foreign-job adoption changes neither artifact bytes nor intent (106.9613ms)
+✔ invalid duplicate adoption changes neither artifact bytes nor intent (95.1091ms)
+✔ invalid incomplete adoption changes neither artifact bytes nor intent (94.8148ms)
+✔ invalid already-adopted adoption changes neither artifact bytes nor intent (106.3604ms)
+✔ settled adoption detects physical rollback on reopen before another HTTP (144.2338ms)
+✔ settled adoption detects physical transaction-id on reopen before another HTTP (140.1539ms)
+✔ all settled adoptions survive later ordinary appends and trusted reopen (145.197ms)
+✔ atomic provenance frame aligns context edits, system/loadout checkpoints and excluded bash (118.6802ms)
+✔ summary replacement crossing an unselected mid-system checkpoint blocks HTTP (57.8847ms)
+✔ native protocol arguments cannot escape through the projector to HTTP (44.711ms)
+✔ native protocol id cannot escape through the projector to HTTP (42.379ms)
+✔ native protocol name cannot escape through the projector to HTTP (48.368ms)
+✔ native protocol dangling-range cannot escape through the projector to HTTP (41.058ms)
+✔ native protocol reversed-range cannot escape through the projector to HTTP (39.0407ms)
+✔ native protocol forged-result cannot escape through the projector to HTTP (45.6574ms)
+✔ native tool-result reduction preserves call IDs/names/arguments and declarations on wire (52.5081ms)
+✔ a completed source job cannot activate a summary after a later source edit (58.5793ms)
+✔ previous-context edit invalidates an in-flight job even if its target is unchanged (70.5627ms)
+✔ reopen rejects a missing or partial journal instead of silently recreating its records (144.8947ms)
+✔ binding lifecycle notifies both revocation and fresh ready views (74.167ms)
+✔ protected system checkpoint between a valid call/result pair survives active projection (106.9905ms)
+✔ auxiliary inference consumes 64/128 on wire, is bounded, and leaves main C2 untouched (190.6562ms)
+✔ artifact-only binding cannot spend without an explicit inference grant (69.1908ms)
+✔ source job allows tail growth but rejects source edits before publication or next attempt (130.7361ms)
+✔ pending inference edit quarantines completion and blocks later attempts (95.5825ms)
+✔ pending inference reload quarantines completion and blocks later attempts (107.2685ms)
+✔ pending inference newSession quarantines completion and blocks later attempts (97.0572ms)
+✔ pending inference owner quarantines completion and blocks later attempts (90.0482ms)
+✔ pending inference ABA quarantines completion and blocks later attempts (98.9863ms)
+✔ pending inference dispose quarantines completion and blocks later attempts (103.7019ms)
+✔ provider failure has unknown usage and never causes implicit transport or model retry (97.6015ms)
+✔ source jobs retain fingerprints, not complete historical frames (173.4633ms)
+✔ unusable source jobs are released after cancel (414.226ms)
+✔ unusable source jobs are released after edit (529.5078ms)
+✔ unusable source jobs are released after newSession (369.1632ms)
+✔ explicit null range omits an existing summary without resurrecting source or adding a placeholder (104.5563ms)
+✔ null range omission retains the protected native checkpoint and remaining tail on wire (64.6771ms)
+✔ null range omission cannot cross a system checkpoint (49.1993ms)
+✔ null range omission refuses a split native call/result pair (51.5339ms)
+✔ null range omission removes a complete native call/result pair (56.3005ms)
+✔ null range omission keeps completed job source authority after later source edit (59.5131ms)
+✔ auxiliary output tool reaches real HTTP and returns an immutable call without executing a tool (144.2249ms)
+✔ auxiliary output tool rejects prose-only and preserves measured usage (85.0565ms)
+✔ auxiliary output tool rejects wrong-tool and preserves measured usage (91.898ms)
+✔ auxiliary output tool rejects missing-parameter and preserves measured usage (96.0149ms)
+✔ auxiliary output tool rejects extra-parameter and preserves measured usage (89.7589ms)
+✔ auxiliary output tool rejects coerced-parameter and preserves measured usage (108.8745ms)
+✔ auxiliary output tool rejects truncated-call and preserves measured usage (93.8468ms)
+✔ auxiliary output tool rejects unfinished-json-with-tool-stop and preserves measured usage (97.154ms)
+✔ auxiliary output tool rejects repaired-json-escape and preserves measured usage (124.4683ms)
+✔ invalid output tool declaration is refused before an inference reservation or HTTP (76.6981ms)
+✔ auxiliary SSE length is incomplete with measured usage retained (171.166ms)
+✔ auxiliary SSE tool_calls is incomplete with measured usage retained (101.5293ms)
+✔ successful auxiliary usage does not fabricate zero (137.933ms)
+✔ successful auxiliary usage has measurements (132.9858ms)
+✔ bash request rendering number changes wire only and never executes a command (115.9077ms)
+✔ bash request rendering reduce changes wire only and never executes a command (77.9774ms)
+✔ bash rendering excluded is rejected before HTTP (47.5941ms)
+✔ bash rendering system is rejected before HTTP (47.244ms)
+✔ bash rendering wrong-role is rejected before HTTP (71.4976ms)
+✔ bash rendering forged-field is rejected before HTTP (53.942ms)
+✔ bash rendering forged-kind is rejected before HTTP (51.0749ms)
+✔ bash rendering bad-exit is rejected before HTTP (44.7073ms)
+✔ bash rendering copied-basis is rejected before HTTP (43.6437ms)
+✔ bash rendering stale-basis is rejected before HTTP (49.6022ms)
+✔ bash rendering duplicate is rejected before HTTP (42.1796ms)
+✔ main provider failure cannot trigger hidden HTTP transport retries (89.4832ms)
+✔ bootstrap duplicate inference definitions fail before any HTTP (6.8146ms)
+✔ bootstrap nonfinite inference definitions fail before any HTTP (4.0789ms)
+✔ bootstrap unlisted inference definitions fail before any HTTP (4.4255ms)
+✔ artifact authority refuses expired-frame without persisting foreign data (125.1184ms)
+✔ artifact authority refuses foreign-principal without persisting foreign data (93.4211ms)
+✔ artifact authority refuses artifact-only-write without persisting foreign data (74.926ms)
+✔ synchronous projector return is snapshotted before later caller mutation (149.9705ms)
+✔ pending auxiliary reservation remains observable with unknown usage until completion (87.4416ms)
+✔ source job rejects targets across a checkpoint instead of minting unsafe authority (100.4328ms)
+✔ a stale artifact version after a projector's own write blocks HTTP until explicitly rebased (56.4883ms)
+✔ an artifact append write failure returns unknown, latches, and sends no model retry (64.4035ms)
+✔ opted-in completed adoption survives trusted reopen without replay (84.7394ms)
+✔ unadopted completed inference stays fail-closed across trusted reopen (76.4966ms)
+✔ live inference reservations remain usable until exact adoption (64.4863ms)
+✔ call budgets survive reload, owner replacement and trusted process reopen (77.0146ms)
+✔ a job checks each explicit fallback with the same source and preserves zero-cap host limits (92.7322ms)
+✔ public inference policy rejects non-finite or missing budgets at bootstrap (24.5834ms)
+✔ old tool async context cannot omit invocation scope to refresh authority after replacement (62.6532ms)
+✔ an auxiliary audit write fault during reload remains isolated to its session (287.0579ms)
+✔ an auxiliary audit write fault during newSession remains isolated to its session (275.2262ms)
+✔ strategy binding enforces principal, exact hook and deactivation (51.3464ms)
+✔ request patches preserve canonical history and survive reload without double installation (184.2089ms)
+✔ active projector throw blocks the next actual HTTP request (94.6822ms)
+✔ active projector copied-basis blocks the next actual HTTP request (103.3774ms)
+✔ active projector missing-entry blocks the next actual HTTP request (110.5193ms)
+✔ active projector system blocks the next actual HTTP request (86.312ms)
+✔ active projector revoked blocks the next actual HTTP request (83.3796ms)
+✔ projector can rebase its own artifact commit before returning a plan (119.2934ms)
+✔ artifact receipts enforce scope/version and a physical journal fault latches (78.5355ms)
+✔ late tool invocation cannot obtain a new-session frame (137.283ms)
+✔ trusted reopen preserves raw identity and records but not old operation authority (80.6273ms)
+✔ requested reopen of missing or corrupted owned storage never creates a new session (7.1505ms)
+✔ M5 client: fresh reconnect reads scoped snapshot, never silently repeats mutations or replaces admission (217.9641ms)
+✔ M5 client: uncorrelated pre-body capacity remains unknown rather than trusting HTTP status (102.4978ms)
+✔ M5 client: cancelling an already-placed wait preserves admitted work and causes no implicit target abort (103.2022ms)
+✔ M5 client: malformed response UTF-8 cannot publish a normalized native receipt after real admission (97.7654ms)
+✔ M5 client: lost HTTP response after real delivery stays unknown; caller retry retains message identity (111.1659ms)
+✔ WebUI settings client: real HTTP metadata keeps exact resource/profile/incarnation correlation without retry (53.8827ms)
+✔ WebUI private client: real HTTP requires the original version and replace/clear outcome, with no automatic replay (73.7312ms)
+✔ WebUI notification client: real HTTP rejects a legal status for another exact resource and never repeats a device write (30.6688ms)
+✔ WebUI Session correlation: a same-ID receipt or team snapshot from another parent is rejected (53.5954ms)
+✔ WebUI fetch client: actual HTTP uses v2/CSRF and reconnect checks the storage instance (31.5452ms)
+✔ WebUI fetch client: a received mutation followed by disconnect remains unknown with zero automatic retries (4.3995ms)
+✔ WebUI fetch client: unrelated errors, wrong target and malformed UTF-8 remain unknown (14.9778ms)
+✔ WebUI fetch client: create/configure/fork results bind the requested resource and profile (61.7318ms)
+✔ Board follows an actual native stream from thinking to reply while earlier parts remain retained (373.2732ms)
+✔ Board shows an actual provider rejection in its failed Conversation while retaining the original delivery (115.174ms)
+✔ M4: foreign and ended invocations cannot use another profile's DevPack client (275.2237ms)
+✔ M4: profile removal replaces current prompt, retains historical updates and denies old tools (269.1776ms)
+✔ M4: bounded ask never withdraws placed peer input when its wait expires (398.616ms)
+✔ M4: real DevPack tool call routes to peer with native invocation and no caller principal (280.6039ms)
+✔ M4: revoked package during recipient admission produces zero target HTTP (185.8895ms)
+✔ M4: temporary spawn binds actual tool task, advertises no authority-bearing schema (189.2ms)
+✔ M4: model discovers native incoming receipt and replies without prompt markers or forged sender (324.7074ms)
+✔ Board activity: projects waiting, public thinking, tool arguments by callId, reply and genuine errors (1.4782ms)
+✔ Board observations: read-only history filters both endpoints before search/pagination and redacts provenance (379.3952ms)
+✔ M4: real communicator tool cannot retire peer even with a lifecycle action grant (394.7327ms)
+✔ Agent facet: public approved profiles bind each native invocation and intersect the complete owner chain (572.4711ms)
+✔ M4: actual model selects new-session, delivery response confirmed (428.212ms)
+✔ M4: actual model selects existing-session, delivery response confirmed (345.8843ms)
+✔ M4: actual model selects new-session, delivery response lost (337.2497ms)
+✔ M4: actual model selects new-session, conflicting reservation explicitly denied (310.584ms)
+✔ M4: actual model selects new-session, post-delivery wait refusal remains unknown (346.5088ms)
+✔ Human MAS reply: real incoming receipt, scoped peer checks and stable retry with no duplicate HTTP (255.4686ms)
+✔ MAS human workbench: revocation while admission waits produces zero target HTTP (108.1142ms)
+✔ MAS human workbench: scoped readers see only approved members and cannot deliver or manage (155.387ms)
+✔ MAS human workbench: management keeps owner authority separate from communication (130.1318ms)
+✔ M4: approved new Session reserves one identity and retries lost preparation on the same real storage (280.8124ms)
+✔ M2 MAS: native client invocation rejects copied, foreign and ended scopes (264.9281ms)
+✔ M2 MAS: JavaScript extra arguments cannot select an internal permission action (76.3027ms)
+✔ M5: restore rejects malformed or foreign native receipts on real coordinator storage before routing (252.2133ms)
+✔ M3 review: generation-blocked unanswered receipt survives target close without dispatch (252.6497ms)
+✔ M3 review: late failed wait cannot downgrade a concurrently committed terminal receipt (239.1564ms)
+✔ M3 review: addressed recipient without send grant may observe native completion with zero extra dispatch (205.4969ms)
+✔ M3 review: concurrent terminal receipt survives a late lost admission response (215.669ms)
+✔ M3 broker: lost admission receipt survives coordinator reopen without duplicate target effects (327.7139ms)
+✔ M3 broker: interrupted preparation reconciles the exact roster and never allocates replacements (176.2352ms)
+✔ M3 broker: revocation during routing and forged Session addresses cause zero target effects (165.3714ms)
+✔ M3 broker: observing an unknown receipt cannot replay it under missing send authority (234.858ms)
+✔ M4: composed authority is rechecked at admission commit and cannot remove a revoked parent lease (98.4526ms)
+✔ M2 MAS: configure selects approved profile, revokes old ref and forks retain bounded history (244.8069ms)
+✔ M2 MAS: retired task-bound member keeps its tombstone in inspect (187.97ms)
+✔ M2 MAS: retired background member keeps its tombstone in inspect (201.8404ms)
+✔ M2 MAS: readiness recovery removes stale diagnostic reason (53.9151ms)
+✔ M2 MAS: readiness barrier activates the entire roster on one durable commit (101.0793ms)
+✔ M2 MAS: retired history survives activation and reopen without resurrecting authority (164.1629ms)
+✔ M2 MAS: activation keeps unfinished and uncertain members behind the readiness barrier (71.5256ms)
+✔ M2 MAS: readiness, source binding, broad send and narrow owner administration (118.7252ms)
+✔ M2 MAS: delayed admission approval rechecks revocation before native target effects (77.8777ms)
+✔ M2 MAS: busy peer uses native steer post-tools and followUp final placement (236.538ms)
+✔ M2 MAS: stopped source is rejected on the commit line despite a stale peer service cache (73.2931ms)
+✔ M2 MAS: reopen preserves duplicate admission without reviving old authority (129.4041ms)
+✔ MAS observations: creation records the requesting Conversation, separately from ownership and fork history (121.0709ms)
+✔ MAS observations: human attribution, reply association and native receipts survive reopen without replay (208.9777ms)
+✔ M4 review: 40 distinct slots contend on real CAS with 1 service instance(s) (2699.19ms)
+✔ M4 review: 40 distinct slots contend on real CAS with 2 service instance(s) (2757.7092ms)
+✔ M2 MAS: unknown create persistence keeps honest state and seals the Session (72.1938ms)
+✔ M2 MAS: unknown deliver persistence keeps honest state and seals the Session (67.5194ms)
+✔ M5 protocol: accepted wire data is detached/frozen and cannot mutate source identity (1.4018ms)
+✔ M5 protocol: version, extra authority fields, malformed references and nonfinite input are refused (0.4401ms)
+✔ M5 protocol: response correlates request ID and validates nested receipts before claiming success (0.3599ms)
+✔ M5 protocol: logical member key remains separate from opaque catalog reference key (0.5778ms)
+✔ M5 protocol: text/body/depth bounds refuse before routing rather than truncating input (0.713ms)
+✔ WebUI collaboration protocol: human operations reject serialized authority, unbounded values and metadata (2.115ms)
+✔ WebUI collaboration protocol: bounded attributed snapshots and scoped events reject malformed state (0.6038ms)
+✔ Independent configuration protocol: only explicit model/cwd changes and bounded directory navigation are accepted (2.4295ms)
+✔ Model catalogue protocol: default plus 64 configured models fits the finite response; a 66th is rejected (0.3818ms)
+✔ WebUI settings protocol: exact scoped metadata and unknown cost are accepted; secret fields and malformed quotas fail closed (0.4987ms)
+✔ WebUI private configuration protocol: dedicated replace/clear/status never accepts an identity or returns a saved value (2.1889ms)
+✔ WebUI navigation protocol: finite metadata command/result and scoped list states reject authority/foreign fields (2.4295ms)
+✔ WebUI fork transcript: current scope and explicit inherited attribution are independent; attribution is never a resource grant (0.4144ms)
+✔ WebUI notification protocol: finite device controls cannot select a person, content or network authority (2.4838ms)
+✔ WebUI Session selectors: receipt reads keep the native ID and carry a separate parent Session (2.2429ms)
+✔ WebUI protocol: explicit v2 commands are independent of unchanged headless v1 (2.6794ms)
+✔ WebUI protocol: complete sanitized Conversation DTOs are bounded and strictly correlated (0.6781ms)
+✔ WebUI protocol: bounded assistant error history survives both response and event decoding (0.3714ms)
+✔ WebUI protocol: human display, explicit model work and person administration use finite separate commands (0.2679ms)
+✔ WebUI protocol: human resource control selects a profile without accepting a capability or runtime configuration (0.2206ms)
+✔ WebUI protocol: receipt reasons are bounded native data, not browser-inferred state (0.1738ms)
+✔ WebUI protocol: resource streams validate incarnation and explicit resnapshot signals (0.1615ms)
+ℹ tests 663
+ℹ suites 0
+ℹ pass 633
+ℹ fail 28
+ℹ cancelled 0
+ℹ skipped 2
+ℹ todo 0
+ℹ duration_ms 542886.6981
+
+✖ failing tests:
+
+test at apps\webui\test\collaboration-late.test.ts:11:1
+✖ WebUI collaboration: a real late read cannot reopen or populate another Conversation (762.1934ms)
+  Error: Browser control not interactable: [data-conversation]:nth-child(2)
+      at Object.click (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/browser.ts:342:13)
+      at async TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/collaboration-late.test.ts:49:4)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3)
+
+test at apps\webui\test\composer-focus-browser.test.ts:104:14
+✖ home 1440px pointer and Tab (1.4246ms)
+  Error: Browser control not interactable: textarea
+      at Object.click (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/browser.ts:342:13)
+      at async TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/composer-focus-browser.test.ts:115:7)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/composer-focus-browser.test.ts:104:6)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3)
+
+test at apps\webui\test\composer-focus-browser.test.ts:144:14
+✖ home 1440px Tab visibly outlines each split button (1.0136ms)
+  Error: Browser evaluation failed: {"exceptionId":1,"text":"Uncaught","lineNumber":0,"columnNumber":34,"scriptId":"39","stackTrace":{"callFrames":[{"functionName":"","scriptId":"39","url":"","lineNumber":0,"columnNumber":34}]},"exception":{"type":"object","subtype":"error","className":"TypeError","description":"TypeError: Cannot read properties of null (reading 'focus')\n    at <anonymous>:1:35","objectId":"-3937406209429802418.2.2"}}
+      at evaluate (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/browser.ts:203:12)
+      at async Object.type (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/browser.ts:262:6)
+      at async TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/composer-focus-browser.test.ts:145:7)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/composer-focus-browser.test.ts:144:6)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3)
+
+test at apps\webui\test\composer-focus-browser.test.ts:104:14
+✖ home 390px pointer and Tab (232.0246ms)
+  Error: Browser control not interactable: [data-action="home"]
+      at Object.click (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/browser.ts:342:13)
+      at async TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/composer-focus-browser.test.ts:111:8)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/composer-focus-browser.test.ts:104:6)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3)
+
+test at apps\webui\test\composer-focus-browser.test.ts:144:14
+✖ home 390px Tab visibly outlines each split button (5.5045ms)
+  Error: Browser control not interactable: textarea
+      at Object.click (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/browser.ts:342:13)
+      at async TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/composer-focus-browser.test.ts:149:8)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/composer-focus-browser.test.ts:144:6)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3)
+
+test at apps\webui\test\composer-focus-browser.test.ts:104:14
+✖ conversation 390px pointer and Tab (0.8197ms)
+  Error: Browser control not interactable: [aria-label="Toggle conversations"]
+      at Object.click (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/browser.ts:342:13)
+      at async toggleConversations (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/frontend-controls.ts:14:2)
+      at async TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/composer-focus-browser.test.ts:106:25)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/composer-focus-browser.test.ts:104:6)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3)
+
+test at apps\webui\test\composer-focus-browser.test.ts:144:14
+✖ conversation 390px Tab visibly outlines each split button (4.4247ms)
+  Error: Browser control not interactable: textarea
+      at Object.click (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/browser.ts:342:13)
+      at async TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/composer-focus-browser.test.ts:149:8)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/composer-focus-browser.test.ts:144:6)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3)
+
+test at apps\webui\test\composer-focus-browser.test.ts:183:12
+✖ Stop, Steer Send and mode retain separate focus while a real turn runs (4.6036ms)
+  Error: Browser control not interactable: [data-action=send]
+      at Object.click (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/browser.ts:342:13)
+      at async TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/composer-focus-browser.test.ts:185:5)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/composer-focus-browser.test.ts:183:4)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3)
+
+test at apps\webui\test\composition-main.test.ts:11:1
+✖ WebUI executable: trusted ESM root composes the real optional Agent and WebUI facets (9116.9344ms)
+  Error: Browser condition deadline: document.querySelector("[data-interface=mas-devpack-board]"): P
+  pakka-webui
+  
+  A shared workbench for your agents.
+  
+  Sign-in or invitation token
+  Sign in
+  
+  The result is unconfirmed. Check the receipt before retrying.
+      at Object.wait (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/browser.ts:362:12)
+      at async TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/composition-main.test.ts:75:4)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3)
+
+test at apps\webui\test\devin-adoption-browser.test.ts:13:1
+✖ reference frontend adoption: original home anatomy, palette, real conversation (694.3788ms)
+  AssertionError [ERR_ASSERTION]: the frontend must retain reference geometry, not the old WebUI silhouette
+  + actual - expected
+  ... Skipped lines
+  
+    {
+  +   card: null,
+  +   editor: null,
+  -   card: {
+  -     h: 154,
+  -     w: 688,
+  -     x: 526,
+  -     y: 373
+  -   },
+  -   editor: 'TEXTAREA',
+      hero: {
+        h: 30,
+        w: 700,
+        x: 520,
+  +     y: 317.0625
+  -     y: 327
+      },
+      newSession: {
+        h: 30,
+        w: 278,
+        x: 8,
+  ...
+      overflow: false,
+  +   toolbar: null
+  -   toolbar: {
+  -     h: 28,
+  -     w: 662,
+  -     x: 539,
+  -     y: 486
+  -   }
+    }
+  
+      at TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/devin-adoption-browser.test.ts:44:11)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: { newSession: { x: 8, y: 44, w: 278, h: 30 }, hero: { x: 520, y: 317.0625, w: 700, h: 30 }, card: null, toolbar: null, editor: null, overflow: false },
+    expected: { newSession: { x: 8, y: 44, w: 278, h: 30 }, hero: { x: 520, y: 327, w: 700, h: 30 }, card: { x: 526, y: 373, w: 688, h: 154 }, toolbar: { x: 539, y: 486, w: 662, h: 28 }, editor: 'TEXTAREA', overflow: false },
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at apps\webui\test\devin-palette-browser.test.ts:12:1
+✖ Devin palette: keyboard/search and extension settings preserve the dialog handoff on desktop and phone (8620.8608ms)
+  Error: Browser condition deadline: document.querySelector("#composerInput"): Owner
+  New Session
+  New Conversation
+  Ctrl
+  O
+  Hello extension
+  Example preferences
+  Commands & Extensions
+  Conversations
+  Conversation Grouping
+  Default
+  Sort Per Session
+  Uncategorized
+  
+  No conversations
+  
+  Recent
+  ADMIN
+  Pakka
+  Agent
+  Start a Conversation
+  
+  Choose a Session, model and working directory in the creation dialog. Send work only after the Conversation is ready.
+  
+  New Conversation
+  New Session
+      at Object.wait (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/browser.ts:362:12)
+      at async TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/devin-palette-browser.test.ts:37:4)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3)
+
+test at apps\webui\test\devin-shell-browser.test.ts:17:1
+✖ Devin frontend: home inherits the selected model; responsive navigation preserves explicit native input (702.5094ms)
+  Error: Browser control not interactable: [data-action="home"]
+      at Object.click (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/browser.ts:342:13)
+      at async TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/devin-shell-browser.test.ts:59:4)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3)
+
+test at apps\webui\test\mas-board-busy.test.ts:13:1
+✖ MAS Board: busy native steer/follow-up and confirmed abort keep the persistent member (8717.6287ms)
+  Error: Browser condition deadline: document.querySelector("[data-interface=mas-devpack-board]"): P
+  pakka-webui
+  
+  A shared workbench for your agents.
+  
+  Sign-in or invitation token
+  Sign in
+  
+  The result is unconfirmed. Check the receipt before retrying.
+      at Object.wait (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/browser.ts:362:12)
+      at async TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/mas-board-busy.test.ts:57:4)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3)
+
+test at apps\webui\test\mas-board-presentation.test.ts:78:2
+✖ MAS Agent controls are a separate dismissible sheet at 1440x900 (8792.8367ms)
+  Error: Browser condition deadline: document.querySelector("[data-conversation]"): P
+  pakka-webui
+  
+  A shared workbench for your agents.
+  
+  Sign-in or invitation token
+  Sign in
+  
+  The result is unconfirmed. Check the receipt before retrying.
+      at Object.wait (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/browser.ts:362:12)
+      at async boardFixture (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/mas-board-presentation.test.ts:65:2)
+      at async TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/mas-board-presentation.test.ts:82:24)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3)
+
+test at apps\webui\test\mas-board-presentation.test.ts:78:2
+✖ MAS Agent controls are a separate dismissible sheet at 360x600 (8626.4662ms)
+  Error: Browser condition deadline: document.querySelector("[data-conversation]"): P
+  pakka-webui
+  
+  A shared workbench for your agents.
+  
+  Sign-in or invitation token
+  Sign in
+  
+  The result is unconfirmed. Check the receipt before retrying.
+      at Object.wait (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/browser.ts:362:12)
+      at async boardFixture (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/mas-board-presentation.test.ts:65:2)
+      at async TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/mas-board-presentation.test.ts:82:24)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7)
+
+test at apps\webui\test\mas-board-presentation.test.ts:78:2
+✖ MAS Agent controls are a separate dismissible sheet at 390x650 (8657.945ms)
+  Error: Browser condition deadline: document.querySelector("[data-conversation]"): P
+  pakka-webui
+  
+  A shared workbench for your agents.
+  
+  Sign-in or invitation token
+  Sign in
+  
+  The result is unconfirmed. Check the receipt before retrying.
+      at Object.wait (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/browser.ts:362:12)
+      at async boardFixture (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/mas-board-presentation.test.ts:65:2)
+      at async TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/mas-board-presentation.test.ts:82:24)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7)
+
+test at apps\webui\test\mas-board-presentation.test.ts:163:1
+✖ MAS retired Agents can be hidden and restored across reload without losing exchanges or history (8662.7263ms)
+  Error: Browser condition deadline: document.querySelector("[data-conversation]"): P
+  pakka-webui
+  
+  A shared workbench for your agents.
+  
+  Sign-in or invitation token
+  Sign in
+  
+  The result is unconfirmed. Check the receipt before retrying.
+      at Object.wait (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/browser.ts:362:12)
+      at async boardFixture (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/mas-board-presentation.test.ts:65:2)
+      at async TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/mas-board-presentation.test.ts:167:33)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7)
+
+test at apps\webui\test\mas-board-recovery.test.ts:10:1
+✖ MAS controls preserve a lost-response operation across panel reopen and reconcile without resending (8716.0372ms)
+  Error: Browser condition deadline: document.querySelector("[data-interface=mas-devpack-board]"): P
+  pakka-webui
+  
+  A shared workbench for your agents.
+  
+  Sign-in or invitation token
+  Sign in
+  
+  The result is unconfirmed. Check the receipt before retrying.
+      at Object.wait (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/browser.ts:362:12)
+      at async TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/mas-board-recovery.test.ts:40:4)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3)
+
+test at apps\webui\test\mas-board-removal.test.ts:14:1
+✖ MAS Board: server-filtered mobile reader; removing UI preserves admitted work, members, history and normal reopen (8669.5088ms)
+  Error: Browser condition deadline: document.querySelector("[data-interface=mas-devpack-board]"): P
+  pakka-webui
+  
+  A shared workbench for your agents.
+  
+  Sign-in or invitation token
+  Sign in
+  
+  The result is unconfirmed. Check the receipt before retrying.
+      at Object.wait (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/browser.ts:362:12)
+      at async TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/mas-board-removal.test.ts:69:4)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3)
+
+test at apps\webui\test\mas-board.test.ts:16:1
+✖ MAS Board: public plugin observes real model-created child and human controls retain its native lifetime/owner (8710.9042ms)
+  Error: Browser condition deadline: document.querySelector("[data-interface=mas-devpack-board]"): P
+  pakka-webui
+  
+  A shared workbench for your agents.
+  
+  Sign-in or invitation token
+  Sign in
+  
+  The result is unconfirmed. Check the receipt before retrying.
+      at Object.wait (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/browser.ts:362:12)
+      at async TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/mas-board.test.ts:81:4)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3)
+
+test at apps\webui\test\mas-devin-adoption.test.ts:11:1
+✖ MAS frontend adoption: one workspace header, Graph/Activity/Agents and contextual inspector (8648.793ms)
+  Error: Browser condition deadline: document.querySelector("[data-interface=mas-devpack-board]"): P
+  pakka-webui
+  
+  A shared workbench for your agents.
+  
+  Sign-in or invitation token
+  Sign in
+  
+  The result is unconfirmed. Check the receipt before retrying.
+      at Object.wait (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/browser.ts:362:12)
+      at async TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/mas-devin-adoption.test.ts:49:4)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3)
+
+test at apps\webui\test\mas-stylesheet-browser.test.ts:17:2
+✖ Team waits for its stylesheet and fails closed when it is loaded (8687.1201ms)
+  Error: Browser condition deadline: document.querySelector("[data-interface=mas-devpack-board]"): P
+  pakka-webui
+  
+  A shared workbench for your agents.
+  
+  Sign-in or invitation token
+  Sign in
+  
+  The result is unconfirmed. Check the receipt before retrying.
+      at Object.wait (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/browser.ts:362:12)
+      at async TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/mas-stylesheet-browser.test.ts:97:5)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3)
+
+test at apps\webui\test\mas-stylesheet-browser.test.ts:17:2
+✖ Team waits for its stylesheet and fails closed when it is failed (8629.3778ms)
+  Error: Browser condition deadline: document.querySelector("[data-interface=mas-devpack-board]"): P
+  pakka-webui
+  
+  A shared workbench for your agents.
+  
+  Sign-in or invitation token
+  Sign in
+  
+  The result is unconfirmed. Check the receipt before retrying.
+      at Object.wait (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/browser.ts:362:12)
+      at async TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/mas-stylesheet-browser.test.ts:97:5)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7)
+
+test at apps\webui\test\mobile-sidebar.test.ts:11:1
+✖ WebUI mobile sidebar: outside click and Escape return to the same conversation without sending the draft (1350.0144ms)
+  Error: Browser control not interactable: [aria-label="Session options"]
+      at Object.click (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/browser.ts:342:13)
+      at async TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/mobile-sidebar.test.ts:43:4)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3)
+
+test at apps\webui\test\short-sidebar.test.ts:19:1
+✖ WebUI short sidebar: sessions remain usable and extensions stay reachable through the palette (1084.6991ms)
+  Error: Browser control not interactable: [data-conversation]:last-child
+      at Object.click (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/browser.ts:342:13)
+      at async TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/short-sidebar.test.ts:77:4)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3)
+
+test at apps\webui\test\typography-spacing-browser.test.ts:99:12
+✖ owned navigation titles use Title Case (1.0566ms)
+  Error: Browser evaluation failed: {"exceptionId":1,"text":"Uncaught","lineNumber":0,"columnNumber":108,"scriptId":"39","stackTrace":{"callFrames":[{"functionName":"","scriptId":"39","url":"","lineNumber":0,"columnNumber":108},{"functionName":"","scriptId":"39","url":"","lineNumber":0,"columnNumber":62}]},"exception":{"type":"object","subtype":"error","className":"TypeError","description":"TypeError: Cannot read properties of null (reading 'textContent')\n    at <anonymous>:1:109\n    at Array.map (<anonymous>)\n    at <anonymous>:1:63","objectId":"2871077063757104964.2.2"}}
+      at Object.evaluate (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/browser.ts:203:12)
+      at async TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/typography-spacing-browser.test.ts:101:6)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/typography-spacing-browser.test.ts:99:4)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3)

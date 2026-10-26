@@ -1,0 +1,40 @@
+TAP version 13
+# Subtest: reference frontend adoption: retained reference chrome, explicit creation without home naming, palette and real conversation
+ok 1 - reference frontend adoption: retained reference chrome, explicit creation without home naming, palette and real conversation
+  ---
+  duration_ms: 2578.7537
+  type: 'test'
+  ...
+# Subtest: Devin palette: keyboard/search and extension settings preserve the dialog handoff on desktop and phone
+ok 2 - Devin palette: keyboard/search and extension settings preserve the dialog handoff on desktop and phone
+  ---
+  duration_ms: 1406.2542
+  type: 'test'
+  ...
+# Subtest: Devin frontend: the creation dialog inherits the selected model; responsive navigation preserves explicit native input
+ok 3 - Devin frontend: the creation dialog inherits the selected model; responsive navigation preserves explicit native input
+  ---
+  duration_ms: 2671.1106
+  type: 'test'
+  ...
+# Subtest: WebUI mobile sidebar: outside click and Escape return to the same conversation without sending the draft
+ok 4 - WebUI mobile sidebar: outside click and Escape return to the same conversation without sending the draft
+  ---
+  duration_ms: 2110.5401
+  type: 'test'
+  ...
+# Subtest: WebUI short sidebar: sessions remain usable and extensions stay reachable through the palette
+ok 5 - WebUI short sidebar: sessions remain usable and extensions stay reachable through the palette
+  ---
+  duration_ms: 3111.8736
+  type: 'test'
+  ...
+1..5
+# tests 5
+# suites 0
+# pass 5
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 16652.0192

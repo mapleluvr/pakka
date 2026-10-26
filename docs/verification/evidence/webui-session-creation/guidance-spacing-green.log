@@ -1,0 +1,22 @@
+TAP version 13
+# Subtest: Conversation creation browser: the dedicated form creates its explicit parent and uses the chosen initial model and directory only after confirmation
+ok 1 - Conversation creation browser: the dedicated form creates its explicit parent and uses the chosen initial model and directory only after confirmation
+  ---
+  duration_ms: 1043.2561
+  type: 'test'
+  ...
+# Subtest: Creation dialog layout: phone and desktop, 20px light/dark, nested pickers and keyboard focus keep complete controls without a home composer
+ok 2 - Creation dialog layout: phone and desktop, 20px light/dark, nested pickers and keyboard focus keep complete controls without a home composer
+  ---
+  duration_ms: 4030.5071
+  type: 'test'
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 6609.2535

@@ -1,0 +1,3981 @@
+
+> pakka-workspace@0.1.0 test
+> node scripts/test.mjs --test-reporter=tap
+
+TAP version 13
+# Subtest: M5 CLI: actual process uses shared authenticated client for snapshot, creation and native message receipt
+ok 1 - M5 CLI: actual process uses shared authenticated client for snapshot, creation and native message receipt
+  ---
+  duration_ms: 625.3311
+  type: 'test'
+  ...
+# Subtest: M5 server executable: explicit trusted config boots real MAS and returns no model or bearer credentials
+ok 2 - M5 server executable: explicit trusted config boots real MAS and returns no model or bearer credentials
+  ---
+  duration_ms: 525.787
+  type: 'test'
+  ...
+# Subtest: M5 browser: compiled shared client connects with no Node globals and executes real authenticated admission
+ok 3 - M5 browser: compiled shared client connects with no Node globals and executes real authenticated admission
+  ---
+  duration_ms: 499.2748
+  type: 'test'
+  ...
+# Subtest: Configuration authority: a narrowed project ceiling is rechecked before committing independent cwd
+ok 4 - Configuration authority: a narrowed project ceiling is rechecked before committing independent cwd
+  ---
+  duration_ms: 83.7931
+  type: 'test'
+  ...
+# Subtest: M4 worker: spawn cannot acquire a child's higher-profile communication grant
+ok 5 - M4 worker: spawn cannot acquire a child's higher-profile communication grant
+  ---
+  duration_ms: 723.4177
+  type: 'test'
+  ...
+# Subtest: M4 review: worker without Session service explicitly denies spawn and inbox before effects
+ok 6 - M4 review: worker without Session service explicitly denies spawn and inbox before effects
+  ---
+  duration_ms: 640.3372
+  type: 'test'
+  ...
+# Subtest: M4 worker: approved DevPack profile executes real native temporary spawn in another PID
+ok 7 - M4 worker: approved DevPack profile executes real native temporary spawn in another PID
+  ---
+  duration_ms: 682.8119
+  type: 'test'
+  ...
+# Subtest: M6 worker: unselected native profile does not inherit root contribution tools
+ok 8 - M6 worker: unselected native profile does not inherit root contribution tools
+  ---
+  duration_ms: 490.4252
+  type: 'test'
+  ...
+# Subtest: product Dynamite: explicit root selection and existing controlled inference configuration are decoded
+ok 9 - product Dynamite: explicit root selection and existing controlled inference configuration are decoded
+  ---
+  duration_ms: 0.8339
+  type: 'test'
+  ...
+# Subtest: product Dynamite: dynamic module/profile authority and ambiguous member selection are refused
+ok 10 - product Dynamite: dynamic module/profile authority and ambiguous member selection are refused
+  ---
+  duration_ms: 0.3041
+  type: 'test'
+  ...
+# Subtest: product Dynamite: explicit bounded pressure threshold is preserved rather than silently normalized
+ok 11 - product Dynamite: explicit bounded pressure threshold is preserved rather than silently normalized
+  ---
+  duration_ms: 0.582
+  type: 'test'
+  ...
+# Subtest: product Dynamite: invalid or unbounded inference and strategy options cannot enter startup
+ok 12 - product Dynamite: invalid or unbounded inference and strategy options cannot enter startup
+  ---
+  duration_ms: 0.3453
+  type: 'test'
+  ...
+# Subtest: M5 HTTP: host-bound source and native admission survive repeated message ID; copied receipt is not authority
+ok 13 - M5 HTTP: host-bound source and native admission survive repeated message ID; copied receipt is not authority
+  ---
+  duration_ms: 204.005
+  type: 'test'
+  ...
+# Subtest: M5 HTTP: four definitive guard families return correlated denied without native effects
+ok 14 - M5 HTTP: four definitive guard families return correlated denied without native effects
+  ---
+  duration_ms: 232.7947
+  type: 'test'
+  ...
+# Subtest: M5 HTTP: opaque admission return-false cannot deny prior real callback effects
+ok 15 - M5 HTTP: opaque admission return-false cannot deny prior real callback effects
+  ---
+  duration_ms: 107.5239
+  type: 'test'
+  ...
+# Subtest: M5 HTTP: opaque admission typed-error cannot deny prior real callback effects
+ok 16 - M5 HTTP: opaque admission typed-error cannot deny prior real callback effects
+  ---
+  duration_ms: 96.4364
+  type: 'test'
+  ...
+# Subtest: M5 HTTP: actual native storage-write failure remains unknown rather than typed denial
+ok 17 - M5 HTTP: actual native storage-write failure remains unknown rather than typed denial
+  ---
+  duration_ms: 80.5877
+  type: 'test'
+  ...
+# Subtest: M5 HTTP: invalid wire/version/authority fields and unapproved origins cause zero provider effects
+ok 18 - M5 HTTP: invalid wire/version/authority fields and unapproved origins cause zero provider effects
+  ---
+  duration_ms: 107.2656
+  type: 'test'
+  ...
+# Subtest: M5 HTTP: malformed UTF-8 refuses instead of substituting a model-visible message
+ok 19 - M5 HTTP: malformed UTF-8 refuses instead of substituting a model-visible message
+  ---
+  duration_ms: 64.1925
+  type: 'test'
+  ...
+# Subtest: M5 HTTP: expired issuer credential cannot create effects or be restored by new connection
+ok 20 - M5 HTTP: expired issuer credential cannot create effects or be restored by new connection
+  ---
+  duration_ms: 75.448
+  type: 'test'
+  ...
+# Subtest: M5 HTTP: issuer expiry during awaited admission is rechecked at the native commit boundary
+ok 21 - M5 HTTP: issuer expiry during awaited admission is rechecked at the native commit boundary
+  ---
+  duration_ms: 588.2842
+  type: 'test'
+  ...
+# Subtest: M5 HTTP: queued native withdrawal, owner abort and retire preserve explicit effect boundaries
+ok 22 - M5 HTTP: queued native withdrawal, owner abort and retire preserve explicit effect boundaries
+  ---
+  duration_ms: 205.5849
+  type: 'test'
+  ...
+# Subtest: M5 HTTP: finite transport capacity refuses excess requests before an admission effect
+ok 23 - M5 HTTP: finite transport capacity refuses excess requests before an admission effect
+  ---
+  duration_ms: 102.5536
+  type: 'test'
+  ...
+# Subtest: M5 HTTP: issuer revocation during admission seals pending effect and cannot be renewed by reconnect
+ok 24 - M5 HTTP: issuer revocation during admission seals pending effect and cannot be renewed by reconnect
+  ---
+  duration_ms: 73.4358
+  type: 'test'
+  ...
+# Subtest: Model consumers: finite server bootstrap keeps the approved model through real HTTP delivery
+ok 25 - Model consumers: finite server bootstrap keeps the approved model through real HTTP delivery
+  ---
+  duration_ms: 182.7233
+  type: 'test'
+  ...
+# Subtest: Model consumers: a real worker PID receives the exact host-approved model
+ok 26 - Model consumers: a real worker PID receives the exact host-approved model
+  ---
+  duration_ms: 476.988
+  type: 'test'
+  ...
+# Subtest: WebUI approvals: real native tool allow executes once
+ok 27 - WebUI approvals: real native tool allow executes once
+  ---
+  duration_ms: 247.4946
+  type: 'test'
+  ...
+# Subtest: WebUI approvals: real native tool deny has no external effect
+ok 28 - WebUI approvals: real native tool deny has no external effect
+  ---
+  duration_ms: 211.8054
+  type: 'test'
+  ...
+# Subtest: WebUI approvals: aborting the native call seals a late decision and unresolved restore never replays
+ok 29 - WebUI approvals: aborting the native call seals a late decision and unresolved restore never replays
+  ---
+  duration_ms: 167.2802
+  type: 'test'
+  ...
+# Subtest: WebUI approvals: a real external effect followed by callback failure remains unknown
+ok 30 - WebUI approvals: a real external effect followed by callback failure remains unknown
+  ---
+  duration_ms: 191.7071
+  type: 'test'
+  ...
+# Subtest: WebUI approvals: a serialized invocation cannot create an approval or execute a tool
+ok 31 - WebUI approvals: a serialized invocation cannot create an approval or execute a tool
+  ---
+  duration_ms: 69.1529
+  type: 'test'
+  ...
+# Subtest: WebUI approvals: losing the bound interface after committed allow blocks a not-yet-started effect
+ok 32 - WebUI approvals: losing the bound interface after committed allow blocks a not-yet-started effect
+  ---
+  duration_ms: 264.2385
+  type: 'test'
+  ...
+# Subtest: WebUI approvals: revocation after committed allow but before the tool effect denies the late effect
+ok 33 - WebUI approvals: revocation after committed allow but before the tool effect denies the late effect
+  ---
+  duration_ms: 286.6396
+  type: 'test'
+  ...
+# Subtest: WebUI browser network: a real reset after a rejected CONNECT stays connection-local and never reaches the target
+ok 34 - WebUI browser network: a real reset after a rejected CONNECT stays connection-local and never reaches the target
+  ---
+  duration_ms: 31.2742
+  type: 'test'
+  ...
+# Subtest: WebUI browser network: a real approved HTTPS tunnel preserves TLS validation; a foreign CONNECT has no target request
+ok 35 - WebUI browser network: a real approved HTTPS tunnel preserves TLS validation; a foreign CONNECT has no target request
+  ---
+  duration_ms: 30.1153
+  type: 'test'
+  ...
+# Subtest: WebUI owned browser: approved resource configuration is detached from later caller mutation
+ok 36 - WebUI owned browser: approved resource configuration is detached from later caller mutation
+  ---
+  duration_ms: 104.6332
+  type: 'test'
+  ...
+# Subtest: WebUI owned browser: completed click survives writer reopen without another page effect
+ok 37 - WebUI owned browser: completed click survives writer reopen without another page effect
+  ---
+  duration_ms: 579.2833
+  type: 'test'
+  ...
+# Subtest: WebUI owned browser: restored running intent survives writer reopen without another page effect
+ok 38 - WebUI owned browser: restored running intent survives writer reopen without another page effect
+  ---
+  duration_ms: 590.2394
+  type: 'test'
+  ...
+# Subtest: WebUI owned browser: real isolated page controls, actual screenshot decode and viewer/resource checks
+ok 39 - WebUI owned browser: real isolated page controls, actual screenshot decode and viewer/resource checks
+  ---
+  duration_ms: 653.9175
+  type: 'test'
+  ...
+# Subtest: WebUI owned browser: disallowed direct navigation redirects subresources and popup never reach another origin
+ok 40 - WebUI owned browser: disallowed direct navigation redirects subresources and popup never reach another origin
+  ---
+  duration_ms: 572.8633
+  type: 'test'
+  ...
+# Subtest: WebUI owned browser: an already-revoked interception does not seal subsequent authorized reads
+ok 41 - WebUI owned browser: an already-revoked interception does not seal subsequent authorized reads # SKIP Controlled POSIX CDP executable; real Chromium isolation remains required on Windows
+  ---
+  duration_ms: 0.1341
+  type: 'test'
+  ...
+# Subtest: WebUI owned browser: unknown interception rejection still seals the service
+ok 42 - WebUI owned browser: unknown interception rejection still seals the service # SKIP Controlled POSIX CDP executable; real Chromium isolation remains required on Windows
+  ---
+  duration_ms: 0.0749
+  type: 'test'
+  ...
+# Subtest: WebUI owned browser: invalidated interfaces and service shutdown seal old clients
+ok 43 - WebUI owned browser: invalidated interfaces and service shutdown seal old clients
+  ---
+  duration_ms: 501.7389
+  type: 'test'
+  ...
+# Subtest: WebUI collaboration: real shared attribution, concurrent note conflict, pins/reactions/quote and no human content in model payload
+ok 44 - WebUI collaboration: real shared attribution, concurrent note conflict, pins/reactions/quote and no human content in model payload
+  ---
+  duration_ms: 185.6741
+  type: 'test'
+  ...
+# Subtest: WebUI collaboration: viewer participation is human-only, presence is ephemeral and resource/identity scopes are checked before publication
+ok 45 - WebUI collaboration: viewer participation is human-only, presence is ephemeral and resource/identity scopes are checked before publication
+  ---
+  duration_ms: 91.6673
+  type: 'test'
+  ...
+# Subtest: WebUI collaboration: real driver CAS controls native input and an expired lease during admission has zero provider effects
+ok 46 - WebUI collaboration: real driver CAS controls native input and an expired lease during admission has zero provider effects
+  ---
+  duration_ms: 83.6076
+  type: 'test'
+  ...
+# Subtest: WebUI collaboration: durable records/driver reopen with the original writer while presence is not restored
+ok 47 - WebUI collaboration: durable records/driver reopen with the original writer while presence is not restored
+  ---
+  duration_ms: 103.0426
+  type: 'test'
+  ...
+# Subtest: WebUI configuration: frozen model catalogue and scoped usage hide preset details, secrets and peer totals
+ok 48 - WebUI configuration: frozen model catalogue and scoped usage hide preset details, secrets and peer totals
+  ---
+  duration_ms: 109.5225
+  type: 'test'
+  ...
+# Subtest: WebUI private configuration: revoke while waiting at the real CAS boundary prevents the late replacement
+ok 49 - WebUI private configuration: revoke while waiting at the real CAS boundary prevents the late replacement
+  ---
+  duration_ms: 70.3131
+  type: 'test'
+  ...
+# Subtest: WebUI private configuration: clearing while the preserved bootstrap callback is awaited rejects its late old key
+ok 50 - WebUI private configuration: clearing while the preserved bootstrap callback is awaited rejects its late old key
+  ---
+  duration_ms: 32.6244
+  type: 'test'
+  ...
+# Subtest: WebUI private configuration: nonzero empty storage is corruption and never reinitializes a secret source
+ok 51 - WebUI private configuration: nonzero empty storage is corruption and never reinitializes a secret source
+  ---
+  duration_ms: 27.1232
+  type: 'test'
+  ...
+# Subtest: WebUI private configuration: a failing host resolver cannot publish its secret error message or send HTTP
+ok 52 - WebUI private configuration: a failing host resolver cannot publish its secret error message or send HTTP
+  ---
+  duration_ms: 59.8812
+  type: 'test'
+  ...
+# Subtest: WebUI private credentials: explicit replace/clear changes real Authorization, never returns a secret and survives normal reopen without fallback
+ok 53 - WebUI private credentials: explicit replace/clear changes real Authorization, never returns a secret and survives normal reopen without fallback
+  ---
+  duration_ms: 285.148
+  type: 'test'
+  ...
+# Subtest: WebUI directories: authorized browsing, independent changes and revocation use current resource authority
+ok 54 - WebUI directories: authorized browsing, independent changes and revocation use current resource authority
+  ---
+  duration_ms: 138.3658
+  type: 'test'
+  ...
+# Subtest: WebUI files: approved scoped reads and CAS edits have real byte/receipt evidence without model work
+ok 55 - WebUI files: approved scoped reads and CAS edits have real byte/receipt evidence without model work
+  ---
+  duration_ms: 274.8511
+  type: 'test'
+  ...
+# Subtest: WebUI files: traversal hidden data junctions and hard links cannot expose another root
+ok 56 - WebUI files: traversal hidden data junctions and hard links cannot expose another root
+  ---
+  duration_ms: 226.919
+  type: 'test'
+  ...
+# Subtest: WebUI files: bounded upload and export preserve original bytes and reject overwrite
+ok 57 - WebUI files: bounded upload and export preserve original bytes and reject overwrite
+  ---
+  duration_ms: 231.5593
+  type: 'test'
+  ...
+# Subtest: WebUI files Git: actual changes branches and managed worktrees are bounded native effects
+ok 58 - WebUI files Git: actual changes branches and managed worktrees are bounded native effects
+  ---
+  duration_ms: 1982.1357
+  type: 'test'
+  ...
+# Subtest: WebUI files Git: a real running native input prevents branch changes
+ok 59 - WebUI files Git: a real running native input prevents branch changes
+  ---
+  duration_ms: 329.7359
+  type: 'test'
+  ...
+# Subtest: WebUI files Git: native hooks are disabled and unsafe local config is refused
+ok 60 - WebUI files Git: native hooks are disabled and unsafe local config is refused
+  ---
+  duration_ms: 802.6345
+  type: 'test'
+  ...
+# Subtest: WebUI files: an opaque host guard cannot forge a definite conflict after its own real effect
+ok 61 - WebUI files: an opaque host guard cannot forge a definite conflict after its own real effect
+  ---
+  duration_ms: 222.5707
+  type: 'test'
+  ...
+# Subtest: WebUI files: restored running intents stay unknown and do not replay disk writes
+ok 62 - WebUI files: restored running intents stay unknown and do not replay disk writes
+  ---
+  duration_ms: 237.7946
+  type: 'test'
+  ...
+# Subtest: WebUI files: committed external-effect receipts reconcile after normal reopen without replay
+ok 63 - WebUI files: committed external-effect receipts reconcile after normal reopen without replay
+  ---
+  duration_ms: 249.0581
+  type: 'test'
+  ...
+# Subtest: WebUI hooks effect boundary: creator invalidation after real intent commit blocks a late native input
+ok 64 - WebUI hooks effect boundary: creator invalidation after real intent commit blocks a late native input
+  ---
+  duration_ms: 181.1463
+  type: 'test'
+  ...
+# Subtest: WebUI hooks effect boundary: extension invalidation after real intent commit blocks a late native input
+ok 65 - WebUI hooks effect boundary: extension invalidation after real intent commit blocks a late native input
+  ---
+  duration_ms: 132.5239
+  type: 'test'
+  ...
+# Subtest: WebUI hooks effect boundary: rotation invalidation after real intent commit blocks a late native input
+ok 66 - WebUI hooks effect boundary: rotation invalidation after real intent commit blocks a late native input
+  ---
+  duration_ms: 145.9654
+  type: 'test'
+  ...
+# Subtest: WebUI hooks unknown: a real admission followed by lost confirmation is retained across retries and writer reopen without a second HTTP
+ok 67 - WebUI hooks unknown: a real admission followed by lost confirmation is retained across retries and writer reopen without a second HTTP
+  ---
+  duration_ms: 160.8825
+  type: 'test'
+  ...
+# Subtest: WebUI hooks finite rate: 30 actual native inputs consume the hour quota and the 31st has no effect
+ok 68 - WebUI hooks finite rate: 30 actual native inputs consume the hour quota and the 31st has no effect
+  ---
+  duration_ms: 1767.0994
+  type: 'test'
+  ...
+# Subtest: WebUI hooks finite bytes: oversized raw input has no effect and the exact 5 MiB bound fits the real native text limit
+ok 69 - WebUI hooks finite bytes: oversized raw input has no effect and the exact 5 MiB bound fits the real native text limit
+  ---
+  duration_ms: 131.5178
+  type: 'test'
+  ...
+# Subtest: WebUI hooks authority and copies: viewers and foreign resources cannot create hooks, and later input mutation cannot change signed bytes
+ok 70 - WebUI hooks authority and copies: viewers and foreign resources cannot create hooks, and later input mutation cannot change signed bytes
+  ---
+  duration_ms: 127.2961
+  type: 'test'
+  ...
+# Subtest: WebUI hooks interrupted intent: writer reopen retains unknown without admitting a replacement native input
+ok 71 - WebUI hooks interrupted intent: writer reopen retains unknown without admitting a replacement native input
+  ---
+  duration_ms: 171.0804
+  type: 'test'
+  ...
+# Subtest: WebUI hooks persistent enum: malformed or foreign recorded results fail closed
+ok 72 - WebUI hooks persistent enum: malformed or foreign recorded results fail closed
+  ---
+  duration_ms: 146.4676
+  type: 'test'
+  ...
+# Subtest: WebUI hooks persistent association: malformed or foreign recorded results fail closed
+ok 73 - WebUI hooks persistent association: malformed or foreign recorded results fail closed
+  ---
+  duration_ms: 136.075
+  type: 'test'
+  ...
+# Subtest: WebUI hooks: exact signed bytes admit one native input and changing unsigned delivery metadata cannot replay it
+ok 74 - WebUI hooks: exact signed bytes admit one native input and changing unsigned delivery metadata cannot replay it
+  ---
+  duration_ms: 173.5819
+  type: 'test'
+  ...
+# Subtest: WebUI hooks: generic secret rotation and removal preserve original records while refusing old endpoints
+ok 75 - WebUI hooks: generic secret rotation and removal preserve original records while refusing old endpoints
+  ---
+  duration_ms: 135.2134
+  type: 'test'
+  ...
+# Subtest: WebUI hooks: signed outsider content is ignored by default even when the unsigned event header claims a push
+ok 76 - WebUI hooks: signed outsider content is ignored by default even when the unsigned event header claims a push
+  ---
+  duration_ms: 132.1753
+  type: 'test'
+  ...
+# Subtest: WebUI hooks: normal writer reopen reconciles the original native delivery with retained creator scope and budget
+ok 77 - WebUI hooks: normal writer reopen reconciles the original native delivery with retained creator scope and budget
+  ---
+  duration_ms: 136.0174
+  type: 'test'
+  ...
+# Subtest: WebUI memory corruption: an array-coerced state cannot become a trusted restored mutation
+ok 78 - WebUI memory corruption: an array-coerced state cannot become a trusted restored mutation
+  ---
+  duration_ms: 61.5491
+  type: 'test'
+  ...
+# Subtest: WebUI memory corruption: an array-coerced scope cannot become a trusted restored mutation
+ok 79 - WebUI memory corruption: an array-coerced scope cannot become a trusted restored mutation
+  ---
+  duration_ms: 36.9545
+  type: 'test'
+  ...
+# Subtest: WebUI memory shared namespace: a second approved binding cannot leave the first source's dispatch check stale
+ok 80 - WebUI memory shared namespace: a second approved binding cannot leave the first source's dispatch check stale
+  ---
+  duration_ms: 96.2396
+  type: 'test'
+  ...
+# Subtest: WebUI memory effect boundary: revocation while the real CAS is waiting prevents a new lesson
+ok 81 - WebUI memory effect boundary: revocation while the real CAS is waiting prevents a new lesson
+  ---
+  duration_ms: 101.3331
+  type: 'test'
+  ...
+# Subtest: WebUI memory confirmation: losing the real committed CAS result resolves the exact saved request without applying it again
+ok 82 - WebUI memory confirmation: losing the real committed CAS result resolves the exact saved request without applying it again
+  ---
+  duration_ms: 31.1444
+  type: 'test'
+  ...
+# Subtest: WebUI memory native changes: repeated updates are idempotent and a model cannot replace or forget approved context before human approval
+ok 83 - WebUI memory native changes: repeated updates are idempotent and a model cannot replace or forget approved context before human approval
+  ---
+  duration_ms: 420.3275
+  type: 'test'
+  ...
+# Subtest: WebUI memory native tool: a real model invocation creates only an attributed proposal until a human owner approves it
+ok 84 - WebUI memory native tool: a real model invocation creates only an attributed proposal until a human owner approves it
+  ---
+  duration_ms: 270.2885
+  type: 'test'
+  ...
+# Subtest: WebUI memory native authority: forged invocation scopes cannot create a proposal or select a human owner
+ok 85 - WebUI memory native authority: forged invocation scopes cannot create a proposal or select a human owner
+  ---
+  duration_ms: 30.8207
+  type: 'test'
+  ...
+# Subtest: WebUI memory facet isolation: human-only assembly neither advertises a memory tool nor injects approved lessons into actual model input
+ok 86 - WebUI memory facet isolation: human-only assembly neither advertises a memory tool nor injects approved lessons into actual model input
+  ---
+  duration_ms: 60.0089
+  type: 'test'
+  ...
+# Subtest: WebUI memory: approved lessons affect actual profile/project context while sender proposals remain private and inactive
+ok 87 - WebUI memory: approved lessons affect actual profile/project context while sender proposals remain private and inactive
+  ---
+  duration_ms: 316.1785
+  type: 'test'
+  ...
+# Subtest: WebUI memory versions: stale edits preserve the winner, unapproved replacement preserves current context, and original requests never apply twice
+ok 88 - WebUI memory versions: stale edits preserve the winner, unapproved replacement preserves current context, and original requests never apply twice
+  ---
+  duration_ms: 96.0938
+  type: 'test'
+  ...
+# Subtest: WebUI memory recovery: disabled injection preserves lessons and the original mutation across normal writer reopen without resetting spent quota
+ok 89 - WebUI memory recovery: disabled injection preserves lessons and the original mutation across normal writer reopen without resetting spent quota
+  ---
+  duration_ms: 206.7099
+  type: 'test'
+  ...
+# Subtest: WebUI model choices: an approved profile changes the real next provider request and survives normal reopen without refund
+ok 90 - WebUI model choices: an approved profile changes the real next provider request and survives normal reopen without refund
+  ---
+  duration_ms: 238.705
+  type: 'test'
+  ...
+# Subtest: WebUI model choices: invalid approved model identifiers reject before storage or provider effects
+ok 91 - WebUI model choices: invalid approved model identifiers reject before storage or provider effects
+  ---
+  duration_ms: 27.3349
+  type: 'test'
+  ...
+# Subtest: WebUI notifications: an invalid unsubscribe identity cannot disable a real registered device
+ok 92 - WebUI notifications: an invalid unsubscribe identity cannot disable a real registered device
+  ---
+  duration_ms: 114.7502
+  type: 'test'
+  ...
+# Subtest: WebUI notifications: native event input is captured before asynchronous store preparation
+ok 93 - WebUI notifications: native event input is captured before asynchronous store preparation
+  ---
+  duration_ms: 74.8225
+  type: 'test'
+  ...
+# Subtest: WebUI notifications: revocation after the real dispatch intent commit prevents the actual TLS push
+ok 94 - WebUI notifications: revocation after the real dispatch intent commit prevents the actual TLS push
+  ---
+  duration_ms: 89.9225
+  type: 'test'
+  ...
+# Subtest: WebUI notification audiences: mention preferences cannot notify a different subscribed person
+ok 95 - WebUI notification audiences: mention preferences cannot notify a different subscribed person
+  ---
+  duration_ms: 95.1219
+  type: 'test'
+  ...
+# Subtest: WebUI notifications: real encrypted TLS push, independent VAPID verification, person/resource metadata and unsubscribe
+ok 96 - WebUI notifications: real encrypted TLS push, independent VAPID verification, person/resource metadata and unsubscribe
+  ---
+  duration_ms: 116.2033
+  type: 'test'
+  ...
+# Subtest: WebUI notifications recovery: lost accepted transport remains unknown after retry and normal writer reopen
+ok 97 - WebUI notifications recovery: lost accepted transport remains unknown after retry and normal writer reopen
+  ---
+  duration_ms: 81.8684
+  type: 'test'
+  ...
+# Subtest: WebUI people: invitation expiry is rechecked after session preparation before native commit
+ok 98 - WebUI people: invitation expiry is rechecked after session preparation before native commit
+  ---
+  duration_ms: 60.7255
+  type: 'test'
+  ...
+# Subtest: WebUI people: pending redemption is fenced by invitation revocation before allocation commits
+ok 99 - WebUI people: pending redemption is fenced by invitation revocation before allocation commits
+  ---
+  duration_ms: 37.1466
+  type: 'test'
+  ...
+# Subtest: WebUI people: role changes invalidate old checks and a targeted sign-in preserves the person
+ok 100 - WebUI people: role changes invalidate old checks and a targeted sign-in preserves the person
+  ---
+  duration_ms: 56.762
+  type: 'test'
+  ...
+# Subtest: WebUI people: uncertain native storage closes authority rather than restoring a bootstrap owner
+ok 101 - WebUI people: uncertain native storage closes authority rather than restoring a bootstrap owner
+  ---
+  duration_ms: 29.8954
+  type: 'test'
+  ...
+# Subtest: WebUI people: session rotation is one-time, persists and replaces both bearer and CSRF
+ok 102 - WebUI people: session rotation is one-time, persists and replaces both bearer and CSRF
+  ---
+  duration_ms: 68.0721
+  type: 'test'
+  ...
+# Subtest: WebUI people: malformed nested persisted identity seals the service without rewriting it
+ok 103 - WebUI people: malformed nested persisted identity seals the service without rewriting it
+  ---
+  duration_ms: 33.7067
+  type: 'test'
+  ...
+# Subtest: WebUI people: a redeemed viewer sees only its granted resources and never receives a write grant
+ok 104 - WebUI people: a redeemed viewer sees only its granted resources and never receives a write grant
+  ---
+  duration_ms: 78.309
+  type: 'test'
+  ...
+# Subtest: WebUI people: concurrent one-time redemption grants exactly one session and retries do not mint invitations
+ok 105 - WebUI people: concurrent one-time redemption grants exactly one session and retries do not mint invitations
+  ---
+  duration_ms: 38.0889
+  type: 'test'
+  ...
+# Subtest: WebUI people: normal writer reopen preserves identity and revocation while old bound checks fail
+ok 106 - WebUI people: normal writer reopen preserves identity and revocation while old bound checks fail
+  ---
+  duration_ms: 53.7055
+  type: 'test'
+  ...
+# Subtest: WebUI people: expired authority and revoked invitations cannot regain scope
+ok 107 - WebUI people: expired authority and revoked invitations cannot regain scope
+  ---
+  duration_ms: 39.5239
+  type: 'test'
+  ...
+# Subtest: WebUI schedules: the declared bounded text limit reaches the actual provider unchanged
+ok 108 - WebUI schedules: the declared bounded text limit reaches the actual provider unchanged
+  ---
+  duration_ms: 291.2422
+  type: 'test'
+  ...
+# Subtest: WebUI schedule authority: resource scopes and viewers cannot register native work or claim a different incarnation
+ok 109 - WebUI schedule authority: resource scopes and viewers cannot register native work or claim a different incarnation
+  ---
+  duration_ms: 90.9131
+  type: 'test'
+  ...
+# Subtest: WebUI schedule authority: current driver handover fences a previously committed due input
+ok 110 - WebUI schedule authority: current driver handover fences a previously committed due input
+  ---
+  duration_ms: 603.7161
+  type: 'test'
+  ...
+# Subtest: WebUI schedule authority: a revoked creator cannot release the next scheduled native input
+ok 111 - WebUI schedule authority: a revoked creator cannot release the next scheduled native input
+  ---
+  duration_ms: 602.5179
+  type: 'test'
+  ...
+# Subtest: WebUI schedule uncertainty: losing a real native admission result cannot re-enter it on retry or receipt reads
+ok 112 - WebUI schedule uncertainty: losing a real native admission result cannot re-enter it on retry or receipt reads
+  ---
+  duration_ms: 370.9926
+  type: 'test'
+  ...
+# Subtest: WebUI schedule uncertainty: an unknown native receipt stops 1-run scheduled work
+ok 113 - WebUI schedule uncertainty: an unknown native receipt stops 1-run scheduled work
+  ---
+  duration_ms: 242.1582
+  type: 'test'
+  ...
+# Subtest: WebUI schedule uncertainty: an unknown native receipt stops 2-run scheduled work
+ok 114 - WebUI schedule uncertainty: an unknown native receipt stops 2-run scheduled work
+  ---
+  duration_ms: 244.6271
+  type: 'test'
+  ...
+# Subtest: WebUI schedules: a finite recurring job uses separate native delivery identities and does not reset its consumed quota
+ok 115 - WebUI schedules: a finite recurring job uses separate native delivery identities and does not reset its consumed quota
+  ---
+  duration_ms: 1392.1302
+  type: 'test'
+  ...
+# Subtest: WebUI schedule cancel boundary: a committed cancel intent fences due effects even while the CAS acknowledgement is held
+ok 116 - WebUI schedule cancel boundary: a committed cancel intent fences due effects even while the CAS acknowledgement is held
+  ---
+  duration_ms: 508.8577
+  type: 'test'
+  ...
+# Subtest: WebUI schedule intent uncertainty: loss after the real intent commit never starts work on the original request retry
+ok 117 - WebUI schedule intent uncertainty: loss after the real intent commit never starts work on the original request retry
+  ---
+  duration_ms: 48.2674
+  type: 'test'
+  ...
+# Subtest: WebUI schedules: a real due native job sends once and request reconciliation never re-enters work
+ok 118 - WebUI schedules: a real due native job sends once and request reconciliation never re-enters work
+  ---
+  duration_ms: 706.2154
+  type: 'test'
+  ...
+# Subtest: WebUI schedules: explicit cancel leaves a native terminal receipt and zero provider effects
+ok 119 - WebUI schedules: explicit cancel leaves a native terminal receipt and zero provider effects
+  ---
+  duration_ms: 182.2419
+  type: 'test'
+  ...
+# Subtest: WebUI schedules recovery: a future checkpoint survives a normal writer reopen and keeps the original job and budget
+ok 120 - WebUI schedules recovery: a future checkpoint survives a normal writer reopen and keeps the original job and budget
+  ---
+  duration_ms: 1313.9684
+  type: 'test'
+  ...
+# Subtest: WebUI workspace: shared resource does not share message authority or allow forged actor/request fields
+ok 121 - WebUI workspace: shared resource does not share message authority or allow forged actor/request fields
+  ---
+  duration_ms: 138.9648
+  type: 'test'
+  ...
+# Subtest: WebUI workspace: normal reopen reattaches original creation/admission without allocating or dispatching again
+ok 122 - WebUI workspace: normal reopen reattaches original creation/admission without allocating or dispatching again
+  ---
+  duration_ms: 103.7978
+  type: 'test'
+  ...
+# Subtest: WebUI workspace: cancelled receipt wait preserves native delivery and an explicit follow-up
+ok 123 - WebUI workspace: cancelled receipt wait preserves native delivery and an explicit follow-up
+  ---
+  duration_ms: 121.5896
+  type: 'test'
+  ...
+# Subtest: WebUI workspace: human create/configure/fork stay inside the host-selected profile ceiling
+ok 124 - WebUI workspace: human create/configure/fork stay inside the host-selected profile ceiling
+  ---
+  duration_ms: 160.0642
+  type: 'test'
+  ...
+# Subtest: WebUI workspace: views and actions bind to the real human identity and current resource scope
+ok 125 - WebUI workspace: views and actions bind to the real human identity and current resource scope
+  ---
+  duration_ms: 80.7769
+  type: 'test'
+  ...
+# Subtest: WebUI workspace: a removed profile ceiling during creation produces no native member
+ok 126 - WebUI workspace: a removed profile ceiling during creation produces no native member
+  ---
+  duration_ms: 29.6544
+  type: 'test'
+  ...
+# Subtest: M6 product: an explicitly unselected profile advertises no inherited DevPack tools
+ok 127 - M6 product: an explicitly unselected profile advertises no inherited DevPack tools
+  ---
+  duration_ms: 192.7437
+  type: 'test'
+  ...
+# Subtest: M6 product: executable trusted bootstrap installs optional tools without amplifying model-created descendants
+ok 128 - M6 product: executable trusted bootstrap installs optional tools without amplifying model-created descendants
+  ---
+  duration_ms: 713.0506
+  type: 'test'
+  ...
+# Subtest: M6 product: normal closed reopen preserves real admission and spent quota without hidden replay
+ok 129 - M6 product: normal closed reopen preserves real admission and spent quota without hidden replay
+  ---
+  duration_ms: 174.5724
+  type: 'test'
+  ...
+# Subtest: M6 product: explicit normal reopen retains authorized dynamic descendants without rewriting the bootstrap roots
+ok 130 - M6 product: explicit normal reopen retains authorized dynamic descendants without rewriting the bootstrap roots
+  ---
+  duration_ms: 287.7233
+  type: 'test'
+  ...
+# Subtest: M6 product: task-bound model-created member cannot receive work after its creating tool task ends
+ok 131 - M6 product: task-bound model-created member cannot receive work after its creating tool task ends
+  ---
+  duration_ms: 252.7543
+  type: 'test'
+  ...
+# Subtest: M6 product: temporary model-created member cannot receive work after its creating tool task ends
+ok 132 - M6 product: temporary model-created member cannot receive work after its creating tool task ends
+  ---
+  duration_ms: 251.1984
+  type: 'test'
+  ...
+# Subtest: M6 product: background member survives its creating tool and requires explicit owner retirement
+ok 133 - M6 product: background member survives its creating tool and requires explicit owner retirement
+  ---
+  duration_ms: 427.8981
+  type: 'test'
+  ...
+# Subtest: M6 product: RPC profile-changing grants are refused before storage when model contributions are enabled
+ok 134 - M6 product: RPC profile-changing grants are refused before storage when model contributions are enabled
+  ---
+  duration_ms: 23.6534
+  type: 'test'
+  ...
+# Subtest: M3 review: invalid reserved Session identity is refused at manager construction: ../../outside-reservation
+ok 135 - M3 review: invalid reserved Session identity is refused at manager construction: ../../outside-reservation
+  ---
+  duration_ms: 15.066
+  type: 'test'
+  ...
+# Subtest: M3 review: invalid reserved Session identity is refused at manager construction: not-a-uuid
+ok 136 - M3 review: invalid reserved Session identity is refused at manager construction: not-a-uuid
+  ---
+  duration_ms: 4.519
+  type: 'test'
+  ...
+# Subtest: M3 review: invalid reserved Session identity is refused at manager construction: 91383703-b5ca-441c-81de-72b487a3e2bg
+ok 137 - M3 review: invalid reserved Session identity is refused at manager construction: 91383703-b5ca-441c-81de-72b487a3e2bg
+  ---
+  duration_ms: 3.8538
+  type: 'test'
+  ...
+# Subtest: M3 review: invalid reserved Session identity is refused at manager construction: 91383703-b5ca-441c-81de-72b487a3e2bA
+ok 138 - M3 review: invalid reserved Session identity is refused at manager construction: 91383703-b5ca-441c-81de-72b487a3e2bA
+  ---
+  duration_ms: 3.7648
+  type: 'test'
+  ...
+# Subtest: M3 workers: two real isolated processes admit A2A and graceful reopen preserves identity/dedup
+ok 139 - M3 workers: two real isolated processes admit A2A and graceful reopen preserves identity/dedup
+  ---
+  duration_ms: 1266.0685
+  type: 'test'
+  ...
+# Subtest: M3 workers: controlled process exit and duplicate writer cannot affect a surviving peer
+ok 140 - M3 workers: controlled process exit and duplicate writer cannot affect a surviving peer
+  ---
+  duration_ms: 1196.7224
+  type: 'test'
+  ...
+# Subtest: M3 workers: capacity rejects allocation before starting an extra process
+ok 141 - M3 workers: capacity rejects allocation before starting an extra process
+  ---
+  duration_ms: 366.1509
+  type: 'test'
+  ...
+# Subtest: M3 workers: private IPC rejects unsupported protocol, copied generation and unapproved lifetime
+ok 142 - M3 workers: private IPC rejects unsupported protocol, copied generation and unapproved lifetime
+  ---
+  duration_ms: 347.7491
+  type: 'test'
+  ...
+# Subtest: WebUI appearance: font and size survive reload without sending the draft, with mobile Send beside input mode
+ok 143 - WebUI appearance: font and size survive reload without sending the draft, with mobile Send beside input mode
+  ---
+  duration_ms: 1778.863
+  type: 'test'
+  ...
+# Subtest: WebUI approval panel: actual browser decisions release or deny original native effects and viewer cannot decide
+ok 144 - WebUI approval panel: actual browser decisions release or deny original native effects and viewer cannot decide
+  ---
+  duration_ms: 2774.6085
+  type: 'test'
+  ...
+# Subtest: WebUI browser contribution: actual UI controls owned page, real frame renders, mobile viewer cannot act
+    # Subtest: recorded wrapper cannot resolve an unconfirmed native browser action
+    ok 1 - recorded wrapper cannot resolve an unconfirmed native browser action
+      ---
+      duration_ms: 146.7468
+      type: 'test'
+      ...
+    1..1
+ok 145 - WebUI browser contribution: actual UI controls owned page, real frame renders, mobile viewer cannot act
+  ---
+  duration_ms: 3251.9949
+  type: 'test'
+  ...
+# Subtest: Browser input driver: Enter activates a plain native button, not only synthetic key handlers
+ok 146 - Browser input driver: Enter activates a plain native button, not only synthetic key handlers
+  ---
+  duration_ms: 465.47
+  type: 'test'
+  ...
+# Subtest: Browser discovery: explicit executable is canonical and a broken override never falls back
+ok 147 - Browser discovery: explicit executable is canonical and a broken override never falls back
+  ---
+  duration_ms: 4.6327
+  type: 'test'
+  ...
+# Subtest: Browser discovery: PATH finds a real executable and rejects a nonexecutable candidate
+ok 148 - Browser discovery: PATH finds a real executable and rejects a nonexecutable candidate
+  ---
+  duration_ms: 4.343
+  type: 'test'
+  ...
+# Subtest: WebUI browser: actual adopted workbench, invitation and two isolated users respect live server visibility
+ok 149 - WebUI browser: actual adopted workbench, invitation and two isolated users respect live server visibility
+  ---
+  duration_ms: 1888.3455
+  type: 'test'
+  ...
+# Subtest: WebUI busy browser: after native admission the user can steer and follow up while original inference is blocked
+ok 150 - WebUI busy browser: after native admission the user can steer and follow up while original inference is blocked
+  ---
+  duration_ms: 1067.3172
+  type: 'test'
+  ...
+# Subtest: WebUI collaboration browser: attributed human work, driver handoff and scoped mobile live updates
+ok 151 - WebUI collaboration browser: attributed human work, driver handoff and scoped mobile live updates
+  ---
+  duration_ms: 2487.2629
+  type: 'test'
+  ...
+# Subtest: WebUI collaboration HTTP: scoped attributed events, viewer participation and definite note conflict
+ok 152 - WebUI collaboration HTTP: scoped attributed events, viewer participation and definite note conflict
+  ---
+  duration_ms: 308.5677
+  type: 'test'
+  ...
+# Subtest: WebUI collaboration: a real late read cannot reopen or populate another Conversation
+ok 153 - WebUI collaboration: a real late read cannot reopen or populate another Conversation
+  ---
+  duration_ms: 777.8297
+  type: 'test'
+  ...
+# Subtest: composer focus follows the rounded outer card for pointer and keyboard input
+    # Subtest: conversation 1440px pointer and Tab
+    ok 1 - conversation 1440px pointer and Tab
+      ---
+      duration_ms: 142.6617
+      type: 'test'
+      ...
+    # Subtest: conversation 1440px Tab visibly outlines each split button
+    ok 2 - conversation 1440px Tab visibly outlines each split button
+      ---
+      duration_ms: 442.4159
+      type: 'test'
+      ...
+    # Subtest: conversation 390px pointer and Tab
+    ok 3 - conversation 390px pointer and Tab
+      ---
+      duration_ms: 549.969
+      type: 'test'
+      ...
+    # Subtest: conversation 390px Tab visibly outlines each split button
+    ok 4 - conversation 390px Tab visibly outlines each split button
+      ---
+      duration_ms: 315.1582
+      type: 'test'
+      ...
+    # Subtest: Stop, Steer Send and mode retain separate focus while a real turn runs
+    ok 5 - Stop, Steer Send and mode retain separate focus while a real turn runs
+      ---
+      duration_ms: 269.2558
+      type: 'test'
+      ...
+    1..5
+ok 154 - composer focus follows the rounded outer card for pointer and keyboard input
+  ---
+  duration_ms: 2575.1342
+  type: 'test'
+  ...
+# Subtest: WebUI composer: a refused send explains itself in every mode, without moving the card, and Stop owns the primary slot
+ok 155 - WebUI composer: a refused send explains itself in every mode, without moving the card, and Stop owns the primary slot
+  ---
+  duration_ms: 840.1682
+  type: 'test'
+  ...
+# Subtest: WebUI executable: trusted ESM root composes the real optional Agent and WebUI facets
+ok 156 - WebUI executable: trusted ESM root composes the real optional Agent and WebUI facets
+  ---
+  duration_ms: 1790.6237
+  type: 'test'
+  ...
+# Subtest: WebUI ESM configuration: finite source selection, malformed exports, opaque failures and redacted output
+ok 157 - WebUI ESM configuration: finite source selection, malformed exports, opaque failures and redacted output
+  ---
+  duration_ms: 1939.3326
+  type: 'test'
+  ...
+# Subtest: WebUI configuration browser: compact model choice changes provider input while mobile viewer cannot configure or read Session totals
+ok 158 - WebUI configuration browser: compact model choice changes provider input while mobile viewer cannot configure or read Session totals
+  ---
+  duration_ms: 1833.3978
+  type: 'test'
+  ...
+# D:\\Projects\\pakka-wt\\webui-p0\\artifacts\\integration\\settings-screenshots
+# Subtest: WebUI settings recovery: lost configure response locks mutations and explicit workspace reload only reads the new incarnation
+ok 159 - WebUI settings recovery: lost configure response locks mutations and explicit workspace reload only reads the new incarnation
+  ---
+  duration_ms: 883.3979
+  type: 'test'
+  ...
+# Subtest: WebUI settings recovery: a real delayed response from the old resource cannot populate the replacement sheet
+ok 160 - WebUI settings recovery: a real delayed response from the old resource cannot populate the replacement sheet
+  ---
+  duration_ms: 722.4205
+  type: 'test'
+  ...
+# Subtest: Conversation creation browser: the dedicated form creates its explicit parent and uses the chosen initial model and directory only after confirmation
+ok 161 - Conversation creation browser: the dedicated form creates its explicit parent and uses the chosen initial model and directory only after confirmation
+  ---
+  duration_ms: 982.8151
+  type: 'test'
+  ...
+# Subtest: Conversation dialog lost before-send: navigation and reconciliation never replace an uncertain admission
+ok 162 - Conversation dialog lost before-send: navigation and reconciliation never replace an uncertain admission
+  ---
+  duration_ms: 792.3792
+  type: 'test'
+  ...
+# Subtest: Conversation dialog lost after-commit: navigation and reconciliation never replace an uncertain admission
+ok 163 - Conversation dialog lost after-commit: navigation and reconciliation never replace an uncertain admission
+  ---
+  duration_ms: 820.6524
+  type: 'test'
+  ...
+# Subtest: Two-step creation loses session.create response: the native parent survives and is never created twice
+ok 164 - Two-step creation loses session.create response: the native parent survives and is never created twice
+  ---
+  duration_ms: 803.3335
+  type: 'test'
+  ...
+# Subtest: Two-step creation loses create response: the native parent survives and is never created twice
+ok 165 - Two-step creation loses create response: the native parent survives and is never created twice
+  ---
+  duration_ms: 780.0627
+  type: 'test'
+  ...
+# Subtest: WebUI private settings browser: explicit replacement and clear affect actual provider auth without round-tripping or browser persistence
+ok 166 - WebUI private settings browser: explicit replacement and clear affect actual provider auth without round-tripping or browser persistence
+  ---
+  duration_ms: 2087.3481
+  type: 'test'
+  ...
+# D:\\Projects\\pakka-wt\\webui-p0\\artifacts\\integration\\private-settings-screenshots
+# Subtest: WebUI private settings recovery: a lost committed response clears the input and only reads state before another explicit change
+ok 167 - WebUI private settings recovery: a lost committed response clears the input and only reads state before another explicit change
+  ---
+  duration_ms: 953.0864
+  type: 'test'
+  ...
+# Subtest: WebUI private HTTP: real product preserves the host resolver, scopes replace/clear, never returns secrets and reopens cleared
+ok 168 - WebUI private HTTP: real product preserves the host resolver, scopes replace/clear, never returns secrets and reopens cleared
+  ---
+  duration_ms: 474.474
+  type: 'test'
+  ...
+# Subtest: reference frontend adoption: retained reference chrome, explicit creation without home naming, palette and real conversation
+ok 169 - reference frontend adoption: retained reference chrome, explicit creation without home naming, palette and real conversation
+  ---
+  duration_ms: 2537.0464
+  type: 'test'
+  ...
+# Subtest: Devin palette: keyboard/search and extension settings preserve the dialog handoff on desktop and phone
+ok 170 - Devin palette: keyboard/search and extension settings preserve the dialog handoff on desktop and phone
+  ---
+  duration_ms: 1180.898
+  type: 'test'
+  ...
+# Subtest: Devin reference: exact pinned LF CSS, protected from checkout/formatting and no legacy stylesheet chain
+ok 171 - Devin reference: exact pinned LF CSS, protected from checkout/formatting and no legacy stylesheet chain
+  ---
+  duration_ms: 3.1703
+  type: 'test'
+  ...
+# Subtest: Devin frontend: the creation dialog inherits the selected model; responsive navigation preserves explicit native input
+ok 172 - Devin frontend: the creation dialog inherits the selected model; responsive navigation preserves explicit native input
+  ---
+  duration_ms: 2520.8576
+  type: 'test'
+  ...
+# Subtest: WebUI error history: a cleared-credential failure stays readable after restart without replay
+ok 173 - WebUI error history: a cleared-credential failure stays readable after restart without replay
+  ---
+  duration_ms: 939.8821
+  type: 'test'
+  ...
+# Subtest: WebUI SSE: normal large frame handles backpressure and remains subscribed for the next real commit
+ok 174 - WebUI SSE: normal large frame handles backpressure and remains subscribed for the next real commit
+  ---
+  duration_ms: 180.4598
+  type: 'test'
+  ...
+# Subtest: WebUI SSE: initial scoped snapshot and subsequent committed update cross the same real authorization boundary
+ok 175 - WebUI SSE: initial scoped snapshot and subsequent committed update cross the same real authorization boundary
+  ---
+  duration_ms: 197.2022
+  type: 'test'
+  ...
+# Subtest: WebUI SSE: reconnect with stale cursor explicitly resnapshots current authorized state
+ok 176 - WebUI SSE: reconnect with stale cursor explicitly resnapshots current authorized state
+  ---
+  duration_ms: 71.0919
+  type: 'test'
+  ...
+# Subtest: WebUI executable starts through the symlinked npm bin path without exposing the owner token
+ok 177 - WebUI executable starts through the symlinked npm bin path without exposing the owner token
+  ---
+  duration_ms: 479.6561
+  type: 'test'
+  ...
+# Subtest: Importing the WebUI executable does not start it
+ok 178 - Importing the WebUI executable does not start it
+  ---
+  duration_ms: 312.2358
+  type: 'test'
+  ...
+# Subtest: Extension browser: unchanged GUI-only and settings packages use public slots, one Preact, shared slash/button dispatch and private state
+ok 179 - Extension browser: unchanged GUI-only and settings packages use public slots, one Preact, shared slash/button dispatch and private state
+  ---
+  duration_ms: 1270.3288
+  type: 'test'
+  ...
+# Subtest: Extension client: original-result reads reject a different extension, request or actor without replay
+ok 180 - Extension client: original-result reads reject a different extension, request or actor without replay
+  ---
+  duration_ms: 38.7502
+  type: 'test'
+  ...
+# Subtest: Extension client: lost/malformed or mismatched response stays unknown and does not replay a write
+ok 181 - Extension client: lost/malformed or mismatched response stays unknown and does not replay a write
+  ---
+  duration_ms: 6.6849
+  type: 'test'
+  ...
+# Subtest: Extension product config: explicit trusted roots/facets survive finite decoding; arbitrary runtime/service injection is refused
+ok 182 - Extension product config: explicit trusted roots/facets survive finite decoding; arbitrary runtime/service injection is refused
+  ---
+  duration_ms: 1.3753
+  type: 'test'
+  ...
+# Subtest: Extension contract: GUI-only registration is inert, closed and frozen without backend/model requirements
+ok 183 - Extension contract: GUI-only registration is inert, closed and frozen without backend/model requirements
+  ---
+  duration_ms: 1.0429
+  type: 'test'
+  ...
+# Subtest: Extension contract: unsafe paths, unbounded schemas and missing command handlers cannot become registrations
+ok 184 - Extension contract: unsafe paths, unbounded schemas and missing command handlers cannot become registrations
+  ---
+  duration_ms: 0.8203
+  type: 'test'
+  ...
+# Subtest: Extension contract: per-action finite input rejects unknown fields and oversized/nested non-JSON values
+ok 185 - Extension contract: per-action finite input rejects unknown fields and oversized/nested non-JSON values
+  ---
+  duration_ms: 1.0234
+  type: 'test'
+  ...
+# Subtest: Extension backend: actual scoped CAS setting and display-only card are reconciled; private user setting never becomes model input
+ok 186 - Extension backend: actual scoped CAS setting and display-only card are reconciled; private user setting never becomes model input
+  ---
+  duration_ms: 188.8289
+  type: 'test'
+  ...
+# Subtest: Extension backend: a real native effect then failure remains unknown and identical retry never re-enters the handler
+ok 187 - Extension backend: a real native effect then failure remains unknown and identical retry never re-enters the handler
+  ---
+  duration_ms: 120.5237
+  type: 'test'
+  ...
+# Subtest: Extension backend: viewer cannot mutate and stale generations or modified assets are refused
+ok 188 - Extension backend: viewer cannot mutate and stale generations or modified assets are refused
+  ---
+  duration_ms: 71.4521
+  type: 'test'
+  ...
+# Subtest: Extension backend: normal writer reopen reconciles done/unknown records and user settings without re-executing native effects
+ok 189 - Extension backend: normal writer reopen reconciles done/unknown records and user settings without re-executing native effects
+  ---
+  duration_ms: 156.8857
+  type: 'test'
+  ...
+# Subtest: Extension backend: revocation while a declared service awaits prevents the later controlled display effect
+ok 190 - Extension backend: revocation while a declared service awaits prevents the later controlled display effect
+  ---
+  duration_ms: 80.2238
+  type: 'test'
+  ...
+# Subtest: Extension backend: user settings and operation receipts cannot be read using another authorized person's session
+ok 191 - Extension backend: user settings and operation receipts cannot be read using another authorized person's session
+  ---
+  duration_ms: 79.454
+  type: 'test'
+  ...
+# Subtest: Extension HTTP: current person/resource/CSRF bind calls and accepted assets; viewer and private paths have no effect
+ok 192 - Extension HTTP: current person/resource/CSRF bind calls and accepted assets; viewer and private paths have no effect
+  ---
+  duration_ms: 377.3268
+  type: 'test'
+  ...
+# Subtest: Extension HTTP: real effect with lost handler result stays unknown through public client; disable seals old generation
+ok 193 - Extension HTTP: real effect with lost handler result stays unknown through public client; disable seals old generation
+  ---
+  duration_ms: 292.559
+  type: 'test'
+  ...
+# Subtest: Extension ingress: an approved non-MAS service verifies exact raw bytes without Cookie authority or model dispatch
+ok 194 - Extension ingress: an approved non-MAS service verifies exact raw bytes without Cookie authority or model dispatch
+  ---
+  duration_ms: 118.5596
+  type: 'test'
+  ...
+# Subtest: Extension ingress: finite bodies, declared service, transport Origin and signatures fail before any target write
+ok 195 - Extension ingress: finite bodies, declared service, transport Origin and signatures fail before any target write
+  ---
+  duration_ms: 90.4476
+  type: 'test'
+  ...
+# Subtest: Extension ingress: closing a backend generation blocks a waiting real disk effect and prevents a later invocation
+ok 196 - Extension ingress: closing a backend generation blocks a waiting real disk effect and prevents a later invocation
+  ---
+  duration_ms: 143.6119
+  type: 'test'
+  ...
+# Subtest: Extension ingress: a finite deadline returns unknown and a late handler cannot write after its live check expires
+ok 197 - Extension ingress: a finite deadline returns unknown and a late handler cannot write after its live check expires
+  ---
+  duration_ms: 128.4788
+  type: 'test'
+  ...
+# Subtest: Extension ingress: mutating the host's original route cannot expand its approved bound or replace its handler
+ok 198 - Extension ingress: mutating the host's original route cannot expand its approved bound or replace its handler
+  ---
+  duration_ms: 67.7362
+  type: 'test'
+  ...
+# Subtest: Extension initialization: failed import stays unavailable across native writer reopen until explicit reload
+ok 199 - Extension initialization: failed import stays unavailable across native writer reopen until explicit reload
+  ---
+  duration_ms: 111.786
+  type: 'test'
+  ...
+# Subtest: Extension initialization: writer closes after a real HTTP effect while import is pending; reopen does not re-enter or await it
+ok 200 - Extension initialization: writer closes after a real HTTP effect while import is pending; reopen does not re-enter or await it
+  ---
+  duration_ms: 58.4664
+  type: 'test'
+  ...
+# Subtest: Extension interface: old callbacks cannot close/notify/reopen a replacement; disable removes only its public UI
+ok 201 - Extension interface: old callbacks cannot close/notify/reopen a replacement; disable removes only its public UI
+  ---
+  duration_ms: 2799.0804
+  type: 'test'
+  ...
+# Subtest: WebUI service assembly: trusted factory receives the existing writer/identity and original owner on normal reopen
+ok 202 - WebUI service assembly: trusted factory receives the existing writer/identity and original owner on normal reopen
+  ---
+  duration_ms: 130.1043
+  type: 'test'
+  ...
+# Subtest: Extension staging: a batch identity/command collision is rejected before any backend module effect
+ok 203 - Extension staging: a batch identity/command collision is rejected before any backend module effect
+  ---
+  duration_ms: 108.8073
+  type: 'test'
+  ...
+# Subtest: Extension staging: a failed backend import seals the registration as unknown until explicit successful reload
+ok 204 - Extension staging: a failed backend import seals the registration as unknown until explicit successful reload
+  ---
+  duration_ms: 106.4889
+  type: 'test'
+  ...
+# Subtest: Extension staging: repeated enable/disable retains a finite discoverable generation and refuses public junctions
+ok 205 - Extension staging: repeated enable/disable retains a finite discoverable generation and refuses public junctions
+  ---
+  duration_ms: 151.5354
+  type: 'test'
+  ...
+# Subtest: Extension facets: a client-only entry is served without loading backend or requiring a Web interface
+ok 206 - Extension facets: a client-only entry is served without loading backend or requiring a Web interface
+  ---
+  duration_ms: 54.7523
+  type: 'test'
+  ...
+# Subtest: Extension facets: persisted disable does not execute its backend on host reopen
+ok 207 - Extension facets: persisted disable does not execute its backend on host reopen
+  ---
+  duration_ms: 92.2444
+  type: 'test'
+  ...
+# Subtest: WebUI files browser: real edit conflicts keep drafts while a mobile viewer decodes an image without write authority
+ok 208 - WebUI files browser: real edit conflicts keep drafts while a mobile viewer decodes an image without write authority
+  ---
+  duration_ms: 2093.7212
+  type: 'test'
+  ...
+# Subtest: WebUI files browser: public extension performs actual edits upload diff branch/worktree effects without hidden model input
+ok 209 - WebUI files browser: public extension performs actual edits upload diff branch/worktree effects without hidden model input
+  ---
+  duration_ms: 4374.04
+  type: 'test'
+  ...
+# Subtest: WebUI file contribution: disable after real intent commit prevents a late disk effect
+ok 210 - WebUI file contribution: disable after real intent commit prevents a late disk effect
+  ---
+  duration_ms: 173.0052
+  type: 'test'
+  ...
+# Subtest: WebUI file contribution: abort after real intent commit prevents a late disk effect
+ok 211 - WebUI file contribution: abort after real intent commit prevents a late disk effect
+  ---
+  duration_ms: 127.8753
+  type: 'test'
+  ...
+# Subtest: WebUI history browser: explicit earlier pages remain searchable across live updates without implicit inference
+ok 212 - WebUI history browser: explicit earlier pages remain searchable across live updates without implicit inference
+  ---
+  duration_ms: 2131.9326
+  type: 'test'
+  ...
+# Subtest: WebUI hooks browser: human setup, signed real HTTP, key rotation, private mobile viewer and removal use ordinary extension slots
+ok 213 - WebUI hooks browser: human setup, signed real HTTP, key rotation, private mobile viewer and removal use ordinary extension slots
+  ---
+  duration_ms: 2208.6639
+  type: 'test'
+  ...
+# D:\\Projects\\pakka-wt\\webui-p0\\artifacts\\integration\\hook-screenshots
+# Subtest: WebUI hooks busy product: native queued input survives completed HTTP and extension disable while new ingress is refused
+ok 214 - WebUI hooks busy product: native queued input survives completed HTTP and extension disable while new ingress is refused
+  ---
+  duration_ms: 327.4255
+  type: 'test'
+  ...
+# Subtest: WebUI hooks private read: a real setup response delayed across panel replacement cannot reveal a key in the new instance
+ok 215 - WebUI hooks private read: a real setup response delayed across panel replacement cannot reveal a key in the new instance
+  ---
+  duration_ms: 912.9202
+  type: 'test'
+  ...
+# Subtest: WebUI hooks recovery: lost response is checked read-only after panel reopen without creating another hook
+ok 216 - WebUI hooks recovery: lost response is checked read-only after panel reopen without creating another hook
+  ---
+  duration_ms: 992.4086
+  type: 'test'
+  ...
+# Subtest: WebUI hooks recovery: lost handler is checked read-only after panel reopen without creating another hook
+ok 217 - WebUI hooks recovery: lost handler is checked read-only after panel reopen without creating another hook
+  ---
+  duration_ms: 911.4055
+  type: 'test'
+  ...
+# Subtest: WebUI hooks mobile operator: generic setup fits the real phone view without persisting its secret address or triggering a model
+ok 218 - WebUI hooks mobile operator: generic setup fits the real phone view without persisting its secret address or triggering a model
+  ---
+  duration_ms: 1941.0078
+  type: 'test'
+  ...
+# D:\\Projects\\pakka-wt\\webui-p0\\artifacts\\integration\\hook-screenshots
+# Subtest: WebUI HTTP: real cookie workbench negotiates v2, records human card, admits native work and recovers its receipt
+ok 219 - WebUI HTTP: real cookie workbench negotiates v2, records human card, admits native work and recovers its receipt
+  ---
+  duration_ms: 233.0094
+  type: 'test'
+  ...
+# Subtest: WebUI HTTP: authentication, host/origin/CSRF and finite envelopes fence the real native effects
+ok 220 - WebUI HTTP: authentication, host/origin/CSRF and finite envelopes fence the real native effects
+  ---
+  duration_ms: 119.5328
+  type: 'test'
+  ...
+# Subtest: WebUI HTTP: one-time invited viewer receives only its authorized resource and cannot drive or retain revoked access
+ok 221 - WebUI HTTP: one-time invited viewer receives only its authorized resource and cannot drive or retain revoked access
+  ---
+  duration_ms: 130.1584
+  type: 'test'
+  ...
+# Subtest: WebUI CSP: import maps execute with LF, CRLF and CR source newlines
+ok 222 - WebUI CSP: import maps execute with LF, CRLF and CR source newlines
+  ---
+  duration_ms: 795.8898
+  type: 'test'
+  ...
+# Subtest: Conversation configuration browser: configured models need no preset grant and remain independent of title-only directories on 3:5 mobile
+ok 223 - Conversation configuration browser: configured models need no preset grant and remain independent of title-only directories on 3:5 mobile
+  ---
+  duration_ms: 2197.7764
+  type: 'test'
+  ...
+# Subtest: WebUI failed input: an unavailable recipient refuses new admission while its original receipt and spent attempts remain
+ok 224 - WebUI failed input: an unavailable recipient refuses new admission while its original receipt and spent attempts remain
+  ---
+  duration_ms: 209.9165
+  type: 'test'
+  ...
+# Subtest: WebUI failed input browser: a known refusal explains how to continue without offering a meaningless retry or replaying the original
+ok 225 - WebUI failed input browser: a known refusal explains how to continue without offering a meaningless retry or replaying the original
+  ---
+  duration_ms: 943.507
+  type: 'test'
+  ...
+# Subtest: WebUI executable: explicit config starts real product and writes its owner link only to the designated private file
+ok 226 - WebUI executable: explicit config starts real product and writes its owner link only to the designated private file
+  ---
+  duration_ms: 510.8087
+  type: 'test'
+  ...
+# Subtest: WebUI executable: unknown configuration, unsafe proxy shortcut and existing owner file fail before storage or provider effects
+ok 227 - WebUI executable: unknown configuration, unsafe proxy shortcut and existing owner file fail before storage or provider effects
+  ---
+  duration_ms: 1409.9154
+  type: 'test'
+  ...
+# Subtest: MAS facet removal: the fixed approved profile set reopens, explicit owner configuration removes current tools and preserves original history/receipt
+ok 228 - MAS facet removal: the fixed approved profile set reopens, explicit owner configuration removes current tools and preserves original history/receipt
+  ---
+  duration_ms: 425.9795
+  type: 'test'
+  ...
+# Subtest: MAS Board: busy native steer/follow-up and confirmed abort keep the persistent member
+ok 229 - MAS Board: busy native steer/follow-up and confirmed abort keep the persistent member
+  ---
+  duration_ms: 1829.7436
+  type: 'test'
+  ...
+# Subtest: MAS Agent controls are a separate dismissible sheet at 1440x900
+ok 230 - MAS Agent controls are a separate dismissible sheet at 1440x900
+  ---
+  duration_ms: 1260.9364
+  type: 'test'
+  ...
+# Subtest: MAS Agent controls are a separate dismissible sheet at 360x600
+ok 231 - MAS Agent controls are a separate dismissible sheet at 360x600
+  ---
+  duration_ms: 1850.7234
+  type: 'test'
+  ...
+# Subtest: MAS Agent controls are a separate dismissible sheet at 390x650
+ok 232 - MAS Agent controls are a separate dismissible sheet at 390x650
+  ---
+  duration_ms: 1842.5823
+  type: 'test'
+  ...
+# Subtest: MAS retired Agents can be hidden and restored across reload without losing exchanges or history
+ok 233 - MAS retired Agents can be hidden and restored across reload without losing exchanges or history
+  ---
+  duration_ms: 1464.6858
+  type: 'test'
+  ...
+# Subtest: MAS controls preserve a lost-response operation across panel reopen and reconcile without resending
+ok 234 - MAS controls preserve a lost-response operation across panel reopen and reconcile without resending
+  ---
+  duration_ms: 993.9987
+  type: 'test'
+  ...
+# Subtest: MAS Board: server-filtered mobile reader; removing UI preserves admitted work, members, history and normal reopen
+ok 235 - MAS Board: server-filtered mobile reader; removing UI preserves admitted work, members, history and normal reopen
+  ---
+  duration_ms: 3008.837
+  type: 'test'
+  ...
+# Subtest: MAS Board: public plugin observes real model-created child and human controls retain its native lifetime/owner
+ok 236 - MAS Board: public plugin observes real model-created child and human controls retain its native lifetime/owner
+  ---
+  duration_ms: 2713.0098
+  type: 'test'
+  ...
+# Subtest: MAS frontend adoption: one workspace header, Graph/Activity/Agents and contextual inspector
+ok 237 - MAS frontend adoption: one workspace header, Graph/Activity/Agents and contextual inspector
+  ---
+  duration_ms: 1464.2015
+  type: 'test'
+  ...
+# Subtest: MAS resources: common Conversation navigation preserves MAS ownership, model admission and current read scope
+ok 238 - MAS resources: common Conversation navigation preserves MAS ownership, model admission and current read scope
+  ---
+  duration_ms: 282.7049
+  type: 'test'
+  ...
+# Subtest: Team waits for its stylesheet and fails closed when it is loaded
+ok 239 - Team waits for its stylesheet and fails closed when it is loaded
+  ---
+  duration_ms: 1083.2428
+  type: 'test'
+  ...
+# Subtest: Team waits for its stylesheet and fails closed when it is failed
+ok 240 - Team waits for its stylesheet and fails closed when it is failed
+  ---
+  duration_ms: 642.5686
+  type: 'test'
+  ...
+# Subtest: WebUI memory browser: real sender proposal, owner approval, preserved conflict draft, current provider context and mobile read-only view
+ok 241 - WebUI memory browser: real sender proposal, owner approval, preserved conflict draft, current provider context and mobile read-only view
+  ---
+  duration_ms: 3785.9721
+  type: 'test'
+  ...
+# D:\\Projects\\pakka-wt\\webui-p0\\artifacts\\integration\\memory-screenshots
+# Subtest: WebUI memory recovery: a lost browser-response is resolved from the original committed mutation without another write
+ok 242 - WebUI memory recovery: a lost browser-response is resolved from the original committed mutation without another write
+  ---
+  duration_ms: 1048.236
+  type: 'test'
+  ...
+# Subtest: WebUI memory recovery: a lost backend-response is resolved from the original committed mutation without another write
+ok 243 - WebUI memory recovery: a lost backend-response is resolved from the original committed mutation without another write
+  ---
+  duration_ms: 910.4235
+  type: 'test'
+  ...
+# Subtest: WebUI mobile sidebar: outside click and Escape return to the same conversation without sending the draft
+ok 244 - WebUI mobile sidebar: outside click and Escape return to the same conversation without sending the draft
+  ---
+  duration_ms: 2106.3105
+  type: 'test'
+  ...
+# Subtest: Model catalogue: unique configured models are visible without a second WebUI model allowlist or preset cwd metadata
+ok 245 - Model catalogue: unique configured models are visible without a second WebUI model allowlist or preset cwd metadata
+  ---
+  duration_ms: 121.4174
+  type: 'test'
+  ...
+# Subtest: Model catalogue: the maximum JSON configuration publishes all 65 unique models through real authenticated HTTP
+ok 246 - Model catalogue: the maximum JSON configuration publishes all 65 unique models through real authenticated HTTP
+  ---
+  duration_ms: 112.0254
+  type: 'test'
+  ...
+# Subtest: Model catalogue: model-only selection and inheritance reach the real provider and survive reopen without changing Agent presets
+ok 247 - Model catalogue: model-only selection and inheritance reach the real provider and survive reopen without changing Agent presets
+  ---
+  duration_ms: 200.5634
+  type: 'test'
+  ...
+# Subtest: Model catalogue: configuration hints agree with existing resource write authority
+ok 248 - Model catalogue: configuration hints agree with existing resource write authority
+  ---
+  duration_ms: 120.0696
+  type: 'test'
+  ...
+# Subtest: Approved directory roots: host JSON admits project trees without combination profiles and refuses changed recovery authority
+ok 249 - Approved directory roots: host JSON admits project trees without combination profiles and refuses changed recovery authority
+  ---
+  duration_ms: 152.9915
+  type: 'test'
+  ...
+# Subtest: WebUI model configuration: configured JSON models reach the real product provider; extra credential/endpoint fields stay rejected
+ok 250 - WebUI model configuration: configured JSON models reach the real product provider; extra credential/endpoint fields stay rejected
+  ---
+  duration_ms: 133.6767
+  type: 'test'
+  ...
+# Subtest: Model index: small catalogs support fuzzy input, cyclic navigation, empty results and cancellation
+ok 251 - Model index: small catalogs support fuzzy input, cyclic navigation, empty results and cancellation
+  ---
+  duration_ms: 721.7791
+  type: 'test'
+  ...
+# Subtest: Model index: long lists retain visible input/index and ranked keyboard confirmation reaches the real provider
+ok 252 - Model index: long lists retain visible input/index and ranked keyboard confirmation reaches the real provider
+  ---
+  duration_ms: 1581.548
+  type: 'test'
+  ...
+# Subtest: Model picker: larger approved catalog is searchable and keyboard selection changes neither cwd nor provider budget
+ok 253 - Model picker: larger approved catalog is searchable and keyboard selection changes neither cwd nor provider budget
+  ---
+  duration_ms: 711.841
+  type: 'test'
+  ...
+# Subtest: WebUI navigation browser: rename/archive/search/restore, reviewed resend, real fork and keyboard history have actual subsequent effects
+ok 254 - WebUI navigation browser: rename/archive/search/restore, reviewed resend, real fork and keyboard history have actual subsequent effects
+  ---
+  duration_ms: 1496.0068
+  type: 'test'
+  ...
+# Subtest: WebUI metadata single writer: competing CAS admits one; finite capacity preserves original receipts and never prunes/replays
+ok 255 - WebUI metadata single writer: competing CAS admits one; finite capacity preserves original receipts and never prunes/replays
+  ---
+  duration_ms: 1408.0027
+  type: 'test'
+  ...
+# Subtest: WebUI navigation metadata: real HTTP CAS, original receipts, archive/restore and current role/resource boundaries
+ok 256 - WebUI navigation metadata: real HTTP CAS, original receipts, archive/restore and current role/resource boundaries
+  ---
+  duration_ms: 334.2809
+  type: 'test'
+  ...
+# Subtest: WebUI navigation metadata: malformed fields, stale incarnation and revoked actors cannot mutate state
+ok 257 - WebUI navigation metadata: malformed fields, stale incarnation and revoked actors cannot mutate state
+  ---
+  duration_ms: 210.8408
+  type: 'test'
+  ...
+# Subtest: WebUI original-operation lookup is read-only: absent and committed metadata/create/fork never re-enter a mutation
+ok 258 - WebUI original-operation lookup is read-only: absent and committed metadata/create/fork never re-enter a mutation
+  ---
+  duration_ms: 228.8583
+  type: 'test'
+  ...
+# Subtest: WebUI metadata browser lost before-send: closed/reopened sheet only reads original result, never repeats or replaces the mutation
+ok 259 - WebUI metadata browser lost before-send: closed/reopened sheet only reads original result, never repeats or replaces the mutation
+  ---
+  duration_ms: 725.7393
+  type: 'test'
+  ...
+# Subtest: WebUI metadata browser lost after-commit: closed/reopened sheet only reads original result, never repeats or replaces the mutation
+ok 260 - WebUI metadata browser lost after-commit: closed/reopened sheet only reads original result, never repeats or replaces the mutation
+  ---
+  duration_ms: 732.7555
+  type: 'test'
+  ...
+# Subtest: WebUI navigation normal reopen: metadata and original receipt persist without rewriting history, effects or spent attempts
+ok 261 - WebUI navigation normal reopen: metadata and original receipt persist without rewriting history, effects or spent attempts
+  ---
+  duration_ms: 164.354
+  type: 'test'
+  ...
+# Subtest: Personal navigation: cross-Session folders and grouping persist, delete only ungroups, and original edits never duplicate
+ok 262 - Personal navigation: cross-Session folders and grouping persist, delete only ungroups, and original edits never duplicate
+  ---
+  duration_ms: 532.0898
+  type: 'test'
+  ...
+# Subtest: Personal navigation: no folder ACL, independent people, and existing resource authorization before assignment
+ok 263 - Personal navigation: no folder ACL, independent people, and existing resource authorization before assignment
+  ---
+  duration_ms: 342.713
+  type: 'test'
+  ...
+# Subtest: WebUI notification links select visible conversation history in an already open document without replaying input
+ok 264 - WebUI notification links select visible conversation history in an already open document without replaying input
+  ---
+  duration_ms: 851.8834
+  type: 'test'
+  ...
+# Subtest: WebUI notification worker: real native display resolves only current cookie/device/resource metadata and closes after logout
+ok 265 - WebUI notification worker: real native display resolves only current cookie/device/resource metadata and closes after logout
+  ---
+  duration_ms: 1981.8757
+  type: 'test'
+  ...
+# D:\\Projects\\pakka-wt\\webui-p0\\artifacts\\integration\\notification-screenshots
+# Subtest: WebUI notifications HTTP: real product native completion, device registration, current cookie metadata and resource revocation
+ok 266 - WebUI notifications HTTP: real product native completion, device registration, current cookie metadata and resource revocation
+  ---
+  duration_ms: 548.2934
+  type: 'test'
+  ...
+# Subtest: WebUI executable notification bounds: malformed push authority is rejected before storage or provider effects
+ok 267 - WebUI executable notification bounds: malformed push authority is rejected before storage or provider effects
+  ---
+  duration_ms: 687.5925
+  type: 'test'
+  ...
+# Subtest: Sidebar navigation browser: Session and personal-folder projections preserve real Conversation identity and survive reload
+ok 268 - Sidebar navigation browser: Session and personal-folder projections preserve real Conversation identity and survive reload
+  ---
+  duration_ms: 1426.7868
+  type: 'test'
+  ...
+# Subtest: WebUI product: actual assets and approved workspace run without MAS, then reopen the same identity and admission
+ok 269 - WebUI product: actual assets and approved workspace run without MAS, then reopen the same identity and admission
+  ---
+  duration_ms: 216.8172
+  type: 'test'
+  ...
+# Subtest: WebUI invitation: independently decoded actual QR opens the same one-use local invitation
+ok 270 - WebUI invitation: independently decoded actual QR opens the same one-use local invitation
+  ---
+  duration_ms: 140.2871
+  type: 'test'
+  ...
+# Subtest: WebUI remote: actual TLS proxy uses exact trusted peer/origin and secure cookies; direct/plain/spoofed access is rejected
+ok 271 - WebUI remote: actual TLS proxy uses exact trusted peer/origin and secure cookies; direct/plain/spoofed access is rejected
+  ---
+  duration_ms: 180.8335
+  type: 'test'
+  ...
+# Subtest: WebUI automation panel: actual human schedules native work, leaving the interface keeps it alive, a viewer is read-only and cancel fences delivery
+ok 272 - WebUI automation panel: actual human schedules native work, leaving the interface keeps it alive, a viewer is read-only and cancel fences delivery
+  ---
+  duration_ms: 4086.9412
+  type: 'test'
+  ...
+# D:\\Projects\\pakka-wt\\webui-p0\\artifacts\\integration\\schedules-screenshots
+# Subtest: WebUI schedule panel recovery: losing an admitted response survives interface replacement and read-only reconciliation never schedules twice
+ok 273 - WebUI schedule panel recovery: losing an admitted response survives interface replacement and read-only reconciliation never schedules twice
+  ---
+  duration_ms: 2892.045
+  type: 'test'
+  ...
+# Subtest: WebUI services: normal product close releases host-owned listeners
+ok 274 - WebUI services: normal product close releases host-owned listeners
+  ---
+  duration_ms: 105.1242
+  type: 'test'
+  ...
+# Subtest: WebUI services: failed registration releases host-owned listeners
+ok 275 - WebUI services: failed registration releases host-owned listeners
+  ---
+  duration_ms: 63.6525
+  type: 'test'
+  ...
+# Subtest: Creation dialog layout: phone and desktop, 20px light/dark, nested pickers and keyboard focus keep complete controls without a home composer
+ok 276 - Creation dialog layout: phone and desktop, 20px light/dark, nested pickers and keyboard focus keep complete controls without a home composer
+  ---
+  duration_ms: 3835.9652
+  type: 'test'
+  ...
+# Subtest: Session creation: authenticated creation makes independent native Sessions and opens Conversations in the chosen parent without inference
+ok 277 - Session creation: authenticated creation makes independent native Sessions and opens Conversations in the chosen parent without inference
+  ---
+  duration_ms: 658.3413
+  type: 'test'
+  ...
+# Subtest: Session authorization: a Conversation grant never reads its same-ID peer or parent metadata in another Session
+ok 278 - Session authorization: a Conversation grant never reads its same-ID peer or parent metadata in another Session
+  ---
+  duration_ms: 218.6336
+  type: 'test'
+  ...
+# Subtest: Conversation creation browser: New Session opens a dedicated configuration dialog and cancel leaves neither a home naming form nor native effects
+ok 279 - Conversation creation browser: New Session opens a dedicated configuration dialog and cancel leaves neither a home naming form nor native effects
+  ---
+  duration_ms: 614.9015
+  type: 'test'
+  ...
+# Subtest: Settings: one click opens configuration pages and Back returns to the conversation
+ok 280 - Settings: one click opens configuration pages and Back returns to the conversation
+  ---
+  duration_ms: 1434.0673
+  type: 'test'
+  ...
+# Subtest: WebUI short sidebar: sessions remain usable and extensions stay reachable through the palette
+ok 281 - WebUI short sidebar: sessions remain usable and extensions stay reachable through the palette
+  ---
+  duration_ms: 3036.8254
+  type: 'test'
+  ...
+# Subtest: shared directional and keyboard icons are decorative SVG paths, not font glyphs
+ok 282 - shared directional and keyboard icons are decorative SVG paths, not font glyphs
+  ---
+  duration_ms: 0.596
+  type: 'test'
+  ...
+# Subtest: shipped core, bundled contribution and MAS direction/shortcut marks contain no Unicode icon substitutes
+ok 283 - shipped core, bundled contribution and MAS direction/shortcut marks contain no Unicode icon substitutes
+  ---
+  duration_ms: 8.5288
+  type: 'test'
+  ...
+# Subtest: WebUI transcript: one real tool keeps its identity, expanded card and result across the live/committed handoff
+ok 284 - WebUI transcript: one real tool keeps its identity, expanded card and result across the live/committed handoff
+  ---
+  duration_ms: 945.1779
+  type: 'test'
+  ...
+# Subtest: WebUI transcript: a native tool error remains identifiable in its collapsed result card
+ok 285 - WebUI transcript: a native tool error remains identifiable in its collapsed result card
+  ---
+  duration_ms: 814.9994
+  type: 'test'
+  ...
+# Subtest: WebUI transcript: an expanded streamed tool call survives its first committed entry
+ok 286 - WebUI transcript: an expanded streamed tool call survives its first committed entry
+  ---
+  duration_ms: 1025.3976
+  type: 'test'
+  ...
+# Subtest: WebUI transcript: valid image parts and a truncated tool declaration remain visible through real reopen and paging
+ok 287 - WebUI transcript: valid image parts and a truncated tool declaration remain visible through real reopen and paging
+  ---
+  duration_ms: 655.3153
+  type: 'test'
+  ...
+# Subtest: WebUI transcript: real chunked generation exposes a live Streaming message, then clears it
+ok 288 - WebUI transcript: real chunked generation exposes a live Streaming message, then clears it
+  ---
+  duration_ms: 925.5448
+  type: 'test'
+  ...
+# Subtest: WebUI transcript: inherited tool results do not swallow a different live call with the same provider id
+ok 289 - WebUI transcript: inherited tool results do not swallow a different live call with the same provider id
+  ---
+  duration_ms: 988.3779
+  type: 'test'
+  ...
+# Subtest: WebUI receipt: a known policy refusal is blocked, not mislabeled as a permission denial
+ok 290 - WebUI receipt: a known policy refusal is blocked, not mislabeled as a permission denial
+  ---
+  duration_ms: 684.347
+  type: 'test'
+  ...
+# Subtest: WebUI receipt: a real host unknown is needs review through a registered Conversation source
+ok 291 - WebUI receipt: a real host unknown is needs review through a registered Conversation source
+  ---
+  duration_ms: 683.7445
+  type: 'test'
+  ...
+# Subtest: WebUI receipt: withdrawing queued input is not described as a policy refusal
+ok 292 - WebUI receipt: withdrawing queued input is not described as a policy refusal
+  ---
+  duration_ms: 837.6369
+  type: 'test'
+  ...
+# Subtest: WebUI typography and input accessibility
+    # Subtest: configuration text follows a larger root font
+    ok 1 - configuration text follows a larger root font
+      ---
+      duration_ms: 4.692
+      type: 'test'
+      ...
+    # Subtest: mobile configuration fields have readable type and touch targets
+    ok 2 - mobile configuration fields have readable type and touch targets
+      ---
+      duration_ms: 257.8988
+      type: 'test'
+      ...
+    # Subtest: message input keeps readable mobile type
+    ok 3 - message input keeps readable mobile type
+      ---
+      duration_ms: 8.1181
+      type: 'test'
+      ...
+    # Subtest: message input has a visible keyboard focus indicator
+    ok 4 - message input has a visible keyboard focus indicator
+      ---
+      duration_ms: 10.3555
+      type: 'test'
+      ...
+    1..4
+ok 293 - WebUI typography and input accessibility
+  ---
+  duration_ms: 961.7933
+  type: 'test'
+  ...
+# Subtest: WebUI compound labels, settings forms and graphical keyboard hints remain readable
+    # Subtest: owned navigation titles use Title Case
+    ok 1 - owned navigation titles use Title Case
+      ---
+      duration_ms: 1.5088
+      type: 'test'
+      ...
+    # Subtest: model primary and profile have distinct rows at 1440x900
+    ok 2 - model primary and profile have distinct rows at 1440x900
+      ---
+      duration_ms: 105.0689
+      type: 'test'
+      ...
+    # Subtest: model primary and profile have distinct rows at 360x600
+    ok 3 - model primary and profile have distinct rows at 360x600
+      ---
+      duration_ms: 269.1588
+      type: 'test'
+      ...
+    # Subtest: model primary and profile have distinct rows at 390x650
+    ok 4 - model primary and profile have distinct rows at 390x650
+      ---
+      duration_ms: 67.2216
+      type: 'test'
+      ...
+    # Subtest: model primary and profile have distinct rows at 390x844
+    ok 5 - model primary and profile have distinct rows at 390x844
+      ---
+      duration_ms: 66.8655
+      type: 'test'
+      ...
+    # Subtest: private credentials keep labels, password input and actions separate at every viewport and larger text
+    ok 6 - private credentials keep labels, password input and actions separate at every viewport and larger text
+      ---
+      duration_ms: 496.8025
+      type: 'test'
+      ...
+    # Subtest: model identities and metadata also fit with the actual 20px reading preference
+    ok 7 - model identities and metadata also fit with the actual 20px reading preference
+      ---
+      duration_ms: 198.7461
+      type: 'test'
+      ...
+    # Subtest: Conversation and Fork fields have gaps and subordinate section headings
+    ok 8 - Conversation and Fork fields have gaps and subordinate section headings
+      ---
+      duration_ms: 99.0387
+      type: 'test'
+      ...
+    # Subtest: Team metadata, chat fields and note actions are laid out rather than pasted together
+    ok 9 - Team metadata, chat fields and note actions are laid out rather than pasted together
+      ---
+      duration_ms: 450.466
+      type: 'test'
+      ...
+    # Subtest: long names and roles remain readable in People
+    ok 10 - long names and roles remain readable in People
+      ---
+      duration_ms: 297.128
+      type: 'test'
+      ...
+    # Subtest: shortcut and palette direction hints use real SVG paths
+    ok 11 - shortcut and palette direction hints use real SVG paths
+      ---
+      duration_ms: 24.9915
+      type: 'test'
+      ...
+    # Subtest: public Field/Notice/Button consumers retain spacing without private host styles
+    ok 12 - public Field/Notice/Button consumers retain spacing without private host styles
+      ---
+      duration_ms: 356.1197
+      type: 'test'
+      ...
+    1..12
+ok 294 - WebUI compound labels, settings forms and graphical keyboard hints remain readable
+  ---
+  duration_ms: 3120.8963
+  type: 'test'
+  ...
+# {"publicWidth":1440,"label":{"x":300,"y":46.71875,"right":1440,"bottom":74.71875,"width":1140,"height":28},"field":{"x":300,"y":80.71875,"right":1440,"bottom":126.71875,"width":1140,"height":46},"copy":{"x":300,"y":141.71875,"right":870.953125,"bottom":165.71875,"width":570.953125,"height":24},"action":{"x":300,"y":176.71875,"right":381.25,"bottom":220.71875,"width":81.25,"height":44}}
+# {"publicWidth":360,"label":{"x":0,"y":90.71875,"right":360,"bottom":118.71875,"width":360,"height":28},"field":{"x":0,"y":124.71875,"right":360,"bottom":170.71875,"width":360,"height":46},"copy":{"x":0,"y":185.71875,"right":346.25,"bottom":239.71875,"width":346.25,"height":54},"action":{"x":0,"y":250.71875,"right":81.25,"bottom":294.71875,"width":81.25,"height":44}}
+# Subtest: WebUI browser dictation: caret and final text reach only the draft until a real explicit Send
+ok 295 - WebUI browser dictation: caret and final text reach only the draft until a real explicit Send
+  ---
+  duration_ms: 1209.4832
+  type: 'test'
+  ...
+# Subtest: WebUI browser dictation: resource and sheet replacement, errors and logout discard old callbacks without dispatch
+ok 296 - WebUI browser dictation: resource and sheet replacement, errors and logout discard old callbacks without dispatch
+  ---
+  duration_ms: 877.0718
+  type: 'test'
+  ...
+# Subtest: WebUI browser dictation: absent speech support retains real typed input and a mobile viewer has no model dictation
+ok 297 - WebUI browser dictation: absent speech support retains real typed input and a mobile viewer has no model dictation
+  ---
+  duration_ms: 2143.143
+  type: 'test'
+  ...
+# Subtest: WebUI HTTP workspace: human create/configure/fork preserve approved config and real inherited model history
+ok 298 - WebUI HTTP workspace: human create/configure/fork preserve approved config and real inherited model history
+  ---
+  duration_ms: 355.8815
+  type: 'test'
+  ...
+# Subtest: Catalog initial configuration: explicit model/cwd are committed with creation without applying another Agent preset
+ok 299 - Catalog initial configuration: explicit model/cwd are committed with creation without applying another Agent preset
+  ---
+  duration_ms: 70.3147
+  type: 'test'
+  ...
+# Subtest: M2: temporary ownership uses actual tool task and respects the native background boundary
+ok 300 - M2: temporary ownership uses actual tool task and respects the native background boundary
+  ---
+  duration_ms: 225.7832
+  type: 'test'
+  ...
+# Subtest: M2: task-bound ownership uses actual tool task and respects the native background boundary
+ok 301 - M2: task-bound ownership uses actual tool task and respects the native background boundary
+  ---
+  duration_ms: 168.5246
+  type: 'test'
+  ...
+# Subtest: M2: background ownership uses actual tool task and respects the native background boundary
+ok 302 - M2: background ownership uses actual tool task and respects the native background boundary
+  ---
+  duration_ms: 182.3053
+  type: 'test'
+  ...
+# Subtest: each Compressor Conversation has its own tool allowance, not the sum of successful siblings
+ok 303 - each Compressor Conversation has its own tool allowance, not the sum of successful siblings
+  ---
+  duration_ms: 532.3812
+  type: 'test'
+  ...
+# Subtest: each Compressor Conversation has its own stop allowance, not the sum of successful siblings
+ok 304 - each Compressor Conversation has its own stop allowance, not the sum of successful siblings
+  ---
+  duration_ms: 421.1622
+  type: 'test'
+  ...
+# Subtest: each Compressor Conversation has its own provider allowance, not the sum of successful siblings
+ok 305 - each Compressor Conversation has its own provider allowance, not the sum of successful siblings
+  ---
+  duration_ms: 424.9921
+  type: 'test'
+  ...
+# Subtest: a sealed Conversation leaves sibling native HTTP and subsequent independent admission usable
+ok 306 - a sealed Conversation leaves sibling native HTTP and subsequent independent admission usable
+  ---
+  duration_ms: 393.9694
+  type: 'test'
+  ...
+# Subtest: a sibling tolerance does not revoke an exact returned candidate's artifact receipt
+ok 307 - a sibling tolerance does not revoke an exact returned candidate's artifact receipt
+  ---
+  duration_ms: 316.5751
+  type: 'test'
+  ...
+# Subtest: source-local unknown completion quarantines only its Conversation and retains the pending reservation
+ok 308 - source-local unknown completion quarantines only its Conversation and retains the pending reservation
+  ---
+  duration_ms: 357.2462
+  type: 'test'
+  ...
+# Subtest: genuine shared Compresser storage uncertainty refuses every source without another provider dispatch
+ok 309 - genuine shared Compresser storage uncertainty refuses every source without another provider dispatch
+  ---
+  duration_ms: 224.2932
+  type: 'test'
+  ...
+# Subtest: aggregate-counter storage rejects implicit migration instead of resetting or inventing per-Conversation counts
+ok 310 - aggregate-counter storage rejects implicit migration instead of resetting or inventing per-Conversation counts
+  ---
+  duration_ms: 12.862
+  type: 'test'
+  ...
+# Subtest: normal reopen preserves the sealed child but admits a fresh independently authorized Conversation
+ok 311 - normal reopen preserves the sealed child but admits a fresh independently authorized Conversation
+  ---
+  duration_ms: 350.0991
+  type: 'test'
+  ...
+# Subtest: Compresser hard interruption stays writer-locked; after explicit dead-writer recovery, only unconfirmed work seals without replay while fresh work can run
+ok 312 - Compresser hard interruption stays writer-locked; after explicit dead-writer recovery, only unconfirmed work seals without replay while fresh work can run
+  ---
+  duration_ms: 1065.8654
+  type: 'test'
+  ...
+# Subtest: Compresser repairs a stop and invalid call in the same native trajectory, auditing every real request
+ok 313 - Compresser repairs a stop and invalid call in the same native trajectory, auditing every real request
+  ---
+  duration_ms: 385.4843
+  type: 'test'
+  ...
+# Subtest: an empty semantic error is still a rejected call, including repeated admission validation
+ok 314 - an empty semantic error is still a rejected call, including repeated admission validation
+  ---
+  duration_ms: 274.6324
+  type: 'test'
+  ...
+# Subtest: Compresser provider errors use the native failed-run boundary without losing earlier analysis
+ok 315 - Compresser provider errors use the native failed-run boundary without losing earlier analysis
+  ---
+  duration_ms: 298.4109
+  type: 'test'
+  ...
+# Subtest: one external Conversation creates independent Compresser Conversations and repeated job admission sends nothing
+ok 316 - one external Conversation creates independent Compresser Conversations and repeated job admission sends nothing
+  ---
+  duration_ms: 287.0629
+  type: 'test'
+  ...
+# Subtest: tool allowance belongs to each successful child Conversation and survives reopen without dispatch
+ok 317 - tool allowance belongs to each successful child Conversation and survives reopen without dispatch
+  ---
+  duration_ms: 435.7933
+  type: 'test'
+  ...
+# Subtest: four stop errors seal their Conversation, preserve the actual reason, and send no fifth request
+ok 318 - four stop errors seal their Conversation, preserve the actual reason, and send no fifth request
+  ---
+  duration_ms: 335.9466
+  type: 'test'
+  ...
+# Subtest: four provider errors seal their Conversation, preserve the actual reason, and send no fifth request
+ok 319 - four provider errors seal their Conversation, preserve the actual reason, and send no fifth request
+  ---
+  duration_ms: 287.8563
+  type: 'test'
+  ...
+# Subtest: Compresser HTTP 429 has no hidden provider retries outside the charged native attempts
+ok 320 - Compresser HTTP 429 has no hidden provider retries outside the charged native attempts
+  ---
+  duration_ms: 229.0487
+  type: 'test'
+  ...
+# Subtest: Compresser HTTP 503 has no hidden provider retries outside the charged native attempts
+ok 321 - Compresser HTTP 503 has no hidden provider retries outside the charged native attempts
+  ---
+  duration_ms: 210.9816
+  type: 'test'
+  ...
+# Subtest: Compresser output-length failure with a tool-shaped partial is unresolved, never an adopted tool error
+ok 322 - Compresser output-length failure with a tool-shaped partial is unresolved, never an adopted tool error
+  ---
+  duration_ms: 229.9231
+  type: 'test'
+  ...
+# Subtest: Compresser strict raw and source validation failures are complete-call repairs, not adopted normalized DTOs
+ok 323 - Compresser strict raw and source validation failures are complete-call repairs, not adopted normalized DTOs
+  ---
+  duration_ms: 318.6274
+  type: 'test'
+  ...
+# Subtest: a source revocation during Compresser HTTP prevents late adoption and another dispatch
+ok 324 - a source revocation during Compresser HTTP prevents late adoption and another dispatch
+  ---
+  duration_ms: 150.6315
+  type: 'test'
+  ...
+# Subtest: Compresser job and strategy hard budgets remain independent of error tolerances
+ok 325 - Compresser job and strategy hard budgets remain independent of error tolerances
+  ---
+  duration_ms: 381.2659
+  type: 'test'
+  ...
+# Subtest: managed Compresser requests spend auxiliary aggregate quota and never primary quota
+ok 326 - managed Compresser requests spend auxiliary aggregate quota and never primary quota
+  ---
+  duration_ms: 273.1671
+  type: 'test'
+  ...
+# Subtest: one container serves distinct external Sessions without a sibling seal revoking an exact returned candidate
+ok 327 - one container serves distinct external Sessions without a sibling seal revoking an exact returned candidate
+  ---
+  duration_ms: 438.4616
+  type: 'test'
+  ...
+# Subtest: Conversation-local sealing keeps another source's candidate private while independent admissions and late results succeed
+ok 328 - Conversation-local sealing keeps another source's candidate private while independent admissions and late results succeed
+  ---
+  duration_ms: 440.0725
+  type: 'test'
+  ...
+# Subtest: a sibling seal leaves an already-in-flight valid response usable
+ok 329 - a sibling seal leaves an already-in-flight valid response usable
+  ---
+  duration_ms: 280.8401
+  type: 'test'
+  ...
+# Subtest: multiple output calls in one response are not candidate patches and each actual tool error counts once
+ok 330 - multiple output calls in one response are not candidate patches and each actual tool error counts once
+  ---
+  duration_ms: 199.9689
+  type: 'test'
+  ...
+# Subtest: cancelling the source job refuses a late result without spending error tolerance or dispatching again
+ok 331 - cancelling the source job refuses a late result without spending error tolerance or dispatching again
+  ---
+  duration_ms: 171.4927
+  type: 'test'
+  ...
+# Subtest: a source audit storage failure after real HTTP seals unknown work without a correction or releasing admission
+ok 332 - a source audit storage failure after real HTTP seals unknown work without a correction or releasing admission
+  ---
+  duration_ms: 176.8854
+  type: 'test'
+  ...
+# Subtest: completed native job state survives reopen without new HTTP and one writer is enforced
+ok 333 - completed native job state survives reopen without new HTTP and one writer is enforced
+  ---
+  duration_ms: 212.0094
+  type: 'test'
+  ...
+# Subtest: WebUI read: revocation during native watch cleanup prevents publishing the acquired snapshot
+ok 334 - WebUI read: revocation during native watch cleanup prevents publishing the acquired snapshot
+  ---
+  duration_ms: 50.938
+  type: 'test'
+  ...
+# Subtest: WebUI display: concurrent retry has one committed entry; actor and namespace are independent
+ok 335 - WebUI display: concurrent retry has one committed entry; actor and namespace are independent
+  ---
+  duration_ms: 39.3468
+  type: 'test'
+  ...
+# Subtest: WebUI display: chat/card writes during a real native tool do not join or replace the run's inputs
+ok 336 - WebUI display: chat/card writes during a real native tool do not join or replace the run's inputs
+  ---
+  duration_ms: 145.7547
+  type: 'test'
+  ...
+# Subtest: WebUI display: invalid shapes, oversized records and expired scope are rejected without commits
+ok 337 - WebUI display: invalid shapes, oversized records and expired scope are rejected without commits
+  ---
+  duration_ms: 27.1861
+  type: 'test'
+  ...
+# Subtest: WebUI port: committed transcript is scoped, frozen, sanitized and passive
+ok 338 - WebUI port: committed transcript is scoped, frozen, sanitized and passive
+  ---
+  duration_ms: 172.2816
+  type: 'test'
+  ...
+# Subtest: WebUI port: display records are idempotent after reopen and absent from real provider payloads
+ok 339 - WebUI port: display records are idempotent after reopen and absent from real provider payloads
+  ---
+  duration_ms: 90.5159
+  type: 'test'
+  ...
+# Subtest: WebUI port: read and passive write recheck authority at their publication/commit boundary
+ok 340 - WebUI port: read and passive write recheck authority at their publication/commit boundary
+  ---
+  duration_ms: 39.2087
+  type: 'test'
+  ...
+# Subtest: WebUI port: a real native tool's live and committed activity is observable without new work
+ok 341 - WebUI port: a real native tool's live and committed activity is observable without new work
+  ---
+  duration_ms: 116.6447
+  type: 'test'
+  ...
+# Subtest: WebUI observation: finite earlier pages keep exact order across a new committed append
+ok 342 - WebUI observation: finite earlier pages keep exact order across a new committed append
+  ---
+  duration_ms: 84.5182
+  type: 'test'
+  ...
+# Subtest: WebUI observation: foreign boundaries and unbounded options are refused without effects
+ok 343 - WebUI observation: foreign boundaries and unbounded options are refused without effects
+  ---
+  duration_ms: 42.2661
+  type: 'test'
+  ...
+# Subtest: A-11: Differential trace compares durable and oracle backends on identical scenario
+ok 344 - A-11: Differential trace compares durable and oracle backends on identical scenario
+  ---
+  duration_ms: 132.2077
+  type: 'test'
+  ...
+# Subtest: A-11: Differential tool invocation compares execution count and provider request sequence
+ok 345 - A-11: Differential tool invocation compares execution count and provider request sequence
+  ---
+  duration_ms: 126.6827
+  type: 'test'
+  ...
+# Subtest: A-11: Differential projection replacement aligns request payload across backends
+ok 346 - A-11: Differential projection replacement aligns request payload across backends
+  ---
+  duration_ms: 143.1241
+  type: 'test'
+  ...
+# Subtest: DurableAdapter is the default runtime created by createHost()
+ok 347 - DurableAdapter is the default runtime created by createHost()
+  ---
+  duration_ms: 44.3727
+  type: 'test'
+  ...
+# Subtest: A-06: Generation gate blocks provider dispatch with providerCalls = 0
+ok 348 - A-06: Generation gate blocks provider dispatch with providerCalls = 0
+  ---
+  duration_ms: 103.4376
+  type: 'test'
+  ...
+# Subtest: A-05 & F-15: Two strategies independently append to separate artifact namespaces
+ok 349 - A-05 & F-15: Two strategies independently append to separate artifact namespaces
+  ---
+  duration_ms: 87.6238
+  type: 'test'
+  ...
+# Subtest: A-04: Projection plan with summary: null omits source range without placeholder and preserves raw history
+ok 350 - A-04: Projection plan with summary: null omits source range without placeholder and preserves raw history
+  ---
+  duration_ms: 108.6862
+  type: 'test'
+  ...
+# Subtest: A-07: Tool execution occurs exactly once without duplicate side effects
+ok 351 - A-07: Tool execution occurs exactly once without duplicate side effects
+  ---
+  duration_ms: 104.3022
+  type: 'test'
+  ...
+# Subtest: A-03: Submission idempotency prevents second execution on identical payload
+ok 352 - A-03: Submission idempotency prevents second execution on identical payload
+  ---
+  duration_ms: 57.7485
+  type: 'test'
+  ...
+# Subtest: concurrent initial submissions do not let waitForIdle return before dispatch
+ok 353 - concurrent initial submissions do not let waitForIdle return before dispatch
+  ---
+  duration_ms: 983.8416
+  type: 'test'
+  ...
+# Subtest: Durable entry frames preserve linear parentage
+ok 354 - Durable entry frames preserve linear parentage
+  ---
+  duration_ms: 61.6706
+  type: 'test'
+  ...
+# Subtest: context views retain entries beyond Durable scan page size
+ok 355 - context views retain entries beyond Durable scan page size
+  ---
+  duration_ms: 37735.7517
+  type: 'test'
+  ...
+# Subtest: Durable verifier keeps the production version as its default
+ok 356 - Durable verifier keeps the production version as its default
+  ---
+  duration_ms: 67.82
+  type: 'test'
+  ...
+# Subtest: Durable verifier selects an explicitly requested patch version
+ok 357 - Durable verifier selects an explicitly requested patch version
+  ---
+  duration_ms: 59.9565
+  type: 'test'
+  ...
+# Subtest: Durable verifier detects tampering in the selected version independently
+ok 358 - Durable verifier detects tampering in the selected version independently
+  ---
+  duration_ms: 114.3039
+  type: 'test'
+  ...
+# Subtest: Durable verifier rejects a patch version containing path traversal
+ok 359 - Durable verifier rejects a patch version containing path traversal
+  ---
+  duration_ms: 58.1839
+  type: 'test'
+  ...
+# Subtest: deterministic HTTP fixtures expose canonical temporary paths, including Windows short-name TEMP aliases
+ok 360 - deterministic HTTP fixtures expose canonical temporary paths, including Windows short-name TEMP aliases
+  ---
+  duration_ms: 15.1247
+  type: 'test'
+  ...
+# Subtest: explicit generation block persists a committed input without HTTP and leaves the host reusable
+ok 361 - explicit generation block persists a committed input without HTTP and leaves the host reusable
+  ---
+  duration_ms: 133.1728
+  type: 'test'
+  ...
+# Subtest: blocking a post-tool generation settles placed steering inputs without another HTTP call
+ok 362 - blocking a post-tool generation settles placed steering inputs without another HTTP call
+  ---
+  duration_ms: 115.8647
+  type: 'test'
+  ...
+# Subtest: a blocked generation remains settled after close and reopen without hidden replay
+ok 363 - a blocked generation remains settled after close and reopen without hidden replay
+  ---
+  duration_ms: 93.057
+  type: 'test'
+  ...
+# Subtest: construction isolates discovery and exposes no mutable runtime
+ok 364 - construction isolates discovery and exposes no mutable runtime
+  ---
+  duration_ms: 46.5136
+  type: 'test'
+  ...
+# Subtest: input identity deduplicates through real HTTP and physical persistence
+ok 365 - input identity deduplicates through real HTTP and physical persistence
+  ---
+  duration_ms: 74.1629
+  type: 'test'
+  ...
+# Subtest: host input transform and handled run before transfer, unsupported commands fail closed
+ok 366 - host input transform and handled run before transfer, unsupported commands fail closed
+  ---
+  duration_ms: 54.0419
+  type: 'test'
+  ...
+# Subtest: reload during an awaited projection: revoked blocks dispatch without losing the failure boundary
+ok 367 - reload during an awaited projection: revoked blocks dispatch without losing the failure boundary
+  ---
+  duration_ms: 142.7546
+  type: 'test'
+  ...
+# Subtest: reload during an awaited projection: unknown blocks dispatch without losing the failure boundary
+ok 368 - reload during an awaited projection: unknown blocks dispatch without losing the failure boundary
+  ---
+  duration_ms: 62.5123
+  type: 'test'
+  ...
+# Subtest: prepared steering enters after tools and follow-up remains in native run
+ok 369 - prepared steering enters after tools and follow-up remains in native run
+  ---
+  duration_ms: 210.9598
+  type: 'test'
+  ...
+# Subtest: cancel only this principal's queued objects and allow released identity retry
+ok 370 - cancel only this principal's queued objects and allow released identity retry
+  ---
+  duration_ms: 138.5277
+  type: 'test'
+  ...
+# Subtest: cancel after drain before append preserves identities (reload=false)
+ok 371 - cancel after drain before append preserves identities (reload=false)
+  ---
+  duration_ms: 116.5974
+  type: 'test'
+  ...
+# Subtest: cancel after drain before append preserves identities (reload=true)
+ok 372 - cancel after drain before append preserves identities (reload=true)
+  ---
+  duration_ms: 104.3064
+  type: 'test'
+  ...
+# Subtest: reload revokes before waiting for active tool and rejects concurrent transition
+ok 373 - reload revokes before waiting for active tool and rejects concurrent transition
+  ---
+  duration_ms: 109.2941
+  type: 'test'
+  ...
+# Subtest: session replacement releases pending queue and does not carry it into new session
+ok 374 - session replacement releases pending queue and does not carry it into new session
+  ---
+  duration_ms: 133.6264
+  type: 'test'
+  ...
+# Subtest: host ABA invalidates capability even with original leaf and count restored
+ok 375 - host ABA invalidates capability even with original leaf and count restored
+  ---
+  duration_ms: 69.2245
+  type: 'test'
+  ...
+# Subtest: preparation crossing replacement cannot transfer into new scope
+ok 376 - preparation crossing replacement cannot transfer into new scope
+  ---
+  duration_ms: 64.2383
+  type: 'test'
+  ...
+# Subtest: tool side effect then disk failure fails closed and does not replay committed input
+ok 377 - tool side effect then disk failure fails closed and does not replay committed input
+  ---
+  duration_ms: 58.84
+  type: 'test'
+  ...
+# Subtest: M2: configuration and membership are atomic; rejected batch has no partial members
+ok 378 - M2: configuration and membership are atomic; rejected batch has no partial members
+  ---
+  duration_ms: 76.2702
+  type: 'test'
+  ...
+# Subtest: M2: native admission shares fingerprint commit, retries conflict and reopen does not dispatch
+ok 379 - M2: native admission shares fingerprint commit, retries conflict and reopen does not dispatch
+  ---
+  duration_ms: 129.013
+  type: 'test'
+  ...
+# Subtest: M2: late revoked guard, forged reference and unproven task ownership reject with zero effects
+ok 380 - M2: late revoked guard, forged reference and unproven task ownership reject with zero effects
+  ---
+  duration_ms: 49.6446
+  type: 'test'
+  ...
+# Subtest: M1: two concurrent Conversations have one storage and independent contexts/provider identity
+ok 381 - M1: two concurrent Conversations have one storage and independent contexts/provider identity
+  ---
+  duration_ms: 153.7028
+  type: 'test'
+  ...
+# Subtest: M1: equal strategy IDs use independent physical journals and projection permits
+ok 382 - M1: equal strategy IDs use independent physical journals and projection permits
+  ---
+  duration_ms: 210.6781
+  type: 'test'
+  ...
+# Subtest: M1: Conversation creation quota and unknown profiles refuse without effects
+ok 383 - M1: Conversation creation quota and unknown profiles refuse without effects
+  ---
+  duration_ms: 38.6516
+  type: 'test'
+  ...
+# Subtest: M1: one failed/disposed Conversation does not close its peer or Harness
+ok 384 - M1: one failed/disposed Conversation does not close its peer or Harness
+  ---
+  duration_ms: 125.1093
+  type: 'test'
+  ...
+# Subtest: M1: local reload does not wait for or invalidate another Conversation's pending HTTP
+ok 385 - M1: local reload does not wait for or invalidate another Conversation's pending HTTP
+  ---
+  duration_ms: 69.7901
+  type: 'test'
+  ...
+# Subtest: M1: native tool invocation authority is routed by asking Conversation, not by tool name
+ok 386 - M1: native tool invocation authority is routed by asking Conversation, not by tool name
+  ---
+  duration_ms: 208.6933
+  type: 'test'
+  ...
+# Subtest: M1: fork publishes a new resource reference and leaves peer identity/capabilities intact
+ok 387 - M1: fork publishes a new resource reference and leaves peer identity/capabilities intact
+  ---
+  duration_ms: 153.077
+  type: 'test'
+  ...
+# Subtest: M1: managed restore reopens the active fork and child journals without inspection HTTP
+ok 388 - M1: managed restore reopens the active fork and child journals without inspection HTTP
+  ---
+  duration_ms: 143.9579
+  type: 'test'
+  ...
+# Subtest: M1: competing primary dispatches reserve one shared durable quota without implicit retries
+ok 389 - M1: competing primary dispatches reserve one shared durable quota without implicit retries
+  ---
+  duration_ms: 113.9084
+  type: 'test'
+  ...
+# Subtest: exact hook ownership denies artifact-only writes and owner cut reaches HTTP
+ok 390 - exact hook ownership denies artifact-only writes and owner cut reaches HTTP
+  ---
+  duration_ms: 142.7304
+  type: 'test'
+  ...
+# Subtest: edit validates target before intent append and changes only provider projection
+ok 391 - edit validates target before intent append and changes only provider projection
+  ---
+  duration_ms: 88.6877
+  type: 'test'
+  ...
+# Subtest: async policy approval is invalidated by owner revocation before commit
+ok 392 - async policy approval is invalidated by owner revocation before commit
+  ---
+  duration_ms: 57.8138
+  type: 'test'
+  ...
+# Subtest: async policy cannot authorize a snapshot invalidated by new input
+ok 393 - async policy cannot authorize a snapshot invalidated by new input
+  ---
+  duration_ms: 82.498
+  type: 'test'
+  ...
+# Subtest: delegated policy sees immutable proposal and records actual owning strategy
+ok 394 - delegated policy sees immutable proposal and records actual owning strategy
+  ---
+  duration_ms: 49.834
+  type: 'test'
+  ...
+# Subtest: capability forgery and invalid proposals are refused without appends
+ok 395 - capability forgery and invalid proposals are refused without appends
+  ---
+  duration_ms: 62.8386
+  type: 'test'
+  ...
+# Subtest: multi-hook conflict does not claim the free hook or leak mutable claims
+ok 396 - multi-hook conflict does not claim the free hook or leak mutable claims
+  ---
+  duration_ms: 23.4855
+  type: 'test'
+  ...
+# Subtest: failed storage cannot be re-enabled by reload; explicit fresh session recovers
+ok 397 - failed storage cannot be re-enabled by reload; explicit fresh session recovers
+  ---
+  duration_ms: 172.3969
+  type: 'test'
+  ...
+# Subtest: old suspended preparation cannot hold the new session admission slot
+ok 398 - old suspended preparation cannot hold the new session admission slot
+  ---
+  duration_ms: 68.012
+  type: 'test'
+  ...
+# Subtest: queued observer replacement cannot run before actual core handoff
+ok 399 - queued observer replacement cannot run before actual core handoff
+  ---
+  duration_ms: 149.0415
+  type: 'test'
+  ...
+# Subtest: WebUI job progress: initial empty checkpoint preserves unknown after a real effect and never repeats it
+ok 400 - WebUI job progress: initial empty checkpoint preserves unknown after a real effect and never repeats it
+  ---
+  duration_ms: 132.6116
+  type: 'test'
+  ...
+# Subtest: WebUI job progress: reordered nested object keys preserves unknown after a real effect and never repeats it
+ok 401 - WebUI job progress: reordered nested object keys preserves unknown after a real effect and never repeats it
+  ---
+  duration_ms: 104.2033
+  type: 'test'
+  ...
+# Subtest: WebUI job progress: equivalent JSON zero preserves unknown after a real effect and never repeats it
+ok 402 - WebUI job progress: equivalent JSON zero preserves unknown after a real effect and never repeats it
+  ---
+  duration_ms: 95.6416
+  type: 'test'
+  ...
+# Subtest: WebUI jobs: unapproved programs and extra authority/configuration fields are rejected before execution
+ok 403 - WebUI jobs: unapproved programs and extra authority/configuration fields are rejected before execution
+  ---
+  duration_ms: 50.0126
+  type: 'test'
+  ...
+# Subtest: WebUI jobs: concurrent retries share one native execution and options conflicts do not poison the Session
+ok 404 - WebUI jobs: concurrent retries share one native execution and options conflicts do not poison the Session
+  ---
+  duration_ms: 48.2233
+  type: 'test'
+  ...
+# Subtest: WebUI job port: cancelled wait retains native work and explicit abort produces a terminal receipt
+ok 405 - WebUI job port: cancelled wait retains native work and explicit abort produces a terminal receipt
+  ---
+  duration_ms: 71.7228
+  type: 'test'
+  ...
+# Subtest: WebUI job port: uncheckpointed interrupted execution reopens as unknown without replay
+ok 406 - WebUI job port: uncheckpointed interrupted execution reopens as unknown without replay
+  ---
+  duration_ms: 66.7396
+  type: 'test'
+  ...
+# Subtest: WebUI job port: committed checkpoint continues once and retained completed receipt survives another reopen
+ok 407 - WebUI job port: committed checkpoint continues once and retained completed receipt survives another reopen
+  ---
+  duration_ms: 73.6564
+  type: 'test'
+  ...
+# Subtest: WebUI job port: late authority revocation stops the approved checkpoint/effect path
+ok 408 - WebUI job port: late authority revocation stops the approved checkpoint/effect path
+  ---
+  duration_ms: 42.8142
+  type: 'test'
+  ...
+# Subtest: Independent configuration: actual provider, tool cwd and instructions remain independent across reopen
+ok 409 - Independent configuration: actual provider, tool cwd and instructions remain independent across reopen
+  ---
+  duration_ms: 352.8474
+  type: 'test'
+  ...
+# Subtest: Independent configuration: active native work and follow-up retain admission when a change is refused
+ok 410 - Independent configuration: active native work and follow-up retain admission when a change is refused
+  ---
+  duration_ms: 130.9285
+  type: 'test'
+  ...
+# Subtest: Independent configuration: unapproved model, missing directory and symlink escape cannot change a conversation
+ok 411 - Independent configuration: unapproved model, missing directory and symlink escape cannot change a conversation
+  ---
+  duration_ms: 42.3797
+  type: 'test'
+  ...
+# Subtest: Runtime context authority: state changed during real credential resolution blocks HTTP and retains the prepared attempt
+ok 412 - Runtime context authority: state changed during real credential resolution blocks HTTP and retains the prepared attempt
+  ---
+  duration_ms: 115.6299
+  type: 'test'
+  ...
+# Subtest: Runtime context validity: an asynchronous check cannot silently allow a provider request
+ok 413 - Runtime context validity: an asynchronous check cannot silently allow a provider request
+  ---
+  duration_ms: 47.6063
+  type: 'test'
+  ...
+# Subtest: Runtime context decode: extra output authority blocks actual HTTP
+ok 414 - Runtime context decode: extra output authority blocks actual HTTP
+  ---
+  duration_ms: 47.3994
+  type: 'test'
+  ...
+# Subtest: Runtime context decode: missing current text blocks actual HTTP
+ok 415 - Runtime context decode: missing current text blocks actual HTTP
+  ---
+  duration_ms: 45.7527
+  type: 'test'
+  ...
+# Subtest: Runtime context decode: over-limit text blocks actual HTTP
+ok 416 - Runtime context decode: over-limit text blocks actual HTTP
+  ---
+  duration_ms: 47.4895
+  type: 'test'
+  ...
+# Subtest: Runtime context privacy: opaque render errors block the request without publishing private source content
+ok 417 - Runtime context privacy: opaque render errors block the request without publishing private source content
+  ---
+  duration_ms: 47.1736
+  type: 'test'
+  ...
+# Subtest: Runtime context privacy: opaque check errors block the request without publishing private source content
+ok 418 - Runtime context privacy: opaque check errors block the request without publishing private source content
+  ---
+  duration_ms: 45.8556
+  type: 'test'
+  ...
+# Subtest: Runtime context registry: mutable startup arrays cannot expand profile scope or replace the approved renderer
+ok 419 - Runtime context registry: mutable startup arrays cannot expand profile scope or replace the approved renderer
+  ---
+  duration_ms: 152.212
+  type: 'test'
+  ...
+# Subtest: Runtime context bootstrap: unknown profiles and duplicate sources fail before opening native storage
+ok 420 - Runtime context bootstrap: unknown profiles and duplicate sources fail before opening native storage
+  ---
+  duration_ms: 28.2662
+  type: 'test'
+  ...
+# Subtest: Runtime context: actual provider payload follows the selected profile and current source without changing raw history
+ok 421 - Runtime context: actual provider payload follows the selected profile and current source without changing raw history
+  ---
+  duration_ms: 218.0366
+  type: 'test'
+  ...
+# Subtest: Runtime context: source failure blocks actual provider dispatch instead of keeping previously rendered text
+ok 422 - Runtime context: source failure blocks actual provider dispatch instead of keeping previously rendered text
+  ---
+  duration_ms: 46.59
+  type: 'test'
+  ...
+# Subtest: Runtime context: definition identity is retained across reopen and a changed version cannot silently replace it
+ok 423 - Runtime context: definition identity is retained across reopen and a changed version cannot silently replace it
+  ---
+  duration_ms: 67.2923
+  type: 'test'
+  ...
+# Subtest: M1: reload quarantines one Conversation's late job without invalidating a peer
+ok 424 - M1: reload quarantines one Conversation's late job without invalidating a peer
+  ---
+  duration_ms: 247.936
+  type: 'test'
+  ...
+# Subtest: M1: deactivate quarantines one Conversation's late job without invalidating a peer
+ok 425 - M1: deactivate quarantines one Conversation's late job without invalidating a peer
+  ---
+  duration_ms: 182.53
+  type: 'test'
+  ...
+# Subtest: M1: edit quarantines one Conversation's late job without invalidating a peer
+ok 426 - M1: edit quarantines one Conversation's late job without invalidating a peer
+  ---
+  duration_ms: 206.7766
+  type: 'test'
+  ...
+# Subtest: M1: fork quarantines one Conversation's late job without invalidating a peer
+ok 427 - M1: fork quarantines one Conversation's late job without invalidating a peer
+  ---
+  duration_ms: 202.6814
+  type: 'test'
+  ...
+# Subtest: M1: explicit legacy mapping preserves source/journal transactions/adoption and spent slots
+ok 428 - M1: explicit legacy mapping preserves source/journal transactions/adoption and spent slots
+  ---
+  duration_ms: 214.817
+  type: 'test'
+  ...
+# Subtest: M1: legacy tool rounds cannot be migrated into a reset primary budget
+ok 429 - M1: legacy tool rounds cannot be migrated into a reset primary budget
+  ---
+  duration_ms: 124.8368
+  type: 'test'
+  ...
+# Subtest: M1: implicit legacy migration refuses without dispatch or source rewrite
+ok 430 - M1: implicit legacy migration refuses without dispatch or source rewrite
+  ---
+  duration_ms: 73.502
+  type: 'test'
+  ...
+# Subtest: M1: wrong-identity legacy migration refuses without dispatch or source rewrite
+ok 431 - M1: wrong-identity legacy migration refuses without dispatch or source rewrite
+  ---
+  duration_ms: 79.4865
+  type: 'test'
+  ...
+# Subtest: M1: unknown-journal legacy migration refuses without dispatch or source rewrite
+ok 432 - M1: unknown-journal legacy migration refuses without dispatch or source rewrite
+  ---
+  duration_ms: 74.0371
+  type: 'test'
+  ...
+# Subtest: M1: pending-intent legacy migration refuses without dispatch or source rewrite
+ok 433 - M1: pending-intent legacy migration refuses without dispatch or source rewrite
+  ---
+  duration_ms: 75.1942
+  type: 'test'
+  ...
+# Subtest: M1: fork-history legacy migration refuses without dispatch or source rewrite
+ok 434 - M1: fork-history legacy migration refuses without dispatch or source rewrite
+  ---
+  duration_ms: 84.3069
+  type: 'test'
+  ...
+# Subtest: Runtime project profiles: real tool reads follow the selected cwd and persist across a normal reopen
+ok 435 - Runtime project profiles: real tool reads follow the selected cwd and persist across a normal reopen
+  ---
+  duration_ms: 471.8512
+  type: 'test'
+  ...
+# Subtest: Runtime project profiles: invalid or missing cwd is refused before opening storage
+ok 436 - Runtime project profiles: invalid or missing cwd is refused before opening storage
+  ---
+  duration_ms: 28.4926
+  type: 'test'
+  ...
+# Subtest: M1 review: InferencePolicy.maxCalls bounds a strategy across Conversations/forks/reopen
+ok 437 - M1 review: InferencePolicy.maxCalls bounds a strategy across Conversations/forks/reopen
+  ---
+  duration_ms: 281.9555
+  type: 'test'
+  ...
+# Subtest: M1 review: post-fork prompt tools are current and idle followUp is explicitly refused
+ok 438 - M1 review: post-fork prompt tools are current and idle followUp is explicitly refused
+  ---
+  duration_ms: 158.5672
+  type: 'test'
+  ...
+# Subtest: M1 review: damaged Conversation artifact storage seals its shared Session
+ok 439 - M1 review: damaged Conversation artifact storage seals its shared Session
+  ---
+  duration_ms: 66.4928
+  type: 'test'
+  ...
+# Subtest: M1 review: foreign jobScope in a peer projection is rejected before HTTP
+ok 440 - M1 review: foreign jobScope in a peer projection is rejected before HTTP
+  ---
+  duration_ms: 150.9068
+  type: 'test'
+  ...
+# Subtest: M1: Session auxiliary quota is shared across equal strategy IDs and retained after cancellation/reopen
+ok 441 - M1: Session auxiliary quota is shared across equal strategy IDs and retained after cancellation/reopen
+  ---
+  duration_ms: 226.6598
+  type: 'test'
+  ...
+# Subtest: M1: unknown shared storage seals every local member but not another Session
+ok 442 - M1: unknown shared storage seals every local member but not another Session
+  ---
+  duration_ms: 102.9935
+  type: 'test'
+  ...
+# Subtest: M1: another runtime cannot open a live writer's same storage
+ok 443 - M1: another runtime cannot open a live writer's same storage
+  ---
+  duration_ms: 31.2427
+  type: 'test'
+  ...
+# Subtest: M1: legacy host cannot bypass a managed runtime's persistent quotas
+ok 444 - M1: legacy host cannot bypass a managed runtime's persistent quotas
+  ---
+  duration_ms: 29.1702
+  type: 'test'
+  ...
+# Subtest: M1: queued cancellation stays unknown until an exact durable withdrawal receipt
+ok 445 - M1: queued cancellation stays unknown until an exact durable withdrawal receipt
+  ---
+  duration_ms: 171.6306
+  type: 'test'
+  ...
+# Subtest: M3 store: concurrent CAS, frozen state and restart preserve exact committed version
+ok 446 - M3 store: concurrent CAS, frozen state and restart preserve exact committed version
+  ---
+  duration_ms: 66.9473
+  type: 'test'
+  ...
+# Subtest: M3 store: non-JSON, capacity and revoked authority reject without advancing state
+ok 447 - M3 store: non-JSON, capacity and revoked authority reject without advancing state
+  ---
+  duration_ms: 27.8692
+  type: 'test'
+  ...
+# Subtest: M3 store: unknown physical commit seals only its owned Session
+ok 448 - M3 store: unknown physical commit seals only its owned Session
+  ---
+  duration_ms: 62.4702
+  type: 'test'
+  ...
+# Subtest: M3 runtime: explicit reserved storage identity is create-once and only reopens explicitly
+ok 449 - M3 runtime: explicit reserved storage identity is create-once and only reopens explicitly
+  ---
+  duration_ms: 48.9153
+  type: 'test'
+  ...
+# Subtest: invalid nonexistent adoption changes neither artifact bytes nor intent
+ok 450 - invalid nonexistent adoption changes neither artifact bytes nor intent
+  ---
+  duration_ms: 124.7962
+  type: 'test'
+  ...
+# Subtest: invalid foreign-job adoption changes neither artifact bytes nor intent
+ok 451 - invalid foreign-job adoption changes neither artifact bytes nor intent
+  ---
+  duration_ms: 93.5283
+  type: 'test'
+  ...
+# Subtest: invalid duplicate adoption changes neither artifact bytes nor intent
+ok 452 - invalid duplicate adoption changes neither artifact bytes nor intent
+  ---
+  duration_ms: 104.6425
+  type: 'test'
+  ...
+# Subtest: invalid incomplete adoption changes neither artifact bytes nor intent
+ok 453 - invalid incomplete adoption changes neither artifact bytes nor intent
+  ---
+  duration_ms: 99.9322
+  type: 'test'
+  ...
+# Subtest: invalid already-adopted adoption changes neither artifact bytes nor intent
+ok 454 - invalid already-adopted adoption changes neither artifact bytes nor intent
+  ---
+  duration_ms: 102.6653
+  type: 'test'
+  ...
+# Subtest: settled adoption detects physical rollback on reopen before another HTTP
+ok 455 - settled adoption detects physical rollback on reopen before another HTTP
+  ---
+  duration_ms: 143.7652
+  type: 'test'
+  ...
+# Subtest: settled adoption detects physical transaction-id on reopen before another HTTP
+ok 456 - settled adoption detects physical transaction-id on reopen before another HTTP
+  ---
+  duration_ms: 145.4028
+  type: 'test'
+  ...
+# Subtest: all settled adoptions survive later ordinary appends and trusted reopen
+ok 457 - all settled adoptions survive later ordinary appends and trusted reopen
+  ---
+  duration_ms: 146.5637
+  type: 'test'
+  ...
+# Subtest: atomic provenance frame aligns context edits, system/loadout checkpoints and excluded bash
+ok 458 - atomic provenance frame aligns context edits, system/loadout checkpoints and excluded bash
+  ---
+  duration_ms: 116.1581
+  type: 'test'
+  ...
+# Subtest: summary replacement crossing an unselected mid-system checkpoint blocks HTTP
+ok 459 - summary replacement crossing an unselected mid-system checkpoint blocks HTTP
+  ---
+  duration_ms: 52.0042
+  type: 'test'
+  ...
+# Subtest: native protocol arguments cannot escape through the projector to HTTP
+ok 460 - native protocol arguments cannot escape through the projector to HTTP
+  ---
+  duration_ms: 50.2881
+  type: 'test'
+  ...
+# Subtest: native protocol id cannot escape through the projector to HTTP
+ok 461 - native protocol id cannot escape through the projector to HTTP
+  ---
+  duration_ms: 37.2957
+  type: 'test'
+  ...
+# Subtest: native protocol name cannot escape through the projector to HTTP
+ok 462 - native protocol name cannot escape through the projector to HTTP
+  ---
+  duration_ms: 39.8742
+  type: 'test'
+  ...
+# Subtest: native protocol dangling-range cannot escape through the projector to HTTP
+ok 463 - native protocol dangling-range cannot escape through the projector to HTTP
+  ---
+  duration_ms: 45.3014
+  type: 'test'
+  ...
+# Subtest: native protocol reversed-range cannot escape through the projector to HTTP
+ok 464 - native protocol reversed-range cannot escape through the projector to HTTP
+  ---
+  duration_ms: 36.5917
+  type: 'test'
+  ...
+# Subtest: native protocol forged-result cannot escape through the projector to HTTP
+ok 465 - native protocol forged-result cannot escape through the projector to HTTP
+  ---
+  duration_ms: 36.602
+  type: 'test'
+  ...
+# Subtest: native tool-result reduction preserves call IDs/names/arguments and declarations on wire
+ok 466 - native tool-result reduction preserves call IDs/names/arguments and declarations on wire
+  ---
+  duration_ms: 48.2689
+  type: 'test'
+  ...
+# Subtest: a completed source job cannot activate a summary after a later source edit
+ok 467 - a completed source job cannot activate a summary after a later source edit
+  ---
+  duration_ms: 53.7182
+  type: 'test'
+  ...
+# Subtest: previous-context edit invalidates an in-flight job even if its target is unchanged
+ok 468 - previous-context edit invalidates an in-flight job even if its target is unchanged
+  ---
+  duration_ms: 67.7553
+  type: 'test'
+  ...
+# Subtest: reopen rejects a missing or partial journal instead of silently recreating its records
+ok 469 - reopen rejects a missing or partial journal instead of silently recreating its records
+  ---
+  duration_ms: 139.6036
+  type: 'test'
+  ...
+# Subtest: binding lifecycle notifies both revocation and fresh ready views
+ok 470 - binding lifecycle notifies both revocation and fresh ready views
+  ---
+  duration_ms: 51.3556
+  type: 'test'
+  ...
+# Subtest: protected system checkpoint between a valid call/result pair survives active projection
+ok 471 - protected system checkpoint between a valid call/result pair survives active projection
+  ---
+  duration_ms: 104.0517
+  type: 'test'
+  ...
+# Subtest: auxiliary inference consumes 64/128 on wire, is bounded, and leaves main C2 untouched
+ok 472 - auxiliary inference consumes 64/128 on wire, is bounded, and leaves main C2 untouched
+  ---
+  duration_ms: 190.3158
+  type: 'test'
+  ...
+# Subtest: artifact-only binding cannot spend without an explicit inference grant
+ok 473 - artifact-only binding cannot spend without an explicit inference grant
+  ---
+  duration_ms: 83.6998
+  type: 'test'
+  ...
+# Subtest: source job allows tail growth but rejects source edits before publication or next attempt
+ok 474 - source job allows tail growth but rejects source edits before publication or next attempt
+  ---
+  duration_ms: 114.6678
+  type: 'test'
+  ...
+# Subtest: pending inference edit quarantines completion and blocks later attempts
+ok 475 - pending inference edit quarantines completion and blocks later attempts
+  ---
+  duration_ms: 95.389
+  type: 'test'
+  ...
+# Subtest: pending inference reload quarantines completion and blocks later attempts
+ok 476 - pending inference reload quarantines completion and blocks later attempts
+  ---
+  duration_ms: 91.7239
+  type: 'test'
+  ...
+# Subtest: pending inference newSession quarantines completion and blocks later attempts
+ok 477 - pending inference newSession quarantines completion and blocks later attempts
+  ---
+  duration_ms: 93.5201
+  type: 'test'
+  ...
+# Subtest: pending inference owner quarantines completion and blocks later attempts
+ok 478 - pending inference owner quarantines completion and blocks later attempts
+  ---
+  duration_ms: 77.4458
+  type: 'test'
+  ...
+# Subtest: pending inference ABA quarantines completion and blocks later attempts
+ok 479 - pending inference ABA quarantines completion and blocks later attempts
+  ---
+  duration_ms: 84.7258
+  type: 'test'
+  ...
+# Subtest: pending inference dispose quarantines completion and blocks later attempts
+ok 480 - pending inference dispose quarantines completion and blocks later attempts
+  ---
+  duration_ms: 74.1701
+  type: 'test'
+  ...
+# Subtest: provider failure has unknown usage and never causes implicit transport or model retry
+ok 481 - provider failure has unknown usage and never causes implicit transport or model retry
+  ---
+  duration_ms: 95.0055
+  type: 'test'
+  ...
+# Subtest: source jobs retain fingerprints, not complete historical frames
+ok 482 - source jobs retain fingerprints, not complete historical frames
+  ---
+  duration_ms: 166.3027
+  type: 'test'
+  ...
+# Subtest: unusable source jobs are released after cancel
+ok 483 - unusable source jobs are released after cancel
+  ---
+  duration_ms: 327.5839
+  type: 'test'
+  ...
+# Subtest: unusable source jobs are released after edit
+ok 484 - unusable source jobs are released after edit
+  ---
+  duration_ms: 496.7802
+  type: 'test'
+  ...
+# Subtest: unusable source jobs are released after newSession
+ok 485 - unusable source jobs are released after newSession
+  ---
+  duration_ms: 316.0425
+  type: 'test'
+  ...
+# Subtest: explicit null range omits an existing summary without resurrecting source or adding a placeholder
+ok 486 - explicit null range omits an existing summary without resurrecting source or adding a placeholder
+  ---
+  duration_ms: 106.339
+  type: 'test'
+  ...
+# Subtest: null range omission retains the protected native checkpoint and remaining tail on wire
+ok 487 - null range omission retains the protected native checkpoint and remaining tail on wire
+  ---
+  duration_ms: 56.5022
+  type: 'test'
+  ...
+# Subtest: null range omission cannot cross a system checkpoint
+ok 488 - null range omission cannot cross a system checkpoint
+  ---
+  duration_ms: 53.9637
+  type: 'test'
+  ...
+# Subtest: null range omission refuses a split native call/result pair
+ok 489 - null range omission refuses a split native call/result pair
+  ---
+  duration_ms: 46.8266
+  type: 'test'
+  ...
+# Subtest: null range omission removes a complete native call/result pair
+ok 490 - null range omission removes a complete native call/result pair
+  ---
+  duration_ms: 63.5035
+  type: 'test'
+  ...
+# Subtest: null range omission keeps completed job source authority after later source edit
+ok 491 - null range omission keeps completed job source authority after later source edit
+  ---
+  duration_ms: 63.8439
+  type: 'test'
+  ...
+# Subtest: auxiliary output tool reaches real HTTP and returns an immutable call without executing a tool
+ok 492 - auxiliary output tool reaches real HTTP and returns an immutable call without executing a tool
+  ---
+  duration_ms: 155.3028
+  type: 'test'
+  ...
+# Subtest: auxiliary output tool rejects prose-only and preserves measured usage
+ok 493 - auxiliary output tool rejects prose-only and preserves measured usage
+  ---
+  duration_ms: 100.0126
+  type: 'test'
+  ...
+# Subtest: auxiliary output tool rejects wrong-tool and preserves measured usage
+ok 494 - auxiliary output tool rejects wrong-tool and preserves measured usage
+  ---
+  duration_ms: 96.9412
+  type: 'test'
+  ...
+# Subtest: auxiliary output tool rejects missing-parameter and preserves measured usage
+ok 495 - auxiliary output tool rejects missing-parameter and preserves measured usage
+  ---
+  duration_ms: 91.9688
+  type: 'test'
+  ...
+# Subtest: auxiliary output tool rejects extra-parameter and preserves measured usage
+ok 496 - auxiliary output tool rejects extra-parameter and preserves measured usage
+  ---
+  duration_ms: 95.6219
+  type: 'test'
+  ...
+# Subtest: auxiliary output tool rejects coerced-parameter and preserves measured usage
+ok 497 - auxiliary output tool rejects coerced-parameter and preserves measured usage
+  ---
+  duration_ms: 89.393
+  type: 'test'
+  ...
+# Subtest: auxiliary output tool rejects truncated-call and preserves measured usage
+ok 498 - auxiliary output tool rejects truncated-call and preserves measured usage
+  ---
+  duration_ms: 77.4807
+  type: 'test'
+  ...
+# Subtest: auxiliary output tool rejects unfinished-json-with-tool-stop and preserves measured usage
+ok 499 - auxiliary output tool rejects unfinished-json-with-tool-stop and preserves measured usage
+  ---
+  duration_ms: 79.4184
+  type: 'test'
+  ...
+# Subtest: auxiliary output tool rejects repaired-json-escape and preserves measured usage
+ok 500 - auxiliary output tool rejects repaired-json-escape and preserves measured usage
+  ---
+  duration_ms: 93.8079
+  type: 'test'
+  ...
+# Subtest: invalid output tool declaration is refused before an inference reservation or HTTP
+ok 501 - invalid output tool declaration is refused before an inference reservation or HTTP
+  ---
+  duration_ms: 70.0994
+  type: 'test'
+  ...
+# Subtest: auxiliary SSE length is incomplete with measured usage retained
+ok 502 - auxiliary SSE length is incomplete with measured usage retained
+  ---
+  duration_ms: 143.3598
+  type: 'test'
+  ...
+# Subtest: auxiliary SSE tool_calls is incomplete with measured usage retained
+ok 503 - auxiliary SSE tool_calls is incomplete with measured usage retained
+  ---
+  duration_ms: 102.1792
+  type: 'test'
+  ...
+# Subtest: successful auxiliary usage does not fabricate zero
+ok 504 - successful auxiliary usage does not fabricate zero
+  ---
+  duration_ms: 95.1252
+  type: 'test'
+  ...
+# Subtest: successful auxiliary usage has measurements
+ok 505 - successful auxiliary usage has measurements
+  ---
+  duration_ms: 95.2742
+  type: 'test'
+  ...
+# Subtest: bash request rendering number changes wire only and never executes a command
+ok 506 - bash request rendering number changes wire only and never executes a command
+  ---
+  duration_ms: 104.7773
+  type: 'test'
+  ...
+# Subtest: bash request rendering reduce changes wire only and never executes a command
+ok 507 - bash request rendering reduce changes wire only and never executes a command
+  ---
+  duration_ms: 63.6521
+  type: 'test'
+  ...
+# Subtest: bash rendering excluded is rejected before HTTP
+ok 508 - bash rendering excluded is rejected before HTTP
+  ---
+  duration_ms: 41.9177
+  type: 'test'
+  ...
+# Subtest: bash rendering system is rejected before HTTP
+ok 509 - bash rendering system is rejected before HTTP
+  ---
+  duration_ms: 43.7282
+  type: 'test'
+  ...
+# Subtest: bash rendering wrong-role is rejected before HTTP
+ok 510 - bash rendering wrong-role is rejected before HTTP
+  ---
+  duration_ms: 50.413
+  type: 'test'
+  ...
+# Subtest: bash rendering forged-field is rejected before HTTP
+ok 511 - bash rendering forged-field is rejected before HTTP
+  ---
+  duration_ms: 42.0153
+  type: 'test'
+  ...
+# Subtest: bash rendering forged-kind is rejected before HTTP
+ok 512 - bash rendering forged-kind is rejected before HTTP
+  ---
+  duration_ms: 47.426
+  type: 'test'
+  ...
+# Subtest: bash rendering bad-exit is rejected before HTTP
+ok 513 - bash rendering bad-exit is rejected before HTTP
+  ---
+  duration_ms: 40.859
+  type: 'test'
+  ...
+# Subtest: bash rendering copied-basis is rejected before HTTP
+ok 514 - bash rendering copied-basis is rejected before HTTP
+  ---
+  duration_ms: 39.2553
+  type: 'test'
+  ...
+# Subtest: bash rendering stale-basis is rejected before HTTP
+ok 515 - bash rendering stale-basis is rejected before HTTP
+  ---
+  duration_ms: 46.5636
+  type: 'test'
+  ...
+# Subtest: bash rendering duplicate is rejected before HTTP
+ok 516 - bash rendering duplicate is rejected before HTTP
+  ---
+  duration_ms: 40.4691
+  type: 'test'
+  ...
+# Subtest: main provider failure cannot trigger hidden HTTP transport retries
+ok 517 - main provider failure cannot trigger hidden HTTP transport retries
+  ---
+  duration_ms: 87.4882
+  type: 'test'
+  ...
+# Subtest: bootstrap duplicate inference definitions fail before any HTTP
+ok 518 - bootstrap duplicate inference definitions fail before any HTTP
+  ---
+  duration_ms: 7.6996
+  type: 'test'
+  ...
+# Subtest: bootstrap nonfinite inference definitions fail before any HTTP
+ok 519 - bootstrap nonfinite inference definitions fail before any HTTP
+  ---
+  duration_ms: 4.2826
+  type: 'test'
+  ...
+# Subtest: bootstrap unlisted inference definitions fail before any HTTP
+ok 520 - bootstrap unlisted inference definitions fail before any HTTP
+  ---
+  duration_ms: 4.2603
+  type: 'test'
+  ...
+# Subtest: artifact authority refuses expired-frame without persisting foreign data
+ok 521 - artifact authority refuses expired-frame without persisting foreign data
+  ---
+  duration_ms: 110.8896
+  type: 'test'
+  ...
+# Subtest: artifact authority refuses foreign-principal without persisting foreign data
+ok 522 - artifact authority refuses foreign-principal without persisting foreign data
+  ---
+  duration_ms: 73.1864
+  type: 'test'
+  ...
+# Subtest: artifact authority refuses artifact-only-write without persisting foreign data
+ok 523 - artifact authority refuses artifact-only-write without persisting foreign data
+  ---
+  duration_ms: 72.2735
+  type: 'test'
+  ...
+# Subtest: synchronous projector return is snapshotted before later caller mutation
+ok 524 - synchronous projector return is snapshotted before later caller mutation
+  ---
+  duration_ms: 154.8364
+  type: 'test'
+  ...
+# Subtest: pending auxiliary reservation remains observable with unknown usage until completion
+ok 525 - pending auxiliary reservation remains observable with unknown usage until completion
+  ---
+  duration_ms: 100.9239
+  type: 'test'
+  ...
+# Subtest: source job rejects targets across a checkpoint instead of minting unsafe authority
+ok 526 - source job rejects targets across a checkpoint instead of minting unsafe authority
+  ---
+  duration_ms: 98.6511
+  type: 'test'
+  ...
+# Subtest: a stale artifact version after a projector's own write blocks HTTP until explicitly rebased
+ok 527 - a stale artifact version after a projector's own write blocks HTTP until explicitly rebased
+  ---
+  duration_ms: 52.5246
+  type: 'test'
+  ...
+# Subtest: an artifact append write failure returns unknown, latches, and sends no model retry
+ok 528 - an artifact append write failure returns unknown, latches, and sends no model retry
+  ---
+  duration_ms: 61.0203
+  type: 'test'
+  ...
+# Subtest: opted-in completed adoption survives trusted reopen without replay
+ok 529 - opted-in completed adoption survives trusted reopen without replay
+  ---
+  duration_ms: 78.4085
+  type: 'test'
+  ...
+# Subtest: unadopted completed inference stays fail-closed across trusted reopen
+ok 530 - unadopted completed inference stays fail-closed across trusted reopen
+  ---
+  duration_ms: 71.1878
+  type: 'test'
+  ...
+# Subtest: live inference reservations remain usable until exact adoption
+ok 531 - live inference reservations remain usable until exact adoption
+  ---
+  duration_ms: 61.6608
+  type: 'test'
+  ...
+# Subtest: call budgets survive reload, owner replacement and trusted process reopen
+ok 532 - call budgets survive reload, owner replacement and trusted process reopen
+  ---
+  duration_ms: 75.6058
+  type: 'test'
+  ...
+# Subtest: a job checks each explicit fallback with the same source and preserves zero-cap host limits
+ok 533 - a job checks each explicit fallback with the same source and preserves zero-cap host limits
+  ---
+  duration_ms: 78.9892
+  type: 'test'
+  ...
+# Subtest: public inference policy rejects non-finite or missing budgets at bootstrap
+ok 534 - public inference policy rejects non-finite or missing budgets at bootstrap
+  ---
+  duration_ms: 15.5047
+  type: 'test'
+  ...
+# Subtest: old tool async context cannot omit invocation scope to refresh authority after replacement
+ok 535 - old tool async context cannot omit invocation scope to refresh authority after replacement
+  ---
+  duration_ms: 47.7605
+  type: 'test'
+  ...
+# Subtest: an auxiliary audit write fault during reload remains isolated to its session
+ok 536 - an auxiliary audit write fault during reload remains isolated to its session
+  ---
+  duration_ms: 288.3967
+  type: 'test'
+  ...
+# Subtest: an auxiliary audit write fault during newSession remains isolated to its session
+ok 537 - an auxiliary audit write fault during newSession remains isolated to its session
+  ---
+  duration_ms: 240.6869
+  type: 'test'
+  ...
+# Subtest: strategy binding enforces principal, exact hook and deactivation
+ok 538 - strategy binding enforces principal, exact hook and deactivation
+  ---
+  duration_ms: 44.9026
+  type: 'test'
+  ...
+# Subtest: request patches preserve canonical history and survive reload without double installation
+ok 539 - request patches preserve canonical history and survive reload without double installation
+  ---
+  duration_ms: 172.5358
+  type: 'test'
+  ...
+# Subtest: active projector throw blocks the next actual HTTP request
+ok 540 - active projector throw blocks the next actual HTTP request
+  ---
+  duration_ms: 81.215
+  type: 'test'
+  ...
+# Subtest: active projector copied-basis blocks the next actual HTTP request
+ok 541 - active projector copied-basis blocks the next actual HTTP request
+  ---
+  duration_ms: 78.7488
+  type: 'test'
+  ...
+# Subtest: active projector missing-entry blocks the next actual HTTP request
+ok 542 - active projector missing-entry blocks the next actual HTTP request
+  ---
+  duration_ms: 87.59
+  type: 'test'
+  ...
+# Subtest: active projector system blocks the next actual HTTP request
+ok 543 - active projector system blocks the next actual HTTP request
+  ---
+  duration_ms: 77.0105
+  type: 'test'
+  ...
+# Subtest: active projector revoked blocks the next actual HTTP request
+ok 544 - active projector revoked blocks the next actual HTTP request
+  ---
+  duration_ms: 77.6333
+  type: 'test'
+  ...
+# Subtest: projector can rebase its own artifact commit before returning a plan
+ok 545 - projector can rebase its own artifact commit before returning a plan
+  ---
+  duration_ms: 104.0541
+  type: 'test'
+  ...
+# Subtest: artifact receipts enforce scope/version and a physical journal fault latches
+ok 546 - artifact receipts enforce scope/version and a physical journal fault latches
+  ---
+  duration_ms: 70.6843
+  type: 'test'
+  ...
+# Subtest: late tool invocation cannot obtain a new-session frame
+ok 547 - late tool invocation cannot obtain a new-session frame
+  ---
+  duration_ms: 129.2827
+  type: 'test'
+  ...
+# Subtest: trusted reopen preserves raw identity and records but not old operation authority
+ok 548 - trusted reopen preserves raw identity and records but not old operation authority
+  ---
+  duration_ms: 72.6514
+  type: 'test'
+  ...
+# Subtest: requested reopen of missing or corrupted owned storage never creates a new session
+ok 549 - requested reopen of missing or corrupted owned storage never creates a new session
+  ---
+  duration_ms: 7.4462
+  type: 'test'
+  ...
+# Subtest: M5 client: fresh reconnect reads scoped snapshot, never silently repeats mutations or replaces admission
+ok 550 - M5 client: fresh reconnect reads scoped snapshot, never silently repeats mutations or replaces admission
+  ---
+  duration_ms: 208.1749
+  type: 'test'
+  ...
+# Subtest: M5 client: uncorrelated pre-body capacity remains unknown rather than trusting HTTP status
+ok 551 - M5 client: uncorrelated pre-body capacity remains unknown rather than trusting HTTP status
+  ---
+  duration_ms: 91.5412
+  type: 'test'
+  ...
+# Subtest: M5 client: cancelling an already-placed wait preserves admitted work and causes no implicit target abort
+ok 552 - M5 client: cancelling an already-placed wait preserves admitted work and causes no implicit target abort
+  ---
+  duration_ms: 94.6052
+  type: 'test'
+  ...
+# Subtest: M5 client: malformed response UTF-8 cannot publish a normalized native receipt after real admission
+ok 553 - M5 client: malformed response UTF-8 cannot publish a normalized native receipt after real admission
+  ---
+  duration_ms: 96.4661
+  type: 'test'
+  ...
+# Subtest: M5 client: lost HTTP response after real delivery stays unknown; caller retry retains message identity
+ok 554 - M5 client: lost HTTP response after real delivery stays unknown; caller retry retains message identity
+  ---
+  duration_ms: 102.2496
+  type: 'test'
+  ...
+# Subtest: WebUI settings client: real HTTP metadata keeps exact resource/profile/incarnation correlation without retry
+ok 555 - WebUI settings client: real HTTP metadata keeps exact resource/profile/incarnation correlation without retry
+  ---
+  duration_ms: 59.3595
+  type: 'test'
+  ...
+# Subtest: WebUI private client: real HTTP requires the original version and replace/clear outcome, with no automatic replay
+ok 556 - WebUI private client: real HTTP requires the original version and replace/clear outcome, with no automatic replay
+  ---
+  duration_ms: 71.1865
+  type: 'test'
+  ...
+# Subtest: WebUI notification client: real HTTP rejects a legal status for another exact resource and never repeats a device write
+ok 557 - WebUI notification client: real HTTP rejects a legal status for another exact resource and never repeats a device write
+  ---
+  duration_ms: 31.2592
+  type: 'test'
+  ...
+# Subtest: WebUI Session correlation: a same-ID receipt or team snapshot from another parent is rejected
+ok 558 - WebUI Session correlation: a same-ID receipt or team snapshot from another parent is rejected
+  ---
+  duration_ms: 43.738
+  type: 'test'
+  ...
+# Subtest: WebUI fetch client: actual HTTP uses v2/CSRF and reconnect checks the storage instance
+ok 559 - WebUI fetch client: actual HTTP uses v2/CSRF and reconnect checks the storage instance
+  ---
+  duration_ms: 31.6903
+  type: 'test'
+  ...
+# Subtest: WebUI fetch client: a received mutation followed by disconnect remains unknown with zero automatic retries
+ok 560 - WebUI fetch client: a received mutation followed by disconnect remains unknown with zero automatic retries
+  ---
+  duration_ms: 4.1374
+  type: 'test'
+  ...
+# Subtest: WebUI fetch client: unrelated errors, wrong target and malformed UTF-8 remain unknown
+ok 561 - WebUI fetch client: unrelated errors, wrong target and malformed UTF-8 remain unknown
+  ---
+  duration_ms: 22.7774
+  type: 'test'
+  ...
+# Subtest: WebUI fetch client: create/configure/fork results bind the requested resource and profile
+ok 562 - WebUI fetch client: create/configure/fork results bind the requested resource and profile
+  ---
+  duration_ms: 61.0683
+  type: 'test'
+  ...
+# Subtest: Board follows an actual native stream from thinking to reply while earlier parts remain retained
+ok 563 - Board follows an actual native stream from thinking to reply while earlier parts remain retained
+  ---
+  duration_ms: 363.1226
+  type: 'test'
+  ...
+# Subtest: Board shows an actual provider rejection in its failed Conversation while retaining the original delivery
+ok 564 - Board shows an actual provider rejection in its failed Conversation while retaining the original delivery
+  ---
+  duration_ms: 105.7009
+  type: 'test'
+  ...
+# Subtest: M4: foreign and ended invocations cannot use another profile's DevPack client
+ok 565 - M4: foreign and ended invocations cannot use another profile's DevPack client
+  ---
+  duration_ms: 234.682
+  type: 'test'
+  ...
+# Subtest: M4: profile removal replaces current prompt, retains historical updates and denies old tools
+ok 566 - M4: profile removal replaces current prompt, retains historical updates and denies old tools
+  ---
+  duration_ms: 256.5754
+  type: 'test'
+  ...
+# Subtest: M4: bounded ask never withdraws placed peer input when its wait expires
+ok 567 - M4: bounded ask never withdraws placed peer input when its wait expires
+  ---
+  duration_ms: 370.5787
+  type: 'test'
+  ...
+# Subtest: M4: real DevPack tool call routes to peer with native invocation and no caller principal
+ok 568 - M4: real DevPack tool call routes to peer with native invocation and no caller principal
+  ---
+  duration_ms: 260.0546
+  type: 'test'
+  ...
+# Subtest: M4: revoked package during recipient admission produces zero target HTTP
+ok 569 - M4: revoked package during recipient admission produces zero target HTTP
+  ---
+  duration_ms: 167.2725
+  type: 'test'
+  ...
+# Subtest: M4: temporary spawn binds actual tool task, advertises no authority-bearing schema
+ok 570 - M4: temporary spawn binds actual tool task, advertises no authority-bearing schema
+  ---
+  duration_ms: 172.7676
+  type: 'test'
+  ...
+# Subtest: M4: model discovers native incoming receipt and replies without prompt markers or forged sender
+ok 571 - M4: model discovers native incoming receipt and replies without prompt markers or forged sender
+  ---
+  duration_ms: 319.823
+  type: 'test'
+  ...
+# Subtest: Board activity: projects waiting, public thinking, tool arguments by callId, reply and genuine errors
+ok 572 - Board activity: projects waiting, public thinking, tool arguments by callId, reply and genuine errors
+  ---
+  duration_ms: 1.4599
+  type: 'test'
+  ...
+# Subtest: Board observations: read-only history filters both endpoints before search/pagination and redacts provenance
+ok 573 - Board observations: read-only history filters both endpoints before search/pagination and redacts provenance
+  ---
+  duration_ms: 370.9968
+  type: 'test'
+  ...
+# Subtest: M4: real communicator tool cannot retire peer even with a lifecycle action grant
+ok 574 - M4: real communicator tool cannot retire peer even with a lifecycle action grant
+  ---
+  duration_ms: 360.0836
+  type: 'test'
+  ...
+# Subtest: Agent facet: public approved profiles bind each native invocation and intersect the complete owner chain
+ok 575 - Agent facet: public approved profiles bind each native invocation and intersect the complete owner chain
+  ---
+  duration_ms: 470.5638
+  type: 'test'
+  ...
+# Subtest: M4: actual model selects new-session, delivery response confirmed
+ok 576 - M4: actual model selects new-session, delivery response confirmed
+  ---
+  duration_ms: 394.4567
+  type: 'test'
+  ...
+# Subtest: M4: actual model selects existing-session, delivery response confirmed
+ok 577 - M4: actual model selects existing-session, delivery response confirmed
+  ---
+  duration_ms: 310.8896
+  type: 'test'
+  ...
+# Subtest: M4: actual model selects new-session, delivery response lost
+ok 578 - M4: actual model selects new-session, delivery response lost
+  ---
+  duration_ms: 324.81
+  type: 'test'
+  ...
+# Subtest: M4: actual model selects new-session, conflicting reservation explicitly denied
+ok 579 - M4: actual model selects new-session, conflicting reservation explicitly denied
+  ---
+  duration_ms: 276.7618
+  type: 'test'
+  ...
+# Subtest: M4: actual model selects new-session, post-delivery wait refusal remains unknown
+ok 580 - M4: actual model selects new-session, post-delivery wait refusal remains unknown
+  ---
+  duration_ms: 299.2499
+  type: 'test'
+  ...
+# Subtest: Human MAS reply: real incoming receipt, scoped peer checks and stable retry with no duplicate HTTP
+ok 581 - Human MAS reply: real incoming receipt, scoped peer checks and stable retry with no duplicate HTTP
+  ---
+  duration_ms: 218.1974
+  type: 'test'
+  ...
+# Subtest: MAS human workbench: revocation while admission waits produces zero target HTTP
+ok 582 - MAS human workbench: revocation while admission waits produces zero target HTTP
+  ---
+  duration_ms: 95.5351
+  type: 'test'
+  ...
+# Subtest: MAS human workbench: scoped readers see only approved members and cannot deliver or manage
+ok 583 - MAS human workbench: scoped readers see only approved members and cannot deliver or manage
+  ---
+  duration_ms: 140.2472
+  type: 'test'
+  ...
+# Subtest: MAS human workbench: management keeps owner authority separate from communication
+ok 584 - MAS human workbench: management keeps owner authority separate from communication
+  ---
+  duration_ms: 117.4931
+  type: 'test'
+  ...
+# Subtest: M4: approved new Session reserves one identity and retries lost preparation on the same real storage
+ok 585 - M4: approved new Session reserves one identity and retries lost preparation on the same real storage
+  ---
+  duration_ms: 257.659
+  type: 'test'
+  ...
+# Subtest: M2 MAS: native client invocation rejects copied, foreign and ended scopes
+ok 586 - M2 MAS: native client invocation rejects copied, foreign and ended scopes
+  ---
+  duration_ms: 245.8693
+  type: 'test'
+  ...
+# Subtest: M2 MAS: JavaScript extra arguments cannot select an internal permission action
+ok 587 - M2 MAS: JavaScript extra arguments cannot select an internal permission action
+  ---
+  duration_ms: 67.5462
+  type: 'test'
+  ...
+# Subtest: M5: restore rejects malformed or foreign native receipts on real coordinator storage before routing
+ok 588 - M5: restore rejects malformed or foreign native receipts on real coordinator storage before routing
+  ---
+  duration_ms: 232.9339
+  type: 'test'
+  ...
+# Subtest: M3 review: generation-blocked unanswered receipt survives target close without dispatch
+ok 589 - M3 review: generation-blocked unanswered receipt survives target close without dispatch
+  ---
+  duration_ms: 232.3373
+  type: 'test'
+  ...
+# Subtest: M3 review: late failed wait cannot downgrade a concurrently committed terminal receipt
+ok 590 - M3 review: late failed wait cannot downgrade a concurrently committed terminal receipt
+  ---
+  duration_ms: 224.1137
+  type: 'test'
+  ...
+# Subtest: M3 review: addressed recipient without send grant may observe native completion with zero extra dispatch
+ok 591 - M3 review: addressed recipient without send grant may observe native completion with zero extra dispatch
+  ---
+  duration_ms: 193.0419
+  type: 'test'
+  ...
+# Subtest: M3 review: concurrent terminal receipt survives a late lost admission response
+ok 592 - M3 review: concurrent terminal receipt survives a late lost admission response
+  ---
+  duration_ms: 204.2738
+  type: 'test'
+  ...
+# Subtest: M3 broker: lost admission receipt survives coordinator reopen without duplicate target effects
+ok 593 - M3 broker: lost admission receipt survives coordinator reopen without duplicate target effects
+  ---
+  duration_ms: 308.6989
+  type: 'test'
+  ...
+# Subtest: M3 broker: interrupted preparation reconciles the exact roster and never allocates replacements
+ok 594 - M3 broker: interrupted preparation reconciles the exact roster and never allocates replacements
+  ---
+  duration_ms: 171.6178
+  type: 'test'
+  ...
+# Subtest: M3 broker: revocation during routing and forged Session addresses cause zero target effects
+ok 595 - M3 broker: revocation during routing and forged Session addresses cause zero target effects
+  ---
+  duration_ms: 154.6507
+  type: 'test'
+  ...
+# Subtest: M3 broker: observing an unknown receipt cannot replay it under missing send authority
+ok 596 - M3 broker: observing an unknown receipt cannot replay it under missing send authority
+  ---
+  duration_ms: 203.8919
+  type: 'test'
+  ...
+# Subtest: M4: composed authority is rechecked at admission commit and cannot remove a revoked parent lease
+ok 597 - M4: composed authority is rechecked at admission commit and cannot remove a revoked parent lease
+  ---
+  duration_ms: 90.3618
+  type: 'test'
+  ...
+# Subtest: M2 MAS: configure selects approved profile, revokes old ref and forks retain bounded history
+ok 598 - M2 MAS: configure selects approved profile, revokes old ref and forks retain bounded history
+  ---
+  duration_ms: 229.185
+  type: 'test'
+  ...
+# Subtest: M2 MAS: retired task-bound member keeps its tombstone in inspect
+ok 599 - M2 MAS: retired task-bound member keeps its tombstone in inspect
+  ---
+  duration_ms: 182.0553
+  type: 'test'
+  ...
+# Subtest: M2 MAS: retired background member keeps its tombstone in inspect
+ok 600 - M2 MAS: retired background member keeps its tombstone in inspect
+  ---
+  duration_ms: 194.5602
+  type: 'test'
+  ...
+# Subtest: M2 MAS: readiness recovery removes stale diagnostic reason
+ok 601 - M2 MAS: readiness recovery removes stale diagnostic reason
+  ---
+  duration_ms: 50.5976
+  type: 'test'
+  ...
+# Subtest: M2 MAS: readiness barrier activates the entire roster on one durable commit
+ok 602 - M2 MAS: readiness barrier activates the entire roster on one durable commit
+  ---
+  duration_ms: 96.5253
+  type: 'test'
+  ...
+# Subtest: M2 MAS: retired history survives activation and reopen without resurrecting authority
+ok 603 - M2 MAS: retired history survives activation and reopen without resurrecting authority
+  ---
+  duration_ms: 155.9735
+  type: 'test'
+  ...
+# Subtest: M2 MAS: activation keeps unfinished and uncertain members behind the readiness barrier
+ok 604 - M2 MAS: activation keeps unfinished and uncertain members behind the readiness barrier
+  ---
+  duration_ms: 64.3891
+  type: 'test'
+  ...
+# Subtest: M2 MAS: readiness, source binding, broad send and narrow owner administration
+ok 605 - M2 MAS: readiness, source binding, broad send and narrow owner administration
+  ---
+  duration_ms: 112.6511
+  type: 'test'
+  ...
+# Subtest: M2 MAS: delayed admission approval rechecks revocation before native target effects
+ok 606 - M2 MAS: delayed admission approval rechecks revocation before native target effects
+  ---
+  duration_ms: 73.0007
+  type: 'test'
+  ...
+# Subtest: M2 MAS: busy peer uses native steer post-tools and followUp final placement
+ok 607 - M2 MAS: busy peer uses native steer post-tools and followUp final placement
+  ---
+  duration_ms: 204.4108
+  type: 'test'
+  ...
+# Subtest: M2 MAS: stopped source is rejected on the commit line despite a stale peer service cache
+ok 608 - M2 MAS: stopped source is rejected on the commit line despite a stale peer service cache
+  ---
+  duration_ms: 68.5164
+  type: 'test'
+  ...
+# Subtest: M2 MAS: reopen preserves duplicate admission without reviving old authority
+ok 609 - M2 MAS: reopen preserves duplicate admission without reviving old authority
+  ---
+  duration_ms: 120.2143
+  type: 'test'
+  ...
+# Subtest: MAS observations: creation records the requesting Conversation, separately from ownership and fork history
+ok 610 - MAS observations: creation records the requesting Conversation, separately from ownership and fork history
+  ---
+  duration_ms: 112.2175
+  type: 'test'
+  ...
+# Subtest: MAS observations: human attribution, reply association and native receipts survive reopen without replay
+ok 611 - MAS observations: human attribution, reply association and native receipts survive reopen without replay
+  ---
+  duration_ms: 186.7402
+  type: 'test'
+  ...
+# Subtest: M4 review: 40 distinct slots contend on real CAS with 1 service instance(s)
+ok 612 - M4 review: 40 distinct slots contend on real CAS with 1 service instance(s)
+  ---
+  duration_ms: 2485.9383
+  type: 'test'
+  ...
+# Subtest: M4 review: 40 distinct slots contend on real CAS with 2 service instance(s)
+ok 613 - M4 review: 40 distinct slots contend on real CAS with 2 service instance(s)
+  ---
+  duration_ms: 2424.625
+  type: 'test'
+  ...
+# Subtest: M2 MAS: unknown create persistence keeps honest state and seals the Session
+ok 614 - M2 MAS: unknown create persistence keeps honest state and seals the Session
+  ---
+  duration_ms: 67.3044
+  type: 'test'
+  ...
+# Subtest: M2 MAS: unknown deliver persistence keeps honest state and seals the Session
+ok 615 - M2 MAS: unknown deliver persistence keeps honest state and seals the Session
+  ---
+  duration_ms: 67.2979
+  type: 'test'
+  ...
+# Subtest: M5 protocol: accepted wire data is detached/frozen and cannot mutate source identity
+ok 616 - M5 protocol: accepted wire data is detached/frozen and cannot mutate source identity
+  ---
+  duration_ms: 1.3808
+  type: 'test'
+  ...
+# Subtest: M5 protocol: version, extra authority fields, malformed references and nonfinite input are refused
+ok 617 - M5 protocol: version, extra authority fields, malformed references and nonfinite input are refused
+  ---
+  duration_ms: 0.428
+  type: 'test'
+  ...
+# Subtest: M5 protocol: response correlates request ID and validates nested receipts before claiming success
+ok 618 - M5 protocol: response correlates request ID and validates nested receipts before claiming success
+  ---
+  duration_ms: 0.3659
+  type: 'test'
+  ...
+# Subtest: M5 protocol: logical member key remains separate from opaque catalog reference key
+ok 619 - M5 protocol: logical member key remains separate from opaque catalog reference key
+  ---
+  duration_ms: 0.1729
+  type: 'test'
+  ...
+# Subtest: M5 protocol: text/body/depth bounds refuse before routing rather than truncating input
+ok 620 - M5 protocol: text/body/depth bounds refuse before routing rather than truncating input
+  ---
+  duration_ms: 0.775
+  type: 'test'
+  ...
+# Subtest: WebUI collaboration protocol: human operations reject serialized authority, unbounded values and metadata
+ok 621 - WebUI collaboration protocol: human operations reject serialized authority, unbounded values and metadata
+  ---
+  duration_ms: 2.3599
+  type: 'test'
+  ...
+# Subtest: WebUI collaboration protocol: bounded attributed snapshots and scoped events reject malformed state
+ok 622 - WebUI collaboration protocol: bounded attributed snapshots and scoped events reject malformed state
+  ---
+  duration_ms: 0.6397
+  type: 'test'
+  ...
+# Subtest: Independent configuration protocol: only explicit model/cwd changes and bounded directory navigation are accepted
+ok 623 - Independent configuration protocol: only explicit model/cwd changes and bounded directory navigation are accepted
+  ---
+  duration_ms: 2.2268
+  type: 'test'
+  ...
+# Subtest: Model catalogue protocol: default plus 64 configured models fits the finite response; a 66th is rejected
+ok 624 - Model catalogue protocol: default plus 64 configured models fits the finite response; a 66th is rejected
+  ---
+  duration_ms: 0.3682
+  type: 'test'
+  ...
+# Subtest: WebUI settings protocol: exact scoped metadata and unknown cost are accepted; secret fields and malformed quotas fail closed
+ok 625 - WebUI settings protocol: exact scoped metadata and unknown cost are accepted; secret fields and malformed quotas fail closed
+  ---
+  duration_ms: 0.4167
+  type: 'test'
+  ...
+# Subtest: WebUI private configuration protocol: dedicated replace/clear/status never accepts an identity or returns a saved value
+ok 626 - WebUI private configuration protocol: dedicated replace/clear/status never accepts an identity or returns a saved value
+  ---
+  duration_ms: 2.1657
+  type: 'test'
+  ...
+# Subtest: WebUI navigation protocol: finite metadata command/result and scoped list states reject authority/foreign fields
+ok 627 - WebUI navigation protocol: finite metadata command/result and scoped list states reject authority/foreign fields
+  ---
+  duration_ms: 2.3185
+  type: 'test'
+  ...
+# Subtest: WebUI fork transcript: current scope and explicit inherited attribution are independent; attribution is never a resource grant
+ok 628 - WebUI fork transcript: current scope and explicit inherited attribution are independent; attribution is never a resource grant
+  ---
+  duration_ms: 0.4051
+  type: 'test'
+  ...
+# Subtest: WebUI notification protocol: finite device controls cannot select a person, content or network authority
+ok 629 - WebUI notification protocol: finite device controls cannot select a person, content or network authority
+  ---
+  duration_ms: 2.4304
+  type: 'test'
+  ...
+# Subtest: WebUI Session selectors: receipt reads keep the native ID and carry a separate parent Session
+ok 630 - WebUI Session selectors: receipt reads keep the native ID and carry a separate parent Session
+  ---
+  duration_ms: 1.9912
+  type: 'test'
+  ...
+# Subtest: WebUI protocol: explicit v2 commands are independent of unchanged headless v1
+ok 631 - WebUI protocol: explicit v2 commands are independent of unchanged headless v1
+  ---
+  duration_ms: 2.5754
+  type: 'test'
+  ...
+# Subtest: WebUI protocol: complete sanitized Conversation DTOs are bounded and strictly correlated
+ok 632 - WebUI protocol: complete sanitized Conversation DTOs are bounded and strictly correlated
+  ---
+  duration_ms: 0.6749
+  type: 'test'
+  ...
+# Subtest: WebUI protocol: bounded assistant error history survives both response and event decoding
+ok 633 - WebUI protocol: bounded assistant error history survives both response and event decoding
+  ---
+  duration_ms: 0.349
+  type: 'test'
+  ...
+# Subtest: WebUI protocol: human display, explicit model work and person administration use finite separate commands
+ok 634 - WebUI protocol: human display, explicit model work and person administration use finite separate commands
+  ---
+  duration_ms: 0.2506
+  type: 'test'
+  ...
+# Subtest: WebUI protocol: human resource control selects a profile without accepting a capability or runtime configuration
+ok 635 - WebUI protocol: human resource control selects a profile without accepting a capability or runtime configuration
+  ---
+  duration_ms: 0.225
+  type: 'test'
+  ...
+# Subtest: WebUI protocol: receipt reasons are bounded native data, not browser-inferred state
+ok 636 - WebUI protocol: receipt reasons are bounded native data, not browser-inferred state
+  ---
+  duration_ms: 0.1721
+  type: 'test'
+  ...
+# Subtest: WebUI protocol: resource streams validate incarnation and explicit resnapshot signals
+ok 637 - WebUI protocol: resource streams validate incarnation and explicit resnapshot signals
+  ---
+  duration_ms: 0.182
+  type: 'test'
+  ...
+1..637
+# tests 659
+# suites 0
+# pass 657
+# fail 0
+# cancelled 0
+# skipped 2
+# todo 0
+# duration_ms 410229.2801

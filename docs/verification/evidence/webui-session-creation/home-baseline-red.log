@@ -1,0 +1,29 @@
+TAP version 13
+# {"homeActions":[{"action":"new-conversation","display":"block","gap":0,"centerDelta":7},{"action":"new-session","display":"flex","gap":5,"centerDelta":0.75}],"theme":"dark","size":14,"width":1440}
+# Subtest: Creation dialog layout: phone and desktop, 20px light/dark, nested pickers and keyboard focus keep complete controls without a home composer
+not ok 1 - Creation dialog layout: phone and desktop, 20px light/dark, nested pickers and keyboard focus keep complete controls without a home composer
+  ---
+  duration_ms: 657.6956
+  type: 'test'
+  location: 'D:\\Projects\\pakka-wt\\webui-p0\\apps\\webui\\test\\session-creation-layout-browser.test.ts:11:1'
+  failureType: 'testCodeFailure'
+  error: 'new-conversation: icon and words must share a visual center'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/session-creation-layout-browser.test.ts:63:14)
+    async Test.run (node:internal/test_runner/test:1332:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1425.83
