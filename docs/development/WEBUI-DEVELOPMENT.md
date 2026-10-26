@@ -176,7 +176,7 @@ Pi Durable 公开 configure 支持 model/cwd 局部修改。Pakka 使用这个�
 
 有限 envelope 仍为 v2，server、静态前端与 `@pakka/client` / `@pakka/protocol` 必须成套更新：新增字段和完整资源键不承诺旧的单 Session decoder 可读取。旧单 Session grant 的归属兼容不等于旧 UI 或旧有限响应 decoder 的兼容；不保留旧首页创建分支。
 
-`navigation.read / navigation.update / navigation.lookup` 在控制 Session 的每人独立 namespace 保存单层个人文件夹与视图。每人最多 32 个文件夹、256 条归类，更新使用版本 CAS 与最近 16 个原请求结果；过期请求也不能绕过版本重做。分组为 Sort Per Session 或 Default，Conversation 至多归入一个文件夹，删除只回到 Unclassified；归类需当前 read 权限，不要求 manage 或新文件夹 ACL。授权读取过滤隐藏资源，但无关编辑保留它们的已有归类。unknown 先核对，不自动重发。
+`navigation.read / navigation.update / navigation.lookup` 在控制 Session 的每人独立 namespace 保存单层个人文件夹与视图。每人最多 32 个文件夹、256 条归类，更新使用版本 CAS 与最近 16 个原请求结果；过期请求也不能绕过版本重做。分组为 Sort Per Session 或 Default，Conversation 至多归入一个文件夹，删除只回到 Uncategorized（未分类）；归类需当前 read 权限，不要求 manage 或新文件夹 ACL。授权读取过滤隐藏资源，但无关编辑保留它们的已有归类。unknown 先核对，不自动重发。
 
 ## 10. 分阶段 Computer Use 实操验收
 

@@ -1,0 +1,66 @@
+{
+  "candidate": "440e9cceb007a6f130be5c4bd8cf51f74cfbccd9",
+  "origin": "http://127.0.0.1:45007",
+  "assets": [
+    {
+      "name": "app.js",
+      "status": 200,
+      "bytes": 41940,
+      "sha256": "5c4970a85b67071932cc63cddb45f841bc972f88b218415ab2371d5210ef940b"
+    },
+    {
+      "name": "frontend.js",
+      "status": 200,
+      "bytes": 14185,
+      "sha256": "a64183590c48aa39efa90e909d33a6a9dce5f01f642ae437bdcfd5efd483d059"
+    },
+    {
+      "name": "creation.js",
+      "status": 200,
+      "bytes": 16302,
+      "sha256": "122becf54d9525104f5f84f2d87d9da33db3dbc391ba598915fba853cb3011f2"
+    },
+    {
+      "name": "conversation-groups.js",
+      "status": 200,
+      "bytes": 14230,
+      "sha256": "8713df5c0415a56d01da289af65082dd20670dcad9a40df55a7a769eafd8f423"
+    },
+    {
+      "name": "resource-identity.js",
+      "status": 200,
+      "bytes": 186,
+      "sha256": "f10acd36afd6588db0fc36a39e4adfc69259a667bbab3eb382e30107e3c1cd85"
+    },
+    {
+      "name": "conversation-configuration.js",
+      "status": 200,
+      "bytes": 16762,
+      "sha256": "a5f1045373a44b457214dc46fd2a6930abad902adfed5cd8a87242675547cac0"
+    },
+    {
+      "name": "elements.css",
+      "status": 200,
+      "bytes": 30152,
+      "sha256": "2f2c42c383b6c79e5d7e286797bd9fa1be9f1064ae0e1f1f357f097ab103252a"
+    },
+    {
+      "name": "reference.css",
+      "status": 200,
+      "bytes": 33738,
+      "sha256": "084adce8bc6e1feab314b301f57ddac0bab5081cfa08d1c911addece9bdb9974"
+    },
+    {
+      "name": "sw.js",
+      "status": 200,
+      "bytes": 4291,
+      "sha256": "ab6c79713cb3a63ea6146bcc3b3b9138c94639d6bd8db632813706322d9181b4"
+    },
+    {
+      "name": "sheet.js",
+      "status": 200,
+      "bytes": 4622,
+      "sha256": "74dd9dda0c67239b2e94a6113d4aa426873467222ca61227e497925e50bb17d4"
+    }
+  ]
+}

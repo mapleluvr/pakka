@@ -1,0 +1,95 @@
+{
+  "sheet": {
+    "x": 12,
+    "y": 8,
+    "right": 348,
+    "bottom": 592,
+    "width": 336,
+    "height": 584
+  },
+  "overflow": false,
+  "fields": [
+    {
+      "name": "SessionNew Session…",
+      "gap": 9.1875,
+      "font": 16
+    },
+    {
+      "name": "Session Name",
+      "gap": 9.1875,
+      "font": 16
+    },
+    {
+      "name": "Conversation Name",
+      "gap": 9.1875,
+      "font": 16
+    },
+    {
+      "name": "Modellocal-preview/very-long-m",
+      "gap": 9.1875,
+      "font": 13
+    },
+    {
+      "name": "Working Directory",
+      "gap": 10.984375,
+      "font": 16
+    }
+  ],
+  "targets": [
+    {
+      "name": "Close creation",
+      "box": {
+        "x": 287,
+        "y": 17,
+        "right": 331,
+        "bottom": 61,
+        "width": 44,
+        "height": 44
+      }
+    },
+    {
+      "name": "local-preview/very-long-model-identity-readable-readable-readable-readable-readable-readable-readable-readable-readable-readable-readable-readable-readable-readable-readable-readable-readable-readable-",
+      "box": {
+        "x": 29,
+        "y": 288.125,
+        "right": 331,
+        "bottom": 368.625,
+        "width": 302,
+        "height": 80.5
+      }
+    },
+    {
+      "name": "Choose working directory",
+      "box": {
+        "x": 287,
+        "y": 410.8125,
+        "right": 331,
+        "bottom": 454.8125,
+        "width": 44,
+        "height": 44
+      }
+    },
+    {
+      "name": "Cancel",
+      "box": {
+        "x": 30.515625,
+        "y": 570,
+        "right": 101.15625,
+        "bottom": 614,
+        "width": 70.640625,
+        "height": 44
+      }
+    },
+    {
+      "name": "Create Session & Conversation",
+      "box": {
+        "x": 113.15625,
+        "y": 570,
+        "right": 331,
+        "bottom": 614,
+        "width": 217.84375,
+        "height": 44
+      }
+    }
+  ]
+}

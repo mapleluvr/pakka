@@ -1,0 +1,12 @@
+Files checked: 15
+Total diagnostics: 0
+Concurrency: 8
+Wait budget: 1200ms
+Outcomes: clean=9, findings=0, unsupported=0, unavailable=0, failed=0, too_large=0, inconclusive=6
+
+Checks not confirmed: 6 (inconclusive/unavailable/unsupported/failed or not started).
+
+9 files confirmed clean, 6 unconfirmed: from a server that cannot confirm clean (push-only, silent-on-clean; e.g. classic typescript-language-server does not publish on a clean re-check). NOT the same as 0 diagnostics.
+
+result ok
+usage tokens=120 elapsed-ms=0 bytes=479 truncated=false

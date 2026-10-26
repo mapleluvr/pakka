@@ -21,7 +21,7 @@
 
 2026-10-25 用户明确否定“获准模型”一类额外权限配置，并要求检查同类过度配置。本轮采用模型目录与整组 Agent 预设授权分离：普通模型选择、继承和检索复用 Conversation 配置权限；完整预设继续限制工具/指令。模型目录隐藏预设 cwd，能力提示遵循真实写权限；目录 roots、身份/资源、凭据与 writer/unknown 边界各保留实际用途。创建和个人文件夹草案不增加逐模型、逐文件夹或多层继承 ACL。采用经过、具体代码点和尚未改动的边界见 [design §6.5](../../openspec/changes/improve-webui-navigation-and-local-recovery/design.md#65-2026-10-25-模型与相关权限精简)、[tasks §4.5](../../openspec/changes/improve-webui-navigation-and-local-recovery/tasks.md#45-模型与相关权限精简2026-10-25) 与[模型目录 delta](../../openspec/changes/improve-webui-navigation-and-local-recovery/specs/devin-frontend/spec.md#requirement-model-selection-uses-a-configured-catalogue-rather-than-per-model-grants)。本切片的真实失败、权限处置、候选和门禁进度见[模型目录与权限精简记录](../verification/WEBUI-MODEL-PERMISSIONS.md)，不以方案更新冒充完成。
 
-用户随后明确要求删除首页命名复用路径并开始执行既有创建方案。本轮按 §6.3 / tasks §4.3 采用并实现公开 Runtime 的真实 Session 目录、独立配置向导、两步创建原身份核对、完整资源寻址及个人单层文件夹；首页与快捷键不保留内嵌命名分支。模型/cwd 与创建同次原生提交，不创建后再修补配置；两种 sidebar 只是原生父子与个人归类的投影。服务字段、容量、writer/重开和恢复范围见[开发契约](../development/WEBUI-DEVELOPMENT.md#session-管理创建与个人导航)。受影响49/49及构建/类型/strict已通过，固定候选全量和耐久证据尚待封存；不以已实现冒充独立 GUI 验收。
+用户随后明确要求删除首页命名复用路径并开始执行既有创建方案。本轮按 §6.3 / tasks §4.3 采用并实现公开 Runtime 的真实 Session 目录、独立配置向导、两步创建原身份核对、完整资源寻址及个人单层文件夹；首页与快捷键不保留内嵌命名分支。模型/cwd 与创建同次原生提交，不创建后再修补配置；两种 sidebar 只是原生父子与个人归类的投影。服务字段、容量、writer/重开和恢复范围见[开发契约](../development/WEBUI-DEVELOPMENT.md#session-管理创建与个人导航)。受影响49/49及构建/类型/strict已通过；固定 `440e9cc` 全量为 659 项/657 pass/0 fail/2 skip。原始失败、两个候选全量、呈现补正、真实重开/部分成功边界与预览见[创建与分组记录](../verification/WEBUI-SESSION-CREATION.md)。本轮作为创建能力封存，用户后续指定的分组菜单与首页入口视觉另起 change；不以这些自检冒充独立 GUI 验收。
 
 现场认证证据、默认 10 分钟/旧会话撤销的设计理由、单 writer、平台文件保护与未知交付的取舍集中在 design，不由本摘要替代。
 

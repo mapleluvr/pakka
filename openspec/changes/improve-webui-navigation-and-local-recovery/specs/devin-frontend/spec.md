@@ -40,13 +40,13 @@ Managed Session registration SHALL persist the original request, server-reserved
 
 ### Requirement: Sidebar projections separate parentage from personal folders
 
-Sort Per Session SHALL group authorized Conversations by their actual native parent. Default SHALL group the same resources by the person's persistent single-level folders with an Unclassified group. Folder creation, renaming, deletion, moving and view preference SHALL modify personal navigation only, use current identity and bounded versioned requests, and SHALL not create another ACL or alter native storage, permissions, cwd or spent budgets.
+Sort Per Session SHALL group authorized Conversations by their actual native parent. Default SHALL group the same resources by the person's persistent single-level folders with an Uncategorized group. Folder creation, renaming, deletion, moving and view preference SHALL modify personal navigation only, use current identity and bounded versioned requests, and SHALL not create another ACL or alter native storage, permissions, cwd or spent budgets.
 
 #### Scenario: Change projection and move a Conversation
 
 - **WHEN** a person changes projection or assigns an authorized Conversation to a folder
 - **THEN** the grouping persists for that person after reopen while the native parent, transcript, configuration, receipts and budgets remain unchanged
-- **AND** deleting the folder moves its entries to Unclassified without deleting native resources
+- **AND** deleting the folder moves its entries to Uncategorized without deleting native resources
 
 ### Requirement: Settings pages have native addressable navigation
 

@@ -1,0 +1,10 @@
+Files checked: 4
+Total diagnostics: 0
+Concurrency: 8
+Wait budget: 1500ms
+Outcomes: clean=4, findings=0, unsupported=0, unavailable=0, failed=0, too_large=0, inconclusive=0
+
+No diagnostics found.
+
+result ok
+usage tokens=49 elapsed-ms=0 bytes=194 truncated=false

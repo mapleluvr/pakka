@@ -1,0 +1,38 @@
+{
+  "candidate": "440e9cceb007a6f130be5c4bd8cf51f74cfbccd9",
+  "baseline": "8df0bf5bd02cb566f6ae7a39a80bd00492d344f4",
+  "environment": "Windows; Node deterministic HTTP providers; isolated HOME/PI_CODING_AGENT_DIR/browser storage",
+  "commands": [
+    {
+      "command": "npm run build",
+      "exitCode": 0,
+      "log": "build-440e9cc.log"
+    },
+    {
+      "command": "npm run check",
+      "exitCode": 0,
+      "log": "check-440e9cc.log"
+    },
+    {
+      "command": "npm test -- --test-reporter=tap",
+      "exitCode": 0,
+      "log": "full-440e9cc.log",
+      "tests": 659,
+      "pass": 657,
+      "fail": 0,
+      "skipped": 2
+    }
+  ],
+  "shellTask": "71962935",
+  "previousCandidate": {
+    "sha": "84c1dfe39967e975d2646943b39a5dfcc13ea4c2",
+    "shellTask": "0ea15fba",
+    "tests": 659,
+    "pass": 657,
+    "fail": 0,
+    "skipped": 2,
+    "subsequentCorrection": "Four CSS declarations align creation action icons/text; 10 test lines measure the actual centers and gaps."
+  },
+  "independentReview": "not scheduled under operator session note 48",
+  "designatedGui": "BLOCKED: agent-workspace-linux desktop tool unavailable; ordinary browser checks are not independent GUI acceptance"
+}
