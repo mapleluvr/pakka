@@ -1262,6 +1262,10 @@ details[open] > .pocket-disclosure > .pocket-icon:first-child {
 	flex-shrink: 0;
 }
 .creation-actions :is(.button, .pill-btn) {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
 	min-width: 44px;
 	min-height: 44px;
 	padding: 10px 14px;

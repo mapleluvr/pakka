@@ -57,6 +57,16 @@ test(
 						true,
 						"home creation and commands have complete hit areas, not an input-bar remnant",
 					);
+					const homeActions = await page.evaluate(
+						`Array.from(document.querySelectorAll('.home-create-card [data-action="new-conversation"], .home-create-card [data-action="new-session"]'),button=>{const icon=button.querySelector('svg').getBoundingClientRect(),text=Array.from(button.childNodes).find(node=>node.nodeType===Node.TEXT_NODE&&node.textContent.trim()),range=document.createRange();range.selectNodeContents(text);const words=range.getBoundingClientRect();return {action:button.dataset.action,display:getComputedStyle(button).display,gap:words.left-icon.right,centerDelta:Math.abs(words.y+words.height/2-icon.y-icon.height/2)}})`,
+					);
+					console.log(
+						JSON.stringify({ homeActions, theme: reading.theme, size: reading.size, width: size.width }),
+					);
+					for (const action of homeActions as { action: string; gap: number; centerDelta: number }[]) {
+						assert.ok(action.centerDelta <= 2, `${action.action}: icon and words must share a visual center`);
+						assert.ok(action.gap >= 7.5, `${action.action}: icon and words require an actual 8px gap`);
+					}
 					await openConversations(page);
 					await page.click('.primary-nav [data-action="new-conversation"]');
 					await page.wait('document.querySelector("[data-creation-form] input[name=name]")');
