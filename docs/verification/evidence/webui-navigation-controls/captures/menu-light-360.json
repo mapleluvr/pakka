@@ -1,0 +1,17 @@
+{
+  "inside": true,
+  "style": {
+    "background": "rgb(255, 255, 255)",
+    "color": "rgba(20, 20, 20, 0.9)",
+    "radius": "10px",
+    "shadow": "rgba(0, 0, 0, 0.34) 0px 16px 40px 0px, rgba(0, 0, 0, 0.18) 0px 2px 8px 0px",
+    "font": "20px"
+  },
+  "checked": "default",
+  "focused": "default",
+  "marked": true,
+  "fonts": [
+    "18.5714px",
+    "18.5714px"
+  ]
+}

@@ -1,0 +1,216 @@
+TAP version 13
+# Subtest: WebUI browser contribution: actual UI controls owned page, real frame renders, mobile viewer cannot act
+    # Subtest: recorded wrapper cannot resolve an unconfirmed native browser action
+    ok 1 - recorded wrapper cannot resolve an unconfirmed native browser action
+      ---
+      duration_ms: 145.2053
+      type: 'test'
+      ...
+    1..1
+ok 1 - WebUI browser contribution: actual UI controls owned page, real frame renders, mobile viewer cannot act
+  ---
+  duration_ms: 3540.0331
+  type: 'test'
+  ...
+# Subtest: WebUI collaboration: a real late read cannot reopen or populate another Conversation
+ok 2 - WebUI collaboration: a real late read cannot reopen or populate another Conversation
+  ---
+  duration_ms: 898.3247
+  type: 'test'
+  ...
+# Subtest: Concise creation: normal controls carry the operation; server/device scope stays readable while cancelled drafts leave resources unchanged
+not ok 3 - Concise creation: normal controls carry the operation; server/device scope stays readable while cancelled drafts leave resources unchanged
+  ---
+  duration_ms: 769.2594
+  type: 'test'
+  location: 'D:\\Projects\\pakka-wt\\webui-p0\\apps\\webui\\test\\copy-presentation-browser.test.ts:37:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    false !== true
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: 'strictEqual'
+  stack: |-
+    file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/copy-presentation-browser.test.ts:55:11
+    async inspect (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/copy-presentation-browser.test.ts:28:3)
+    async TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/copy-presentation-browser.test.ts:38:2)
+    async Test.run (node:internal/test_runner/test:1332:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3)
+  ...
+# Subtest: People Chat and concise settings: contextual accounting help stays accessible and attributed human messages consume no model attempts
+ok 4 - People Chat and concise settings: contextual accounting help stays accessible and attributed human messages consume no model attempts
+  ---
+  duration_ms: 1022.297
+  type: 'test'
+  ...
+# Subtest: Conversation dialog lost before-send: navigation and reconciliation never replace an uncertain admission
+ok 5 - Conversation dialog lost before-send: navigation and reconciliation never replace an uncertain admission
+  ---
+  duration_ms: 825.5133
+  type: 'test'
+  ...
+# Subtest: Conversation dialog lost after-commit: navigation and reconciliation never replace an uncertain admission
+ok 6 - Conversation dialog lost after-commit: navigation and reconciliation never replace an uncertain admission
+  ---
+  duration_ms: 887.9543
+  type: 'test'
+  ...
+# Subtest: Two-step creation loses session.create response: the native parent survives and is never created twice
+not ok 7 - Two-step creation loses session.create response: the native parent survives and is never created twice
+  ---
+  duration_ms: 8769.2386
+  type: 'test'
+  location: 'D:\\Projects\\pakka-wt\\webui-p0\\apps\\webui\\test\\creation-recovery-browser.test.ts:90:2'
+  failureType: 'testCodeFailure'
+  error: |-
+    Browser condition deadline: document.querySelector("[data-creation-message]")?.textContent.includes("The original Session is ready"): Owner
+    New Session
+    New Conversation
+    Ctrl
+    O
+    Commands & Extensions
+    Conversations
+    Default
+    Uncategorized
+    
+    No conversations
+    
+    Recent
+    ADMIN
+    Pakka
+    Agent
+    Start a Conversation
+    New Conversation
+    New Session
+    New Conversation
+    Session Ready
+    Kept Parent
+    9b8be532-7cb1-4da5-813f-d4fcfb68ff08
+    Conversation Name
+    Model
+    local-model
+    Server Directory
+    Close
+    Create Conversation
+    
+    Session Ready. Confirm to create the Conversation.
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    Object.wait (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/browser.ts:373:12)
+    async TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/creation-recovery-browser.test.ts:132:6)
+    async Test.run (node:internal/test_runner/test:1332:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:911:7)
+  ...
+# Subtest: Two-step creation loses create response: the native parent survives and is never created twice
+ok 8 - Two-step creation loses create response: the native parent survives and is never created twice
+  ---
+  duration_ms: 823.3928
+  type: 'test'
+  ...
+# Subtest: WebUI metadata browser lost before-send: closed/reopened sheet only reads original result, never repeats or replaces the mutation
+ok 9 - WebUI metadata browser lost before-send: closed/reopened sheet only reads original result, never repeats or replaces the mutation
+  ---
+  duration_ms: 717.1651
+  type: 'test'
+  ...
+# Subtest: WebUI metadata browser lost after-commit: closed/reopened sheet only reads original result, never repeats or replaces the mutation
+ok 10 - WebUI metadata browser lost after-commit: closed/reopened sheet only reads original result, never repeats or replaces the mutation
+  ---
+  duration_ms: 855.2471
+  type: 'test'
+  ...
+# Subtest: WebUI compound labels, settings forms and graphical keyboard hints remain readable
+    # Subtest: owned navigation titles use Title Case
+    ok 1 - owned navigation titles use Title Case
+      ---
+      duration_ms: 1.7032
+      type: 'test'
+      ...
+    # Subtest: model primary and profile have distinct rows at 1440x900
+    ok 2 - model primary and profile have distinct rows at 1440x900
+      ---
+      duration_ms: 108.7902
+      type: 'test'
+      ...
+    # Subtest: model primary and profile have distinct rows at 360x600
+    ok 3 - model primary and profile have distinct rows at 360x600
+      ---
+      duration_ms: 267.3334
+      type: 'test'
+      ...
+    # Subtest: model primary and profile have distinct rows at 390x650
+    ok 4 - model primary and profile have distinct rows at 390x650
+      ---
+      duration_ms: 65.8568
+      type: 'test'
+      ...
+    # Subtest: model primary and profile have distinct rows at 390x844
+    ok 5 - model primary and profile have distinct rows at 390x844
+      ---
+      duration_ms: 70.1082
+      type: 'test'
+      ...
+    # Subtest: private credentials keep labels, password input and actions separate at every viewport and larger text
+    ok 6 - private credentials keep labels, password input and actions separate at every viewport and larger text
+      ---
+      duration_ms: 560.7307
+      type: 'test'
+      ...
+    # Subtest: model identities and metadata also fit with the actual 20px reading preference
+    ok 7 - model identities and metadata also fit with the actual 20px reading preference
+      ---
+      duration_ms: 133.5028
+      type: 'test'
+      ...
+    # Subtest: Conversation and Fork fields have gaps and subordinate section headings
+    ok 8 - Conversation and Fork fields have gaps and subordinate section headings
+      ---
+      duration_ms: 98.4149
+      type: 'test'
+      ...
+    # Subtest: Team metadata, chat fields and note actions are laid out rather than pasted together
+    ok 9 - Team metadata, chat fields and note actions are laid out rather than pasted together
+      ---
+      duration_ms: 454.2071
+      type: 'test'
+      ...
+    # Subtest: long names and roles remain readable in People
+    ok 10 - long names and roles remain readable in People
+      ---
+      duration_ms: 343.7228
+      type: 'test'
+      ...
+    # Subtest: shortcut and palette direction hints use real SVG paths
+    ok 11 - shortcut and palette direction hints use real SVG paths
+      ---
+      duration_ms: 30.2809
+      type: 'test'
+      ...
+    # Subtest: public Field/Notice/Button consumers retain spacing without private host styles
+    ok 12 - public Field/Notice/Button consumers retain spacing without private host styles
+      ---
+      duration_ms: 366.4731
+      type: 'test'
+      ...
+    1..12
+ok 11 - WebUI compound labels, settings forms and graphical keyboard hints remain readable
+  ---
+  duration_ms: 3388.9218
+  type: 'test'
+  ...
+# {"publicWidth":1440,"label":{"x":300,"y":46.71875,"right":1440,"bottom":74.71875,"width":1140,"height":28},"field":{"x":300,"y":80.71875,"right":1440,"bottom":126.71875,"width":1140,"height":46},"copy":{"x":300,"y":141.71875,"right":870.953125,"bottom":165.71875,"width":570.953125,"height":24},"action":{"x":300,"y":176.71875,"right":381.25,"bottom":220.71875,"width":81.25,"height":44}}
+# {"publicWidth":360,"label":{"x":0,"y":90.71875,"right":360,"bottom":118.71875,"width":360,"height":28},"field":{"x":0,"y":124.71875,"right":360,"bottom":170.71875,"width":360,"height":46},"copy":{"x":0,"y":185.71875,"right":346.25,"bottom":239.71875,"width":346.25,"height":54},"action":{"x":0,"y":250.71875,"right":81.25,"bottom":294.71875,"width":81.25,"height":44}}
+1..11
+# tests 24
+# suites 0
+# pass 22
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 27888.3276

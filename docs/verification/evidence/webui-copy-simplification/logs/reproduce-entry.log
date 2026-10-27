@@ -1,0 +1,25 @@
+✔ Conversation creation browser: the dedicated form creates its explicit parent and uses the chosen initial model and directory only after confirmation (1022.0007ms)
+✔ Concise creation: normal controls carry the operation; server/device scope stays readable while cancelled drafts leave resources unchanged (1105.3381ms)
+✔ People Chat and concise settings: contextual accounting help stays accessible and attributed human messages consume no model attempts (1738.0693ms)
+✔ Interface disable: confirmed feedback accompanies actual UI removal while the same pending native input completes (1786.1741ms)
+✔ Devin frontend: the creation dialog inherits the selected model; responsive navigation preserves explicit native input (2694.6579ms)
+✔ Grouping menu: shared themed popup supports keyboard cancellation, explicit persisted choice and normal Tab without model input (1953.4498ms)
+✔ Home creation pair: equal transparent actions and a short gray divider retain alignment and real dialog behavior at 20px/phone sizes (1961.8063ms)
+✔ WebUI schedule panel recovery: losing an admitted response survives interface replacement and read-only reconciliation never schedules twice (2966.3989ms)
+✔ WebUI transcript: one real tool keeps its identity, expanded card and result across the live/committed handoff (1009.0238ms)
+✔ WebUI transcript: a native tool error remains identifiable in its collapsed result card (842.3276ms)
+✔ WebUI transcript: an expanded streamed tool call survives its first committed entry (1080.3775ms)
+✔ WebUI transcript: valid image parts and a truncated tool declaration remain visible through real reopen and paging (762.4517ms)
+✔ WebUI transcript: real chunked generation exposes a live Streaming message, then clears it (955.3026ms)
+✔ WebUI transcript: inherited tool results do not swallow a different live call with the same provider id (1049.4895ms)
+✔ WebUI receipt: a known policy refusal is blocked, not mislabeled as a permission denial (716.7452ms)
+✔ WebUI receipt: a real host unknown is needs review through a registered Conversation source (652.1719ms)
+✔ WebUI receipt: withdrawing queued input is not described as a policy refusal (865.4934ms)
+ℹ tests 17
+ℹ suites 0
+ℹ pass 17
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 28326.2476

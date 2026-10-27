@@ -14,7 +14,7 @@ Pakka 将 Pi 的 Conversation、权限、持久化和 MAS 服务接到可选的 
 
 用户实查后另起[分组菜单与首页创建入口](changes/webui-grouping-and-creation-controls.md)：复用主题化菜单，首页两个创建入口同型透明并由灰色短竖线分隔。已有创建能力先独立封存，本轮范围及实际门禁由[新任务](../openspec/changes/polish-webui-grouping-and-creation-controls/tasks.md)承接。
 
-同阶段的[UI 澄清文案调查](verification/WEBUI-COPY-AUDIT.md)保留静态快照与原引文。用户后续授权按 D1–D13/Q1–Q8 推荐精简，明确人类聊天为 People Chat，省去重复教学，把必要范围和后果放进短标签、状态、按需帮助及实际动作反馈；未知、部分成功、冲突、秘密和截断不削去。[独立文案变更](changes/webui-explanatory-copy.md)与[任务](../openspec/changes/simplify-webui-explanatory-copy/tasks.md)承接采用和验证，不把原调查当作实施或 GUI 验收。
+同阶段的[UI 澄清文案调查](verification/WEBUI-COPY-AUDIT.md)保留静态快照与原引文。用户后续授权按 D1–D13/Q1–Q8 推荐精简，明确人类聊天为 People Chat，省去重复教学，把必要范围和后果放进短标签、状态、按需帮助及实际动作反馈；未知、部分成功、冲突、秘密和截断不削去。[独立文案变更](changes/webui-explanatory-copy.md)与[任务](../openspec/changes/simplify-webui-explanatory-copy/tasks.md)承接采用和验证，不把原调查当作实施或 GUI 验收。菜单/入口与文案已固定于产品 `04fcf4a`，旧消费者测试补正 `59ff465` 产品零 diff；最终全量 664/662 pass/0 fail/2 skip，build/check 通过，见[菜单记录](verification/WEBUI-NAVIGATION-CONTROLS.md)和[文案记录](verification/WEBUI-COPY-SIMPLIFICATION.md)。新预览使用独立 `45009` 数据/profile/本地 responder；独立桌面工具缺失仍保留 BLOCKED。
 
 按用户指定的 Pi TUI `/model` 交互，Model Selection 已加入常驻模糊检索、保留输入焦点的循环候选索引、Enter/Escape 与位置计数；保持已配置模型目录和模型独立配置边界。候选、真实 provider/浏览器结果和预览见[模型索引记录](verification/WEBUI-MODEL-INDEX.md)，由[统一 tasks §4.4](../openspec/changes/improve-webui-navigation-and-local-recovery/tasks.md#44-model-selection-检索索引2026-10-25)承接；不混入 Session 创建与设置路由。
 

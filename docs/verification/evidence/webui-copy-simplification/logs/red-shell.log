@@ -1,0 +1,115 @@
+TAP version 13
+# Subtest: Concise creation: normal controls carry the operation; server/device scope stays readable while cancelled drafts leave resources unchanged
+not ok 1 - Concise creation: normal controls carry the operation; server/device scope stays readable while cancelled drafts leave resources unchanged
+  ---
+  duration_ms: 664.1791
+  type: 'test'
+  location: 'D:\\Projects\\pakka-wt\\webui-p0\\apps\\webui\\test\\copy-presentation-browser.test.ts:37:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Home needs actions, not a creation tutorial
+    
+    1 !== 0
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 0
+  actual: 1
+  operator: 'strictEqual'
+  stack: |-
+    file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/copy-presentation-browser.test.ts:40:10
+    async inspect (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/copy-presentation-browser.test.ts:28:3)
+    async TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/copy-presentation-browser.test.ts:38:2)
+    async Test.run (node:internal/test_runner/test:1332:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3)
+  ...
+# Subtest: People Chat and concise settings: contextual accounting help stays accessible and attributed human messages consume no model attempts
+not ok 2 - People Chat and concise settings: contextual accounting help stays accessible and attributed human messages consume no model attempts
+  ---
+  duration_ms: 705.6608
+  type: 'test'
+  location: 'D:\\Projects\\pakka-wt\\webui-p0\\apps\\webui\\test\\copy-presentation-browser.test.ts:69:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    1 !== 0
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 0
+  actual: 1
+  operator: 'strictEqual'
+  stack: |-
+    file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/copy-presentation-browser.test.ts:75:10
+    async inspect (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/copy-presentation-browser.test.ts:28:3)
+    async TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/copy-presentation-browser.test.ts:70:2)
+    async Test.run (node:internal/test_runner/test:1332:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:911:7)
+  ...
+# Subtest: WebUI hooks browser: human setup, signed real HTTP, key rotation, private mobile viewer and removal use ordinary extension slots
+not ok 3 - WebUI hooks browser: human setup, signed real HTTP, key rotation, private mobile viewer and removal use ordinary extension slots
+  ---
+  duration_ms: 1567.9102
+  type: 'test'
+  location: 'D:\\Projects\\pakka-wt\\webui-p0\\apps\\webui\\test\\hooks-browser.test.ts:12:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    connection details are available on demand
+    + actual - expected
+    
+    + undefined
+    - false
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: false
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/hooks-browser.test.ts:68:11)
+    async Test.run (node:internal/test_runner/test:1332:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3)
+  ...
+# Subtest: WebUI browser dictation: caret and final text reach only the draft until a real explicit Send
+not ok 4 - WebUI browser dictation: caret and final text reach only the draft until a real explicit Send
+  ---
+  duration_ms: 1006.5377
+  type: 'test'
+  location: 'D:\\Projects\\pakka-wt\\webui-p0\\apps\\webui\\test\\voice-browser.test.ts:13:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    idle dictation does not carry a permanent tutorial
+    
+    true !== false
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: false
+  actual: true
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/voice-browser.test.ts:65:11)
+    async Test.run (node:internal/test_runner/test:1332:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3)
+  ...
+# Subtest: WebUI browser dictation: resource and sheet replacement, errors and logout discard old callbacks without dispatch
+ok 5 - WebUI browser dictation: resource and sheet replacement, errors and logout discard old callbacks without dispatch
+  ---
+  duration_ms: 842.4287
+  type: 'test'
+  ...
+# Subtest: WebUI browser dictation: absent speech support retains real typed input and a mobile viewer has no model dictation
+ok 6 - WebUI browser dictation: absent speech support retains real typed input and a mobile viewer has no model dictation
+  ---
+  duration_ms: 2128.6523
+  type: 'test'
+  ...
+1..6
+# tests 6
+# suites 0
+# pass 2
+# fail 4
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 9382.4006

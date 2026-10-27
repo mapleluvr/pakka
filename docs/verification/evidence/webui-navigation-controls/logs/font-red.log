@@ -1,0 +1,36 @@
+TAP version 13
+# Subtest: Grouping menu: shared themed popup supports keyboard cancellation, explicit persisted choice and normal Tab without model input
+not ok 1 - Grouping menu: shared themed popup supports keyboard cancellation, explicit persisted choice and normal Tab without model input
+  ---
+  duration_ms: 1431.0958
+  type: 'test'
+  location: 'D:\\Projects\\pakka-wt\\webui-p0\\apps\\webui\\test\\navigation-controls-browser.test.ts:59:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    menu choices scale with the same UI text role as their trigger
+    + actual - expected
+    
+    + '13px'
+    - '18.5714px'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: '18.5714px'
+  actual: '13px'
+  operator: 'strictEqual'
+  stack: |-
+    file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/navigation-controls-browser.test.ts:97:12
+    async inspectUi (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/navigation-controls-browser.test.ts:30:3)
+    async TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/navigation-controls-browser.test.ts:63:3)
+    async Test.run (node:internal/test_runner/test:1332:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2219.964

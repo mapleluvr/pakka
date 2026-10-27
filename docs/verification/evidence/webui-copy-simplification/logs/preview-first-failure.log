@@ -1,0 +1,3 @@
+Preview task ac093c10 failed closed before opening a window: Frozen asset mismatch: frontend.js.
+Diagnostic: source served from frozen Windows checkout frontend.js has 14591 bytes/427 CRLF; canonical Git blob has 14164 bytes/LF. Canonical content matches exactly; working SHA256 162158307a9599aee20c293242b3a78d1e9c981d9f0b24de179680c49d36e6a7, Git SHA256 66543faf782aa160e58b1e9f28353a4ef0c9d26a0dde3abd3b7578c728d636c9.
+No product source changed. Retained failed preview's isolated data; retry uses fresh data/profile/port 45009. Bind candidate to explicit raw checkout hashes plus canonical Git blobs; HTTP bytes must exactly equal the recorded checkout hashes, not merely normalize to them. Only CRLF-to-LF is allowed for canonical Git comparison.

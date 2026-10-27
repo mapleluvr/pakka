@@ -1,0 +1,10 @@
+{
+  "candidate": "04fcf4ad2e35442738e15f3399b0290d3ad21d8c",
+  "checkoutDigest": "08509673f81c3a0e316f7a9f19d5b9dcbef853dba3a1e4b44e8daaaa931f3ee8",
+  "origin": "http://127.0.0.1:45009",
+  "provider": "local deterministic responder",
+  "dataDirectory": "D:\\Projects\\pakka-wt\\webui-p0\\docs\\.temp\\operator-preview-ui-04fcf4a-r2\\data",
+  "browserProfile": "D:\\Projects\\pakka-wt\\webui-p0\\docs\\.temp\\operator-preview-ui-04fcf4a-r2\\browser-profile",
+  "authenticated": true,
+  "browserLaunchRequested": true
+}

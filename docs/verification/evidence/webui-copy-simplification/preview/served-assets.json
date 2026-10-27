@@ -1,0 +1,127 @@
+{
+  "candidate": "04fcf4ad2e35442738e15f3399b0290d3ad21d8c",
+  "checkoutDigest": "08509673f81c3a0e316f7a9f19d5b9dcbef853dba3a1e4b44e8daaaa931f3ee8",
+  "origin": "http://127.0.0.1:45009",
+  "assets": [
+    {
+      "name": "app.js",
+      "status": 200,
+      "bytes": 41700,
+      "sha256": "80bdfd729e6379ab53a5bd7d0b8d16807ba49ebc8abdd76480d7f1b6e88aed2d",
+      "matchesFrozenCheckout": true,
+      "rawGitMatch": true
+    },
+    {
+      "name": "frontend.js",
+      "status": 200,
+      "bytes": 14591,
+      "sha256": "162158307a9599aee20c293242b3a78d1e9c981d9f0b24de179680c49d36e6a7",
+      "matchesFrozenCheckout": true,
+      "rawGitMatch": false
+    },
+    {
+      "name": "creation.js",
+      "status": 200,
+      "bytes": 15277,
+      "sha256": "759634cd86503e912831c8ccd0ceb3646f3869083c2e9d996a6df1be4619a7f6",
+      "matchesFrozenCheckout": true,
+      "rawGitMatch": true
+    },
+    {
+      "name": "conversation-groups.js",
+      "status": 200,
+      "bytes": 15448,
+      "sha256": "39f829ebacaf73a87e9a2b5690fed3c71f560d618ba3e6e7c84e9e6ee763005a",
+      "matchesFrozenCheckout": true,
+      "rawGitMatch": true
+    },
+    {
+      "name": "conversation-configuration.js",
+      "status": 200,
+      "bytes": 16460,
+      "sha256": "421cfc2c80ddc7af2fe2ebe0655a04d89d2f0cd7d65123dc402b584e8b42d8e1",
+      "matchesFrozenCheckout": true,
+      "rawGitMatch": false
+    },
+    {
+      "name": "native-composer.js",
+      "status": 200,
+      "bytes": 7617,
+      "sha256": "820bc2f032976cf479e3fd85b53d989b1fd6e7ade9bb95858b32742c62a4a025",
+      "matchesFrozenCheckout": true,
+      "rawGitMatch": false
+    },
+    {
+      "name": "collaboration.js",
+      "status": 200,
+      "bytes": 11446,
+      "sha256": "a0d1400c46e59e8232889665fd8ba1bba5ac2a8241eca2cdf8fa538860ec0194",
+      "matchesFrozenCheckout": true,
+      "rawGitMatch": false
+    },
+    {
+      "name": "configuration.js",
+      "status": 200,
+      "bytes": 3118,
+      "sha256": "07da61df5444c337e3bb658ec1aee7461c0810a09e1e8351b7fcf585487eb4d8",
+      "matchesFrozenCheckout": true,
+      "rawGitMatch": false
+    },
+    {
+      "name": "appearance.js",
+      "status": 200,
+      "bytes": 4210,
+      "sha256": "64c5aef7a198e8857d8fa4158b672db2a8c67f67992af1f3d670b70ec7a707f5",
+      "matchesFrozenCheckout": true,
+      "rawGitMatch": false
+    },
+    {
+      "name": "credentials.js",
+      "status": 200,
+      "bytes": 4450,
+      "sha256": "a9b50840923bfde6aca50f2a7a6a95afd901450bc7a665ff42e5bda8aaa1478e",
+      "matchesFrozenCheckout": true,
+      "rawGitMatch": false
+    },
+    {
+      "name": "voice.js",
+      "status": 200,
+      "bytes": 8925,
+      "sha256": "69c9f611c7238270f05bcb8712fb9b84ac82e4b5d9e109ddb772746249a548a5",
+      "matchesFrozenCheckout": true,
+      "rawGitMatch": false
+    },
+    {
+      "name": "notifications.js",
+      "status": 200,
+      "bytes": 8837,
+      "sha256": "e9e83e3a62f69f44e7840b61a1258474c27487abbf3959bd83b78ede9f24ae75",
+      "matchesFrozenCheckout": true,
+      "rawGitMatch": false
+    },
+    {
+      "name": "navigation.js",
+      "status": 200,
+      "bytes": 5406,
+      "sha256": "dc8ee70df6a7aeb816fec09d5642f20de5c73e31146f3ab66aac550fab9267f1",
+      "matchesFrozenCheckout": true,
+      "rawGitMatch": false
+    },
+    {
+      "name": "extensions.js",
+      "status": 200,
+      "bytes": 22978,
+      "sha256": "969eb063d08d43527c63f0ce28bc61b33cf5dbc0b206d10d69bc5c29de086237",
+      "matchesFrozenCheckout": true,
+      "rawGitMatch": false
+    },
+    {
+      "name": "elements.css",
+      "status": 200,
+      "bytes": 31631,
+      "sha256": "84a30de7b25aebc98f333debbb43207d98550291b6089667ea5fe25c1fa0fc7b",
+      "matchesFrozenCheckout": true,
+      "rawGitMatch": false
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "baseline": "075899280acb732aca6de9359fc230267ecd0b66",
+  "unchanged": true,
+  "files": [
+    {
+      "path": "packages/agent/src/durable-adapter.ts",
+      "blob": "9234f7219e3f1ab3b446acdeeb401519f70fabb2"
+    },
+    {
+      "path": "packages/agent/test/compresser-conversation.test.ts",
+      "blob": "a8964bdffb01637f210d44ccc4c95745d55b7194"
+    },
+    {
+      "path": "packages/agent/test/compresser-crash.test.ts",
+      "blob": "928b20a852e30db981727fe06147ea36f7d216a5"
+    },
+    {
+      "path": "packages/agent/test/compresser-session.test.ts",
+      "blob": "7b29982c49aa65513b055fcdff249c21faf457be"
+    },
+    {
+      "path": "integrations/dynamite/compresser-conversation-pairing.json",
+      "blob": "6cd4302644b64e8fc8b2f8fd6f360a0ea0a04a3f"
+    },
+    {
+      "path": "integrations/dynamite/compresser-trial-initial-pairing.json",
+      "blob": "eba49d0483e812b9813c7fec1a73bdf658b085c3"
+    },
+    {
+      "path": "integrations/dynamite/compresser-trial-pairing.json",
+      "blob": "7b58056f227b7a5abe3d83309870d44f963680cc"
+    }
+  ],
+  "scope": "global format:check existing findings; changed UI files pass separate checks"
+}

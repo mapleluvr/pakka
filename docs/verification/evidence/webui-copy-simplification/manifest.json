@@ -1,0 +1,361 @@
+{
+  "candidate": "59ff46550105367d0ae94736b1529a01837360c0",
+  "productCandidate": "04fcf4ad2e35442738e15f3399b0290d3ad21d8c",
+  "notes": "Earlier RED/intermediate logs retain their own working-tree identity. Final test candidate changes four test files only. HTTP assets must match raw frozen checkout bytes; canonical Git comparison permits only checkout CRLF-to-LF. No credentials or preview owner links retained.",
+  "artifacts": [
+    {
+      "path": "docs/verification/evidence/webui-copy-simplification/logs/red-shell.log",
+      "stage": "retained earlier RED/GREEN, failed first full suite, or diagnostics",
+      "bytes": 4928,
+      "sha256": "f700b8c649058428fcf9a137e6753b5359d5abae1a5038a4b31d7652204ee6b1"
+    },
+    {
+      "path": "docs/verification/evidence/webui-copy-simplification/logs/red-contributions.log",
+      "stage": "retained earlier RED/GREEN, failed first full suite, or diagnostics",
+      "bytes": 2140,
+      "sha256": "d16b216169308ef5488d305ee401dbd36443015e466ed57c8c0a90bfc7228499"
+    },
+    {
+      "path": "docs/verification/evidence/webui-copy-simplification/logs/disable-red.log",
+      "stage": "retained earlier RED/GREEN, failed first full suite, or diagnostics",
+      "bytes": 2177,
+      "sha256": "be68f47a746dc1fd21b4755bb888e1d911f0372757d4c1b28e710473fc138b88"
+    },
+    {
+      "path": "docs/verification/evidence/webui-copy-simplification/logs/disable-green.log",
+      "stage": "retained earlier RED/GREEN, failed first full suite, or diagnostics",
+      "bytes": 1129,
+      "sha256": "9365a5b80d75db2b01a62d5d338f14b76b5e568669255bdbeb5e6ba7114e8fc0"
+    },
+    {
+      "path": "docs/verification/evidence/webui-copy-simplification/logs/green-first.log",
+      "stage": "retained earlier RED/GREEN, failed first full suite, or diagnostics",
+      "bytes": 4776,
+      "sha256": "b946404435452362609722dd060e115eee5721ceba7a860d3383665397495e94"
+    },
+    {
+      "path": "docs/verification/evidence/webui-copy-simplification/logs/green-second.log",
+      "stage": "retained earlier RED/GREEN, failed first full suite, or diagnostics",
+      "bytes": 9266,
+      "sha256": "a155231a2deb7cf6b865fa1300d1284dd23e457256e5e2e71f9f9ab6fe3f3297"
+    },
+    {
+      "path": "docs/verification/evidence/webui-copy-simplification/logs/green-third.log",
+      "stage": "retained earlier RED/GREEN, failed first full suite, or diagnostics",
+      "bytes": 1942,
+      "sha256": "24a527aa3151c9288a08178b2577f3218c81d4b4da35a882fdc46bdf8a8729c0"
+    },
+    {
+      "path": "docs/verification/evidence/webui-copy-simplification/logs/help-geometry.log",
+      "stage": "retained earlier RED/GREEN, failed first full suite, or diagnostics",
+      "bytes": 1130,
+      "sha256": "b8ed5ffe0c7ceafc9a85e6bace900980868df4bd384e9e934ab858c9c2385b0d"
+    },
+    {
+      "path": "docs/verification/evidence/webui-copy-simplification/logs/presentation-final.log",
+      "stage": "retained earlier RED/GREEN, failed first full suite, or diagnostics",
+      "bytes": 1999,
+      "sha256": "98fdc7dc0c91d1f66c2c585b1d1ac17334fae08943e623ce9db760c6c6dc82e2"
+    },
+    {
+      "path": "docs/verification/evidence/webui-copy-simplification/logs/mode-phone-probe.log",
+      "stage": "retained earlier RED/GREEN, failed first full suite, or diagnostics",
+      "bytes": 1536,
+      "sha256": "934280cbe3c600cde558122c832ad3f2f9e135ce26f44635c2a960ed37ca01cd"
+    },
+    {
+      "path": "docs/verification/evidence/webui-copy-simplification/logs/people-placeholder-red.log",
+      "stage": "retained earlier RED/GREEN, failed first full suite, or diagnostics",
+      "bytes": 1413,
+      "sha256": "9f35263c4a83c8446ed6926a3ee9e8bc3d35232b66e15d537191abda8ad6212b"
+    },
+    {
+      "path": "docs/verification/evidence/webui-copy-simplification/logs/presentation-final-green.log",
+      "stage": "retained earlier RED/GREEN, failed first full suite, or diagnostics",
+      "bytes": 2587,
+      "sha256": "c8344d60ae15da0fa5d17942a3605938151546f434b4b372b7c0022b1cf14f2d"
+    },
+    {
+      "path": "docs/verification/evidence/webui-copy-simplification/logs/affected.log",
+      "stage": "retained earlier RED/GREEN, failed first full suite, or diagnostics",
+      "bytes": 12882,
+      "sha256": "bd2da10e073bd04db47a6a81f5f91f48aa01298ca2089413fad64cc4c58e0630"
+    },
+    {
+      "path": "docs/verification/evidence/webui-copy-simplification/logs/lsp.log",
+      "stage": "retained earlier RED/GREEN, failed first full suite, or diagnostics",
+      "bytes": 551,
+      "sha256": "f9ca7a8984a429cfc4ae387b53edfb75cc6ab03dc55c4623bd5f724867d5135c"
+    },
+    {
+      "path": "docs/verification/evidence/webui-copy-simplification/logs/lsp-final-two.log",
+      "stage": "retained earlier RED/GREEN, failed first full suite, or diagnostics",
+      "bytes": 260,
+      "sha256": "6b528c22c9efd947dfac446e083fe53a434d6895249d47366ac354e56668a689"
+    },
+    {
+      "path": "docs/verification/evidence/webui-copy-simplification/logs/lsp-legacy-tests.log",
+      "stage": "retained earlier RED/GREEN, failed first full suite, or diagnostics",
+      "bytes": 545,
+      "sha256": "17216998911eba6549c2be972d77662349b5d32140881ddb4eeefc41d4da9df9"
+    },
+    {
+      "path": "docs/verification/evidence/webui-copy-simplification/logs/lsp-evidence-helpers.log",
+      "stage": "retained earlier RED/GREEN, failed first full suite, or diagnostics",
+      "bytes": 544,
+      "sha256": "42c0d1d7b7a73d971988a6e9405bebf6d2bb58bce19019f674da9c0b682a4ffa"
+    },
+    {
+      "path": "docs/verification/evidence/webui-copy-simplification/logs/format-check.log",
+      "stage": "retained earlier RED/GREEN, failed first full suite, or diagnostics",
+      "bytes": 615,
+      "sha256": "acc8b95dab8f398aa8eb25c27d974fbfe5bb95fa5d92fda804d735749defd4bd"
+    },
+    {
+      "path": "docs/verification/evidence/webui-copy-simplification/logs/format-baseline-diff.log",
+      "stage": "retained earlier RED/GREEN, failed first full suite, or diagnostics",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/verification/evidence/webui-copy-simplification/logs/final-format-check.log",
+      "stage": "retained earlier RED/GREEN, failed first full suite, or diagnostics",
+      "bytes": 68,
+      "sha256": "f20510a9da4717c51c4cffee6d0dd88d6c9a723d0a83711d01216f5b48961283"
+    },
+    {
+      "path": "docs/verification/evidence/webui-copy-simplification/logs/final-strict.log",
+      "stage": "retained earlier RED/GREEN, failed first full suite, or diagnostics",
+      "bytes": 51,
+      "sha256": "77da71a0571447760646448bb2f71c987fe0aa3afbd6c0307ac7d5324ced9f1a"
+    },
+    {
+      "path": "docs/verification/evidence/webui-copy-simplification/logs/frozen-build.log",
+      "stage": "retained earlier RED/GREEN, failed first full suite, or diagnostics",
+      "bytes": 927,
+      "sha256": "d0178804667a98a57a144a907e7ebe52353fd1ffdc0694b618c710a7b98228b8"
+    },
+    {
+      "path": "docs/verification/evidence/webui-copy-simplification/logs/frozen-check.log",
+      "stage": "retained earlier RED/GREEN, failed first full suite, or diagnostics",
+      "bytes": 230,
+      "sha256": "46fd6177c4e91b62c1602b3ec14c90c976e4c02d913f127990da2db2bbe13df7"
+    },
+    {
+      "path": "docs/verification/evidence/webui-copy-simplification/logs/full-04fcf4a.log",
+      "stage": "retained earlier RED/GREEN, failed first full suite, or diagnostics",
+      "bytes": 82117,
+      "sha256": "46f76789b73e1f29d569876d29d1a36c57d28278cb65f50145ca930d02e5d792"
+    },
+    {
+      "path": "docs/verification/evidence/webui-copy-simplification/logs/legacy-copy-tests-green.log",
+      "stage": "retained earlier RED/GREEN, failed first full suite, or diagnostics",
+      "bytes": 4210,
+      "sha256": "40dabb84ce8e596713cbe6baa18f9c7e56128013fcbc56c43c95b5d532cad246"
+    },
+    {
+      "path": "docs/verification/evidence/webui-copy-simplification/logs/home-controls-probe.log",
+      "stage": "retained earlier RED/GREEN, failed first full suite, or diagnostics",
+      "bytes": 1290,
+      "sha256": "faac68d5ff117571ef95258b2afedbcd57a9b5f23e7011cedd9cb972d972596b"
+    },
+    {
+      "path": "docs/verification/evidence/webui-copy-simplification/logs/legacy-copy-tests-final-green.log",
+      "stage": "retained earlier RED/GREEN, failed first full suite, or diagnostics",
+      "bytes": 3560,
+      "sha256": "36391e4e819e19bcbeddfc82a46ac5f0183a10fa44fec09105cffd862c5b5ba4"
+    },
+    {
+      "path": "docs/verification/evidence/webui-copy-simplification/logs/test-only-check.log",
+      "stage": "retained earlier RED/GREEN, failed first full suite, or diagnostics",
+      "bytes": 230,
+      "sha256": "46fd6177c4e91b62c1602b3ec14c90c976e4c02d913f127990da2db2bbe13df7"
+    },
+    {
+      "path": "docs/verification/evidence/webui-copy-simplification/logs/test-only-format.log",
+      "stage": "retained earlier RED/GREEN, failed first full suite, or diagnostics",
+      "bytes": 68,
+      "sha256": "f20510a9da4717c51c4cffee6d0dd88d6c9a723d0a83711d01216f5b48961283"
+    },
+    {
+      "path": "docs/verification/evidence/webui-copy-simplification/logs/final-frozen-build.log",
+      "stage": "fixed final candidate gate",
+      "bytes": 927,
+      "sha256": "d0178804667a98a57a144a907e7ebe52353fd1ffdc0694b618c710a7b98228b8"
+    },
+    {
+      "path": "docs/verification/evidence/webui-copy-simplification/logs/final-frozen-check.log",
+      "stage": "fixed final candidate gate",
+      "bytes": 230,
+      "sha256": "46fd6177c4e91b62c1602b3ec14c90c976e4c02d913f127990da2db2bbe13df7"
+    },
+    {
+      "path": "docs/verification/evidence/webui-copy-simplification/logs/full-59ff465.log",
+      "stage": "fixed final candidate gate",
+      "bytes": 76215,
+      "sha256": "ffa6979c24f2b8b2137c464b4944f8df5b86297df776cb24cc1a14d4ea63aa48"
+    },
+    {
+      "path": "docs/verification/evidence/webui-copy-simplification/logs/final-shell-result.log",
+      "stage": "fixed final candidate gate",
+      "bytes": 875,
+      "sha256": "791386478e05503661a828455d984d3e1e8bcdb21cd6e7dce8a1082a088fb38d"
+    },
+    {
+      "path": "docs/verification/evidence/webui-copy-simplification/logs/terminology-sweep.log",
+      "stage": "retained earlier RED/GREEN, failed first full suite, or diagnostics",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/verification/evidence/webui-copy-simplification/logs/preview-first-failure.log",
+      "stage": "retained earlier RED/GREEN, failed first full suite, or diagnostics",
+      "bytes": 752,
+      "sha256": "791aacb4864147a820ab6a4682f898f44194820725da31b83880ee43aa4be07d"
+    },
+    {
+      "path": "docs/verification/evidence/webui-copy-simplification/logs/reproduce-entry.log",
+      "stage": "retained earlier RED/GREEN, failed first full suite, or diagnostics",
+      "bytes": 2350,
+      "sha256": "e9e1ee6fe389e9d6fa16c040568b8b54d9d7cee638987ddf68a89cb1131a4ff1"
+    },
+    {
+      "path": "docs/verification/evidence/webui-copy-simplification/captures/accounting-dark.png",
+      "stage": "unchanged final product browser capture",
+      "bytes": 53214,
+      "sha256": "a5bb758872089d4eb5ad56fe5dcf7c2f85b16071e27a0eab1ca09df63c378236"
+    },
+    {
+      "path": "docs/verification/evidence/webui-copy-simplification/captures/accounting-light-20-1440.json",
+      "stage": "unchanged final product browser capture",
+      "bytes": 91,
+      "sha256": "c184d654749e650aa500a883a4d2ec4807c8bd39b5eb4188ce868cbb0948c14f"
+    },
+    {
+      "path": "docs/verification/evidence/webui-copy-simplification/captures/accounting-light-20-1440.png",
+      "stage": "unchanged final product browser capture",
+      "bytes": 68793,
+      "sha256": "341c81c48a1f525b6f834bb27e96f88fe3711dd6f8829785a52a3258ab38f602"
+    },
+    {
+      "path": "docs/verification/evidence/webui-copy-simplification/captures/accounting-light-20-360.json",
+      "stage": "unchanged final product browser capture",
+      "bytes": 91,
+      "sha256": "c184d654749e650aa500a883a4d2ec4807c8bd39b5eb4188ce868cbb0948c14f"
+    },
+    {
+      "path": "docs/verification/evidence/webui-copy-simplification/captures/accounting-light-20-360.png",
+      "stage": "unchanged final product browser capture",
+      "bytes": 52847,
+      "sha256": "8bcb358a0f4f852fdba460b906c0f6084d8648298daf5840f975fa5b64d1f6df"
+    },
+    {
+      "path": "docs/verification/evidence/webui-copy-simplification/captures/home.png",
+      "stage": "unchanged final product browser capture",
+      "bytes": 35797,
+      "sha256": "26d6738a29683a2af253a87cddd1d380bdc6c719b775914eb183edbdca33a9fe"
+    },
+    {
+      "path": "docs/verification/evidence/webui-copy-simplification/captures/new-conversation-directory.png",
+      "stage": "unchanged final product browser capture",
+      "bytes": 99563,
+      "sha256": "530c5bd9534c47e4a624a839c1ae3848776aa74567bf74eb34308a4e6f490268"
+    },
+    {
+      "path": "docs/verification/evidence/webui-copy-simplification/captures/new-session-directory.png",
+      "stage": "unchanged final product browser capture",
+      "bytes": 112034,
+      "sha256": "4a9391a86da5448c6f4206c6d578789dc4b7436fbf8df563fc029a96d2a1ecd6"
+    },
+    {
+      "path": "docs/verification/evidence/webui-copy-simplification/captures/people-chat-mobile-20.json",
+      "stage": "unchanged final product browser capture",
+      "bytes": 302,
+      "sha256": "d2726353e74024d4c5510db436c2fafee1eacca40431f43b2f45f4b2b78b3510"
+    },
+    {
+      "path": "docs/verification/evidence/webui-copy-simplification/captures/people-chat-mobile-20.png",
+      "stage": "unchanged final product browser capture",
+      "bytes": 12759,
+      "sha256": "8670f49e2ddb9c256bb121d622a4dbdb409beb60959aeef91d512812180498b2"
+    },
+    {
+      "path": "docs/verification/evidence/webui-copy-simplification/captures/people-chat.png",
+      "stage": "unchanged final product browser capture",
+      "bytes": 91499,
+      "sha256": "ff1ea709346b51126f62562ed4db58e94c1874101bcb5671ece1e590273e2cf3"
+    },
+    {
+      "path": "docs/verification/evidence/webui-copy-simplification/preview/served-assets.json",
+      "stage": "product candidate exact raw checkout preview",
+      "bytes": 3744,
+      "sha256": "e51ac06d9477ee7bcc9840e67350a7084071de69bd265e9a5050169dcc3a5ca5"
+    },
+    {
+      "path": "docs/verification/evidence/webui-copy-simplification/preview/login-status.json",
+      "stage": "product candidate exact raw checkout preview",
+      "bytes": 78,
+      "sha256": "ffa336f5d74af5f78144eaebc2b7d61339f62836d1e2d9fc3776606b3b86e92a"
+    },
+    {
+      "path": "docs/verification/evidence/webui-copy-simplification/preview/status.json",
+      "stage": "product candidate exact raw checkout preview",
+      "bytes": 518,
+      "sha256": "36439cb165ef3be0d395115d614edd58e2a0b08a8bc1cd3050424f8fb5188424"
+    },
+    {
+      "path": "docs/verification/evidence/webui-copy-simplification/preview/home.png",
+      "stage": "product candidate exact raw checkout preview",
+      "bytes": 33114,
+      "sha256": "77aaaefccfe50e2ae03d5b2653d7af91a51965154e8dd1a666e4b728c8ad6b5f"
+    },
+    {
+      "path": "docs/verification/evidence/webui-copy-simplification/preview/product-checkout.json",
+      "stage": "product candidate raw checkout manifest",
+      "bytes": 13597,
+      "sha256": "2be9bd578a53b08492cbfd52073cc1313573e837991e630560659a58b9bee57a"
+    },
+    {
+      "path": "docs/verification/evidence/webui-copy-simplification/preview/final-assets.json",
+      "stage": "post-full-suite HTTP byte recheck",
+      "bytes": 2815,
+      "sha256": "732e3c58c2e198059c1744f2795b43acf416491e17ae75a3dd626c35f2b15bd4"
+    },
+    {
+      "path": "docs/verification/evidence/webui-copy-simplification/final-checkout.json",
+      "stage": "final test candidate raw checkout manifest",
+      "bytes": 15050,
+      "sha256": "00ee01ed388dbdcb20683d62d12f75f9349287b24f7a26b532d62e33aa03d325"
+    },
+    {
+      "path": "docs/verification/evidence/webui-copy-simplification/source-snapshot.json",
+      "stage": "final source identities",
+      "bytes": 15187,
+      "sha256": "e76338ae1b2e24ba7ebb67abcfab455896f858f418de48d5bbb1d96f7e68c303"
+    },
+    {
+      "path": "docs/verification/evidence/webui-copy-simplification/format-baseline.json",
+      "stage": "existing format findings not changed",
+      "bytes": 1152,
+      "sha256": "af0a0f17413ae5d2927e68087b353cb1482b3234084a539bd0e1c59229f46cf4"
+    },
+    {
+      "path": "docs/verification/evidence/webui-copy-simplification/gate-summary.json",
+      "stage": "confirmed final gate and retained failed gate",
+      "bytes": 1182,
+      "sha256": "eee19617c9631f4b9436c1e0e3d7e9fb021e1dd1d6df62824d4850f4cb005f39"
+    },
+    {
+      "path": "docs/verification/evidence/webui-copy-simplification/reproduce.mjs",
+      "stage": "standalone reproducible test entry",
+      "bytes": 1807,
+      "sha256": "0d6e8eb735cfdbae4ac5bf6d59e10cbb93c2478cefe0c541fb4218ce665bf830"
+    },
+    {
+      "path": "docs/verification/evidence/webui-copy-simplification/README.md",
+      "stage": "version scope and reproducible commands",
+      "bytes": 1966,
+      "sha256": "41c399e7c6cc810f4286e27e8d728499686b88ba47445c3c0ec771f097aba144"
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+TAP version 13
+# Subtest: Concise creation: normal controls carry the operation; server/device scope stays readable while cancelled drafts leave resources unchanged
+ok 1 - Concise creation: normal controls carry the operation; server/device scope stays readable while cancelled drafts leave resources unchanged
+  ---
+  duration_ms: 1188.8501
+  type: 'test'
+  ...
+# Subtest: People Chat and concise settings: contextual accounting help stays accessible and attributed human messages consume no model attempts
+ok 2 - People Chat and concise settings: contextual accounting help stays accessible and attributed human messages consume no model attempts
+  ---
+  duration_ms: 1512.6933
+  type: 'test'
+  ...
+# Subtest: Interface disable: confirmed feedback accompanies actual UI removal while the same pending native input completes
+ok 3 - Interface disable: confirmed feedback accompanies actual UI removal while the same pending native input completes
+  ---
+  duration_ms: 1858.2304
+  type: 'test'
+  ...
+1..3
+# tests 3
+# suites 0
+# pass 3
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 5530.3795

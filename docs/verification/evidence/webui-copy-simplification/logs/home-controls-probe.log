@@ -1,0 +1,18 @@
+TAP version 13
+# HOME-CONTROL-PROBE {"paragraphs":0,"viewport":390,"scroll":390,"buttons":[{"action":"new-conversation","label":null,"text":"New Conversation","left":28.359375,"right":174.515625,"width":146.15625,"height":44},{"action":"new-session","label":null,"text":"New Session","left":199.515625,"right":312,"width":112.484375,"height":44},{"label":"Commands & Extensions","text":"","left":324,"right":368,"width":44,"height":44}]}
+# HOME-CONTROL-PROBE {"paragraphs":0,"viewport":360,"scroll":360,"buttons":[{"action":"new-conversation","label":null,"text":"New Conversation","left":54.359375,"right":200.515625,"width":146.15625,"height":44},{"action":"new-session","label":null,"text":"New Session","left":225.515625,"right":338,"width":112.484375,"height":44},{"label":"Commands & Extensions","text":"","left":294,"right":338,"width":44,"height":44}]}
+# Subtest: Devin frontend: the creation dialog inherits the selected model; responsive navigation preserves explicit native input
+ok 1 - Devin frontend: the creation dialog inherits the selected model; responsive navigation preserves explicit native input
+  ---
+  duration_ms: 2707.0515
+  type: 'test'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 3534.4884

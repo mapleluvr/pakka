@@ -1,0 +1,47 @@
+{
+  "backdrop": "rgb(252, 252, 252)",
+  "actions": [
+    {
+      "x": 802.0625,
+      "y": 482.796875,
+      "right": 994.140625,
+      "bottom": 526.796875,
+      "width": 192.078125,
+      "height": 44,
+      "background": "rgba(0, 0, 0, 0)",
+      "weight": "500",
+      "font": "18.5714px",
+      "iconWidth": 24,
+      "iconHeight": 24,
+      "gap": 8,
+      "centerDelta": 0.9375
+    },
+    {
+      "x": 1019.140625,
+      "y": 482.796875,
+      "right": 1164,
+      "bottom": 526.796875,
+      "width": 144.859375,
+      "height": 44,
+      "background": "rgba(0, 0, 0, 0)",
+      "weight": "500",
+      "font": "18.5714px",
+      "iconWidth": 24,
+      "iconHeight": 24,
+      "gap": 8,
+      "centerDelta": 0.9375
+    }
+  ],
+  "divider": {
+    "x": 1006.140625,
+    "y": 496.796875,
+    "right": 1007.140625,
+    "bottom": 512.796875,
+    "width": 1,
+    "height": 16,
+    "hidden": "true",
+    "tab": -1,
+    "color": "rgba(20, 20, 20, 0.54)"
+  },
+  "overflow": false
+}

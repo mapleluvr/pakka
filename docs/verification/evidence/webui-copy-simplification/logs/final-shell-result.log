@@ -1,0 +1,20 @@
+taskId: ccb435ff
+name: Set-Location 'D:/Projects/pakka-wt/webui-p0'
+node docs/.temp
+status: done
+exitCode: 0
+command: Set-Location 'D:/Projects/pakka-wt/webui-p0'
+node docs/.temp/ui-copy-cleanup/freeze-final-checkout.mjs
+if($LASTEXITCODE -ne 0) {exit $LASTEXITCODE}
+npm run build *> docs/.temp/ui-copy-cleanup/final-frozen-build.log
+if($LASTEXITCODE -ne 0) {exit $LASTEXITCODE}
+npm run check *> docs/.temp/ui-copy-cleanup/final-frozen-check.log
+if($LASTEXITCODE -ne 0) {exit $LASTEXITCODE}
+npm test *> docs/.temp/ui-copy-cleanup/full-59ff465.log
+$code=$LASTEXITCODE
+"full_exit=$code candidate=59ff46550105367d0ae94736b1529a01837360c0"
+exit $code
+
+{"candidate":"59ff46550105367d0ae94736b1529a01837360c0","digest":"2f8dfa4cf0e29dd23f30dc865ef71658bb7d5b0d25369468cdc0ff2f22925783","files":41,"crlfCheckouts":31}
+full_exit=0 candidate=59ff46550105367d0ae94736b1529a01837360c0
+

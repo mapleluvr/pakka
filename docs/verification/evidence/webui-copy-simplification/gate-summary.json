@@ -1,0 +1,58 @@
+{
+  "candidate": "59ff46550105367d0ae94736b1529a01837360c0",
+  "productCandidate": "04fcf4ad2e35442738e15f3399b0290d3ad21d8c",
+  "full": {
+    "tests": 664,
+    "pass": 662,
+    "fail": 0,
+    "skipped": 2,
+    "cancelled": 0
+  },
+  "exitCode": 0,
+  "shellTask": "ccb435ff",
+  "firstFull": {
+    "candidate": "04fcf4ad2e35442738e15f3399b0290d3ad21d8c",
+    "tests": 664,
+    "pass": 656,
+    "fail": 6,
+    "skipped": 2,
+    "exitCode": 1
+  },
+  "affected": {
+    "tests": 41,
+    "fail": 0
+  },
+  "finalPresentation": {
+    "tests": 8,
+    "fail": 0
+  },
+  "alignedExistingConsumers": {
+    "tests": 12,
+    "fail": 0
+  },
+  "reproductionEntry": {
+    "tests": 17,
+    "fail": 0,
+    "exitCode": 0,
+    "shellTask": "d1cee960"
+  },
+  "lspInitial": {
+    "paths": 37,
+    "confirmedClean": 21,
+    "inconclusive": 16,
+    "reportedErrors": 0
+  },
+  "lspFinalDelta": {
+    "paths": 2,
+    "confirmedClean": 2,
+    "reportedErrors": 0
+  },
+  "lspTestOnlyDelta": {
+    "paths": 4,
+    "confirmedClean": 3,
+    "inconclusive": 1,
+    "reportedErrors": 0
+  },
+  "independentReview": "not scheduled by operator",
+  "designatedDesktop": "BLOCKED: agent-workspace-linux tool unavailable"
+}

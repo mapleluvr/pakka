@@ -4,7 +4,7 @@
 
 用户在[全仓静态调查](WEBUI-COPY-AUDIT.md)后授权 D1–D13/Q1–Q8 推荐，纠正回答中引入项目不存在的产品实体。当前界面人类协作统一为 People Chat / Shared Notes，保留原 chat 模式、授权及 API；MAS DevPack 页面没有被改造成新产品概念。调查原文、原源码 manifest 和当时未采用的时态保留，后续采用单独注明。
 
-当前产品/测试待固定。构建/类型与受影响 41/41 通过，手机/20px 帮助区补充 3/3；全量及新预览尚未执行。
+产品候选 `04fcf4ad2e35442738e15f3399b0290d3ad21d8c` 已固定；测试补正候选 `59ff46550105367d0ae94736b1529a01837360c0` 仅改四个既有浏览器测试，产品零 diff。构建/类型、受影响 41/41、最终展示/语音/聊天 8/8、旧消费者补正 12/12 已通过。首轮全量 664 项：656 pass、6 fail、2 skip（exit 1），失败记录保留；`59ff465` 最终全量为 664 项、662 pass、0 fail、2 个既有 Windows 跳过项，shell exit 0。该候选的 build/check 均退出 0。
 
 ## 已实施
 
@@ -18,14 +18,16 @@
 
 真实 RED：常驻 Home 文案、Settings 副标题、闲置语音脚注、未收起 Webhook 信息、Memory 重复说明、模糊的定时完成名均失败。禁用 UI 的旧反馈另经反向 RED：真实请求已在等待本地 provider，UI 确认禁用但没有反馈；恢复实现后同一原请求继续完成，模型计数不增加。
 
-首轮 11 项 10 pass/1 fail，目录测试误把索引/键盘提示 div 当教学 p；仅收窄到 p。手机新增检查一度把左侧模式文本误当作右侧下拉按钮的子节点；实际 DOM/独立 bounds 及截图证明二者本来分开，改测真实 toolbar 文本容器和视口边界。第二轮 24 项 22 pass/2 fail：目录浏览结果尚未载入，以及创建恢复等旧句子等待；改等真实目录容器/Session Ready 与可确认状态，保留请求/资源/重放计数。后续 6/6、禁用组 3/3、受影响 41/41、最终帮助几何组 3/3 均通过。原始失败待封存，不改写为通过。
+首轮 11 项 10 pass/1 fail，目录测试误把索引/键盘提示 div 当教学 p；仅收窄到 p。手机新增检查一度把左侧模式文本误当作右侧下拉按钮的子节点；实际 DOM/独立 bounds 及截图证明二者本来分开，改测真实 toolbar 文本容器和视口边界。第二轮 24 项 22 pass/2 fail：目录浏览结果尚未载入，以及创建恢复等旧句子等待；改等真实目录容器/Session Ready 与可确认状态，保留请求/资源/重放计数。后续 6/6、禁用组 3/3、受影响 41/41、最终帮助几何组 3/3 均通过。原始失败已封存，不改写为通过。
+
+首轮固定候选全量的六项失败均已核对：创建/首页测试仍引用已删除正文，定时恢复等待显示 `done` 而非原始 `data-schedule-state`，三个回执测试仍期待已删的重复尾句。只修改旧测试：对无正文和现有可见控件做断言、同时检查原始 done 与 Inputs Submitted、更新三个完整文案相等断言；资源数、配置、请求次数、真实 unknown/策略/withdraw 及不重放断言保留。首页补充检查最初误把 Commands 第三个按钮算进两个创建入口，真实 DOM/独立 bounds 证实后分别检查三个可见控件；原探针与失败保留。
 
 覆盖真实本地 provider、当前 Cookie/CSRF、public runtime、HTTP/SSE 与 DOM：取消草稿不建资源，People Chat/共享笔记不触发模型；禁用 UI 不取消已接纳输入；Webhook 签名/轮换/秘密、定时取消、Memory 批准/冲突、Files 的真实写入/worktree，以及创建/导航/浏览器 unknown/撤权仍保留原精确断言。语音测试控制浏览器 SpeechRecognition 事件，仅验证草稿和生命周期，不声称语音识别准确性或远端服务能力。
 
 ## 证据与门禁
 
-原始日志与 PNG/JSON 待在固定版本封存。主动 LSP：37 个改动路径，21 confirmed clean、16 inconclusive、无已报告 error；不能写成 37 文件全部清洁。npm check 是独立完整类型门禁。全仓 format:check 报告 7 个既有文件：durable-adapter、3 个 compresser 测试和 3 个 Dynamite pairing JSON；与基线 0758992 的 diff 为空。本轮改动文件的独立 prettier check 已通过，不为格式门禁扩散修改这些文件。
+原始日志与 PNG/JSON 已在最终同候选全量后封存；[来源与逐文件 byte hash](evidence/webui-copy-simplification/source-snapshot.json)、[门禁汇总](evidence/webui-copy-simplification/gate-summary.json)与[逐件 manifest](evidence/webui-copy-simplification/manifest.json)绑定版本。41 个改动源码/测试文件的原始 bytes 和 canonical Git 身份均核对；原始 RED、首轮全量失败、两处取证选择器失误与预览失败一并保留。重现命令见[证据说明](evidence/webui-copy-simplification/README.md)。主动 LSP：37 个改动路径，21 confirmed clean、16 inconclusive、无已报告 error；不能写成 37 文件全部清洁。npm check 是独立完整类型门禁。全仓 format:check 报告 7 个既有文件：durable-adapter、3 个 compresser 测试和 3 个 Dynamite pairing JSON；与基线 0758992 的 diff 为空。本轮改动文件的独立 prettier check 已通过，不为格式门禁扩散修改这些文件。最后两个展示路径主动 LSP 均 clean，四个测试补正路径 3 clean/1 inconclusive，均无已报告 error，仍不外推为全部静态检查通过。
 
-无后端协议、权限、持久化、额度和原生调度变更。按用户本会话决定不安排独立复核；指定隔离桌面不可用，GUI 保持 BLOCKED，不以 browser 自检替代。原预览及数据保持。
+无后端协议、权限、持久化、额度和原生调度变更。按用户本会话决定不安排独立复核；指定隔离桌面不可用，GUI 保持 BLOCKED，不以 browser 自检替代。原预览及数据保持。新隔离预览为 `http://127.0.0.1:45009`，15 份实际静态资产逐字节匹配已冻结工作副本，绑定产品 `04fcf4a`，与测试候选产品零 diff；本地 responder、独立 data/profile，初始登录跨浏览器重开成功。首次预览被错误的 raw-Git 等同比较拦住：Windows checkout 的 CRLF 与 Git blob LF 不同，没有产品内容漂移。保留失败；重新固定原始 checkout hashes 和 canonical Git blobs，HTTP 必须等于前者，Git 对比只允许 CRLF→LF，不以规范化比较代替 HTTP byte 核对。实际读取截图确认菜单、分隔线、人类聊天输入提示和手机帮助区，不视为指定桌面验收。
 
 归属：[summary](../changes/webui-explanatory-copy.md)、[proposal](../../openspec/changes/simplify-webui-explanatory-copy/proposal.md)、[design](../../openspec/changes/simplify-webui-explanatory-copy/design.md)、[tasks](../../openspec/changes/simplify-webui-explanatory-copy/tasks.md)、[全部 delta](../../openspec/changes/simplify-webui-explanatory-copy/specs/devin-frontend/spec.md)、[frontend state](../state/frontend.md#文案与操作信息)。菜单/入口另见[独立验证](WEBUI-NAVIGATION-CONTROLS.md)。

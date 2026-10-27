@@ -1,0 +1,169 @@
+{
+  "candidate": "59ff46550105367d0ae94736b1529a01837360c0",
+  "productCandidate": "04fcf4ad2e35442738e15f3399b0290d3ad21d8c",
+  "sourceSnapshot": "../webui-copy-simplification/source-snapshot.json",
+  "artifacts": [
+    {
+      "path": "docs/verification/evidence/webui-navigation-controls/before-home.png",
+      "stage": "operator reference or pre-change home",
+      "bytes": 39599,
+      "sha256": "0669dddaae36926d7c98c72fce62a60d92ab6b8e9d06437d8be7acef483e5fa0"
+    },
+    {
+      "path": "docs/verification/evidence/webui-navigation-controls/user-1.png",
+      "stage": "operator reference or pre-change home",
+      "bytes": 5896,
+      "sha256": "298623e47f28cf0d551b48cb1c1116178cb68b40427666d212588158037e12ce"
+    },
+    {
+      "path": "docs/verification/evidence/webui-navigation-controls/user-2.png",
+      "stage": "operator reference or pre-change home",
+      "bytes": 2886,
+      "sha256": "63b6aca2b1109ddd5c0dfdcb7b1c56f56aeae326ec3f9c36e13f5ad1437412af"
+    },
+    {
+      "path": "docs/verification/evidence/webui-navigation-controls/user-3.png",
+      "stage": "operator reference or pre-change home",
+      "bytes": 6467,
+      "sha256": "53ac216e4107f60651bd7aa5aad3c84fe66c8e88b3134363f8d8f7c48a22f818"
+    },
+    {
+      "path": "docs/verification/evidence/webui-navigation-controls/logs/red.log",
+      "stage": "pre-freeze RED/GREEN and diagnostics",
+      "bytes": 2799,
+      "sha256": "a4557afa482857717fdfec7acc33e5edc3eb696a6294c842e2909365a3a0bbe1"
+    },
+    {
+      "path": "docs/verification/evidence/webui-navigation-controls/logs/font-red.log",
+      "stage": "pre-freeze RED/GREEN and diagnostics",
+      "bytes": 1382,
+      "sha256": "39396f89936ad1b538ce05c194d3001a8bb666864f359fa1ca19174daf702f11"
+    },
+    {
+      "path": "docs/verification/evidence/webui-navigation-controls/logs/menu-focus-probe.log",
+      "stage": "pre-freeze RED/GREEN and diagnostics",
+      "bytes": 1644,
+      "sha256": "ec7690501a15181927b43e472608a62b0f164138a9fa19c12f34e363649f3214"
+    },
+    {
+      "path": "docs/verification/evidence/webui-navigation-controls/logs/green-first.log",
+      "stage": "pre-freeze RED/GREEN and diagnostics",
+      "bytes": 2484,
+      "sha256": "44db8847f394f26daf223df7b8e5bf139274e36c268c1f39e0bfdf6e6b41db66"
+    },
+    {
+      "path": "docs/verification/evidence/webui-navigation-controls/logs/green-second.log",
+      "stage": "pre-freeze RED/GREEN and diagnostics",
+      "bytes": 1676,
+      "sha256": "379a91ad484b926eee0d59a2a963e00b9ffaca9903bc378a3ce74ceced972acb"
+    },
+    {
+      "path": "docs/verification/evidence/webui-navigation-controls/logs/green-resume.log",
+      "stage": "pre-freeze RED/GREEN and diagnostics",
+      "bytes": 1124,
+      "sha256": "4ebf20f1cb3d5f1e63d1e8eb50accf1cedf86f0f6d14730479240f56167bcca8"
+    },
+    {
+      "path": "docs/verification/evidence/webui-navigation-controls/logs/final-strict.log",
+      "stage": "pre-freeze RED/GREEN and diagnostics",
+      "bytes": 63,
+      "sha256": "b3b637b00dc90aa5e546a29db5e5f07b7a7be444b109898c816bbf5a66284938"
+    },
+    {
+      "path": "docs/verification/evidence/webui-navigation-controls/captures/home-dark-1440.json",
+      "stage": "product candidate browser capture; unchanged in final test candidate",
+      "bytes": 962,
+      "sha256": "53dc6f5b050c3792f131db166690b896c556c62d6a337b1022b73ba5cf59950a"
+    },
+    {
+      "path": "docs/verification/evidence/webui-navigation-controls/captures/home-dark-1440.png",
+      "stage": "product candidate browser capture; unchanged in final test candidate",
+      "bytes": 33160,
+      "sha256": "e285e325b0354172e97ec4968e15ce1247ee8f62f1ada272ece2504e96e969aa"
+    },
+    {
+      "path": "docs/verification/evidence/webui-navigation-controls/captures/home-dark-360.json",
+      "stage": "product candidate browser capture; unchanged in final test candidate",
+      "bytes": 956,
+      "sha256": "20ddecd4ba27c4293d860b708eefafe7ed4371cd0413a0ab2529a858e06aee2d"
+    },
+    {
+      "path": "docs/verification/evidence/webui-navigation-controls/captures/home-dark-360.png",
+      "stage": "product candidate browser capture; unchanged in final test candidate",
+      "bytes": 12008,
+      "sha256": "2ecae98dd16cc9d8c332e36fb4a5b25973ac61a32f46a3a064d2efdd02b2ef38"
+    },
+    {
+      "path": "docs/verification/evidence/webui-navigation-controls/captures/home-dark-390.json",
+      "stage": "product candidate browser capture; unchanged in final test candidate",
+      "bytes": 956,
+      "sha256": "0f6e6e5a305778937d1952a12b07e1c202dcb5d04239e005cf1fe747a2efc7da"
+    },
+    {
+      "path": "docs/verification/evidence/webui-navigation-controls/captures/home-dark-390.png",
+      "stage": "product candidate browser capture; unchanged in final test candidate",
+      "bytes": 12304,
+      "sha256": "adf18e2fbfcae25c6a0b1260e27c6108d5be54795a9c8e45328e9c3a1215065c"
+    },
+    {
+      "path": "docs/verification/evidence/webui-navigation-controls/captures/home-light-1440.json",
+      "stage": "product candidate browser capture; unchanged in final test candidate",
+      "bytes": 980,
+      "sha256": "c9655e4941b47f33377f0b79cc5bf6cb5bc879c49cb3570b4f3a60e55cd09915"
+    },
+    {
+      "path": "docs/verification/evidence/webui-navigation-controls/captures/home-light-1440.png",
+      "stage": "product candidate browser capture; unchanged in final test candidate",
+      "bytes": 36067,
+      "sha256": "1e274817d276acf86c1a6e860a918651e99d2e0a731fc025eabda72d0209b188"
+    },
+    {
+      "path": "docs/verification/evidence/webui-navigation-controls/captures/home-light-360.json",
+      "stage": "product candidate browser capture; unchanged in final test candidate",
+      "bytes": 990,
+      "sha256": "699f941710d3df7fe8a5d60faca3a71be0470146c729dbf8e487919d5ea30623"
+    },
+    {
+      "path": "docs/verification/evidence/webui-navigation-controls/captures/home-light-360.png",
+      "stage": "product candidate browser capture; unchanged in final test candidate",
+      "bytes": 15342,
+      "sha256": "1e826cf90c2f8f43f27f76dc736388357ddfd75e771b973e05d558c4913fd273"
+    },
+    {
+      "path": "docs/verification/evidence/webui-navigation-controls/captures/home-light-390.json",
+      "stage": "product candidate browser capture; unchanged in final test candidate",
+      "bytes": 955,
+      "sha256": "af9473fdb8e015ca4f2be8301f0e76bb89b149bcb5127f3af6f3d49f6dec836b"
+    },
+    {
+      "path": "docs/verification/evidence/webui-navigation-controls/captures/home-light-390.png",
+      "stage": "product candidate browser capture; unchanged in final test candidate",
+      "bytes": 15804,
+      "sha256": "c160bdfd351af0ee1c49b4106dd7f05aae3c272e435346f70dbf947754b94294"
+    },
+    {
+      "path": "docs/verification/evidence/webui-navigation-controls/captures/menu-dark-1440.json",
+      "stage": "product candidate browser capture; unchanged in final test candidate",
+      "bytes": 357,
+      "sha256": "64badaa160eaeb1a5b5e8bda42d583b17c5d73c6ff94d41970739f6af3005ffe"
+    },
+    {
+      "path": "docs/verification/evidence/webui-navigation-controls/captures/menu-dark-1440.png",
+      "stage": "product candidate browser capture; unchanged in final test candidate",
+      "bytes": 35797,
+      "sha256": "a00e46af2f743c44d8c12902477ddfd32e4fc0aa7ac9faf269fbb07254a22ede"
+    },
+    {
+      "path": "docs/verification/evidence/webui-navigation-controls/captures/menu-light-360.json",
+      "stage": "product candidate browser capture; unchanged in final test candidate",
+      "bytes": 367,
+      "sha256": "9a4c0db0a06eefc3f07a672286fa1d08443dcef46531809920aaaed44385bc64"
+    },
+    {
+      "path": "docs/verification/evidence/webui-navigation-controls/captures/menu-light-360.png",
+      "stage": "product candidate browser capture; unchanged in final test candidate",
+      "bytes": 29697,
+      "sha256": "e031373abf5dd316bae8401db544a70ff5f2d6990d76bf91275d97915bd30d29"
+    }
+  ]
+}

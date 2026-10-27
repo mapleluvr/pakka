@@ -1,0 +1,306 @@
+{
+  "candidate": "04fcf4ad2e35442738e15f3399b0290d3ad21d8c",
+  "digest": "08509673f81c3a0e316f7a9f19d5b9dcbef853dba3a1e4b44e8daaaa931f3ee8",
+  "createdAt": "2026-10-27T02:27:32.657Z",
+  "platform": "win32",
+  "node": "v24.18.0",
+  "rule": "Frozen checkout bytes plus canonical Git identity; only CRLF-to-LF checkout normalization is allowed when comparing Git text. HTTP assets must equal frozen checkout bytes exactly.",
+  "files": [
+    {
+      "path": "apps/webui/contributions/approvals/web/index.js",
+      "bytes": 2670,
+      "sha256": "4ef92056bad3a578bdb346ceacdb6d50d4c53aca31724d9ee538a90a39838969",
+      "gitBlob": "67ff7aae21f084606003a69f9f67e7873c54fa21",
+      "canonicalSha256": "fd4f78f785856afca2d570fe26226a78d090714b129febc2ccd689fad0113da8",
+      "rawGitMatch": false
+    },
+    {
+      "path": "apps/webui/contributions/browser/web/index.js",
+      "bytes": 5505,
+      "sha256": "308e6ec7cecca573fe3bfb9e6c22887e01f70ea5be27b1e177cb25c54bd1477f",
+      "gitBlob": "7aadb4f8adfe1adce0f68d83c25dccfd786ce903",
+      "canonicalSha256": "bc57fb508893b867821d00bf55d296197a50d3ac846e60d1cb3c800c1ea805fc",
+      "rawGitMatch": false
+    },
+    {
+      "path": "apps/webui/contributions/files/web/index.js",
+      "bytes": 14656,
+      "sha256": "b3532513616b608d66bfcec48d95c20af2d257a8e4a33e6ab9e860640730cd00",
+      "gitBlob": "29754e3104c4cf3727aad8deb34970c4d74a4ca4",
+      "canonicalSha256": "5e670daa05877b18331f5b64dd948ec9adccc181ce1cea91f2772e89c9a82235",
+      "rawGitMatch": false
+    },
+    {
+      "path": "apps/webui/contributions/hooks/web/index.js",
+      "bytes": 12989,
+      "sha256": "ad17f5ed9cddd20a85bff0747453f12c424e657127060b34b060f8d7570d6d36",
+      "gitBlob": "1fcbb64e4e7f29413a5e3db73560a1fa4ecbe1ec",
+      "canonicalSha256": "aee7cdfbc47392aac0b0ee876d7e89b61b64c3c19a7f66f615d1312bb2138a3c",
+      "rawGitMatch": false
+    },
+    {
+      "path": "apps/webui/contributions/memory/web/index.js",
+      "bytes": 10478,
+      "sha256": "b803503ec40b275ce06bbb412bb405cfc24858966298b847af67c989b6293048",
+      "gitBlob": "f2dae9f7d7b7eedd10706ed0a2f1dc98bee81548",
+      "canonicalSha256": "5b4a6b082da70e677f2202c72103c6521af3245bf36bb7b4a8e4afafdd22c042",
+      "rawGitMatch": false
+    },
+    {
+      "path": "apps/webui/contributions/schedules/web/index.js",
+      "bytes": 6593,
+      "sha256": "aca1ebb36e8de1b727010b6afd2cef9a348480794f8005ba9f71d8c60e70c4ad",
+      "gitBlob": "6092655ce3846301394062310605f37e6af70409",
+      "canonicalSha256": "55cbb8d1d6daa2928ce4eff019dbaae835a9d293d053ced065652d0b23e59bd4",
+      "rawGitMatch": false
+    },
+    {
+      "path": "apps/webui/test/browser-contribution.test.ts",
+      "bytes": 12284,
+      "sha256": "426e4df324dbb805dce725bd80c8c1677f7e290eeb7de0c36ba8bf2508bf6d14",
+      "gitBlob": "73f92238513ddad9c4c5965c06ccc0e112f3cc56",
+      "canonicalSha256": "3bf7a922b218ba7798376231816fef7d18a234e50855e02700ded196b46cc696",
+      "rawGitMatch": false
+    },
+    {
+      "path": "apps/webui/test/browser.ts",
+      "bytes": 15034,
+      "sha256": "b2c9266c232c624e21d3d8ef77a9b9a70d83146d78cdd9e4f66b9b9df1d0f33d",
+      "gitBlob": "75bc8d169643d7c8625229583ff9d03d7f69d0e8",
+      "canonicalSha256": "9e857c0c737f000e805bff40dd3da398fb770461c0807811621ceccae793956b",
+      "rawGitMatch": false
+    },
+    {
+      "path": "apps/webui/test/collaboration-late.test.ts",
+      "bytes": 3539,
+      "sha256": "f4004591cf57db1afdf78d00ad5fa60414278edc0c8fc33763ac9f1a2d66aec7",
+      "gitBlob": "5648fbe823a5acb859af9971e8d9185ee6982c40",
+      "canonicalSha256": "b79408bd1b56cc428877fe7876299824a3e9acd3a2f9ec4c621756d8483bb1a7",
+      "rawGitMatch": false
+    },
+    {
+      "path": "apps/webui/test/composer-hints-browser.test.ts",
+      "bytes": 12300,
+      "sha256": "1cea4301277f37243b598a9d0a5088b743eaa528da61df9b95598e3d68293c9c",
+      "gitBlob": "24e273e5c7c04fdb7167e82ea3de3675b8da88d6",
+      "canonicalSha256": "8d5fd791ec84946101d06b041250e66964fa2f891fc6c5272e02394a9cef6e19",
+      "rawGitMatch": false
+    },
+    {
+      "path": "apps/webui/test/copy-presentation-browser.test.ts",
+      "bytes": 12419,
+      "sha256": "7e558bb91d10579f5d42b04c7a314ce9fa150b8065da39aed553383695b70aef",
+      "gitBlob": "6ae404cb4fd8f3d0e137ca4b83759dfc3a7d2387",
+      "canonicalSha256": "7e558bb91d10579f5d42b04c7a314ce9fa150b8065da39aed553383695b70aef",
+      "rawGitMatch": true
+    },
+    {
+      "path": "apps/webui/test/creation-recovery-browser.test.ts",
+      "bytes": 9190,
+      "sha256": "a1cd2324726547f6078eda0aa4f5a72471052b50192e62a82ca53b863248072a",
+      "gitBlob": "0958a1eb0bd9aa997a652cedf1baaf7faff3b804",
+      "canonicalSha256": "a1cd2324726547f6078eda0aa4f5a72471052b50192e62a82ca53b863248072a",
+      "rawGitMatch": true
+    },
+    {
+      "path": "apps/webui/test/frontend-controls.ts",
+      "bytes": 5072,
+      "sha256": "65752e3b99784ecc4109d99c85e180acb40927c14d0371f99f018343734a17f6",
+      "gitBlob": "2c158ca86e75a4cd8d08d03eb7eb6b661bc78b2e",
+      "canonicalSha256": "32751a3b1638296265738fa0880b329aabcedbffdb60c50427d8361a4a4fedc8",
+      "rawGitMatch": false
+    },
+    {
+      "path": "apps/webui/test/hooks-browser.test.ts",
+      "bytes": 9124,
+      "sha256": "48994ebc66d870b7bf2135b17d202662905a35963e53086542289b39372e2383",
+      "gitBlob": "da80cb4fc5d35b6d3bbd4fe199c8719ee1fac200",
+      "canonicalSha256": "5ecf0a8757e51e00974d13e2a7aaa114d0171078a4f957d5fcdcba7774f05e3a",
+      "rawGitMatch": false
+    },
+    {
+      "path": "apps/webui/test/independent-configuration-browser.test.ts",
+      "bytes": 7922,
+      "sha256": "ccac58f9b3d5e13ca19a22292963a2af10492058d8e0177a324edd9fda71badb",
+      "gitBlob": "a762b2057149b800d40320d480e54de06d9f18d0",
+      "canonicalSha256": "3481550262b6d39d4726c15f89afca605a3a9608230ba33d76974d069b4063a0",
+      "rawGitMatch": false
+    },
+    {
+      "path": "apps/webui/test/memory-browser.test.ts",
+      "bytes": 10515,
+      "sha256": "6b661d02c7ed8111b948fad3cac7c8ade55a5fbcc2720d7e17ffbe716e356e6d",
+      "gitBlob": "1371bdb33767afaedbf8385f787957060df9e6d1",
+      "canonicalSha256": "2a19ea5ff954e736353a09ff38af6f95cb11488c4a5d70dff5ca541150dcee1a",
+      "rawGitMatch": false
+    },
+    {
+      "path": "apps/webui/test/navigation-controls-browser.test.ts",
+      "bytes": 14533,
+      "sha256": "d66a2505516090d1f83693e34cf3ef87328ab6a76f74c448011c088dc4c35751",
+      "gitBlob": "07a44f12bb97e2d822f932cdbdd2277f8b5f26f5",
+      "canonicalSha256": "d66a2505516090d1f83693e34cf3ef87328ab6a76f74c448011c088dc4c35751",
+      "rawGitMatch": true
+    },
+    {
+      "path": "apps/webui/test/navigation-recovery-browser.test.ts",
+      "bytes": 4140,
+      "sha256": "888a6120f44df8b4abb1c6b475352e217a5cfbac7afbb081981b25a35d6482fd",
+      "gitBlob": "8fab951cf29e78be4b24e5b55cc00cb2b7a01a24",
+      "canonicalSha256": "753451dc0f2e48a8ba7f22030af06d09215e2216eb99a82230e7cc4cb383ee49",
+      "rawGitMatch": false
+    },
+    {
+      "path": "apps/webui/test/personal-navigation-browser.test.ts",
+      "bytes": 6948,
+      "sha256": "fc0fa89318e31414300608fca887d0269bf5e24f8c0b7f8a83503461de6d67e9",
+      "gitBlob": "b46db64dd0a2060ac4cf6391d28e2ac19522a31a",
+      "canonicalSha256": "fc0fa89318e31414300608fca887d0269bf5e24f8c0b7f8a83503461de6d67e9",
+      "rawGitMatch": true
+    },
+    {
+      "path": "apps/webui/test/schedules-browser.test.ts",
+      "bytes": 7541,
+      "sha256": "2d235fee9d5c8774c26aaa9b47a08073fb3b9c60ab4ae5ce88c285dbfa61e045",
+      "gitBlob": "3e1f581aa29343db874fed9447b4f65c661c2469",
+      "canonicalSha256": "6e64c2afb71f81360d26ec7a96e25dc93c43008bd600f397e223ffe02b8b1e4e",
+      "rawGitMatch": false
+    },
+    {
+      "path": "apps/webui/test/typography-spacing-browser.test.ts",
+      "bytes": 18762,
+      "sha256": "bd33e09060bb9e502b4611579700c507397eede61c083063209fb24fc80eba0d",
+      "gitBlob": "ebfc3afe273434627105fe147f1787a244a80364",
+      "canonicalSha256": "bd33e09060bb9e502b4611579700c507397eede61c083063209fb24fc80eba0d",
+      "rawGitMatch": true
+    },
+    {
+      "path": "apps/webui/test/voice-browser.test.ts",
+      "bytes": 17201,
+      "sha256": "ffaeda90f64382ec9c59ab7339b3ce6b75bb8f992816a6e3bfbd8665d90ed756",
+      "gitBlob": "88a955247f7bd8572c51d44d5caccd22dab4ca2d",
+      "canonicalSha256": "d0ab7dc3a8849d140c659c07a00765d458c7de3d0a781d65e65585f46bea93af",
+      "rawGitMatch": false
+    },
+    {
+      "path": "apps/webui/web/app.js",
+      "bytes": 41700,
+      "sha256": "80bdfd729e6379ab53a5bd7d0b8d16807ba49ebc8abdd76480d7f1b6e88aed2d",
+      "gitBlob": "8a6ed18e27d813fe60a5305dcaacce3eda4d03e0",
+      "canonicalSha256": "80bdfd729e6379ab53a5bd7d0b8d16807ba49ebc8abdd76480d7f1b6e88aed2d",
+      "rawGitMatch": true
+    },
+    {
+      "path": "apps/webui/web/appearance.js",
+      "bytes": 4210,
+      "sha256": "64c5aef7a198e8857d8fa4158b672db2a8c67f67992af1f3d670b70ec7a707f5",
+      "gitBlob": "b7615c309007c2c4613e93bb578cd9043aeaf9a4",
+      "canonicalSha256": "bd67259515c044cd3a5491954572021594e6ab3c4260324487b242d9afca11d8",
+      "rawGitMatch": false
+    },
+    {
+      "path": "apps/webui/web/collaboration.js",
+      "bytes": 11446,
+      "sha256": "a0d1400c46e59e8232889665fd8ba1bba5ac2a8241eca2cdf8fa538860ec0194",
+      "gitBlob": "e4d15bd4c63b427374c48fd39b01df8b80096c21",
+      "canonicalSha256": "54085f4b56e89d3a2ede07565b6750ad5bcae279829504e4e30f665b6cea7a40",
+      "rawGitMatch": false
+    },
+    {
+      "path": "apps/webui/web/configuration.js",
+      "bytes": 3118,
+      "sha256": "07da61df5444c337e3bb658ec1aee7461c0810a09e1e8351b7fcf585487eb4d8",
+      "gitBlob": "2b262f4ff101c7aded4afe41f026dc39d90ce397",
+      "canonicalSha256": "0180bbdf109f6ef58df43192f99956114a8b7610982a8cae42d05ee988159e2f",
+      "rawGitMatch": false
+    },
+    {
+      "path": "apps/webui/web/conversation-configuration.js",
+      "bytes": 16460,
+      "sha256": "421cfc2c80ddc7af2fe2ebe0655a04d89d2f0cd7d65123dc402b584e8b42d8e1",
+      "gitBlob": "6e0b167709b601e283057848932f4b18b5103110",
+      "canonicalSha256": "8a0d690728e438372a0dfcf35f06a9b5ff087d02ee1a61beb0307eb7607fa6a2",
+      "rawGitMatch": false
+    },
+    {
+      "path": "apps/webui/web/conversation-groups.js",
+      "bytes": 15448,
+      "sha256": "39f829ebacaf73a87e9a2b5690fed3c71f560d618ba3e6e7c84e9e6ee763005a",
+      "gitBlob": "79a3cb36da544dc3776ff7bcb44680937c536b95",
+      "canonicalSha256": "39f829ebacaf73a87e9a2b5690fed3c71f560d618ba3e6e7c84e9e6ee763005a",
+      "rawGitMatch": true
+    },
+    {
+      "path": "apps/webui/web/creation.js",
+      "bytes": 15277,
+      "sha256": "759634cd86503e912831c8ccd0ceb3646f3869083c2e9d996a6df1be4619a7f6",
+      "gitBlob": "589388efa5a5eeb50fde35622cad23c7a139e985",
+      "canonicalSha256": "759634cd86503e912831c8ccd0ceb3646f3869083c2e9d996a6df1be4619a7f6",
+      "rawGitMatch": true
+    },
+    {
+      "path": "apps/webui/web/credentials.js",
+      "bytes": 4450,
+      "sha256": "a9b50840923bfde6aca50f2a7a6a95afd901450bc7a665ff42e5bda8aaa1478e",
+      "gitBlob": "85213d5384b7c17ea01bf72baf559d43d21fdb31",
+      "canonicalSha256": "e56fe808f70f2ffb88a67cbb0e7fcf20c2c15bf81a516692cbbdb72b8c3e0432",
+      "rawGitMatch": false
+    },
+    {
+      "path": "apps/webui/web/elements.css",
+      "bytes": 31631,
+      "sha256": "84a30de7b25aebc98f333debbb43207d98550291b6089667ea5fe25c1fa0fc7b",
+      "gitBlob": "adb1467cb6ed9b31e4f870f802d98f44a007a2d9",
+      "canonicalSha256": "c21e33cf8fe1ee5fd1fee6f1232877f520d364ab13a6e6fba6161f1acc99590c",
+      "rawGitMatch": false
+    },
+    {
+      "path": "apps/webui/web/extensions.js",
+      "bytes": 22978,
+      "sha256": "969eb063d08d43527c63f0ce28bc61b33cf5dbc0b206d10d69bc5c29de086237",
+      "gitBlob": "7d591abd7ab8d1d1d55610540750364c07c69c6d",
+      "canonicalSha256": "01cb943394720727f76e0e6adf451076d5e028d52a9f531f42b724162a5b1f22",
+      "rawGitMatch": false
+    },
+    {
+      "path": "apps/webui/web/frontend.js",
+      "bytes": 14591,
+      "sha256": "162158307a9599aee20c293242b3a78d1e9c981d9f0b24de179680c49d36e6a7",
+      "gitBlob": "7e86d72045f51e692b9e1b8133ea37f1131c3075",
+      "canonicalSha256": "66543faf782aa160e58b1e9f28353a4ef0c9d26a0dde3abd3b7578c728d636c9",
+      "rawGitMatch": false
+    },
+    {
+      "path": "apps/webui/web/native-composer.js",
+      "bytes": 7617,
+      "sha256": "820bc2f032976cf479e3fd85b53d989b1fd6e7ade9bb95858b32742c62a4a025",
+      "gitBlob": "16520c1cbbd4d4ea59e1629bed074a15d80845b7",
+      "canonicalSha256": "fe7007a23caa1b834f40d2d53517408b75ce45eda37301133cdea22e6be0aaff",
+      "rawGitMatch": false
+    },
+    {
+      "path": "apps/webui/web/navigation.js",
+      "bytes": 5406,
+      "sha256": "dc8ee70df6a7aeb816fec09d5642f20de5c73e31146f3ab66aac550fab9267f1",
+      "gitBlob": "1619763903420808acd5812769fdd9ec70d30a88",
+      "canonicalSha256": "45a4022d06489f9eae18652d354795f28c4b949c8ed9f9008a843d9a5a6a37ce",
+      "rawGitMatch": false
+    },
+    {
+      "path": "apps/webui/web/notifications.js",
+      "bytes": 8837,
+      "sha256": "e9e83e3a62f69f44e7840b61a1258474c27487abbf3959bd83b78ede9f24ae75",
+      "gitBlob": "575402cd40126cc23bff2880976e208bc2b569a5",
+      "canonicalSha256": "eb6b3d43b6b530419ca473cadf50dae018806ef4cca18330417144fb9a0fa6b6",
+      "rawGitMatch": false
+    },
+    {
+      "path": "apps/webui/web/voice.js",
+      "bytes": 8925,
+      "sha256": "69c9f611c7238270f05bcb8712fb9b84ac82e4b5d9e109ddb772746249a548a5",
+      "gitBlob": "c40bb9513529ab7d0c43179bab3c465099b10c17",
+      "canonicalSha256": "d170859c3ed935a7123577d5c7230dd1781eeb8fd6a61d7a115d4d2eb941f1ee",
+      "rawGitMatch": false
+    }
+  ]
+}

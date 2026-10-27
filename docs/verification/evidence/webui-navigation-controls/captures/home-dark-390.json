@@ -1,0 +1,47 @@
+{
+  "backdrop": "rgb(20, 20, 20)",
+  "actions": [
+    {
+      "x": 28.359375,
+      "y": 364.34375,
+      "right": 174.515625,
+      "bottom": 408.34375,
+      "width": 146.15625,
+      "height": 44,
+      "background": "rgba(0, 0, 0, 0)",
+      "weight": "500",
+      "font": "13px",
+      "iconWidth": 24,
+      "iconHeight": 24,
+      "gap": 8,
+      "centerDelta": 0.75
+    },
+    {
+      "x": 199.515625,
+      "y": 364.34375,
+      "right": 312,
+      "bottom": 408.34375,
+      "width": 112.484375,
+      "height": 44,
+      "background": "rgba(0, 0, 0, 0)",
+      "weight": "500",
+      "font": "13px",
+      "iconWidth": 24,
+      "iconHeight": 24,
+      "gap": 8,
+      "centerDelta": 0.75
+    }
+  ],
+  "divider": {
+    "x": 186.515625,
+    "y": 378.34375,
+    "right": 187.515625,
+    "bottom": 394.34375,
+    "width": 1,
+    "height": 16,
+    "hidden": "true",
+    "tab": -1,
+    "color": "rgba(255, 255, 255, 0.52)"
+  },
+  "overflow": false
+}

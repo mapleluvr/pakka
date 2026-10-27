@@ -1,0 +1,47 @@
+{
+  "backdrop": "rgb(252, 252, 252)",
+  "actions": [
+    {
+      "x": 22,
+      "y": 341.9375,
+      "right": 187.890625,
+      "bottom": 413.65625,
+      "width": 165.890625,
+      "height": 71.71875,
+      "background": "rgba(0, 0, 0, 0)",
+      "weight": "500",
+      "font": "18.5714px",
+      "iconWidth": 24,
+      "iconHeight": 24,
+      "gap": 17,
+      "centerDelta": 0.9296875
+    },
+    {
+      "x": 212.890625,
+      "y": 341.9375,
+      "right": 338,
+      "bottom": 413.65625,
+      "width": 125.109375,
+      "height": 71.71875,
+      "background": "rgba(0, 0, 0, 0)",
+      "weight": "500",
+      "font": "18.5714px",
+      "iconWidth": 24,
+      "iconHeight": 24,
+      "gap": 20.21875,
+      "centerDelta": 0.9296875
+    }
+  ],
+  "divider": {
+    "x": 199.890625,
+    "y": 369.796875,
+    "right": 200.890625,
+    "bottom": 385.796875,
+    "width": 1,
+    "height": 16,
+    "hidden": "true",
+    "tab": -1,
+    "color": "rgba(20, 20, 20, 0.54)"
+  },
+  "overflow": false
+}

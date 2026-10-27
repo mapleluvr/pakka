@@ -1,0 +1,58 @@
+TAP version 13
+# Subtest: WebUI collaboration browser: attributed human work, driver handoff and scoped mobile live updates
+ok 1 - WebUI collaboration browser: attributed human work, driver handoff and scoped mobile live updates
+  ---
+  duration_ms: 2744.0908
+  type: 'test'
+  ...
+# Subtest: WebUI composer: a refused send explains itself in every mode, without moving the card, and Stop owns the primary slot
+ok 2 - WebUI composer: a refused send explains itself in every mode, without moving the card, and Stop owns the primary slot
+  ---
+  duration_ms: 933.0421
+  type: 'test'
+  ...
+# Subtest: Concise creation: normal controls carry the operation; server/device scope stays readable while cancelled drafts leave resources unchanged
+ok 3 - Concise creation: normal controls carry the operation; server/device scope stays readable while cancelled drafts leave resources unchanged
+  ---
+  duration_ms: 1113.1831
+  type: 'test'
+  ...
+# Subtest: People Chat and concise settings: contextual accounting help stays accessible and attributed human messages consume no model attempts
+ok 4 - People Chat and concise settings: contextual accounting help stays accessible and attributed human messages consume no model attempts
+  ---
+  duration_ms: 1744.6534
+  type: 'test'
+  ...
+# Subtest: Interface disable: confirmed feedback accompanies actual UI removal while the same pending native input completes
+ok 5 - Interface disable: confirmed feedback accompanies actual UI removal while the same pending native input completes
+  ---
+  duration_ms: 1756.2739
+  type: 'test'
+  ...
+# Subtest: WebUI browser dictation: caret and final text reach only the draft until a real explicit Send
+ok 6 - WebUI browser dictation: caret and final text reach only the draft until a real explicit Send
+  ---
+  duration_ms: 1207.6228
+  type: 'test'
+  ...
+# Subtest: WebUI browser dictation: resource and sheet replacement, errors and logout discard old callbacks without dispatch
+ok 7 - WebUI browser dictation: resource and sheet replacement, errors and logout discard old callbacks without dispatch
+  ---
+  duration_ms: 768.4495
+  type: 'test'
+  ...
+# Subtest: WebUI browser dictation: absent speech support retains real typed input and a mobile viewer has no model dictation
+ok 8 - WebUI browser dictation: absent speech support retains real typed input and a mobile viewer has no model dictation
+  ---
+  duration_ms: 2183.5544
+  type: 'test'
+  ...
+1..8
+# tests 8
+# suites 0
+# pass 8
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 15865.1043

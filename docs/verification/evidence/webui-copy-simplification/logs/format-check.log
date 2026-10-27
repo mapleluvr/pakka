@@ -1,0 +1,13 @@
+
+> pakka-workspace@0.1.0 format:check
+> prettier --check packages apps scripts integrations *.json
+
+Checking formatting...
+[warn] packages/agent/src/durable-adapter.ts
+[warn] packages/agent/test/compresser-conversation.test.ts
+[warn] packages/agent/test/compresser-crash.test.ts
+[warn] packages/agent/test/compresser-session.test.ts
+[warn] integrations/dynamite/compresser-conversation-pairing.json
+[warn] integrations/dynamite/compresser-trial-initial-pairing.json
+[warn] integrations/dynamite/compresser-trial-pairing.json
+[warn] Code style issues found in 7 files. Run Prettier with --write to fix.
