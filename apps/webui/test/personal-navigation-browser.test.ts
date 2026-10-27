@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { runtimeFixture } from "../../../packages/agent/test/runtime-fixture.ts";
 import { startPocket } from "../src/bootstrap.ts";
 import { ownedBrowser } from "./browser.ts";
-import { settleFrontend, type FrontendPage } from "./frontend-controls.ts";
+import { groupingMode, settleFrontend, type FrontendPage } from "./frontend-controls.ts";
 
 async function rpc(page: FrontendPage, command: Record<string, unknown>) {
 	const response = (await page.evaluate(
@@ -79,8 +79,7 @@ test(
 			await page.wait(
 				'document.querySelector("[data-navigation-mode]") && !document.querySelector("[data-navigation-mode]").disabled',
 			);
-			await page.type("[data-navigation-mode]", "");
-			await page.key("ArrowDown");
+			await groupingMode(page, "session");
 			await page.wait(
 				'document.querySelector("[data-navigation-mode]").value==="session" && !document.querySelector("[data-navigation-mode]").disabled && document.querySelectorAll("[data-session-group]").length===2',
 			);
@@ -107,8 +106,7 @@ test(
 					false,
 				);
 			}
-			await page.type("[data-navigation-mode]", "");
-			await page.key("ArrowUp");
+			await groupingMode(page, "default");
 			await page.wait(
 				'document.querySelector("[data-navigation-mode]").value==="default" && !document.querySelector("[data-navigation-mode]").disabled',
 			);

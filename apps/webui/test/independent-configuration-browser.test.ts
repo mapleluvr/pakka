@@ -131,10 +131,10 @@ test(
 			assert.equal(m.f.requests.length, 0);
 			assert.equal(app.runtime.view().budget.primaryAttempts, 0);
 			await page.click("[data-action=cwd]");
-			await page.wait(`document.querySelector('[aria-label="Favorite directories"]')`);
+			await page.wait(`document.querySelector('[aria-label="Favorite Directories"]')`);
 			assert.match(
 				String(
-					await page.evaluate(`document.querySelector('[aria-label="Favorite directories"]').textContent`),
+					await page.evaluate(`document.querySelector('[aria-label="Favorite Directories"]').textContent`),
 				),
 				/child/,
 			);

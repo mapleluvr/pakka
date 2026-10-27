@@ -42,7 +42,6 @@ export function Approvals({ context }) {
 	>
 		<header>
 			<h2>Tool Approvals</h2>
-			<p>Each decision applies to the exact pending tool and arguments below.</p>
 		</header>
 		${problem && html`<${Notice}>${problem}<//>`}
 		${rows.length === 0 && html`<p>No approvals in this Conversation.</p>`}

@@ -1,0 +1,262 @@
+{
+  "kind": "static-ui-copy-investigation-not-GUI-acceptance",
+  "base": "075899280acb732aca6de9359fc230267ecd0b66",
+  "workingChanges": "Uncommitted grouping-menu and home-creation visual changes; no copy deletions were applied for this audit.",
+  "method": "whole-production-source text candidate scan followed by manual display-context review; not an AST completeness claim",
+  "scannedSourceFiles": 146,
+  "uiRelatedFiles": 49,
+  "excluded": [
+    "docs",
+    "test",
+    "dist",
+    "vendor",
+    "node_modules"
+  ],
+  "files": [
+    {
+      "path": "apps/webui/contributions/approvals/manifest.json",
+      "bytes": 3109,
+      "sha256": "9c03226dd9493fdcee394528f6e525c6a309c7fac6c3c5b6e278e175ee6fc309"
+    },
+    {
+      "path": "apps/webui/contributions/approvals/web/client.js",
+      "bytes": 270,
+      "sha256": "c8b87c7c0ae493ad7d6030b210bd04f4694edbd42778acd60c046a92c9f684a1"
+    },
+    {
+      "path": "apps/webui/contributions/approvals/web/index.js",
+      "bytes": 2750,
+      "sha256": "523ffefaa380ca6551a33d79831e67179364ac1eb39fa70d8bb4e3dadf683486"
+    },
+    {
+      "path": "apps/webui/contributions/browser/manifest.json",
+      "bytes": 4065,
+      "sha256": "6d29a2a4d3220c2032a06d3e660b67cdb6fee18df76e3f4d5c2f2f30d2b5760c"
+    },
+    {
+      "path": "apps/webui/contributions/browser/web/client.js",
+      "bytes": 291,
+      "sha256": "17bc8dcf136941bec856a5450c641259102db93a976ad181ef2df8c52e823e54"
+    },
+    {
+      "path": "apps/webui/contributions/browser/web/index.js",
+      "bytes": 5587,
+      "sha256": "7a1fae080adb33ae3bb4bfba8a6bc0d58f1701e68c37b116944d02b36cb90806"
+    },
+    {
+      "path": "apps/webui/contributions/files/manifest.json",
+      "bytes": 15176,
+      "sha256": "95843ab8ddf7bc5f042f3b254cb5dea6e7856e3dd6c23ac857bd4756af7527d1"
+    },
+    {
+      "path": "apps/webui/contributions/files/web/client.js",
+      "bytes": 332,
+      "sha256": "7f7ec31b8d64d90681a8aff9a44a338e2e31fb2e301ce27fff329ffd7676141f"
+    },
+    {
+      "path": "apps/webui/contributions/files/web/index.js",
+      "bytes": 14937,
+      "sha256": "0de307f93ab130a23a951641294006f57588dd0c0590d180bb9a6946f248bacf"
+    },
+    {
+      "path": "apps/webui/contributions/hooks/manifest.json",
+      "bytes": 17366,
+      "sha256": "ab3c892ef4f7ec70d0fcf07375502ff419df99486d94e9faa00bbd07f26092bd"
+    },
+    {
+      "path": "apps/webui/contributions/hooks/web/client.js",
+      "bytes": 302,
+      "sha256": "94826457ec8118c22706131bc51899bf6ccb053f1fb65d91c8dddc84fc93d6d8"
+    },
+    {
+      "path": "apps/webui/contributions/hooks/web/index.js",
+      "bytes": 13117,
+      "sha256": "fb3366611562b0f559e22ede37e96fab595845a1d1afb3669eee545f24b8b8e0"
+    },
+    {
+      "path": "apps/webui/contributions/memory/manifest.json",
+      "bytes": 13939,
+      "sha256": "93ba1afb0eb9427d85d26769817d037b683658aa4f85277d8fcb1157c1ba349f"
+    },
+    {
+      "path": "apps/webui/contributions/memory/web/client.js",
+      "bytes": 288,
+      "sha256": "b9aa24fc3e6b5aaaaefa540a2a6d84db2ca212fed6020d0e7e0d5da9996d3445"
+    },
+    {
+      "path": "apps/webui/contributions/memory/web/index.js",
+      "bytes": 11009,
+      "sha256": "a5483faac2be2ab3bba14ece7beae3028dc3321204b9c30c9f44121d907dc682"
+    },
+    {
+      "path": "apps/webui/contributions/schedules/manifest.json",
+      "bytes": 7046,
+      "sha256": "b5013fc3f51000f647903d7682915fea628c47066aa59e3f63ebf2de18b73a8a"
+    },
+    {
+      "path": "apps/webui/contributions/schedules/web/client.js",
+      "bytes": 287,
+      "sha256": "2fcdb6972309095b22d735496538031b57f51265758c4fb5142f8a1bff46b159"
+    },
+    {
+      "path": "apps/webui/contributions/schedules/web/index.js",
+      "bytes": 6676,
+      "sha256": "3aa4e4ee10d8ad501b98b94a87e9298be70bd18b23ce507e8c2c8a74974c25d1"
+    },
+    {
+      "path": "apps/webui/examples/hello/manifest.json",
+      "bytes": 625,
+      "sha256": "f7937a42d83a29b147450553c93e7de5d18d8224939dcd8c9834a51b6203b6e4"
+    },
+    {
+      "path": "apps/webui/examples/hello/web/index.js",
+      "bytes": 692,
+      "sha256": "59276a889db0feae13b5878ce292341e4f7d9a670411313d45c36baa6251bf76"
+    },
+    {
+      "path": "apps/webui/examples/preferences/manifest.json",
+      "bytes": 2275,
+      "sha256": "e75261208ee8e6d3434846cd258560724c3ad091fb72a6c57f96f94a0a78643c"
+    },
+    {
+      "path": "apps/webui/examples/preferences/web/index.js",
+      "bytes": 1585,
+      "sha256": "4742ea0f59a568da90a9e5c9589979a6b0f78523e7122f5834f609032ace3fcc"
+    },
+    {
+      "path": "apps/webui/src/components.ts",
+      "bytes": 2969,
+      "sha256": "5b7a676ccd16c5c122ac9da1a08c71125e56bef65d5754274390ad925de94e7a"
+    },
+    {
+      "path": "apps/webui/src/ui.ts",
+      "bytes": 1493,
+      "sha256": "9a8b382441db650271de5af25f0b909eb70036c375275da56689bab3be7abe20"
+    },
+    {
+      "path": "apps/webui/web/app.js",
+      "bytes": 41940,
+      "sha256": "5c4970a85b67071932cc63cddb45f841bc972f88b218415ab2371d5210ef940b"
+    },
+    {
+      "path": "apps/webui/web/appearance.js",
+      "bytes": 4244,
+      "sha256": "473ace2773d2e36a22aab476822d0a9f75adf0c7a5686467fcaa9becaae3a86e"
+    },
+    {
+      "path": "apps/webui/web/collaboration.js",
+      "bytes": 11559,
+      "sha256": "fa9682acc1f1b2e788083bae97bb4198c21c895af2f1a08f028e33f712477d7a"
+    },
+    {
+      "path": "apps/webui/web/configuration.js",
+      "bytes": 3103,
+      "sha256": "214cdfdab809e5a29cd05bbd6c0c1e6816dbf15c6e758b697941ad87e60ed892"
+    },
+    {
+      "path": "apps/webui/web/conversation-configuration.js",
+      "bytes": 16762,
+      "sha256": "a5f1045373a44b457214dc46fd2a6930abad902adfed5cd8a87242675547cac0"
+    },
+    {
+      "path": "apps/webui/web/conversation-groups.js",
+      "bytes": 15959,
+      "sha256": "d65cac81ccf6d699fc9202e9e2da75aa41ecb85606fd992f563ba9bebdba9b48"
+    },
+    {
+      "path": "apps/webui/web/creation.js",
+      "bytes": 16302,
+      "sha256": "122becf54d9525104f5f84f2d87d9da33db3dbc391ba598915fba853cb3011f2"
+    },
+    {
+      "path": "apps/webui/web/credentials.js",
+      "bytes": 4562,
+      "sha256": "82e703b7a8e9e11f9a4eae5e87d6e2173d1d5e15e2f2ee87ca227544849cef52"
+    },
+    {
+      "path": "apps/webui/web/extensions.js",
+      "bytes": 22897,
+      "sha256": "06b5dfca4fb6f77dcc5dbc1b458e33dd4ce310e44e83139486150986e71e047f"
+    },
+    {
+      "path": "apps/webui/web/frontend.js",
+      "bytes": 14747,
+      "sha256": "aa3aa8c0ecc382edd568bbe150e808fcaa9b9b700ec3b7646db500e28acf801a"
+    },
+    {
+      "path": "apps/webui/web/index.html",
+      "bytes": 9837,
+      "sha256": "9a8524b61ba5ddd5f8a63f9c70d4a885284fd707365aa51a6692342c08eca223"
+    },
+    {
+      "path": "apps/webui/web/message-parts.js",
+      "bytes": 1625,
+      "sha256": "836ff86dd2c0042e518d4a7e8a325a6140b9f6db20e5fba3d11a93db6fd17a6c"
+    },
+    {
+      "path": "apps/webui/web/native-composer.js",
+      "bytes": 7554,
+      "sha256": "a6d3fcce9ada0a07dfb4947f4342e191dd76be197a94c9fcfc347b4de8d3259c"
+    },
+    {
+      "path": "apps/webui/web/navigation.js",
+      "bytes": 5563,
+      "sha256": "ad2b7bf80c252ddedb1ed9704d357ea7cde463a2623cb5ad38812b3f8344d140"
+    },
+    {
+      "path": "apps/webui/web/notifications.js",
+      "bytes": 9104,
+      "sha256": "0295a9eb2ca8f37b3516f22033573ac2c7ef7d92db7579ca0aa4ead997981215"
+    },
+    {
+      "path": "apps/webui/web/resource-identity.js",
+      "bytes": 186,
+      "sha256": "f10acd36afd6588db0fc36a39e4adfc69259a667bbab3eb382e30107e3c1cd85"
+    },
+    {
+      "path": "apps/webui/web/settings-page.js",
+      "bytes": 1938,
+      "sha256": "d1499a0a204281362afed8193bbcf4cda16902c42cfba929a76b88cb6eb2df0b"
+    },
+    {
+      "path": "apps/webui/web/sheet.js",
+      "bytes": 4622,
+      "sha256": "74dd9dda0c67239b2e94a6113d4aa426873467222ca61227e497925e50bb17d4"
+    },
+    {
+      "path": "apps/webui/web/sw.js",
+      "bytes": 4291,
+      "sha256": "ab6c79713cb3a63ea6146bcc3b3b9138c94639d6bd8db632813706322d9181b4"
+    },
+    {
+      "path": "apps/webui/web/voice.js",
+      "bytes": 8888,
+      "sha256": "2821e9a3356b6e253a02477d9b232a899113dfd68e494a62ff9cb5b43d6df1e1"
+    },
+    {
+      "path": "packages/mas-devpack/src/browser/client.ts",
+      "bytes": 1911,
+      "sha256": "469cc577b0537e02d5f1289e0db179ebed30cb54da4016c9c0535d6d3fa5429f"
+    },
+    {
+      "path": "packages/mas-devpack/src/browser/contract.ts",
+      "bytes": 5323,
+      "sha256": "bce09146dbd2f48d734cb2313f48314f10773fbcc05ecad3240cf2b09bd70d06"
+    },
+    {
+      "path": "packages/mas-devpack/src/browser/dto.ts",
+      "bytes": 2939,
+      "sha256": "9f18fa6ac570a80ea04281fc2ec8cafe54e714e2831bceae0f957d34415be2e4"
+    },
+    {
+      "path": "packages/mas-devpack/src/browser/graph-board.ts",
+      "bytes": 38300,
+      "sha256": "c282466e7491ba5d62c14cd88eace8eb3bbfecb9cd7a83129e72fe7560d13aad"
+    },
+    {
+      "path": "packages/mas-devpack/src/browser/index.ts",
+      "bytes": 12994,
+      "sha256": "c54978f003ccbad9b0586d38aab9fca40a17cbdfb9f949c551c701b60bceb4cf"
+    }
+  ]
+}

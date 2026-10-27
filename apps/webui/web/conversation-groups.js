@@ -3,6 +3,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "preact/hooks";
 import htm from "htm";
 import { Icon } from "@pakka/webui/components";
 import { Sheet } from "./sheet.js";
+import { Menu } from "./frontend.js";
 import { resourceKey } from "./resource-identity.js";
 const html = htm.bind(h);
 
@@ -27,6 +28,7 @@ export function ConversationGroups({
 		[message, setMessage] = useState(""),
 		[uncertain, setUncertain] = useState(false),
 		[dialog, setDialog] = useState(null),
+		[modeMenu, setModeMenu] = useState(null),
 		[name, setName] = useState(""),
 		[folder, setFolder] = useState("");
 	const scope = JSON.stringify([person.id, workspaceSessionId]),
@@ -57,11 +59,12 @@ export function ConversationGroups({
 		setBusy(false);
 		setUncertain(false);
 		setDialog(null);
+		setModeMenu(null);
 		setMessage("");
 		if (!workspaceSessionId) return;
 		void load(scope).catch((failure) => {
 			if (!valid(scope)) return;
-			setMessage("Personal navigation could not be read. No grouping changes were made.");
+			setMessage("Personal navigation could not be read.");
 			if (failure.code === "UNAUTHORIZED" || failure.code === "FORBIDDEN") error(failure);
 		});
 	}, [scope]);
@@ -122,15 +125,15 @@ export function ConversationGroups({
 				setDialog(null);
 				setMessage(
 					committed
-						? "Navigation was saved, but its view could not be refreshed. Nothing will be repeated."
-						: "The navigation result is unconfirmed. Check the original edit; nothing will be repeated.",
+						? "Navigation saved. Refresh failed."
+						: "Navigation result unconfirmed. Check the original edit.",
 				);
 			} else {
 				operation.current = null;
 				setMessage(
 					failure.code === "CONFLICT"
 						? "Navigation changed elsewhere. Load the current navigation and review your edit."
-						: "This navigation edit was refused. No native Conversation was changed.",
+						: "Navigation edit refused.",
 				);
 				if (failure.code === "UNAUTHORIZED" || failure.code === "FORBIDDEN") error(failure);
 			}
@@ -146,10 +149,10 @@ export function ConversationGroups({
 			if (!(await load(binding))) return;
 			operation.current = null;
 			setUncertain(false);
-			setMessage("Current navigation loaded. The previous edit was not replayed.");
+			setMessage("Current navigation loaded.");
 		} catch (failure) {
 			if (!valid(binding)) return;
-			setMessage("Current navigation could not be verified. Nothing was replayed.");
+			setMessage("Current navigation could not be verified.");
 			if (failure.code === "UNAUTHORIZED" || failure.code === "FORBIDDEN") error(failure);
 		} finally {
 			if (valid(binding)) setBusy(false);
@@ -164,22 +167,34 @@ export function ConversationGroups({
 			const result = await client.request({ op: "navigation.lookup", original: original.input });
 			if (!valid(binding)) return;
 			if (!result.receipt) {
-				setMessage(
-					"The original edit has no confirmed result in the recent operation window. Nothing was replayed.",
-				);
+				setMessage("Original edit unconfirmed in the recent operation window.");
 				return;
 			}
 			if (!(await load(binding))) return;
 			operation.current = null;
 			setUncertain(false);
-			setMessage("The original edit was confirmed. Nothing was replayed.");
+			setMessage("Original edit confirmed.");
 		} catch (failure) {
 			if (!valid(binding)) return;
-			setMessage("The original navigation result could not be verified. Nothing was replayed.");
+			setMessage("Original navigation result unconfirmed.");
 			if (failure.code === "UNAUTHORIZED" || failure.code === "FORBIDDEN") error(failure);
 		} finally {
 			if (valid(binding)) setBusy(false);
 		}
+	}
+	function browseMode(event) {
+		if (!["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) return;
+		event.preventDefault();
+		event.stopPropagation();
+		const items = [...event.currentTarget.querySelectorAll('[role="menuitemradio"]')],
+			index = items.indexOf(document.activeElement),
+			next =
+				event.key === "Home"
+					? 0
+					: event.key === "End"
+						? items.length - 1
+						: (index + (event.key === "ArrowUp" ? -1 : 1) + items.length) % items.length;
+		items[next]?.focus();
 	}
 	const blocked = !view || busy || uncertain,
 		parents = new Map(sessions.map((row) => [row.id, row])),
@@ -217,19 +232,59 @@ export function ConversationGroups({
 	const sessionGroups = [...new Set([...sessions.map((row) => row.id), ...refs.map((row) => row.sessionId)])];
 	return html`<div class="personal-navigation">
 		<div class="navigation-tools">
-			<label
-				><span class="sr-only">Conversation Grouping</span
-				><select
-					aria-label="Conversation grouping"
-					data-navigation-mode
-					value=${view?.mode ?? "default"}
-					disabled=${blocked}
-					onChange=${(event) => void apply({ kind: "mode", mode: event.currentTarget.value })}
-				>
-					<option value="default">Default</option>
-					<option value="session">Sort Per Session</option>
-				</select></label
-			>${view?.mode === "default" &&
+			<button
+				type="button"
+				class="navigation-mode-trigger"
+				aria-label="Conversation Grouping"
+				aria-haspopup="menu"
+				aria-expanded=${Boolean(modeMenu) && !blocked}
+				data-navigation-mode
+				value=${view?.mode ?? "default"}
+				disabled=${blocked}
+				onClick=${(event) => {
+					stopInput?.();
+					setModeMenu(modeMenu ? null : event.currentTarget);
+				}}
+				onKeyDown=${(event) => {
+					if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+						event.preventDefault();
+						setModeMenu(event.currentTarget);
+					}
+				}}
+			>
+				<span>${view?.mode === "session" ? "Sort Per Session" : "Default"}</span><${Icon} name="chevron" />
+			</button>
+			${modeMenu &&
+			!blocked &&
+			html`<${Menu}
+				name="grouping" trigger=${modeMenu} close=${() => setModeMenu(null)}
+				initialFocus=${'[aria-checked="true"]'} closeOnTab=${true}
+			>
+				<div onKeyDown=${browseMode}>
+					${[
+						["default", "Default"],
+						["session", "Sort Per Session"],
+					].map(
+						([mode, label]) =>
+							html`<button
+								type="button"
+								class="menu-row"
+								role="menuitemradio"
+								aria-checked=${view.mode === mode}
+								data-navigation-choice=${mode}
+								onClick=${() => {
+									setModeMenu(null);
+									if (mode !== view.mode) void apply({ kind: "mode", mode });
+								}}
+							>
+								<span class="grouping-marker" aria-hidden="true"
+									>${view.mode === mode && html`<${Icon} name="check" />`}</span
+								><span>${label}</span>
+							</button>`,
+					)}
+				</div>
+			</${Menu}>`}
+			${view?.mode === "default" &&
 			html`<button
 				type="button"
 				class="icon-btn"
@@ -368,7 +423,6 @@ export function ConversationGroups({
 										onInput=${(event) => setName(event.currentTarget.value)}
 								/></label>`
 				}
-				${dialog.type !== "delete" && html`<p class="pocket-secondary">Personal navigation only. Conversations keep their original Session, directory, permissions and budget.</p>`}
 				<footer class="creation-actions"><button type="button" class="pill-btn" onClick=${close}>${busy ? "Close" : "Cancel"}</button><button type="submit" class="button primary" data-folder-confirm=${dialog.type === "delete" ? undefined : ""} data-folder-delete-confirm=${dialog.type === "delete" ? "" : undefined} disabled=${busy}>${dialog.type === "delete" ? "Delete Folder" : dialog.type === "move" ? "Move" : dialog.type === "rename" ? "Save" : "Create Folder"}</button></footer>
 			</form>
 		</${Sheet}>`}

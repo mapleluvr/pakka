@@ -246,7 +246,7 @@ export function MicButton({ dictation }) {
 		data-dictate
 		aria-label=${dictation.listening ? "Stop dictation" : "Dictate"}
 		aria-pressed=${dictation.listening ? "true" : "false"}
-		aria-describedby="pocket-dictation-help"
+		aria-describedby=${dictation.listening ? "pocket-dictation-help" : undefined}
 		title=${dictation.listening
 			? "Stop dictation (Alt+V)"
 			: "Dictate with your browser's speech service (Alt+V)"}

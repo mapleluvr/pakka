@@ -30,6 +30,21 @@ export async function openConversations(page: FrontendPage) {
 	await backFromSettings(page);
 	await sidebarReady(page);
 }
+export async function groupingMode(page: FrontendPage, mode: "default" | "session") {
+	await page.wait(
+		'document.querySelector("[data-navigation-mode]") && !document.querySelector("[data-navigation-mode]").disabled',
+	);
+	await page.click("[data-navigation-mode]");
+	await page.wait(
+		'document.querySelector(".grouping-menu") && getComputedStyle(document.querySelector(".grouping-menu")).visibility === "visible"',
+	);
+	await page.click("[data-navigation-choice=" + JSON.stringify(mode) + "]");
+	await page.wait(
+		'!document.querySelector(".grouping-menu") && document.querySelector("[data-navigation-mode]").value === ' +
+			JSON.stringify(mode) +
+			' && !document.querySelector("[data-navigation-mode]").disabled',
+	);
+}
 export async function openExtensionManager(page: FrontendPage) {
 	await backFromSettings(page);
 	await sidebarReady(page);

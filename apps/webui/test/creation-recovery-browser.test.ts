@@ -67,7 +67,7 @@ for (const lost of ["before-send", "after-commit"]) {
 					assert.equal(await page.evaluate('document.querySelectorAll("[data-conversation]").length'), 2);
 				} else {
 					await page.wait(
-						'document.querySelector("[data-creation-message]")?.textContent.includes("Nothing was replayed")',
+						'document.querySelector("[data-creation-message]")?.textContent.includes("unconfirmed")',
 					);
 					assert.equal(await page.evaluate('document.querySelector("[data-create-confirm]").disabled'), true);
 					assert.equal(await page.evaluate('document.querySelectorAll("[data-conversation]").length'), 1);
@@ -130,7 +130,7 @@ for (const lostStage of ["session.create", "create"]) {
 				await page.click('[data-action="check-creation"]');
 				if (lostStage === "session.create") {
 					await page.wait(
-						'document.querySelector("[data-creation-message]")?.textContent.includes("The original Session is ready")',
+						'document.querySelector(".creation-parent h3")?.textContent==="Session Ready" && !document.querySelector("[data-create-confirm]").disabled',
 					);
 					assert.equal(
 						((await page.evaluate("window.qaRequests")) as { op: string }[]).filter(

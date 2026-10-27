@@ -42,9 +42,7 @@ export function ConversationSettings({
 			);
 			if (!live.current) return;
 			if (lookup && !result.result) {
-				setReconciliation(
-					"No committed original result was found. Nothing was replayed; replacement submission remains blocked.",
-				);
+				setReconciliation("Original result unconfirmed. Replacement submission remains blocked.");
 				return;
 			}
 			setPending(null);
@@ -73,7 +71,6 @@ export function ConversationSettings({
 			<div class="pocket-sheet-body">
 				<p>${state.archived ? "Archived" : "Active"} · metadata version ${state.version}/256</p>
 				${state.version >= 256 && html`<p role="status">Metadata capacity reached. Original receipts are retained; no more metadata writes are admitted.</p>`}
-				<p>Archive hides navigation only. It does not cancel admitted work, delete history or revoke access.</p>
 				<form class="pocket-form" onSubmit=${(event) => {
 					event.preventDefault();
 					void perform({

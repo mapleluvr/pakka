@@ -57,7 +57,7 @@ test(
 			await page.wait('document.querySelector("[data-action=send]")?.disabled===false');
 			await page.evaluate("new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))");
 			assert.equal(
-				await page.evaluate(`Boolean(document.querySelector('[aria-label="Team Collaboration"]'))`),
+				await page.evaluate(`Boolean(document.querySelector('[aria-label="People Chat"]'))`),
 				false,
 			);
 			assert.equal(

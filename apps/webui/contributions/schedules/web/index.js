@@ -54,6 +54,8 @@ export function Schedules({ context }) {
 			remember(null);
 			if (action === "add") setText("");
 			await refresh();
+			if (action === "cancel" && !context.signal.aborted)
+				context.notice("Schedule cancelled; already submitted inputs continue.");
 		} catch (error) {
 			if (!context.signal.aborted) setProblem(error.message || "Schedule result unknown");
 		} finally {
@@ -105,10 +107,6 @@ export function Schedules({ context }) {
 		<link rel="stylesheet" href=${new URL("./schedules.css", import.meta.url).href} />
 		<header>
 			<h2>Scheduled Inputs</h2>
-			<p>
-				Native durable work, not a page timer. Each occurrence rechecks the creator and current driver before
-				native follow-up admission.
-			</p>
 		</header>
 		${problem && html`<${Notice}>${problem}<//>`}
 		${pending &&
@@ -164,20 +162,25 @@ export function Schedules({ context }) {
 				>Schedule input<//
 			>
 		</div>`}
-		<p class="schedule-hint">
-			Done means this job admitted its planned input(s), not that the model finished answering. Inspect the
-			Conversation for the model result. Cancelling cannot roll back an already admitted input.
-		</p>
 		${rows.length === 0 && html`<p>No scheduled inputs in this Conversation.</p>`}
 		${rows.map(
 			(row) =>
 				html`<article key=${row.id} data-schedule=${row.id} class="schedule-row">
-					<header><strong>${row.actorName}</strong><output data-schedule-state>${row.state}</output></header>
+					<header>
+						<strong>${row.actorName}</strong
+						><output data-schedule-state=${row.state}
+							>${row.state === "done"
+								? "Inputs Submitted"
+								: row.state === "unknown"
+									? "Needs Review"
+									: row.state}</output
+						>
+					</header>
 					<pre>${row.text}</pre>
 					<p>
-						${`Due ${new Date(row.dueAt).toLocaleString()} · ${row.completed}/${row.maxRuns} admitted${row.intervalMs ? " · every " + row.intervalMs / 1000 + "s" : ""}`}
+						${`Due ${new Date(row.dueAt).toLocaleString()} · ${row.completed}/${row.maxRuns} submitted${row.intervalMs ? " · every " + row.intervalMs / 1000 + "s" : ""}`}
 					</p>
-					${row.deliveryId && html`<small>Native admission: ${row.deliveryId}</small>`}
+					${row.deliveryId && html`<small>Input Receipt: ${row.deliveryId}</small>`}
 					${row.nativeTerminal && html`<small>Native terminal: ${row.nativeTerminal}</small>`}
 					${row.state === "unknown" &&
 					html`<${Notice}

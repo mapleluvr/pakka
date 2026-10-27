@@ -10,10 +10,21 @@ const html = htm.bind(h);
 export const Glyph = ({ name, className = "icon" }) =>
 	html`<svg class=${className} aria-hidden="true"><use href=${"#i-" + name} /></svg>`;
 
-export function Menu({ name, trigger, close, children }) {
+export function Menu({
+	name,
+	trigger,
+	close,
+	children,
+	initialFocus = "button:not(:disabled),input",
+	closeOnTab = false,
+}) {
 	const node = useRef(null),
 		[position, setPosition] = useState({ visibility: "hidden" });
 	useLayoutEffect(() => {
+		if (position.visibility !== "hidden") node.current.querySelector(initialFocus)?.focus();
+	}, [position.visibility, initialFocus]);
+	useLayoutEffect(() => {
+		let returnFocus = true;
 		const place = () => {
 			const r = trigger.getBoundingClientRect(),
 				box = node.current.getBoundingClientRect();
@@ -23,7 +34,6 @@ export function Menu({ name, trigger, close, children }) {
 			});
 		};
 		place();
-		node.current.querySelector("button:not(:disabled),input")?.focus();
 		const outside = (e) => {
 			if (!node.current.contains(e.target) && !trigger.contains(e.target)) close();
 		};
@@ -31,6 +41,10 @@ export function Menu({ name, trigger, close, children }) {
 			if (e.key === "Escape") {
 				e.preventDefault();
 				e.stopPropagation();
+				close();
+			} else if (closeOnTab && e.key === "Tab") {
+				returnFocus = false;
+				trigger.focus();
 				close();
 			}
 		};
@@ -41,7 +55,7 @@ export function Menu({ name, trigger, close, children }) {
 			window.removeEventListener("pointerdown", outside, true);
 			window.removeEventListener("keydown", escape, true);
 			window.removeEventListener("resize", place);
-			if (trigger.isConnected) trigger.focus();
+			if (returnFocus && trigger.isConnected) trigger.focus();
 		};
 	}, []);
 	return html`<div class=${"menu " + name + "-menu"} role="menu" style=${position} ref=${node}>
@@ -342,23 +356,27 @@ export function Frontend({
 								</div>
 								<section class="home-create-card" aria-label="Create Conversation">
 									<h1>Start a Conversation</h1>
-									<p>
-										${canCreate
-											? "Choose a Session, model and working directory in the creation dialog. Send work only after the Conversation is ready."
-											: "Select a Conversation from the sidebar to view its history."}
-									</p>
+									${!canCreate && html`<p>Select a Conversation from the sidebar to view its history.</p>`}
 									<div class="creation-actions">
 										${canCreate &&
-										html`<button
+										html`<div class="home-creation-pair">
+											<button
 												type="button"
-												class="button primary"
+												class="creation-entry-button"
 												data-action="new-conversation"
 												onClick=${() => newConversation()}
 											>
 												<${Glyph} name="message" />New Conversation</button
-											><button type="button" class="pill-btn" data-action="new-session" onClick=${newSession}>
+											><span class="creation-divider" data-creation-divider aria-hidden="true"></span
+											><button
+												type="button"
+												class="creation-entry-button"
+												data-action="new-session"
+												onClick=${newSession}
+											>
 												<${Glyph} name="plus" />New Session
-											</button>`}<button
+											</button>
+										</div>`}<button
 											type="button"
 											class="pocket-icon-button"
 											aria-label="Commands & Extensions"
@@ -402,7 +420,7 @@ export function Frontend({
 		}
    ${menu.name === "sessions" && html`<button class="menu-row" role="menuitem" onClick=${action(search)}><${Glyph} name="search" />Search / Archived Conversations</button><button class="menu-row" role="menuitem" onClick=${action(refresh)}><${Glyph} name="clock" />Refresh Conversations</button>`}
 
-   ${menu.name === "conversation" && html`<button class="menu-row" role="menuitem" data-action="conversation" onClick=${action(() => openSheet("conversation"))}>Conversation</button><button class="menu-row" role="menuitem" data-action="settings" onClick=${action(() => openSheet("configuration"))}>Settings</button><button class="menu-row" role="menuitem" data-action="notifications" onClick=${action(() => openSheet("notifications"))}>Notifications</button><button class="menu-row" role="menuitem" data-action="collaboration" onClick=${action(showCollaboration)}>Team</button>`}
+   ${menu.name === "conversation" && html`<button class="menu-row" role="menuitem" data-action="conversation" onClick=${action(() => openSheet("conversation"))}>Conversation</button><button class="menu-row" role="menuitem" data-action="settings" onClick=${action(() => openSheet("configuration"))}>Settings</button><button class="menu-row" role="menuitem" data-action="notifications" onClick=${action(() => openSheet("notifications"))}>Notifications</button><button class="menu-row" role="menuitem" data-action="collaboration" onClick=${action(showCollaboration)}>People Chat</button>`}
   </${Menu}>`}
 		${children}
 	</div>`;

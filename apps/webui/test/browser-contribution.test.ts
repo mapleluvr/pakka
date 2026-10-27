@@ -178,7 +178,7 @@ test(
 				assert.equal(original.value.state, "unknown", "native missing-control effect is not claimed as done");
 				await owner.click("[data-browser-reconcile]");
 				await owner.wait(
-					'document.querySelector("[data-owned-browser] output")?.textContent.includes("No action was repeated")',
+					'document.querySelector("[data-owned-browser] output")?.textContent.includes("Outcome remains unknown")',
 				);
 				assert.equal(
 					await owner.evaluate('Boolean(document.querySelector("[data-browser-pending]"))'),

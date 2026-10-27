@@ -211,7 +211,7 @@ export function ModelPicker(props) {
 	)}</div>
   ${!filtered.length && html`<p role="status">No matching configured models.</p>`}
   <div class="pocket-model-keys pocket-secondary" aria-hidden="true"><span><${Icon} name="up"/><${Icon} name="down"/> Navigate</span><span><${Icon} name="enter"/> Select</span><span><kbd>Esc</kbd> Close</span></div>
-  <p class="pocket-secondary">${props.draftChange ? "Selects the initial model in this draft. Nothing is created or sent until you confirm creation." : "Changes only the model for this conversation. Directory, instructions and tools stay unchanged."}</p>${busy && html`<p role="status">Wait for current work and queued inputs to finish.</p>`}${change.status}
+  ${busy && html`<p role="status">Wait for current work and queued inputs to finish.</p>`}${change.status}
  </div></${Sheet}>`;
 }
 const placeKey = (person, server) => "pakka.directories." + server + "." + person.id;
@@ -342,8 +342,7 @@ export function DirectoryPicker(props) {
 						</button>`,
 				)}
 		</section>`;
-	return html`<${Sheet} label="Working Directory" close=${close}><${Heading} title="Working Directory" label="Close directory picker" close=${close}/><div class="pocket-sheet-body pocket-directory-picker">
-  <p class="pocket-secondary">Folders on the server, not this phone or browser. Browsing does not change configuration or grant file/tool access. Shortcuts are saved in this browser and cleared on sign out.</p>
+	return html`<${Sheet} label="Server Directory" close=${close}><${Heading} title="Server Directory" label="Close directory picker" close=${close}/><div class="pocket-sheet-body pocket-directory-picker">
   <form class="pocket-directory-location" onSubmit=${(event) => {
 		event.preventDefault();
 		void browse(path);
@@ -386,7 +385,12 @@ export function DirectoryPicker(props) {
 							</button>`,
 					)}
 				</nav>
-				${links("Favorite directories", places.favorites)}${links("Recent directories", places.recent)}
+				<div class="pocket-directory-shortcuts">
+					<span class="pocket-secondary" title="Cleared on sign out.">In This Browser</span>${links(
+						"Favorite Directories",
+						places.favorites,
+					)}${links("Recent Directories", places.recent)}
+				</div>
 				<section aria-label="Folders">
 					<div class="pocket-directory-current">
 						<strong title=${view.path}>${view.path}</strong

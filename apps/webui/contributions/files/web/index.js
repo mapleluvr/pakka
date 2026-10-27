@@ -127,13 +127,9 @@ function GitView({
 					onClick=${() => switchBranch(branch, true)}
 					>Create & switch<//
 				>`}
-			<p class="secondary">Branch changes require a clean, idle approved workspace.</p>
 		</section>
 		<section>
 			<h3>Isolated Worktrees</h3>
-			<p class="secondary">
-				Creates a real sibling working tree. This does not silently move the Agent's working directory.
-			</p>
 			${git.worktrees.map(
 				(row) =>
 					html`<div data-worktree-name=${row.name}>
@@ -368,7 +364,7 @@ export function Files({ context }) {
 				setWorktree("");
 				setWorktreeBranch("");
 				await refreshedGit();
-				setStatus("Created isolated worktree");
+				setStatus("Worktree created. Current directory unchanged.");
 			}
 		});
 	}
@@ -399,7 +395,6 @@ export function Files({ context }) {
 		<header class="workspace-files-heading">
 			<div>
 				<h2>Files & Changes</h2>
-				<p>Approved project files. Nothing is sent to the model automatically.</p>
 			</div>
 			<label
 				>Project<select

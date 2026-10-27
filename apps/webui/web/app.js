@@ -236,13 +236,13 @@ const unansweredLabel = (reason) => {
 // undelivered input are all `unanswered`, and only the native reason tells them apart.
 const receiptGuidance = (receipt) =>
 	receipt.status === "unknown"
-		? "Result unknown: check before resending. Do not resend blindly."
+		? "Result unknown: check before resending."
 		: receipt.status === "unanswered"
 			? receipt.reason === "blocked"
-				? "Not delivered: policy refused this input. Edit it and send again."
+				? "Not delivered: policy refused this input."
 				: receipt.reason === "aborted"
-					? "Withdrawn before delivery. Send again only when ready."
-					: "Not delivered. Review the input before sending again."
+					? "Withdrawn before delivery."
+					: "Not delivered."
 			: null;
 function App() {
 	const [person, setPerson] = useState(null),
@@ -693,7 +693,7 @@ function App() {
 			return;
 		}
 		setDraft(text);
-		notify("Copied to draft. Review and Send explicitly to create a new native input.");
+		notify("Copied to draft.");
 		composer.current?.focus();
 	}
 	const allEntries = [
@@ -906,7 +906,7 @@ function App() {
 								${entry?.display
 									? html`<aside class="tool-card">
 											<div class="tool-card-head">
-												${entry.display.kind === "chat" ? "Team Chat" : "Card"}
+												${entry.display.kind === "chat" ? "People Chat" : "Card"}
 											</div>
 											<p>${entry.display.text}</p>
 										</aside>`
@@ -1127,7 +1127,7 @@ function App() {
 		}
 		${
 			sheet === "people" &&
-			html`<${SettingsPage} title="People & Invitations" label="People & Invitations" category="Workspace" icon="user" closeLabel="Close people" close=${() => openSheet(null)} description="People with access, their roles and one-use invitations.">
+			html`<${SettingsPage} title="People & Invitations" label="People & Invitations" category="Workspace" icon="user" closeLabel="Close people" close=${() => openSheet(null)}>
 				<div class="settings-card settings-native-fields">
 					${people?.people.map(
 						(p) =>

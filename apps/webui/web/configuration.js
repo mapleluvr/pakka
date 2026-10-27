@@ -1,6 +1,7 @@
 import { h } from "preact";
 import { useEffect, useState } from "preact/hooks";
 import htm from "htm";
+import { Icon } from "@pakka/webui/components";
 import { PrivateCredentials } from "./credentials.js";
 import { SettingsPage } from "./settings-page.js";
 const html = htm.bind(h);
@@ -22,7 +23,7 @@ export function Configuration({ target, client, close, error }) {
 			live = false;
 		};
 	}, [target.key, target.incarnation]);
-	return html`<${SettingsPage} title="Conversation Settings" category="Workspace" closeLabel="Close settings" close=${close} description="Usage, session limits and your private credentials. Model and directory choices stay in the conversation."><div class="pocket-configuration settings-native">
+	return html`<${SettingsPage} title="Conversation Settings" category="Workspace" closeLabel="Close settings" close=${close}><div class="pocket-configuration settings-native">
  ${
 		!value
 			? html`<p role="status">Loading settings…</p>`
@@ -79,9 +80,10 @@ export function Configuration({ target, client, close, error }) {
 								<dd>${value.session.limits.maxConversations}</dd>
 							</div>
 						</dl>
-						<p class="pocket-secondary">
-							Reserved attempts remain counted after cancellation or an unconfirmed result.
-						</p>
+						<details class="pocket-help">
+							<summary><${Icon} name="chevron" />Attempt Accounting</summary>
+							<p>Reserved attempts remain counted after cancellation or an unconfirmed result.</p>
+						</details>
 					</section>`}
 					${value.session && html`<${PrivateCredentials} client=${client} error=${error} />`}`
  }

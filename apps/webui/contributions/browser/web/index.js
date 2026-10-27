@@ -68,11 +68,7 @@ export function Browser({ context }) {
 			if (result?.requestId !== pending) throw new Error("Original action outcome unconfirmed");
 			const confirmed = result.state === "done" && result.value?.state === "done";
 			if (confirmed) remember(null);
-			setStatus(
-				confirmed
-					? "Original action recorded. No action was repeated."
-					: "Outcome remains unknown. No action was repeated.",
-			);
+			setStatus(confirmed ? "Original action recorded." : "Outcome remains unknown.");
 			apply(await browserCall(context, "view"));
 		} catch (error) {
 			if (!context.signal.aborted) setStatus(error.message);
@@ -85,7 +81,7 @@ export function Browser({ context }) {
 		style="padding:1rem;max-width:70rem;margin:auto;min-width:0;overflow-wrap:anywhere"
 	>
 		<h2>Project Browser</h2>
-		<p>Isolated host-owned page · ${view?.title || "No page open"}</p>
+		<p>Server Browser · ${view?.title || "No page open"}</p>
 		${writable &&
 		html`<form
 			style="display:flex;flex-wrap:wrap;gap:.5rem"

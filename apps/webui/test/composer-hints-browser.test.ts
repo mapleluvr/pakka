@@ -200,7 +200,7 @@ test(
 			);
 			assert.equal(await page.evaluate('document.querySelector("[data-action=send]").disabled'), true);
 
-			// Team chat while the same turn runs: no reason text, and the card must not move.
+			// People Chat while the same turn runs: no reason text, and the card must not move.
 			await pickMode("chat");
 			await page.wait('document.querySelectorAll("[data-submit-hint]").length === 0');
 			const withoutHint = (await page.evaluate(CARD_BOX)) as { x: number; y: number; w: number; h: number };
@@ -212,10 +212,10 @@ test(
 				hitW: number;
 				hitH: number;
 			};
-			assert.equal(chatStop.inLeft, true, "Team chat keeps Stop out of the circular send group");
+			assert.equal(chatStop.inLeft, true, "People Chat keeps Stop out of the circular send group");
 			assert.ok(
 				chatStop.hitW >= 44 && chatStop.hitH >= 44,
-				"the Team chat Stop control must reach 44x44: " + JSON.stringify(chatStop),
+				"the People Chat Stop control must reach 44x44: " + JSON.stringify(chatStop),
 			);
 			assert.equal(await page.evaluate('document.querySelector("[data-action=send]").disabled'), false);
 

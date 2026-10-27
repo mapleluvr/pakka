@@ -71,7 +71,7 @@ export function Appearance({ close }) {
 		}
 	}
 	return html`<${SettingsPage} title="Appearance" icon="system" closeLabel="Close appearance" close=${close}>
-			<p class="settings-sub" role="status">${saved ? "Changes apply immediately and are saved in this browser." : "Changes apply to this tab only; browser storage is unavailable."}</p>
+			<p class="settings-sub" role="status">${saved ? "Saved in this browser." : "Changes apply to this tab only; browser storage is unavailable."}</p>
 			<div class="settings-card appearance-fields">
 				<label class="settings-card-row"><span class="card-row-label">Theme</span><select aria-label="Theme" value=${preferences.mode} onChange=${(event) => change({ mode: event.currentTarget.value })}><option value="dark">Dark</option><option value="light">Light</option></select></label>
 				<label class="settings-card-row"><span class="card-row-label">Font</span><select aria-label="Font" value=${preferences.font} onChange=${(event) => change({ font: event.currentTarget.value })}>${Object.entries(fonts).map(([value, font]) => html`<option key=${value} value=${value}>${font.label}</option>`)}</select></label>

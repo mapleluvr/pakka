@@ -5,6 +5,8 @@
 - [Compresser 会话修复与封存](compressor-repair-session.md)：两类累计错误容忍、轨迹保留和原生基础设施调查；实现路线在报告决策点。
 - [辅助推理 Tool Calling 输出](auxiliary-tool-output.md)：来源绑定的结构化候选生产与独立 Dynamite 产物。
 - [设置路由与本机恢复](webui-navigation-and-local-recovery.md)：登录恢复闭环、可寻址配置和逐页质量的待采用方案。
+- [分组菜单与首页创建入口](webui-grouping-and-creation-controls.md)：复用主题菜单，平级透明入口与灰色短分隔。
+- [UI 文案精简与情境化反馈](webui-explanatory-copy.md)：采用全仓调查推荐，准确名称、短状态和按需信息，保留未确认和风险后果。
 - [前端规范与原生行为](webui-frontend-guidelines.md)：采用两份开发指南、直接生产代码参考和第一批可读性/焦点改进。
 - [设置与产品命名](webui-settings-and-name.md)：单击进入专用配置页、页内分类与 pakka-webui 命名。
 - [Durable 1.4.0 补丁与 Verification 选用](durable-1-4-0-and-verification.md)：版本固定的独立补丁、可重建/安装入口与可选验证记录规则。

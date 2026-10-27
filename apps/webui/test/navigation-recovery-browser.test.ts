@@ -63,9 +63,7 @@ for (const lost of ["before-send", "after-commit"])
 					);
 					assert.equal((await catalog.snapshot()).version, originalVersion + 1);
 				} else {
-					await page.wait(
-						'document.querySelector("[role=dialog]")?.textContent.includes("Nothing was replayed")',
-					);
+					await page.wait('document.querySelector("[role=dialog]")?.textContent.includes("unconfirmed")');
 					assert.equal(await page.evaluate('document.querySelector("[data-action=rename]").disabled'), true);
 					assert.equal((await catalog.snapshot()).version, originalVersion);
 				}

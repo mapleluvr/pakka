@@ -640,8 +640,13 @@ details[open] > .pocket-disclosure > .pocket-icon:first-child {
 	flex-direction: column;
 	gap: 12px;
 }
+.pocket-directory-shortcuts {
+	display: grid;
+	gap: 12px;
+	min-width: 0;
+}
 .pocket-directory-browser h3 {
-	font-size: 12px;
+	font-size: var(--type-group-label-size);
 	color: var(--muted);
 }
 .pocket-directory-current,
@@ -1261,7 +1266,7 @@ details[open] > .pocket-disclosure > .pocket-icon:first-child {
 	height: 24px;
 	flex-shrink: 0;
 }
-.creation-actions :is(.button, .pill-btn) {
+.creation-actions :is(.button, .pill-btn, .creation-entry-button) {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
@@ -1272,6 +1277,57 @@ details[open] > .pocket-disclosure > .pocket-icon:first-child {
 	font-size: var(--type-ui-size);
 	line-height: 1.5;
 	white-space: normal;
+}
+.home-creation-pair {
+	display: inline-flex;
+	align-items: center;
+	gap: 12px;
+	min-width: 0;
+	max-width: 100%;
+}
+.home-creation-pair .creation-entry-button {
+	padding: 8px 0;
+	border: 0;
+	border-radius: 0;
+	background: transparent;
+	color: var(--text);
+	font-weight: 500;
+}
+.home-creation-pair .creation-entry-button:hover {
+	background: transparent;
+	text-decoration: underline;
+	text-underline-offset: 3px;
+}
+.creation-divider {
+	width: 1px;
+	height: 16px;
+	flex: 0 0 1px;
+	background: var(--muted);
+}
+.pocket-help {
+	color: var(--muted);
+	font-size: var(--type-ui-size);
+	line-height: 1.6;
+}
+.pocket-help > summary {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	min-height: 44px;
+	color: var(--text);
+	cursor: pointer;
+	list-style: none;
+}
+.pocket-help > summary::-webkit-details-marker {
+	display: none;
+}
+.pocket-help > summary svg {
+	width: 24px;
+	height: 24px;
+	flex: 0 0 24px;
+}
+.pocket-help[open] > summary svg {
+	transform: rotate(180deg);
 }
 .creation-reconciliation,
 .navigation-reconciliation {
@@ -1294,12 +1350,12 @@ details[open] > .pocket-disclosure > .pocket-icon:first-child {
 	gap: 8px;
 	padding: 4px 8px 12px;
 }
-.navigation-tools > label {
+.navigation-mode-trigger {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
 	flex: 1;
-	min-width: 0;
-}
-.navigation-tools select {
-	width: 100%;
+	gap: 8px;
 	min-width: 0;
 	min-height: 44px;
 	padding: 8px 10px;
@@ -1308,6 +1364,23 @@ details[open] > .pocket-disclosure > .pocket-icon:first-child {
 	background: var(--input-bg);
 	border: 1px solid var(--border);
 	border-radius: 8px;
+}
+.navigation-mode-trigger svg,
+.grouping-menu .grouping-marker svg {
+	width: 24px;
+	height: 24px;
+	flex-shrink: 0;
+}
+.grouping-menu .menu-row {
+	min-height: 44px;
+	font-size: var(--type-ui-size);
+}
+.grouping-marker {
+	display: grid;
+	place-items: center;
+	width: 24px;
+	height: 24px;
+	flex: 0 0 24px;
 }
 .personal-navigation .session-list {
 	flex: 1;

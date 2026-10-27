@@ -109,7 +109,7 @@ export function useCreation({
 			update({
 				...next,
 				phase: "failed",
-				message: "Session information could not be read. No creation was started.",
+				message: "Session information could not be read.",
 			});
 			if (failure.code === "UNAUTHORIZED") error(failure);
 		}
@@ -151,8 +151,7 @@ export function useCreation({
 			if (!valid(row.id)) return;
 			update({
 				...current.current,
-				message:
-					"The Conversation was created, but navigation could not be refreshed. Nothing will be created again.",
+				message: "Conversation created. Navigation could not be refreshed.",
 			});
 			if (failure.code === "UNAUTHORIZED") error(failure);
 		}
@@ -185,7 +184,7 @@ export function useCreation({
 				phase: uncertain ? "conversation-unknown" : "editing",
 				conversationRequest: uncertain ? command : null,
 				message: uncertain
-					? "Conversation result unconfirmed. Check the original request; nothing will be resent."
+					? "Conversation result unconfirmed. Check the original request."
 					: row.parent
 						? "The Session is ready. Conversation creation was refused; review the fields and continue in this Session."
 						: "Conversation creation was refused. Review the fields before trying again.",
@@ -234,7 +233,7 @@ export function useCreation({
 					phase: uncertain ? "session-unknown" : "editing",
 					sessionRequest: uncertain ? command : null,
 					message: uncertain
-						? "Session result unconfirmed. Check the original request; nothing will be resent."
+						? "Session result unconfirmed. Check the original request."
 						: "Session creation was refused. No Conversation was submitted.",
 				});
 				if (failure.code === "UNAUTHORIZED") error(failure);
@@ -266,15 +265,13 @@ export function useCreation({
 						sessionId: result.session.id,
 						pending: false,
 						phase: "editing",
-						message:
-							"The original Session is ready. Confirm to continue; no Conversation was sent automatically.",
+						message: "",
 					});
 				} else
 					update({
 						...row,
 						pending: false,
-						message:
-							"No confirmed Session result is visible. Nothing was replayed; creation remains blocked.",
+						message: "Session result unconfirmed. Creation remains blocked.",
 					});
 			} else {
 				const result = await client.request({ op: "conversation.lookup", original: row.conversationRequest });
@@ -284,8 +281,7 @@ export function useCreation({
 					update({
 						...row,
 						pending: false,
-						message:
-							"No committed Conversation result is visible. Nothing was replayed; creation remains blocked.",
+						message: "Conversation result unconfirmed. Creation remains blocked.",
 					});
 			}
 		} catch (failure) {
@@ -293,7 +289,7 @@ export function useCreation({
 			update({
 				...row,
 				pending: false,
-				message: "The original result could not be verified. Nothing was replayed; creation remains blocked.",
+				message: "Original result unconfirmed. Creation remains blocked.",
 			});
 			if (failure.code === "UNAUTHORIZED") error(failure);
 		}
@@ -325,7 +321,6 @@ export function useCreation({
 								? html`<section class="creation-parent" aria-label="Created Session">
 										<h3>Session Ready</h3>
 										<strong>${value.parent.name}</strong><code>${value.parent.id}</code>
-										<p>This Session is already created and will not be created again.</p>
 									</section>`
 								: value.kind === "conversation" &&
 									html`<label class="creation-field"
@@ -346,11 +341,6 @@ export function useCreation({
 									>`}
 							${needsParent &&
 							html`<section class="creation-parent" aria-label="New Session Configuration">
-								<p>
-									${value.kind === "conversation"
-										? "A Session must be created first. This is a draft until you confirm both steps."
-										: "Creates an independent Durable Session, not a folder or a browser login."}
-								</p>
 								<label class="creation-field"
 									>Session Name<input
 										name="sessionName"
@@ -393,7 +383,7 @@ export function useCreation({
 									</button>
 								</div>`}
 							<label class="creation-field"
-								>Working Directory
+								>Server Directory
 								<div class="creation-location">
 									<input name="cwd" value=${value.cwd} readonly title=${value.cwd} /><button
 										type="button"
@@ -405,12 +395,6 @@ export function useCreation({
 										<${Icon} name="folder" />
 									</button></div
 							></label>
-							<p class="pocket-secondary">
-								${needsParent
-									? "The Session starts in this server directory. Each Conversation keeps its own model and directory configuration. "
-									: "Model and directory are initial Conversation configuration; the parent Session is not moved. "}
-								Creating resources does not send a model input.
-							</p>
 						</fieldset>
 						<footer class="creation-actions">
 							<button type="button" class="pill-btn" onClick=${close}>

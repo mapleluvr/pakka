@@ -286,13 +286,24 @@ export async function ownedBrowser(dir: string, options: { readonly push?: boole
 					if (text) await call("Input.insertText", { text }, id);
 				},
 				key: async (
-					key: "Escape" | "Tab" | "Enter" | "ArrowLeft" | "ArrowRight" | "ArrowUp" | "ArrowDown",
+					key:
+						| "Escape"
+						| "Tab"
+						| "Enter"
+						| "Home"
+						| "End"
+						| "ArrowLeft"
+						| "ArrowRight"
+						| "ArrowUp"
+						| "ArrowDown",
 					shift = false,
 				) => {
 					const code = {
 						Escape: 27,
 						Tab: 9,
 						Enter: 13,
+						Home: 36,
+						End: 35,
 						ArrowLeft: 37,
 						ArrowRight: 39,
 						ArrowUp: 38,

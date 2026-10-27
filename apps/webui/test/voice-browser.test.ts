@@ -62,9 +62,10 @@ test(
 			await page.resize({ width: 1440, height: 900 });
 			await settleFrontend(page);
 			assert.equal(await page.evaluate("globalThis.__voiceTest.instances.length"), 0);
-			assert.match(
-				String(await page.evaluate('document.querySelector("[data-dictation-help]").textContent')),
-				/speech recognition.*browser/i,
+			assert.equal(
+				await page.evaluate('Boolean(document.querySelector("[data-dictation-help]"))'),
+				false,
+				"idle dictation does not carry a permanent tutorial",
 			);
 			await page.type("textarea[name=message]", "Start end");
 			await page.evaluate(
@@ -72,6 +73,14 @@ test(
 			);
 			await page.click("[data-dictate]");
 			await page.wait('document.querySelector("[data-dictate]").getAttribute("aria-pressed")==="true"');
+			assert.match(
+				String(await page.evaluate('document.querySelector("[data-dictation-help]").textContent')),
+				/browser.*speech service/i,
+			);
+			assert.equal(
+				await page.evaluate('document.querySelector("[data-dictate]").getAttribute("aria-describedby")'),
+				"pocket-dictation-help",
+			);
 			assert.deepEqual(
 				await page.evaluate(`(()=>{
 					const node=document.querySelector('[data-dictate]');
@@ -98,6 +107,11 @@ test(
 			assert.equal(app.runtime.view().budget.primaryAttempts, 0);
 			await page.click("[data-dictate]");
 			await page.wait('document.querySelector("[data-dictate]").getAttribute("aria-pressed")==="false"');
+			assert.equal(await page.evaluate('Boolean(document.querySelector("[data-dictation-help]"))'), false);
+			assert.equal(
+				await page.evaluate('document.querySelector("[data-dictate]").hasAttribute("aria-describedby")'),
+				false,
+			);
 			await page.evaluate('globalThis.__voiceTest.instances[0].emit([["LATE-STOPPED-RESULT",true]],true)');
 			assert.equal(
 				await page.evaluate('document.querySelector("textarea[name=message]").value'),

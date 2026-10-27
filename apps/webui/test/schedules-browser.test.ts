@@ -75,10 +75,26 @@ test(
 			await t.waitFor(() => assert.equal(m.f.requests.length, 1), { timeout: 5000 });
 			assert.ok(JSON.stringify(m.f.requests[0]).includes("ACTUAL-SCHEDULED-BROWSER-WORK"));
 			await owner.click("[data-interface=workspace-schedules-schedules]");
-			await owner.wait('document.querySelector("[data-schedule-state]")?.textContent.includes("done")');
+			await owner.wait('document.querySelector("[data-schedule] p")?.textContent.includes("1/1")');
+			assert.equal(
+				await owner.evaluate('document.querySelector("[data-schedule-state]").textContent.trim()'),
+				"Inputs Submitted",
+				"completion names input submission, not model answering",
+			);
+			assert.equal(
+				await owner.evaluate('document.querySelector("[data-schedule-state]").dataset.scheduleState'),
+				"done",
+				"the original native state remains available",
+			);
+			assert.equal(
+				await owner.evaluate(
+					'document.querySelectorAll(".schedule-hint, .workspace-schedules > header > p").length',
+				),
+				0,
+			);
 			assert.match(
 				String(await owner.evaluate('document.querySelector("[data-schedule] p").textContent.trim()')),
-				/ · 1\/1 admitted$/u,
+				/ · 1\/1 submitted$/u,
 				"native schedule counts and their label remain readable, not concatenated",
 			);
 			await toggleConversations(viewer);
@@ -97,7 +113,10 @@ test(
 			await owner.wait('document.querySelector("[data-schedule-cancel]")?.disabled===false');
 			await owner.click("[data-schedule-cancel]");
 			await owner.wait(
-				'[...document.querySelectorAll("[data-schedule-state]")].some(node=>node.textContent.includes("cancelled"))',
+				'document.querySelector("[role=alert]")?.textContent.includes("already submitted inputs")',
+			);
+			await owner.wait(
+				'[...document.querySelectorAll("[data-schedule-state]")].some(node=>node.dataset.scheduleState==="cancelled")',
 			);
 			assert.equal(m.f.requests.length, 1);
 			assert.equal(app.runtime.view().budget.primaryAttempts, 1);

@@ -130,17 +130,16 @@ export function Collaboration({ person, target, client, snapshot, updated, notic
 			ref=${dialog}
 			role="dialog"
 			aria-modal="true"
-			aria-label="Team Collaboration"
+			aria-label="People Chat"
 			tabIndex="-1"
 		>
 			<header>
-				<h2>Team Collaboration</h2>
+				<h2>People Chat</h2>
 				<button class="pocket-icon-button" aria-label="Close collaboration" onClick=${close}>
 					<${Icon} name="close" />
 				</button>
 			</header>
 			<div class="pocket-sheet-body">
-				<p class="pocket-secondary">Human workspace · chat and notes stay outside the model context.</p>
 				<section class="pocket-turns" aria-label="Driver Control">
 					<p data-driver-status>
 						${!driver?.personId
@@ -176,8 +175,8 @@ export function Collaboration({ person, target, client, snapshot, updated, notic
 					!own &&
 					html`<button disabled=${pending} onClick=${() => void driverAction("take")}>Take over</button>`}
 				</section>
-				<section class="pocket-form" aria-label="Human Team Chat">
-					<h3>Team Chat</h3>
+				<section class="pocket-form" aria-label="People Chat Messages">
+					<h3>Messages</h3>
 					<p class="pocket-secondary" data-presence>
 						${snapshot?.presence
 							.map((row) => row.name + (row.state === "typing" ? " is typing" : " is here"))

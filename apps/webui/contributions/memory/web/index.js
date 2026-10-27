@@ -54,8 +54,6 @@ function Lesson({ lesson, data, busy, change, context, edits, setEdits }) {
 				>${`${lesson.proposal.byAgent ? "Agent" : lesson.proposal.mine ? "You" : lesson.proposal.authorName} ${lesson.proposal.text === null ? "proposes forgetting this lesson." : "proposes:"}`}</small
 			>${lesson.proposal.text !== null && html`<p>${lesson.proposal.text}</p>`}
 		</blockquote>`}
-		${(lesson.pending || lesson.proposal) &&
-		html`<p class="memory-meta">The approved text stays in force until an owner approves this change.</p>`}
 		${draft &&
 		html`<label
 				>Lesson<textarea
@@ -235,13 +233,6 @@ export function Memory({ context }) {
 				>${data.enabled ? "Automatic memory: allowed" : "Automatic memory: paused"}<//
 			>`}
 		</header>
-		<p>
-			${"Short lessons for later work: build and test commands, gotchas, conventions and preferences. " +
-			(data.project
-				? `Lessons for ${data.project.name} apply to its approved conversations; the rest apply across this workspace.`
-				: "Global lessons apply across this workspace.") +
-			" An owner approves proposals before they affect model context."}
-		</p>
 		${!data.enabled &&
 		html`<${Notice}>Automatic memory is paused. Stored lessons and proposals are preserved.<//>`}
 		${!data.canWrite &&

@@ -86,6 +86,17 @@ test(
 			await sender.wait('document.querySelector("[data-memory-add]")?.disabled===false');
 			await sender.click("[data-memory-add]");
 			await sender.wait('document.querySelector("[data-memory-pending]")');
+			assert.equal(
+				await sender.evaluate(
+					'document.querySelectorAll("[data-workspace-memory] > p, [data-memory-lesson] > p.memory-meta").length',
+				),
+				0,
+				"scope and approval markers replace repeated explanations",
+			);
+			assert.match(
+				String(await sender.evaluate('document.querySelector("[data-memory-lesson] header").textContent')),
+				/All conversations|This project/,
+			);
 			await owner.wait('document.querySelector("[data-memory-approve]")?.disabled===false');
 			assert.equal(m.f.requests.length, 0);
 			await toggleConversations(viewer);

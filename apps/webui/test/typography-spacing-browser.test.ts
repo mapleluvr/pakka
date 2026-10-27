@@ -322,7 +322,7 @@ test(
 							await capture(`team-large-${size.width}`);
 							const [chat, mention, noteLabel, version, save, author, time] = await boxes([
 								"textarea[name=teamChat]",
-								'[aria-label="Human Team Chat" i] select',
+								'[aria-label="People Chat Messages" i] select',
 								'[aria-label="Shared Notes" i] label',
 								'[aria-label="Shared Notes" i] small',
 								"[data-action=save-note]",
@@ -349,7 +349,7 @@ test(
 							await page.evaluate(
 								'Array.from(document.querySelectorAll(".pocket-sheet h2,.pocket-sheet h3"),node=>node.textContent.trim())',
 							),
-							["Team Collaboration", "Team Chat", "Shared Notes"],
+							["People Chat", "Messages", "Shared Notes"],
 						);
 					} finally {
 						await page.key("Escape");

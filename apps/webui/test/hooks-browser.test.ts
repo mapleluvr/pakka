@@ -65,6 +65,26 @@ test(
 				0,
 			);
 			await owner.wait('document.querySelector("[data-hook-name]")?.disabled===false');
+			assert.equal(
+				await owner.evaluate('document.querySelector("[data-webhook-help]")?.open'),
+				false,
+				"connection details are available on demand",
+			);
+			assert.equal(
+				await owner.evaluate(
+					'document.querySelectorAll(".workspace-hooks > p:not([data-hook-readonly])").length',
+				),
+				0,
+			);
+			await owner.click("[data-webhook-help] summary");
+			assert.equal(await owner.evaluate('document.querySelector("[data-webhook-help]").open'), true);
+			assert.match(
+				String(await owner.evaluate('document.querySelector("[data-webhook-help]").textContent')),
+				/5 MiB/,
+			);
+			await owner.key("Enter");
+			assert.equal(await owner.evaluate('document.querySelector("[data-webhook-help]").open'), false);
+			assert.equal(m.f.requests.length, 0);
 			await owner.type("[data-hook-name]", "Build events");
 			await owner.type("[data-hook-instructions]", "Report the build result.");
 			await owner.wait('document.querySelector("[data-hook-create]")?.disabled===false');

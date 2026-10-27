@@ -2,7 +2,7 @@
 import { h } from "preact";
 import { useEffect, useRef, useState } from "preact/hooks";
 import htm from "htm";
-import { Button, Notice } from "@pakka/webui/components";
+import { Button, Icon, Notice } from "@pakka/webui/components";
 import { hooksCall } from "./client.js";
 const html = htm.bind(h);
 function savedRequest(key) {
@@ -111,9 +111,7 @@ function HookRow({
 		html`<${Setup} credentials=${setup} context=${context} hide=${hideSetup} disabled=${disabled} />`}
 		${deliveries?.id === hook.id &&
 		html`<div class="hook-deliveries">
-			<p class="hook-meta">
-				These records report input admission. Follow the conversation for the work's current result.
-			</p>
+			<h3>Input Receipts</h3>
 			${deliveries.rows.length === 0 && html`<p>No admission records yet.</p>`}
 			${deliveries.rows.map(
 				(row) =>
@@ -243,10 +241,6 @@ export function Hooks({ context }) {
 	return html`<section class="workspace-hooks" data-workspace-hooks>
 		<link rel="stylesheet" href=${new URL("./hooks.css", import.meta.url).href} />
 		<h2>Webhooks</h2>
-		<p>
-			GitHub, a deploy or a monitor can post an event here. It becomes follow-up input in this conversation
-			using the creator's current permissions.
-		</p>
 		${problem && html`<${Notice}>${problem}<//>`}
 		${pending &&
 		html`<${Notice}
@@ -311,8 +305,8 @@ export function Hooks({ context }) {
 				>
 				<p class="hook-meta">
 					${allowOutside
-						? "Outside authors' text will reach the model as fenced data."
-						: "Outside authors are filtered. Repository owners and the host-approved writer list are accepted."}
+						? "Posts from outside authors can trigger this Conversation."
+						: "Only repository owners and configured contributors can trigger this webhook."}
 				</p>`}
 			<${Button}
 				data-hook-create
@@ -361,9 +355,13 @@ export function Hooks({ context }) {
 				><${Button} disabled=${disabled} onClick=${() => setConfirmation(null)}>Keep current setup<//>
 			</div>
 		</div>`}
-		<p class="hook-meta">
-			Up to 20 active hooks per person, 30 new posts per hook/hour and 5 MiB per post. Payload text is fitted
-			to the conversation's input limit. Services must be able to reach this product's public address.
-		</p>
+		<details class="pocket-help" data-webhook-help>
+			<summary><${Icon} name="chevron" />Connection & Limits</summary>
+			<p class="hook-meta">20 active hooks per person · 30 new posts per hook/hour · 5 MiB per post.</p>
+			<p class="hook-meta">
+				Payload text is fitted to the Conversation input limit. Sending services need access to the public
+				server address.
+			</p>
+		</details>
 	</section>`;
 }

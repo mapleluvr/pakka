@@ -162,7 +162,6 @@ export function Notifications({ target, person, client, close, error }) {
 
 	return html`<${SettingsPage} title="Notifications" closeLabel="Close notifications" icon="bell" close=${close}>
 			<div class="settings-card settings-native-fields">
-				<p>Enable this device for the current conversation. Only updates you can still read are displayed.</p>
 				${
 					!capable() &&
 					html`<p role="status">
@@ -225,10 +224,6 @@ export function Notifications({ target, person, client, close, error }) {
 					</button>`
 				}
 				${message && html`<p role="status">${message}</p>`}
-				<p class="pocket-secondary">
-					Notifications open the conversation. Tool approvals still require your decision in the approval
-					panel.
-				</p>
 			</div>
 	</${SettingsPage}>`;
 }

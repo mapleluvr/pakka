@@ -24,7 +24,7 @@ export function submitState({ mode, canInput, slash, working, view }) {
 }
 
 const SUBMIT_HINTS = {
-	"read-only": "View only: switch to Team chat to send a message.",
+	"read-only": "View only: use People Chat to message others.",
 	working: "The previous message is still being submitted.",
 	"busy-prompt": "This turn is generating: steer it, or wait for it to finish.",
 	"no-view": "Connecting to the conversation…",
@@ -110,7 +110,7 @@ export function NativeComposer({
 		{ value: "prompt", label: "Prompt", allowed: canSend },
 		{ value: "steer", label: "Steer", allowed: canDrive },
 		{ value: "followUp", label: "Follow Up", allowed: canDrive },
-		{ value: "chat", label: "Team Chat", allowed: true },
+		{ value: "chat", label: "People Chat", allowed: true },
 	];
 	return html`<div class="conversation-composer">
 		${disabled &&
@@ -138,7 +138,11 @@ export function NativeComposer({
 							aria-describedby=${disabled && reason ? "submitHint" : undefined}
 							rows="1"
 							value=${draft}
-							placeholder=${canSend ? "Reply to Pakka…" : "Read-only commands…"}
+							placeholder=${mode === "chat"
+								? "Message People…"
+								: canSend
+									? "Reply to Pakka…"
+									: "Read-only commands…"}
 							onInput=${(e) => setDraft(e.currentTarget.value)}
 						></textarea>
 					</div>
@@ -191,8 +195,9 @@ export function NativeComposer({
 			</div>
 		</form>
 		${dictation.available &&
-		html`<p id="pocket-dictation-help" class="composer-annotation" data-dictation-help>
-			Browser speech recognition is provided by this browser. Review the draft before sending.
+		dictation.listening &&
+		html`<p id="pocket-dictation-help" class="composer-annotation" role="status" data-dictation-help>
+			Listening · Browser speech service
 		</p>`}
 		${children}
 		${trigger &&

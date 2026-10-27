@@ -284,10 +284,13 @@ export function useExtensions({ person, target, csrf, notice, error, navigate, o
 					<button
 						onClick=${async () => {
 							try {
+								const personId = latest.current.person?.id;
 								await client.control(
 									registration.manifest.id,
 									registration.phase === "ready" ? "disable" : "enable",
 								);
+								if (registration.phase === "ready" && latest.current.person?.id === personId)
+									latest.current.notice("Interface disabled. Running work continues.");
 							} catch (failure) {
 								latest.current.error(failure);
 							}
@@ -425,7 +428,7 @@ export function useExtensions({ person, target, csrf, notice, error, navigate, o
 			? html`<${HostInterface} key=${overlay.id} instance=${overlay} ...${props} />`
 			: palette
 				? palette === "manage"
-					? html`<${SettingsPage} title="Extensions" category="Workspace" description="Installed extensions available to your current identity. Disabling a UI does not cancel accepted work or delete its history." close=${() => setPalette(false)}><section class="settings-section settings-native"><div class="settings-card extension-manager-list">${controls}</div></section></${SettingsPage}>`
+					? html`<${SettingsPage} title="Extensions" category="Workspace" close=${() => setPalette(false)}><section class="settings-section settings-native"><div class="settings-card extension-manager-list">${controls}</div></section></${SettingsPage}>`
 					: html`<${Sheet} variant="palette" label="Commands & Extensions" initialFocus='input[aria-label="Find command"]' close=${() => setPalette(false)}>
 						<div class="palette-search"><${Glyph} name="search" /><input aria-label="Find command" value=${query} onInput=${(event) => setQuery(event.currentTarget.value)} placeholder="Find a command or page…" /></div>
 						<div class="palette-body">

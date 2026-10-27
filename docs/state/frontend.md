@@ -24,7 +24,7 @@ pakka-webui 的对应原生界面行为以 [Devin 离线生产前端](https://gi
 | 消息与工具         | 参考 message/avatar/byline/tool-card 结构，接入原生 history/live/receipt；保留 live、合法不可预览 part 和工具跨载体身份 |
 | 模型按钮           | 列出服务已配置 provider 的可用模型；Conversation 配置权限与 busy 条件决定能否应用                                       |
 | cwd                | 入口为 Conversation 标题下的当前路径；选择器限定批准目录，仅 Use this directory 明确应用所选目录                        |
-| Send caret         | 工作输入使用原生 Prompt/Steer/Follow up 调度；Team chat 使用独立的人类协作通道                                          |
+| Send caret         | 工作输入使用原生 Prompt/Steer/Follow up 调度；People Chat 使用独立的人类协作通道                                        |
 | Palette            | 会话搜索、命令、主题和导航共用参考层级，保留键盘与焦点行为                                                              |
 | Settings           | 左下角按钮单击进入独立配置页，默认 Appearance；页内分类导航连接配置、凭据、人员、通知和扩展                             |
 
@@ -40,11 +40,17 @@ New Session 创建独立的 Durable 存储与提交域，New Conversation 在确
 
 Sidebar 的 Sort Per Session 表达原生父子归属；Default 使用当前人的持久单层文件夹和未分类组。每个 Conversation 至多归入一个个人文件夹，删除文件夹后回到未分类；切换视图和归类仅改变个人导航元数据。读取、选择、SSE 与资源授权同时绑定 Session 和 Conversation，名称或裸 Conversation ID 不授予跨 Session 访问。详细创建、持久化、恢复和实施状态见[创建设计](../../openspec/changes/improve-webui-navigation-and-local-recovery/design.md#63-session--conversation-创建关系调查)及[任务](../../openspec/changes/improve-webui-navigation-and-local-recovery/tasks.md#43-session--conversation-创建方向2026-10-24)。
 
+Conversation Grouping 使用与工作台其他菜单一致的主题化弹出行，当前偏好有独立标记；箭头浏览、Escape/Tab 离开仅改变焦点，明确确认才更新个人导航。首页 New Conversation 与 New Session 是图文同轴、相同排版的透明平级入口，中间有灰色短竖线；窄屏/放大文字下分组、可见焦点和 44px 触达完整保留。具体场景见[控件 delta](../../openspec/changes/polish-webui-grouping-and-creation-controls/specs/devin-frontend/spec.md)，采用与实施入口见[变更摘要](../changes/webui-grouping-and-creation-controls.md)。
+
+### 文案与操作信息
+
+页面以准确标题、字段、状态和当前操作结果呈现信息。首页、创建、模型、文件夹和内置贡献省去重复教学及后台自我担保；People Chat 表达人类聊天，Shared Notes 表达共享笔记。服务器目录/浏览器与设备本地收藏、偏好使用短标签；Session 密钥注明未来请求作用域，额度计数与 Webhook 接入限制通过默认收起的帮助阅读。语音来源在启动前可读，监听时显示短状态。归档、扩展 UI 禁用、worktree 和取消的后果由相关动作结果反馈，定时输入以 Inputs Submitted 区分模型完成。Memory 显示原有作用域和 Awaiting approval 标记。未确认、部分成功、冲突、拒绝、截断、秘密及不可逆后果继续提供真实状态及原身份核对入口。完整场景及采用记录见[文案 delta](../../openspec/changes/simplify-webui-explanatory-copy/specs/devin-frontend/spec.md)与[变更摘要](../changes/webui-explanatory-copy.md)。
+
 ### 主次文字、表单与 SVG 图标
 
 产品维护的固定页面/分区标题与导航/菜单名称采用 Title Case，例如 `Conversation Settings`、`People & Invitations`、`Commands & Extensions`、`New Session`；保留空格与 `&`。不以 CSS text-transform 伪装标题，不改写用户会话名、模型 ID、原文内容或第三方自定义标题。
 
-Dictate 使用可见 SVG 麦克风，监听时使用 SVG 停止图标；两态保留可访问名称、pressed 状态、浏览器服务说明和至少 44×44px 命中区。语音只改当前草稿，仍由明确 Send 提交。
+Dictate 使用可见 SVG 麦克风，监听时使用 SVG 停止图标；两态保留可访问名称、pressed 状态、启动前可读取的浏览器语音服务来源、监听时的短状态和至少 44×44px 命中区。语音只改当前草稿，仍由明确 Send 提交。
 
 模型 ID 与 profile、姓名与角色、版本与操作等复合内容具有明确的主次字号、颜色和间距，身份字符串完整保留。模型选择列表以独立行组织主信息和元数据，长 ID 在可用宽度内换行；列表选择标记占独立位置。
 

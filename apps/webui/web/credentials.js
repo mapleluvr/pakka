@@ -83,10 +83,7 @@ export function PrivateCredentials({ client, error }) {
 		aria-label="Private provider configuration"
 	>
 		<h3>Private Provider Key</h3>
-		<p class="pocket-secondary">
-			The key applies to new model requests in this Session. Saved keys are never displayed. Only global
-			administrators can replace or clear it.
-		</p>
+		<p class="pocket-secondary">For new model requests in this Session.</p>
 		${value &&
 		html`<p
 			role="status"
