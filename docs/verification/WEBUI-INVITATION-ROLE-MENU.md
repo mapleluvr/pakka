@@ -37,3 +37,17 @@ npm test
 ```
 
 `scripts/test.mjs` 自建隔离 HOME/USERPROFILE/PI 配置且禁用遥测；证据截图写入 ignored `docs/.temp/invite-role/captures`。永久原始结果与 manifest 位于 [evidence/webui-invitation-role-menu](evidence/webui-invitation-role-menu/)。
+
+## 后续：Appearance 式紧凑同行布局
+
+用户在基线 `c7a9bf3` 上指出全宽字段与短角色值/菜单失衡，授权改成 Appearance 的左标签/右小控件。新产品/测试候选 **`e447e829f6a1f8d5fc2f090c713367ab6afaaefe`**，上一节及父目录的旧版本证据不覆盖。
+
+复用实际 `appearance.js` 使用的 `settings-card-row`：同行左标签、右侧适宽按钮。现有 Menu 只为该调用提供可选 `end` 锚定，其他调用保留原 `start` 默认。菜单按内容适宽且至少与小按钮等宽；不更改邀请角色、scope、ttl、授权或命令，也不把 Appearance 自身的原生 select 改进范围。
+
+- 三次实际 RED 分别拦住原字段上下错行、弹层仍左锚导致右缘偏移、手机放大字后菜单窄于按钮；不是源文件检查或人为假响应。
+- 新几何断言与原角色/焦点/44px/主题断言全部保留。默认桌面按钮 104px、菜单约 110px，字段可用宽度 688px；手机 360×600/20px 偏好下按钮与菜单约 149px，字段宽 302px。两者均左标签与按钮中心同轴、控件及菜单右缘一致，弹层完整在视口内。截图已直接读取。
+- 同一候选受影响 6/6（真实邀请兑换、分组与设置导航），全量退出 0：**666 tests / 664 pass / 0 fail / 2 既有 Windows skip**。两个角色用例在全量中实际执行；浏览/取消/选择不发邀请，四角色的真实一次性邀请兑换结果及权限断言未削弱。
+- build/check、局部格式、OpenSpec strict 通过。主动 LSP 四路径：1 confirmed clean、1 findings、2 inconclusive；唯一报告是未改动位置的既有 CSS `-webkit-line-clamp` 标准属性兼容性警告，不宣称四文件静态全 clean。
+- 新隔离预览 **http://127.0.0.1:45011**，本地 responder、独立 data/profile，登录跨浏览器重开保留，初始化模型请求为 0。全量后 20 项 HTTP 资产精确匹配冻结 checkout 的原始 bytes；另存 canonical Git blob hash。旧 45010 的 20 项 HTTP 资产仍为原始版本，未操作旧数据和 profile。
+
+原始 RED/GREEN/完整日志、截图、30 份来源身份、原始字节 manifest 与预览复验保存在独立 [compact 子目录](evidence/webui-invitation-role-menu/compact/)。重现命令与上节相同。指定独立桌面工具仍不可用，普通浏览器验证不替代独立 GUI 验收，保持 **BLOCKED**；按会话指令不安排独立复核。

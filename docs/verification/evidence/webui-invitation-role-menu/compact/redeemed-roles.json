@@ -1,0 +1,26 @@
+[
+  {
+    "role": "viewer",
+    "send": false,
+    "steer": false,
+    "manage": false
+  },
+  {
+    "role": "sender",
+    "send": true,
+    "steer": false,
+    "manage": false
+  },
+  {
+    "role": "driver",
+    "send": true,
+    "steer": true,
+    "manage": false
+  },
+  {
+    "role": "admin",
+    "send": true,
+    "steer": true,
+    "manage": true
+  }
+]

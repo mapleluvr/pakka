@@ -1,0 +1,51 @@
+{
+  "background": "rgb(31, 31, 31)",
+  "border": "10px",
+  "shadow": "rgba(0, 0, 0, 0.34) 0px 16px 40px 0px, rgba(0, 0, 0, 0.18) 0px 2px 8px 0px",
+  "box": {
+    "left": 526,
+    "top": 284.5625,
+    "right": 750,
+    "bottom": 474.5625
+  },
+  "triggerHeight": 44,
+  "field": {
+    "left": 526,
+    "right": 1214,
+    "width": 688
+  },
+  "labelCenter": 217.46875,
+  "trigger": {
+    "left": 526,
+    "right": 1214,
+    "width": 688,
+    "center": 256.5625
+  },
+  "rows": [
+    {
+      "role": "viewer",
+      "height": 44,
+      "font": "13px"
+    },
+    {
+      "role": "sender",
+      "height": 44,
+      "font": "13px"
+    },
+    {
+      "role": "driver",
+      "height": 44,
+      "font": "13px"
+    },
+    {
+      "role": "admin",
+      "height": 44,
+      "font": "13px"
+    }
+  ],
+  "labelFont": "13px",
+  "triggerFont": "13px",
+  "focused": "viewer",
+  "hasCheck": true,
+  "theme": "dark"
+}

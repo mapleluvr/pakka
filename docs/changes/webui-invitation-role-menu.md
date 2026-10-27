@@ -8,4 +8,4 @@
 
 采用现有 Menu 与 Icon，不追加控件体系或新权限层；同页仅该角色字段是下拉，其他页面 select 不在本轮声称完成。
 
-后续用户指出短角色值不应占满整行：在 `c7a9bf3` 之后采用 Appearance 式左标签/右侧紧凑控件、内容适宽且不窄于按钮的右缘菜单。由[design 后续纠偏](../../openspec/changes/polish-webui-invitation-role-menu/design.md#后续布局纠偏基线-c7a9bf3)与[tasks 第4节](../../openspec/changes/polish-webui-invitation-role-menu/tasks.md#4-紧凑同行布局纠偏)承接，新候选结果另记，不覆盖 ba2b2f0 的旧图或通过结论。
+后续用户指出短角色值不应占满整行：在 `c7a9bf3` 之后采用 Appearance 式左标签/右侧紧凑控件、内容适宽且不窄于按钮的右缘菜单。由[design 后续纠偏](../../openspec/changes/polish-webui-invitation-role-menu/design.md#后续布局纠偏基线-c7a9bf3)与[tasks 第4节](../../openspec/changes/polish-webui-invitation-role-menu/tasks.md#4-紧凑同行布局纠偏)承接，新候选 `e447e82` 受影响 6/6、全量 666/664 pass/0 fail/2 skip，build/check 通过。截图/三项 RED/原始日志和新 45011 预览的精确 bytes 复验见[紧凑布局记录](../verification/WEBUI-INVITATION-ROLE-MENU.md#后续appearance-式紧凑同行布局)；不覆盖 ba2b2f0 的旧图或通过结论，旧 45010 资产不变。

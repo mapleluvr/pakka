@@ -1,0 +1,14 @@
+Files checked: 4
+Total diagnostics: 1
+Concurrency: 8
+Outcomes: clean=1, findings=1, unsupported=0, unavailable=0, failed=0, too_large=0, inconclusive=2
+
+Checks not confirmed: 2 (inconclusive/unavailable/unsupported/failed or not started).
+
+1 file confirmed clean, 2 unconfirmed: from a server that cannot confirm clean (push-only, silent-on-clean; e.g. classic typescript-language-server does not publish on a clean re-check). NOT the same as 0 diagnostics.
+
+Primary findings (1):
+D:/Projects/pakka-wt/webui-p0/apps/webui/web/elements.css:1207:2: warning[css] (vendorPrefix): Also define the standard property 'line-clamp' for compatibility
+
+result ok
+usage tokens=160 elapsed-ms=0 bytes=640 truncated=false
