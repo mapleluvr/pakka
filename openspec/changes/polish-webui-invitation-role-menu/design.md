@@ -18,3 +18,7 @@
 Settings 容器可能裁剪/覆盖浮层，必须检查真实位置和直接截图；Escape 不应连带关闭人员页，Tab 不应困在菜单。用真实浏览器产生邀请并 redeem，验证角色/范围/一次性及权限，不能只看 UI 的选中标记。只用隔离测试身份、本地 provider；截图不得含邀请秘密。按本会话指令不独立复核；指定 desktop 缺失仍 BLOCKED。
 
 前置 devin-frontend 活动谱系未归档，本 change 排在其后归档，不提前创建主 spec。
+
+## 后续布局纠偏（基线 c7a9bf3）
+
+用户明确指出当前字段占满整行，与短角色值/菜单失衡，要求采用 Appearance 的左标签、右紧凑选择布局。复用实际 Appearance 的 settings-card-row/Body 样式；该表单已有外层 padding，字段行不再重复缩进。保留主题菜单，不退回 Appearance 的原生 select。菜单按内容适宽、从按钮右侧锚定；现有 Menu 新增可选 end 对齐，其他菜单仍默认 start，既有定位/取消/Tab 所有权不变。新几何回归先在全宽版本 RED，再以两主题/手机/20px 与原分组/设置回归验证；ba2b2f0 的历史结果与图片不覆盖。

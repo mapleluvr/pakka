@@ -264,8 +264,8 @@ function InvitationRole({ value, change }) {
 		else next = (index + (event.key === "ArrowUp" ? -1 : 1) + items.length) % items.length;
 		items[next]?.focus();
 	}
-	return html`<div class="invite-role-field">
-		<label for="invite-role-trigger">Invite Role</label>
+	return html`<div class="settings-card-row invite-role-field">
+		<label class="card-row-label" for="invite-role-trigger">Invite Role</label>
 		<button
 			id="invite-role-trigger"
 			type="button"
@@ -288,7 +288,7 @@ function InvitationRole({ value, change }) {
 		</button>
 		${trigger &&
 		html`<${Menu}
-			name="invite-role" trigger=${trigger} close=${() => setTrigger(null)}
+			name="invite-role" trigger=${trigger} close=${() => setTrigger(null)} align="end"
 			initialFocus=${'[aria-checked="true"]'} closeOnTab=${true}
 		>
 			<div onKeyDown=${browse}>

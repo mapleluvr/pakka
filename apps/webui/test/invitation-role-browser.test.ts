@@ -91,9 +91,12 @@ test(
 				);
 				const sample = (await page.evaluate(`(() => {
 				const menu=document.querySelector('.invite-role-menu'), t=document.querySelector('[aria-label="Invite Role"]'),
-				style=getComputedStyle(menu), r=menu.getBoundingClientRect(), tr=t.getBoundingClientRect();
+				style=getComputedStyle(menu), r=menu.getBoundingClientRect(), tr=t.getBoundingClientRect(),
+				fr=document.querySelector('.invite-role-field').getBoundingClientRect(),lr=document.querySelector('label[for="invite-role-trigger"]').getBoundingClientRect();
 				return { background:style.backgroundColor, border:style.borderRadius, shadow:style.boxShadow,
 					box:{left:r.left,top:r.top,right:r.right,bottom:r.bottom}, triggerHeight:tr.height,
+					field:{left:fr.left,right:fr.right,width:fr.width},labelCenter:(lr.top+lr.bottom)/2,
+					trigger:{left:tr.left,right:tr.right,width:tr.width,center:(tr.top+tr.bottom)/2},
 					rows:[...menu.querySelectorAll('[role=menuitemradio]')].map(n=>({role:n.dataset.inviteRoleChoice,height:n.getBoundingClientRect().height,font:getComputedStyle(n).fontSize})),
 					labelFont:getComputedStyle(document.querySelector('label[for="invite-role-trigger"]')).fontSize,triggerFont:getComputedStyle(t).fontSize,focused:document.activeElement?.dataset.inviteRoleChoice,
 					hasCheck:Boolean(menu.querySelector('[aria-checked=true] svg')),theme:document.documentElement.dataset.theme };
@@ -103,6 +106,9 @@ test(
 					shadow: string;
 					box: { left: number; top: number; right: number; bottom: number };
 					triggerHeight: number;
+					field: { left: number; right: number; width: number };
+					labelCenter: number;
+					trigger: { left: number; right: number; width: number; center: number };
 					rows: { role: string; height: number; font: string }[];
 					labelFont: string;
 					triggerFont: string;
@@ -121,6 +127,30 @@ test(
 					[sample.background, sample.border, sample.shadow],
 					sharedStyle,
 					"invite popup uses the actual workbench menu theme",
+				);
+				assert.ok(
+					Math.abs(sample.labelCenter - sample.trigger.center) <= 1,
+					"Invite Role label and compact control share the Appearance-style row",
+				);
+				assert.ok(
+					sample.trigger.width < sample.field.width * 0.6,
+					"short role value must not stretch across the settings row",
+				);
+				assert.ok(
+					Math.abs(sample.trigger.right - sample.field.right) <= 1,
+					"compact trigger sits at the right end of the row",
+				);
+				assert.ok(
+					Math.abs(sample.box.right - sample.trigger.right) <= 1,
+					"popup aligns to the compact trigger right edge",
+				);
+				assert.ok(
+					sample.box.right - sample.box.left <= sample.trigger.width * 1.6,
+					"four short roles use a content-sized popup",
+				);
+				assert.ok(
+					sample.box.right - sample.box.left + 1 >= sample.trigger.width,
+					"popup must not be narrower than its compact choice button",
 				);
 				assert.equal(sample.focused, "viewer");
 				assert.equal(sample.hasCheck, true);

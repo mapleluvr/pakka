@@ -42,7 +42,7 @@ Sidebar 的 Sort Per Session 表达原生父子归属；Default 使用当前人�
 
 Conversation Grouping 使用与工作台其他菜单一致的主题化弹出行，当前偏好有独立标记；箭头浏览、Escape/Tab 离开仅改变焦点，明确确认才更新个人导航。首页 New Conversation 与 New Session 是图文同轴、相同排版的透明平级入口，中间有灰色短竖线；窄屏/放大文字下分组、可见焦点和 44px 触达完整保留。具体场景见[控件 delta](../../openspec/changes/polish-webui-grouping-and-creation-controls/specs/devin-frontend/spec.md)，采用与实施入口见[变更摘要](../changes/webui-grouping-and-creation-controls.md)。
 
-People & Invitations 的 Invite Role 同样使用工作台主题菜单，保留 Viewer/Sender/Driver/Admin 与 Viewer 默认。焦点浏览/取消不改邀请草稿，明确选择仅改草稿，Create Invitation 才执行原邀请；范围、有效期和授权不变。手机/放大字号保持菜单、选中标记与 44px 触达；场景见[邀请角色 delta](../../openspec/changes/polish-webui-invitation-role-menu/specs/devin-frontend/spec.md)，记录见[变更摘要](../changes/webui-invitation-role-menu.md)。
+People & Invitations 的 Invite Role 采用 Appearance 式同行布局：标签居左，紧凑选择按钮居右，内容适宽的主题菜单从按钮右缘展开，不占满整行。保留 Viewer/Sender/Driver/Admin 与 Viewer 默认。焦点浏览/取消不改邀请草稿，明确选择仅改草稿，Create Invitation 才执行原邀请；范围、有效期和授权不变。手机/放大字号保持菜单、选中标记与 44px 触达；场景见[邀请角色 delta](../../openspec/changes/polish-webui-invitation-role-menu/specs/devin-frontend/spec.md)，记录见[变更摘要](../changes/webui-invitation-role-menu.md)。
 
 ### 文案与操作信息
 

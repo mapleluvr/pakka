@@ -4,7 +4,7 @@
 
 | 核对对象                       | 记录                                                                                                         |
 | ------------------------------ | ------------------------------------------------------------------------------------------------------------ |
-| WebUI Invite Role 菜单补齐     | [邀请角色菜单记录](WEBUI-INVITATION-ROLE-MENU.md)                                                          |
+| WebUI Invite Role 菜单/紧凑布局     | [邀请角色菜单记录](WEBUI-INVITATION-ROLE-MENU.md)                                                            |
 | WebUI 分组菜单与创建入口       | [菜单/入口记录](WEBUI-NAVIGATION-CONTROLS.md)                                                                |
 | WebUI 情境文案精简             | [文案验证](WEBUI-COPY-SIMPLIFICATION.md)                                                                     |
 | WebUI 独立创建与分组           | [创建与分组记录](WEBUI-SESSION-CREATION.md)                                                                  |

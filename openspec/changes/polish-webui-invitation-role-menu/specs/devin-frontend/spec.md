@@ -2,7 +2,7 @@
 
 ### Requirement: Invitation role uses the workbench selection menu
 
-People & Invitations SHALL present Invite Role using the same themed popup treatment as other workbench menus, with Viewer, Sender, Driver and Admin choices, a separate current-choice mark and an accessible trigger. The popup and 44px targets SHALL remain readable within phone viewports and at enlarged text sizes.
+People & Invitations SHALL present Invite Role using the same themed popup treatment as other workbench menus, with Viewer, Sender, Driver and Admin choices, a separate current-choice mark and an accessible trigger. The label and compact right-aligned trigger SHALL share one row, matching the Appearance settings layout rather than stretching the value across the row. The content-sized popup SHALL align with the trigger's right edge and SHALL NOT be narrower than the compact trigger. The popup and 44px targets SHALL remain readable within phone viewports and at enlarged text sizes.
 
 #### Scenario: Browse and cancel without changing an invitation
 

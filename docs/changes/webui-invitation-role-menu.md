@@ -7,3 +7,5 @@
 - [frontend state](../state/frontend.md#创建与导航) 与本地计划同步。角色仍为原四种，沿用邀请命令、一次性 redeem、scope/ttl 和服务器授权；没有模型输入。产品/测试候选 `ba2b2f0` 的受影响 9/9、完整 666/664 pass/0 fail/2 skip，及保留的 RED/样式覆盖失败、来源身份和新 45010 预览见[固定验证记录](../verification/WEBUI-INVITATION-ROLE-MENU.md)。旧 45009 资产保持原始 bytes。
 
 采用现有 Menu 与 Icon，不追加控件体系或新权限层；同页仅该角色字段是下拉，其他页面 select 不在本轮声称完成。
+
+后续用户指出短角色值不应占满整行：在 `c7a9bf3` 之后采用 Appearance 式左标签/右侧紧凑控件、内容适宽且不窄于按钮的右缘菜单。由[design 后续纠偏](../../openspec/changes/polish-webui-invitation-role-menu/design.md#后续布局纠偏基线-c7a9bf3)与[tasks 第4节](../../openspec/changes/polish-webui-invitation-role-menu/tasks.md#4-紧凑同行布局纠偏)承接，新候选结果另记，不覆盖 ba2b2f0 的旧图或通过结论。

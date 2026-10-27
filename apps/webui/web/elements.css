@@ -1351,8 +1351,16 @@ details[open] > .pocket-disclosure > .pocket-icon:first-child {
 	padding: 4px 8px 12px;
 }
 .invite-role-field {
-	display: grid;
-	gap: 8px;
+	padding: 0;
+	border: 0;
+}
+.invite-role-menu,
+.invite-role-field .invite-role-trigger {
+	min-width: 8em;
+}
+.invite-role-field .invite-role-trigger {
+	flex: 0 0 auto;
+	margin-left: auto;
 }
 .navigation-mode-trigger,
 .invite-role-trigger {

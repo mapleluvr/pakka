@@ -17,6 +17,7 @@ export function Menu({
 	children,
 	initialFocus = "button:not(:disabled),input",
 	closeOnTab = false,
+	align = "start",
 }) {
 	const node = useRef(null),
 		[position, setPosition] = useState({ visibility: "hidden" });
@@ -29,7 +30,9 @@ export function Menu({
 			const r = trigger.getBoundingClientRect(),
 				box = node.current.getBoundingClientRect();
 			setPosition({
-				left: Math.max(8, Math.min(r.left, innerWidth - box.width - 8)) + "px",
+				left:
+					Math.max(8, Math.min(align === "end" ? r.right - box.width : r.left, innerWidth - box.width - 8)) +
+					"px",
 				top: Math.max(8, Math.min(r.bottom + 6, innerHeight - box.height - 8)) + "px",
 			});
 		};
