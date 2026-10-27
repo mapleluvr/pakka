@@ -48,14 +48,10 @@ test(
 				await page.evaluate('document.querySelector("[role=dialog] input[name=sessionName]").value'),
 				"New Session",
 			);
-			assert.match(
-				String(
-					await page.evaluate(
-						'Array.from(document.querySelectorAll(".creation-body p.pocket-secondary"), node => node.textContent).join("\\n")',
-					),
-				),
-				/configuration\.\s+Creating resources/,
-				"creation guidance keeps sentence boundaries rather than joining configuration.Creating",
+			assert.equal(
+				await page.evaluate('document.querySelectorAll(".creation-body p.pocket-secondary").length'),
+				0,
+				"explicit creation controls do not repeat implementation guidance",
 			);
 			await page.type("input[name=sessionName]", "Dialog Parent", { replace: true });
 			await page.type("input[name=name]", "Configured in Dialog", { replace: true });

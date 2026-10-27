@@ -782,7 +782,7 @@ test(
 			)) as { text: string; reason?: string; guidance?: string };
 			assert.match(blocked.text, /^unanswered · /);
 			assert.equal(blocked.reason, "blocked");
-			assert.equal(blocked.guidance, "Not delivered: policy refused this input. Edit it and send again.");
+			assert.equal(blocked.guidance, "Not delivered: policy refused this input.");
 		} finally {
 			await stopAll(app, browser, m);
 		}
@@ -822,7 +822,7 @@ test(
 			)) as { text: string; badge?: string; guidance?: string; retry: boolean };
 			assert.match(receipt.text, /^unknown · /);
 			assert.equal(receipt.badge, "needs review");
-			assert.equal(receipt.guidance, "Result unknown: check before resending. Do not resend blindly.");
+			assert.equal(receipt.guidance, "Result unknown: check before resending.");
 			assert.equal(receipt.retry, false, "an unknown host outcome is not offered an automatic replay");
 			assert.equal(m.f.requests.length, 0, "the real preparation failure sent no provider request");
 		} finally {
@@ -866,7 +866,7 @@ test(
 			)) as { badge?: string; nativeReason?: string; guidance?: string; reason: string };
 			assert.equal(receipt.badge, "withdrawn");
 			assert.equal(receipt.nativeReason, "aborted");
-			assert.equal(receipt.guidance, "Withdrawn before delivery. Send again only when ready.");
+			assert.equal(receipt.guidance, "Withdrawn before delivery.");
 			assert.doesNotMatch(receipt.reason, /blocked|policy refused/);
 			assert.equal(m.f.requests.length, 1, "withdrawing a queued input dispatches no new generation");
 		} finally {

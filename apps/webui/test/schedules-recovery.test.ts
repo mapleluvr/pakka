@@ -58,7 +58,11 @@ test(
 			await page.wait('!document.querySelector("[data-schedule-reconcile]")');
 			assert.equal(await page.evaluate("globalThis.__scheduleAdds"), 1);
 			await t.waitFor(() => assert.equal(m.f.requests.length, 1), { timeout: 5000 });
-			await page.wait('document.querySelector("[data-schedule-state]")?.textContent.includes("done")');
+			await page.wait('document.querySelector("[data-schedule-state=done]")');
+			assert.equal(
+				await page.evaluate('document.querySelector("[data-schedule-state=done]").textContent'),
+				"Inputs Submitted",
+			);
 			assert.equal(await page.evaluate('document.querySelectorAll("[data-schedule]").length'), 1);
 			assert.ok(JSON.stringify(m.f.requests[0]).includes("ONCE-AFTER-LOST-SCHEDULE-RESPONSE"));
 			assert.equal(app.runtime.view().budget.primaryAttempts, 1);

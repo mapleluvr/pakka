@@ -5,13 +5,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { runtimeFixture } from "../../../packages/agent/test/runtime-fixture.ts";
 import { startPocket } from "../src/bootstrap.ts";
 import { ownedBrowser } from "./browser.ts";
-import {
-	settleFrontend,
-	toggleConversations,
-	openAppearance,
-	organizationAction,
-	newConversation,
-} from "./frontend-controls.ts";
+import { settleFrontend, openAppearance, organizationAction, newConversation } from "./frontend-controls.ts";
 
 // Geometry belongs to devin-adoption-browser; this consumer catches lost native
 // configuration inheritance and accidental submission from home/navigation.
@@ -84,12 +78,43 @@ test(
 				await page.navigate(app.http.origin);
 				await page.wait('document.querySelector(".home-create-card")');
 				await settleFrontend(page);
-				assert.equal(
-					await page.evaluate(
-						`(()=>{const n=document.querySelector(".home-create-card > p"),b=n.getBoundingClientRect(),r=document.createRange();r.selectNodeContents(n);return document.documentElement.scrollWidth<=innerWidth&&[...r.getClientRects()].every(p=>p.left>=b.left&&p.right<=b.right&&p.top>=b.top&&p.bottom<=b.bottom);})()`,
-					),
-					true,
-					"Home guidance is fully visible on the phone",
+				const home = (await page.evaluate(
+					`(()=>{const n=document.querySelector(".home-create-card"),buttons=[...n.querySelectorAll("button")];return {paragraphs:n.querySelectorAll(":scope > p").length,viewport:innerWidth,scroll:document.documentElement.scrollWidth,buttons:buttons.map(button=>{const b=button.getBoundingClientRect();return {action:button.dataset.action,label:button.getAttribute("aria-label"),text:button.textContent,left:b.left,right:b.right,width:b.width,height:b.height};})}})()`,
+				)) as {
+					paragraphs: number;
+					viewport: number;
+					scroll: number;
+					buttons: {
+						action?: string;
+						label: string | null;
+						text: string;
+						left: number;
+						right: number;
+						width: number;
+						height: number;
+					}[];
+				};
+				await writeFile(
+					join(evidence, `home-controls-${size.width}.json`),
+					JSON.stringify(home, null, 2) + "\n",
+				);
+				await writeFile(join(evidence, `home-controls-${size.width}.png`), await page.screenshot());
+				assert.equal(home.paragraphs, 0);
+				assert.deepEqual(
+					home.buttons.filter((button) => button.action).map((button) => button.action),
+					["new-conversation", "new-session"],
+				);
+				assert.equal(home.buttons.filter((button) => button.label === "Commands & Extensions").length, 1);
+				assert.ok(
+					home.scroll <= home.viewport &&
+						home.buttons.every(
+							(button) =>
+								button.left >= 0 &&
+								button.right <= home.viewport &&
+								button.width >= 44 &&
+								button.height >= 44,
+						),
+					"creation and Commands controls remain visible on the phone: " + JSON.stringify(home),
 				);
 				await page.click('[aria-label="Commands & Extensions"]');
 				await page.wait('document.querySelector(".palette")?.contains(document.activeElement)');
