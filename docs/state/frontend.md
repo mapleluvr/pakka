@@ -42,6 +42,8 @@ Sidebar 的 Sort Per Session 表达原生父子归属；Default 使用当前人�
 
 Conversation Grouping 使用与工作台其他菜单一致的主题化弹出行，当前偏好有独立标记；箭头浏览、Escape/Tab 离开仅改变焦点，明确确认才更新个人导航。首页 New Conversation 与 New Session 是图文同轴、相同排版的透明平级入口，中间有灰色短竖线；窄屏/放大文字下分组、可见焦点和 44px 触达完整保留。具体场景见[控件 delta](../../openspec/changes/polish-webui-grouping-and-creation-controls/specs/devin-frontend/spec.md)，采用与实施入口见[变更摘要](../changes/webui-grouping-and-creation-controls.md)。
 
+People & Invitations 的 Invite Role 同样使用工作台主题菜单，保留 Viewer/Sender/Driver/Admin 与 Viewer 默认。焦点浏览/取消不改邀请草稿，明确选择仅改草稿，Create Invitation 才执行原邀请；范围、有效期和授权不变。手机/放大字号保持菜单、选中标记与 44px 触达；场景见[邀请角色 delta](../../openspec/changes/polish-webui-invitation-role-menu/specs/devin-frontend/spec.md)，记录见[变更摘要](../changes/webui-invitation-role-menu.md)。
+
 ### 文案与操作信息
 
 页面以准确标题、字段、状态和当前操作结果呈现信息。首页、创建、模型、文件夹和内置贡献省去重复教学及后台自我担保；People Chat 表达人类聊天，Shared Notes 表达共享笔记。服务器目录/浏览器与设备本地收藏、偏好使用短标签；Session 密钥注明未来请求作用域，额度计数与 Webhook 接入限制通过默认收起的帮助阅读。语音来源在启动前可读，监听时显示短状态。归档、扩展 UI 禁用、worktree 和取消的后果由相关动作结果反馈，定时输入以 Inputs Submitted 区分模型完成。Memory 显示原有作用域和 Awaiting approval 标记。未确认、部分成功、冲突、拒绝、截断、秘密及不可逆后果继续提供真实状态及原身份核对入口。完整场景及采用记录见[文案 delta](../../openspec/changes/simplify-webui-explanatory-copy/specs/devin-frontend/spec.md)与[变更摘要](../changes/webui-explanatory-copy.md)。

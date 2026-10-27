@@ -25,7 +25,7 @@ import { useCreation } from "./creation.js";
 import { resourceKey } from "./resource-identity.js";
 import { ConversationSettings } from "./navigation.js";
 import { Appearance, readAppearance, applyAppearance } from "./appearance.js";
-import { Frontend, Glyph } from "./frontend.js";
+import { Frontend, Glyph, Menu } from "./frontend.js";
 import { NativeComposer } from "./native-composer.js";
 import { SettingsNavigation, SettingsPage } from "./settings-page.js";
 
@@ -244,6 +244,76 @@ const receiptGuidance = (receipt) =>
 					? "Withdrawn before delivery."
 					: "Not delivered."
 			: null;
+function InvitationRole({ value, change }) {
+	const [trigger, setTrigger] = useState(null);
+	const choices = [
+		["viewer", "Viewer"],
+		["sender", "Sender"],
+		["driver", "Driver"],
+		["admin", "Admin"],
+	];
+	function browse(event) {
+		if (!["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) return;
+		event.preventDefault();
+		event.stopPropagation();
+		const items = [...event.currentTarget.querySelectorAll('[role="menuitemradio"]')],
+			index = items.indexOf(document.activeElement);
+		let next;
+		if (event.key === "Home") next = 0;
+		else if (event.key === "End") next = items.length - 1;
+		else next = (index + (event.key === "ArrowUp" ? -1 : 1) + items.length) % items.length;
+		items[next]?.focus();
+	}
+	return html`<div class="invite-role-field">
+		<label for="invite-role-trigger">Invite Role</label>
+		<button
+			id="invite-role-trigger"
+			type="button"
+			class="invite-role-trigger"
+			aria-label="Invite Role"
+			aria-describedby="invite-role-value"
+			aria-haspopup="menu"
+			aria-expanded=${Boolean(trigger)}
+			value=${value}
+			onClick=${(event) => setTrigger(trigger ? null : event.currentTarget)}
+			onKeyDown=${(event) => {
+				if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+					event.preventDefault();
+					setTrigger(event.currentTarget);
+				}
+			}}
+		>
+			<span id="invite-role-value">${choices.find(([role]) => role === value)?.[1]}</span
+			><${Icon} name="chevron" />
+		</button>
+		${trigger &&
+		html`<${Menu}
+			name="invite-role" trigger=${trigger} close=${() => setTrigger(null)}
+			initialFocus=${'[aria-checked="true"]'} closeOnTab=${true}
+		>
+			<div onKeyDown=${browse}>
+				${choices.map(
+					([role, label]) =>
+						html`<button
+							type="button"
+							class="menu-row"
+							role="menuitemradio"
+							aria-checked=${value === role}
+							data-invite-role-choice=${role}
+							onClick=${() => {
+								change(role);
+								setTrigger(null);
+							}}
+						>
+							<span class="invite-role-marker" aria-hidden="true"
+								>${value === role && html`<${Icon} name="check" />`}</span
+							><span>${label}</span>
+						</button>`,
+				)}
+			</div>
+		</${Menu}>`}
+	</div>`;
+}
 function App() {
 	const [person, setPerson] = useState(null),
 		[refs, setRefs] = useState([]),
@@ -1145,18 +1215,7 @@ function App() {
 									Revoke
 								</button>`}
 							</div>`,
-					)}<label
-						>Invite role<select
-							aria-label="Invite role"
-							value=${inviteRole}
-							onChange=${(event) => setInviteRole(event.currentTarget.value)}
-						>
-							<option value="viewer">Viewer</option>
-							<option value="sender">Sender</option>
-							<option value="driver">Driver</option>
-							<option value="admin">Admin</option>
-						</select></label
-					>
+					)}<${InvitationRole} value=${inviteRole} change=${setInviteRole} />
 					<p>Invite to ${selected ? "this conversation" : "the workspace"}.</p>
 					<button
 						class="button"

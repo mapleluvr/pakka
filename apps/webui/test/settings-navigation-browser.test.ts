@@ -66,7 +66,7 @@ test(
 				await page.click('[data-settings-page="configuration"]');
 				await page.wait('document.querySelector("[data-settings-model]")');
 				await page.click('[data-settings-page="people"]');
-				await page.wait(`document.querySelector('[aria-label="Invite role"]')`);
+				await page.wait(`document.querySelector('[aria-label="Invite Role"]')`);
 				await page.click('[data-settings-page="extensions"]');
 				await page.wait('document.querySelector(".extension-manager-list")');
 				await page.click('[data-settings-page="appearance"]');

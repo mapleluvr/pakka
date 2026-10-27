@@ -166,7 +166,7 @@ test(
 			await page.click('[aria-label="Close notifications"]');
 			await page.click(".org-trigger");
 			await page.click("[data-action=people]");
-			await page.wait('document.querySelector("[aria-label=\\"Invite role\\"]")');
+			await page.wait('document.querySelector("[aria-label=\\"Invite Role\\"]")');
 			assert.equal(
 				await page.evaluate('document.querySelectorAll(".settings-view").length'),
 				1,

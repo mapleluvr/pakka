@@ -53,7 +53,7 @@ code {
 	font-size: var(--type-group-label-size);
 }
 .settings-page :is(.pocket-secondary, .extension-phase),
-.settings-page .settings-native-fields button {
+.settings-page .settings-native-fields button:not(:where(.invite-role-trigger, .menu-row)) {
 	font-size: var(--type-caption-size);
 }
 .composer-card:has(textarea:focus-visible) {
@@ -1079,7 +1079,7 @@ details[open] > .pocket-disclosure > .pocket-icon:first-child {
 	font: inherit;
 	font-size: 13px;
 }
-:is(.settings-native, .settings-native-fields) button {
+:is(.settings-native, .settings-native-fields) button:not(:where(.invite-role-trigger, .menu-row)) {
 	min-height: 30px;
 	padding: 6px 12px;
 	border: 1px solid var(--border);
@@ -1350,7 +1350,12 @@ details[open] > .pocket-disclosure > .pocket-icon:first-child {
 	gap: 8px;
 	padding: 4px 8px 12px;
 }
-.navigation-mode-trigger {
+.invite-role-field {
+	display: grid;
+	gap: 8px;
+}
+.navigation-mode-trigger,
+.invite-role-trigger {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
@@ -1366,16 +1371,20 @@ details[open] > .pocket-disclosure > .pocket-icon:first-child {
 	border-radius: 8px;
 }
 .navigation-mode-trigger svg,
+.invite-role-trigger svg,
+.invite-role-menu .invite-role-marker svg,
 .grouping-menu .grouping-marker svg {
 	width: 24px;
 	height: 24px;
 	flex-shrink: 0;
 }
-.grouping-menu .menu-row {
+.grouping-menu .menu-row,
+.invite-role-menu .menu-row {
 	min-height: 44px;
 	font-size: var(--type-ui-size);
 }
-.grouping-marker {
+.grouping-marker,
+.invite-role-marker {
 	display: grid;
 	place-items: center;
 	width: 24px;
