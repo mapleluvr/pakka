@@ -1,0 +1,126 @@
+{
+  "candidate": "ba2b2f089baa0259132900c6ab9d1ed415c55df5",
+  "digest": "626aadf541955db954f982c0b53ee2409f81534399d8045e5d132eea01fb8c19",
+  "files": [
+    {
+      "path": "apps/webui/web/app.js",
+      "bytes": 43544,
+      "sha256": "ff409587ad63509b1d0e8884ff1abe35ae24f13dc31113b1c33c144f853790fc",
+      "canonicalSha256": "ff409587ad63509b1d0e8884ff1abe35ae24f13dc31113b1c33c144f853790fc"
+    },
+    {
+      "path": "apps/webui/web/frontend.js",
+      "bytes": 14591,
+      "sha256": "162158307a9599aee20c293242b3a78d1e9c981d9f0b24de179680c49d36e6a7",
+      "canonicalSha256": "66543faf782aa160e58b1e9f28353a4ef0c9d26a0dde3abd3b7578c728d636c9"
+    },
+    {
+      "path": "apps/webui/web/creation.js",
+      "bytes": 15277,
+      "sha256": "759634cd86503e912831c8ccd0ceb3646f3869083c2e9d996a6df1be4619a7f6",
+      "canonicalSha256": "759634cd86503e912831c8ccd0ceb3646f3869083c2e9d996a6df1be4619a7f6"
+    },
+    {
+      "path": "apps/webui/web/conversation-groups.js",
+      "bytes": 15448,
+      "sha256": "39f829ebacaf73a87e9a2b5690fed3c71f560d618ba3e6e7c84e9e6ee763005a",
+      "canonicalSha256": "39f829ebacaf73a87e9a2b5690fed3c71f560d618ba3e6e7c84e9e6ee763005a"
+    },
+    {
+      "path": "apps/webui/web/conversation-configuration.js",
+      "bytes": 16460,
+      "sha256": "421cfc2c80ddc7af2fe2ebe0655a04d89d2f0cd7d65123dc402b584e8b42d8e1",
+      "canonicalSha256": "8a0d690728e438372a0dfcf35f06a9b5ff087d02ee1a61beb0307eb7607fa6a2"
+    },
+    {
+      "path": "apps/webui/web/native-composer.js",
+      "bytes": 7617,
+      "sha256": "820bc2f032976cf479e3fd85b53d989b1fd6e7ade9bb95858b32742c62a4a025",
+      "canonicalSha256": "fe7007a23caa1b834f40d2d53517408b75ce45eda37301133cdea22e6be0aaff"
+    },
+    {
+      "path": "apps/webui/web/collaboration.js",
+      "bytes": 11446,
+      "sha256": "a0d1400c46e59e8232889665fd8ba1bba5ac2a8241eca2cdf8fa538860ec0194",
+      "canonicalSha256": "54085f4b56e89d3a2ede07565b6750ad5bcae279829504e4e30f665b6cea7a40"
+    },
+    {
+      "path": "apps/webui/web/configuration.js",
+      "bytes": 3118,
+      "sha256": "07da61df5444c337e3bb658ec1aee7461c0810a09e1e8351b7fcf585487eb4d8",
+      "canonicalSha256": "0180bbdf109f6ef58df43192f99956114a8b7610982a8cae42d05ee988159e2f"
+    },
+    {
+      "path": "apps/webui/web/appearance.js",
+      "bytes": 4210,
+      "sha256": "64c5aef7a198e8857d8fa4158b672db2a8c67f67992af1f3d670b70ec7a707f5",
+      "canonicalSha256": "bd67259515c044cd3a5491954572021594e6ab3c4260324487b242d9afca11d8"
+    },
+    {
+      "path": "apps/webui/web/credentials.js",
+      "bytes": 4450,
+      "sha256": "a9b50840923bfde6aca50f2a7a6a95afd901450bc7a665ff42e5bda8aaa1478e",
+      "canonicalSha256": "e56fe808f70f2ffb88a67cbb0e7fcf20c2c15bf81a516692cbbdb72b8c3e0432"
+    },
+    {
+      "path": "apps/webui/web/voice.js",
+      "bytes": 8925,
+      "sha256": "69c9f611c7238270f05bcb8712fb9b84ac82e4b5d9e109ddb772746249a548a5",
+      "canonicalSha256": "d170859c3ed935a7123577d5c7230dd1781eeb8fd6a61d7a115d4d2eb941f1ee"
+    },
+    {
+      "path": "apps/webui/web/notifications.js",
+      "bytes": 8837,
+      "sha256": "e9e83e3a62f69f44e7840b61a1258474c27487abbf3959bd83b78ede9f24ae75",
+      "canonicalSha256": "eb6b3d43b6b530419ca473cadf50dae018806ef4cca18330417144fb9a0fa6b6"
+    },
+    {
+      "path": "apps/webui/web/navigation.js",
+      "bytes": 5406,
+      "sha256": "dc8ee70df6a7aeb816fec09d5642f20de5c73e31146f3ab66aac550fab9267f1",
+      "canonicalSha256": "45a4022d06489f9eae18652d354795f28c4b949c8ed9f9008a843d9a5a6a37ce"
+    },
+    {
+      "path": "apps/webui/web/extensions.js",
+      "bytes": 22978,
+      "sha256": "969eb063d08d43527c63f0ce28bc61b33cf5dbc0b206d10d69bc5c29de086237",
+      "canonicalSha256": "01cb943394720727f76e0e6adf451076d5e028d52a9f531f42b724162a5b1f22"
+    },
+    {
+      "path": "apps/webui/web/elements.css",
+      "bytes": 31921,
+      "sha256": "ee44e820996aef9327ccba9b0bc98d09db87d89cec8cdacde8af55682c0ac39e",
+      "canonicalSha256": "88b5c28ac07580ed4b9b92fed23e47f55c4a571647abae0bace0cb874f21ec78"
+    },
+    {
+      "path": "apps/webui/web/sheet.js",
+      "bytes": 4622,
+      "sha256": "74dd9dda0c67239b2e94a6113d4aa426873467222ca61227e497925e50bb17d4",
+      "canonicalSha256": "a15eea56a42647acc822642a8749b6bd96c8d5920ec8cde21828db290debacfd"
+    },
+    {
+      "path": "apps/webui/web/settings-page.js",
+      "bytes": 1938,
+      "sha256": "d1499a0a204281362afed8193bbcf4cda16902c42cfba929a76b88cb6eb2df0b",
+      "canonicalSha256": "50ae72b1ec932929994aae9169db27c7980c872d67412c8b3f37f1d56d8ff4be"
+    },
+    {
+      "path": "apps/webui/web/resource-identity.js",
+      "bytes": 186,
+      "sha256": "f10acd36afd6588db0fc36a39e4adfc69259a667bbab3eb382e30107e3c1cd85",
+      "canonicalSha256": "f10acd36afd6588db0fc36a39e4adfc69259a667bbab3eb382e30107e3c1cd85"
+    },
+    {
+      "path": "apps/webui/web/message-parts.js",
+      "bytes": 1625,
+      "sha256": "836ff86dd2c0042e518d4a7e8a325a6140b9f6db20e5fba3d11a93db6fd17a6c",
+      "canonicalSha256": "836ff86dd2c0042e518d4a7e8a325a6140b9f6db20e5fba3d11a93db6fd17a6c"
+    },
+    {
+      "path": "apps/webui/web/reference.css",
+      "bytes": 33738,
+      "sha256": "084adce8bc6e1feab314b301f57ddac0bab5081cfa08d1c911addece9bdb9974",
+      "canonicalSha256": "084adce8bc6e1feab314b301f57ddac0bab5081cfa08d1c911addece9bdb9974"
+    }
+  ]
+}

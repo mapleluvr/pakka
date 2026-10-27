@@ -1,0 +1,44 @@
+TAP version 13
+# Subtest: Invitation role: shared menu preserves draft on browsing/cancel with keyboard, theme and phone text scaling
+not ok 1 - Invitation role: shared menu preserves draft on browsing/cancel with keyboard, theme and phone text scaling
+  ---
+  duration_ms: 899.6482
+  type: 'test'
+  location: 'D:\\Projects\\pakka-wt\\webui-p0\\apps\\webui\\test\\invitation-role-browser.test.ts:47:1'
+  failureType: 'testCodeFailure'
+  error: 'Browser evaluation failed: {"exceptionId":1,"text":"Uncaught","lineNumber":0,"columnNumber":23,"scriptId":"48","exception":{"type":"object","subtype":"error","className":"SyntaxError","description":"SyntaxError: missing ) after argument list","objectId":"-5783079116256116606.2.2"}}'
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    Object.evaluate (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/browser.ts:203:12)
+    async file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/invitation-role-browser.test.ts:62:18
+    async inspect (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/invitation-role-browser.test.ts:38:3)
+    async TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/invitation-role-browser.test.ts:48:2)
+    async Test.run (node:internal/test_runner/test:1332:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3)
+  ...
+# Subtest: Invitation role: explicit selection is only a draft; created one-use invitations redeem to each original role
+not ok 2 - Invitation role: explicit selection is only a draft; created one-use invitations redeem to each original role
+  ---
+  duration_ms: 697.9457
+  type: 'test'
+  location: 'D:\\Projects\\pakka-wt\\webui-p0\\apps\\webui\\test\\invitation-role-browser.test.ts:119:1'
+  failureType: 'testCodeFailure'
+  error: 'Browser evaluation failed: {"exceptionId":1,"text":"Uncaught","lineNumber":0,"columnNumber":23,"scriptId":"43","exception":{"type":"object","subtype":"error","className":"SyntaxError","description":"SyntaxError: missing ) after argument list","objectId":"-6990351637865323271.2.2"}}'
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    Object.evaluate (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/browser.ts:203:12)
+    async file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/invitation-role-browser.test.ts:123:16
+    async inspect (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/invitation-role-browser.test.ts:38:3)
+    async TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/invitation-role-browser.test.ts:120:2)
+    async Test.run (node:internal/test_runner/test:1332:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:911:7)
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 0
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2582.2491

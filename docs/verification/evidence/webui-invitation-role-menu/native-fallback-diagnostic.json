@@ -1,0 +1,38 @@
+{
+  "background": "rgb(31, 31, 31)",
+  "border": "10px",
+  "shadow": "rgba(0, 0, 0, 0.34) 0px 16px 40px 0px, rgba(0, 0, 0, 0.18) 0px 2px 8px 0px",
+  "box": {
+    "left": 526,
+    "top": 278.5625,
+    "right": 750,
+    "bottom": 468.5625
+  },
+  "triggerHeight": 38,
+  "rows": [
+    {
+      "role": "viewer",
+      "height": 44,
+      "font": "12px"
+    },
+    {
+      "role": "sender",
+      "height": 44,
+      "font": "12px"
+    },
+    {
+      "role": "driver",
+      "height": 44,
+      "font": "12px"
+    },
+    {
+      "role": "admin",
+      "height": 44,
+      "font": "12px"
+    }
+  ],
+  "triggerFont": "12px",
+  "focused": "viewer",
+  "hasCheck": true,
+  "theme": "dark"
+}

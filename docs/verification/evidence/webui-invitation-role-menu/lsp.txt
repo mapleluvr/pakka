@@ -1,0 +1,11 @@
+Files checked: 5
+Total diagnostics: 0
+Concurrency: 8
+Outcomes: clean=1, findings=0, unsupported=0, unavailable=0, failed=0, too_large=0, inconclusive=4
+
+Checks not confirmed: 4 (inconclusive/unavailable/unsupported/failed or not started).
+
+1 file confirmed clean, 4 unconfirmed: 1 timed out (check didn't complete within budget) and 3 from a server that cannot confirm clean (push-only, silent-on-clean). NOT the same as 0 diagnostics.
+
+result ok
+usage tokens=109 elapsed-ms=0 bytes=435 truncated=false

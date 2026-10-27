@@ -1,0 +1,58 @@
+TAP version 13
+# Subtest: Invitation role: shared menu preserves draft on browsing/cancel with keyboard, theme and phone text scaling
+not ok 1 - Invitation role: shared menu preserves draft on browsing/cancel with keyboard, theme and phone text scaling
+  ---
+  duration_ms: 816.8925
+  type: 'test'
+  location: 'D:\\Projects\\pakka-wt\\webui-p0\\apps\\webui\\test\\invitation-role-browser.test.ts:47:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Invite Role must use a workbench popup, not a system select
+    
+    'SELECT' !== 'BUTTON'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'BUTTON'
+  actual: 'SELECT'
+  operator: 'strictEqual'
+  stack: |-
+    file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/invitation-role-browser.test.ts:64:11
+    async inspect (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/invitation-role-browser.test.ts:38:3)
+    async TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/invitation-role-browser.test.ts:48:2)
+    async Test.run (node:internal/test_runner/test:1332:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3)
+  ...
+# Subtest: Invitation role: explicit selection is only a draft; created one-use invitations redeem to each original role
+not ok 2 - Invitation role: explicit selection is only a draft; created one-use invitations redeem to each original role
+  ---
+  duration_ms: 692.7122
+  type: 'test'
+  location: 'D:\\Projects\\pakka-wt\\webui-p0\\apps\\webui\\test\\invitation-role-browser.test.ts:120:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    'SELECT' !== 'BUTTON'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'BUTTON'
+  actual: 'SELECT'
+  operator: 'strictEqual'
+  stack: |-
+    file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/invitation-role-browser.test.ts:124:10
+    async inspect (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/invitation-role-browser.test.ts:38:3)
+    async TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/invitation-role-browser.test.ts:121:2)
+    async Test.run (node:internal/test_runner/test:1332:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:911:7)
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 0
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2387.1806

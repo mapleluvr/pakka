@@ -1,0 +1,40 @@
+TAP version 13
+# Subtest: Invitation role: shared menu preserves draft on browsing/cancel with keyboard, theme and phone text scaling
+not ok 1 - Invitation role: shared menu preserves draft on browsing/cancel with keyboard, theme and phone text scaling
+  ---
+  duration_ms: 766.3373
+  type: 'test'
+  location: 'D:\\Projects\\pakka-wt\\webui-p0\\apps\\webui\\test\\invitation-role-browser.test.ts:47:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The expression evaluated to a falsy value:
+    
+      assert.ok(sample.triggerHeight >= 44 && sample.rows.every(row=>row.height>=44))
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/invitation-role-browser.test.ts:80:11
+    async inspect (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/invitation-role-browser.test.ts:38:3)
+    async TestContext.<anonymous> (file:///D:/Projects/pakka-wt/webui-p0/apps/webui/test/invitation-role-browser.test.ts:48:2)
+    async Test.run (node:internal/test_runner/test:1332:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3)
+  ...
+# Subtest: Invitation role: explicit selection is only a draft; created one-use invitations redeem to each original role
+ok 2 - Invitation role: explicit selection is only a draft; created one-use invitations redeem to each original role
+  ---
+  duration_ms: 950.1862
+  type: 'test'
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 1
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2601.417
