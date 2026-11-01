@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import { strict as assert } from "node:assert";
-import { rename, mkdir, rm } from "node:fs/promises";
+import { blockSqliteWrites } from "./native-storage.ts";
 import { createRuntime } from "../src/index.ts";
 import type { JsonObject } from "../src/index.ts";
 import { runtimeFixture } from "./runtime-fixture.ts";
@@ -77,23 +77,18 @@ test("M3 store: non-JSON, capacity and revoked authority reject without advancin
 test("M3 store: unknown physical commit seals only its owned Session", async () => {
 	const m = await runtimeFixture(),
 		peer = await runtimeFixture();
-	let file: string | undefined;
+	let releaseWrites: (() => void) | undefined;
 	try {
 		const journal = store(m.runtime);
 		await journal.compareAndSet(0, { known: true }, () => {});
-		file = m.runtime.view().sessionFile;
-		await rename(file, file + ".saved");
-		await mkdir(file);
+		releaseWrites = blockSqliteWrites(m.runtime.view().sessionFile);
 		await assert.rejects(journal.compareAndSet(1, { uncertain: true }, () => {}));
 		assert.equal(m.runtime.view().phase, "failed");
 		assert.equal(peer.runtime.view().phase, "ready");
 		await store(peer.runtime).compareAndSet(0, { independent: true }, () => {});
 		assert.equal(m.f.requests.length + peer.f.requests.length, 0);
 	} finally {
-		if (file) {
-			await rm(file, { recursive: true });
-			await rename(file + ".saved", file);
-		}
+		releaseWrites?.();
 		await m.close();
 		await peer.close();
 	}

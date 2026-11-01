@@ -40,7 +40,7 @@ async function findSession(dir) {
 		if (entry.isDirectory()) {
 			const file = await findSession(path);
 			if (file) return file;
-		} else if (entry.name === "main.jsonl") return path;
+		} else if (entry.name === "main.sqlite") return path;
 	}
 }
 async function childResult(path, args, cwd) {

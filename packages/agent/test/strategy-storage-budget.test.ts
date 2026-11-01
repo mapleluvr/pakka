@@ -46,8 +46,8 @@ test("a stale artifact version after a projector's own write blocks HTTP until e
 		const host = await f.start();
 		const { client: user } = await seed(host);
 		const { b } = await writer(host);
-		b.installProjector((frame) => {
-			b.artifacts.append(frame.basis, { expectedVersion: 0, records: [{ trigger: true }] });
+		b.installProjector(async (frame) => {
+			await b.artifacts.append(frame.basis, { expectedVersion: 0, records: [{ trigger: true }] });
 			return { status: "disabled", basis: frame.basis };
 		});
 		await user.submit({ key: "no-rebase", text: "BLOCK" });
@@ -76,11 +76,11 @@ test("an artifact append write failure returns unknown, latches, and sends no mo
 			(await job.infer({ modelKey: "summary", prompt: "ONE", maxOutputTokens: 64 })).status,
 			"completed",
 		);
-		const committed = b.artifacts.append(job.scope, { expectedVersion: 0, records: [{ initial: true }] });
+		const committed = (await b.artifacts.append(job.scope, { expectedVersion: 0, records: [{ initial: true }] }));
 		assert.equal(committed.status, "committed");
 		path = committed.journalPath;
 		await chmod(path, 0o444);
-		const receipt = b.artifacts.append(job.scope, { expectedVersion: 1, records: [{ candidate: true }] });
+		const receipt = (await b.artifacts.append(job.scope, { expectedVersion: 1, records: [{ candidate: true }] }));
 		assert.equal(receipt.status, "unknown");
 		assert.equal(host.view().phase, "failed");
 		await assert.rejects(
@@ -109,11 +109,11 @@ test("opted-in completed adoption survives trusted reopen without replay", async
 		});
 		const result = await job.infer({ modelKey: "summary", prompt: "ADOPT" });
 		assert.equal(result.status, "completed");
-		const receipt = b.artifacts.append(job.scope, {
+		const receipt = (await b.artifacts.append(job.scope, {
 			expectedVersion: frame.artifacts.version,
 			records: [{ kind: "adopted-candidate" }],
 			attemptIds: [result.attemptId],
-		});
+		}));
 		assert.equal(receipt.status, "committed");
 		const file = first.view().sessionFile;
 		await first.dispose();
@@ -138,10 +138,10 @@ test("unadopted completed inference stays fail-closed across trusted reopen", as
 		await seed(first);
 		const { b } = await writer(first),
 			frame = b.readFrame();
-		const initial = b.artifacts.append(frame.basis, {
+		const initial = (await b.artifacts.append(frame.basis, {
 			expectedVersion: frame.artifacts.version,
 			records: [{ kind: "initial" }],
-		});
+		}));
 		assert.equal(initial.status, "committed");
 		path = initial.journalPath;
 		const current = b.readFrame();
@@ -154,11 +154,11 @@ test("unadopted completed inference stays fail-closed across trusted reopen", as
 		const result = await job.infer({ modelKey: "summary", prompt: "UNKNOWN" });
 		assert.equal(result.status, "completed");
 		await chmod(path, 0o444);
-		const unknown = b.artifacts.append(job.scope, {
+		const unknown = (await b.artifacts.append(job.scope, {
 			expectedVersion: initial.version,
 			records: [{ kind: "candidate" }],
 			attemptIds: [result.attemptId],
-		});
+		}));
 		assert.equal(unknown.status, "unknown");
 		const file = first.view().sessionFile;
 		await first.dispose();

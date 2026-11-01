@@ -5,6 +5,7 @@ import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createHost } from "@pakka/agent";
+import { readConversationEntries } from "./consumer-native-storage.mjs";
 const consumer = dirname(fileURLToPath(import.meta.url));
 await assert.rejects(createHost({ backend: "oracle" }), /Unsupported production backend/);
 const require = createRequire(import.meta.url);
@@ -143,7 +144,7 @@ try {
 		contextEntryIds: [],
 		maxCalls: 2,
 	});
-	const before = await readFile(host.view().sessionFile, "utf8");
+	const before = await readConversationEntries(host.view().sessionFile, host.view().conversationId);
 	for (const cap of [64, 128]) {
 		assert.equal(
 			(await job.infer({ modelKey: "summary", prompt: "PACKED-AUXILIARY", maxOutputTokens: cap })).status,
@@ -151,8 +152,8 @@ try {
 		);
 		assert.equal(requests.at(-1).max_tokens, cap);
 	}
-	assert.equal(await readFile(host.view().sessionFile, "utf8"), before);
-	const receipt = binding.artifacts.append(job.scope, {
+	assert.equal(await readConversationEntries(host.view().sessionFile, host.view().conversationId), before);
+	const receipt = await binding.artifacts.append(job.scope, {
 		expectedVersion: 0,
 		records: [{ kind: "packed-record" }],
 	});
@@ -185,7 +186,10 @@ try {
 	assert.match(JSON.stringify(requests[5]), /PACKED-SYSTEM/);
 	assert.match(JSON.stringify(requests[5]), /PACKED-FOURTH/);
 	assert.doesNotMatch(JSON.stringify(requests[5]), /PACKED-NEXT|PACKED-PROJECTED|Host strategy summary/);
-	assert.match(await readFile(host.view().sessionFile, "utf8"), /PACKED-NEXT/);
+	assert.match(
+		await readConversationEntries(host.view().sessionFile, host.view().conversationId),
+		/PACKED-NEXT/,
+	);
 	removeOmission();
 	const unblock = binding.installProjector((frame) => ({
 		status: "blocked",

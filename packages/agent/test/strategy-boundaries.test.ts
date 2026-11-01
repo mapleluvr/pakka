@@ -294,7 +294,7 @@ test("reopen rejects a missing or partial journal instead of silently recreating
 			owner.activateStrategy({ id: "strategy", hooks: ["context_artifacts.write"] });
 			const b = binding(owner),
 				frame = b.readFrame();
-			const receipt = b.artifacts.append(frame.basis, { expectedVersion: 0, records: [{ kind: "DURABLE" }] });
+			const receipt = (await b.artifacts.append(frame.basis, { expectedVersion: 0, records: [{ kind: "DURABLE" }] }));
 			assert.equal(receipt.status, "committed");
 			await host.dispose();
 			if (fault === "missing") await rm(receipt.journalPath);

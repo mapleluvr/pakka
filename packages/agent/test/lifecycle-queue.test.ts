@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { mkdir, rename, rm } from "node:fs/promises";
+import { blockSqliteWrites } from "./native-storage.ts";
 import { deferred, fixture, raw, seed, text } from "./fixture.ts";
 import type { Host, HostOptions } from "../src/index.ts";
 const cut = { type: "cut" as const, summary: "MUST-NOT-COMMIT", firstKeptEntryId: null, tokensBefore: 1 };
@@ -175,7 +175,12 @@ test(
 			const reload = host.reload();
 			assert.equal(host.view().phase, "transitioning");
 			assert.equal((await owner.commit(old, cut)).status, "denied");
-			assert.equal(await raw(host), before);
+			const persisted = JSON.parse(await raw(host));
+			assert.deepEqual(persisted.entries, JSON.parse(before).entries);
+			assert.ok(
+				persisted.tasks.every((task: { abortRequested: boolean }) => task.abortRequested),
+				"reload durably requests abort; denied context writes still append no entry",
+			);
 			await assert.rejects(host.newSession(), /transition/);
 			release.resolve();
 			await reload;
@@ -243,7 +248,11 @@ test(
 			assert.equal(host.view().leafId, view.leafId);
 			assert.equal(host.view().entries.length, view.entries.length);
 			assert.equal((await owner.commit(old, cut)).status, "denied");
-			assert.equal(await raw(host), disk);
+			assert.deepEqual(
+				JSON.parse(await raw(host)).entries,
+				JSON.parse(disk).entries,
+				"authorized forks may persist, but the stale capability appends no context entry",
+			);
 			assert.equal(
 				(await owner.commit(owner.capture(), { ...cut, summary: "FRESH-ABA" })).status,
 				"committed",
@@ -294,7 +303,7 @@ test(
 			gatedOptions(entered, release, () => effects++),
 			(_p, n) => (n === 1 ? { tool: "gate" } : { text: "ANSWER" }),
 		);
-		let path: string | undefined;
+		let releaseWrites: (() => void) | undefined;
 		try {
 			const host = await f.start(),
 				user = host.connect("user", ["input.submit"]);
@@ -302,9 +311,7 @@ test(
 			await reachedGate(host, entered);
 			assert.equal(effects, 1);
 			assert.equal(user.receipt(start.id)?.state, "committed");
-			path = host.view().sessionFile;
-			await rename(path, path + ".saved");
-			await mkdir(path);
+			releaseWrites = blockSqliteWrites(host.view().sessionFile);
 			release.resolve();
 			await host.waitForIdle();
 			assert.equal(host.view().phase, "failed");
@@ -316,10 +323,7 @@ test(
 			await assert.rejects(user.submit({ key: "other", text: "RETRY" }), /failed/);
 		} finally {
 			release.resolve();
-			if (path) {
-				await rm(path, { recursive: true });
-				await rename(path + ".saved", path);
-			}
+			releaseWrites?.();
 			await f.close();
 		}
 	},

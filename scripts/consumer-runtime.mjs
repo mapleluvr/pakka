@@ -1,9 +1,10 @@
 import assert from "node:assert/strict";
 import { createServer } from "node:http";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createRuntime } from "@pakka/agent";
+import { readStorageText } from "./consumer-native-storage.mjs";
 
 const consumer = dirname(fileURLToPath(import.meta.url));
 const requests = [];
@@ -70,12 +71,12 @@ try {
 	assert.equal(requests.find((body) => /UNIQUE-ROOT-A/.test(JSON.stringify(body)))?.model, "local");
 	assert.equal(requests.find((body) => /UNIQUE-PEER-B/.test(JSON.stringify(body)))?.model, "alternate-local");
 	assert.notEqual(a.view().providerSessionId, b.view().providerSessionId);
-	const storedBeforeRead = await readFile(runtime.view().sessionFile, "utf8");
+	const storedBeforeRead = await readStorageText(runtime.view().sessionFile);
 	const observed = await runtime.readConversation(ref, () => {});
 	assert.ok(Object.isFrozen(observed) && Object.isFrozen(observed.entries));
 	assert.match(JSON.stringify(observed), /UNIQUE-PEER-B/);
 	assert.doesNotMatch(JSON.stringify(observed), /UNIQUE-ROOT-A|MANAGED-WORKER|providerSessionId|local-only/);
-	assert.equal(await readFile(runtime.view().sessionFile, "utf8"), storedBeforeRead);
+	assert.equal(await readStorageText(runtime.view().sessionFile), storedBeforeRead);
 	let checks = 0;
 	await assert.rejects(
 		runtime.readConversation(ref, () => {
@@ -105,8 +106,8 @@ try {
 		() => ja.artifacts.append(fb.basis, { expectedVersion: 0, records: ["foreign"] }),
 		/Invalid\/copied frame basis scope|Invalid job scope|Stale frame basis/i,
 	);
-	const ra = ja.artifacts.append(fa.basis, { expectedVersion: 0, records: ["ROOT-JOURNAL"] });
-	const rb = jb.artifacts.append(fb.basis, { expectedVersion: 0, records: ["PEER-JOURNAL"] });
+	const ra = await ja.artifacts.append(fa.basis, { expectedVersion: 0, records: ["ROOT-JOURNAL"] });
+	const rb = await jb.artifacts.append(fb.basis, { expectedVersion: 0, records: ["PEER-JOURNAL"] });
 	assert.equal(ra.status, "committed");
 	assert.equal(rb.status, "committed");
 	assert.notEqual(ra.journalPath, rb.journalPath);
@@ -114,8 +115,8 @@ try {
 	assert.deepEqual(jb.artifacts.read(jb.readFrame().basis).records, ["PEER-JOURNAL"]);
 	await assert.rejects(runtime.createConversation({ key: "overflow" }), /limit/i);
 	const file = runtime.view().sessionFile;
-	assert.match(await readFile(file, "utf8"), /UNIQUE-ROOT-A/);
-	assert.match(await readFile(file, "utf8"), /UNIQUE-PEER-B/);
+	assert.match(await readStorageText(file), /UNIQUE-ROOT-A/);
+	assert.match(await readStorageText(file), /UNIQUE-PEER-B/);
 	await runtime.close();
 	reopened = await createRuntime({ ...options, reopenSessionFile: file });
 	assert.equal(requests.length, 2, "reopen/inspection cannot dispatch");

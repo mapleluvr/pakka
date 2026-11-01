@@ -1,4 +1,22 @@
-# Durable × Dynamite 配对门禁（M0）
+# Durable × Dynamite 配对
+
+## 当前 SQLite 配对
+
+[SQLite 配对](sqlite-persistence-pairing.json)固定 `agent@0.7.0` 与 `dynamite@0.5.0` 的实际归档 SHA-256、源码基线和 workingTree 身份。宿主采用 Pi Durable `1.4.0-pakka.1` 的公开持久化端口；产物、原采纳回执和本地 checkpoint 同业务提交，恢复使用固定计划与封存结果。
+
+预期在[持久化 state](../../docs/state/dynamite-persistence.md)，架构取舍、实际检查及接续在[OpenSpec tasks](../../openspec/changes/adopt-dynamite-sqlite-persistence/tasks.md)。源码回归为 agent 278/278、Dynamite 386/386；两包仓库外矩阵为 73/73、461 次本地 HTTP、0 个 provider 错误。
+
+从相应 Dynamite checkout 重建并执行两包检查：
+
+```powershell
+npm run bootstrap:host -- <pakka-checkout>
+npm ci --ignore-scripts --no-audit --no-fund
+npm run smoke:package -- <pakka-checkout>
+```
+
+本地已验证归档在 `artifacts/dynamite/sqlite-persistence/`，生成物按 ignore 管理，固定身份由 JSON 记录。该目录下的 M0、M6 与初始 Compresser 配对各自保留原版本意义。
+
+## 历史 M0 门禁
 
 此目录消费外部 [`pakka-dynamite`](https://github.com/mapleluvr/pakka-dynamite) 的固定源码，**不是** Dynamite 算法或 adapter 的复制品。`@pakka/agent` 保留现名；MAS 和多 Conversation 迁移必须保留这个跨仓门禁。
 
@@ -26,7 +44,7 @@ npm run test:dynamite
 
 `summary.status` 为 `passed`、`blocked` 或运行中的 `running`；任何安装、声明、host smoke 或行为断言失败都返回非零 exit。门禁自身有 8 项失败先行回归，要求完整 6 项行为检查全部通过，拒绝 missing/duplicate TAP counts、减少用例、todo/skip/cancelled 或不一致的 pass 总数。**不能通过删除失败断言、标记 todo/skip 或把已知失败改成 expected success 来放行 M0。**
 
-当前第一组回归覆盖编号、reduce/flush、64/128 cap 的压缩候选与 wire adoption、reload/reopen 和缺失权限的零 dispatch。源 edit/ABA、unknown-storage 及其他组合回归仍是 [保留的失败配对与恢复条件](../../docs/archive/investigations/DEFERRED-DYNAMITE-COMPATIBILITY.md)，本目录初始回归不代表完整 M0 已通过。
+M0 第一组回归覆盖编号、reduce/flush、64/128 cap 的压缩候选与 wire adoption、reload/reopen 和缺失权限的零 dispatch。源 edit/ABA、unknown-storage 及其他组合回归仍是 [保留的失败配对与恢复条件](../../docs/archive/investigations/DEFERRED-DYNAMITE-COMPATIBILITY.md)，本目录初始回归不代表完整 M0 已通过。
 
 ## 核心迁移后的可选产品配对（独立候选）
 

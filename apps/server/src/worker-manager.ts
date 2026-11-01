@@ -199,7 +199,7 @@ export function createWorkerManager(rawOptions: WorkerManagerOptions): WorkerMan
 			throw new Error("Worker capacity exhausted");
 		let config = structuredClone(preset);
 		const storage = join(config.runtime.dataDir, "sessions", config.runtime.reservedSessionId),
-			file = join(storage, "main.jsonl");
+			file = join(storage, "main.sqlite");
 		if (existsSync(storage)) {
 			if (!existsSync(file)) throw new Error("Reserved worker storage initialization unknown");
 			config = { ...config, runtime: { ...config.runtime, reopenSessionFile: file } };

@@ -18,6 +18,7 @@ import type {
 
 /** Composition only: all Pi/storage mutable objects remain in DurableAdapter. */
 export async function createRuntime(options: RuntimeOptions): Promise<Runtime> {
+	if (Object.hasOwn(options, "migrateLegacy")) throw new Error("Unsupported runtime option: migrateLegacy");
 	if (options.backend !== undefined && options.backend !== "durable")
 		throw new Error("Unsupported production backend");
 	let port!: ManagedAdapterPort;

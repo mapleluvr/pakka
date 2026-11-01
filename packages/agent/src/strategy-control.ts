@@ -1,6 +1,10 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 import { randomUUID } from "node:crypto";
 import { ArtifactJournal, copy, freeze, hash, json, type ArtifactIntent } from "./artifact-journal.ts";
+import { NativeJournal, type JournalStorage } from "./native-journal.ts";
+import { sourceWorkPlan, type StoredSourceWork, type SourceWorkMutation } from "./source-work.ts";
+type Journal = ArtifactJournal | NativeJournal;
+class AwaitingWorkAdoption extends Error {}
 import { applyProjection } from "./strategy-projection.ts";
 import type { AdapterFrame, RunScopeToken, GovernedConversation } from "./durable-adapter.ts";
 import type {
@@ -21,6 +25,8 @@ import type {
 	ProjectionPlan,
 	SourceJob,
 	SourceJobSpec,
+	SourceWorkSnapshot,
+	SourceWorkCheckpoint,
 	StrategyBinding,
 	StrategyLifecycleEvent,
 	ToolInvocationScope,
@@ -47,9 +53,13 @@ interface Ports {
 	frame(): AdapterFrame;
 	fail(reason: string, sessionId?: string): void;
 	storageUnknown(reason: string, sessionId: string): void;
-	journalNamespace?(strategyId: string, kind: string): string | undefined;
 	models(): readonly ModelDTO[];
+	journalStorage?(): JournalStorage | undefined;
 	checkCompresser?(jobId: string): void;
+	recoverConverse?(
+		source: GovernedConversation["source"],
+		request: InferenceRequest,
+	): Promise<InferenceResult>;
 	converse?(
 		input: Omit<GovernedConversation, "reserve">,
 		strategy: { strategyId: string; maxCalls: number },
@@ -70,9 +80,29 @@ type BasisRecord = Authority & {
 	requestId: string | null;
 	frame: ContextFrame;
 	invocation?: object;
+	recovery?: boolean;
 };
 function isJsonObject(value: unknown): value is JsonObject {
 	return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+/** Optional object fields are absent in the persisted result; arrays and all
+ * present values still obey finite JSON. Public artifact input remains strict. */
+function finiteInferenceResult(result: InferenceResult): InferenceResult {
+	const normalize = (value: unknown): JsonValue => {
+		if (Array.isArray(value)) return value.map(normalize);
+		if (value !== null && typeof value === "object" && Object.getPrototypeOf(value) === Object.prototype) {
+			return Object.fromEntries(
+				Object.entries(value)
+					.filter(([, field]) => field !== undefined)
+					.map(([key, field]) => [key, normalize(field)]),
+			);
+		}
+		json(value);
+		return value;
+	};
+	// SAFETY: the adapter constructs InferenceResult; normalization preserves its
+	// required fields and present finite values, dropping only undefined object fields.
+	return copy(normalize(result)) as unknown as InferenceResult;
 }
 
 type JobRecord = Authority & {
@@ -85,9 +115,14 @@ type JobRecord = Authority & {
 	calls: number;
 	controller: AbortController;
 	policy: InferencePolicy;
-	journal: ArtifactJournal;
-	auditJournal: ArtifactJournal;
+	journal: Journal;
+	auditJournal: Journal;
 	requireArtifactReceipt: boolean;
+	originLeaseId: string;
+	metadata: JsonValue;
+	prepared?: Promise<void>;
+	restored?: StoredSourceWork;
+	recoveryOnly?: boolean;
 	conversational?: boolean;
 };
 
@@ -106,8 +141,9 @@ export class StrategyControl {
 	#basis = new WeakMap<FrameBasis, BasisRecord>();
 	#jobsByScope = new WeakMap<object, JobRecord>();
 	#jobs = new Set<JobRecord>();
+	#settling = new Set<Promise<void>>();
 	#projectors = new Map<string, { projector: Projector; leaseId: string }>();
-	#journals = new Map<string, ArtifactJournal>();
+	#journals = new Map<string, Journal>();
 	#listeners = new Map<string, Set<(event: StrategyLifecycleEvent) => void>>();
 	#runs = new WeakMap<object, Identity>();
 	#invocations = new WeakMap<object, Identity & { active: boolean }>();
@@ -161,7 +197,7 @@ export class StrategyControl {
 	#journalFailure(sessionId: string): (reason: string) => void {
 		return (reason) => this.#ports.storageUnknown(reason, sessionId);
 	}
-	#journal(authority: Authority, kind = "records"): ArtifactJournal {
+	#journal(authority: Authority, kind = "records"): Journal {
 		const sessionId = authority.sessionId;
 		if (
 			this.#namespaceVersion === 2 &&
@@ -170,23 +206,39 @@ export class StrategyControl {
 			throw new Error("Missing managed Conversation journal identity");
 		const namespace =
 			this.#namespaceVersion === 2
-				? (this.#ports.journalNamespace?.(authority.strategyId, kind) ??
-					JSON.stringify([
+				? JSON.stringify([
 						"pakka.conversation-journal.v2",
 						authority.conversationId,
 						authority.strategyId,
 						kind,
-					]))
+					])
 				: authority.strategyId + ":" + kind;
 		const key = JSON.stringify([sessionId, namespace]);
 		let journal = this.#journals.get(key);
 		if (!journal) {
-			journal = new ArtifactJournal(
-				this.#root,
-				authority.sessionId,
-				namespace,
-				this.#journalFailure(sessionId),
-			);
+			const storage = this.#ports.journalStorage?.();
+			journal = storage
+				? new NativeJournal(storage, hash(key), (mutations) => {
+						// A lifecycle transition refuses new work but may settle the existing
+						// source attempt. The store still checks its exact reservation identity.
+						const settlement =
+							kind === "inference" &&
+							["transitioning", "disposed"].includes(this.#ports.phase()) &&
+							sessionId === this.#ports.identity().sessionId &&
+							mutations.length === 1 &&
+							mutations.every(
+								(mutation) =>
+									mutation.key === hash(key) &&
+									mutation.records.length > 0 &&
+									mutation.records.every(
+										(row) => isJsonObject(row) && (row.kind === "completion" || row.kind === "work-result"),
+									) &&
+									(mutation.work?.length ?? 0) > 0 &&
+									mutation.work?.every((work) => work.type === "result"),
+							);
+						if (!settlement) this.#ports.ready();
+					})
+				: new ArtifactJournal(this.#root, authority.sessionId, namespace, this.#journalFailure(sessionId));
 			this.#journals.set(key, journal);
 		}
 		return journal;
@@ -224,6 +276,7 @@ export class StrategyControl {
 		principal: string,
 		leaseId: string,
 		invocation?: ToolInvocationScope,
+		recovery?: JobRecord,
 	): ContextFrame {
 		const local = this.#local.getStore();
 		if (local) this.#checkInvocation(local);
@@ -233,8 +286,10 @@ export class StrategyControl {
 		let artifacts: ContextFrame["artifacts"];
 		try {
 			artifacts = this.#reconcileArtifact(authority);
-			this.#ensureInferenceSettled(authority);
+			if (recovery) this.#checkJob(recovery);
+			else this.#ensureInferenceSettled(authority);
 		} catch (error) {
+			if (error instanceof AwaitingWorkAdoption) throw error;
 			this.#ports.storageUnknown("Artifact/adoption storage unknown: " + String(error), authority.sessionId);
 			throw error;
 		}
@@ -255,6 +310,7 @@ export class StrategyControl {
 			requestId: frame.requestId,
 			frame,
 			invocation: local ?? invocation,
+			recovery: recovery !== undefined,
 		});
 		return frame;
 	}
@@ -262,6 +318,7 @@ export class StrategyControl {
 		const record = this.#basis.get(scope);
 		if (
 			!record ||
+			record.recovery ||
 			record.principal !== principal ||
 			record.strategyId !== strategyId ||
 			record.leaseId !== leaseId
@@ -412,6 +469,7 @@ export class StrategyControl {
 			const liveJob = [...this.#jobs].some(
 				(job) =>
 					job.id === reservation.jobId &&
+					!job.recoveryOnly &&
 					!job.controller.signal.aborted &&
 					job.sessionId === authority.sessionId &&
 					job.generation === authority.generation &&
@@ -447,7 +505,22 @@ export class StrategyControl {
 					typeof record.transactionId === "string" &&
 					typeof record.version === "number",
 			) as JsonObject | undefined;
-			if (!adopted) throw new Error("Completed inference has no durable artifact adoption receipt");
+			if (!adopted) {
+				const journal = this.#journal(authority, "inference");
+				if (
+					journal instanceof NativeJournal &&
+					journal
+						.work()
+						.some(
+							(work) =>
+								work.jobId === reservation.jobId &&
+								work.principal === authority.principal &&
+								work.result !== null,
+						)
+				)
+					throw new AwaitingWorkAdoption("Stored inference awaits local adoption of its original work");
+				throw new Error("Completed inference has no durable artifact adoption receipt");
+			}
 			this.#journal(authority).assertTransaction(adopted.transactionId as string, adopted.version as number);
 		}
 	}
@@ -471,7 +544,7 @@ export class StrategyControl {
 					record.sessionId === job.sessionId &&
 					record.strategyId === job.strategyId &&
 					record.principal === job.principal &&
-					record.leaseId === job.leaseId,
+					(record.leaseId === job.originLeaseId || record.leaseId === job.leaseId),
 			);
 			const completion = records.find(
 				(record) =>
@@ -494,11 +567,11 @@ export class StrategyControl {
 				throw new Error("Artifact inference attempt already adopted");
 		}
 	}
-	#settleArtifact(
+	#adoptionRecords(
 		job: JobRecord,
-		receipt: Extract<ReturnType<ArtifactJournal["append"]>, { status: "committed" }>,
+		receipt: Extract<Awaited<ReturnType<Journal["append"]>>, { status: "committed" }>,
 		attemptIds: readonly string[],
-	): void {
+	): JsonValue[] {
 		const records = job.auditJournal.read().records;
 		const adopted: JsonValue[] = [];
 		for (const attemptId of attemptIds) {
@@ -538,9 +611,17 @@ export class StrategyControl {
 				});
 			}
 		}
+		return adopted;
+	}
+	async #settleArtifact(
+		job: JobRecord,
+		receipt: Extract<Awaited<ReturnType<Journal["append"]>>, { status: "committed" }>,
+		attemptIds: readonly string[],
+	): Promise<void> {
+		const adopted = this.#adoptionRecords(job, receipt, attemptIds);
 		const current = job.auditJournal.read();
 		if (adopted.length > 0) {
-			const adoptionReceipt = job.auditJournal.append(current.version, adopted);
+			const adoptionReceipt = await job.auditJournal.append(current.version, adopted);
 			if (adoptionReceipt.status !== "committed")
 				throw new Error("Inference adoption receipt storage unknown");
 		}
@@ -573,9 +654,22 @@ export class StrategyControl {
 			artifacts: Object.freeze({
 				read: (scope: ArtifactScope) =>
 					this.#journal(this.#scope(scope, principal, strategyId, leaseId)).read(),
+				receipt: (scope: ArtifactScope, transactionId: string) => {
+					const journal = this.#journal(this.#scope(scope, principal, strategyId, leaseId));
+					if (!(journal instanceof NativeJournal))
+						throw new Error("Native transaction receipts unavailable in test oracle");
+					if (!/^[A-Za-z0-9_-]{1,128}$/.test(transactionId)) throw new Error("Invalid transaction identity");
+					return journal.receipt(transactionId);
+				},
 				append: (
 					scope: ArtifactScope,
-					batch: { expectedVersion: number; records: readonly JsonValue[]; attemptIds?: readonly string[] },
+					batch: {
+						expectedVersion: number;
+						records: readonly JsonValue[];
+						transactionId?: string;
+						attemptIds?: readonly string[];
+						checkpoint?: SourceWorkCheckpoint;
+					},
 				) => {
 					if (!lease.hooks.includes("context_artifacts.write"))
 						throw new Error("Missing context_artifacts.write lease");
@@ -586,26 +680,94 @@ export class StrategyControl {
 						throw new Error("Artifact adoption requires exact attempt IDs");
 					if (!job?.requireArtifactReceipt && attemptIds.length > 0)
 						throw new Error("Attempt IDs require an opted-in source job");
+					if (batch.checkpoint !== undefined) {
+						json(batch.checkpoint);
+						if (
+							!job ||
+							!attemptIds.length ||
+							!["ready", "finished"].includes(batch.checkpoint.stage) ||
+							Object.keys(batch.checkpoint).some((key) => !["stage", "state", "retryAtMs"].includes(key)) ||
+							(batch.checkpoint.retryAtMs !== undefined &&
+								(!Number.isSafeInteger(batch.checkpoint.retryAtMs) || batch.checkpoint.retryAtMs < 0))
+						)
+							throw new Error("Invalid work checkpoint");
+					}
 					// Association checks are caller preconditions, before either durable
 					// intent or artifact bytes. Post-write validation cannot undo an effect.
 					if (job?.requireArtifactReceipt) this.#validateAdoption(job, attemptIds);
-					const receipt = this.#journal(authority).append(batch.expectedVersion, batch.records, {
-						attemptIds,
-					});
-					if (receipt.status !== "committed" || !job || attemptIds.length === 0) return receipt;
-					try {
-						this.#settleArtifact(job, receipt, attemptIds);
-						return receipt;
-					} catch (error) {
-						this.#ports.storageUnknown(
-							"Artifact adoption receipt unknown: " + String(error),
-							authority.sessionId,
-						);
-						return {
-							status: "unknown",
-							reason: "Artifact adoption receipt failed: " + String(error),
-						} as const;
+					const journal = this.#journal(authority);
+					if (journal instanceof NativeJournal) {
+						const transactionId = batch.transactionId ?? randomUUID();
+						const companions: {
+							journal: NativeJournal;
+							expectedVersion: number;
+							records: JsonValue[];
+							work?: readonly SourceWorkMutation[];
+						}[] = [];
+						if (job && attemptIds.length) {
+							if (!(job.auditJournal instanceof NativeJournal))
+								throw new Error("Mixed journal storage refused");
+							const adopted = this.#adoptionRecords(
+								job,
+								{
+									status: "committed",
+									version: batch.expectedVersion + 1,
+									transactionId,
+									journalPath: journal.address(),
+								},
+								attemptIds,
+							);
+							adopted.push({
+								kind: "checkpoint",
+								jobId: job.id,
+								planId: job.planId,
+								stage: "adopted",
+								transactionId,
+								artifactVersion: batch.expectedVersion + 1,
+								attemptIds: [...attemptIds],
+							});
+							companions.push({
+								journal: job.auditJournal,
+								expectedVersion: job.auditJournal.read().version,
+								records: adopted,
+								work: [
+									{
+										type: "adopt",
+										jobId: job.id,
+										transactionId,
+										artifactVersion: batch.expectedVersion + 1,
+										...(batch.checkpoint === undefined ? {} : { checkpoint: copy(batch.checkpoint) }),
+									},
+								],
+							});
+						}
+						return journal.append(batch.expectedVersion, batch.records, {
+							transactionId,
+							companions,
+							check: () => {
+								this.#scope(scope, principal, strategyId, leaseId);
+								if (job?.requireArtifactReceipt) this.#validateAdoption(job, attemptIds);
+							},
+						});
 					}
+					const pending = journal.append(batch.expectedVersion, batch.records, { attemptIds });
+					return (async () => {
+						const receipt = await pending;
+						if (receipt.status !== "committed" || !job || attemptIds.length === 0) return receipt;
+						try {
+							await this.#settleArtifact(job, receipt, attemptIds);
+							return receipt;
+						} catch (error) {
+							this.#ports.storageUnknown(
+								"Artifact adoption receipt unknown: " + String(error),
+								authority.sessionId,
+							);
+							return {
+								status: "unknown",
+								reason: "Artifact adoption receipt failed: " + String(error),
+							} as const;
+						}
+					})();
 				},
 			}),
 			models: () => {
@@ -617,6 +779,17 @@ export class StrategyControl {
 				if (!grants.has("model.infer")) throw new Error("Missing model.infer grant");
 				const record = this.#checkBasis(basis, principal, strategyId, leaseId);
 				return this.#createJob(record, spec);
+			},
+			pendingWork: () => this.#pendingWork(this.#authority(strategyId, principal, leaseId)),
+			restoreJob: (jobId: string) => {
+				if (!grants.has("model.infer")) throw new Error("Missing model.infer grant");
+				return this.#restoreJob(this.#authority(strategyId, principal, leaseId), jobId);
+			},
+			readWorkFrame: (scope: ArtifactScope) => {
+				const job = this.#jobsByScope.get(scope);
+				if (!job || job.principal !== principal || job.strategyId !== strategyId || job.leaseId !== leaseId)
+					throw new Error("Invalid recovery job scope");
+				return this.#readFrame(strategyId, principal, leaseId, undefined, job);
 			},
 			audit: () => this.#audit(this.#authority(strategyId, principal, leaseId)),
 			subscribe: (listener: (event: StrategyLifecycleEvent) => void) => {
@@ -698,21 +871,198 @@ export class StrategyControl {
 				journal: this.#journal(record),
 				auditJournal: this.#journal(record, "inference"),
 				requireArtifactReceipt: spec.requireArtifactReceipt === true,
+				originLeaseId: record.leaseId,
+				metadata: spec.metadata === undefined ? null : copy(spec.metadata),
 			};
 		this.#jobsByScope.set(scope, job);
 		this.#jobs.add(job);
 		this.#checkJob(job);
 		return this.#jobHandle(job);
 	}
+	#pendingWork(authority: Authority): readonly SourceWorkSnapshot[] {
+		const journal = this.#journal(authority, "inference");
+		if (!(journal instanceof NativeJournal)) return [];
+		return copy(
+			journal
+				.work()
+				.filter((work) => work.principal === authority.principal && work.strategyId === authority.strategyId)
+				.map((work) => ({
+					address: work.namespace + "." + work.jobId,
+					jobId: work.jobId,
+					planId: work.planId,
+					stage: work.stage as SourceWorkSnapshot["stage"],
+					checkpoint: work.checkpoint,
+					retryAtMs: work.retryAtMs,
+					sourceEntryIds: work.sources.map(([id]) => id),
+					targetEntryIds: work.targetEntryIds,
+					metadata: work.metadata,
+					attemptIds: work.attemptIds,
+					budget: { reserved: work.attemptIds.length, maxCalls: work.maxCalls },
+					hasSealedResult: work.sealed && work.result !== null,
+				})),
+		);
+	}
+	async #restoreJob(authority: Authority, jobId: string): Promise<SourceJob> {
+		const journal = this.#journal(authority),
+			auditJournal = this.#journal(authority, "inference");
+		if (!(auditJournal instanceof NativeJournal))
+			throw new Error("Native work recovery unavailable in test oracle");
+		const work = auditJournal.work().find((work) => work.jobId === jobId);
+		const policy = this.#policies.find((policy) => policy.strategyId === authority.strategyId);
+		if (
+			!work ||
+			work.principal !== authority.principal ||
+			work.strategyId !== authority.strategyId ||
+			work.sessionId !== authority.sessionId ||
+			work.durableSessionId !== authority.durableSessionId ||
+			work.conversationId !== authority.conversationId ||
+			!policy ||
+			work.maxCalls > policy.maxJobCalls ||
+			(work.result && !policy.modelKeys.includes(work.result.modelKey))
+		)
+			throw new Error("Persisted work identity/policy does not match current authority");
+		const scope = Object.freeze({});
+		const job: JobRecord = {
+			...authority,
+			id: work.jobId,
+			scope,
+			planId: work.planId,
+			sources: new Map(work.sources),
+			targets: copy(work.targetEntryIds),
+			maxCalls: work.maxCalls,
+			calls: work.attemptIds.length,
+			controller: new AbortController(),
+			policy,
+			journal,
+			auditJournal,
+			requireArtifactReceipt: work.requireArtifactReceipt,
+			originLeaseId: work.originLeaseId,
+			metadata: copy(work.metadata),
+			prepared: Promise.resolve(),
+			restored: work,
+			recoveryOnly: !["planned", "ready"].includes(work.stage),
+			conversational: work.mode === "conversation",
+		};
+		this.#checkJob(job);
+		this.#jobsByScope.set(scope, job);
+		this.#jobs.add(job);
+		return this.#jobHandle(job);
+	}
+	#prepareJob(job: JobRecord): Promise<void> {
+		this.#checkJob(job);
+		if (job.prepared) return job.prepared;
+		const journal = job.auditJournal;
+		if (!(journal instanceof NativeJournal)) return (job.prepared = Promise.resolve());
+		json(job.metadata);
+		if (Buffer.byteLength(JSON.stringify(job.metadata), "utf8") > 262144)
+			throw new Error("Source-work metadata is too large");
+		const work: StoredSourceWork = {
+			namespace: "",
+			jobId: job.id,
+			planId: job.planId,
+			sessionId: job.sessionId,
+			...(job.durableSessionId === undefined ? {} : { durableSessionId: job.durableSessionId }),
+			...(job.conversationId === undefined ? {} : { conversationId: job.conversationId }),
+			strategyId: job.strategyId,
+			principal: job.principal,
+			originLeaseId: job.originLeaseId,
+			sources: [...job.sources],
+			targetEntryIds: copy(job.targets),
+			maxCalls: job.maxCalls,
+			requireArtifactReceipt: job.requireArtifactReceipt,
+			metadata: copy(job.metadata),
+			stage: "planned",
+			checkpoint: null,
+			retryAtMs: null,
+			attemptIds: [],
+			pendingAttempt: null,
+			requestHash: null,
+			mode: null,
+			result: null,
+			resultDigest: null,
+			sealed: false,
+			adoption: null,
+		};
+		return (job.prepared = (async () => {
+			const receipt = await journal.appendLatest(
+				[{ kind: "workplan", jobId: job.id, planId: job.planId, planHash: hash(sourceWorkPlan(work)) }],
+				() => this.#checkJob(job),
+				[{ type: "plan", work }],
+			);
+			if (receipt.status !== "committed")
+				throw new Error("Source-work preparation unconfirmed: " + receipt.status);
+			this.#checkJob(job);
+		})());
+	}
+	#recoveredResult(
+		job: JobRecord,
+		request: InferenceRequest,
+		mode: "single" | "conversation",
+		validateCall?: InferenceCallValidator,
+	): InferenceResult | undefined {
+		const work = job.restored;
+		if (!work) return undefined;
+		if (work.stage === "ready" && work.retryAtMs !== null && Date.now() < work.retryAtMs)
+			throw new Error("Persisted retry time has not arrived");
+		if (work.attemptIds.length === 0 || work.stage === "ready") {
+			job.restored = undefined;
+			job.recoveryOnly = false;
+			return undefined;
+		}
+		this.#checkJob(job);
+		if (work.mode !== mode || work.requestHash !== hash(copy(request)))
+			throw new Error("Restored work request/mode digest changed");
+		if (work.stage === "quarantined" || work.pendingAttempt || !work.result || !work.sealed)
+			throw new Error("Restored work has unconfirmed model effects; request replay refused");
+		if (work.resultDigest !== hash(work.result)) throw new Error("Restored result digest is invalid");
+		if (work.result.toolCall && validateCall?.(copy(work.result.toolCall)) !== undefined)
+			throw new Error("Restored candidate validation changed");
+		return copy(work.result);
+	}
+	async #sealJobResult(job: JobRecord, rawResult: InferenceResult): Promise<void> {
+		if (!(job.auditJournal instanceof NativeJournal)) return;
+		const result = finiteInferenceResult(rawResult);
+		const receipt = await job.auditJournal.appendLatest(
+			[
+				{
+					kind: "work-result",
+					jobId: job.id,
+					planId: job.planId,
+					attemptId: result.attemptId,
+					resultHash: hash(result),
+				},
+			],
+			// Quarantine is bookkeeping for effects already checked and recorded.
+			// Revocation must block adoption, not discard the late audit result.
+			result.status === "quarantined" ? () => {} : () => this.#checkJob(job),
+			[{ type: "seal", jobId: job.id, result: copy(result) }],
+		);
+		if (receipt.status !== "committed")
+			throw new Error("Source-work sealed result unconfirmed: " + receipt.status);
+	}
+	#trackInference(pending: Promise<InferenceResult>): Promise<InferenceResult> {
+		const settled = pending.then(
+			() => {},
+			() => {},
+		);
+		this.#settling.add(settled);
+		void settled.then(() => this.#settling.delete(settled));
+		return pending;
+	}
+	/** Own all started attempts until their bookkeeping is confirmed or unknown. */
+	async drain(): Promise<void> {
+		while (this.#settling.size) await Promise.all([...this.#settling]);
+	}
 	#jobHandle(job: JobRecord): SourceJob {
 		return Object.freeze({
 			id: job.id,
 			scope: job.scope,
 			signal: job.controller.signal,
+			prepare: () => this.#prepareJob(job),
 			check: () => this.#checkJob(job),
-			infer: (request: InferenceRequest) => this.#infer(job, request),
+			infer: (request: InferenceRequest) => this.#trackInference(this.#infer(job, request)),
 			converse: (request: InferenceRequest, validateCall?: InferenceCallValidator) =>
-				this.#converse(job, request, validateCall),
+				this.#trackInference(this.#converse(job, request, validateCall)),
 			cancel: (reason = "caller cancellation") => this.#cancelJob(job, reason),
 		});
 	}
@@ -755,7 +1105,7 @@ export class StrategyControl {
 		);
 		return { request, cap };
 	}
-	#beginInference(job: JobRecord, request: InferenceRequest, cap: number): string {
+	async #beginInference(job: JobRecord, request: InferenceRequest, cap: number): Promise<string> {
 		this.#checkJob(job);
 		const journal = job.auditJournal,
 			before = journal.read();
@@ -765,8 +1115,13 @@ export class StrategyControl {
 		).length;
 		if (job.calls >= job.maxCalls || calls >= job.policy.maxCalls)
 			throw new Error("Inference call budget exhausted");
+		if (journal instanceof NativeJournal) {
+			const work = journal.work().find((work) => work.jobId === job.id);
+			if (work?.retryAtMs !== null && work?.retryAtMs !== undefined && Date.now() < work.retryAtMs)
+				throw new Error("Persisted retry time has not arrived");
+		}
 		const attemptId = randomUUID();
-		const reservation = journal.append(before.version, [
+		const reserve = [
 			{
 				kind: "reservation",
 				jobId: job.id,
@@ -780,7 +1135,36 @@ export class StrategyControl {
 				principal: job.principal,
 				leaseId: job.leaseId,
 			},
-		]);
+		] as const;
+		const reservation =
+			journal instanceof NativeJournal
+				? await journal.appendLatest(
+						reserve,
+						(snapshot) => {
+							this.#checkJob(job);
+							const work = journal.work().find((work) => work.jobId === job.id);
+							if (work?.retryAtMs !== null && work?.retryAtMs !== undefined && Date.now() < work.retryAtMs)
+								throw new Error("Persisted retry time has not arrived");
+							const reservations = snapshot.records.filter(
+								(row) => isJsonObject(row) && row.kind === "reservation",
+							);
+							if (
+								reservations.length >= job.policy.maxCalls ||
+								reservations.filter((row) => isJsonObject(row) && row.jobId === job.id).length >= job.maxCalls
+							)
+								throw new Error("Inference call budget exhausted");
+						},
+						[
+							{
+								type: "reserve",
+								jobId: job.id,
+								attemptId,
+								requestHash: hash(copy(request)),
+								mode: job.conversational ? "conversation" : "single",
+							},
+						],
+					)
+				: await journal.append(before.version, reserve);
 		if (reservation.status !== "committed") {
 			this.#ports.storageUnknown("Inference budget storage unknown/conflict", job.sessionId);
 			throw new Error("Inference budget storage unknown/conflict");
@@ -788,19 +1172,19 @@ export class StrategyControl {
 		job.calls++;
 		return attemptId;
 	}
-	#completeInference(
+	async #completeInference(
 		job: JobRecord,
 		attemptId: string,
 		cap: number,
 		output: Omit<InferenceResult, "attemptId">,
-	): InferenceResult {
+	): Promise<InferenceResult> {
 		const journal = job.auditJournal;
 		try {
 			this.#checkJob(job);
 		} catch (error) {
 			output = { ...output, status: "quarantined", reason: String(error) };
 		}
-		const result = copy({ ...output, attemptId }),
+		const result = finiteInferenceResult({ ...output, attemptId }),
 			audit: InferenceAudit = { ...result, jobId: job.id, planId: job.planId, maxOutputTokens: cap };
 		try {
 			const after = journal.read();
@@ -814,9 +1198,28 @@ export class StrategyControl {
 				)
 			)
 				throw new Error("Inference attempt completion already recorded; do not duplicate");
-			const receipt = journal.append(after.version, [
+			const completion = [
 				{ kind: "completion", audit: JSON.parse(JSON.stringify(audit)) as JsonValue },
-			]);
+			] as const;
+			const receipt =
+				journal instanceof NativeJournal
+					? await journal.appendLatest(
+							completion,
+							(snapshot) => {
+								if (
+									snapshot.records.some(
+										(row) =>
+											isJsonObject(row) &&
+											row.kind === "completion" &&
+											isJsonObject(row.audit) &&
+											row.audit.attemptId === attemptId,
+									)
+								)
+									throw new Error("Inference attempt completion already recorded");
+							},
+							[{ type: "result", jobId: job.id, result, sealed: !job.conversational }],
+						)
+					: await journal.append(after.version, completion);
 			if (receipt.status !== "committed")
 				throw new Error("Inference completion storage unknown; do not retry");
 		} catch (error) {
@@ -828,8 +1231,11 @@ export class StrategyControl {
 	async #infer(job: JobRecord, original: InferenceRequest): Promise<InferenceResult> {
 		if (job.conversational)
 			throw new Error("A conversational source job cannot switch to single-call retries");
-		const { request, cap } = this.#prepareInference(job, original),
-			attemptId = this.#beginInference(job, request, cap);
+		const { request, cap } = this.#prepareInference(job, original);
+		await this.#prepareJob(job);
+		const recovered = this.#recoveredResult(job, request, "single");
+		if (recovered) return recovered;
+		const attemptId = await this.#beginInference(job, request, cap);
 		const signal = AbortSignal.any([job.controller.signal, AbortSignal.timeout(job.policy.timeoutMs)]);
 		let output: Omit<InferenceResult, "attemptId">;
 		try {
@@ -860,10 +1266,43 @@ export class StrategyControl {
 		if (!request.outputTool || (validateCall !== undefined && typeof validateCall !== "function"))
 			throw new Error("Conversational inference requires a declared output tool and optional pure validator");
 		if (!this.#ports.converse) throw new Error("Conversational auxiliary inference unavailable");
+		await this.#prepareJob(job);
+		const work = job.restored;
+		if (
+			work &&
+			work.stage === "resultStored" &&
+			!work.sealed &&
+			!work.pendingAttempt &&
+			work.result?.status === "completed"
+		) {
+			if (work.mode !== "conversation" || work.requestHash !== hash(copy(request)))
+				throw new Error("Restored work request/mode digest changed");
+			if (!this.#ports.recoverConverse) throw new Error("Compresser fixed result recovery unavailable");
+			const result = await this.#ports.recoverConverse(
+				{
+					jobId: job.id,
+					planId: job.planId,
+					sessionId: job.sessionId,
+					conversationId: job.conversationId ?? "",
+				},
+				request,
+			);
+			const { compresser: _compresser, ...single } = result;
+			if (
+				hash(single) !== hash(work.result) ||
+				!work.attemptIds.includes(result.attemptId) ||
+				(result.toolCall && validateCall?.(copy(result.toolCall)) !== undefined)
+			)
+				throw new Error("Compresser result differs from the confirmed source completion");
+			await this.#sealJobResult(job, result);
+			job.restored = { ...work, result: copy(result), resultDigest: hash(result), sealed: true };
+		}
+		const recovered = this.#recoveredResult(job, request, "conversation", validateCall);
+		if (recovered) return recovered;
 		this.#ports.checkCompresser?.(job.id);
 		if (job.calls && !job.conversational) throw new Error("Source job already uses single-call inference");
 		job.conversational = true;
-		return this.#ports.converse(
+		const result = await this.#ports.converse(
 			{
 				request,
 				cap,
@@ -882,6 +1321,8 @@ export class StrategyControl {
 			},
 			{ strategyId: job.strategyId, maxCalls: job.policy.maxCalls },
 		);
+		await this.#sealJobResult(job, result);
+		return result;
 	}
 	#planSnapshot(plan: ProjectionPlan): ProjectionPlan {
 		if (plan.status === "disabled" || plan.status === "blocked") return freeze({ ...plan });

@@ -1,7 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
-import { deferred, fixture } from "./fixture.ts";
+import { deferred, fixture, raw } from "./fixture.ts";
 
 test("explicit generation block persists a committed input without HTTP and leaves the host reusable", async () => {
 	const f = await fixture();
@@ -25,7 +24,7 @@ test("explicit generation block persists a committed input without HTTP and leav
 		assert.equal(host.view().busy, false);
 		assert.equal(f.requests.length, 0);
 		assert.ok(host.view().context.some((entry) => entry.text.includes("BLOCKED-INPUT")));
-		const storage = await readFile(host.view().sessionFile, "utf8");
+		const storage = await raw(host);
 		assert.match(storage, /"reason":"blocked"/);
 		assert.doesNotMatch(storage, /"reason":"faulted"/);
 		assert.doesNotMatch(storage, /"kind":"pi.assistant"/);

@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { readFile, writeFile } from "node:fs/promises";
+import { rewriteNativeDocument } from "./native-storage.ts";
 import { createRuntime } from "../src/index.ts";
 import { runtimeFixture, runtimeLimits } from "./runtime-fixture.ts";
 import { inferencePolicy, target } from "./strategy-fixture.ts";
@@ -125,26 +125,29 @@ test("M1 review: post-fork prompt tools are current and idle followUp is explici
 	}
 });
 
-test("M1 review: damaged Conversation artifact storage seals its shared Session", async () => {
+test("M1 review: damaged Conversation artifact storage seals its shared Session when reread", async () => {
 	const m = await runtimeFixture();
-	let path: string | undefined, before: string | undefined;
 	try {
 		const a = m.runtime.root(),
 			b = await m.runtime.conversation(await m.runtime.createConversation({ key: "peer" }));
 		const aa = activate(a),
 			frame = aa.binding.readFrame();
-		const receipt = aa.binding.artifacts.append(frame.basis, { expectedVersion: 0, records: ["owned"] });
+		const receipt = await aa.binding.artifacts.append(frame.basis, {
+			expectedVersion: 0,
+			records: ["owned"],
+		});
 		assert.equal(receipt.status, "committed");
-		path = receipt.journalPath;
-		before = await readFile(path, "utf8");
-		await writeFile(path, before.slice(0, -1));
-		assert.throws(() => aa.binding.readFrame(), /storage|journal/i);
+		const key = receipt.journalPath!.split(/[\\/]/).at(-1)! + "." + receipt.version;
+		await rewriteNativeDocument(a.view().sessionFile, "pakka.strategy-batch", key, (value) => ({
+			...(value as object),
+			checksum: "corrupt-checksum",
+		}));
+		await assert.rejects(a.reload(), /storage|journal|checksum/i);
 		assert.equal(a.view().phase, "failed");
 		assert.equal(b.view().phase, "failed");
 		assert.equal(m.runtime.view().phase, "failed");
 		assert.equal(m.f.requests.length, 0);
 	} finally {
-		if (path && before) await writeFile(path, before);
 		await m.close();
 	}
 });

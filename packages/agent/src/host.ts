@@ -44,9 +44,10 @@ type RuntimeAdapter = {
 	models: DurableAdapter["models"];
 	infer: DurableAdapter["infer"];
 	converse?: DurableAdapter["converse"];
+	recoverConverse?: DurableAdapter["recoverConverse"];
 	checkCompresser?: DurableAdapter["checkCompresser"];
 	storageUnknown?: DurableAdapter["storageUnknown"];
-	journalNamespace?: DurableAdapter["journalNamespace"];
+	journalStorage?: DurableAdapter["journalStorage"];
 	readonly busy: boolean;
 	readonly canQueue: boolean;
 	start: DurableAdapter["start"];
@@ -114,12 +115,16 @@ class Kernel {
 					if (sessionId === this.#adapter.snapshot().sessionId) this.#adapter.storageUnknown?.(reason);
 					this.#fail(reason, sessionId);
 				},
-				journalNamespace: (strategyId, kind) => this.#adapter.journalNamespace?.(strategyId, kind),
 				models: () => this.#adapter.models(),
+				journalStorage: () => this.#adapter.journalStorage?.(),
 				checkCompresser: (jobId) => {
 					if (!this.#adapter.checkCompresser)
 						throw new Error("Conversational auxiliary inference unavailable");
 					this.#adapter.checkCompresser(jobId);
+				},
+				recoverConverse: (source, request) => {
+					if (!this.#adapter.recoverConverse) throw new Error("Compresser result recovery unavailable");
+					return this.#adapter.recoverConverse(source, request);
 				},
 				converse: (input, strategy) => {
 					if (!this.#adapter.converse) throw new Error("Conversational auxiliary inference unavailable");
@@ -222,7 +227,14 @@ class Kernel {
 		record.receipt = { ...record.receipt, ...patch };
 		this.#emit({ type: "receipt", receipt: record.receipt });
 	}
-	#fail(reason: string, sessionId = this.#adapter.snapshot().sessionId): void {
+	#fail(reason: string, sessionId?: string): void {
+		const current = this.#adapter?.snapshot().sessionId;
+		if (current === undefined) {
+			this.#lastError ??= reason;
+			this.#phase = "failed";
+			return;
+		}
+		sessionId ??= current;
 		if (!this.#sessionFailures.has(sessionId)) this.#sessionFailures.set(sessionId, reason);
 		if (sessionId !== this.#adapter.snapshot().sessionId || this.#phase === "disposed") return;
 		this.#lastError = this.#sessionFailures.get(sessionId);
@@ -469,6 +481,7 @@ class Kernel {
 		const operation = (async () => {
 			try {
 				await this.#adapter.abortAndIdle();
+				await this.#control.drain();
 				if (replace) {
 					const previous = this.#adapter;
 					const next = await previous.replacement((n) => this.#notice(n), this.#adapterControl());
@@ -509,6 +522,7 @@ class Kernel {
 				/* still dispose current adapter */
 			}
 			this.#clear();
+			await this.#control.drain();
 			await this.#adapter.dispose();
 			this.#listeners.clear();
 		})();

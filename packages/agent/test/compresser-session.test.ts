@@ -1,7 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { dirname, join } from "node:path";
-import { chmod, readdir, readFile, writeFile } from "node:fs/promises";
+import { join } from "node:path";
+import { writeFile } from "node:fs/promises";
+import { blockSqliteWrites, readStorageText } from "./native-storage.ts";
 import * as api from "../src/index.ts";
 import { fixture as httpFixture, seed, text, deferred } from "./fixture.ts";
 import { binding, target, inferencePolicy } from "./strategy-fixture.ts";
@@ -493,11 +494,11 @@ test("one container serves distinct external Sessions without a sibling seal rev
 		assert.equal(state.conversations.find(row => row.jobId === other.job.id)!.sealed, true);
 		assert.equal(state.conversations.find(row => row.jobId === other.job.id)!.toolErrors, 2);
 		assert.equal(new Set(state.conversations.map((row) => row.sourceSessionId)).size, 2);
-		const adopted = original.b.artifacts.append(job.scope, {
+		const adopted = (await original.b.artifacts.append(job.scope, {
 			expectedVersion: 0,
 			records: [{ candidate: "independent successful candidate" }],
 			attemptIds: [result.attemptId],
-		});
+		}));
 		assert.equal(adopted.status, "committed");
 		assert.equal(original.b.artifacts.read(job.scope).version, 1);
 	} finally {
@@ -689,7 +690,7 @@ test("a source audit storage failure after real HTTP seals unknown work without 
 		return { tool: "submit_candidate", args: { text: "COMPLETE" } };
 	});
 	const c = await container(f.root);
-	let path: string | undefined;
+	let unblock: (() => void) | undefined;
 	try {
 		const host = await f.start(policy(f.endpoint, c));
 		await seed(host);
@@ -697,12 +698,11 @@ test("a source audit storage failure after real HTTP seals unknown work without 
 		owner.activateStrategy({ id: "strategy", hooks: ["context_artifacts.write"] });
 		const b = binding(owner),
 			original = b.readFrame();
-		const initial = b.artifacts.append(original.basis, {
+		const initial = (await b.artifacts.append(original.basis, {
 			expectedVersion: original.artifacts.version,
 			records: [{ kind: "initial" }],
-		});
+		}));
 		assert.equal(initial.status, "committed");
-		path = initial.journalPath;
 		const frame = b.readFrame(),
 			job = b.createJob(frame.basis, {
 				planId: "audit-unknown",
@@ -711,20 +711,10 @@ test("a source audit storage failure after real HTTP seals unknown work without 
 			});
 		const pending = job.converse(request);
 		await entered.promise;
-		const attempt = b.audit()[0].attemptId,
-			directory = dirname(path);
-		const files = await Promise.all(
-			(await readdir(directory))
-				.filter((name) => name.endsWith(".jsonl"))
-				.map(async (name) => ({
-					path: join(directory, name),
-					content: await readFile(join(directory, name), "utf8"),
-				})),
-		);
-		const matching = files.filter((file) => file.content.includes(attempt));
-		assert.equal(matching.length, 1);
-		path = matching[0].path;
-		await chmod(path, 0o444);
+		const attempt = b.audit()[0].attemptId, file = host.view().sessionFile;
+		const before = await readStorageText(file);
+		assert.ok(before.includes(attempt));
+		unblock = blockSqliteWrites(file);
 		const rejected = assert.rejects(pending, /storage|persist|journal|unknown|writ/i);
 		release.resolve();
 		await rejected;
@@ -735,8 +725,8 @@ test("a source audit storage failure after real HTTP seals unknown work without 
 		assert.equal(state.conversations[0].toolErrors, 0);
 		assert.equal(state.conversations[0].unresolvedErrors, 0);
 		assert.equal(
-			await readFile(path, "utf8"),
-			matching[0].content,
+			await readStorageText(file),
+			before,
 			"the original reservation remains, with no invented completion or refund",
 		);
 		assert.equal(f.requests.filter((p) => p.model === "summary-model").length, 1);
@@ -752,7 +742,7 @@ test("a source audit storage failure after real HTTP seals unknown work without 
 		await assert.rejects(job.converse(request), /storage|failed|unknown|cancel/i);
 	} finally {
 		release.resolve();
-		if (path) await chmod(path, 0o666);
+		unblock?.();
 		await f.close();
 		await c.close();
 	}

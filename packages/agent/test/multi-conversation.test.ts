@@ -68,8 +68,8 @@ test("M1: equal strategy IDs use independent physical journals and projection pe
 			bb = binding(cb, "same-strategy");
 		const fa = ba.readFrame(),
 			fb = bb.readFrame();
-		const ja = ba.artifacts.append(fa.basis, { expectedVersion: 0, records: [{ only: "A" }] });
-		const jb = bb.artifacts.append(fb.basis, { expectedVersion: 0, records: [{ only: "B" }] });
+		const ja = (await ba.artifacts.append(fa.basis, { expectedVersion: 0, records: [{ only: "A" }] }));
+		const jb = (await bb.artifacts.append(fb.basis, { expectedVersion: 0, records: [{ only: "B" }] }));
 		assert.equal(ja.status, "committed");
 		assert.equal(jb.status, "committed");
 		assert.notEqual(ja.journalPath, jb.journalPath);
@@ -272,7 +272,7 @@ test("M1: fork publishes a new resource reference and leaves peer identity/capab
 		assert.equal(await m.runtime.conversation(current), a);
 		assert.equal(await m.runtime.conversation(peerRef), b);
 		assert.equal(
-			bound.artifacts.append(frame.basis, { expectedVersion: 0, records: [{ untouched: true }] }).status,
+			(await bound.artifacts.append(frame.basis, { expectedVersion: 0, records: [{ untouched: true }] })).status,
 			"committed",
 		);
 		await user.submit({ key: "after-fork", text: "AFTER-FORK-A" });
@@ -300,7 +300,7 @@ test("M1: managed restore reopens the active fork and child journals without ins
 		const oldBound = binding(owner, "saved"),
 			saved = oldBound.readFrame();
 		assert.equal(
-			oldBound.artifacts.append(saved.basis, { expectedVersion: 0, records: [{ persisted: "B" }] }).status,
+			(await oldBound.artifacts.append(saved.basis, { expectedVersion: 0, records: [{ persisted: "B" }] })).status,
 			"committed",
 		);
 		const currentRoot = m.runtime.view().conversations.find((ref) => ref.key === "root")!;

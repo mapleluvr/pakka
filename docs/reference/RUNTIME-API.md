@@ -1,6 +1,6 @@
-# Conversation runtime API（`@pakka/agent@0.5.0`）
+# Conversation runtime API（`@pakka/agent@0.7.0`）
 
-M1 增加 `createRuntime(options)`：受信任 bootstrap 在一个 Durable Harness/storage 中管理多个 Conversation。M2 的同 Session MAS 服务通过该 runtime 的受控 catalog port 装配；MAS 的 client、membership 和 A2A 语义见 [MAS-API.md](MAS-API.md)。`createHost()` 继续提供单 Conversation 兼容入口，使用原有 strategy journal namespace。两者不是可互换的 storage 开启方式：legacy host 不得重开 managed runtime storage，managed runtime 也不隐式采用旧 host storage/journal。
+`createRuntime(options)` 让受信任 bootstrap 在一个 Durable Harness/SQLite storage 中管理多个 Conversation。同 Session MAS 服务通过 runtime 的受控 catalog port 装配；MAS 的 client、membership 和 A2A 语义见 [MAS-API.md](MAS-API.md)。`createHost()` 提供单 Conversation 入口。每个入口依据持久 runtime 身份重开所属存储，保留原资源与额度。新建文件为 `main.sqlite`，`storage.json` 声明 backend/schema 与 WAL/FULL 策略；存储与恢复细则见 [SQLite 场景](../../openspec/changes/adopt-dynamite-sqlite-persistence/specs/conversation-runtime/spec.md)。
 
 当前实现与证据范围见[固定验证记录](../verification/README.md)，验证工作方式见[开发指南](../development/VERIFICATION.md)；[历史迁移及记录](../archive/README.md)保留对应版本的形成过程。Runtime API 本身不授予 agent 创建/控制资源的权限。M3 的跨 Session A2A、worker 与真实进程隔离通过上层 [BROKER-API.md](BROKER-API.md) 装配，已验收（[范围与残余项](../archive/acceptance/MIGRATION-M3-ACCEPTANCE.md)）；可选 [DevPack](MAS-DEVPack-API.md) 已在 M4 验收（[范围与 notes](../archive/acceptance/MIGRATION-M4-ACCEPTANCE.md)）；有限 loopback MAS RPC 已在 M5 验收，见 [应用 API](../guides/MAS-APPLICATION-API.md) 与 [范围和 notes](../archive/acceptance/MIGRATION-M5-ACCEPTANCE.md)；remote refs 不能转交 Runtime authority。
 
@@ -66,14 +66,10 @@ pakka-webui 保留宿主已有 resolver 作为初始来源，仅全局管理员�
 - `sessionId` 保留现有 Pakka storage/provenance ID 的含义；`durableSessionId` 显式指向同一存储域。
 - `conversationId` 是原生 Conversation ID；`providerSessionId` 是 `pi.provider` 的 provider affinity identity，两者独立。
 - `ConversationRef` 包含 `key/sessionId/conversationId/incarnation/profile`。它是受检地址，不是可以序列化转交的权限。复制不能提升权限；替换或 fork 后的旧 reference 被拒绝。
-- 同名 principal/strategy 不共享 scope。managed journal v2 的物理 namespace 包含 Session、Conversation、strategy 和 journal kind；legacy journal v1 保留不动。
+- 同名 principal/strategy 各自绑定 scope。单 Conversation journal 的 namespace 为 strategy 和 journal kind；managed journal v2 的地址组合 Session、Conversation、strategy 和 journal kind。
 - navigation 创建 native fork，发布新的 Conversation/incarnation/provider identity。既有 Host closure 继续代表该 key 的当前 Conversation，调用方通过 `runtime.view()` 取新的 resource reference。
 
-M1 提供 `migrateLegacy: { expectedSessionId, expectedConversationId }` 的显式映射，必须同时指定 `reopenSessionFile`。只接受已关闭、无 pending task/submission、可证明唯一 ownerless root 的 Pakka storage；错误身份、fork 历史、未知 journal/intent/completion/adoption、未批准的 inference strategy 及不足以承接已消费记录的 limits 均拒绝。普通 managed reopen 仍拒绝 legacy storage。
-
-原 journal 的 header、hash chain、transaction ID 和 adoption 字节保持不动；同一次 Durable commit 记录新的 runtime metadata、namespace 映射与 `journalMigration` receipt。receipt 包含原存储/各 journal 的 SHA-256、前缀长度与版本。该 Conversation 使用已审计 legacy namespace，新成员使用 v2 namespace；旧 capability 不复活。主额度从持久 generation task 的 checkpoint marker 保守扣占：terminal sidecar 已回收时不猜测精确 HTTP 次数，每个 marker 占一额度；辅助/strategy 额度从原 reservation 继承，不退还 unknown 成本。重开和映射 journal 的后续访问校验原前缀。没有 bulk import 或多 Conversation 归属猜测。
-
-`pakka.runtime` document schema v2 增加 Session strategy attempt totals。未发布的 v1 开发记录仅在无辅助花费，或已含明确 totals 时可安全升级；缺少 totals 且有花费时拒绝，不重置预算。
+`pakka.runtime` document schema v2 保存 Session 配额、已消费预算、strategy attempt totals、批准的 profile 身份和 Conversation resources。普通重开核对这些持久字段，恢复原资源及额度。
 
 ## 调度、预算与失败
 
@@ -83,7 +79,7 @@ M1 提供 `migrateLegacy: { expectedSessionId, expectedConversationId }` 的显�
 
 可归因的 provider/run 失败留在该 Conversation。另一成员可继续工作；同 Session 的未知 storage、commit/adoption、未分类 report 则封闭所有成员。一个新 Harness 仍在同一 Node 进程，不能隔离进程退出或 OOM。
 
-`Host.dispose()/reload()` 只处理该 Conversation；managed Host 的 `newSession()` 被拒绝。managed 的 pending fork 在 `busy` 中可见；legacy 兼容入口保留同步连续 branch/ABA 的观察语义，调用方等待 `waitForIdle()` 后再确认 native fork 完成。`Runtime.close()` 管理共享 Harness/storage 关闭。运行时不允许第二个 writer 重开同一 storage：使用 `pakka-writer.json` 的独占 claim。只有已知 writer 成功关闭后才删除 claim；发现旧 claim 时 fail closed，不依据 PID 或超时自动抢占。崩溃后的 claim 回收尚未由 M1 提供。
+`Host.dispose()/reload()` 只处理该 Conversation；managed Host 的 `newSession()` 被拒绝。managed 的 pending fork 在 `busy` 中可见；legacy 兼容入口保留同步连续 branch/ABA 的观察语义，调用方等待 `waitForIdle()` 后再确认 native fork 完成。`Runtime.close()` 管理共享 Harness/storage 关闭。运行时不允许第二个 writer 重开同一 storage：使用 `pakka-writer.json` 的独占 claim。只有已知 writer 成功关闭后才删除 claim；发现旧 claim 时 fail closed，不依据 PID 或超时自动抢占。受信任宿主可调用 `recoverStorageWriter({ storageDir, expectedClaim: { pid, nonce } })`：排他维护门禁下只读核对数据库身份，确认原进程已退出且 claim 精确匹配后释放原 claim。命令不启动模型、不改写数据库／WAL；具体接口见 [维护命令](STRATEGY-API.md#trusted-writer-maintenance)。
 
 ## 取消与重开
 

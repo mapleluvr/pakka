@@ -1,7 +1,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { access, readFile, writeFile } from "node:fs/promises";
+import { access } from "node:fs/promises";
+import { join } from "node:path";
+import { readStorageText, readNativeDocument, rewriteNativeDocument } from "./native-storage.ts";
 import { deferred, fixture, seed } from "./fixture.ts";
 import { binding, target, inferencePolicy } from "./strategy-fixture.ts";
 import type { Host, StrategyBinding } from "../src/index.ts";
@@ -38,7 +40,7 @@ for (const invalid of ["nonexistent", "foreign-job", "duplicate", "incomplete", 
 			await seed(host);
 			const b = activate(host),
 				frame = b.readFrame();
-			const initial = b.artifacts.append(frame.basis, { expectedVersion: 0, records: [{ initial: true }] });
+			const initial = (await b.artifacts.append(frame.basis, { expectedVersion: 0, records: [{ initial: true }] }));
 			assert.equal(initial.status, "committed");
 			const source = job(b, "source"),
 				destination = invalid === "foreign-job" ? job(b, "destination") : source;
@@ -54,33 +56,33 @@ for (const invalid of ["nonexistent", "foreign-job", "duplicate", "incomplete", 
 				attemptIds = [result.attemptId];
 				if (invalid === "duplicate") attemptIds.push(result.attemptId);
 				if (invalid === "already-adopted") {
-					const adopted = b.artifacts.append(source.scope, {
+					const adopted = (await b.artifacts.append(source.scope, {
 						expectedVersion: version,
 						records: [{ candidate: true }],
 						attemptIds,
-					});
+					}));
 					assert.equal(adopted.status, "committed");
 					version = adopted.version;
 				}
 			}
-			const before = await readFile(initial.journalPath, "utf8");
+			const before = await readStorageText(host.view().sessionFile);
 			let rejected = false;
 			try {
-				const receipt = b.artifacts.append(destination.scope, {
+				const receipt = (await b.artifacts.append(destination.scope, {
 					expectedVersion: version,
 					records: [{ mustNotLand: true }],
 					attemptIds,
-				});
+				}));
 				rejected = receipt.status !== "committed";
 			} catch {
 				rejected = true;
 			}
 			assert.equal(
-				await readFile(initial.journalPath, "utf8"),
+				await readStorageText(host.view().sessionFile),
 				before,
 				"invalid association must be checked before physical append",
 			);
-			await assert.rejects(access(initial.journalPath + ".intent"), { code: "ENOENT" });
+			await assert.rejects(access(join(f.dataDir, "artifacts")), { code: "ENOENT" });
 			assert.equal(rejected, true);
 			assert.equal(host.view().phase, "ready", "invalid caller input must not poison storage");
 			assert.equal(f.requests.length, invalid === "nonexistent" ? 1 : 2);
@@ -99,30 +101,42 @@ for (const fault of ["rollback", "transaction-id"] as const)
 			await seed(first);
 			const b = activate(first),
 				frame = b.readFrame();
-			const initial = b.artifacts.append(frame.basis, { expectedVersion: 0, records: [{ initial: true }] });
+			const initial = (await b.artifacts.append(frame.basis, { expectedVersion: 0, records: [{ initial: true }] }));
 			assert.equal(initial.status, "committed");
-			const prefix = await readFile(initial.journalPath, "utf8"),
+			const prefix = await readNativeDocument(first.view().sessionFile, "pakka.strategy-journals"),
 				source = job(b, "paid-once");
 			const result = await source.infer({ modelKey: "summary", prompt: "EXACT-TARGET" });
 			assert.equal(result.status, "completed");
 			assert.equal(
-				b.artifacts.append(source.scope, {
+				(await b.artifacts.append(source.scope, {
 					expectedVersion: initial.version,
 					records: [{ candidate: true }],
 					attemptIds: [result.attemptId],
-				}).status,
+				})).status,
 				"committed",
 			);
 			const file = first.view().sessionFile;
 			await first.dispose();
-			if (fault === "rollback") await writeFile(initial.journalPath, prefix);
-			else {
-				const lines = (await readFile(initial.journalPath, "utf8")).trimEnd().split("\n");
-				const { checksum: _checksum, ...payload } = JSON.parse(lines.at(-1)!);
-				payload.id = "different-valid-physical-transaction";
-				const checksum = createHash("sha256").update(JSON.stringify(payload)).digest("hex");
-				lines[lines.length - 1] = JSON.stringify({ ...payload, checksum });
-				await writeFile(initial.journalPath, lines.join("\n") + "\n");
+			const key = initial.journalPath.split("#journal/")[1]!;
+			if (fault === "rollback") {
+				await rewriteNativeDocument(file, "pakka.strategy-journals", undefined, value => {
+					const heads = value.heads as Record<string, typeof value>;
+					heads[key] = (prefix.value.heads as Record<string, typeof value>)[key]!;
+					return value;
+				});
+			} else {
+				let checksum = "";
+				await rewriteNativeDocument(file, "pakka.strategy-batch", key + ".2", value => {
+					const { checksum: _checksum, ...payload } = value;
+					payload.transactionId = "different-valid-physical-transaction";
+					checksum = createHash("sha256").update(JSON.stringify(payload)).digest("hex");
+					return { ...payload, checksum };
+				});
+				await rewriteNativeDocument(file, "pakka.strategy-journals", undefined, value => {
+					const heads = value.heads as Record<string, typeof value>;
+					heads[key]!.checksum = checksum;
+					return value;
+				});
 			}
 			const reopened = await f.start({ ...inferencePolicy(f.endpoint), reopenSessionFile: file });
 			const fresh = activate(reopened);
@@ -154,20 +168,20 @@ test("all settled adoptions survive later ordinary appends and trusted reopen", 
 				result = await source.infer({ modelKey: "summary", prompt: "TARGET-" + i });
 			const frame = b.readFrame();
 			assert.equal(
-				b.artifacts.append(source.scope, {
+				(await b.artifacts.append(source.scope, {
 					expectedVersion: frame.artifacts.version,
 					records: [{ candidate: i }],
 					attemptIds: [result.attemptId],
-				}).status,
+				})).status,
 				"committed",
 			);
 			source.cancel();
 			const next = b.readFrame();
 			assert.equal(
-				b.artifacts.append(next.basis, {
+				(await b.artifacts.append(next.basis, {
 					expectedVersion: next.artifacts.version,
 					records: [{ progress: i }],
-				}).status,
+				})).status,
 				"committed",
 			);
 		}

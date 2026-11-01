@@ -31,7 +31,7 @@ test("source jobs retain fingerprints, not complete historical frames", async ()
 		assert.equal(weak.deref(), undefined, "Job must not retain the complete frame after source validation");
 		assert.doesNotThrow(() => job.check(), "Collecting a snapshot must not revoke a valid scope");
 		assert.equal(
-			b.artifacts.append(job.scope, { expectedVersion: 0, records: [{ adopted: true }] }).status,
+			(await b.artifacts.append(job.scope, { expectedVersion: 0, records: [{ adopted: true }] })).status,
 			"committed",
 		);
 	} finally {

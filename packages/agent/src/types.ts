@@ -1,5 +1,15 @@
 export type Hook = "real_context.write" | "context_artifacts.write";
 export type Grant = Hook | "input.submit" | "branch.control" | "model.infer";
+export interface WriterRecoveryOptions {
+	readonly storageDir: string;
+	readonly expectedClaim: { readonly pid: number; readonly nonce: string };
+}
+export interface WriterRecoveryReceipt {
+	readonly status: "released";
+	readonly storageFile: string;
+	readonly pid: number;
+	readonly nonce: string;
+}
 export type InputMode = "prompt" | "steer" | "followUp";
 export type ReceiptState =
 	| "reserved"
@@ -195,23 +205,42 @@ export type ArtifactReceipt =
 			readonly journalPath: string;
 	  }
 	| { readonly status: "conflict"; readonly version: number }
-	| { readonly status: "unknown"; readonly reason: string };
+	| {
+			readonly status: "unknown";
+			readonly reason: string;
+			readonly transactionId?: string;
+			readonly journalPath?: string;
+	  };
+export interface SourceWorkCheckpoint {
+	readonly stage: "ready" | "finished";
+	readonly state?: JsonValue;
+	readonly retryAtMs?: number;
+}
 export interface StrategyArtifacts {
 	read(scope: ArtifactScope): ArtifactSnapshot;
+	/** Lookup a confirmed commit in this scope; absence does not authorize external replay. */
+	receipt(
+		scope: ArtifactScope,
+		transactionId: string,
+	): Extract<ArtifactReceipt, { status: "committed" }> | undefined;
 	append(
 		scope: ArtifactScope,
 		batch: {
 			readonly expectedVersion: number;
 			readonly records: readonly JsonValue[];
+			readonly transactionId?: string;
 			readonly attemptIds?: readonly string[];
+			readonly checkpoint?: SourceWorkCheckpoint;
 		},
-	): ArtifactReceipt;
+	): Promise<ArtifactReceipt>;
 }
 export interface SourceJobSpec {
 	readonly planId: string;
 	readonly targetEntryIds: readonly string[];
 	readonly contextEntryIds?: readonly string[];
 	readonly maxCalls: number;
+	/** Immutable domain configuration/read-set description; conveys no execution authority. */
+	readonly metadata?: JsonValue;
 	/** Compression jobs require an exact post-write adoption receipt before their artifact intent is cleared. */
 	readonly requireArtifactReceipt?: boolean;
 }
@@ -299,10 +328,26 @@ export interface CompresserSession {
 }
 /** Source/artifact validation only; receives a detached frozen DTO, never tool execution authority. */
 export type InferenceCallValidator = (call: InferenceToolCall) => string | undefined;
+export interface SourceWorkSnapshot {
+	readonly address: string;
+	readonly jobId: string;
+	readonly planId: string;
+	readonly stage: "planned" | "ready" | "reserved" | "resultStored" | "quarantined";
+	readonly checkpoint: JsonValue | null;
+	readonly retryAtMs: number | null;
+	readonly sourceEntryIds: readonly string[];
+	readonly targetEntryIds: readonly string[];
+	readonly metadata: JsonValue;
+	readonly attemptIds: readonly string[];
+	readonly budget: { readonly reserved: number; readonly maxCalls: number };
+	readonly hasSealedResult: boolean;
+}
 export interface SourceJob {
 	readonly id: string;
 	readonly scope: JobScope;
 	readonly signal: AbortSignal;
+	/** Confirm the fixed plan before external work begins. */
+	prepare(): Promise<void>;
 	check(): void;
 	infer(request: InferenceRequest): Promise<InferenceResult>;
 	converse(request: InferenceRequest, validateCall?: InferenceCallValidator): Promise<InferenceResult>;
@@ -321,6 +366,11 @@ export interface StrategyBinding {
 	readonly artifacts: StrategyArtifacts;
 	models(): readonly ModelDTO[];
 	createJob(basis: FrameBasis, spec: SourceJobSpec): SourceJob;
+	pendingWork(): readonly SourceWorkSnapshot[];
+	/** Reauthorize one persisted job; unknown effects never authorize another model request. */
+	restoreJob(jobId: string): Promise<SourceJob>;
+	/** Local recovery data only; its basis cannot create new jobs or project provider requests. */
+	readWorkFrame(scope: JobScope): ContextFrame;
 	audit(): readonly InferenceAudit[];
 	subscribe(listener: (event: StrategyLifecycleEvent) => void): () => void;
 }
@@ -360,24 +410,6 @@ export interface ConversationProfile {
 	readonly systemPrompt?: string;
 	readonly tools?: HostOptions["tools"];
 }
-export interface JournalMigration {
-	readonly id: string;
-	readonly schemaVersion: 1;
-	readonly sessionId: string;
-	readonly conversationId: string;
-	readonly sourceLength: number;
-	readonly sourceSha256: string;
-	readonly primaryAttempts: number;
-	readonly auxiliaryAttempts: number;
-	readonly journals: readonly {
-		readonly strategyId: string;
-		readonly kind: "records" | "inference";
-		readonly namespace: string;
-		readonly version: number;
-		readonly prefixLength: number;
-		readonly prefixSha256: string;
-	}[];
-}
 export interface RuntimeContextValue {
 	/** Current text only; null explicitly omits this contribution for the next request. */
 	readonly text: string | null;
@@ -410,8 +442,6 @@ export interface RuntimeOptions extends HostOptions {
 	readonly contextSources?: readonly RuntimeContextSource[];
 	/** Trusted, named/versioned backend programs; native objects never leave the adapter. */
 	readonly jobs?: readonly RuntimeJobDefinition[];
-	/** Opt-in mapping of a closed, provably single-Conversation legacy storage; never bulk import. */
-	readonly migrateLegacy?: { readonly expectedSessionId: string; readonly expectedConversationId: string };
 }
 export interface ConversationRef {
 	readonly key: string;
@@ -533,7 +563,6 @@ export interface RuntimeView {
 	readonly conversations: readonly ConversationRef[];
 	readonly limits: RuntimeLimits;
 	readonly budget: { readonly primaryAttempts: number; readonly auxiliaryAttempts: number };
-	readonly journalMigration?: JournalMigration;
 	readonly lastError?: string;
 }
 /** Bootstrap-owned catalog. Data never grants authority and commands never expose native handles. */

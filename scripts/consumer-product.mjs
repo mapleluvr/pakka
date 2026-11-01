@@ -331,7 +331,7 @@ try {
 		...config,
 		runtime: {
 			...config.runtime,
-			reopenSessionFile: join(dataDir, "sessions", retained.sessionId, "main.jsonl"),
+			reopenSessionFile: join(dataDir, "sessions", retained.sessionId, "main.sqlite"),
 		},
 	});
 	const reopened = await app.client.reconnect();

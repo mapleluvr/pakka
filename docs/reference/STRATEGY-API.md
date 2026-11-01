@@ -1,6 +1,6 @@
 # Strategy Control API
 
-This is the generic headless `@pakka/agent` boundary for a reviewed strategy. It does not implement Dynamite numbering, window selection, compression quality, fallback order or record schemas. Import only the package root. The value exports include `createHost`, trusted `createRuntime` and `createCompresserSession` bootstrap factories; all declarations below are type exports from `packages/agent/src/types.ts` through `src/index.ts`.
+This is the generic headless `@pakka/agent` boundary for a reviewed strategy. It does not implement Dynamite numbering, window selection, compression quality, fallback order or record schemas. Import only the package root. The value exports include `createHost`, trusted `createRuntime` and `createCompresserSession` bootstrap factories, and the trusted `recoverStorageWriter` maintenance command; all declarations below are type exports from `packages/agent/src/types.ts` through `src/index.ts`.
 
 ## Authority And Frames
 
@@ -16,17 +16,13 @@ Trusted bootstrap creates `createCompresserSession({ storageDir, toolCallingTole
 
 The bootstrap snapshot may contain diagnostics from several sources and must not be exposed as a conversation-scoped endpoint. CompresserSnapshot.conversations[] contains each child's sealed, toolErrors, unresolvedErrors and lastError. Root lastError describes only a genuine shared-container fault; model errors have no root aggregate counter. Shared-fault refusals remain generic to sources, while own diagnostics stay in their audit and trusted row.
 
-
 A source job can explicitly call `converse(request, validateCall?)` with a declared output tool. The optional synchronous `InferenceCallValidator` receives a frozen call DTO and returns a diagnostic string or `undefined`; it receives no native handles. A job selects either primitive infer or conversational inference. Same live job/request admission shares one operation; native repair preserves the originating source and transcript rather than rebuilding prompts.
 
 Each native request separately passes the source checks and finite auxiliary budgets and receives a reservation/completion audit. Tool failures require complete matched replacements. Incomplete stops and provider errors admit bounded native steering; each Conversation independently accumulates incidents and seals only itself at its exact count. A sibling's seal neither rejects in-flight results nor revokes an exact returned candidate's adoption receipt. Per-job hard limits, cancellation and revocation remain terminal host conditions.
 
-
 A final `InferenceResult.compresser` identifies the internal Session/Conversation, all attempt IDs, `reportedUsage` summed from actual reports, and whether every attempt is known. The ordinary result's `attemptId` remains the final exact artifact-adoption receipt. Native submission failure is not the whole source-job result. Candidate adoption checks its own source job/Conversation seal and current authority, not sibling error counts.
 
-
 Normal reopen retains policy and completed job metadata. Unconfirmed work is quarantined in its own child and stopped before unrelated authorized work can run. Source-local audit uncertainty retains that source's pending reservation; genuine Compresser storage uncertainty closes the shared storage boundary. Schema-v2 storage rejects implicit migration of unattributed aggregate policy. Writer claims are resolved only by explicit trusted recovery; persisted jobs are not refreshed source capabilities. See [current lifecycle state](../state/compressor-session.md), [Conversation-isolated verification](../verification/COMPRESSOR-CONVERSATION-ISOLATION.md), and `packages/agent/test/compresser-session.test.ts`.
-
 
 ## Minimal Usage
 
@@ -83,6 +79,7 @@ try {
 		maxCalls: 2,
 		requireArtifactReceipt: true,
 	});
+	await job.prepare();
 	const result = await job.infer({
 		modelKey: "summary",
 		prompt: JSON.stringify(target.messages),
@@ -91,7 +88,7 @@ try {
 	});
 	if (result.status !== "completed" || !result.text) throw new Error(result.reason ?? "No usable summary");
 	job.check();
-	const receipt = binding.artifacts.append(job.scope, {
+	const receipt = await binding.artifacts.append(job.scope, {
 		expectedVersion: frame.artifacts.version,
 		attemptIds: [result.attemptId],
 		records: [
@@ -136,15 +133,15 @@ An intentional policy refusal returns `{ status: "blocked", basis: frame.basis, 
 
 `binding.subscribe()` reports transitioning/ready for reload/newSession, and navigation/deactivation/disposed/failed notifications. Generation is revoked before lifecycle awaits. On a fresh ready event, read a new frame and reconstruct plans from validated records; old frames/jobs are not refreshed. Installed projector callbacks survive reload idempotently while the strategy lease remains active, but any captured job scopes must be replaced. Deactivation removes the projector and invalidates the binding. Abort is best effort for sent calls and does not prove zero cost.
 
-Root startup may set `reopenSessionFile` to a Pakka-owned file beneath the same dataDir's sessions directory. Reopen checks the physical header, parentage and Pakka provenance marker; missing/corrupt/foreign requested storage rejects rather than creating a replacement session. Reopen preserves raw session/entry identity and scoped records, not old operation tokens, clients, hook leases or C2 idempotency claims. No bulk Pi/Kappa import or C2 crash recovery is implied.
+Root startup may set `reopenSessionFile` to the Pakka-owned `main.sqlite` beneath the same dataDir. Reopen checks the SQLite application identity through a read-only connection, the backend/schema descriptor, integrity and Pakka provenance before enabling the writer. Missing, corrupt or foreign requested storage rejects rather than creating a replacement Session. Reopen preserves storage, entry and scoped-record identities while acquiring fresh operation authority.
 
 ## Persistence, Inference And Limits
 
-Artifact operations require a valid frame or job scope and the correct strategy/session namespace. Batch receipts distinguish version conflict, committed physical readback and unknown storage. Each JSONL transaction has a version and SHA-256 chain; files are fsynced and read back. A separate ownership marker detects missing files/directories across reopen. Partial, changed or unreadable storage latches host failure. A same-session audit fault arriving during reload remains latched when reload settles; faults are attributed to their original session, so explicit newSession recovery is not poisoned by an old-session completion. This is single-writer evidence, not a multi-process transaction or a complete crash-proof directory protocol.
+Artifact operations require a valid frame or job scope and the correct strategy/Session namespace. `append()` returns `Promise<ArtifactReceipt>` and resolves only after the public Pi transaction and exact receipt readback. SQLite stores immutable batch documents, a versioned namespace head and stable transaction receipts. Artifact records, adoption and the work checkpoint share one Session commit. A caller can fix `transactionId` and use `receipt(scope, transactionId)` to confirm the original committed write; the same identity with different content is rejected. Absence of a receipt is not proof that an external effect did not occur. Storage failures seal their Session; a failure from an old Session does not poison an explicitly created fresh Session.
 
 Each auxiliary attempt reserves a durable budget slot before dispatch. Limits are finite per job and per strategy/session, including failed or unknown attempts; reload, deactivation/re-activation and process reopen do not reset spent slots. Requests use public Pi `Models.completeSimple`, actual `maxTokens` options and a capped per-request model, with provider transport retry disabled. Caller cap `0` means no extra caller cap, never unlimited spending. The effective cap is the minimum of model, host policy and any positive caller cap. All summary endpoints/auth/headers stay in `durable-adapter.ts`; strategies see only their allowlisted sanitized models. This slice supports OpenAI completions, not every Pi provider API.
 
-For inference-derived persisted candidates, create the job with `requireArtifactReceipt: true` and include the exact completed `attemptIds` in its scoped artifact append. Before any artifact intent or bytes are written, the host validates unique nonempty IDs, the job/plan/session/strategy/principal/lease reservation and its completion. Already adopted, nonexistent, foreign or unfinished attempts are rejected without effects. After physical artifact receipt, an adoption record binds the attempt to that exact transaction ID/version. Missing or uncertain receipts block same-session reconstruction; cancellation and unrelated progress writes do not settle a completed result. Reopen checks every adopted transaction against the physical artifact journal, including earlier versions followed by later ordinary appends. Failed/quarantined attempts retain their audit and bounded retry behavior. Dynamite opts compression jobs into this protocol; fresh jobs used only to authorize existing summaries do not reserve new inference. These receipts remain part of the bounded single-writer contract, not a general exactly-once model-call guarantee.
+For inference-derived persisted candidates, create the job with `requireArtifactReceipt: true` and include its exact completed `attemptIds` in the awaited artifact append. Before staging writes, the host validates unique IDs and the job/plan/Session/strategy/principal/lease reservation and completion. The batch, adoption receipt and optional `checkpoint` are committed atomically. Already adopted, nonexistent, foreign or unfinished attempts are rejected without effects. A `ready` checkpoint records the confirmed next attempt and optional absolute retry time; `finished` removes the work from active scheduling. Reopen verifies adoption against its original transaction. Failed and quarantined attempts retain usage and reservations. These are local transaction and recovery guarantees, not exactly-once model transport.
 
 An optional `outputTool: { name, description, parameters }` declares a result channel on the same single inference request. The declaration uses an object JSON Schema and a bounded name/description/serialized size; it supplies no executable callback. The public Pi stream must expose complete JSON argument deltas that parse strictly and exactly match its final argument DTO; missing, repaired, oversized or mismatched bytes fail closed. Exactly one complete matching `toolUse` call with schema-valid arguments returns `toolCall: { id, name, arguments }` instead of text. Prose-only, wrong/multiple calls, implicit argument coercion, invalid parameters and truncation fail with measured usage retained. Arguments are bounded to 256 KiB JSON and returned as detached frozen DTOs. The strategy validates its own domain references and adopts candidates through the existing exact attempt receipt; the host executes no returned tool. Absence of outputTool preserves text completion behavior.
 
@@ -152,480 +149,28 @@ Auxiliary messages/results never use `Client.submit`, never append to the main t
 
 There is no native Pi extension discovery, OS sandbox, full TUI/CLI, fsynced C2 ledger, arbitrary provider compatibility, runtime model-policy mutation, Dynamite algorithm or default-strategy integration in this component. Main native steering/follow-up and the original 22 C2/permission/lifecycle tests are preserved.
 
-## Exact Exported Declarations
+## Persisted Source Work
 
-The following block is copied verbatim from `packages/agent/src/types.ts`; the package root exports every declaration. `createHost(options: HostOptions): Promise<Host>` is exported from `src/host.ts`. The installed tarball declaration smoke exercises the binding/frame/plan/artifact/job/tool types without ancestor workspace dependencies.
+`SourceJobSpec.metadata` is a finite JSON description of fixed domain configuration and read-set identities. It grants no authority. `await job.prepare()` confirms the immutable plan before external work. Budget reservation, request digest, result digest, sealed result and checkpoint persist through public Pi documents; a planning proof binds the fixed fields to the append-only journal.
 
-```ts
-export type Hook = "real_context.write" | "context_artifacts.write";
-export type Grant = Hook | "input.submit" | "branch.control" | "model.infer";
-export type InputMode = "prompt" | "steer" | "followUp";
-export type ReceiptState =
-	| "reserved"
-	| "queued"
-	| "consumed"
-	| "committed"
-	| "handled"
-	| "released"
-	| "unknown";
-export type Capability = object;
-export interface Receipt {
-	readonly id: string;
-	readonly key: string;
-	readonly principal: string;
-	readonly sessionId: string;
-	readonly branchId: string;
-	readonly attempt: number;
-	readonly state: ReceiptState;
-	readonly entryId?: string;
-	readonly reason?: string;
-	/** Generation outcome is independent of whether this input was persisted. */
-	readonly generation?: { readonly status: "blocked"; readonly reason: string };
-}
-export interface View {
-	/** Storage/provenance identity; sessionId keeps its legacy meaning. */
-	readonly durableSessionId?: string;
-	readonly conversationId?: string;
-	/** Native pi.provider identity, independent for each Conversation/fork. */
-	readonly providerSessionId?: string;
-	readonly phase: "ready" | "transitioning" | "failed" | "disposed";
-	readonly busy: boolean;
-	readonly sessionId: string;
-	readonly sessionFile: string;
-	readonly branchId: string;
-	readonly epoch: number;
-	readonly generation: number;
-	readonly leafId: string | null;
-	readonly entries: readonly { id: string; type: string; role?: string; text?: string }[];
-	readonly context: readonly { role: string; text: string }[];
-	readonly autoCompaction: boolean;
-	readonly lastError?: string;
-	readonly effects: "not-assessed" | "unknown";
-}
-export type Proposal =
-	| { type: "cut"; summary: string; firstKeptEntryId: string | null; tokensBefore: number }
-	| { type: "edit"; targetId: string; text: string | null };
-export type Decision =
-	| { readonly status: "committed"; readonly entryId: string }
-	| { readonly status: "denied"; readonly reason: string }
-	| { readonly status: "unknown"; readonly reason: string };
-export type Policy = (
-	request: Readonly<{ principal: string; proposal: Proposal }>,
-) => boolean | Promise<boolean>;
-export interface Client {
-	view(): View;
-	capture(): Capability;
-	activateStrategy(spec: { id: string; hooks: readonly Hook[] }): void;
-	deactivateStrategy(id: string): void;
-	bindStrategy(id: string): StrategyBinding;
-	setPolicy(policy: Policy): void;
-	commit(at: Capability, proposal: Proposal): Promise<Decision>;
-	submit(input: { key: string; text: string; mode?: InputMode; at?: Capability }): Promise<Receipt>;
-	receipt(id: string): Receipt | undefined;
-	/** Requests withdrawal; returns unknown until Durable confirms no placement. Observe receipts for release. */
-	cancelQueued(): readonly Receipt[];
-	branch(at: Capability, entryId: string): void;
-}
-export type HostEvent =
-	| { readonly type: "receipt"; readonly receipt: Receipt }
-	| { readonly type: "state"; readonly phase: View["phase"] };
-export interface Host {
-	connect(id: string, grants: readonly Grant[]): Client;
-	view(): View;
-	subscribe(listener: (event: HostEvent) => void): () => void;
-	waitForIdle(): Promise<View>;
-	reload(): Promise<void>;
-	newSession(): Promise<void>;
-	dispose(): Promise<void>;
-}
-export type JsonValue = null | boolean | number | string | readonly JsonValue[] | JsonObject;
-export interface JsonObject {
-	readonly [key: string]: JsonValue | undefined;
-}
-/** Identity-only capabilities. Copies, serialization and persisted tokens carry no authority. */
-export type FrameBasis = object;
-export type JobScope = object;
-export type ToolInvocationScope = object;
-export type ArtifactScope = FrameBasis | JobScope;
-export interface MessageDTO extends JsonObject {
-	readonly role: string;
-}
-export interface RawEntryDTO {
-	readonly id: string;
-	readonly parentId: string | null;
-	readonly type: string;
-	readonly raw: JsonObject;
-}
-export interface ProjectedEntryDTO {
-	readonly sourceEntryId: string;
-	readonly messages: readonly MessageDTO[];
-	readonly boundary: "system" | "host-summary" | null;
-	readonly excluded: boolean;
-	/** SHA-256 of exact source, effective messages and relevant edit identities. Not a capability. */
-	readonly fingerprint: string;
-}
-export interface ModelDTO {
-	readonly key: string;
-	readonly model: string;
-	readonly name: string;
-	readonly reasoning: boolean;
-	readonly contextWindow: number;
-	readonly maxOutputTokens: number;
-	readonly available: boolean;
-}
-export interface UsageDTO {
-	readonly input: number;
-	readonly output: number;
-	readonly cacheRead: number;
-	readonly cacheWrite: number;
-	readonly totalTokens: number;
-	/** null when bootstrap has not supplied authoritative pricing. */
-	readonly cost: number | null;
-}
-export interface ArtifactSnapshot {
-	readonly version: number;
-	readonly records: readonly JsonValue[];
-}
-export interface ContextFrame {
-	readonly durableSessionId?: string;
-	readonly conversationId?: string;
-	readonly providerSessionId?: string;
-	readonly basis: FrameBasis;
-	readonly strategyId: string;
-	readonly leaseId: string;
-	readonly sessionId: string;
-	readonly cwd: string;
-	readonly leafId: string | null;
-	readonly generation: number;
-	readonly navigationId: string;
-	readonly requestId: string | null;
-	readonly entries: readonly RawEntryDTO[];
-	readonly activeEntryIds: readonly string[];
-	readonly projection: readonly ProjectedEntryDTO[];
-	readonly model: ModelDTO;
-	readonly usage: UsageDTO;
-	readonly artifacts: ArtifactSnapshot;
-}
-export interface EntryMessagePatch {
-	readonly sourceEntryId: string;
-	readonly messageIndex: number;
-	/** Only content changes. Native tool call IDs/names/arguments and non-text payloads stay exact. */
-	readonly content: string | readonly JsonObject[];
-}
-export interface BashExecutionRenderPatch {
-	/** Request-only display of an already-recorded execution, never an execution request. */
-	readonly kind: "bashExecution";
-	readonly sourceEntryId: string;
-	readonly messageIndex: number;
-	/** Exactly the fields consumed by Pi's public bashExecutionToText conversion. */
-	readonly command: string;
-	readonly output: string;
-	readonly cancelled: boolean;
-	readonly truncated: boolean;
-	readonly fullOutputPath: string | null;
-	readonly exitCode: number | null;
-}
-export interface SummaryRangeReplacement {
-	readonly sourceEntryIds: readonly string[];
-	/** null omits the complete checked range without emitting a replacement message. */
-	readonly summary: string | null;
-	/** Include when this summary was produced by a source-authorized job. Checked on every application. */
-	readonly jobScope?: JobScope;
-}
-export type ProjectionPlan =
-	| { readonly status: "disabled"; readonly basis: FrameBasis }
-	| { readonly status: "blocked"; readonly basis: FrameBasis; readonly reason: string }
-	| {
-			readonly status: "apply";
-			readonly basis: FrameBasis;
-			readonly patches?: readonly EntryMessagePatch[];
-			readonly renderPatches?: readonly BashExecutionRenderPatch[];
-			readonly replacements?: readonly SummaryRangeReplacement[];
-	  };
-export type Projector = (
-	frame: ContextFrame,
-	signal?: AbortSignal,
-) => ProjectionPlan | Promise<ProjectionPlan>;
-export type ArtifactReceipt =
-	| {
-			readonly status: "committed";
-			readonly version: number;
-			readonly transactionId: string;
-			readonly journalPath: string;
-	  }
-	| { readonly status: "conflict"; readonly version: number }
-	| { readonly status: "unknown"; readonly reason: string };
-export interface StrategyArtifacts {
-	read(scope: ArtifactScope): ArtifactSnapshot;
-	append(
-		scope: ArtifactScope,
-		batch: {
-			readonly expectedVersion: number;
-			readonly records: readonly JsonValue[];
-			readonly attemptIds?: readonly string[];
-		},
-	): ArtifactReceipt;
-}
-export interface SourceJobSpec {
-	readonly planId: string;
-	readonly targetEntryIds: readonly string[];
-	readonly contextEntryIds?: readonly string[];
-	readonly maxCalls: number;
-	/** Compression jobs require an exact post-write adoption receipt before their artifact intent is cleared. */
-	readonly requireArtifactReceipt?: boolean;
-}
-export interface InferenceOutputTool {
-	readonly name: string;
-	readonly description: string;
-	readonly parameters: JsonObject;
-}
-export interface InferenceToolCall {
-	readonly id: string;
-	readonly name: string;
-	readonly arguments: JsonObject;
-}
-export interface InferenceRequest {
-	readonly modelKey: string;
-	readonly systemPrompt?: string;
-	readonly prompt: string;
-	/** 0 means no extra caller cap; finite host and model limits still apply. */
-	readonly maxOutputTokens?: number;
-	readonly thinkingLevel?: "off" | "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
-	readonly outputTool?: InferenceOutputTool;
-}
-export interface InferenceResult {
-	readonly status: "completed" | "failed" | "quarantined";
-	readonly attemptId: string;
-	readonly modelKey: string;
-	readonly text?: string;
-	readonly toolCall?: InferenceToolCall;
-	readonly reason?: string;
-	readonly usageStatus: "known" | "unknown";
-	readonly usage?: UsageDTO;
-}
-export interface InferenceAudit extends InferenceResult {
-	readonly jobId: string;
-	readonly planId: string;
-	readonly maxOutputTokens: number;
-}
-export interface SourceJob {
-	readonly id: string;
-	readonly scope: JobScope;
-	readonly signal: AbortSignal;
-	check(): void;
-	infer(request: InferenceRequest): Promise<InferenceResult>;
-	cancel(reason?: string): void;
-}
-export interface StrategyLifecycleEvent {
-	readonly phase: View["phase"];
-	readonly reason: "reload" | "newSession" | "navigation" | "deactivated" | "disposed" | "failed";
-	readonly generation: number;
-	readonly sessionId: string;
-}
-export interface StrategyBinding {
-	readonly id: string;
-	readFrame(invocation?: ToolInvocationScope): ContextFrame;
-	installProjector(projector: Projector): () => void;
-	readonly artifacts: StrategyArtifacts;
-	models(): readonly ModelDTO[];
-	createJob(basis: FrameBasis, spec: SourceJobSpec): SourceJob;
-	audit(): readonly InferenceAudit[];
-	subscribe(listener: (event: StrategyLifecycleEvent) => void): () => void;
-}
-/** Bootstrap-only definitions. Never supplied to a strategy. This slice supports OpenAI completions. */
-export interface InferenceModelDefinition {
-	readonly key: string;
-	readonly model: string;
-	readonly name?: string;
-	readonly endpoint: string;
-	readonly apiKey: string;
-	readonly headers?: Readonly<Record<string, string>>;
-	readonly reasoning?: boolean;
-	readonly contextWindow: number;
-	readonly maxTokens: number;
-}
-export interface InferencePolicy {
-	readonly strategyId: string;
-	readonly modelKeys: readonly string[];
-	/** Durable lifetime limit per strategy+Session, including failed/unknown sent calls. Managed multi-Conversation runtimes enforce this through the Session aggregate; legacy Host has one Conversation. */
-	readonly maxCalls: number;
-	readonly maxJobCalls: number;
-	readonly maxOutputTokens: number;
-	readonly timeoutMs: number;
-}
-export interface RuntimeLimits {
-	readonly maxConversations: number;
-	/** Conservative, durable reservations; cancelled/unknown attempts are not refunded. */
-	readonly maxPrimaryAttempts: number;
-	readonly maxAuxiliaryAttempts: number;
-}
-export interface ConversationProfile {
-	readonly id: string;
-	readonly systemPrompt?: string;
-	readonly tools?: HostOptions["tools"];
-}
-export interface JournalMigration {
-	readonly id: string;
-	readonly schemaVersion: 1;
-	readonly sessionId: string;
-	readonly conversationId: string;
-	readonly sourceLength: number;
-	readonly sourceSha256: string;
-	readonly primaryAttempts: number;
-	readonly auxiliaryAttempts: number;
-	readonly journals: readonly {
-		readonly strategyId: string;
-		readonly kind: "records" | "inference";
-		readonly namespace: string;
-		readonly version: number;
-		readonly prefixLength: number;
-		readonly prefixSha256: string;
-	}[];
-}
-export interface RuntimeOptions extends HostOptions {
-	readonly limits: RuntimeLimits;
-	/** Trusted UUID for create-once storage placement; an existing directory requires explicit reopen. */
-	readonly reservedSessionId?: string;
-	/** Additional bootstrap-approved profiles; default inherits HostOptions. */
-	readonly profiles?: readonly ConversationProfile[];
-	/** Opt-in mapping of a closed, provably single-Conversation legacy storage; never bulk import. */
-	readonly migrateLegacy?: { readonly expectedSessionId: string; readonly expectedConversationId: string };
-}
-export interface ConversationRef {
-	readonly key: string;
-	readonly sessionId: string;
-	readonly conversationId: string;
-	readonly incarnation: string;
-	readonly profile: string;
-}
-export interface ConversationSpec {
-	readonly key: string;
-	readonly profile?: string;
-}
-export interface RuntimeView {
-	readonly sessionId: string;
-	readonly sessionFile: string;
-	readonly phase: "ready" | "failed" | "closed";
-	readonly conversations: readonly ConversationRef[];
-	readonly limits: RuntimeLimits;
-	readonly budget: { readonly primaryAttempts: number; readonly auxiliaryAttempts: number };
-	readonly journalMigration?: JournalMigration;
-	readonly lastError?: string;
-}
-/** Bootstrap-owned catalog. Data never grants authority and commands never expose native handles. */
-export interface CatalogOptions {
-	readonly namespace: string;
-	readonly maxDeliveries: number;
-	readonly maxPending: number;
-}
-export type MemberLifetime = "persistent" | "temporary" | "task-bound" | "background";
-export interface CatalogMember {
-	readonly key: string;
-	readonly ref: ConversationRef;
-	readonly lifetime: MemberLifetime;
-	readonly ownerTaskId?: string;
-	readonly data: JsonObject;
-}
-export interface CatalogSnapshot {
-	readonly version: number;
-	readonly members: readonly CatalogMember[];
-}
-export interface CatalogEnroll extends ConversationSpec {
-	readonly data: JsonObject;
-	readonly lifetime?: MemberLifetime;
-	readonly source?: ConversationRef;
-	readonly invocation?: ToolInvocationScope;
-	readonly fork?: { readonly source: ConversationRef; readonly entryId: string };
-}
-export interface CatalogDeliverySpec {
-	readonly requestId: string;
-	readonly principal: string;
-	readonly source: ConversationRef | null;
-	readonly target: ConversationRef;
-	readonly text: string;
-	readonly mode: InputMode;
-}
-export interface DeliveryReceipt {
-	readonly id: string;
-	readonly requestId: string;
-	readonly principal: string;
-	readonly source: ConversationRef | null;
-	readonly target: ConversationRef;
-	readonly status: "queued" | "placed" | "done" | "unanswered" | "unknown";
-	readonly entryId?: string;
-	readonly reason?: string;
-}
-export interface RuntimeCatalog {
-	checkInvocation(ref: ConversationRef, scope: ToolInvocationScope): void;
-	snapshot(): Promise<CatalogSnapshot>;
-	enroll(specs: readonly CatalogEnroll[], check: () => void): Promise<readonly CatalogMember[]>;
-	update(key: string, data: JsonObject, expectedVersion: number, check: () => void): Promise<CatalogSnapshot>;
-	updateMany(
-		changes: readonly { readonly key: string; readonly data: JsonObject }[],
-		expectedVersion: number,
-		check: () => void,
-	): Promise<CatalogSnapshot>;
-	configure(ref: ConversationRef, profile: string, check: () => void): Promise<CatalogMember>;
-	deliver(spec: CatalogDeliverySpec, check: () => void): Promise<DeliveryReceipt>;
-	receipt(id: string, check: () => void): Promise<DeliveryReceipt>;
-	wait(id: string, check: () => void, signal?: AbortSignal): Promise<DeliveryReceipt>;
-	withdraw(id: string, check: () => void): Promise<DeliveryReceipt>;
-	stop(ref: ConversationRef, check: () => void): Promise<void>;
-	readiness(
-		ref: ConversationRef,
-	): Promise<{ readonly phase: "ready" | "failed" | "ended"; readonly reason?: string }>;
-}
-export interface RuntimeStoreOptions {
-	readonly namespace: string;
-	readonly maxBytes: number;
-}
-export interface RuntimeStoreSnapshot {
-	readonly version: number;
-	readonly data: JsonObject;
-}
-/** Bootstrap-only JSON coordinator state, not model authority or arbitrary native transactions. */
-export interface RuntimeStore {
-	snapshot(): Promise<RuntimeStoreSnapshot>;
-	compareAndSet(expectedVersion: number, data: JsonObject, check: () => void): Promise<RuntimeStoreSnapshot>;
-}
-/** Trusted bootstrap/control plane, not an agent-facing permission grant. */
-export interface Runtime {
-	root(): Host;
-	view(): RuntimeView;
-	createConversation(spec: ConversationSpec): Promise<ConversationRef>;
-	catalog(options: CatalogOptions): RuntimeCatalog;
-	store(options: RuntimeStoreOptions): RuntimeStore;
-	conversation(ref: ConversationRef): Promise<Host>;
-	waitForIdle(): Promise<void>;
-	close(): Promise<void>;
-}
-export interface HostOptions {
-	backend?: "durable";
-	cwd: string;
-	dataDir: string;
-	endpoint: string;
-	model: string;
-	apiKey: string;
-	systemPrompt?: string;
-	steeringMode?: "all" | "one-at-a-time";
-	/** Explicit trusted reopen of a session created under this dataDir. Never falls back to new. */
-	reopenSessionFile?: string;
-	inference?: {
-		readonly models: readonly InferenceModelDefinition[];
-		readonly policies: readonly InferencePolicy[];
-	};
-	prepareInput?: (
-		input: Readonly<{ principal: string; text: string; mode: InputMode }>,
-	) => Promise<{ action: "handled" } | { action: "text"; text: string }>;
-	tools?: readonly {
-		name: string;
-		description: string;
-		parameters: Record<string, unknown>;
-		execute(
-			args: Record<string, unknown>,
-			signal: AbortSignal | undefined,
-			scope: ToolInvocationScope,
-		): Promise<string>;
-	}[];
-}
-```
+`binding.pendingWork()` returns frozen `SourceWorkSnapshot[]` with stable address/job/plan IDs, stage, checkpoint, retry time, source IDs, metadata, attempt IDs and retained budget. `await binding.restoreJob(jobId)` validates current grants and the original source versions. `binding.readWorkFrame(restored.scope)` reads that fixed authorized source set. Old scopes and serialized tokens do not become live again.
+
+A planned job can dispatch its first request after reauthorization. A confirmed failed attempt continues only from its stored ready checkpoint and original finite allowance. A sealed result resumes local validation/adoption with the original request digest and no new reservation. A reserved or otherwise unknown request remains blocked pending effect reconciliation. The Compresser/source completion gap is reconciled only against the original internal Session/Conversation, complete candidate, attempt identities and request digest; recovery does not replay its HTTP.
+
+Lifecycle transitions revoke new work first. They allow only settlement/quarantine of already-started attempts, await that settlement, then close storage. Explicit reload also revalidates the persisted document chain through a consistent public Storage snapshot. Daily history refresh uses ascending 256-entry pages after the last confirmed immutable ID; a new Conversation or explicit reload resets that read cursor. `ContextFrame` still materializes the current Conversation's raw history and effective projection for numbering and provenance.
+
+## Trusted Writer Maintenance
+
+`recoverStorageWriter({ storageDir, expectedClaim: { pid, nonce } })` is a bootstrap-only command for a closed/killed writer. It acquires an exclusive maintenance gate, checks database identity read-only, refuses a live or unconfirmable process, and rechecks the exact claim before releasing it. It returns a frozen `WriterRecoveryReceipt`; it does not open a model or alter database/WAL content. Normal opens still refuse residual claims. A failed or unknown close retains its claim.
+
+## Exported Declaration Sources
+
+The authoritative declarations are exported by [the package root](../../packages/agent/src/index.ts) from [types.ts](../../packages/agent/src/types.ts). Public compiled declarations are checked by the independent installation smoke.
+
+| Surface                                      | Declaration                                                                                                  |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| Frames and projection authority              | `ContextFrame`, `FrameBasis`, `JobScope`, `ToolInvocationScope`, `ProjectionPlan`                            |
+| Durable artifact submission and confirmation | `ArtifactSnapshot`, `ArtifactReceipt`, `StrategyArtifacts`, `SourceWorkCheckpoint`                           |
+| Planned work, inference and recovery         | `SourceJobSpec`, `SourceJob`, `SourceWorkSnapshot`, `InferenceRequest`, `InferenceResult`, `StrategyBinding` |
+| Native Compresser facade and diagnostics     | `CompresserSession`, `CompresserSnapshot`, `InferenceCallValidator`                                          |
+| Trusted lifecycle and storage maintenance    | `HostOptions`, `RuntimeOptions`, `WriterRecoveryOptions`, `WriterRecoveryReceipt`                            |
