@@ -4,7 +4,9 @@ Pakka 将 Pi 的 Conversation、权限、持久化和 MAS 服务接到可选的 
 
 ## 当前工作
 
-[Dynamite SQLite 持久化模式](changes/dynamite-sqlite-persistence.md)已实施：独立 Session/Compresser 存储、领域原子提交、固定计划与恢复、可信 writer 维护、增量历史读取。采用的对象和关系在[预期声明](state/dynamite-persistence.md)，两份实际安装归档见[固定配对](../integrations/dynamite/sqlite-persistence-pairing.json)，源码与检查的接续由[持久化 tasks](../openspec/changes/adopt-dynamite-sqlite-persistence/tasks.md)承接。
+[协作流程编程指南](guides/MAS-WORKFLOWS.md)面向人和 Agent，以应用脚本组合现有 Runtime/MAS/DevPack 能力；提供 Mermaid、可运行示例、产物／状态保存和分级可行性验证。形成与实际检查见[变更摘要](changes/scripted-mas-workflows.md)及[所属 tasks](../openspec/changes/document-scripted-mas-workflows/tasks.md)。
+
+[Dynamite SQLite 持久化模式](changes/dynamite-sqlite-persistence.md)已实施：独立 Session/Compresser 存储、领域原子提交、固定计划与恢复、可信 writer 维护、增量历史读取。采用的对象和关系在[预期声明](state/dynamite-persistence.md)，两份实际安装归档见[固定配对](../integrations/dynamite/sqlite-persistence-pairing.json)，源码与检查的接续由[持久化 tasks](../openspec/changes/archive/2026-11-02-adopt-dynamite-sqlite-persistence/tasks.md)承接。
 
 [Compresser 会话修复与封存](changes/compressor-repair-session.md)已按用户纠偏修正为 Conversation 级计数／封存与原生并发：显式试行 Dynamite 0.5.0 × agent 0.7.0 在固定 Durable 1.4.0-pakka.1 上运行一个长期容器，以多个 source-job Conversation 服务容器外的业务 Session／Conversation；一个外部 Conversation 可触发多个压缩 Conversation。原生 steer／失败边界接续保留轨迹，每次请求计入原辅助额度并保留回执；两类错误在各 Compressor Conversation 内独立累计，达到容忍值只封存该条，其他独立任务保留调度与采用资格；跨任务 P2/P3 合并属于额外异步机制。真实进程中断后的未确认工作在可信解除旧 writer 锁后重开为 quarantined，不自动重发。见[当前状态](state/compressor-session.md)、[Conversation 隔离验证](verification/COMPRESSOR-CONVERSATION-ISOLATION.md)、[设计](../openspec/changes/add-compressor-repair-session/design.md)与[剩余任务](../openspec/changes/add-compressor-repair-session/tasks.md)。[1.4 能力探针](verification/COMPRESSOR-SESSION-1.4-FEASIBILITY.md)与[初轮 1.0.3 证据](verification/COMPRESSOR-SESSION-FEASIBILITY.md)保留原范围。
 

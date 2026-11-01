@@ -4,7 +4,7 @@
 
 用户先要求调查持久化方式和 JSONL 空间特征，随后明确 SQLite、参考 Pi Durable 作架构决策，并按内部开发阶段的新建数据布局实施。
 
-宿主基线为 `ec173fd0deae487ae7664a1575c1f76de27e0913`。当前 SDK 是 `pi-durable@1.4.0-pakka.1`；同 cohort 公开依赖为 1.4.0。当前 Compresser 配对身份在 [pairing](../../../integrations/dynamite/compresser-conversation-pairing.json)：agent 0.7.0、Dynamite 0.5.0 / `279eb83`。
+宿主基线为 `ec173fd0deae487ae7664a1575c1f76de27e0913`。当前 SDK 是 `pi-durable@1.4.0-pakka.1`；同 cohort 公开依赖为 1.4.0。当前 Compresser 配对身份在 [pairing](../../../../integrations/dynamite/compresser-conversation-pairing.json)：agent 0.7.0、Dynamite 0.5.0 / `279eb83`。
 
 初始调查时，本机和远端仍为 `5ff775a`，配对源码尚未取得。2026-10-31 用户发布后，已取得精确 `279eb83`，并采用后续 `5ec402f3d84a539163ca932b5f98bcd0253de7f8` 为库实施基线：该增量明确保持独立原生窗口并发、采纳序列化与批次 drain。旧配对身份保留；开发归档和最终交付分别重新绑定实际字节。
 

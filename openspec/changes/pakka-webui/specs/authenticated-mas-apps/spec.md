@@ -2,7 +2,7 @@
 
 ### Requirement: Executable operator and browser consumption
 
-Actual server bootstrap and CLI SHALL consume the same controlled services and protocol as the shared client. Configuration MUST be explicit and trusted; remote requests SHALL select only approved profile/template references. Browser clients MUST compile and connect without host file access. Import MUST NOT start server/storage or read user credentials. Trusted bootstrap MAY enable approved optional DevPack profiles; native invocation and capability-owner grant ceilings MUST constrain their model calls. Until RPC-owner-to-agent ceilings are supported, DevPack-enabled bootstrap MUST reject spawn/configure/fork RPC grants before opening storage. No-DevPack mode SHALL preserve the accepted M5 command surface. A new WebUI profile-management path SHALL NOT bypass this guard: it MUST establish its own tested authenticated-actor-to-Agent ceiling before enabling such actions, while preserving v1 behavior.
+Actual server bootstrap and CLI SHALL consume the same controlled services and protocol as the shared client. Configuration MUST be explicit and trusted; remote requests SHALL select only approved profile/template references. Browser clients MUST compile and connect without host file access. Import MUST NOT start server/storage or read user credentials. The v1 headless and WebUI entry points SHALL enforce their respective actor-to-Agent grant ceilings at profile allocation, configuration and native invocation.
 
 #### Scenario: Product path
 
@@ -12,7 +12,13 @@ Actual server bootstrap and CLI SHALL consume the same controlled services and p
 #### Scenario: Optional model contribution
 
 - **WHEN** an operator starts an approved contribution configuration and sends input to that member
-- **THEN** actual advertised tools run through its native invocation and grants; unsupported profile-changing RPC combinations are refused without storage/model effects
+- **THEN** trusted bootstrap MAY enable approved DevPack profiles, with advertised model tools constrained by native invocation and capability-owner grant ceilings
+- **AND** DevPack-enabled headless bootstrap MUST refuse spawn/configure/fork RPC grants before opening storage
+
+#### Scenario: Native command configuration
+
+- **WHEN** bootstrap omits DevPack
+- **THEN** it SHALL expose the validated MAS command surface under its configured grants
 
 #### Scenario: WebUI actor boundary
 
@@ -21,7 +27,7 @@ Actual server bootstrap and CLI SHALL consume the same controlled services and p
 
 ### Requirement: Bounded initial deployment
 
-The existing v1 headless transport SHALL bind IPv4 loopback with explicit approved origins and finite body/concurrency limits. It MUST NOT advertise public Internet confidentiality, hostile-code sandbox, remote arbitrary configuration, complete crash recovery or deferred Dynamite support. An explicitly configured WebUI product entry SHALL support the separately specified authenticated multi-user remote deployment, without widening the existing listener/client defaults or serializing in-process capabilities. New protocol versions/actions SHALL be negotiated and runtime-validated; old consumers SHALL retain their accepted closed v1 schemas.
+The v1 headless transport SHALL bind IPv4 loopback with explicit approved origins, finite limits and trusted configuration. Explicit optional contributions SHALL use their fixed pairing and installation contract. An explicitly configured WebUI entry SHALL support its authenticated multi-user deployment with separately negotiated, runtime-validated actions. Each entry SHALL retain its own closed schemas and transport defaults; serialized in-process capabilities SHALL confer no authority.
 
 #### Scenario: Unapproved origin or capacity
 
@@ -30,7 +36,7 @@ The existing v1 headless transport SHALL bind IPv4 loopback with explicit approv
 
 #### Scenario: Existing headless consumer
 
-- **WHEN** the unchanged v1 server/client is used after WebUI support is added
+- **WHEN** bootstrap selects the v1 headless server and client
 - **THEN** it retains loopback, explicit credential/origin and finite-schema behavior; remote listening and arbitrary extension dispatch are not enabled implicitly
 
 ## ADDED Requirements
@@ -46,7 +52,7 @@ GUI observation SHALL use authorized frozen DTOs and identity-bound commands pro
 
 ### Requirement: Broker receipt publication provenance
 
-Stored broker receipt provenance SHALL be verified against the exact endpoint/namespace before publication if the new public path exposes those receipts.
+Stored broker receipt provenance SHALL be verified against the exact endpoint/namespace before publication if a public path exposes those receipts.
 
 #### Scenario: Broker receipt publication provenance
 

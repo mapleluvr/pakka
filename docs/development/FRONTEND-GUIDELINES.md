@@ -57,4 +57,4 @@ Devin 已有界面的原生操作、页面关系、菜单/快捷键和切换行�
 
 ### 继续打磨的组织
 
-对照具体原生入口，记录当前差距、来源位置、可观察结果和下一步。可重跑断言放入相应测试；本地探查留在 docs/.temp；采用的要求写回 state，完整形成与调整进入 OpenSpec。首批结果见[指南 tasks](../../openspec/changes/adopt-webui-frontend-guidelines/tasks.md)，后续工作与待采用方案见[设置路由与本机恢复 tasks](../../openspec/changes/improve-webui-navigation-and-local-recovery/tasks.md)。
+对照具体原生入口，记录当前差距、来源位置、可观察结果和下一步。可重跑断言放入相应测试；本地探查留在 docs/.temp；采用的要求写回 state，完整形成与调整进入 OpenSpec。当前工作及形成记录由[工作入口](../OVERVIEW.md)接续。

@@ -19,6 +19,6 @@ Dynamite 的计划、推理结果与 P1–P4 产物需要稳定的身份、版�
 
 - 主要实现：`packages/agent/src/durable-adapter.ts`、`strategy-control.ts`、`artifact-journal.ts` 及公开 Strategy API。
 - 策略端：Dynamite 的原文窗口计划、产物提交和工作恢复消费宿主契约。
-- 当前声明：[Dynamite persistence](../../../docs/state/dynamite-persistence.md)。
-- 细则：[dynamite-persistence delta](specs/dynamite-persistence/spec.md)、[conversation-runtime delta](specs/conversation-runtime/spec.md)；相关主边界为 [conversation-runtime](../../specs/conversation-runtime/spec.md)、[optional-dynamite-product](../../specs/optional-dynamite-product/spec.md)。
+- 当前声明：[Dynamite persistence](../../../../docs/state/dynamite-persistence.md)。
+- 细则：[dynamite-persistence delta](specs/dynamite-persistence/spec.md)、[conversation-runtime delta](specs/conversation-runtime/spec.md)；相关主边界为 [conversation-runtime](../../../specs/conversation-runtime/spec.md)、[optional-dynamite-product](../../../specs/optional-dynamite-product/spec.md)。
 - 执行顺序和源码前置条件见 [tasks](tasks.md)；选型、事务域与恢复决策见 [design](design.md)。

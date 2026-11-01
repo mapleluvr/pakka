@@ -1,21 +1,21 @@
-# pakka-webui source and native feasibility
+# pakka-webui 来源与原生端口工具
 
-This is the executable P0 evidence path, not an installed WebUI or a claim that the migration is finished. Current product scope is in [state](../../docs/state/product.md); the complete [WebUI change and specs](../../docs/changes/webui-and-mas.md) retain the development record.
+本目录固定外部来源、许可、采用映射和可执行探针。WebUI 的使用、界面与服务契约分别在[使用指南](../../docs/guides/WEBUI-GUIDE.md)、[前端声明](../../docs/state/frontend.md)和[开发规范](../../docs/development/WEBUI-DEVELOPMENT.md)维护。
 
-## Immutable sources
+## 固定来源
 
-[The lock](source-lock.json) distinguishes two divergent trees:
+[source-lock.json](source-lock.json)分别指定两棵源码树的用途：
 
-- Adopt UI from `TannerMidd/pi-pocket@de612d5622cdc66b6b8b4900c650c6f2efdf4c63` (`pi-durable@1.1.0`).
-- Inspect commands/interfaces from `mapleluvr/pi-pocket@58a4fdcc88ed755023aea9fac897735fca7396fe` (`pi-durable@1.0.2`), whose immediate parent is Phase 1 `2cb652c465f670ba8c66fc3ee639798caca8afbc`.
-- Their common ancestor is `096b7e198cb69846ce91ca45a18d144f688d478e`; **Phase 2 does not contain the newer adopted UI baseline**. Do not substitute one for the other or claim that Phase 2 was already merged into that baseline.
-- Neither upstream cohort is installed into Pakka. Production keeps the pinned `pi-durable@1.0.3-pakka.1` and its existing build/patch gates.
+- `TannerMidd/pi-pocket@de612d5622cdc66b6b8b4900c650c6f2efdf4c63`：界面与资产来源。
+- `mapleluvr/pi-pocket@58a4fdcc88ed755023aea9fac897735fca7396fe`：命令／接口参考，其 parent 为 `2cb652c465f670ba8c66fc3ee639798caca8afbc`。
 
-Code and font notices are retained byte-for-byte in [licenses/](licenses/). Every adopted asset must retain its own source/blob/SHA and notice; this directory is not permission to relabel the whole upstream tree as Pakka-authored.
+这些是不同的 Git tree，按 lock 中的用途读取，不能互相替代。来源探针使用各自固定依赖；Pakka 的生产依赖另由 package/lock 及[Durable 补丁契约](../../docs/state/durable-patch.md)绑定。
 
-## Reproduce
+原始代码和字体 notices 保存在 [licenses/](licenses/)。采用的资产保持对应 source/blob/SHA、许可及 copyright。生产前端的 Devin 参考与原生行为规则见[前端开发规范](../../docs/development/FRONTEND-GUIDELINES.md)。
 
-From the Pakka repository root, create the two ignored source checkouts. Fetch the three exact commits without depth truncation, not a floating branch. Do not execute their application or use user credentials.
+## 准备源码
+
+从 Pakka 根目录运行，检出完整精确 commit：
 
 ```powershell
 $root = 'artifacts/pakka-webui/p0'
@@ -30,7 +30,9 @@ git -C "$root/pi-pocket-source" fetch --no-tags origin 58a4fdcc88ed755023aea9fac
 git -C "$root/pi-pocket-source" checkout --detach 58a4fdcc88ed755023aea9fac897735fca7396fe
 ```
 
-`upstream-baseline.mjs` first verifies source commit/tree/licenses and a clean worktree (including rejection of untracked inputs), then runs upstream `npm ci --ignore-scripts`, check and tests in a fresh isolated HOME/AppData/temp/data profile. Its environment excludes inherited credentials and user npm configuration. It uses the selected Node/npm, not `npx node`, and never upgrades Pakka. On the measured Windows baseline its exit is **1**, not a passing Pakka gate.
+源码和生成物放在忽略目录中；来源工具不启动上游应用或使用用户凭据。
+
+## 执行与输出
 
 ```powershell
 node integrations/pocket/upstream-baseline.mjs
@@ -39,25 +41,10 @@ node integrations/pocket/source.mjs "$root/upstream-source" "$root/pi-pocket-sou
 node --test --test-concurrency=1 integrations/pocket/native-jobs.test.mjs packages/agent/test/conversation-observation.test.ts packages/agent/test/conversation-observation-safety.test.ts
 ```
 
-The inventory uses Git blob bytes, not a raw copy of a dirty checkout. The AST parser is the **upstream lock-installed TypeScript 6.0.3 public API**, explicitly resolved from its isolated installation. Pakka's TypeScript 7 root exports version metadata only; this tool neither downgrades it nor reaches into unstable/private compiler APIs.
+- `upstream-baseline.mjs`：核对 commit/tree/licenses 和干净工作树，在隔离 HOME/AppData/temp/data 中安装、检查和测试上游；环境排除用户凭据与 npm 配置。输出归属于该上游、平台和工具版本。
+- `source.mjs`：从 Git blob 生成 mode、blob ID、SHA-256、长度及 AST 调用／路由位置。AST parser 使用上游锁定 TypeScript 6.0.3 的公开 API。
+- [adoption-map.json](adoption-map.json)：为源模块关联采用职责、scope、效果策略与执行路径。候选引用位置本身不是已确认功能或漏洞。
+- `native-jobs.test.mjs`：直接检查锁定 Durable 的 waiter cancellation、显式 abort receipt 和 checkpoint 重开。应用 job 的权限、有限额度和执行期检查另由 Runtime 公开接口承担。
+- Conversation observation 测试：核对冻结 DTO、权限撤销、显示记录去重及零模型贡献。
 
-## Results and what they establish
-
-[The original baseline](upstream-baseline.json) records **548 = 378 passed + 40 failed + 130 skipped**, no cancelled/todo, on Windows/Node 24.18.0. Install and check passed. Failures and skips are preserved, not fixed or counted as acceptance. Raw logs are under `artifacts/pakka-webui/p0/`. Faux-provider upstream results do not substitute for the real pinned-Durable production path.
-
-`source.mjs` emits per-file modes/blob IDs/SHA-256/lengths and AST call/route/old-authority candidate locations. The initial primary inventory contains **259 files, 364 call locations, 113 route conditions, 880 candidate authority references**. These are lexical/AST inventory counts, not counts of distinct user features or confirmed vulnerabilities. [The adoption map](adoption-map.json) assigns all **61** upstream Web modules exactly one owner, scope, effect policy and real acceptance path. The generated action locations stay associated with those module owners; generic store/API endpoints are mapped by the service ledger in [the P0 record](../../docs/archive/webui/PAKKA-WEBUI-P0.md).
-
-The committed adapter tests exercise actual `createRuntime`/Harness, real local provider HTTP, real live tool execution and native storage:
-
-- Scoped, frozen committed transcript/tool/live/usage DTOs; no system/config/provider identity or credential fields.
-- No new work or storage commits from reading. Revoke is checked after asynchronous native watch cleanup, immediately before publication.
-- Idempotent, actor/namespace/Conversation-bound display-only writes, concurrency/reopen/conflict/finite-capacity rejection.
-- Cards/chat have zero model contribution, do not advance the model head or replace the original requester, and are absent from the next actual provider request even when written during a tool run.
-
-`native-jobs.test.mjs` is **test-only feasibility** of the public locked Durable API: waiter cancellation rejects with the exact cancellation reason without cancelling work; explicit task abort has a terminal native receipt; committed checkpoints continue after close/reopen without replaying prepare. It does not expose native task objects to application/extensions and is not a production long-job service. P1 must bind such a service to actors, limits and effect-time checks. The earlier scratch `native-jobs.log` is superseded: its waiter-cancellation assertion accepted an unrelated API error; only the corrected exact-reason run and committed test count as evidence.
-
-## Human authority decision
-
-The new read/display ports take bootstrap-owned checks, not browser-supplied permissions. A UI command will need a current human/resource/profile check at each controlled effect. MAS send/discover is not human read authority. Existing DevPack-mode v1 startup refuses RPC spawn/configure/fork grants; keep this guard until P1 proves an explicit person-to-profile ceiling. A generic owner check or `profile: "approved-name"` is not sufficient to bypass it.
-
-Native mechanics above need **no new Durable patch**. People/session metadata, actor/profile ceilings, finite WebUI protocol, event streams and the controlled long-job interface remain P1/P2 work. Broker native receipts are not newly published; the exact endpoint/namespace gate remains closed until verified. No WebUI package, second Harness/SQLite writer or original subagent/PiP backend is introduced by P0.
+逐命令 exit、skip 和失败按实际环境记录。来源清单、上游测试与 API 探针分别建立不同证据，不能互相替代。固定结果见 [upstream-baseline.json](upstream-baseline.json)，形成与测量记录见[来源调查](../../docs/archive/webui/PAKKA-WEBUI-P0.md)。

@@ -14,6 +14,19 @@ function fixture(t: TestContext) {
 	const script = join(root, "scripts", "verify-durable-patch.mjs");
 	mkdirSync(dirname(script), { recursive: true });
 	copyFileSync(fileURLToPath(new URL("../../../scripts/verify-durable-patch.mjs", import.meta.url)), script);
+	copyFileSync(
+		fileURLToPath(new URL("../../../scripts/durable-patch-version.mjs", import.meta.url)),
+		join(root, "scripts", "durable-patch-version.mjs"),
+	);
+	mkdirSync(join(root, "packages", "agent"), { recursive: true });
+	writeFileSync(
+		join(root, "packages", "agent", "package.json"),
+		JSON.stringify({
+			dependencies: {
+				"@earendil-works/pi-durable": "file:vendor/earendil-works-pi-durable-1.4.0-pakka.1.tgz",
+			},
+		}),
+	);
 	for (const version of ["1.0.3-pakka.1", "1.4.0-pakka.1"]) {
 		const patch = join(root, "patches", "pi-durable", version);
 		const vendor = join(root, "packages", "agent", "vendor");
@@ -45,7 +58,7 @@ test("Durable verifier keeps the production version as its default", (t) => {
 	const f = fixture(t);
 	const result = f.run();
 	assert.equal(result.status, 0, result.stderr);
-	assert.match(result.stdout, /Verified pi-durable 1\.0\.3-pakka\.1/);
+	assert.match(result.stdout, /Verified pi-durable 1\.4\.0-pakka\.1/);
 });
 
 test("Durable verifier selects an explicitly requested patch version", (t) => {
@@ -57,8 +70,8 @@ test("Durable verifier selects an explicitly requested patch version", (t) => {
 test("Durable verifier detects tampering in the selected version independently", (t) => {
 	const f = fixture(t);
 	writeFileSync(join(f.root, "patches", "pi-durable", "1.4.0-pakka.1", "source.patch"), "tampered");
-	assert.equal(f.run().status, 0);
-	const result = f.run("1.4.0-pakka.1");
+	assert.equal(f.run("1.0.3-pakka.1").status, 0);
+	const result = f.run();
 	assert.notEqual(result.status, 0);
 	assert.match(result.stderr, /source\.patch does not match/);
 });

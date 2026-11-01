@@ -22,7 +22,7 @@ A trusted product bootstrap SHALL install DevPack only for explicitly approved p
 
 ### Requirement: Explicit supported combinations
 
-The product SHALL distinguish application RPC, trusted library/fixed-worker composition and unsupported public broker/template allocation. RPC spawn/configure/fork grants MUST be refused before opening storage in DevPack-enabled or Dynamite-enabled product bootstrap until their actor-to-agent ceilings are supported. Lifetime, normal-reopen identity/quota and unknown outcomes MUST remain native/controlled-service semantics.
+The product SHALL distinguish application RPC, trusted library/fixed-worker composition and unsupported public broker/template allocation. RPC spawn/configure/fork grants MUST be refused before opening storage in DevPack-enabled or Dynamite-enabled product bootstrap. Lifetime, normal-reopen identity/quota and unknown outcomes MUST remain native/controlled-service semantics.
 
 #### Scenario: Unsupported remote profile management
 
@@ -46,9 +46,9 @@ The product SHALL distinguish application RPC, trusted library/fixed-worker comp
 
 ### Requirement: Fixed-artifact product acceptance
 
-Supported combinations SHALL be exercised using real installed artifacts without workspace paths/root overrides and local deterministic providers. Evidence MUST distinguish native admission/generation/tool results from external effects and retain unknowns. GUI inclusion SHALL be a separate documented consumer/repository decision, not a prerequisite for headless acceptance. Dynamite SHALL remain absent by default and SHALL only be advertised as optional supported pairing after the new fixed library and actual product gates pass; historical failed pairing MUST remain recorded.
+Product checks SHALL exercise each explicit combination using real installed artifacts without workspace paths/root overrides and local deterministic providers. Evidence MUST distinguish native admission/generation/tool results from external effects and retain unknowns. Headless and WebUI consumers SHALL each use their declared configuration and execution path. Dynamite SHALL be selected explicitly using its exact optional pairing.
 
 #### Scenario: Actual operator path
 
 - **WHEN** an isolated consumer starts the product executable and submits work through CLI/shared client
-- **THEN** actual native tool calls, original storage, exact HTTP/tool counts and terminal receipts demonstrate the supported composition, not simulation or summed prior-phase test counts
+- **THEN** actual native tool calls, original storage, exact HTTP/tool counts and terminal receipts demonstrate the supported composition, using the actual run rather than simulation or unrelated test counts

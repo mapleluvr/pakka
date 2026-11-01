@@ -37,7 +37,7 @@ MAS Board 必须通过右侧的通用贡献方式实现。不为 MAS 增加特�
 - 注册 slash/command-palette/button action，共用 command identity。
 - 返回私有 toast、共享 display card、打开 interface 或 operation receipt。
 
-宿主负责容器 title、close/focus、返回导航、加载与错误状态；扩展不要嵌套第二个应用壳层或通过 DOM monkey patch 抢占它。完整全局布局/store override 不是首版稳定第三方接口；需要新插槽时用真实消费者证明，而不是复制内部代码。
+宿主负责容器 title、close/focus、返回导航、加载与错误状态；扩展不要嵌套第二个应用壳层或通过 DOM monkey patch 抢占它。全局布局和 store 由宿主拥有；需要新插槽时，定义公开契约并以独立消费者验证。
 
 设置界面只是自定义 interface 的一种用途。简单设置复用标准 input/select/toggle；复杂 MAS topology、receipt inspector、策略预览可以自行组成组件。
 
@@ -84,7 +84,7 @@ Card 是显示记录，不是偷偷添加 system/user message。必须用下一�
 - 实际 public SDK 的 `ExtensionClient.operationByRequest({ extension, requestId, target })` 可在丢失 host operation ID 时只读查询原请求；服务端绑定当前 person 和精确 AgentRef，并在发布前重查原权限。`UIContext.operationByRequest(requestId)` 另绑定当前 open instance。
 - 外层 operation 已记录 `done` 不证明内层 job/browser/native effect 已完成；内层仍为 `unknown` 时必须保留待确认身份，不解锁重复效果。
 - 明确 pre-effect guard 的拒绝可报 denied；opaque callback 可能已有效果，其异常/断连/超时保持 unknown。不要解析报错文本推断 rollback。
-- Memory 是相同插槽的另一实际消费者：`workspaceMemoryService`/`workspaceMemoryExtensionRoot` 绑定当前人类与精确资源；宿主分别选择 `createPocketMemory().tools` 与 `.source`。人类界面不自动激活 Agent 能力；记忆审批、版本冲突、暂停与原操作核对见 [P5 阶段记录](../archive/webui/PAKKA-WEBUI-P5.md)。
+- Memory 是相同插槽的另一实际消费者：`workspaceMemoryService`/`workspaceMemoryExtensionRoot` 绑定当前人类与精确资源；宿主分别选择 `createPocketMemory().tools` 与 `.source`。人类界面不自动激活 Agent 能力；提议须经授权审批才进入来源；编辑、审批和遗忘按精确 expectedVersion 提交，冲突保留当前草稿。暂停只停止内容贡献，移除人类界面保留已批准记录及宿主显式工具；响应不明按原 operation 核对。每条文本最多 300 个 UTF-16 code units，项目/global 各最多 40/30 条，未批准提议最多 20 条，保留记录／mutation ledger 上限为 256/512。
 - 对外 incoming endpoint 可由已安装 Backend 的 `ExtensionService.ingress` 声明：有限 raw body/headers/path、截止时间、封闭输出 schema 与 generation live check；handler 不取得 socket、Cookie/CSRF authority、模块或任意响应 header。服务先验证外部身份，再把 live check 传到受控效果边界，超时保持 unknown。
 - Webhooks 已通过这一通用接口实现签名/专用 secret、轮换、原请求恢复和真实 native follow-up；明确 Conversation 的目标与当前创建人权限由服务端绑定，移除 WebUI 保留 Backend。私密 setup 是显式授权的只读操作，不落入通用 operation ledger；详细路径与容量见 [Webhook 说明](../guides/WEBHOOKS.md)。
 - 不把 metadata 写和 native Durable effect 称为跨存储原子提交。保留各自 operation/receipt 与不确定状态。
@@ -103,7 +103,7 @@ pakka-webui 的主 provider key 使用独立 `credential.status / credential.rep
 
 owned 私密服务会持久保存显式提交的值，供未来原生主请求解析；保留已有启动 resolver，直到明确替换/清除。清除会阻止后续解析且重开不回退，但不撤回已发请求、不擦除旧持久日志，也不宣称加密。它的稳定写回执有每 Session 256 次的上限，不以自动遗忘回执扩大容量。
 
-通知使用独立的 `notification.status / subscribe / unsubscribe / preferences` 有限命令，设备与偏好绑定当前人类，当前 Conversation 在服务端校验。`PocketServiceContext.notifications` 是受信任 producer；浏览器命令不能决定通知收件人或文案。pending/unknown 的真实 push 不自动重发；worker 在显示和导航前用当前 Cookie 读取 metadata，HTTP 接受不作为 OS 显示的证据。状态仅返回公开 VAPID key、偏好和当前资源设备的 `{ id, subscriptionKey }`；摘要匹配真实 PushSubscription，丢注册响应后的核对不再写注册，也不返回 endpoint/auth/private VAPID。实际边界、保留上限与测量记录见 [P5 通知](../archive/webui/PAKKA-WEBUI-P5.md)。
+通知使用独立的 `notification.status / subscribe / unsubscribe / preferences` 有限命令，设备与偏好绑定当前人类，当前 Conversation 在服务端校验。`PocketServiceContext.notifications` 是受信任 producer；浏览器命令不能决定通知收件人或文案。pending/unknown 的真实 push 不自动重发；worker 在显示和导航前用当前 Cookie 读取 metadata，HTTP 接受不作为 OS 显示的证据。状态仅返回公开 VAPID key、偏好和当前资源设备的 `{ id, subscriptionKey }`；摘要匹配真实 PushSubscription，丢注册响应后的核对不再写注册，也不返回 endpoint/auth/private VAPID。保留上限为每 Session 256 个事件、512 个控制操作、128 个设备与 128 份个人偏好；单人最多 10 个活动设备，每设备最多 64 个资源，store 最大 1 MiB。容量耗尽拒绝新增。VAPID 私钥和订阅材料由受保护存储保留，不进入模型或状态响应；HTTP 接受与操作系统实际显示分别确认。
 
 ## 8. 生命周期与资产
 
@@ -130,7 +130,7 @@ Verification 的选用与记录按[通用方法](VERIFICATION.md#选用与记录
 
 ### 独立选择模型和 Conversation 工作目录
 
-模型入口位于消息输入区，点击紧凑的模型按钮选择**已配置 provider 的可用模型**。具有 Conversation 配置权限的人可选择目录内任一模型；该目录由 `runtime.model` 与 `runtime.profiles[].model` 派生，模型-only 路径不使用逐模型/逐 Session ACL，也不要求在顶层 `profiles` 再声明一遍。候选按模型 ID 去重，保留首次出现顺序和首个配置标识，只发布标识与模型 ID，不携带另一个预设的 cwd、工具或指令。有限响应最多 65 项，对齐 JSON 的默认模型加 64 个附加配置；第 66 项仍拒绝。HTTP server 与客户端应一起更新，旧的 64 上限客户端不能读取 65 项；此处不扩展为无限 headless 模型目录。当前模型置顶；所有列表都提供搜索，支持按模型 ID 或配置标识进行不区分大小写的多词模糊检索（空格或 `/` 分词、词内字符有序匹配）。选择器参考 Pi TUI `/model` 的输入焦点、上下键循环、高亮候选、Enter 确认、Escape 关闭及位置/匹配总数反馈；实际已应用模型有独立标记。检索和键盘移动不提交配置，空结果下 Enter 无效果，中文等输入法组合期间不把 Enter 当作选择。当前 headless 集成仍是同一 OpenAI-completions provider 下的已配置模型，不虚构多供应商登录、Thinking 档位或自动模型发现。
+模型入口位于消息输入区，点击紧凑的模型按钮选择**已配置 provider 的可用模型**。具有 Conversation 配置权限的人可选择目录内任一模型；该目录由 `runtime.model` 与 `runtime.profiles[].model` 派生，模型-only 路径不使用逐模型/逐 Session ACL，也不要求在顶层 `profiles` 再声明一遍。候选按模型 ID 去重，保留首次出现顺序和首个配置标识，只发布标识与模型 ID，不携带另一个预设的 cwd、工具或指令。有限响应最多 65 项，对齐 JSON 的默认模型加 64 个附加配置；第 66 项仍拒绝。HTTP server 与客户端应一起更新，客户端按相同的 65 项上限解析该有限目录。当前模型置顶；所有列表都提供搜索，支持按模型 ID 或配置标识进行不区分大小写的多词模糊检索（空格或 `/` 分词、词内字符有序匹配）。选择器参考 Pi TUI `/model` 的输入焦点、上下键循环、高亮候选、Enter 确认、Escape 关闭及位置/匹配总数反馈；实际已应用模型有独立标记。检索和键盘移动不提交配置，空结果下 Enter 无效果，中文等输入法组合期间不把 Enter 当作选择。headless 配置使用同一 OpenAI-completions provider 下的明确模型目录，endpoint 与凭据由宿主提供。
 
 工作目录入口**只在 Conversation 标题下方**，Settings 不提供目录变更入口。点击当前服务器路径打开目录选择器：
 
@@ -160,7 +160,7 @@ Pi Durable 公开 configure 支持 model/cwd 局部修改。Pakka 使用这个�
 
 `cwdRoots` 是宿主批准的全局目录位置，当前能够管理 Conversation 的角色可在其中选择；未显式配置时，从该角色可使用的整组 Agent 预设推导位置。它支持 JSON、ESM 与 worker 配置，必须是现有绝对目录。路径为**运行服务器上的路径**，不是手机本地路径，也不构成文件系统沙箱。Files & changes 的 roots 是独立批准的权限，切换 cwd 不会扩大它们。
 
-现存 Session 的 profile/limits/显式 cwdRoots 身份仍锁定，重开必须保持原声明；不能改配置文件后静默扩大旧工作权限。旧 Session 未配置 cwdRoots 时仍可正常重开，并使用原批准目录内的子目录，不要求迁移为组合 profile。正常重开从原生 Conversation 配置恢复实际模型、目录及额度，而非从基础 profile 猜测。
+现存 Session 的 profile/limits/显式 cwdRoots 身份仍锁定，重开必须保持原声明；不能改配置文件后静默扩大旧工作权限。未配置 cwdRoots 的 Session 使用原批准目录中的子目录。正常重开从原生 Conversation 配置恢复实际模型、目录及额度，而非从基础 profile 猜测。
 
 基础 profile、顶层 `profiles`/服务端 `profileCeiling` 与整组 configure API 用于完整 Agent 预设的工具/指令权限；单独模型选择不据此筛选或改变预设。未知模型仍按服务配置目录拒绝；`canConfigure` 与实际 `manage` 资源写权限一致，目录读取、凭据及扩展安装继续各自处理真实效果。
 
@@ -168,13 +168,13 @@ Pi Durable 公开 configure 支持 model/cwd 局部修改。Pakka 使用这个�
 
 创建不复用首页消息框：New Session / New Conversation 使用独立配置向导。`session.list` 对有创建权限者返回的 defaults 与 `creation.directories` 是只读草稿来源，不创建资源、不发送模型输入，也不增加模型授权。`session.list / session.create / session.lookup` 分别读取当前授权父项、以稳定 requestId 创建、只读核对原 `{requestId,name,cwd}`；清单失败不被转换为空清单。
 
-管理目录位于控制 Session 的 `pocket.sessions` namespace，最多 31 个新增 Session，加已有控制 Session 最多 32 项。它先持久记录保留的 Session ID 和 unknown，再以公开 `createRuntime` 打开独立 storage/writer，原生初始化和 ready 注册均确认后才发布。重开沿原 ID、目录与固定宿主预算配置，不自动清理 writer claim、重做 unknown 初始化或重放输入；现有预算消费不重置。已确认子存储无法重开时本轮实现使工作区启动失败，不伪装为空目录。它不是跨 Session 的 Runtime、总预算域或进程隔离。
+管理目录位于控制 Session 的 `pocket.sessions` namespace，最多 31 个新增 Session，加已有控制 Session 最多 32 项。它先持久记录保留的 Session ID 和 unknown，再以公开 `createRuntime` 打开独立 storage/writer，原生初始化和 ready 注册均确认后才发布。重开沿原 ID、目录与固定宿主预算配置，不自动清理 writer claim、重做 unknown 初始化或重放输入；现有预算消费不重置。已确认子存储无法重开时，工作区启动失败并报告原身份，不发布空目录。它不是跨 Session 的 Runtime、总预算域或进程隔离。
 
-`create` 在明确的 sessionId 内创建 Conversation；可选 `configuration: {model?,cwd?}` 与创建同次原生提交，不替换整组 Agent 预设。没有可用父项时，确认执行 Session → Conversation 两步，保留各自原请求；父项成功后不因第二步失败重建或删除。请求未知时仅 lookup，明确确认才接续第二步。当前页面中关闭/重开保留待核对身份；整页刷新后恢复未确认创建草稿不是本轮已验证能力。
+`create` 在明确的 sessionId 内创建 Conversation；可选 `configuration: {model?,cwd?}` 与创建同次原生提交，不替换整组 Agent 预设。没有可用父项时，确认执行 Session → Conversation 两步，保留各自原请求；父项成功后不因第二步失败重建或删除。请求未知时仅 lookup，明确确认才接续第二步。待核对身份保存在当前页面状态，关闭并重开对话框可读取；整页刷新重新加载资源清单，未确认创建草稿仅在原页面存续。
 
 读取、SSE、协作、通知、扩展服务与 Native 操作按完整 Session/Conversation 地址选择所属 Runtime。资源 grant 同样区分两级身份；原单 Session 裸 ID 兼容授权只代表原控制 Session，不向同号的新 Session 扩权。receipt/wait/withdraw 保留原生 receipt ID，sessionId 作为单独寻址字段；客户端同时核对响应父项，不用重编码的 ID 冒充新原生回执。
 
-有限 envelope 仍为 v2，server、静态前端与 `@pakka/client` / `@pakka/protocol` 必须成套更新：新增字段和完整资源键不承诺旧的单 Session decoder 可读取。旧单 Session grant 的归属兼容不等于旧 UI 或旧有限响应 decoder 的兼容；不保留旧首页创建分支。
+有限 envelope 为 v2。server、静态前端与 `@pakka/client` / `@pakka/protocol` 必须按相同字段与完整资源键成套解析。仅具裸 Conversation ID 的兼容 grant 归属控制 Session；grant 解析与 wire decoder 版本分别核对。
 
 `navigation.read / navigation.update / navigation.lookup` 在控制 Session 的每人独立 namespace 保存单层个人文件夹与视图。每人最多 32 个文件夹、256 条归类，更新使用版本 CAS 与最近 16 个原请求结果；过期请求也不能绕过版本重做。分组为 Sort Per Session 或 Default，Conversation 至多归入一个文件夹，删除只回到 Uncategorized（未分类）；归类需当前 read 权限，不要求 manage 或新文件夹 ACL。授权读取过滤隐藏资源，但无关编辑保留它们的已有归类。unknown 先核对，不自动重发。
 
@@ -192,9 +192,9 @@ Pi Durable 公开 configure 支持 model/cwd 局部修改。Pakka 使用这个�
 
 ### 固定快照与隔离环境
 
-主代理为每个验收任务准备独立 worktree 和 agent-workspace-linux 桌面，固定本轮实际候选代码。快照必须收录本阶段的实际改动及必要的未提交或未跟踪文件；不得默认以旧 HEAD 代替。记录基线、候选文件清单、内容身份与实际测试版本，并核对启动代码、构建资产及安装归档属于该快照。
+主代理为每个验收任务准备独立 worktree 和 agent-workspace-linux 桌面，固定待检查的实际候选代码。快照必须收录本阶段的实际改动及必要的未提交或未跟踪文件；不得默认以旧 HEAD 代替。记录基线、候选文件清单、内容身份与实际测试版本，并核对启动代码、构建资产及安装归档属于该快照。
 
-每个并行任务使用唯一 workspace id，所有 workspace 调用显式传入该 id。应用通过 workspace 工具从验收 worktree 启动；P6 仓库外安装场景使用同一快照生成的确切产物。端口、浏览器 profile、身份、测试数据与存储相互隔离，GUI 操作只使用 workspace 工具。
+每个并行任务使用唯一 workspace id，所有 workspace 调用显式传入该 id。应用通过 workspace 工具从验收 worktree 启动；仓库外安装场景使用同一快照生成的确切产物。端口、浏览器 profile、身份、测试数据与存储相互隔离，GUI 操作只使用 workspace 工具。
 
 ### 交接与异步推进
 

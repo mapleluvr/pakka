@@ -1,6 +1,6 @@
 # Dynamite 持久化
 
-本页声明 Dynamite 工作、结果与产物的预期持久状态。事务与恢复细则映射到 [dynamite-persistence delta](../../openspec/changes/adopt-dynamite-sqlite-persistence/specs/dynamite-persistence/spec.md)。
+本页声明 Dynamite 工作、结果与产物的预期持久状态。事务与恢复细则映射到 [dynamite-persistence spec](../../openspec/specs/dynamite-persistence/spec.md)。
 
 ## 存储与身份
 

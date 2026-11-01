@@ -33,7 +33,7 @@
 		"providerRequests": 461,
 		"providerErrors": 0,
 		"declarations": "passed",
-		"record": "../../openspec/changes/adopt-dynamite-sqlite-persistence/tasks.md"
+		"record": "../../openspec/changes/archive/2026-11-02-adopt-dynamite-sqlite-persistence/tasks.md"
 	},
 	"archives": {
 		"host": "../../artifacts/dynamite/sqlite-persistence/pakka-agent-0.7.0.tgz",

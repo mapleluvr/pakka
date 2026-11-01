@@ -1,6 +1,6 @@
-# Same-Session MAS API（`@pakka/mas@0.4.0`）
+# Same-Session MAS API（`@pakka/mas`）
 
-当前服务消费 `@pakka/agent@0.5.0` 公开控制端口；同 Session 契约在 M2 已验收，M3 复用它作为跨 Session 的原生准入路径。调用方向为 composition root → MAS service → gate → Durable adapter。业务 agent 只接收冻结的 `MasClient`；`Mas`、`Runtime`、catalog、model endpoint、凭据和原始 Pi handles 留在受信任装配层。当前实现与验收范围见[固定验证记录](../verification/README.md)；[核心阶段摘要](../changes/core-integration-lineage.md)完整引用各次 OpenSpec change 和 spec。
+MAS 服务通过 `@pakka/agent` 的公开控制端口，管理同 Session 的成员与消息。调用方向为 composition root → MAS service → gate → Durable adapter。业务 agent 只接收冻结的 `MasClient`；`Mas`、`Runtime`、catalog、model endpoint、凭据和原始 Pi handles 留在受信任装配层。
 
 ## 使用
 
@@ -42,7 +42,7 @@ console.log(await caller.wait(sent.id));
 
 `mas.revoke(principal)` 撤销该服务实例已发行 client closure；重新授予由宿主显式 `connect`。service instance 是 authority issuer，不能把另一个独立实例当作同一 issuer 的撤权通道。Session 关闭或 scope 结束时旧 closure 失效；重开不恢复旧权限。
 
-工具调用通过 `client.forInvocation(scope)` 绑定实际 native invocation，scope 来自 gate 配置的 tool executor。复制、foreign Conversation 和过期 scope 无效。M4 的可选 [DevPack](MAS-DEVPack-API.md) 提供 agent-facing contribution（[已验收，带限制](../archive/acceptance/MIGRATION-M4-ACCEPTANCE.md)）。`authorize(action)` 仅检查既有 grant；`withAuthority(check)` 只能收窄 lease，后续 `forInvocation` 和再组合继续保留原 check 链。`inbox()` 在 reply grant 下仅返回自己的 incoming receipt metadata，不返回 payload 或 peer transcript。
+工具调用通过 `client.forInvocation(scope)` 绑定实际 native invocation，scope 来自 gate 配置的 tool executor。复制、foreign Conversation 和过期 scope 无效。可选 [DevPack](MAS-DEVPack-API.md) 将批准的通信与管理能力提供为模型工具。`authorize(action)` 仅检查既有 grant；`withAuthority(check)` 只能收窄 lease，后续 `forInvocation` 和再组合继续保留原 check 链。`inbox()` 在 reply grant 下仅返回自己的 incoming receipt metadata，不返回 payload 或 peer transcript。
 
 ## A2A 与回执
 
@@ -52,7 +52,7 @@ identity 为 namespace + principal + source incarnation + requestId，payload fi
 
 `DeliveryReceipt.status` 保留 `queued | placed | done | unanswered | unknown`，`entryId` 区分已置入 transcript，`reason` 保留 native terminal 原因。done 表示输入得到回答，不证明工具外部副作用完成。`withdraw` 仅在 native queued 记录确认未 placement 时撤回；已 placed 的输入与 entry 继续保留。wait 的取消或超时只停止等待，不证明未送达。unknown 不退还 admission 或调用花费。
 
-关闭、重开和相同 requestId 重试会沿用持久 catalog/native admission，inspection 本身不发送 HTTP。Host 的进程内 C2 ledger 仍独立；MAS 去重依赖目标 Session 的 durable catalog。
+关闭、重开和相同 requestId 重试会沿用持久 catalog/native admission，inspection 本身不发送 HTTP。Host 的进程内直接输入回执 ledger 仍独立；MAS 去重依赖目标 Session 的 durable catalog。
 
 ## 宿主持久观测
 
@@ -68,10 +68,10 @@ identity 为 namespace + principal + source incarnation + requestId，payload fi
 | `task-bound` / `temporary` | 当前已证明 native tool task 的子 Conversation，owner task 结束后拒绝新工作；temporary 是逻辑寿命，历史仍保存                           |
 | `background`               | 当前来源 Conversation 拥有的原生 background anchor task；父 Conversation 普通 abort 不跨此边界，explicit retirement abort/drain anchor |
 
-没有 invocation 证明时拒绝非 persistent 创建。普通子树与 background boundary 用真实 tool call 和 child provider 请求验收。owner task 的状态是 admission 检查的一部分，不能由 LLM 文本声明替代。
+没有 invocation 证明时拒绝非 persistent 创建。普通子树由创建它的 native tool task 控制寿命；background 使用独立 anchor。owner task 的状态是 admission 检查的一部分，不能由 LLM 文本声明替代。
 
 configure 只选择 runtime 批准的 profile，要求 idle active 成员，发布新的 incarnation；fork 限 ownerless、idle source 和该 Conversation 中的合法 cutoff，原子登记新成员。old ref 不能被用于新命令。
 
-retire 先停止 admission，再 native abort/drain，最后保存 retired tombstone；原始 transcript、delivery 与花费记录保留。未知 persistence 封闭整个对应 Session，MAS view 报 unknown；未确认 commit 不自动重建。Conversation 已归因的局部故障沿用 M1 故障策略。
+retire 先停止 admission，再 native abort/drain，最后保存 retired tombstone；原始 transcript、delivery 与花费记录保留。未知 persistence 封闭整个对应 Session，MAS view 报 unknown；未确认 commit 不自动重建。可归因的 Conversation 故障封闭该成员；共享存储故障封闭所属 Session。
 
-本 API 只覆盖同 Session。同进程多 Session、独立 worker 与跨 Session outbox/reconciliation 由 [BROKER-API.md](BROKER-API.md) 的上层服务装配，M3 已验收（[范围与残余项](../archive/acceptance/MIGRATION-M3-ACCEPTANCE.md)）；MAS DevPack 已在 M4 验收，带明确限制；有限 loopback 协议已在 M5 验收，见 [应用 API](../guides/MAS-APPLICATION-API.md) 与 [限制](../archive/acceptance/MIGRATION-M5-ACCEPTANCE.md)。Dynamite 保持 [deferred](../archive/investigations/DEFERRED-DYNAMITE-COMPATIBILITY.md)。
+同 Session 之外的进程内多 Session、独立 worker 和 outbox/reconciliation 由 [Broker API](BROKER-API.md) 装配；模型工具见 [DevPack API](MAS-DEVPack-API.md)，远端 client/CLI 装配见[应用指南](../guides/MAS-APPLICATION-API.md)。应用脚本可组合这些端口编写协作流程，见[协作流程指南](../guides/MAS-WORKFLOWS.md)。

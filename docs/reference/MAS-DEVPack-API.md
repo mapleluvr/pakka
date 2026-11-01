@@ -1,10 +1,10 @@
-# MAS DevPack API（M4，accepted with notes）
+# MAS DevPack API
 
-M4 阶段固定配对为 `@pakka/agent@0.5.0`、`@pakka/mas@0.3.0`、`@pakka/mas-devpack@0.1.0`、private `@pakka/server@0.2.0`，使用 `pi-durable 1.0.3-pakka.1`。本页的 M4 验收数字保留当时条件；后续已有 M5 transport／CLI、M6 可选配对和 pakka-webui P1–P5，当前版本与范围见 [仓库入口](../../README.md)和 [Web 产品范围](../state/product.md)。
+`@pakka/mas-devpack` 提供批准的模型工具、角色指令和可选 Backend/Client/WebUI facets。宿主选择成员、profile、权限和服务；模型通过实际 invocation 使用这些能力。包与 peer 身份由各 package manifest 和所选安装归档确定。
 
 ## 可选 Web 产品 facets
 
-公开 Backend/Client/WebUI 子入口提供 MAS Board 关系画布、实时活动、分页交流日志和 member panel，保留 Agent-only 入口及其 headless 依赖图。操作见 [MAS Board](../guides/MAS-BOARD.md)，本轮源码和门禁范围见 [实施记录](../verification/MAS-BOARD-R1.md)。实际组装、独立 profile 选择、人类权限、原生 reply、facet 移除与恢复的契约和验证见 [P4 记录](../archive/webui/PAKKA-WEBUI-P4.md)。Runtime 的固定批准 profile 集保持原契约；关闭 Agent contribution 使用已批准的无工具 profile 和真实 owner configure，不通过改写重开配置放宽身份校验。
+公开 Backend/Client/WebUI 子入口提供 MAS Board 关系画布、实时活动、分页交流日志和 member panel；Agent-only 入口可用于 headless 应用。操作见 [MAS Board](../guides/MAS-BOARD.md)。Runtime 使用固定批准 profile 集；关闭 Agent contribution 使用已批准的无工具 profile 和真实 owner configure，重开继续核对持久身份。
 
 Board 的只读 `WorkbenchView` 包含宿主绑定的 `sessionId`；浏览器据此保存个人视图，身份不依赖宿主此刻是否选中了某个 Conversation。`member` 界面使用公开 `sheet` 插槽承载 Agent controls，关闭仅结束观察。退役节点的个人隐藏与恢复不写入 MAS catalog。
 
@@ -51,12 +51,12 @@ const profile = { id: "researcher", tools: pack.tools, systemPrompt: pack.instru
 
 - `location: current-session`（默认）：复用调用方 MAS catalog；支持 persistent、task-bound、temporary、background。task-bound/temporary 的 owner 是真实创建 tool task，结束后 native readiness 为 ended、拒绝新输入。background 有独立原生 anchor，须 owner 显式 retire。它们都不是 OS process isolation。
 - `location: existing-session | new-session`：只能选择宿主 `createApprovedSessions()` 固定的 template 与稳定 `requestId`。每 template 一个持久 reservation slot，固定 source、principal、plan、placement、profile 和预算，不能在工具参数中覆写 current-member 参数。new-session 必须得到不同 storage Session identity。
-- 远端返回 `BrokerAgentRef`；后续 send/ask/reply/inbox 使用 `sessionTemplate`。服务复用 M3 的 broker/outbox/目标原生 admission，不新造 transport。outbox/native request identity 继续使用 M3 的 retained-record 去重限制。
+- 远端返回 `BrokerAgentRef`；后续 send/ask/reply/inbox 使用 `sessionTemplate`。服务通过 broker/outbox 进入目标原生 admission，outbox/native request identity 遵循 retained-record 去重限制。
 - startup/enrollment/回执不明时保留 pending/unknown，重试同一 slot/storage。冲突、已占 slot、旧来源 incarnation 或不匹配 template 拒绝，不自动分配替代 Session。配置来源是宿主固定角色；换角色必须显式重建，不隐式 enrollment。
-- 同一 service 串行提交 reservation 写入，但不串行整个 provisioning；每次排队后和提交时重新验权。其他 service 实例仍靠 CAS，冲突最多重试 32 次，耗尽时拒绝继续，不覆盖或释放未知 slot。40 个 distinct template 在一/两个实例上的真实 storage 争用已验证；这不是无限并发或公平性保证。
+- 同一 service 串行提交 reservation 写入，但不串行整个 provisioning；每次排队后和提交时重新验权。其他 service 实例仍靠 CAS，冲突最多重试 32 次，耗尽时拒绝继续，不覆盖或释放未知 slot。并发公平性由调用方安排。
 - 没有跨 Session 原子事务或原子撤权保证。发出的远端 prepare/admission 可能已经生效；late rejection 不声称 rollback，不释放 reservation。
 
-`MasClient.reply()` 使用原 receipt 验证并选定回复目标；持久 delivery observation 现保留 `replyTo`、正文、时间与实际发起者，`DeliveryReceipt` 继续承载原生 generation 状态。人类经成员面板代发保留通信端点并标记 `human`。创建来源与 fork 来源记录在 catalog 成员中；旧字段缺失时保持未知。宿主 `Mas.history()` 提供有界观测，业务 Agent 的 `MasClient` 不因 Board 增加全局正文权限。Board 另按当前人员过滤两端、搜索、游标和计数，读取独立于发送权限。
+`MasClient.reply()` 使用原 receipt 验证并选定回复目标；持久 delivery observation 保留 `replyTo`、正文、时间与实际发起者，`DeliveryReceipt` 继续承载原生 generation 状态。人类经成员面板代发保留通信端点并标记 `human`。创建来源与 fork 来源记录在 catalog 成员中；旧字段缺失时保持未知。宿主 `Mas.history()` 提供有界观测，业务 Agent 的 `MasClient` 不因 Board 增加全局正文权限。Board 另按当前人员过滤两端、搜索、游标和计数，读取独立于发送权限。
 
 当前 membership `view()` 是持久 phase snapshot。原生 owner task 已结束时 `inspect()` 才给出 native readiness；`deliver` 在 commit line 仍会拒绝 ended owner，不因旧 snapshot 显示 active 而放行。
 
@@ -77,7 +77,7 @@ const profile = { id: "researcher", tools: pack.tools, systemPrompt: pack.instru
 
 root grants 来自宿主 preset；模型创建后代的有效 grants 是自身批准 profile 与完整 capability-owner 祖先链的交集，缺失/循环 ancestry fail closed。选高权限 profile、反复创建或重配 child 不能扩大 root ceiling。原生 task ownership 与此 capability inheritance 仍是两个独立边界。
 
-当前 private worker 内仅装配同 Session 工具。未配置跨 Session template service 的 worker 对 existing/new-session 请求明确拒绝；不会隐式启动 broker 或分配新的进程/storage。宿主 in-process profile 可接入批准的同进程或 M3 worker placement。支持范围以实际安装/HTTP/原生 ownership 验证为准，不从两个 Harness 推断进程隔离。
+当前 private worker 内仅装配同 Session 工具。未配置跨 Session template service 的 worker 对 existing/new-session 请求明确拒绝；不会隐式启动 broker 或分配新的进程/storage。宿主 in-process profile 可接入批准的同进程或 worker placement；placement 决定 Session 与进程边界。
 
 ## 验证入口
 
@@ -86,4 +86,4 @@ root grants 来自宿主 preset；模型创建后代的有效 grants 是自身�
 - `apps/server/test/devpack-*.test.ts`：真实 PID、native temporary owner、旧输入拒绝、higher-profile grant 不能扩大。
 - `scripts/consumer-devpack.mjs`：隔离真实 tarball 的 native tools、撤销零 peer effect 与 worker 生命周期。
 
-M4 的执行门禁与两轮指定对抗复审已通过；产物身份、原始反例、两项 report-only P2 和支持限制见 [MIGRATION-M4-ACCEPTANCE.md](../archive/acceptance/MIGRATION-M4-ACCEPTANCE.md)。这不是完整产品或 M5 远端 authority 的放行。
+使用模型工具编写协作程序，见[协作流程指南](../guides/MAS-WORKFLOWS.md)；HTTP/CLI 调用与授权装配见[应用指南](../guides/MAS-APPLICATION-API.md)。

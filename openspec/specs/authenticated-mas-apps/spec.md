@@ -45,7 +45,7 @@ Connections SHALL obtain fresh scoped snapshots with server and Session identity
 
 ### Requirement: Executable operator and browser consumption
 
-Actual server bootstrap and CLI SHALL consume the same controlled services and protocol as the shared client. Configuration MUST be explicit and trusted; remote requests SHALL select only approved profile/template references. Browser clients MUST compile and connect without host file access. Import MUST NOT start server/storage or read user credentials. Trusted bootstrap MAY enable approved optional DevPack profiles; native invocation and capability-owner grant ceilings MUST constrain their model calls. Until RPC-owner-to-agent ceilings are supported, DevPack-enabled bootstrap MUST reject spawn/configure/fork RPC grants before opening storage. No-DevPack mode SHALL preserve the accepted M5 command surface.
+Actual server bootstrap and CLI SHALL consume the same controlled services and protocol as the shared client. Configuration MUST be explicit and trusted; remote requests SHALL select only approved profile/template references. Browser clients MUST compile and connect without host file access. Import MUST NOT start server/storage or read user credentials.
 
 #### Scenario: Product path
 
@@ -55,11 +55,17 @@ Actual server bootstrap and CLI SHALL consume the same controlled services and p
 #### Scenario: Optional model contribution
 
 - **WHEN** an operator starts an approved contribution configuration and sends input to that member
-- **THEN** actual advertised tools run through its native invocation and grants; unsupported profile-changing RPC combinations are refused without storage/model effects
+- **THEN** trusted bootstrap MAY enable approved DevPack profiles, with advertised model tools constrained by native invocation and capability-owner grant ceilings
+- **AND** DevPack-enabled bootstrap MUST refuse spawn/configure/fork RPC grants before opening storage
+
+#### Scenario: Native command configuration
+
+- **WHEN** bootstrap omits DevPack
+- **THEN** it SHALL expose the validated MAS command surface under its configured grants
 
 ### Requirement: Bounded initial deployment
 
-The initial transport SHALL bind IPv4 loopback with explicit approved origins and finite body/concurrency limits. It MUST NOT advertise public Internet confidentiality, hostile-code sandbox, remote arbitrary configuration, complete crash recovery or deferred Dynamite support.
+The headless transport SHALL bind IPv4 loopback with explicit approved origins and finite body/concurrency limits. Configuration and credentials SHALL be supplied by trusted bootstrap. Remote requests SHALL select only approved references and SHALL preserve unknown outcomes after a possible effect. Explicit optional contributions SHALL follow their own fixed pairing and installation contract.
 
 #### Scenario: Unapproved origin or capacity
 
