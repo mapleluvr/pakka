@@ -24,7 +24,7 @@
 - [x] 实施 expectedVersion 冲突、提交 unknown 与原 transaction 重查。
 - [x] 以真实本地 provider 验证产物可见性、独立 blockId 和窗口并行。
 
-源码已取得：2026-10-31 抓取用户发布的 origin/main，核对 279eb83 存在，并从 5ec402f 建立独立 `dynamite-sqlite-persistence` 工作树。该增量保留独立原生窗口的并发和采纳队列。0.5.0 在新宿主开发归档上编译通过；旧 pairing 保存固定身份，当前开发组合明确标记 workingTree。
+源码已取得：2026-10-31 抓取用户发布的 origin/main，核对 279eb83 存在，并从 5ec402f 建立独立 `dynamite-sqlite-persistence` 工作树。该增量保留独立原生窗口的并发和采纳队列。0.5.0 在新宿主开发归档上编译通过；旧 pairing 保存固定身份，归档构建时开发组合明确标记 workingTree。
 
 ## 4. 持久工作与恢复
 
@@ -76,8 +76,8 @@
 - 两份真实 tarball 安装进新的仓库外消费者；公开声明、原 installed Host smoke 和完整 **73/73** 集成矩阵通过，矩阵记录 **461 次 loopback HTTP、0 个 provider 错误、0 skip/todo/cancelled**。Root Runtime 另在同一真实安装归档的全新数据命名空间通过，重开零 dispatch，预算及独立 namespace 保留。
 - 安装 driver 的修正保留原断言：复制 Storage 查询 helper，并启用公开 parent-URL resolver；合法 append 等待 Promise。跨 scope 的身份检查仍同步拒绝。Root Host 7 次请求和 Runtime 3 次请求另行记录，不计入上面的 461 次矩阵计数。
 - 初次冷缓存安装在公开 native compiler 的 registry 下载阶段超时。交付重跑使用显式隔离的公开包缓存；只导入指定 registry 的精确公共 tarball，不导入用户 npm 配置或模型凭据。消费者、安装树、profile、数据和实际请求仍独立。
-- 固定组合见 [SQLite pairing](../../../integrations/dynamite/sqlite-persistence-pairing.json)：agent SHA-256 `3cd81e13ed3dc173e4108a472a5ce5c45c0e90ca7c7520cd6afd04c60b770c82`；Dynamite SHA-256 `67a13e72b644c2f8163ad720d486703f608fdf1c59dfb5f65b290c4186574a30`。两仓实现当前为 workingTree，基线分别 ec173fd 与 5ec402f；原发布配对保持固定身份。
+- 固定组合见 [SQLite pairing](../../../integrations/dynamite/sqlite-persistence-pairing.json)：agent SHA-256 `3cd81e13ed3dc173e4108a472a5ce5c45c0e90ca7c7520cd6afd04c60b770c82`；Dynamite SHA-256 `67a13e72b644c2f8163ad720d486703f608fdf1c59dfb5f65b290c4186574a30`。两份验证归档构建时源码为 workingTree，基线分别 ec173fd 与 5ec402f；随后保存的实现提交见[源码关联](../../../integrations/dynamite/sqlite-persistence-source-commits.json)，原发布配对保持固定身份。
 
-实施与已选检查闭合；当前源码尚未提交／推送，下一步由操作者决定保存与合并。预期和接口分别在 [state](../../../docs/state/dynamite-persistence.md) 与 [Strategy API](../../../docs/reference/STRATEGY-API.md)。
+实施与已选检查闭合；实现已保存为 Pakka `7030287` 与 Dynamite `2810097`。操作者要求推送分支变更；发布目标分别为 `plan/dynamite-persistence-mode` 与 `feat/dynamite-sqlite-persistence`，main 合并由后续指令决定。预期和接口分别在 [state](../../../docs/state/dynamite-persistence.md) 与 [Strategy API](../../../docs/reference/STRATEGY-API.md)。
 
 执行材料：宿主 `docs/.temp/dynamite-persistence/` 与库的 `docs/.temp/` 保留各阶段 red/green、process-interruption、源码／安装 TAP、build/check、docs 与 strict 输出。两包安装 summary 和归档在宿主 `artifacts/dynamite/sqlite-persistence/`，实际消费者 `dynamite-packed-consumer-P3N8dv` 保留安装树及原 evidence；生成材料按 ignore 管理，固定身份与检查结论以本页和 pairing 承接。

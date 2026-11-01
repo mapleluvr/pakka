@@ -1,0 +1,18 @@
+{
+	"schema": "pakka.dynamite.sqlite-source-commits.v1",
+	"status": "source-committed",
+	"artifactPair": "./sqlite-persistence-pairing.json",
+	"host": {
+		"repository": "https://github.com/mapleluvr/pakka",
+		"branch": "plan/dynamite-persistence-mode",
+		"implementationCommit": "70302872826d220f555a33fd6b07c46d2cd358e1",
+		"tree": "c34fc8b3ad9040b9628d8bcf5f95c4fc066daa27"
+	},
+	"strategy": {
+		"repository": "https://github.com/mapleluvr/pakka-dynamite",
+		"branch": "feat/dynamite-sqlite-persistence",
+		"implementationCommit": "28100973b781c175de3abfd4ea23eb603805fd2f",
+		"tree": "278f40fa368ed7b3e179d2d54517b0a279a66060"
+	},
+	"provenance": "The artifact pair retains its original working-tree build identity and verified tarball hashes. This record identifies the subsequently saved implementation commits; it does not re-label or rebuild those artifacts."
+}

@@ -2,7 +2,7 @@
 
 ## 当前 SQLite 配对
 
-[SQLite 配对](sqlite-persistence-pairing.json)固定 `agent@0.7.0` 与 `dynamite@0.5.0` 的实际归档 SHA-256、源码基线和 workingTree 身份。宿主采用 Pi Durable `1.4.0-pakka.1` 的公开持久化端口；产物、原采纳回执和本地 checkpoint 同业务提交，恢复使用固定计划与封存结果。
+[SQLite 配对](sqlite-persistence-pairing.json)固定 `agent@0.7.0` 与 `dynamite@0.5.0` 的实际归档 SHA-256、源码基线和构建时 workingTree 身份；随后保存的实现提交见[源码关联](sqlite-persistence-source-commits.json)。宿主采用 Pi Durable `1.4.0-pakka.1` 的公开持久化端口；产物、原采纳回执和本地 checkpoint 同业务提交，恢复使用固定计划与封存结果。
 
 预期在[持久化 state](../../docs/state/dynamite-persistence.md)，架构取舍、实际检查及接续在[OpenSpec tasks](../../openspec/changes/adopt-dynamite-sqlite-persistence/tasks.md)。源码回归为 agent 278/278、Dynamite 386/386；两包仓库外矩阵为 73/73、461 次本地 HTTP、0 个 provider 错误。
 

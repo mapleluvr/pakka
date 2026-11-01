@@ -39,5 +39,6 @@
 		"host": "../../artifacts/dynamite/sqlite-persistence/pakka-agent-0.7.0.tgz",
 		"strategy": "../../artifacts/dynamite/sqlite-persistence/pakka-dynamite-0.5.0.tgz"
 	},
-	"previousPair": "./compresser-conversation-pairing.json"
+	"previousPair": "./compresser-conversation-pairing.json",
+	"sourceCommits": "./sqlite-persistence-source-commits.json"
 }
