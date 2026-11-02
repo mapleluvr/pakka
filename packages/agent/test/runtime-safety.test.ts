@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { mkdir, rename, rm } from "node:fs/promises";
+import { blockSqliteWrites } from "./native-storage.ts";
 import { createHost, createRuntime } from "../src/index.ts";
 import { deferred, text } from "./fixture.ts";
 import { inferencePolicy, target } from "./strategy-fixture.ts";
@@ -84,15 +84,13 @@ test(
 test("M1: unknown shared storage seals every local member but not another Session", async () => {
 	const m = await runtimeFixture(),
 		independent = await runtimeFixture();
-	let damaged: string | undefined;
+	let releaseWrites: (() => void) | undefined;
 	try {
 		const a = m.runtime.root(),
 			b = await m.runtime.conversation(await m.runtime.createConversation({ key: "peer" }));
 		const owner = a.connect("owner", ["real_context.write"]);
 		owner.activateStrategy({ id: "writer", hooks: ["real_context.write"] });
-		damaged = a.view().sessionFile;
-		await rename(damaged, damaged + ".saved");
-		await mkdir(damaged);
+		releaseWrites = blockSqliteWrites(a.view().sessionFile);
 		const decision = await owner.commit(owner.capture(), {
 			type: "cut",
 			summary: "MUST-SEAL-SHARED-STORAGE",
@@ -111,10 +109,7 @@ test("M1: unknown shared storage seals every local member but not another Sessio
 		assert.equal(independent.f.requests.length, 1);
 		assert.match(text(independent.f.requests[0]!), /OTHER-SESSION-SURVIVES/);
 	} finally {
-		if (damaged) {
-			await rm(damaged, { recursive: true });
-			await rename(damaged + ".saved", damaged);
-		}
+		releaseWrites?.();
 		try {
 			await m.close();
 		} finally {

@@ -74,7 +74,7 @@ for (const transition of ["reload", "deactivate", "edit", "fork"] as const) {
 				});
 				assert.equal(peerResult.status, "completed");
 				assert.equal(
-					bb.artifacts.append(jb.scope, { expectedVersion: 0, records: ["B-VALID-RESULT"] }).status,
+					(await bb.artifacts.append(jb.scope, { expectedVersion: 0, records: ["B-VALID-RESULT"] })).status,
 					"committed",
 				);
 				assert.deepEqual(bb.readFrame().artifacts.records, ["B-VALID-RESULT"]);

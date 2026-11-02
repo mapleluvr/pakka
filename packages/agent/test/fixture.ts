@@ -5,6 +5,7 @@ import { join, basename } from "node:path";
 import { createHost, type Host, type HostOptions } from "../src/index.ts";
 import { createHostWithAdapter } from "../src/host.ts";
 import { PiAdapter } from "./pi-adapter.ts";
+import { readStorageText } from "./native-storage.ts";
 
 type FixtureOptions = Omit<Partial<HostOptions>, "backend"> & { backend?: "durable" | "oracle" };
 export function deferred() {
@@ -173,7 +174,7 @@ export function text(payload: Payload): string {
 }
 export async function raw(host: Host): Promise<string> {
 	try {
-		return await readFile(host.view().sessionFile, "utf8");
+		return await readStorageText(host.view().sessionFile);
 	} catch (e) {
 		if ((e as NodeJS.ErrnoException).code === "ENOENT") return "";
 		throw e;

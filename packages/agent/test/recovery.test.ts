@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { mkdir, rename, rm } from "node:fs/promises";
+import { blockSqliteWrites } from "./native-storage.ts";
 import { deferred, fixture, text } from "./fixture.ts";
 
 test(
@@ -26,21 +26,18 @@ test(
 			},
 			(_p, n) => (n === 1 ? { tool: "gate" } : { text: "ANSWER" }),
 		);
-		let damaged: string | undefined;
+		let unblock: (() => void) | undefined;
 		try {
 			const host = await f.start(),
 				user = host.connect("user", ["input.submit"]);
 			await user.submit({ key: "old", text: "OLD-FAILED-RUN" });
 			await entered.promise;
-			damaged = host.view().sessionFile;
-			await rename(damaged, damaged + ".saved");
-			await mkdir(damaged);
+			unblock = blockSqliteWrites(host.view().sessionFile);
 			release.resolve();
 			await host.waitForIdle();
 			assert.equal(host.view().phase, "failed");
-			await rm(damaged, { recursive: true });
-			await rename(damaged + ".saved", damaged);
-			damaged = undefined;
+			unblock();
+			unblock = undefined;
 			await assert.rejects(host.reload(), /failed.*newSession/);
 			await host.newSession();
 			assert.equal(host.view().phase, "ready");
@@ -50,10 +47,7 @@ test(
 			assert.doesNotMatch(text(f.requests.at(-1)!), /OLD-FAILED-RUN/);
 		} finally {
 			release.resolve();
-			if (damaged) {
-				await rm(damaged, { recursive: true });
-				await rename(damaged + ".saved", damaged);
-			}
+			unblock?.();
 			await f.close();
 		}
 	},

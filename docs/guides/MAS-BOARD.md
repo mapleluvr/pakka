@@ -2,7 +2,7 @@
 
 宿主显式安装 MAS DevPack 的 Backend/WebUI/Client facets 并组装 MAS 服务后，从主导航 **Team** 或 **Commands & extensions → Pages** 进入。界面与 Agent tools 分别装配；没有安装该贡献时，普通 Conversation 工作仍可使用。
 
-当前页面采用 Devin 风格的单层 Team 页头和 **Graph / Activity / Agents**，不再查找旧 Extensions → MAS team、Graph/Log 或 Canvas/List 工具栏。页面预期见[前端声明](../state/frontend.md#team)，当前验证范围见 [R2 记录](../verification/DEVIN-FRONTEND-R2.md)。
+页面使用单层 Team 页头和 **Graph / Activity / Agents** 三个视图，详见[前端声明](../state/frontend.md#team)。
 
 ## 关系画布与成员列表
 
@@ -22,7 +22,7 @@ Availability 表示成员可用性，活动摘要另取原生观测：公开 thi
 
 **More → Member controls…** 打开成员控制界面。输入区采用 compact composer，原生模式由发送旁的菜单选择 Prompt/Steer/Follow up；对实际 incoming peer receipt 可输入正文后 Reply。权限不足的动作不会因打开面板获得授权。
 
-控制界面的 **Management** 提供当前获准的 Stop work 和 **Retire member…**，退休需进一步确认。创建成员由实际 Agent 工具或宿主批准的服务路径发起；不要在 Management 中寻找并不存在的新建表单。
+控制界面的 **Management** 提供当前获准的 Stop work 和 **Retire member…**，退休需进一步确认。创建成员由批准的 Agent 工具或宿主服务发起。
 
 结果未确认时新操作保持锁定。关闭后重开可 **Check original operation** 只读核对原请求，不重新发送，不把关闭当撤回。源 Conversation 的草稿不因观察 Team 被替换。
 
@@ -38,4 +38,4 @@ Exchange filters 支持方向、模式、发起者和状态，Search 筛选可�
 
 使用 [DevPack API](../reference/MAS-DEVPack-API.md)的可选 facets 和 `masWorkbenchService`；模型工具由批准 profile 单独启用。只停用 WebUI 不删除 members、history 或已接纳工作。
 
-普通 Conversation 归档/恢复与 MAS retirement 不是物理删除。[MAS state](../state/mas.md)维护资源和观测关系；[OpenSpec 设计](../../openspec/changes/mas-board-relationship-workbench/design.md)只作来路，[既有实施记录](../verification/MAS-BOARD-R1.md)保留其版本证据，不能代替 R2 的结果。
+Conversation 归档/恢复和 MAS retirement 均保留持久历史。[MAS state](../state/mas.md)维护资源与观测关系，形成来路见[变更摘要](../changes/webui-and-mas.md)。

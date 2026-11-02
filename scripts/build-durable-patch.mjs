@@ -6,8 +6,10 @@ import { tmpdir } from "node:os";
 import { basename, dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { productionDurableVersion } from "./durable-patch-version.mjs";
+
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
-const version = process.argv[3] ?? "1.0.3-pakka.1";
+const version = process.argv[3] ?? productionDurableVersion(root);
 if (!/^\d+\.\d+\.\d+-pakka\.\d+$/.test(version)) throw new Error("Invalid patch version");
 const patchDir = join(root, "patches", "pi-durable", version);
 const baseline = parseJson(

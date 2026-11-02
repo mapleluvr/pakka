@@ -1,10 +1,11 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
-import { join } from "node:path";
+import { readFile, readdir, writeFile } from "node:fs/promises";
+import { dirname, join } from "node:path";
 import type { StrategyBinding, ToolInvocationScope } from "../src/index.ts";
 import { binding, target } from "./strategy-fixture.ts";
 import { deferred, fixture, raw, seed, text } from "./fixture.ts";
+import { blockSqliteWrites, readStorageText } from "./native-storage.ts";
 
 test("strategy binding enforces principal, exact hook and deactivation", async () => {
 	const f = await fixture();
@@ -120,8 +121,8 @@ test("projector can rebase its own artifact commit before returning a plan", asy
 		const owner = host.connect("owner", ["real_context.write", "context_artifacts.write"]);
 		owner.activateStrategy({ id: "strategy", hooks: ["real_context.write", "context_artifacts.write"] });
 		const b = binding(owner);
-		b.installProjector((frame) => {
-			const receipt = b.artifacts.append(frame.basis, {
+		b.installProjector(async (frame) => {
+			const receipt = await b.artifacts.append(frame.basis, {
 				expectedVersion: frame.artifacts.version,
 				records: [{ kind: "trigger" }],
 			});
@@ -146,7 +147,7 @@ test("projector can rebase its own artifact commit before returning a plan", asy
 
 test("artifact receipts enforce scope/version and a physical journal fault latches", async () => {
 	const f = await fixture();
-	let path: string | undefined;
+	let unblock: (() => void) | undefined;
 	try {
 		const host = await f.start();
 		const { client: user } = await seed(host);
@@ -158,30 +159,24 @@ test("artifact receipts enforce scope/version and a physical journal fault latch
 			() => b.artifacts.append({ ...frame.basis }, { expectedVersion: 0, records: [{ kind: "copied" }] }),
 			/scope|basis/,
 		);
-		const receipt = b.artifacts.append(frame.basis, { expectedVersion: 0, records: [{ kind: "saved" }] });
+		const receipt = (await b.artifacts.append(frame.basis, { expectedVersion: 0, records: [{ kind: "saved" }] }));
 		assert.equal(receipt.status, "committed");
 		assert.equal(receipt.version, 1);
-		path = receipt.journalPath;
-		assert.match(await readFile(path, "utf8"), /saved/);
+		assert.match(await readStorageText(host.view().sessionFile), /saved/);
 		assert.equal(
-			b.artifacts.append(b.readFrame().basis, { expectedVersion: 0, records: [{ kind: "conflict" }] }).status,
+			(await b.artifacts.append(b.readFrame().basis, { expectedVersion: 0, records: [{ kind: "conflict" }] })).status,
 			"conflict",
 		);
 		b.installProjector((f) => ({ status: "disabled", basis: f.basis }));
-		await rename(path, path + ".saved");
-		await mkdir(path);
-		assert.throws(() => b.readFrame(), /journal|storage/i);
-		await rm(path, { recursive: true });
-		await rename(path + ".saved", path);
-		path = undefined;
+		unblock = blockSqliteWrites(host.view().sessionFile);
+		assert.equal((await b.artifacts.append(b.readFrame().basis, { expectedVersion: 1, records: [{ mustNotLand: true }] })).status, "unknown");
+		unblock();
+		unblock = undefined;
 		assert.throws(() => b.readFrame(), /failed|storage/i);
 		await assert.rejects(user.submit({ key: "no-http", text: "NO" }), /failed/);
 		assert.equal(f.requests.length, 1);
 	} finally {
-		if (path) {
-			await rm(path, { recursive: true });
-			await rename(path + ".saved", path);
-		}
+		unblock?.();
 		await f.close();
 	}
 });
@@ -246,7 +241,7 @@ test("trusted reopen preserves raw identity and records but not old operation au
 		owner.activateStrategy({ id: "strategy", hooks: ["context_artifacts.write"] });
 		const old = binding(owner),
 			frame = old.readFrame();
-		old.artifacts.append(frame.basis, { expectedVersion: 0, records: [{ kind: "recover" }] });
+		(await old.artifacts.append(frame.basis, { expectedVersion: 0, records: [{ kind: "recover" }] }));
 		const before = first.view();
 		await first.dispose();
 		const second = await f.start({ reopenSessionFile: before.sessionFile });
@@ -271,14 +266,21 @@ test("trusted reopen preserves raw identity and records but not old operation au
 test("requested reopen of missing or corrupted owned storage never creates a new session", async () => {
 	const f = await fixture();
 	try {
+		const host = await f.start();
+		const file = host.view().sessionFile,
+			directory = dirname(dirname(file));
+		await host.dispose();
+		const names = (await readdir(directory)).sort();
 		await assert.rejects(
-			f.start({ reopenSessionFile: join(f.dataDir, "sessions", "missing.jsonl") }),
-			/reopen|ENOENT|missing/,
+			f.start({ reopenSessionFile: join(directory, "missing", "main.sqlite") }),
+			/reopen|ENOENT|missing/i,
 		);
-		const file = join(f.dataDir, "sessions", "broken.jsonl");
-		await mkdir(join(f.dataDir, "sessions"), { recursive: true });
-		await writeFile(file, '{"type":"session","id":"fake"}\n{bad}\n');
-		await assert.rejects(f.start({ reopenSessionFile: file }), /reopen|corrupt|JSON/);
+		const body = Buffer.from('{"looks":"valid-json"}\n');
+		await writeFile(file, body);
+		await assert.rejects(f.start({ reopenSessionFile: file }), /SQLite|corrupt|database/i);
+		assert.ok((await readFile(file)).equals(body), "corrupt input is preserved");
+		assert.deepEqual((await readdir(directory)).sort(), names, "no replacement Session directory");
+		assert.equal(f.requests.length, 0);
 	} finally {
 		await f.close();
 	}

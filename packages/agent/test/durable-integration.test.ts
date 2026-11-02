@@ -9,7 +9,7 @@ test("DurableAdapter is the default runtime created by createHost()", async () =
 		const host = await f.start();
 		const view = host.view();
 		assert.equal(view.autoCompaction, false);
-		assert.match(view.sessionFile, /main\.jsonl$/);
+		assert.match(view.sessionFile, /main\.sqlite$/);
 		assert.equal(view.phase, "ready");
 		assert.equal(view.effects, "not-assessed");
 	} finally {
@@ -63,18 +63,18 @@ test("A-05 & F-15: Two strategies independently append to separate artifact name
 		const frameB = bB.readFrame();
 
 		// Append to namespace A
-		const receiptA = bA.artifacts.append(frameA.basis, {
+		const receiptA = (await bA.artifacts.append(frameA.basis, {
 			expectedVersion: 0,
 			records: [{ data: "from-A" }],
-		});
+		}));
 		assert.equal(receiptA.status, "committed");
 		assert.equal(receiptA.version, 1);
 
 		// Append to namespace B independently
-		const receiptB = bB.artifacts.append(frameB.basis, {
+		const receiptB = (await bB.artifacts.append(frameB.basis, {
 			expectedVersion: 0,
 			records: [{ data: "from-B" }],
-		});
+		}));
 		assert.equal(receiptB.status, "committed");
 		assert.equal(receiptB.version, 1);
 

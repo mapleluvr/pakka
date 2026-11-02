@@ -1,6 +1,7 @@
 import { strict as assert } from "node:assert";
 import { test } from "node:test";
 import { readFile } from "node:fs/promises";
+import { readStorageText } from "./native-storage.ts";
 import { createRuntime } from "../src/index.ts";
 import { runtimeFixture } from "./runtime-fixture.ts";
 
@@ -13,6 +14,20 @@ async function catalog(runtime: Awaited<ReturnType<typeof createRuntime>>) {
 	return runtime.catalog({ namespace: "m2-test", maxDeliveries: 16, maxPending: 2 });
 }
 const allow = () => {};
+
+// SQLite WAL frame headers mark transaction commits with a nonzero database size.
+// This physical oracle verifies one commit, independently of Pi table layouts.
+function walCommitCount(wal: Buffer): number {
+	assert.ok([0x377f0682, 0x377f0683].includes(wal.readUInt32BE(0)));
+	const pageSize = wal.readUInt32BE(8),
+		frameSize = pageSize + 24;
+	assert.ok(pageSize > 0);
+	assert.equal((wal.length - 32) % frameSize, 0);
+	let commits = 0;
+	for (let offset = 32; offset < wal.length; offset += frameSize)
+		if (wal.readUInt32BE(offset + 4) > 0) commits++;
+	return commits;
+}
 
 test("M2: configuration and membership are atomic; rejected batch has no partial members", async () => {
 	const m = await runtimeFixture();
@@ -30,6 +45,8 @@ test("M2: configuration and membership are atomic; rejected batch has no partial
 		);
 		assert.equal((await c.snapshot()).members.length, 0);
 		assert.equal(m.runtime.view().conversations.length, 1);
+		const file = m.runtime.view().sessionFile,
+			beforeWal = await readFile(file + "-wal");
 		const members = await c.enroll(
 			[
 				{ key: "a", data: { owner: "admin" } },
@@ -39,20 +56,20 @@ test("M2: configuration and membership are atomic; rejected batch has no partial
 		);
 		assert.equal(members.length, 2);
 		assert.ok(Object.isFrozen(members[0]!.ref));
-		const lines = (await readFile(m.runtime.view().sessionFile, "utf8"))
-			.trim()
-			.split("\n")
-			.map((line) => JSON.parse(line));
-		assert.ok(
-			lines.some(
-				(line) =>
-					line.writes.filter((write: { type: string }) => write.type === "conversation").length === 2 &&
-					line.writes.some(
-						(write: { type: string; record?: { kind: string } }) =>
-							write.type === "document.create" && write.record?.kind === "pakka.catalog",
-					),
-			),
+		const afterWal = await readFile(file + "-wal");
+		assert.deepEqual(
+			afterWal.subarray(0, beforeWal.length),
+			beforeWal,
+			"the WAL did not reset during the observed transaction",
 		);
+		assert.equal(
+			walCommitCount(afterWal) - walCommitCount(beforeWal),
+			1,
+			"both Conversations and catalog state are published by one SQLite commit",
+		);
+		assert.equal(m.runtime.view().conversations.length, 3);
+		assert.equal((await c.snapshot()).members.length, 2);
+		assert.match(await readStorageText(file), /"kind":"pakka.catalog"/);
 		assert.equal(m.f.requests.length, 0);
 	} finally {
 		await m.close();

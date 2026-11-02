@@ -18,6 +18,14 @@ MAS 将同 Session 的 Conversation 注册为成员，并通过当前绑定身�
 - 进入完整 Conversation 通过普通受授权资源打开链路完成，保留输入、历史、配置及返回选择。
 - 个人布局、隐藏和筛选作用于呈现；通信、任务、历史和已接纳操作继续由原服务及其生命周期管理。
 
+## 协作程序
+
+宿主应用通过脚本组合 Conversation、成员通信、自定义工具和持久状态，表达并行处理、交接、讨论、返工及结果汇总。程序与角色指令共同定义参与者和协作关系，应用根据已确认产物及成员业务状态判断完成。
+
+流程定义随应用代码保存；消息与投递由原生会话和 MAS 回执记录，应用状态通过受控 store 保存。长期程序可通过命名、版本化的 Runtime job 与 checkpoint 表达阶段及续行。产物、外部效果和当前权限按各自的保存、确认与重开条件处理。
+
+人和 Agent 的编写入口为[协作流程编程指南](../guides/MAS-WORKFLOWS.md)，指南要求见[相应场景](../../openspec/changes/document-scripted-mas-workflows/specs/mas-devpack/spec.md)。
+
 ## 可选贡献
 
 Team 通过 MAS DevPack 的 Backend/WebUI/Client facets 提供，与其他扩展使用同一公共接口。宿主分别选择界面贡献和 Agent tools/instructions。移除界面清理其导航和订阅；成员、历史和已接纳工作继续由 MAS/Runtime 管理。页面结构见[前端交互](frontend.md#team)。

@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Define explicit host-selected Dynamite support for the accepted optional product pairing, retaining native invocation, authority, identity and budgets without enabling the strategy by default or implying worker provisioning.
+Define explicit host-selected Dynamite support through fixed optional archive pairs, native invocation, authority, identity and finite budgets under trusted bootstrap.
 
 ## Requirements
 
@@ -36,7 +36,7 @@ Every model reduce invocation SHALL pass the exact catalog member scope and the 
 
 ### Requirement: Real fixed-artifact product pairing
 
-Acceptance SHALL use compiled server executable and client/CLI with the accepted agent and external strategy archives, exact hashes, actual native calls and deterministic HTTP. Structural protocol validity or prior library counts MUST NOT substitute for product execution. The historical failed pairing SHALL remain recorded; accepted status SHALL describe only the optional supported combination, not default activation, worker provisioning or vision support.
+Product checks SHALL use the compiled server executable and client/CLI with exact agent and external strategy archive hashes, actual native calls and deterministic HTTP. Results SHALL bind that explicit combination, configuration and execution environment. Archive identity, provider dispatch, native receipts and unknown effects SHALL be checked separately.
 
 #### Scenario: Installed operator and model path
 

@@ -4,6 +4,7 @@ import { mkdir, readFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createRuntime } from "@pakka/agent";
+import { readStorageText } from "./consumer-native-storage.mjs";
 import { createPocketPeople, createPocketWorkspace } from "@pakka/server/pocket";
 import { decodePocketRequest, decodePocketResponse } from "@pakka/protocol/pocket";
 import { createPocketClient } from "@pakka/client/pocket";
@@ -95,10 +96,10 @@ try {
 		);
 	await client.display(ref, { requestId: "card", kind: "card", text: "CARD-MUST-NOT-BE-MODEL-INPUT" });
 	const file = runtime.view().sessionFile,
-		original = await readFile(file, "utf8");
+		original = await readStorageText(file);
 	const read = await visitor.read(ref, { limit: 1 });
 	assert.equal(read.entries.length, 1);
-	assert.equal(await readFile(file, "utf8"), original);
+	assert.equal(await readStorageText(file), original);
 	assert.equal(requests.length, 0);
 	decodePocketResponse(
 		{

@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import { strict as assert } from "node:assert";
 import { createMas, MasRequestDenied } from "@pakka/mas";
-import { mkdir, rename, rm } from "node:fs/promises";
+import { blockSqliteWrites } from "../../../packages/agent/test/native-storage.ts";
 import { decodeResponse } from "../../../packages/protocol/src/index.ts";
 import type { Command, Response } from "../../../packages/protocol/src/index.ts";
 import { createMasServer } from "../src/http-server.ts";
@@ -217,22 +217,16 @@ test(
 	{ timeout: 20000 },
 	async () => {
 		const m = await crew();
-		const file = m.fixture.runtime.view().sessionFile;
-		let replaced = false;
+		let unblock: (() => void) | undefined;
 		try {
-			await rename(file, file + ".saved");
-			replaced = true;
-			await mkdir(file);
+			unblock = blockSqliteWrites(m.fixture.runtime.view().sessionFile);
 			const reply = await m.rpc({ op: "spawn", key: "unknown-storage" });
 			if (!("error" in reply)) assert.fail("Unknown persistence published success");
 			assert.equal(reply.error.outcome, "unknown");
 			assert.equal(m.fixture.runtime.view().phase, "failed");
 			assert.equal(m.fixture.f.requests.length, 0);
 		} finally {
-			if (replaced) {
-				await rm(file, { recursive: true, force: true });
-				await rename(file + ".saved", file);
-			}
+			unblock?.();
 			await m.close();
 		}
 	},

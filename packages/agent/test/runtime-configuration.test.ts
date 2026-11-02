@@ -201,7 +201,7 @@ test("Independent configuration: unapproved model, missing directory and symlink
 	try {
 		const outside = join(m.f.root, "outside");
 		await mkdir(outside);
-		await symlink(outside, join(m.f.cwd, "escape"), "dir");
+		await symlink(outside, join(m.f.cwd, "escape"), process.platform === "win32" ? "junction" : "dir");
 		const catalog = m.runtime.catalog({
 			namespace: "invalid-configuration",
 			maxDeliveries: 8,

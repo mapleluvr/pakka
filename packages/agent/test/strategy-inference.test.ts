@@ -1,7 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { binding, target, inferencePolicy } from "./strategy-fixture.ts";
-import { deferred, fixture, raw, seed, text } from "./fixture.ts";
+import { deferred, fixture, seed, text } from "./fixture.ts";
+import { readMainStorageText } from "./native-storage.ts";
 
 test("auxiliary inference consumes 64/128 on wire, is bounded, and leaves main C2 untouched", async () => {
 	const f = await fixture();
@@ -19,7 +20,7 @@ test("auxiliary inference consumes 64/128 on wire, is bounded, and leaves main C
 			contextEntryIds: [],
 			maxCalls: 2,
 		});
-		const before = await raw(host);
+		const before = await readMainStorageText(host.view().sessionFile);
 		for (const cap of [64, 128]) {
 			const result = await job.infer({
 				modelKey: "summary",
@@ -33,7 +34,7 @@ test("auxiliary inference consumes 64/128 on wire, is bounded, and leaves main C
 			assert.equal(f.requests.at(-1)!.max_tokens, cap);
 		}
 		await assert.rejects(job.infer({ modelKey: "summary", prompt: "EXTRA", maxOutputTokens: 64 }), /budget/);
-		assert.equal(await raw(host), before);
+		assert.equal(await readMainStorageText(host.view().sessionFile), before);
 		assert.equal(b.audit().length, 2);
 		assert.equal(f.requests.length, 3);
 		await user.submit({ key: "main", text: "MAIN-NEXT" });

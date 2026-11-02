@@ -23,7 +23,7 @@ git diff --check
 
 浏览器检查需要实际 Chrome/Chromium。非标准安装设置绝对路径 `PAKKA_TEST_CHROME`；使用新 profile，不读用户 Cookie、模型凭据或付费服务。已选用浏览器检查而缺少必要浏览器时，将该次检查记录为 BLOCKED；未选用的活动由本任务的选用记录承接。
 
-Windows 独立命令需重新设置隔离 HOME/USERPROFILE/PI_CODING_AGENT_DIR、PI_OFFLINE，并将 TEMP/TMP 规范为 `fs.realpathSync.native(os.tmpdir())`；工具调用间不继承上一条命令的设置。R2 局部浏览器回归可使用已有隔离 runner：
+Windows 独立命令需重新设置隔离 HOME/USERPROFILE/PI_CODING_AGENT_DIR、PI_OFFLINE，并将 TEMP/TMP 规范为 `fs.realpathSync.native(os.tmpdir())`；工具调用间不继承上一条命令的设置。局部浏览器回归可使用隔离 runner：
 
 ```powershell
 ./scripts/test-devin-r2.ps1 -EvidencePath artifacts/devin-r2/new-run -TestFiles apps/webui/test/mas-stylesheet-browser.test.ts
@@ -37,9 +37,9 @@ Windows 独立命令需重新设置隔离 HOME/USERPROFILE/PI_CODING_AGENT_DIR�
 
 `npm run smoke:package` 生成并安装八个实际归档，运行公开声明、实际 executable、浏览器与消费者。选用仓库外安装检查时，执行身份 preflight，核对源码/门禁 helper/资产、归档/lock/安装逐文件内容及消费者结果。漏源码、损坏归档和身份篡改反例必须在 build/install 前被拒绝。
 
-完整 R2 候选使用已有 `scripts/verify-devin-r2.ps1`，在固定快照上串行保存 check、syntax、build、扩大、全量和 package 原始结果。失败退出、取消或 NOT_RUN 不覆盖为后续局部通过。
+需要完整前端候选检查时使用 `scripts/verify-devin-r2.ps1`，在固定快照上串行保存 check、syntax、build、扩大、全量和 package 原始结果。失败退出、取消或 NOT_RUN 不覆盖为后续局部通过。
 
-若本轮失败，`artifacts/package-smoke/consumer-path.txt` 可能仍指向上次成功目录；从本轮日志的实际 cwd、进程退出/signal 和原始状态定位，不单凭旧指针或 `exit=null` 推断业务原因。子进程控制台退出也不自动证明 native 效果终态。
+若检查失败，`artifacts/package-smoke/consumer-path.txt` 可能仍指向上次成功目录；从该次执行日志的实际 cwd、进程退出/signal 和原始状态定位，不单凭旧指针或 `exit=null` 推断业务原因。子进程控制台退出也不自动证明 native 效果终态。
 
 ## OpenSpec 校验范围
 
@@ -51,7 +51,7 @@ openspec validate mas-board-relationship-workbench --strict --no-interactive --j
 openspec validate --all --strict --no-interactive --json
 ```
 
-本次已选用的 CLI 不可用则记录 BLOCKED，不临时改依赖或把旧通过结果当本轮输出。OpenSpec 已安装；当前 strict 结果及保留的历史长度告警见[整理验证](../verification/DOCUMENTATION-CLEANUP.md)。原整理报告已备份，不以旧数字代替当前执行结果。
+已选用的 CLI 不可用时记录 BLOCKED；保存实际 CLI 版本和输出，不临时改依赖或用其他版本的结果替代。
 
 ## 独立实操与审查
 

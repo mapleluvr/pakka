@@ -4,6 +4,7 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createRuntime } from "@pakka/agent";
+import { readStorageText } from "./consumer-native-storage.mjs";
 import { createMas } from "@pakka/mas";
 
 const consumer = dirname(fileURLToPath(import.meta.url)),
@@ -89,7 +90,7 @@ try {
 	assert.equal((await admin.inspect(child.ref)).phase, "retired");
 	await assert.rejects(admin.send(child.ref, { requestId: "retired", text: "RETIRED" }), /retired|inactive/);
 	const file = runtime.view().sessionFile;
-	assert.ok((await readFile(file, "utf8")).includes("pakka.catalog"));
+	assert.ok((await readStorageText(file)).includes("pakka.catalog"));
 	await runtime.close();
 	reopened = await createRuntime({ ...options, reopenSessionFile: file });
 	const restored = await createMas({ ...config, runtime: reopened });

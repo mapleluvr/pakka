@@ -12,6 +12,6 @@
 | 显式可选策略的产品装配                                | [Dynamite 配置 API](DYNAMITE-PRODUCT-API.md) |
 | Server/client/CLI 的应用层装配                        | [应用指南](../guides/MAS-APPLICATION-API.md) |
 
-[架构](../development/ARCHITECTURE.md)说明身份、权限和失败边界；[Web 扩展开发](../development/WEBUI-DEVELOPMENT.md)说明公开 UI、Backend 与 Client 插槽。MAS 的关系/观测设计在 [OpenSpec change](../../openspec/changes/mas-board-relationship-workbench/design.md)，当前 Team 交互与候选状态分别见[前端预期](../state/frontend.md#team)和[R2 验证](../verification/DEVIN-FRONTEND-R2.md)，不将历史草稿当作当前接口。
+[架构](../development/ARCHITECTURE.md)说明身份、权限和失败边界；[Web 扩展开发](../development/WEBUI-DEVELOPMENT.md)说明公开 UI、Backend 与 Client 插槽。Team 的关系、观测与交互契约见 [MAS state](../state/mas.md)和[前端预期](../state/frontend.md#team)。
 
-版本配对和证据见[验证入口](../verification/README.md)；早期接口形成过程见[历史资料](../archive/README.md)。
+版本配对见[集成入口](../../integrations/dynamite/README.md)；形成与固定结果由[变更记录](../changes/README.md)及[验证入口](../verification/README.md)承接。

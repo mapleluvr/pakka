@@ -1,7 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { binding, target, inferencePolicy } from "./strategy-fixture.ts";
-import { fixture, seed, raw } from "./fixture.ts";
+import { fixture, seed } from "./fixture.ts";
+import { readMainStorageText } from "./native-storage.ts";
 
 const outputTool = {
 	name: "submit_candidate",
@@ -37,7 +38,7 @@ test("auxiliary output tool reaches real HTTP and returns an immutable call with
 			],
 		});
 		await seed(host);
-		const before = await raw(host);
+		const before = await readMainStorageText(host.view().sessionFile);
 		const owner = host.connect("owner", ["context_artifacts.write", "model.infer"]);
 		owner.activateStrategy({ id: "strategy", hooks: ["context_artifacts.write"] });
 		const b = binding(owner),
@@ -69,7 +70,7 @@ test("auxiliary output tool reaches real HTTP and returns an immutable call with
 		assert.equal(f.requests[1].max_tokens, 64);
 		assert.deepEqual(f.requests[1].tools, [{ type: "function", function: outputTool }]);
 		assert.equal(executions, 0);
-		assert.equal(await raw(host), before);
+		assert.equal(await readMainStorageText(host.view().sessionFile), before);
 	} finally {
 		await f.close();
 	}

@@ -1,56 +1,24 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { chmod, readFile, readdir } from "node:fs/promises";
-import { join } from "node:path";
 import { deferred, fixture, seed } from "./fixture.ts";
 import { binding, inferencePolicy, target } from "./strategy-fixture.ts";
-
-async function inferenceJournal(dataDir: string): Promise<string> {
-	const root = join(dataDir, "artifacts");
-	for (const directory of await readdir(root))
-		for (const file of await readdir(join(root, directory))) {
-			const path = join(root, directory, file);
-			const firstLine = (await readFile(path, "utf8")).split("\n")[0];
-			if (JSON.parse(firstLine).namespace === "strategy:inference") return path;
-		}
-	throw new Error("Inference journal missing from fixture");
-}
+import { blockSqliteWrites } from "./native-storage.ts";
+import type { SourceJob } from "../src/index.ts";
 
 for (const transition of ["reload", "newSession"] as const)
-	test(`an auxiliary audit write fault during ${transition} remains isolated to its session`, async () => {
-		const auxiliaryEntered = deferred(),
-			auxiliaryRelease = deferred();
-		const toolEntered = deferred(),
-			toolRelease = deferred();
-		let path: string | undefined;
-		const f = await fixture(
-			{
-				tools: [
-					{
-						name: "hold",
-						description: "hold",
-						parameters: { type: "object", properties: {} },
-						execute: async () => {
-							toolEntered.resolve();
-							await toolRelease.promise;
-							return "DONE";
-						},
-					},
-				],
-			},
-			async (payload) => {
-				if (payload.model === "summary-model") {
-					auxiliaryEntered.resolve();
-					await auxiliaryRelease.promise;
-				}
-				if (
-					payload.messages.some((message) => JSON.stringify(message.content).includes("HOLD-RELOAD")) &&
-					!payload.messages.some((message) => message.role === "tool")
-				)
-					return { tool: "hold" };
-				return { text: "ANSWER" };
-			},
-		);
+	test(`an auxiliary audit write fault during ${transition} seals the old Session and permits explicit fresh recovery`, async () => {
+		const entered = deferred(),
+			release = deferred();
+		const f = await fixture({}, async (payload) => {
+			if (payload.model === "summary-model") {
+				entered.resolve();
+				await release.promise;
+			}
+			return { text: "ANSWER" };
+		});
+		let unblock: (() => void) | undefined;
+		let pending: ReturnType<SourceJob["infer"]> | undefined;
+		let lifecycle: Promise<void> | undefined;
 		try {
 			const host = await f.start(inferencePolicy(f.endpoint));
 			const { client: user } = await seed(host);
@@ -63,20 +31,18 @@ for (const transition of ["reload", "newSession"] as const)
 				targetEntryIds: [target(frame)],
 				maxCalls: 2,
 			});
-			const pending = job.infer({ modelKey: "summary", prompt: "SOURCE", maxOutputTokens: 64 });
-			await auxiliaryEntered.promise;
-			await user.submit({ key: "hold", text: "HOLD-RELOAD" });
-			await toolEntered.promise;
-			path = await inferenceJournal(f.dataDir);
-			await chmod(path, 0o444);
-			const lifecycle = host[transition]();
-			const settled = transition === "reload" ? assert.rejects(lifecycle, /journal|storage/i) : lifecycle;
-			await assert.rejects(pending, /storage/i);
-			assert.equal(host.view().phase, "transitioning");
-			toolRelease.resolve();
-			auxiliaryRelease.resolve();
+			pending = job.infer({ modelKey: "summary", prompt: "SOURCE", maxOutputTokens: 64 });
+			await entered.promise;
+			unblock = blockSqliteWrites(host.view().sessionFile);
+			lifecycle = host[transition]();
+			const settled =
+				transition === "reload" ? assert.rejects(lifecycle, /journal|storage|database/i) : lifecycle;
+			await assert.rejects(pending, /storage|journal/i);
+			unblock();
+			unblock = undefined;
+			release.resolve();
 			await settled;
-			assert.equal(f.requests.length, 3);
+			assert.equal(f.requests.length, 2, "the failed audit cannot refund or resend the original request");
 			if (transition === "reload") {
 				assert.equal(host.view().phase, "failed");
 				await assert.rejects(user.submit({ key: "blocked", text: "DO-NOT-SEND" }), /failed/);
@@ -84,26 +50,26 @@ for (const transition of ["reload", "newSession"] as const)
 			}
 			assert.equal(host.view().phase, "ready");
 			assert.notEqual(host.view().sessionId, frame.sessionId);
-			const nextFrame = b.readFrame();
-			assert.deepEqual(nextFrame.artifacts.records, []);
+			assert.deepEqual(b.readFrame().artifacts.records, []);
 			await user.submit({ key: "recovered", text: "FRESH-SOURCE" });
 			await host.waitForIdle();
 			const fresh = b.readFrame();
-			const nextJob = b.createJob(fresh.basis, {
+			const next = b.createJob(fresh.basis, {
 				planId: "new-authority",
 				targetEntryIds: [target(fresh)],
 				maxCalls: 1,
 			});
 			assert.equal(
-				(await nextJob.infer({ modelKey: "summary", prompt: "FRESH-SOURCE", maxOutputTokens: 64 })).status,
+				(await next.infer({ modelKey: "summary", prompt: "FRESH-SOURCE", maxOutputTokens: 64 })).status,
 				"completed",
 			);
 			assert.equal(host.view().phase, "ready");
-			assert.equal(f.requests.length, 5);
+			assert.equal(f.requests.length, 4);
 		} finally {
-			toolRelease.resolve();
-			auxiliaryRelease.resolve();
-			if (path) await chmod(path, 0o666);
+			unblock?.();
+			release.resolve();
+			if (pending) await Promise.allSettled([pending]);
+			if (lifecycle) await Promise.allSettled([lifecycle]);
 			await f.close();
 		}
 	});

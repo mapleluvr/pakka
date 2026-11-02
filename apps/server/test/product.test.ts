@@ -216,7 +216,7 @@ test(
 					...config,
 					runtime: {
 						...config.runtime,
-						reopenSessionFile: join(config.runtime.dataDir, "sessions", view.sessionId, "main.jsonl"),
+						reopenSessionFile: join(config.runtime.dataDir, "sessions", view.sessionId, "main.sqlite"),
 					},
 				}),
 			);
@@ -297,7 +297,7 @@ test(
 				...config,
 				runtime: {
 					...config.runtime,
-					reopenSessionFile: join(config.runtime.dataDir, "sessions", state.sessionId, "main.jsonl"),
+					reopenSessionFile: join(config.runtime.dataDir, "sessions", state.sessionId, "main.sqlite"),
 				},
 			};
 			await assert.rejects(

@@ -1,8 +1,8 @@
 # Optional Dynamite product configuration
 
-> Accepted with notes only in the bounded explicit configuration below. Core 255/255, library 345/345, installed library 47/47 and actual product 5/5 passed; the complete selected product review converged OK with notes and its identity omission was corrected. Exact pairing, both opinions and the product-budget observability limitation are in [the acceptance record](../verification/DYNAMITE-PRODUCT-ACCEPTANCE.md). No default activation is implied.
+> This page describes the bounded headless server contribution. Select its exact archive pair from [core-m6-pairing.json](../../integrations/dynamite/core-m6-pairing.json). Programmatic SQLite work and recovery use the separate [persistence contract](../state/dynamite-persistence.md) and its fixed pairing.
 
-The supported installation target is the packaged `@pakka/server` bootstrap with an explicit, exact `@pakka/dynamite@0.2.1` optional peer and the accepted `@pakka/agent@0.5.0` archive. The core archive is unchanged. Omitting `dynamite` keeps native context and imports no strategy. Explicit selection without the peer refuses before opening storage. See [application setup](../guides/MAS-APPLICATION-API.md) for the existing server, connection-file and CLI startup path; authentication and resource references do not change.
+The supported installation target is the packaged `@pakka/server` bootstrap with an explicit, exact `@pakka/dynamite@0.2.1` optional peer and the paired `@pakka/agent@0.5.0` archive. Omitting `dynamite` keeps native context and imports no strategy. Explicit selection without the peer refuses before opening storage. See [application setup](../guides/MAS-APPLICATION-API.md) for the existing server, connection-file and CLI startup path; authentication and resource references do not change.
 
 ## Host-owned selection
 
@@ -47,8 +47,8 @@ Lease revocation is not a durable permission-registry deletion. Explicit re-boot
 
 Shutdown cancels and drains owned strategy work before closing the runtime, including failure cleanup. Forced exits and unknown writer claims retain the core's existing fail-closed limitations.
 
-## Scope and evidence
+## Composition and checks
 
-Acceptance requires the compiled executable and CLI/client, exact archives, native tool call/result IDs, real HTTP, terminal receipts and original storage—not only library/service calls. The product gate is `npm run test:dynamite:product -- <accepted-agent.tgz> <accepted-dynamite.tgz>`. It rejects changed archives, missing/skipped/cancelled cases, workspace/sibling shortcuts and oracle production dependencies.
+Acceptance requires the compiled executable and CLI/client, exact archives, native tool call/result IDs, real HTTP, terminal receipts and original storage—not only library/service calls. The product gate is `npm run test:dynamite:product -- <agent-archive.tgz> <dynamite-archive.tgz>`. It rejects changed archives, missing/skipped/cancelled cases, workspace/sibling shortcuts and oracle production dependencies.
 
-This does not enable Dynamite by default, provision it in private workers or dynamic children, support arbitrary restored state, validate vision transport or promise semantic summary quality. The historical M0 failed pairing remains failed; a later accepted pairing is a new record, not a rewrite of that evidence.
+The server contribution applies to the configured initial persistent members. Private-worker and dynamic-child strategies require their own explicit host service; model selection or profile inheritance does not install one. The transport is the configured OpenAI-completions interface; summary quality is evaluated on the actual task.

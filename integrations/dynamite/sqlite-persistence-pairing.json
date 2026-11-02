@@ -1,0 +1,44 @@
+{
+	"schema": "pakka.dynamite.sqlite-persistence-pairing.v1",
+	"status": "installed-library-verified",
+	"host": {
+		"package": "@pakka/agent",
+		"version": "0.7.0",
+		"sourceBaseline": "ec173fd0deae487ae7664a1575c1f76de27e0913",
+		"sourceChange": "adopt-dynamite-sqlite-persistence",
+		"workingTree": true,
+		"tarballSha256": "3cd81e13ed3dc173e4108a472a5ce5c45c0e90ca7c7520cd6afd04c60b770c82",
+		"durableVersion": "1.4.0-pakka.1"
+	},
+	"strategy": {
+		"package": "@pakka/dynamite",
+		"version": "0.5.0",
+		"sourceBaseline": "5ec402f3d84a539163ca932b5f98bcd0253de7f8",
+		"sourceChange": "adopt-dynamite-sqlite-persistence",
+		"workingTree": true,
+		"tarballSha256": "67a13e72b644c2f8163ad720d486703f608fdf1c59dfb5f65b290c4186574a30"
+	},
+	"verification": {
+		"node": "v24.15.0",
+		"agentTests": 278,
+		"strategyTests": 386,
+		"installedTests": {
+			"tests": 73,
+			"pass": 73,
+			"fail": 0,
+			"skipped": 0,
+			"cancelled": 0,
+			"todo": 0
+		},
+		"providerRequests": 461,
+		"providerErrors": 0,
+		"declarations": "passed",
+		"record": "../../openspec/changes/archive/2026-11-02-adopt-dynamite-sqlite-persistence/tasks.md"
+	},
+	"archives": {
+		"host": "../../artifacts/dynamite/sqlite-persistence/pakka-agent-0.7.0.tgz",
+		"strategy": "../../artifacts/dynamite/sqlite-persistence/pakka-dynamite-0.5.0.tgz"
+	},
+	"previousPair": "./compresser-conversation-pairing.json",
+	"sourceCommits": "./sqlite-persistence-source-commits.json"
+}

@@ -280,7 +280,9 @@ export async function startPocket(options: PocketProductOptions) {
 					cwd,
 					cwdRoots: runtime.directoryRoots(profiles),
 					reservedSessionId: id,
-					reopenSessionFile: reopen ? join(options.runtime.dataDir, "sessions", id, "main.jsonl") : undefined,
+					reopenSessionFile: reopen
+						? join(options.runtime.dataDir, "sessions", id, "main.sqlite")
+						: undefined,
 					resolveApiKey: () => credentials!.resolve(),
 				});
 				if (notifications) {

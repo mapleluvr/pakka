@@ -1,6 +1,8 @@
 import { randomUUID } from "node:crypto";
-import { readFileSync, realpathSync, existsSync, statSync } from "node:fs";
-import { mkdir, writeFile, open, readFile, unlink } from "node:fs/promises";
+import { readFileSync, realpathSync, existsSync, statSync, lstatSync } from "node:fs";
+import { mkdir, writeFile, open, readFile, unlink, mkdtemp, rm } from "node:fs/promises";
+import { DatabaseSync, backup } from "node:sqlite";
+import { tmpdir } from "node:os";
 import { join, resolve, relative, isAbsolute, dirname } from "node:path";
 import { isDeepStrictEqual } from "node:util";
 import { BACKGROUND_CONTEXT, withAbortSignal } from "@earendil-works/chord/context";
@@ -26,7 +28,6 @@ import {
 	LiveDoc,
 	configure,
 	ProviderDoc,
-	ROOT_CONVERSATION_ID,
 	type Tx,
 	type Registry,
 	type ConversationId,
@@ -34,6 +35,7 @@ import {
 	type Conversation,
 	type Submission,
 	type SubmissionId,
+	type Storage,
 	type Cursor,
 	type EntryRecord,
 	type EntryDraft,
@@ -46,7 +48,8 @@ import {
 	type LiveState,
 	type UsageState,
 } from "@earendil-works/pi-durable";
-import { openNodeJsonlStorage } from "@earendil-works/pi-durable/storage/jsonl/node";
+import { SqliteStorage } from "@earendil-works/pi-durable/storage/sqlite";
+import { NodeSqliteDatabase, openNodeSqliteStorage } from "@earendil-works/pi-durable/storage/sqlite/node";
 import {
 	createModels,
 	createProvider,
@@ -61,17 +64,17 @@ import {
 } from "@earendil-works/pi-ai";
 import * as oac from "@earendil-works/pi-ai/api/openai-completions";
 import { copy, hash, json } from "./artifact-journal.ts";
+import type { JournalStorage, JournalMutation } from "./native-journal.ts";
+import { sourceWorkPlan, type StoredSourceWork, type SourceWorkMutation } from "./source-work.ts";
+import { planHistoryScan } from "./history-scan.ts";
 import { LifecycleTransitionRevoked } from "./strategy-control.ts";
-import {
-	inspectLegacyJournals,
-	legacyPrimaryReservations,
-	migratedNamespace,
-	verifyMigration,
-	textHash,
-	type JournalMapping,
-} from "./journal-migration.ts";
 import type {
 	HostOptions,
+	WriterRecoveryOptions,
+	WriterRecoveryReceipt,
+	ArtifactReceipt,
+	ArtifactSnapshot,
+	JsonValue,
 	Proposal,
 	ContextFrame,
 	MessageDTO,
@@ -229,8 +232,8 @@ export interface GovernedConversation {
 	};
 	readonly validateCall?: InferenceCallValidator;
 	check(): void;
-	begin(): string;
-	complete(attemptId: string, output: Omit<InferenceResult, "attemptId">): InferenceResult;
+	begin(): Promise<string>;
+	complete(attemptId: string, output: Omit<InferenceResult, "attemptId">): Promise<InferenceResult>;
 	reserve(): Promise<boolean>;
 }
 type CompresserPolicy = {
@@ -259,7 +262,9 @@ type CompresserJobState = {
 const CompresserPolicyDoc = defineDoc<CompresserPolicy>({
 	kind: "pakka.compresser",
 	version: 2,
-	migrate: () => { throw new MutationDenied("Aggregate Compresser policy requires explicit Conversation-scope migration"); },
+	migrate: () => {
+		throw new MutationDenied("Aggregate Compresser policy requires explicit Conversation-scope migration");
+	},
 	scope: "session",
 	checkpointWhen: () => true,
 	initial: () => ({
@@ -274,7 +279,9 @@ const CompresserPolicyDoc = defineDoc<CompresserPolicy>({
 const CompresserJobDoc = defineDoc<CompresserJobState>({
 	kind: "pakka.compresser-job",
 	version: 2,
-	migrate: () => { throw new MutationDenied("Legacy Compresser job requires explicit Conversation-scope migration"); },
+	migrate: () => {
+		throw new MutationDenied("Legacy Compresser job requires explicit Conversation-scope migration");
+	},
 	scope: "conversation",
 	history: "latest",
 	fork: "initial",
@@ -298,7 +305,11 @@ const CompresserJobDoc = defineDoc<CompresserJobState>({
 type AuxiliaryModel = { model: Model<Api>; apiKey: string; headers?: Record<string, string> };
 const nativeCompresserSessions = new WeakMap<
 	CompresserSession,
-	{ check(jobId?: string): void; run(input: GovernedConversation, model: AuxiliaryModel): Promise<InferenceResult> }
+	{
+		check(jobId?: string): void;
+		run(input: GovernedConversation, model: AuxiliaryModel): Promise<InferenceResult>;
+		recover(source: GovernedConversation["source"], request: InferenceRequest): Promise<InferenceResult>;
+	}
 >();
 const COMPLETE_REWRITE =
 	"Preserve your earlier analysis. Call the submission tool again and REWRITE THE ENTIRE COMPLETE candidate with every required field; never submit a patch or merge with an earlier invalid candidate.";
@@ -320,6 +331,7 @@ export async function createCompresserSession(
 	const models = createModels(),
 		registry = createRegistry();
 	let harness: Harness;
+	let database: OwnedSqlite | undefined;
 	let closed = false,
 		fatal: string | undefined;
 	const sealedJobs = new Set<string>();
@@ -330,7 +342,9 @@ export async function createCompresserSession(
 	>();
 	try {
 		harness = await Harness.open(
-			await openNodeJsonlStorage(options.storageDir, BACKGROUND_CONTEXT, { fsync: true }),
+			await openPersistentStorage(options.storageDir, false, (owner) => {
+				database = owner;
+			}),
 			{
 				models,
 				registry,
@@ -385,12 +399,14 @@ export async function createCompresserSession(
 					const wasQuarantined = job.status === "quarantined";
 					job.status = "quarantined";
 					job.sealed = true;
-					if (!wasQuarantined || !job.lastError) job.lastError = {
-						reason: "Unconfirmed Compresser job on reopen; source authority and model effects cannot be replayed",
-						incidentId: "reopen:" + jobId,
-						conversationId: id,
-						jobId,
-					};
+					if (!wasQuarantined || !job.lastError)
+						job.lastError = {
+							reason:
+								"Unconfirmed Compresser job on reopen; source authority and model effects cannot be replayed",
+							incidentId: "reopen:" + jobId,
+							conversationId: id,
+							jobId,
+						};
 				}
 				if (job.sealed) sealedJobs.add(jobId);
 			}
@@ -402,6 +418,7 @@ export async function createCompresserSession(
 			await (await harness.conversation(conversationId(id), BACKGROUND_CONTEXT))?.abort(BACKGROUND_CONTEXT);
 	} catch (error) {
 		if (harness!) await harness.close(BACKGROUND_CONTEXT).catch(() => {});
+		await database?.close();
 		await release();
 		throw error;
 	}
@@ -520,23 +537,39 @@ export async function createCompresserSession(
 					const job = await tx.doc(CompresserJobDoc, child.id);
 					job.status = "quarantined";
 					job.sealed = true;
-					job.lastError = { reason: localFault!, incidentId: currentAttempt ?? "source-fault", conversationId: String(child.id), jobId: key };
+					job.lastError = {
+						reason: localFault!,
+						incidentId: currentAttempt ?? "source-fault",
+						conversationId: String(child.id),
+						jobId: key,
+					};
 					// The pending attempt is retained: an unknown external audit is not a completion/refund.
 				});
 			}
-			async function record(output: Omit<InferenceResult, "attemptId">): Promise<InferenceResult | undefined> {
+			async function record(
+				output: Omit<InferenceResult, "attemptId">,
+			): Promise<InferenceResult | undefined> {
 				if (localFault) return;
 				if (!currentAttempt) throw new Error("Compresser response lacks an exact request reservation");
 				const attempt = currentAttempt;
-				try { latest = input.complete(attempt, output); }
-				catch (error) { await quarantine(error); return; }
+				try {
+					latest = await input.complete(attempt, output);
+				} catch (error) {
+					await quarantine(error);
+					return;
+				}
 				rounds.push(latest);
 				await commit(async (tx) => {
 					const job = await tx.doc(CompresserJobDoc, child.id);
 					job.pendingAttempt = null;
 					job.result = storedJson<JsonRepresentation<InferenceResult>>(latest!);
 					if (output.status !== "completed" && output.reason !== undefined)
-						job.lastError = { reason: output.reason, incidentId: attempt + ":response", conversationId: String(child.id), jobId: key };
+						job.lastError = {
+							reason: output.reason,
+							incidentId: attempt + ":response",
+							conversationId: String(child.id),
+							jobId: key,
+						};
 				});
 				currentAttempt = undefined;
 				return latest;
@@ -575,7 +608,10 @@ export async function createCompresserSession(
 						job.incidents[id] = true;
 						job[kind]++;
 						job.lastError = { reason, incidentId: id, conversationId: String(child.id), jobId: key };
-						if (job.toolErrors >= options.toolCallingTolerance || job.unresolvedErrors >= options.unresolvedErrorTolerance) {
+						if (
+							job.toolErrors >= options.toolCallingTolerance ||
+							job.unresolvedErrors >= options.unresolvedErrorTolerance
+						) {
 							job.sealed = true;
 							job.status = "failed";
 						}
@@ -621,7 +657,14 @@ export async function createCompresserSession(
 							isError: true,
 						};
 					const result = await record({ ...output("completed"), toolCall: validCall });
-					if (!result) return { output: [{ type: "text", text: "Source completion is unconfirmed; this Conversation is quarantined." }], isError: true, control: { terminate: true } };
+					if (!result)
+						return {
+							output: [
+								{ type: "text", text: "Source completion is unconfirmed; this Conversation is quarantined." },
+							],
+							isError: true,
+							control: { terminate: true },
+						};
 					check();
 					await api.commit(async (tx) => {
 						checkAuthority(check);
@@ -656,7 +699,7 @@ export async function createCompresserSession(
 						beforeRequest: async (request) => {
 							try {
 								check();
-								currentAttempt = input.begin();
+								currentAttempt = await input.begin();
 								answer = undefined;
 								diagnostic = undefined;
 								validCall = undefined;
@@ -860,7 +903,12 @@ export async function createCompresserSession(
 							policy = await tx.doc(CompresserPolicyDoc);
 						job.status = "quarantined"; // Keep the pending reservation; uncertainty is not a release.
 						job.sealed = true;
-						job.lastError = { reason, incidentId: currentAttempt ?? "native-fault", conversationId: String(child.id), jobId: key };
+						job.lastError = {
+							reason,
+							incidentId: currentAttempt ?? "native-fault",
+							conversationId: String(child.id),
+							jobId: key,
+						};
 						if (fatal && policy.status === "open") {
 							policy.status = "sealed";
 							policy.lastError = {
@@ -920,13 +968,237 @@ export async function createCompresserSession(
 					);
 					await Promise.allSettled([...active.values()].map((item) => item.operation));
 					await harness.close(BACKGROUND_CONTEXT);
-				} finally {
+					await database?.close();
 					await release();
+				} catch (error) {
+					throw new Error("Compresser storage closure could not be confirmed; writer retained", {
+						cause: error,
+					});
 				}
 			})()),
 	});
-	nativeCompresserSessions.set(facade, { check: guard, run });
+	nativeCompresserSessions.set(facade, {
+		check: guard,
+		run,
+		async recover(source, request) {
+			guard(source.jobId);
+			const id = cached.conversations[source.jobId];
+			if (!id) throw new Error("Compresser has no confirmed result for the original source job");
+			const job = await harness.snapshot(CompresserJobDoc, conversationId(id), BACKGROUND_CONTEXT);
+			if (
+				!job ||
+				job.jobId !== source.jobId ||
+				job.planId !== source.planId ||
+				job.sourceSessionId !== source.sessionId ||
+				job.sourceConversationId !== source.conversationId ||
+				job.fingerprint !== hash([source, request]) ||
+				job.status !== "completed" ||
+				job.sealed ||
+				job.pendingAttempt ||
+				!job.result
+			)
+				throw new Error("Compresser result identity, request or completion is unconfirmed");
+			const result = storedJson<InferenceResult>(job.result);
+			if (
+				result.status !== "completed" ||
+				!result.compresser ||
+				result.compresser.sessionId !== cached.sessionId ||
+				result.compresser.conversationId !== id ||
+				!result.compresser.attemptIds.includes(result.attemptId)
+			)
+				throw new Error("Compresser result envelope is not a complete fixed result");
+			return copy(result);
+		},
+	});
 	return facade;
+}
+
+const SQLITE_DESCRIPTION = Object.freeze({
+	schema: "pakka.storage.v1",
+	backend: "sqlite",
+	schemaVersion: 1,
+	file: "main.sqlite",
+	durability: "full",
+});
+const SQLITE_APPLICATION_ID = 0x50414b4b;
+type OwnedSqlite = { close(): Promise<void> };
+
+/** Identity checks are read-only even in the presence of a hot rollback journal. */
+async function probeExistingStorage(
+	storageDir: string,
+	opened: (owner: OwnedSqlite) => void = () => {},
+): Promise<void> {
+	const file = join(storageDir, SQLITE_DESCRIPTION.file);
+	let stored: unknown;
+	try {
+		stored = JSON.parse(await readFile(join(storageDir, "storage.json"), "utf8"));
+	} catch (error) {
+		throw new Error("Storage description is corrupt", { cause: error });
+	}
+	if (hash(stored) !== hash(SQLITE_DESCRIPTION))
+		throw new Error("Storage description/backend identity mismatch");
+	const reader = await open(file, "r");
+	try {
+		const header = Buffer.alloc(16),
+			result = await reader.read(header, 0, 16, 0);
+		if (result.bytesRead !== 16 || header.toString() !== "SQLite format 3\0")
+			throw new Error("Storage file is not a SQLite database");
+	} finally {
+		await reader.close();
+	}
+	const probe = new DatabaseSync(file, { readOnly: true });
+	const owner: OwnedSqlite = {
+		close: async () => {
+			if (probe.isOpen) probe.close();
+			if (probe.isOpen) throw new Error("SQLite identity reader closure unknown");
+		},
+	};
+	opened(owner);
+	try {
+		if (probe.prepare("PRAGMA application_id").get()?.application_id !== SQLITE_APPLICATION_ID)
+			throw new Error("SQLite storage application identity mismatch");
+	} finally {
+		await owner.close();
+	}
+}
+function assertExitedWriter(pid: number): void {
+	try {
+		process.kill(pid, 0);
+	} catch (error) {
+		if ((error as NodeJS.ErrnoException).code === "ESRCH") return;
+		throw new Error("Writer process liveness is unknown; recovery refused", { cause: error });
+	}
+	throw new Error("Writer process is alive; recovery refused");
+}
+/** Trusted local maintenance: reconcile one dead claim, never acquire model authority. */
+export async function recoverStorageWriter(options: WriterRecoveryOptions): Promise<WriterRecoveryReceipt> {
+	const expected = options?.expectedClaim;
+	if (
+		typeof options?.storageDir !== "string" ||
+		!Number.isSafeInteger(expected?.pid) ||
+		expected.pid <= 0 ||
+		typeof expected?.nonce !== "string" ||
+		!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(expected.nonce)
+	)
+		throw new Error("Invalid writer recovery identity");
+	const storageDir = realpathSync(options.storageDir),
+		path = join(storageDir, "pakka-writer.json"),
+		gatePath = join(storageDir, "pakka-maintenance.json");
+	if (!statSync(storageDir).isDirectory() || !lstatSync(path).isFile() || lstatSync(path).isSymbolicLink())
+		throw new Error("Writer claim file identity mismatch");
+	const original = await readFile(path, "utf8");
+	let claim;
+	try {
+		claim = JSON.parse(original);
+	} catch (error) {
+		throw new Error("Writer claim is corrupt; recovery refused", { cause: error });
+	}
+	if (
+		claim?.schema !== "pakka.writer.v1" ||
+		Object.keys(claim).length !== 3 ||
+		claim.pid !== expected.pid ||
+		claim.nonce !== expected.nonce
+	)
+		throw new Error("Writer claim identity changed; recovery refused");
+	assertExitedWriter(claim.pid);
+	await probeExistingStorage(storageDir);
+	let gate;
+	try {
+		gate = await open(gatePath, "wx");
+	} catch (error) {
+		throw new Error("Storage maintenance is locked; recovery refused", { cause: error });
+	}
+	const marker = { schema: "pakka.maintenance.v1", pid: process.pid, nonce: randomUUID() };
+	let published = false;
+	try {
+		await gate.writeFile(JSON.stringify(marker) + "\n");
+		await gate.sync();
+		await gate.close();
+		published = true;
+		await probeExistingStorage(storageDir);
+		assertExitedWriter(claim.pid);
+		if (
+			(await readFile(path, "utf8")) !== original ||
+			!lstatSync(path).isFile() ||
+			lstatSync(path).isSymbolicLink()
+		)
+			throw new Error("Writer claim changed during maintenance; recovery refused");
+		await unlink(path);
+		return copy({
+			status: "released" as const,
+			storageFile: join(storageDir, SQLITE_DESCRIPTION.file),
+			pid: claim.pid,
+			nonce: claim.nonce,
+		});
+	} finally {
+		if (published) {
+			let current;
+			try {
+				current = JSON.parse(await readFile(gatePath, "utf8"));
+			} catch (error) {
+				throw new Error("Maintenance claim is unknown; release refused", { cause: error });
+			}
+			if (current?.nonce !== marker.nonce) throw new Error("Maintenance claim changed; release refused");
+			await unlink(gatePath);
+		} else {
+			await gate.close();
+		}
+	}
+}
+
+/** Public Pi database/storage adapters, with explicit ownership before initialization. */
+async function openPersistentStorage(
+	storageDir: string,
+	reopening: boolean,
+	opened: (owner: OwnedSqlite) => void,
+): Promise<SqliteStorage> {
+	const file = join(storageDir, SQLITE_DESCRIPTION.file),
+		description = join(storageDir, "storage.json");
+	const existing = existsSync(description);
+	if (existing) await probeExistingStorage(storageDir, opened);
+	else if (reopening || existsSync(file) || existsSync(join(storageDir, "main.jsonl"))) {
+		throw new Error("Storage backend identity description is missing");
+	}
+	const handle = new DatabaseSync(file, { timeout: 5000 }),
+		database = new NodeSqliteDatabase(handle);
+	let published = false;
+	opened({
+		close: async () => {
+			try {
+				await database.close();
+			} catch (error) {
+				// Checkpoint errors can reject facade close despite a closed handle.
+				// Before publication there are no callers/tasks; close the owned handle.
+				if (published) throw error;
+				if (handle.isOpen) handle.close();
+			} finally {
+				if (handle.isOpen) throw new Error("SQLite database closure unknown; writer retained");
+			}
+		},
+	});
+	if (existing) {
+		const identity = await database.get<{ application_id: number }>("PRAGMA application_id");
+		if (identity?.application_id !== SQLITE_APPLICATION_ID)
+			throw new Error("SQLite storage application identity mismatch");
+	} else await database.exec(`PRAGMA application_id = ${SQLITE_APPLICATION_ID}`);
+	await database.exec("PRAGMA journal_mode = WAL");
+	await database.exec("PRAGMA synchronous = FULL");
+	const mode = await database.get<{ journal_mode: string }>("PRAGMA journal_mode");
+	const sync = await database.get<{ synchronous: number }>("PRAGMA synchronous");
+	if (mode?.journal_mode !== "wal" || sync?.synchronous !== 2)
+		throw new Error("SQLite durability configuration unavailable");
+	const storage = await SqliteStorage.open(database);
+	if (!existing) {
+		const descriptor = await open(description, "wx");
+		try {
+			await descriptor.writeFile(JSON.stringify(SQLITE_DESCRIPTION) + "\n");
+			await descriptor.sync();
+		} finally {
+			await descriptor.close();
+		}
+	}
+	published = true;
+	return storage;
 }
 
 interface ProvenanceData {
@@ -934,24 +1206,12 @@ interface ProvenanceData {
 	cwd: string;
 }
 
-type MigrationRecord = {
-	id: string;
-	schemaVersion: 1;
-	sessionId: string;
-	conversationId: string;
-	sourceLength: number;
-	sourceSha256: string;
-	primaryAttempts: number;
-	auxiliaryAttempts: number;
-	journals: JournalMapping[];
-};
 type RuntimeRecord = {
 	sessionId: string;
 	limits: { maxConversations: number; maxPrimaryAttempts: number; maxAuxiliaryAttempts: number };
 	conversationCount: number;
 	budget: { primaryAttempts: number; auxiliaryAttempts: number };
 	strategyAttempts: Record<string, number>;
-	journalMigration?: MigrationRecord;
 	profiles: Record<string, string>;
 	resources: Record<
 		string,
@@ -1141,6 +1401,8 @@ function profileOptions(options: HostOptions, profile?: ConversationProfile): Ho
 async function claimWriter(storageDir: string): Promise<() => Promise<void>> {
 	const path = join(storageDir, "pakka-writer.json"),
 		nonce = randomUUID();
+	if (existsSync(join(storageDir, "pakka-maintenance.json")))
+		throw new Error("Pakka storage maintenance is locked");
 	let descriptor;
 	try {
 		descriptor = await open(path, "wx");
@@ -1156,7 +1418,7 @@ async function claimWriter(storageDir: string): Promise<() => Promise<void>> {
 		await descriptor.close();
 	}
 	let released = false;
-	return async () => {
+	const release = async () => {
 		if (released) return;
 		let current: { nonce?: string } | undefined;
 		try {
@@ -1168,8 +1430,70 @@ async function claimWriter(storageDir: string): Promise<() => Promise<void>> {
 		await unlink(path);
 		released = true;
 	};
+	// Maintenance may start while the exclusive file creation is queued.
+	// Recheck before any database is opened, then release only our own claim.
+	if (existsSync(join(storageDir, "pakka-maintenance.json"))) {
+		await release();
+		throw new Error("Pakka storage maintenance is locked");
+	}
+	return release;
 }
 class MutationDenied extends Error {}
+class JournalConflict extends MutationDenied {
+	readonly version: number;
+	constructor(version: number) {
+		super("Artifact version conflict");
+		this.version = version;
+	}
+}
+type JournalHead = { version: number; checksum: string };
+type JournalBatch = {
+	key: string;
+	version: number;
+	transactionId: string;
+	previous: string;
+	checksum: string;
+	records: JsonRepresentation<JsonValue[]>;
+};
+const JournalIndexDoc = defineDoc<{ heads: Record<string, JournalHead> }>({
+	kind: "pakka.strategy-journals",
+	version: 1,
+	scope: "session",
+	checkpointWhen: () => true,
+	initial: () => ({ heads: {} }),
+});
+const JournalBatchDoc = defineDocFamily<JournalBatch, null>({
+	kind: "pakka.strategy-batch",
+	version: 1,
+	scope: "session",
+	family: true,
+	checkpointWhen: () => true,
+	initial: () => ({ key: "", version: 0, transactionId: "", previous: "", checksum: "", records: [] }),
+});
+const JournalReceiptDoc = defineDocFamily<{ version: number; fingerprint: string }, null>({
+	kind: "pakka.strategy-receipt",
+	version: 1,
+	scope: "session",
+	family: true,
+	checkpointWhen: () => true,
+	initial: () => ({ version: 0, fingerprint: "" }),
+});
+const SourceWorkIndexDoc = defineDoc<{ active: Record<string, string[]> }>({
+	kind: "pakka.source-work-index",
+	version: 1,
+	scope: "session",
+	checkpointWhen: () => true,
+	initial: () => ({ active: {} }),
+});
+const SourceWorkDoc = defineDocFamily<{ state: JsonRepresentation<StoredSourceWork> | null }, null>({
+	kind: "pakka.source-work",
+	version: 1,
+	scope: "session",
+	family: true,
+	checkpointWhen: () => true,
+	initial: () => ({ state: null }),
+});
+
 /** This attempted input created no admission; any original receipt remains authoritative. */
 export class ConversationUnavailableError extends MutationDenied {
 	constructor() {
@@ -1507,6 +1831,8 @@ export class DurableAdapter {
 	#pendingQueue = new Set<Promise<void>>();
 	#activeEntries: EntryRecord[] = [];
 	#allEntries: EntryRecord[] = [];
+	#historyConversationId: string | undefined;
+	#cacheRefresh: Promise<void> = Promise.resolve();
 	#contributions: (readonly Message[])[] = [];
 	#contextMessages: readonly Message[] = [];
 	#forkPromise: Promise<void> | undefined;
@@ -1522,6 +1848,14 @@ export class DurableAdapter {
 	#routes = new Map<ConversationId, DurableAdapter>();
 	#managed: ManagedState | undefined;
 	#releaseWriter: (() => Promise<void>) | undefined;
+	#database: OwnedSqlite | undefined;
+	#storage: SqliteStorage | undefined;
+	#journalCache = new Map<
+		string,
+		{ snapshot: ArtifactSnapshot; checksum: string; transactions: Map<number, string> }
+	>();
+	#workCache = new Map<string, StoredSourceWork>();
+	#journalRefresh: Promise<void> = Promise.resolve();
 	#inferenceModels = new Map<
 		string,
 		{ model: Model<Api>; apiKey: string; headers?: Record<string, string> }
@@ -1561,13 +1895,11 @@ export class DurableAdapter {
 		control: AdapterControl,
 		managedOptions?: Pick<
 			RuntimeOptions,
-			"limits" | "profiles" | "cwdRoots" | "migrateLegacy" | "reservedSessionId" | "jobs" | "contextSources"
+			"limits" | "profiles" | "cwdRoots" | "reservedSessionId" | "jobs" | "contextSources"
 		>,
 	): Promise<DurableAdapter> {
 		const profiles = new Map<string, HostOptions>([["default", profileOptions(options)]]);
 		if (managedOptions) {
-			if (managedOptions.migrateLegacy && !options.reopenSessionFile)
-				throw new Error("Legacy migration requires an explicit closed storage");
 			const limits = managedOptions.limits;
 			if (
 				!limits ||
@@ -1645,16 +1977,8 @@ export class DurableAdapter {
 			if (!inside || inside.startsWith("..") || isAbsolute(inside))
 				throw new Error("Reopen must be a Pakka-owned session");
 
-			const text = readFileSync(file, "utf8");
-			if (!text.endsWith("\n")) throw new Error("Corrupt reopen session");
-			const lines = text.trimEnd().split("\n");
-			for (const line of lines) {
-				try {
-					JSON.parse(line);
-				} catch {
-					throw new Error("Corrupt reopen session");
-				}
-			}
+			if (!file.endsWith("/main.sqlite") && !file.endsWith("\\main.sqlite"))
+				throw new Error("Reopen storage file identity must be main.sqlite");
 
 			storageDir = dirname(file);
 			const provPath = join(storageDir, "provenance.json");
@@ -1686,14 +2010,21 @@ export class DurableAdapter {
 			}
 			const prov: ProvenanceData = { sessionId, cwd: resolve(options.cwd) };
 			await writeFile(join(storageDir, "provenance.json"), JSON.stringify(prov), "utf8");
-			sessionFile = join(storageDir, "main.jsonl");
+			sessionFile = join(storageDir, "main.sqlite");
 		}
 
 		const releaseWriter = await claimWriter(storageDir);
 		let openedHarness: Harness | undefined;
-		let openedStorage: Awaited<ReturnType<typeof openNodeJsonlStorage>> | undefined;
+		let openedStorage: SqliteStorage | undefined;
+		let openedDatabase: OwnedSqlite | undefined;
 		try {
-			const storage = await openNodeJsonlStorage(storageDir, BACKGROUND_CONTEXT, { fsync: true });
+			const storage = await openPersistentStorage(
+				storageDir,
+				options.reopenSessionFile !== undefined,
+				(owner) => {
+					openedDatabase = owner;
+				},
+			);
 			openedStorage = storage;
 
 			const rawModels = createModels();
@@ -1811,83 +2142,6 @@ export class DurableAdapter {
 			const storedRuntime = await harness.snapshot(RuntimeDoc, BACKGROUND_CONTEXT);
 			if (!managedOptions && storedRuntime)
 				throw new Error("Managed storage requires createRuntime; legacy bypass refused");
-			if (managedOptions?.migrateLegacy) {
-				const expected = managedOptions.migrateLegacy;
-				if (expected.expectedSessionId !== sessionId) throw new Error("Legacy migration provenance mismatch");
-				if (storedRuntime) {
-					if (
-						!storedRuntime.journalMigration ||
-						storedRuntime.journalMigration.conversationId !== expected.expectedConversationId
-					)
-						throw new Error("Already managed storage is not the requested legacy migration");
-				} else {
-					const conversations = await storage.scanConversations({}, 2, undefined, BACKGROUND_CONTEXT);
-					const only = conversations.items[0];
-					if (
-						conversations.items.length !== 1 ||
-						conversations.next ||
-						!only ||
-						only.parent ||
-						only.owner ||
-						String(only.id) !== expected.expectedConversationId ||
-						only.id !== ROOT_CONVERSATION_ID
-					)
-						throw new Error("Legacy migration requires one provably unique root Conversation");
-					const pending = await harness.inspect(BACKGROUND_CONTEXT);
-					if (pending.tasks.length || pending.submissions.length)
-						throw new Error("Legacy migration requires settled tasks/submissions; outcome unknown");
-					const source = readFileSync(sessionFile, "utf8"),
-						journals = inspectLegacyJournals(
-							options.dataDir,
-							sessionId,
-							new Set(options.inference?.policies.map((policy) => policy.strategyId) ?? []),
-						);
-					const primaryAttempts = legacyPrimaryReservations(source, GenerationTask.definition.name);
-					if (
-						primaryAttempts > managedOptions.limits.maxPrimaryAttempts ||
-						journals.auxiliaryAttempts > managedOptions.limits.maxAuxiliaryAttempts
-					)
-						throw new Error("Legacy migration limits below already consumed spending");
-					const migration: MigrationRecord = {
-						id: randomUUID(),
-						schemaVersion: 1,
-						sessionId,
-						conversationId: String(only.id),
-						sourceLength: source.length,
-						sourceSha256: textHash(source),
-						primaryAttempts,
-						auxiliaryAttempts: journals.auxiliaryAttempts,
-						journals: journals.journals,
-					};
-					await harness.commit(async (tx) => {
-						const state = await tx.doc(RuntimeDoc);
-						state.sessionId = sessionId;
-						state.limits = { ...managedOptions.limits };
-						state.profiles = { ...approvedHashes };
-						state.conversationCount = 1;
-						state.budget = { primaryAttempts, auxiliaryAttempts: journals.auxiliaryAttempts };
-						state.strategyAttempts = { ...journals.strategyAttempts };
-						state.journalMigration = migration;
-						state.resources.root = {
-							key: "root",
-							sessionId,
-							conversationId: String(only.id),
-							incarnation: randomUUID(),
-							profile: "default",
-						};
-						await configure(tx, only.id, {
-							model: { provider: mainProviderId, modelId: mainModelId },
-							extensions: [ext],
-							instructions: options.systemPrompt,
-							cwd: options.cwd,
-						});
-						await tx.appendEntry(only.id, {
-							kind: "pakka.journal-migration",
-							data: { migrationId: migration.id, sourceSha256: migration.sourceSha256 },
-						});
-					}, BACKGROUND_CONTEXT);
-				}
-			}
 			let conversation = await harness.root(BACKGROUND_CONTEXT, {
 				agent: {
 					model: { provider: mainProviderId, modelId: mainModelId },
@@ -1927,16 +2181,7 @@ export class DurableAdapter {
 					hash(savedRuntime.profiles) !== hash(expected)
 				) {
 					await harness.close(BACKGROUND_CONTEXT);
-					throw new Error("Managed runtime profile/limits mismatch or explicit legacy migration required");
-				}
-				if (savedRuntime.journalMigration) {
-					const migration = savedRuntime.journalMigration;
-					if (
-						textHash(readFileSync(sessionFile, "utf8").slice(0, migration.sourceLength)) !==
-						migration.sourceSha256
-					)
-						throw new Error("Migrated source prefix changed; storage unknown");
-					verifyMigration(options.dataDir, sessionId, migration);
+					throw new Error("Managed runtime profile/limits mismatch");
 				}
 				const activeRoot = savedRuntime.resources.root;
 				if (!activeRoot) {
@@ -1966,6 +2211,8 @@ export class DurableAdapter {
 			);
 			adapterRef = adapter;
 			adapter.#releaseWriter = releaseWriter;
+			adapter.#database = openedDatabase;
+			adapter.#storage = storage;
 			adapter.#routes = routes;
 			adapter.#registry = registry;
 			routes.set(conversation.id, adapter);
@@ -2039,6 +2286,7 @@ export class DurableAdapter {
 			// A claim is released only after the known writer is closed; cleanup failure retains it.
 			if (openedHarness) await openedHarness.close(BACKGROUND_CONTEXT);
 			else if (openedStorage) await openedStorage.close(BACKGROUND_CONTEXT);
+			await openedDatabase?.close();
 			await releaseWriter();
 			throw error;
 		}
@@ -2223,7 +2471,6 @@ export class DurableAdapter {
 					conversations: Object.values(managed.state.resources),
 					limits: managed.state.limits,
 					budget: managed.state.budget,
-					...(managed.state.journalMigration ? { journalMigration: managed.state.journalMigration } : {}),
 					...(managed.failure ? { lastError: managed.failure } : {}),
 				});
 			},
@@ -2327,6 +2574,7 @@ export class DurableAdapter {
 				adapter.#registry = this.#registry;
 				adapter.#managed = this.#managed;
 				adapter.#inferenceModels = this.#inferenceModels;
+				adapter.#storage = this.#storage;
 				this.#routes.set(id, adapter);
 				await adapter.#initStream();
 				await adapter.refreshCache();
@@ -2341,6 +2589,7 @@ export class DurableAdapter {
 				if (this.#managed!.closed) return;
 				this.#managed!.closed = true;
 				await this.#harness.close(BACKGROUND_CONTEXT);
+				await this.#database?.close();
 				this.#managed!.unsubscribe?.();
 				await this.#releaseWriter?.();
 			},
@@ -2909,11 +3158,21 @@ export class DurableAdapter {
 					json(s.data);
 					const configuration = s.configuration === undefined ? undefined : copy(s.configuration);
 					if (configuration !== undefined) {
-						if (!configuration || typeof configuration !== "object" || Array.isArray(configuration) || !Object.keys(configuration).length || Object.keys(configuration).some(key => !["model", "cwd"].includes(key)))
+						if (
+							!configuration ||
+							typeof configuration !== "object" ||
+							Array.isArray(configuration) ||
+							!Object.keys(configuration).length ||
+							Object.keys(configuration).some((key) => !["model", "cwd"].includes(key))
+						)
 							throw new Error("Invalid initial configuration");
-						if (configuration.model !== undefined && ![...this.#managedReady().profiles.values()].some(row => row.model === configuration.model))
+						if (
+							configuration.model !== undefined &&
+							![...this.#managedReady().profiles.values()].some((row) => row.model === configuration.model)
+						)
 							throw new Error("Unconfigured initial model");
-						if (configuration.cwd !== undefined) approvedDirectory(configuration.cwd, this.#managedReady().cwdRoots);
+						if (configuration.cwd !== undefined)
+							approvedDirectory(configuration.cwd, this.#managedReady().cwdRoots);
 					}
 					return {
 						key: s.key,
@@ -3033,8 +3292,17 @@ export class DurableAdapter {
 							instructions: profile.systemPrompt,
 							cwd: profile.cwd,
 							...(inherited.get(spec.key) ?? {}),
-							...(spec.configuration?.model === undefined ? {} : { model: { provider: "pakka-provider-" + hash(profile.endpoint).slice(0, 12), modelId: spec.configuration.model } }),
-							...(spec.configuration?.cwd === undefined ? {} : { cwd: approvedDirectory(spec.configuration.cwd, this.#managedReady().cwdRoots) }),
+							...(spec.configuration?.model === undefined
+								? {}
+								: {
+										model: {
+											provider: "pakka-provider-" + hash(profile.endpoint).slice(0, 12),
+											modelId: spec.configuration.model,
+										},
+									}),
+							...(spec.configuration?.cwd === undefined
+								? {}
+								: { cwd: approvedDirectory(spec.configuration.cwd, this.#managedReady().cwdRoots) }),
 						});
 						const ref = {
 							key: resourceKey,
@@ -3416,17 +3684,6 @@ export class DurableAdapter {
 	storageUnknown(reason: string): void {
 		this.#failSession(new Error(reason));
 	}
-	journalNamespace(strategyId: string, kind: string): string | undefined {
-		const receipt = this.#managed?.state.journalMigration;
-		if (!receipt) return undefined;
-		try {
-			verifyMigration(this.#options.dataDir, this.#sessionId, receipt);
-			return migratedNamespace(receipt, String(this.#conversation.id), strategyId, kind);
-		} catch (error) {
-			this.storageUnknown("Migration storage unknown: " + String(error));
-			throw error;
-		}
-	}
 	#failSession(error: Error): void {
 		if (this.#managed) this.#managed.failure ??= error.message;
 		for (const adapter of this.#routes.values()) adapter.markFailed(error);
@@ -3542,23 +3799,393 @@ export class DurableAdapter {
 		}
 	}
 
-	async refreshCache(): Promise<void> {
+	journalStorage(): JournalStorage {
+		return Object.freeze({
+			identity: this.#sessionFile,
+			address: (key: string) => this.#sessionFile + "#journal/" + key,
+			read: (key: string) => copy(this.#journalCache.get(key)?.snapshot ?? { version: 0, records: [] }),
+			transaction: (key: string, version: number) => this.#journalCache.get(key)?.transactions.get(version),
+			receipt: (key: string, transactionId: string) => {
+				const version = [...(this.#journalCache.get(key)?.transactions ?? [])].find(
+					([, id]) => id === transactionId,
+				)?.[0];
+				return version === undefined
+					? undefined
+					: copy({
+							status: "committed" as const,
+							version,
+							transactionId,
+							journalPath: this.#sessionFile + "#journal/" + key,
+						});
+			},
+			work: (key: string) => copy([...this.#workCache.values()].filter((work) => work.namespace === key)),
+			commit: (mutations: readonly JournalMutation[], check: () => void) =>
+				this.#commitJournals(mutations, check),
+		});
+	}
+	#refreshJournals(force = false): Promise<void> {
+		const operation = this.#journalRefresh.then(() =>
+			force ? this.#reloadJournalsFromStorage() : this.#loadJournals(),
+		);
+		this.#journalRefresh = operation.then(
+			() => {},
+			() => {},
+		);
+		return operation;
+	}
+	async #snapshotDocument<T>(storage: Storage, kind: string, key?: string): Promise<T | undefined> {
+		const record = await storage.findDocument(
+			{ scope: { kind: "session" }, kind, ...(key === undefined ? {} : { key }) },
+			"current",
+			BACKGROUND_CONTEXT,
+		);
+		if (!record) return undefined;
+		const document = await storage.document(record.id, "current", BACKGROUND_CONTEXT);
+		if (!document) throw new Error("Persisted document incarnation disappeared");
+		return storedJson<T>(document.value);
+	}
+	async #reloadJournalsFromStorage(): Promise<void> {
+		// Hold the public mutation line without staging writes. The independent
+		// SQLite backup does not re-enter Session reads or its document cache.
+		await this.#harness.commit(async () => {
+			const dir = await mkdtemp(join(tmpdir(), "pakka-journal-reload-"));
+			let reader: DatabaseSync | undefined;
+			let storage: Storage | undefined;
+			try {
+				reader = new DatabaseSync(this.#sessionFile, { readOnly: true });
+				const file = join(dir, "snapshot.sqlite");
+				await backup(reader, file);
+				reader.close();
+				reader = undefined;
+				storage = await openNodeSqliteStorage(file);
+				await this.#loadJournals(true, storage);
+			} finally {
+				reader?.close();
+				if (storage) await storage.close(BACKGROUND_CONTEXT);
+				await rm(dir, { recursive: true, force: true });
+			}
+		}, BACKGROUND_CONTEXT);
+	}
+	async #loadJournals(force = false, storage?: Storage): Promise<void> {
+		const index = storage
+			? await this.#snapshotDocument<{ heads: Record<string, JournalHead> }>(
+					storage,
+					"pakka.strategy-journals",
+				)
+			: await this.#harness.snapshot(JournalIndexDoc, BACKGROUND_CONTEXT);
+		for (const [key, head] of Object.entries(index?.heads ?? {})) {
+			const known = this.#journalCache.get(key);
+			if (!Number.isSafeInteger(head.version) || head.version < (known?.snapshot.version ?? 0))
+				throw new Error("Invalid/regressed native journal head");
+			if (!force && known && head.version === known.snapshot.version) {
+				if (head.checksum !== known.checksum) throw new Error("Native journal head integrity failure");
+				continue;
+			}
+			const records = force ? [] : [...(known?.snapshot.records ?? [])],
+				transactions = new Map(force ? undefined : known?.transactions);
+			let checksum = force ? "" : (known?.checksum ?? "");
+			for (
+				let version = (force ? 0 : (known?.snapshot.version ?? 0)) + 1;
+				version <= head.version;
+				version++
+			) {
+				const batch = storage
+					? await this.#snapshotDocument<JournalBatch>(storage, "pakka.strategy-batch", key + "." + version)
+					: await this.#harness.snapshot(JournalBatchDoc, key + "." + version, BACKGROUND_CONTEXT);
+				if (
+					!batch ||
+					batch.key !== key ||
+					batch.version !== version ||
+					batch.previous !== checksum ||
+					!batch.transactionId ||
+					!batch.records.length
+				)
+					throw new Error("Missing/invalid native journal batch");
+				const { checksum: digest, ...payload } = batch;
+				if (hash(payload) !== digest) throw new Error("Native journal batch integrity failure");
+				records.push(...storedJson<JsonValue[]>(batch.records));
+				transactions.set(version, batch.transactionId);
+				checksum = digest;
+			}
+			if (checksum !== head.checksum) throw new Error("Native journal head integrity failure");
+			this.#journalCache.set(key, {
+				checksum,
+				transactions,
+				snapshot: copy({ version: head.version, records }),
+			});
+		}
+		for (const key of this.#journalCache.keys())
+			if (!index?.heads[key]) throw new Error("Native journal head disappeared");
+		await this.#loadSourceWork(storage);
+	}
+	async #loadSourceWork(storage?: Storage): Promise<void> {
+		const index = storage
+			? await this.#snapshotDocument<{ active: Record<string, string[]> }>(storage, "pakka.source-work-index")
+			: await this.#harness.snapshot(SourceWorkIndexDoc, BACKGROUND_CONTEXT);
+		const works = new Map<string, StoredSourceWork>();
+		for (const [namespace, ids] of Object.entries(index?.active ?? {})) {
+			if (!/^[0-9a-f]{64}$/.test(namespace) || !Array.isArray(ids) || new Set(ids).size !== ids.length)
+				throw new Error("Invalid source-work index");
+			for (const id of ids) {
+				const address = namespace + "." + id;
+				const document = storage
+					? await this.#snapshotDocument<{ state: JsonRepresentation<StoredSourceWork> | null }>(
+							storage,
+							"pakka.source-work",
+							address,
+						)
+					: await this.#harness.snapshot(SourceWorkDoc, address, BACKGROUND_CONTEXT);
+				const work = document?.state && storedJson<StoredSourceWork>(document.state);
+				if (
+					!work ||
+					work.jobId !== id ||
+					work.namespace !== namespace ||
+					!work.sources.length ||
+					!Number.isSafeInteger(work.maxCalls) ||
+					work.maxCalls < 1 ||
+					new Set(work.attemptIds).size !== work.attemptIds.length ||
+					work.attemptIds.length > work.maxCalls ||
+					(work.result && hash(work.result) !== work.resultDigest)
+				)
+					throw new Error("Missing/invalid source work");
+				const proof = this.#journalCache
+					.get(namespace)
+					?.snapshot.records.find(
+						(row) =>
+							row &&
+							typeof row === "object" &&
+							!Array.isArray(row) &&
+							"kind" in row &&
+							row.kind === "workplan" &&
+							"jobId" in row &&
+							row.jobId === id,
+					);
+				if (
+					!proof ||
+					typeof proof !== "object" ||
+					Array.isArray(proof) ||
+					!("planHash" in proof) ||
+					proof.planHash !== hash(sourceWorkPlan(work))
+				)
+					throw new Error("Source-work plan integrity failure");
+				works.set(address, copy(work));
+			}
+		}
+		this.#workCache = works;
+	}
+	async #updateSourceWork(tx: Tx, namespace: string, mutation: SourceWorkMutation): Promise<void> {
+		const jobId = mutation.type === "plan" ? mutation.work.jobId : mutation.jobId;
+		if (!/^[A-Za-z0-9_-]{1,128}$/.test(jobId)) throw new MutationDenied("Invalid source-work identity");
+		const document = await tx.doc(SourceWorkDoc, namespace + "." + jobId, null);
+		const index = await tx.doc(SourceWorkIndexDoc);
+		let state = document.state && storedJson<StoredSourceWork>(document.state);
+		if (mutation.type === "plan") {
+			const proposed = { ...mutation.work, namespace };
+			if (state && hash(state) !== hash(proposed))
+				throw new MutationDenied("Source-work plan identity already exists");
+			state = proposed;
+		} else {
+			if (!state) throw new MutationDenied("Source work is not prepared");
+			if (state.stage === "adopted") throw new MutationDenied("Source work is already adopted");
+			switch (mutation.type) {
+				case "reserve":
+					if (
+						state.pendingAttempt ||
+						state.stage === "quarantined" ||
+						state.attemptIds.length >= state.maxCalls ||
+						state.attemptIds.includes(mutation.attemptId) ||
+						(state.mode && state.mode !== mutation.mode)
+					)
+						throw new MutationDenied("Source-work attempt cannot be reserved");
+					state = {
+						...state,
+						stage: "reserved",
+						pendingAttempt: mutation.attemptId,
+						attemptIds: [...state.attemptIds, mutation.attemptId],
+						requestHash: mutation.requestHash,
+						mode: mutation.mode,
+						result: null,
+						resultDigest: null,
+						sealed: false,
+						checkpoint: null,
+						retryAtMs: null,
+						adoption: null,
+					};
+					break;
+				case "result":
+					if (state.pendingAttempt !== mutation.result.attemptId)
+						throw new MutationDenied("Source-work result has no exact pending attempt");
+					state = {
+						...state,
+						stage: state.requireArtifactReceipt ? "resultStored" : "completed",
+						pendingAttempt: null,
+						result: copy(mutation.result),
+						resultDigest: hash(mutation.result),
+						sealed: mutation.sealed,
+					};
+					break;
+				case "seal":
+					if (state.pendingAttempt || !state.attemptIds.includes(mutation.result.attemptId))
+						throw new MutationDenied("Source-work sealed result lacks attempt confirmation");
+					state = {
+						...state,
+						result: copy(mutation.result),
+						resultDigest: hash(mutation.result),
+						sealed: true,
+					};
+					break;
+				case "adopt":
+					if (state.pendingAttempt || !state.result || !state.sealed)
+						throw new MutationDenied("Source work lacks a sealed result for adoption");
+					state = {
+						...state,
+						stage: mutation.checkpoint?.stage === "ready" ? "ready" : "adopted",
+						checkpoint: mutation.checkpoint?.state ?? null,
+						retryAtMs: mutation.checkpoint?.retryAtMs ?? null,
+						adoption: { transactionId: mutation.transactionId, artifactVersion: mutation.artifactVersion },
+					};
+					break;
+				case "quarantine":
+					state = { ...state, stage: "quarantined" };
+					break;
+				default:
+					throw new MutationDenied("Unknown source-work mutation");
+			}
+		}
+		document.state = storedJson<JsonRepresentation<StoredSourceWork>>(state);
+		const active = (index.active[namespace] ?? []).filter((id) => id !== jobId);
+		if (!["completed", "adopted"].includes(state.stage)) active.push(jobId);
+		index.active[namespace] = active;
+	}
+	async #commitJournals(mutations: readonly JournalMutation[], check: () => void): Promise<ArtifactReceipt> {
+		if (!mutations.length || new Set(mutations.map((row) => row.key)).size !== mutations.length)
+			throw new Error("Invalid native journal transaction");
+		for (const row of mutations) {
+			if (
+				!/^[0-9a-f]{64}$/.test(row.key) ||
+				!Number.isSafeInteger(row.expectedVersion) ||
+				row.expectedVersion < 0 ||
+				!row.records.length ||
+				!row.transactionId
+			)
+				throw new Error("Invalid native journal mutation");
+			json(row.records);
+		}
+		try {
+			const versions = await this.#persist(async (tx) => {
+				checkAuthority(check);
+				const index = await tx.doc(JournalIndexDoc);
+				const receipts = [];
+				for (const row of mutations) {
+					const receipt = await tx.doc(JournalReceiptDoc, row.key + "." + row.transactionId, null);
+					const fingerprint = hash({
+						key: row.key,
+						expectedVersion: row.expectedVersion,
+						records: row.records,
+					});
+					if (receipt.version > 0 && receipt.fingerprint !== fingerprint)
+						throw new MutationDenied("Transaction identity reused for different records/version");
+					receipts.push({ receipt, fingerprint });
+				}
+				if (receipts.some(({ receipt }) => receipt.version > 0)) {
+					if (!receipts.every(({ receipt }) => receipt.version > 0))
+						throw new MutationDenied("Transaction identity has a different companion set");
+					return receipts.map(({ receipt }) => receipt.version);
+				}
+				for (const row of mutations)
+					if ((index.heads[row.key]?.version ?? 0) !== row.expectedVersion)
+						throw new JournalConflict(index.heads[row.key]?.version ?? 0);
+				for (const [i, row] of mutations.entries()) {
+					const version = row.expectedVersion + 1;
+					const payload = {
+						key: row.key,
+						version,
+						transactionId: row.transactionId,
+						previous: index.heads[row.key]?.checksum ?? "",
+						records: storedJson<JsonValue[]>(row.records),
+					};
+					const batch = await tx.doc(JournalBatchDoc, row.key + "." + version, null);
+					if (batch.version !== 0) throw new MutationDenied("Native journal address already occupied");
+					Object.assign(batch, payload, { checksum: hash(payload) });
+					index.heads[row.key] = { version, checksum: hash(payload) };
+					Object.assign(receipts[i]!.receipt, { version, fingerprint: receipts[i]!.fingerprint });
+					for (const mutation of row.work ?? []) await this.#updateSourceWork(tx, row.key, mutation);
+				}
+				checkAuthority(check);
+				return mutations.map((row) => row.expectedVersion + 1);
+			});
+			await this.#refreshJournals();
+			const first = mutations[0]!,
+				version = versions[0]!;
+			if (this.#journalCache.get(first.key)?.transactions.get(version) !== first.transactionId)
+				throw new Error("Native journal receipt missing");
+			return copy({
+				status: "committed",
+				version,
+				transactionId: first.transactionId,
+				journalPath: this.#sessionFile + "#journal/" + first.key,
+			});
+		} catch (error) {
+			if (error instanceof JournalConflict) {
+				await this.#refreshJournals();
+				return copy({ status: "conflict", version: error.version });
+			}
+			if (error instanceof MutationDenied) throw error;
+			this.#failSession(error instanceof Error ? error : new Error(String(error)));
+			return copy({
+				status: "unknown",
+				reason: "Native journal commit unknown: " + String(error),
+				transactionId: mutations[0]!.transactionId,
+				journalPath: this.#sessionFile + "#journal/" + mutations[0]!.key,
+			});
+		}
+	}
+
+	refreshCache(): Promise<void> {
+		const operation = this.#cacheRefresh.then(() => this.#refreshCacheOnce());
+		this.#cacheRefresh = operation.then(
+			() => {},
+			() => {},
+		);
+		return operation;
+	}
+	async #refreshCacheOnce(): Promise<void> {
 		if (this.#failedReason) return;
 		try {
-			const ctx = await this.#conversation.context(BACKGROUND_CONTEXT);
-			const provider = await this.#harness.snapshot(ProviderDoc, this.#conversation.id, BACKGROUND_CONTEXT);
+			const conversation = this.#conversation;
+			await this.#refreshJournals();
+			const ctx = await conversation.context(BACKGROUND_CONTEXT);
+			const provider = await this.#harness.snapshot(ProviderDoc, conversation.id, BACKGROUND_CONTEXT);
+			const conversationId = String(conversation.id),
+				last = this.#allEntries.at(-1),
+				plan = planHistoryScan({
+					conversationId,
+					cachedConversationId: this.#historyConversationId,
+					...(last ? { lastEntryId: Number(last.id) } : {}),
+				});
+			let cursor: Cursor | undefined;
+			const additions: EntryRecord[] = [];
+			do {
+				const page = await conversation.entries(
+					{
+						order: "ascending",
+						...(plan.minEntryId === undefined ? {} : { minEntryId: plan.minEntryId as EntryId }),
+					},
+					plan.pageSize,
+					cursor,
+					BACKGROUND_CONTEXT,
+				);
+				additions.push(...page.items);
+				cursor = page.next;
+			} while (cursor !== undefined);
+			if (conversation !== this.#conversation) return;
 			this.#providerSessionId = provider?.sessionId;
 			this.#activeEntries = [...ctx.entries];
 			this.#contributions = [...ctx.contributions];
 			this.#contextMessages = [...ctx.messages];
-			let cursor: Cursor | undefined;
-			const entries: EntryRecord[] = [];
-			do {
-				const page = await this.#conversation.entries({}, 1000, cursor, BACKGROUND_CONTEXT);
-				entries.push(...page.items);
-				cursor = page.next;
-			} while (cursor !== undefined);
-			this.#allEntries = entries.reverse();
+			if (plan.reset) this.#allEntries = additions;
+			else this.#allEntries.push(...additions);
+			this.#historyConversationId = conversationId;
 		} catch (e) {
 			const reason = e instanceof Error ? e.message : String(e);
 			this.markFailed(new Error(reason));
@@ -3686,6 +4313,15 @@ export class DurableAdapter {
 		if (!native) throw new Error("An explicit host-owned Compresser Session is required");
 		native.check(jobId);
 	}
+	async recoverConverse(
+		source: GovernedConversation["source"],
+		request: InferenceRequest,
+	): Promise<InferenceResult> {
+		this.checkCompresser(source.jobId);
+		const native = nativeCompresserSessions.get(this.#options.inference!.compresserSession!)!;
+		return native.recover(source, request);
+	}
+
 	async converse(
 		input: Omit<GovernedConversation, "reserve">,
 		strategy: { strategyId: string; maxCalls: number },
@@ -3928,31 +4564,11 @@ export class DurableAdapter {
 		return cleared;
 	}
 
-	persisted(id: string): boolean {
-		try {
-			if (!existsSync(this.#sessionFile)) return false;
-			const content = readFileSync(this.#sessionFile, "utf8");
-			return content
-				.split("\n")
-				.filter(Boolean)
-				.some((line) => {
-					try {
-						const parsed = JSON.parse(line);
-						if (parsed.type === "commit" && Array.isArray(parsed.writes)) {
-							return parsed.writes.some(
-								(w: Record<string, unknown>) =>
-									w.type === "entry" && String((w.value as Record<string, unknown>)?.id) === id,
-							);
-						}
-						return parsed.id === id || String(parsed.id) === id;
-					} catch {
-						return false;
-					}
-				});
-		} catch (e) {
-			if ((e as NodeJS.ErrnoException).code === "ENOENT") return false;
-			throw e;
-		}
+	async persisted(id: string): Promise<boolean> {
+		if (!Number.isSafeInteger(Number(id)) || Number(id) <= 0) return false;
+		if (!this.#storage) throw new Error("Persistent storage unavailable");
+		const record = await this.#storage.entry(Number(id) as EntryId, BACKGROUND_CONTEXT);
+		return record !== undefined;
 	}
 
 	validate(proposal: Proposal): boolean {
@@ -4045,7 +4661,7 @@ export class DurableAdapter {
 		await this.refreshCache();
 
 		const strId = String(entryId);
-		if (!this.persisted(strId)) throw new Error("Context commit has no physical receipt");
+		if (!(await this.persisted(strId))) throw new Error("Context commit has no physical receipt");
 		return strId;
 	}
 
@@ -4063,15 +4679,16 @@ export class DurableAdapter {
 		}
 		// SAFETY: Branded EntryId is assigned by numeric cast
 		const branchTargetId = Number(id) as unknown as EntryId;
-		const prevFork = this.#forkPromise ?? Promise.resolve();
+		const branchSource = this.#conversation,
+			prevFork = this.#forkPromise ?? Promise.resolve();
 		const forkOp = prevFork
 			.then(() => {
-				const source = String(this.#conversation.id);
+				const source = String(branchSource.id);
 				const resource = this.#managed
 					? Object.values(this.#managedReady().state.resources).find((ref) => ref.conversationId === source)
 					: undefined;
 				if (this.#managed && !resource) throw new Error("Managed fork source is unregistered");
-				return this.#conversation.fork(
+				return branchSource.fork(
 					branchTargetId,
 					{
 						ownership: { kind: "ownerless" },
@@ -4124,7 +4741,14 @@ export class DurableAdapter {
 	}
 
 	async reload(): Promise<void> {
-		await this.refreshCache();
+		try {
+			await this.#refreshJournals(true);
+			this.#historyConversationId = undefined;
+			await this.refreshCache();
+		} catch (error) {
+			this.#failSession(error instanceof Error ? error : new Error(String(error)));
+			throw error;
+		}
 	}
 
 	async abortAndIdle(): Promise<void> {
@@ -4168,6 +4792,7 @@ export class DurableAdapter {
 		this.#routes.delete(this.#conversation.id);
 		if (!this.#managed) {
 			await this.#harness.close(BACKGROUND_CONTEXT);
+			await this.#database?.close();
 			await this.#releaseWriter?.();
 		}
 	}

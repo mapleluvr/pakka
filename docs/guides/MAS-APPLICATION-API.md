@@ -1,16 +1,15 @@
-# Authenticated MAS applications（M5 accepted with notes）
+# Authenticated MAS applications
 
-本入口把已验收的 gate/MAS 服务交给实际 operator、CLI 和浏览器消费者。当前只支持 **IPv4 loopback HTTP**；不是公网上的多租户账号服务，也不提供 TLS、反向代理信任或任意插件加载。M5 已通过执行门禁及两轮指定复审（第一轮 BLOCK、修复后 OK with notes）；产物身份和残余项见 [MIGRATION-M5-ACCEPTANCE.md](../archive/acceptance/MIGRATION-M5-ACCEPTANCE.md)。
+本指南说明如何运行 headless `pakka-server`、CLI 和浏览器 client。服务使用显式 IPv4 loopback HTTP、专用 client token 和宿主批准的 role；传输与授权限制见下文。Web 工作台另见 [WebUI 使用指南](WEBUI-GUIDE.md)。
 
 ## 1. Package and authority boundaries
 
-- `@pakka/protocol@0.1.0`：闭合 version-1 JSON schema、资源引用、scoped snapshot 和 receipt；无 Pi、Node、storage、凭据发现依赖。
-- `@pakka/client@0.1.0`：同一 fetch client 供 Node/CLI/browser 使用，校验响应、明确 deadline/cancellation/reconnect；不自动重试 mutation。
-- `@pakka/cli@0.1.0`：只读显式 connection/command JSON，调用 client、输出结果；不定义 MAS policy。
-- 当前 private `@pakka/server@0.5.0`：保留 worker manager、`@pakka/server/http`、`@pakka/server/bootstrap` 和 `pakka-server` executable，新增显式可选 Dynamite 装配（在 [限定范围](../verification/DYNAMITE-PRODUCT-ACCEPTANCE.md) 带 notes 验收）。M5 的固定历史产物是 `0.3.0`；`0.4.0` 的 DevPack product contribution 已在 M6 验收，见 [产品支持矩阵](MAS-PRODUCT-SUPPORT.md) 和 [M6 验收](../archive/acceptance/MIGRATION-M6-ACCEPTANCE.md)。
-- 当前搭配 `@pakka/agent@0.5.0`、`@pakka/mas@0.4.0`、`@pakka/mas-devpack@0.2.0`。Dynamite 历史失败与 [延期目标](../archive/investigations/DEFERRED-DYNAMITE-COMPATIBILITY.md) 保留；迁移后可选配对的受限配置见 [Dynamite 产品 API](../reference/DYNAMITE-PRODUCT-API.md)，完整复审与身份闭环见上方验收记录；不默认装配或推广至 worker/动态子成员。
+- `@pakka/protocol`：闭合 version-1 JSON schema、资源引用、scoped snapshot 和 receipt；无 Pi、Node、storage 或凭据发现依赖。
+- `@pakka/client`：供 Node/CLI/browser 使用的 fetch client，校验响应、deadline、cancellation 和 reconnect；mutation 由调用方明确发送。
+- `@pakka/cli`：读取显式 connection/command JSON，调用 client 并输出结果。
+- `@pakka/server`：受信任 bootstrap、worker manager、HTTP 服务与 `pakka-server` executable。可选模型工具见[支持条件](MAS-PRODUCT-SUPPORT.md)，可选策略见 [Dynamite 产品 API](../reference/DYNAMITE-PRODUCT-API.md)。
 
-请求中的 ref 只是受检地址，不是 capability。server 由专用 client token 找到宿主批准的 principal/source/grants，重新检查该 issuer role 和 MAS 权限。请求不能指定 caller、owner、storage path、provider/model credential、tools 或预算。不要把 provider API key 用作 client token。
+安装版本和 peer 关系由 package manifests 与所选归档确定。请求 ref 是受检地址；server 将专用 token 绑定到批准的 principal/source/grants，并重新检查 issuer role 和 MAS 权限。caller、owner、storage path、模型凭据、tools 和预算由宿主配置。client token 必须独立于 provider API key。
 
 ## 2. Start the executable
 
@@ -53,7 +52,7 @@ Server config 的结构示例（全部值均为占位符，不是可用凭据）
 }
 ```
 
-`runtime` 的 JSON bootstrap 接受以上基础字段、`reopenSessionFile`、`reservedSessionId`，以及 M6 新增的 `profiles: [{id, systemPrompt}]`。后续显式可选装配增加闭合的 `runtime.inference: {models, policies}`，模型/凭据/endpoint 和有限预算仅由宿主配置；选择方式和限制见 Dynamite 产品 API。profile 默认为 gate 的 `default`；未批准 profile 会由 gate 拒绝。可选 `devpack` 的批准配置、RPC profile-management 组合拒绝和正常恢复范围见 [产品支持矩阵](MAS-PRODUCT-SUPPORT.md)。functions、额外 tools/extensions/config 均不属于该 JSON bootstrap；更复杂的程序化配置仍由可信 composition root 使用 `createMasServer()`，不能从 RPC 传入。
+`runtime` 的 JSON bootstrap 接受以上基础字段、`reopenSessionFile`、`reservedSessionId`，以及 `profiles: [{id, systemPrompt}]`。可选 inference 装配接受闭合的 `runtime.inference: {models, policies}`，模型/凭据/endpoint 和有限预算仅由宿主配置；选择方式和限制见 Dynamite 产品 API。profile 默认为 gate 的 `default`；未批准 profile 会由 gate 拒绝。可选 `devpack` 的批准配置、RPC profile-management 组合拒绝和正常恢复范围见 [产品支持矩阵](MAS-PRODUCT-SUPPORT.md)。functions、额外 tools/extensions/config 均不属于该 JSON bootstrap；更复杂的程序化配置仍由可信 composition root 使用 `createMasServer()`，不能从 RPC 传入。
 
 ```powershell
 node apps/server/dist/main.js --config D:/explicit/server.json
@@ -116,7 +115,7 @@ const outcome = await client.request({ op: "wait", id: sent.receipt.id });
 
 Response envelope 包含协议 version、transport requestId、serverId 和恰好一个 result/error。共享 client 保留 `serverId`、`rpcRequestId`，其余字段按 result discriminant 读取。`reconnect()` 执行 hello + 新 snapshot，并核对同一 server/Session；不会重放之前的 mutation。显式传入 `requestId` 时，两次顺序读取复用它；它用于单请求关联，不承诺跨 envelope 全局唯一或审计序号。默认调用各自生成 ID。catalog version 是 scoped 描述，不是跨 Session global revision，更不是 authority。
 
-浏览器 bundler/import map 必须解析 `@pakka/client` 与 `@pakka/protocol` 的公开 ESM；不要把 server/MAS/gate 导入前端。server 的 `origins` 必须显式批准当前页面 origin，不接受 wildcard、cookies 或 URL token。测试使用全新 Chrome profile，不读取用户现有浏览器数据；GUI 尚未实现。
+浏览器 bundler/import map 必须解析 `@pakka/client` 与 `@pakka/protocol` 的公开 ESM；不要把 server/MAS/gate 导入前端。server 的 `origins` 必须显式批准当前页面 origin，不接受 wildcard、cookies 或 URL token。浏览器客户端通过已批准的 origin 使用该 loopback RPC。
 
 ## 4. Revocation, cancellation and unknown
 
@@ -127,16 +126,16 @@ Response envelope 包含协议 version、transport requestId、serverId 和恰�
 - queued withdrawal 只有 native 确认精确移除后才终结；`abort/retire` 是单独 owner 操作。retire 不删除 immutable transcript 或物理 storage。
 - 确定发生在当前 native effect 之前的 owner、foreign receipt、inactive recipient 和 non-sender guard 返回 typed denied（HTTP 403、CLI exit 2）。普通 `check/grant`、adapter `MutationDenied`、持久化故障和迟到撤权不依错误字符串改为 denied。opaque admission callback 即使抛 typed denial 或返回 false，也不能证明它之前没有外部 effects，保守 unknown。
 - 已有限读取/解析的 JSON 含合法 descriptive requestId 时，schema 拒绝保留该 ID，不授予命令权限。Host/Origin/URL/method/content-type/capacity 等 **body 读取前** 的拒绝没有可信 transport ID，使用 `invalid` sentinel；raw HTTP 可以看到 4xx，但共享 client/CLI 因关联失败保守 unknown（exit 3），包括 capacity。没有按 HTTP status 放宽关联，也没有为了给 overflow 请求取 ID 而增加无界 body parser。
-- 超限 body 会在流式读取时拒绝；不承诺坏连接一定能收到 JSON envelope。一次本机 131073-byte 实测返回 HTTP 400/INVALID_REQUEST/denied、目标零 HTTP，其他分片/平台可能断连，client 不推断无效果。
+- 超限 body 会在流式读取时拒绝；不承诺坏连接一定能收到 JSON envelope。分片或平台处理可能直接断连；client 依有效关联的 envelope 判定结果，不能仅按连接终止推断无效果。
 - wire enum 的 `VERSION_MISMATCH`/`UNSUPPORTED` 是保留代码；本实现的未知版本/不支持命令统一拒绝为 `INVALID_REQUEST`，没有这两个独立 producer。
 - JSON bootstrap 严格要求 `canRevoke` 为 boolean。直接调用受信任的 `createMasServer()` 时，该字段仍按 JS truthiness 使用；programmatic caller 必须提供真实 boolean，这不是远端可配置字段。
 - dispatch 已开始但结果不能确认时保守 unknown，原内部错误与 paths 不向 client 发布。
 - schema 合法、HTTP 成功、native receipt 分别只是各自边界的证据，不能推导 exactly-once provider/tools/external effects。重试 admission 不替换原 ID，不清除 unknown/receipt 来腾容量。
 
-## 5. Initial limits and validation
+## 5. Transport limits
 
 Body/result 上限 131072 bytes；protocol depth 32；文本上限 65536 UTF-16 code units 且总 bytes 仍受限，不截断输入。最多 512 snapshot members；listener pending 默认 32，允许 1–256。初始部署只绑定 `127.0.0.1`，拒绝非实际 Host、未批准 Origin 和 schema extra fields。client 拒绝非该 loopback `/rpc` URL、userinfo、query、hash 和 redirect。没有本机恶意进程 sandbox 保证。
 
-M5 执行证据在 `artifacts/migration-m5/`：真实 server/CLI 子进程、Chrome 原生执行、正常/非法 wire、迟到撤权/expiry、queued withdrawal、abort/retire、取消等待不影响已 placed input，以及隔离 tarball/DOM-only 编译。全部使用本地 deterministic HTTP provider；没有读取用户 credentials 或调用付费测试 provider。
+相关可执行检查位于 `apps/server/test/http.test.ts`、`apps/server/test/product.test.ts` 与 `scripts/consumer-product.mjs`；检查选用和方法见[验证方法](../development/VERIFICATION.md)。
 
-本文件的放行范围以 M5/M6 验收记录及产品支持矩阵为准；未支持配置不会因 schema 可表示而自动成为受支持能力。
+组合与正常重开条件见[产品支持指南](MAS-PRODUCT-SUPPORT.md)。

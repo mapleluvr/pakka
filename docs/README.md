@@ -16,9 +16,8 @@
 
 - state 描述产物的当前预期并映射详细契约，不描述完成进度。
 - OpenSpec 保留完整变更及 proposal/design/tasks/specs/归档生命周期；docs/changes 只摘要并完整引用。
-- guides、reference、development 各维护实际操作、接口和方法。
+- guides、reference、development 各维护当前操作、接口和方法。所有产物层正文均可独立阅读，以对象、运行条件和实际行为表述；开发阶段、验收状态、测试计数及形成经过由 changes、archive 和 verification 承接。
 - verification 保存固定版本结果，追加式 [Pi Durable 账本](PI-DURABLE-COMPATIBILITY.md)保存兼容性变化。当前补丁产物见 [state](state/durable-patch.md)。
 - 本地计划/草稿在忽略的 `docs/.temp/`，视觉生成物在忽略的 `docs/visual-primitives/`；测试持续使用的稳定输入在测试 fixtures。既有 runner 的输出位置按其脚本维护。
-- 重复计划/草图和无用探针已备份后移出；不再以 plans/design 的旧兼容入口维持另一套目录。
 
 state 不等于已实现，task checkbox/目录归档不证明验收。详细更新关系见[文档维护](development/README.md#文档维护)。

@@ -3,8 +3,10 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { productionDurableVersion } from "./durable-patch-version.mjs";
+
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
-const version = process.argv[2] ?? "1.0.3-pakka.1";
+const version = process.argv[2] ?? productionDurableVersion(root);
 if (!/^\d+\.\d+\.\d+-pakka\.\d+$/.test(version)) throw new Error("Invalid patch version");
 const metadataPath = join(root, "patches", "pi-durable", version, "artifact.json");
 let metadata;

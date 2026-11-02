@@ -1,8 +1,8 @@
 # WebUI 使用与启动
 
-本分支的前端以 Devin 原型为页面与交互基座，接入 Pakka 的真实 API，不使用原型演示数据。当前候选的通过、失败及独立验收阻塞见 [R2 验证记录](../verification/DEVIN-FRONTEND-R2.md)。
+pakka-webui 的原生操作参考 Devin 离线生产前端；界面接入 Pakka 的实际 API、权限、持久状态和原生调度。
 
-pakka-webui 是可选的 Web 工作台。它提供普通 Conversation、原生输入、多人协作和宿主装配的服务／插件；模型工具与界面按各自权限启用。产品组成见[产品声明](../state/product.md)，后续工作见[领域任务](../../openspec/changes/adopt-devin-frontend/tasks.md)。
+pakka-webui 是可选的 Web 工作台。它提供普通 Conversation、原生输入、多人协作和宿主装配的服务／插件；模型工具与界面按各自权限启用。产品组成见[产品声明](../state/product.md)。
 
 ## 1. 从源码启动
 
@@ -50,16 +50,16 @@ node apps/webui/dist/main.js --config /absolute/private/pakka.json --owner-file 
 
 ## 2. Conversation、模型与工作目录
 
-从侧栏 **Sessions** 选择 Conversation，或点击 **New session** 返回首页。首页输入 Conversation 名称后点向上箭头，只创建并打开会话；**不会调用模型**，工作需在进入会话后显式 Send。已选会话的模型／cwd 作为新建的继承来源；首次进入时使用 default profile。原版侧栏底部的新建表单已移除，不要按旧入口查找。
+从侧栏 **Sessions** 选择 Conversation；首页的 **New Session / New Conversation** 打开独立配置向导。填写名称，选择父 Session、模型和服务器目录，明确确认后创建并打开。没有可用父项时可先创建 Session，再创建 Conversation；部分成功保留已创建父项，unknown 保留原请求核对。创建不提交模型输入，进入会话后明确 **Send** 才开始工作。
 
 输入模式按目的选择：
 
 - **Prompt**：启动普通模型工作。
 - **Steer**：工作进行中提交原生 steering。
 - **Follow up**：使用原生 follow-up 队列。
-- **Team chat**：人类旁聊，不自动成为模型输入。
+- **People Chat**：人类旁聊，不自动成为模型输入。
 
-模型按钮位于输入区，列出当前人员可配置的批准模型。当前模型置顶，模型多于 8 个时提供搜索。当前集成使用宿主显式配置的同一 OpenAI-completions provider；菜单不承担供应商账号登录或发现服务。
+模型按钮位于输入区，列出当前人员可配置的批准模型。搜索覆盖模型 ID 和配置标识；方向键移动高亮，Enter 确认，Escape 取消，当前模型有独立标记。当前集成使用宿主显式配置的同一 OpenAI-completions provider；菜单不承担供应商账号登录或发现服务。
 
 工作目录入口位于 **Conversation 标题下方的服务器路径**。打开后可浏览批准位置、面包屑、最近目录、收藏或输入路径，点击 **Use this directory** 才应用。模型和目录分别保存，变更任意一个都保留另一个、指令和工具。新会话以及同基础 profile 的分叉继承当前选择。
 
@@ -69,15 +69,15 @@ node apps/webui/dist/main.js --config /absolute/private/pakka.json --owner-file 
 
 ## 3. 手机导航与外观
 
-手机默认最短测试比例为宽∶高 **3∶5**，例如 360×600 或 390×650。左上角侧栏图标开关抽屉；从 **Sessions** 选择会话，从 **Commands & extensions** 进入命令与扩展页。点击抽屉右侧暗区或按 Escape 返回会话。没有旧版工具栏或顶部资源下拉框。
+手机默认最短测试比例为宽∶高 **3∶5**，例如 360×600 或 390×650。左上角侧栏图标开关抽屉；从 **Sessions** 选择会话，从 **Commands & extensions** 进入命令与扩展页。点击抽屉右侧暗区或按 Escape 返回会话。
 
-生产页面直接采用参考的平整侧栏、首页卡片、palette 和独立 Settings 页面，不包括没有后端的 Ask、PR、额度或仓库连接演示。桌面侧栏可通过侧栏顶部面板图标或 Ctrl/⌘ B 收起；手机该快捷键开关抽屉。搜索图标或 Ctrl/⌘ K 打开当前身份可见的 Conversation 搜索；在搜索 palette 中选择 **Include archived**，归档项可显式 **Restore**。会话页头搜索只筛选已加载的历史，不发送模型工作。
+页面由侧栏、首页、Conversation、palette 和独立 Settings 组成，入口随已安装服务与当前授权呈现。桌面侧栏可通过侧栏顶部面板图标或 Ctrl/⌘ B 收起；手机该快捷键开关抽屉。搜索图标或 Ctrl/⌘ K 打开当前身份可见的 Conversation 搜索；在搜索 palette 中选择 **Include archived**，归档项可显式 **Restore**。会话页头搜索只筛选已加载的历史，不发送模型工作。
 
 侧栏底部 **Settings** 单击进入独立配置页，默认显示 **Appearance**。页内分类导航提供外观、Conversation settings（用量与凭据）、Notifications、管理员可见的 People & invitations 和 Extensions。Conversation 专属分类在选中会话后可用；手机上可横向滚动分类栏。**Back to app** 返回原页面并保留当前会话与未发送草稿。可选择 Dark / Light、默认 Inter、JetBrains Mono、系统无衬线或衬线字体，以及 14–24px 字号；合法的已保存字体／字号偏好继续生效。选择即时应用并保存到当前浏览器，代码块维持等宽显示。模型按钮在输入卡片内，Input mode 与 Send 同行；窄屏模型入口为带可访问名称的图标。
 
 ## 4. 人员、服务和插件
 
-侧栏账号菜单（管理员）中的 **People & invitations** 按批准资源创建邀请，第二身份可在独立浏览器窗口兑换。角色、资源范围、审批和撤权以服务端当前判断为准；显示一个卡片或菜单不会授予执行权限。
+管理员在 **Settings → People & Invitations** 按批准资源创建邀请，第二身份可在独立浏览器窗口兑换。角色、资源范围、审批和撤权以服务端当前判断为准；显示一个卡片或菜单不会授予执行权限。
 
 当宿主安装了相应贡献时：
 
@@ -92,18 +92,18 @@ node apps/webui/dist/main.js --config /absolute/private/pakka.json --owner-file 
 
 **Commands & extensions** 打开可筛选 palette，Commands 区列出命令，Pages 区列出当前身份可见的页面。方向键导航、Enter 执行、Escape 关闭；命令参数由插件声明，缺少必填参数时显示具体用法。**Manage extensions…** 进入独立 Settings 页，执行 Disable / Reload / Enable；停用 UI 不会自动取消已提交工作或删除历史。
 
-Team 使用单层页头与 **Graph / Activity / Agents** 三视图。选择成员显示右侧 inspector；手机改为底部面板。**Open Conversation** 进入真实成员会话并可返回原选择；**More → Member controls…** 提供输入及获准回复，控制界面的 **Management** 提供 Stop work 与退休确认，不是创建表单。个人视图切换不启动模型工作。操作见[Team 指南](MAS-BOARD.md)，目标见[前端声明](../state/frontend.md#team)，验证边界见 [R2 记录](../verification/DEVIN-FRONTEND-R2.md)。
+Team 使用单层页头与 **Graph / Activity / Agents** 三视图。选择成员显示右侧 inspector；手机改为底部面板。**Open Conversation** 进入真实成员会话并可返回原选择；**More → Member controls…** 提供输入及获准回复，控制界面的 **Management** 提供 Stop work 与退休确认，不是创建表单。个人视图切换不启动模型工作。操作见[Team 指南](MAS-BOARD.md)，目标见[前端声明](../state/frontend.md#team)。
 
 ## 5. 正常关闭与重开
 
 正常停止 CLI 后，在原启动配置的 `runtime.reopenSessionFile` 填入 stdout 曾输出的确切 sessionFile，并保留原 dataDir、profile、limits 和批准根声明，再用同一入口启动。已有身份、资源、回执、实际模型／cwd 和已花额度按持久记录恢复，不重新签发 owner。
 
-归档／恢复用于当前界面的 Conversation 整理。MAS 退役具有另外的成员语义；实际删除契约仍在[工程待办](../../openspec/changes/pakka-webui/tasks.md)中。
+归档／恢复整理当前人的 Conversation 列表，保留原会话数据。MAS retire 另行停止成员准入并保存 tombstone；这两类操作均保留持久历史。
 
-未知结果先通过原请求与当前状态只读核对；刷新、关闭面板或退出浏览器都不自动重放输入，也不退还已消费额度。强制终止后的 claim 或未知存储需要另行恢复判断，正常重开说明不承诺 crash recovery。
+未知结果先通过原请求与当前状态只读核对；刷新、关闭面板或退出浏览器都不自动重放输入，也不退还已消费额度。强制终止后的 claim 或未知存储需要另行恢复判断，受信宿主的 writer 维护命令见 [Strategy API](../reference/STRATEGY-API.md#trusted-writer-maintenance)。
 
 ## 6. 远程连接
 
 默认 loopback HTTP。远程部署需明确 `transport.publicOrigin`、受信反向代理 peer、TLS 终止及 SSE 传输；未经配置的新域名会被拒绝。Cloudflare Quick Tunnel 声明不支持 SSE，不能用作这套实时界面的正向验收环境。
 
-真实 OS 通知、本地 TLS、真实设备公网推送、LAN、tailnet 和不同平台分别验证，范围见[领域任务](../../openspec/changes/adopt-devin-frontend/tasks.md)。传输与扩展装配契约见[开发规范](../development/WEBUI-DEVELOPMENT.md)，验证方式见[验证入口](../verification/README.md)。
+真实 OS 通知、本地 TLS、真实设备公网推送、LAN、tailnet 和不同平台分别验证，部署时应选择与实际传输和设备匹配的检查。传输与扩展装配契约见[开发规范](../development/WEBUI-DEVELOPMENT.md)，验证方式见[验证入口](../verification/README.md)。

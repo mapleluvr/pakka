@@ -10,7 +10,7 @@
 - [artifact.json](artifact.json)：源补丁、构建锁与归档 SHA-256。
 - [安装归档](../../../packages/agent/vendor/earendil-works-pi-durable-1.4.0-pakka.1.tgz)。
 
-依赖 cohort 为 pi-ai、Chord、pi-codemode、pi-telemetry `1.4.0`。Pakka 当前生产依赖由根与 agent 的 package.json/lock 指定；本目录是独立补丁产物，产品接入安排见[所属任务](../../../openspec/changes/prepare-durable-1-4-0-patch/tasks.md)。
+依赖 cohort 为 pi-ai、Chord、pi-codemode、pi-telemetry `1.4.0`。Pakka 当前生产依赖由根与 agent 的 package.json/lock 指定；本目录固定此版本的源补丁、构建与归档契约。
 
 ## 行为
 
@@ -36,7 +36,7 @@ node scripts/verify-durable-patch.mjs 1.4.0-pakka.1
 
 打包后另建独立 npm project 安装该归档，使用公开 exports、编译后的 dist 与本地 HTTP provider 运行同一 HTTP fixture；该 project 使用自己的依赖及 Vitest，不使用根 workspace、overrides 或 source alias。安装检查成功后才写入 vendor 与 artifact 清单。
 
-省略版本参数时，构建和哈希检查入口仍选择生产补丁 `1.0.3-pakka.1`。重建新产物时显式传入版本。
+省略版本参数时，构建和哈希检查入口从 agent 的固定 vendor 依赖选择生产版本；重建本目录的固定基线时，显式传 `1.4.0-pakka.1`。
 
 ## 回归入口
 

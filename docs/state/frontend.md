@@ -30,7 +30,7 @@ pakka-webui 的对应原生界面行为以 [Devin 离线生产前端](https://gi
 
 设置页的 Conversation 分类在选中会话后可用，人员管理入口按管理员权限呈现。手机分类栏支持横向滚动。Back to app 返回原页面并保留会话和未发送草稿。详细场景及命名契约见[设置与命名 delta](../../openspec/changes/correct-webui-settings-and-name/specs/devin-frontend/spec.md)，采用记录见[变更摘要](../changes/webui-settings-and-name.md)。
 
-模型目录按模型 ID 去重，只发布首个配置标识和模型 ID；拥有 Conversation 配置权限的人可选择目录中的任一模型。有限响应容纳现有 JSON 的默认模型加 64 项附加配置，最多 65 个不同模型；更大目录不由当前有限 WebUI 协议承诺。整组 Agent 预设的工具/指令授权独立于模型选择。模型/cwd 持久化、服务器目录 roots、incarnation 和配置拒绝的详细条件由[开发契约](../development/WEBUI-DEVELOPMENT.md#独立选择模型和-conversation-工作目录)维护。
+模型目录按模型 ID 去重，只发布首个配置标识和模型 ID；拥有 Conversation 配置权限的人可选择目录中的任一模型。有限响应容纳现有 JSON 的默认模型加 64 项附加配置，最多 65 个不同模型；超出上限时拒绝响应。整组 Agent 预设的工具/指令授权独立于模型选择。模型/cwd 持久化、服务器目录 roots、incarnation 和配置拒绝的详细条件由[开发契约](../development/WEBUI-DEVELOPMENT.md#独立选择模型和-conversation-工作目录)维护。
 
 Model Selection 为可用模型列表提供检索框，覆盖模型 ID 和配置标识；检索忽略大小写，空格与 `/` 分隔的词各自按顺序字符匹配，并将更紧密的匹配排在前面。打开时定位当前模型，输入查询后定位首个匹配；上下键循环移动候选高亮，搜索框保持输入焦点，Enter 明确确认，Escape 关闭并返回模型入口。候选位置/匹配总数始终可见，空结果为 0 / 0，当前已应用模型有独立标记。列表滚动保留搜索入口与位置反馈，触屏可直接选择。检索、移动和取消只改变本地呈现；明确选择后仍由原配置命令核验权限、busy 和 unknown。详细场景及形成记录见[模型索引 delta](../../openspec/changes/improve-webui-navigation-and-local-recovery/specs/devin-frontend/spec.md#requirement-model-selection-has-a-searchable-keyboard-index)与[设计 §6.4](../../openspec/changes/improve-webui-navigation-and-local-recovery/design.md#64-2026-10-25-model-selection-检索索引)。
 
@@ -38,11 +38,11 @@ Model Selection 为可用模型列表提供检索框，覆盖模型 ID 和配置
 
 New Session 创建独立的 Durable 存储与提交域，New Conversation 在确认的父 Session 内创建资源。向导提供名称、父项、初始模型与服务器工作目录，打开/取消仅改变表单草稿。Session 清单确认没有可用父项时预填待建 Session，显式确认后按 Session → Conversation 顺序创建；部分成功保留父项，unknown 保留原请求并先核对。成功打开 Conversation 后，明确 Send 才提交模型输入。
 
-Sidebar 的 Sort Per Session 表达原生父子归属；Default 使用当前人的持久单层文件夹和未分类组。每个 Conversation 至多归入一个个人文件夹，删除文件夹后回到未分类；切换视图和归类仅改变个人导航元数据。读取、选择、SSE 与资源授权同时绑定 Session 和 Conversation，名称或裸 Conversation ID 不授予跨 Session 访问。详细创建、持久化、恢复和实施状态见[创建设计](../../openspec/changes/improve-webui-navigation-and-local-recovery/design.md#63-session--conversation-创建关系调查)及[任务](../../openspec/changes/improve-webui-navigation-and-local-recovery/tasks.md#43-session--conversation-创建方向2026-10-24)。
+Sidebar 的 Sort Per Session 表达原生父子归属；Default 使用当前人的持久单层文件夹和未分类组。每个 Conversation 至多归入一个个人文件夹，删除文件夹后回到未分类；切换视图和归类仅改变个人导航元数据。读取、选择、SSE 与资源授权同时绑定 Session 和 Conversation，名称或裸 Conversation ID 不授予跨 Session 访问。详细创建、持久化与恢复条件见[创建场景](../../openspec/changes/improve-webui-navigation-and-local-recovery/specs/devin-frontend/spec.md#requirement-dedicated-creation-distinguishes-native-sessions-and-conversations)及[受管存储场景](../../openspec/changes/improve-webui-navigation-and-local-recovery/specs/devin-frontend/spec.md#requirement-managed-sessions-preserve-native-identity-and-authorization)。
 
 Conversation Grouping 使用与工作台其他菜单一致的主题化弹出行，当前偏好有独立标记；箭头浏览、Escape/Tab 离开仅改变焦点，明确确认才更新个人导航。首页 New Conversation 与 New Session 是图文同轴、相同排版的透明平级入口，中间有灰色短竖线；窄屏/放大文字下分组、可见焦点和 44px 触达完整保留。具体场景见[控件 delta](../../openspec/changes/polish-webui-grouping-and-creation-controls/specs/devin-frontend/spec.md)，采用与实施入口见[变更摘要](../changes/webui-grouping-and-creation-controls.md)。
 
-People & Invitations 的 Invite Role 采用 Appearance 式同行布局：标签居左，紧凑选择按钮居右，内容适宽的主题菜单从按钮右缘展开，不占满整行。保留 Viewer/Sender/Driver/Admin 与 Viewer 默认。焦点浏览/取消不改邀请草稿，明确选择仅改草稿，Create Invitation 才执行原邀请；范围、有效期和授权不变。手机/放大字号保持菜单、选中标记与 44px 触达；场景见[邀请角色 delta](../../openspec/changes/polish-webui-invitation-role-menu/specs/devin-frontend/spec.md)，记录见[变更摘要](../changes/webui-invitation-role-menu.md)。
+People & Invitations 的 Invite Role 采用 Appearance 式同行布局：标签居左，紧凑选择按钮居右，内容适宽的主题菜单从按钮右缘展开，不占满整行。保留 Viewer/Sender/Driver/Admin 与 Viewer 默认。焦点浏览/取消不改邀请草稿，明确选择仅改草稿，Create Invitation 才执行原邀请；范围、有效期和授权按原邀请契约处理。手机/放大字号保持菜单、选中标记与 44px 触达；场景见[邀请角色 delta](../../openspec/changes/polish-webui-invitation-role-menu/specs/devin-frontend/spec.md)，记录见[变更摘要](../changes/webui-invitation-role-menu.md)。
 
 ### 文案与操作信息
 
@@ -65,8 +65,8 @@ Dictate 使用可见 SVG 麦克风，监听时使用 SVG 停止图标；两态�
 - 仅以授权 DTO 的 `live.busy`、`live.message`、`live.tools`、`entries` 和输入回执驱动工作呈现。进行中的消息以 `data-live=true`/`message-live` 区分；只有 busy 且存在该消息时，消息列末尾显示紧凑的 Streaming。合法但不支持内联预览的 `image/*` 以中性占位和 MIME 文本保留，不能静默消失；未知 DTO 仍由协议闭锁。
 - 工具调用在 `toolCall.id`、`live.callId`、`toolResult.toolCallId` 三个载体间与来源 Conversation 组成同一键：历史用 `sourceConversationId ?? conversationId`，live 用当前 Conversation。卡片暴露 `data-source-conversation`，live 与持久声明并存时只显示一卡，live 状态取原 DTO，输出从同卡可读；找不到当前声明的结果保留有标识的孤儿卡。不同 Conversation/fork 的相同 ID 不跨域合并；更新与分页保留已展开卡片，流式 toolCall 初次落盘也维持同型父层及调用键。原生结果 `isError:true` 在折叠卡内仍以显式 error 标记可辨，不靠颜色单独表达。
 - Send 禁用保持原判定并分别说明只读、提交中、视图未就绪和 Prompt 生成中原因。原生 Stop 在发送组主位；停止请求不代替 `busy=false` 的实际结束，持续忙碌提供有界再次停止。Steer/Follow up 的原生调度不被串行化。
-- receipt 保留原生 reason；只有 `reason:"blocked"` 以 blocked 和指导修改输入呈现，`aborted` 表示撤回，其他未回答统一中性 not delivered，不从自由文本 reason 猜测 policy refusal 或撤回；reason 缺省时不伪造属性值。`unknown` 以 needs review 和指导先核对呈现，保留原状态及请求身份。blocked 不是权限 denied。本批不改变回执清除时机。
-- Sessions 行运行状态不能由只有 `version`/`archived` 的列表 state 推导；所需协议与服务扩展另行变更。此切片的形成记录与范围见[逐页调优设计](../../openspec/changes/improve-webui-navigation-and-local-recovery/design.md#61-2026-10-24-conversation-状态可观测性批次)。
+- receipt 保留原生 reason；只有 `reason:"blocked"` 以 blocked 和指导修改输入呈现，`aborted` 表示撤回，其他未回答统一中性 not delivered，不从自由文本 reason 猜测 policy refusal 或撤回；reason 缺省时不伪造属性值。`unknown` 以 needs review 和指导先核对呈现，保留原状态及请求身份。blocked 表达 generation 的策略拒绝；权限 denied 由授权检查表达。
+- Sessions 列表的 `version` 和 `archived` 表达版本与归档状态；Conversation 运行状态由当前授权的 live 观测与回执表达。
 
 ## Team
 
@@ -91,7 +91,7 @@ Team 的动态 `board.css` 节点在加载、成功和失败之间保持同一�
 - 控件支持键盘操作与可见焦点；组合发送按钮的每个可用动作有独立、完整的焦点边界，描边留在胶囊裁切区内并贴合首尾圆角，不能只剩接缝竖线。模态管理 focus trap/return，支持 Escape/Back 及关闭后焦点返回。导航交接后，关闭与清理只作用于所属弹层实例。
 - unknown/pending 操作保留原身份及交互锁；重开后以原 request ID 进行只读核对。
 
-配置页按页面标题、分区标题、控件正文和说明维护相对文字角色，随字体偏好及浏览器基准字号缩放。手机配置控件的触达高度至少为 44px，手机文字输入至少为 16px，并保留更大的阅读偏好。composer 的文本焦点由外层圆角 `.composer-card` 给出可见指示，内部 surface 与 textarea 不重复描边；鼠标点击和 Tab 到达文本输入时均保持完整、未裁切的指示。采用关系和后续差距见[指南变更](../changes/webui-frontend-guidelines.md)及其任务。
+配置页按页面标题、分区标题、控件正文和说明维护相对文字角色，随字体偏好及浏览器基准字号缩放。手机配置控件的触达高度至少为 44px，手机文字输入至少为 16px，并保留更大的阅读偏好。composer 的文本焦点由外层圆角 `.composer-card` 给出可见指示，内部 surface 与 textarea 不重复描边；鼠标点击和 Tab 到达文本输入时均保持完整、未裁切的指示。采用来路见[指南变更](../changes/webui-frontend-guidelines.md)。
 
 ## 可检验条件
 

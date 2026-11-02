@@ -1,53 +1,53 @@
-# Durable × Dynamite 配对门禁（M0）
+# Dynamite 固定配对与执行
 
-此目录消费外部 [`pakka-dynamite`](https://github.com/mapleluvr/pakka-dynamite) 的固定源码，**不是** Dynamite 算法或 adapter 的复制品。`@pakka/agent` 保留现名；MAS 和多 Conversation 迁移必须保留这个跨仓门禁。
+本目录维护 Pakka 与独立 [pakka-dynamite](https://github.com/mapleluvr/pakka-dynamite) 仓库的精确配对和检查入口。算法、产物模型与 Dynamite adapter 由外仓维护；本目录负责装配和安装消费者。
 
-## 运行
+## 配对选择
 
-在已完成 `npm ci --ignore-scripts` 的 Pakka checkout 中运行：
+| 使用路径                     | 身份                                                                                               | 契约                                                                                                               |
+| ---------------------------- | -------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| 程序化 SQLite 工作与恢复     | [SQLite 配对](sqlite-persistence-pairing.json)、[源码关联](sqlite-persistence-source-commits.json) | [Dynamite 持久化](../../docs/state/dynamite-persistence.md)与 [Strategy API](../../docs/reference/STRATEGY-API.md) |
+| Headless server 显式可选贡献 | [server 配对](core-m6-pairing.json)                                                                | [Dynamite 配置 API](../../docs/reference/DYNAMITE-PRODUCT-API.md)                                                  |
+| 固定源码兼容性探针           | [源码配对](pairing.json)                                                                           | [run.mjs](run.mjs)指定的生产包、编译器和外仓 commit                                                                |
+
+配对中的版本、完整 commit、归档 SHA-256 与构建时 workingTree 身份共同描述输入。后续保存的实现提交由源码关联记录承接，不能反写为旧归档的构建身份。选择不同入口时使用各自的配置与归档，不将一个组合的结果推广到另一组合。
+
+## 程序化 SQLite 消费者
+
+从相应 Dynamite checkout 运行，参数为要构建的 Pakka checkout：
+
+```powershell
+npm run bootstrap:host -- <pakka-checkout>
+npm ci --ignore-scripts --no-audit --no-fund
+npm run smoke:package -- <pakka-checkout>
+```
+
+`bootstrap:host` 生成明确标记的本地开发配对；检查锁定归档与依赖后执行标准安装。归档与消费矩阵写入各 runner 指定的忽略目录，固定身份保存在配对 JSON 中。产物、精确采纳回执与 checkpoint 的同库提交及跨库恢复由持久化契约定义。
+
+## Headless server 消费者
+
+在 Pakka 根目录运行，提供与 server 配对 SHA 完全一致的两个归档：
+
+```powershell
+npm run test:dynamite:product -- <agent-archive.tgz> <dynamite-archive.tgz>
+```
+
+runner 在 build、pack 或安装前核对归档身份，打包真实 server/client/CLI 并在仓库外安装。运行经原生调用的工具、实际本地 HTTP 和存储断言。显式选择服务的成员、角色约束、撤权与重开行为见配置 API。
+
+## 固定源码探针
+
+在完成依赖安装的 Pakka 根目录运行：
 
 ```sh
 npm run test:dynamite
 ```
 
-需要 Node 24+、npm 11、Git 和访问 GitHub/npm registry 的网络。模型请求只访问 fixture 的 `127.0.0.1` HTTP provider；profile、模型配置、字面量测试 key 和数据目录均独立，不使用用户模型凭据或付费 endpoint。消费者在仓库外创建，不安装根 workspace overrides，也不允许 lifecycle install scripts。
+要求 Node 24+、npm 11、Git 和 GitHub/npm registry 网络。脚本核对 agent、Durable patch 和编译器身份，构建并打包宿主，检出精确外仓源码，在隔离 build 中以该宿主编译并打包 Dynamite，再安装两份真实归档到仓库外消费者。外仓 checkout 必须干净；runtime/peer dependencies 按其 manifest 保持。
 
-`pairing.json` 固定外部 repo/完整 commit、双方 package version、Durable patch SHA-256 和 compiler 身份。脚本按以下顺序验证：
+## 输出与判读
 
-1. 校验当前 agent version 和已审计 Durable artifact identity；记录宿主 commit、tracked source diff、Node/npm 与门禁源码 hash。
-2. 构建并通过现有 staged packer 打包 agent，克隆并 checkout 固定 Dynamite commit。源 checkout 必须保持干净。
-3. 在隔离 build 目录中，用这次 agent tarball 编译外部 Dynamite；仅替换构建用 dev dependencies，pack 前恢复固定源码的 package manifest，runtime/peer dependencies 不变。不执行外部 npm scripts，也不修改 sibling checkout。
-4. 将实际两个 tarball 安装进仓库外消费者；记录 tarball SHA-256/integrity 和依赖树；确认依赖不是 workspace link。
-5. 编译公开声明，运行现有 installed host smoke，再运行本目录的 Dynamite 行为回归。
+模型请求仅使用 fixture 的 loopback HTTP provider；模型配置、测试 key、profile 和数据目录独立。安装禁止 lifecycle scripts，不使用用户模型凭据、workspace link 或根 overrides。
 
-## 证据与结果
+每次执行生成 summary、命令日志、归档身份、依赖树和原始 HTTP／存储证据；具体路径由 runner 输出。声明检查、Host smoke 和行为用例均以实际 exit 与完整断言判读，缺项、重复计数、skip、todo 或 cancelled 不计通过。读取旧 summary 不能代替新执行。
 
-每次运行在 `artifacts/dynamite/run-*/` 写入 `summary.json`、逐命令日志、tarball 副本和 fixture HTTP/frame/view/raw-history/journal 副本。仓库外 build/consumer 保留供失败调查；其位置记录在 summary 中，不是可提交的源码。完整新运行是复核入口，不把旧日志当作新配对的放行结果。
-
-`summary.status` 为 `passed`、`blocked` 或运行中的 `running`；任何安装、声明、host smoke 或行为断言失败都返回非零 exit。门禁自身有 8 项失败先行回归，要求完整 6 项行为检查全部通过，拒绝 missing/duplicate TAP counts、减少用例、todo/skip/cancelled 或不一致的 pass 总数。**不能通过删除失败断言、标记 todo/skip 或把已知失败改成 expected success 来放行 M0。**
-
-当前第一组回归覆盖编号、reduce/flush、64/128 cap 的压缩候选与 wire adoption、reload/reopen 和缺失权限的零 dispatch。源 edit/ABA、unknown-storage 及其他组合回归仍是 [保留的失败配对与恢复条件](../../docs/archive/investigations/DEFERRED-DYNAMITE-COMPATIBILITY.md)，本目录初始回归不代表完整 M0 已通过。
-
-## 核心迁移后的可选产品配对（独立候选）
-
-历史 `pairing.json` 和下节 blocked 结果保持原样。新的 `core-m6-pairing.json` 固定已接受的 M6 `agent@0.5.0` 和 corrective `dynamite@0.2.1`；外仓成熟算法未迁入此目录，SDK 原始 records 未伪装旧格式。
-
-```powershell
-npm run test:dynamite:product -- <accepted-agent-archive.tgz> <candidate-dynamite-archive.tgz>
-```
-
-这个独立 runner 在执行 build、pack 或安装前核验双方精确 SHA；两种 archive-byte 污染反例均返回 blocked、零子命令。它打包当前真实 server/client/CLI 并在仓库外安装，运行完整 5 项产品场景，拒绝缺项、skip/todo/cancelled；正常路径为 107 次本地 HTTP、8 个 native tool-call/result，另有一个明确的丢失摘要响应。它不从 sibling checkout 或 workspace overrides 取代已固定的 runtime archives。
-
-此显式限定配对已完成执行门禁、完整指定产品复审和身份遗漏修正；两方意见及剩余观测限制见 [验收记录](../../docs/verification/DYNAMITE-PRODUCT-ACCEPTANCE.md)。不将历史 M0 改为 passed，不默认启用或推广到未验证组合。可用组合、显式安装、撤权与 reopen 语义见 [Dynamite 产品 API](../../docs/reference/DYNAMITE-PRODUCT-API.md)。
-
-## 历史固定配对：blocked
-
-- Pakka 生产基线：`6c77632`；本轮宿主 checkout：`84bffb141bc610ed0c322e081c192a0e39508c4b`（相同生产代码，加仓库规范）。
-- Dynamite：`5ff775aee041fe63a82a7fcd1d108d17c206da4e`，`@pakka/dynamite@0.1.0`。
-- Durable：`1.0.3-pakka.1`，identity 见 `pairing.json`。
-- 原始失败运行：`artifacts/dynamite/run-JVQkFr/summary.json`；最终门禁复跑：`artifacts/dynamite/run-pANLhY/summary.json`（保留两个实际 tarball）。两次 installed host smoke 均通过，7 次本地 HTTP、64/128 cap、block 零额外 dispatch、oracle absent 和 private subpath rejection 均验证。
-- Dynamite 初始 6 项回归：1 通过、5 失败，无跳过。下一次 HTTP 未出现编号，`reduce("#1")` 未接受目标，两个 compression cap 用例没有发出摘要请求，恢复用例在初始 reduce 处被阻断。
-
-具体外部 seam 是该 commit 的 `src/pakka-adapter.ts:31–51`：`toRuntimeFrame()` 将 Durable `pi.*` raw records 原样作为旧 `EntryLike`，并只从 `message/custom_message` 提取 raw messages。Durable frame 的 `pi.user`、`pi.assistant` 和 `model[]` 因而不能形成算法所需的 numbering/step/source inputs。编译和相同的 `0.1.0` peer version 不足以证明行为兼容。
-
-修复应在明确的、版本化的 producer DTO 或外部 adapter 映射契约中完成；本目录不伪造旧 raw records、不直接解析 Pi storage、不内嵌外部算法修补。用户已明确授权此专项延期、不阻塞 M1–M6 核心迁移；[未处理问题、兼容性功能目标和恢复条件](../../docs/archive/investigations/DEFERRED-DYNAMITE-COMPATIBILITY.md) 已单独留档。迁移期间不装配或宣称 Dynamite 兼容，保留本门禁的失败语义；核心迁移完成后再修复外部组件、更新固定配对并补齐 M0 矩阵。
+形成与固定版本结果由[集成来路](../../docs/changes/core-integration-lineage.md)、[持久化变更](../../docs/changes/dynamite-sqlite-persistence.md)及配对所链接的记录维护。

@@ -39,7 +39,7 @@ Object.assign(env, {
 	npm_execpath: npmCli,
 });
 function run(name, args, cwd) {
-	const r = spawnSync(process.execPath, args, {
+	const r = spawnSync(process.execPath, ["--experimental-import-meta-resolve", ...args], {
 		cwd,
 		env,
 		encoding: "utf8",
@@ -94,6 +94,10 @@ writeFileSync(
 	),
 );
 copyFileSync(join(root, "scripts", "consumer-smoke.mjs"), join(consumer, "smoke.mjs"));
+copyFileSync(
+	join(root, "scripts", "consumer-native-storage.mjs"),
+	join(consumer, "consumer-native-storage.mjs"),
+);
 copyFileSync(join(root, "scripts", "consumer-types.ts"), join(consumer, "consumer-types.ts"));
 copyFileSync(join(root, "scripts", "consumer-runtime.mjs"), join(consumer, "runtime.mjs"));
 copyFileSync(join(root, "scripts", "consumer-mas.mjs"), join(consumer, "mas.mjs"));

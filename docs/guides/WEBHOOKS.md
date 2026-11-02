@@ -1,6 +1,6 @@
 # pakka-webui Webhooks
 
-Webhook 是可选的普通 Backend/Client/WebUI 贡献。人类在明确的 Conversation 中创建入口，外部 POST 通过签名或专用 URL secret 验证后，再以创建人的当前权限进入原生 `followUp`。安装界面、创建和轮换均不会触发模型。阶段证据见 [P5 记录](../archive/webui/PAKKA-WEBUI-P5.md)。
+Webhook 是可选的普通 Backend/Client/WebUI 贡献。人类在明确的 Conversation 中创建入口，外部 POST 通过签名或专用 URL secret 验证后，再以创建人的当前权限进入原生 `followUp`。安装界面、创建和轮换均不会触发模型。
 
 ## 宿主组装
 
@@ -21,7 +21,7 @@ export default {
 };
 ```
 
-`githubWriters` 是宿主固定的 GitHub 作者允许项，不是凭据或仓库轮询配置。底层服务还可由 `@pakka/server/pocket` 的 `createPocketHooks` 直接消费。当前只有明确 Conversation 目标，没有 PiP、隐含控制 Conversation 或旧 repository-watch 权限。
+`githubWriters` 是宿主固定的 GitHub 作者允许项，不是凭据或仓库轮询配置。底层服务还可由 `@pakka/server/pocket` 的 `createPocketHooks` 直接消费。投递目标是创建人明确选择的 Conversation，服务端按该目标核对权限。
 
 ## 人类操作与密钥
 
