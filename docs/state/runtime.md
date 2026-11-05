@@ -6,6 +6,8 @@
 
 Pi 集成使用公开 API。下游 [Durable 源补丁](durable-patch.md)为 generation 提供明确拒绝与请求级检查，包含版本固定的源补丁、基线、构建锁及安装归档；真实回归与兼容性变化分别由构建/集成测试和追加式账本承接。
 
+工具的文件与命令能力通过[执行环境](execution-environment.md)绑定到可信 bootstrap 批准的目标；原生工具及合作插件共享 invocation 校验，模型、存储和插件承载进程各有自己的执行边界。
+
 本页描述跨模块关系；核心语义与 API 条件由[架构契约](../development/ARCHITECTURE.md)及下表所列领域细则维护。
 
 ## 跨模块条件

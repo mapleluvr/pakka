@@ -1,0 +1,115 @@
+{
+  "schema": 1,
+  "recordedAt": "2026-11-05T08:41:03.354Z",
+  "baseCommit": "547c4968b9414ecff774edb7071687539895e8e8",
+  "branch": "feat/execution-env-1.4.0",
+  "node": "v24.15.0",
+  "platform": "win32",
+  "durable": {
+    "filename": "earendil-works-pi-durable-1.4.0-pakka.2.tgz",
+    "sha256": "12d21b230d40706618db4ac83747b9189b7d9070f023c2705bc5c8b521d90ecd",
+    "upstreamCommit": "4a080252f06caf63a525d7873c5d94d3c23887e0",
+    "upstreamVersion": "1.4.0",
+    "patchedVersion": "1.4.0-pakka.2",
+    "sourcePatchSha256": "128df5c9618c3f92cb8dcb43c1eb71d069b7927d32e1688067e1ccb5cf2a1f66",
+    "buildLockSha256": "7feebbad7d4d6a1e241be4dd0bd3d0a41e48d6d4236161f9f62d6d245bfa9029"
+  },
+  "reproducibleSdk": true,
+  "sourcePatchUnchanged": true,
+  "focused": {
+    "tests": 24,
+    "pass": 24,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0
+  },
+  "adjacent": {
+    "tests": 36,
+    "pass": 36,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0
+  },
+  "package": {
+    "name": "@pakka/agent",
+    "version": "0.7.0",
+    "archive": "C:\\Users\\mapleland\\AppData\\Local\\Temp\\pakka-env-consumer-install-iAumjs\\pakka-agent-0.7.0.tgz",
+    "sha256": "f169cb32f9e2b7a5bf4c7596083c0ab2a89e816d3ecbb72ec271c2abbefe46f7",
+    "installedAdapterMatchesBuild": true
+  },
+  "execution": {
+    "consumer": "execution",
+    "requests": 5,
+    "nativeFile": "NEW",
+    "argvFile": "ARGV",
+    "cleaned": 1,
+    "root": "C:\\Users\\mapleland\\AppData\\Local\\Temp\\pakka-execution-consumer-p7a7kC"
+  },
+  "core": {
+    "status": "passed",
+    "consumer": "C:\\Users\\mapleland\\AppData\\Local\\Temp\\pakka-env-consumer-install-iAumjs",
+    "entry": "file:///C:/Users/mapleland/AppData/Local/Temp/pakka-env-consumer-install-iAumjs/node_modules/@pakka/agent/dist/index.js",
+    "versions": {
+      "pi-ai": "1.4.0",
+      "chord": "1.4.0",
+      "pi-durable": "1.4.0-pakka.2",
+      "pi-telemetry": "1.4.0"
+    },
+    "httpRequests": 7,
+    "privateSubpath": "rejected",
+    "auxiliaryWireCaps": [
+      64,
+      128
+    ],
+    "projectorAfterReload": "verified",
+    "rangeOmission": "verified",
+    "generationBlock": "verified",
+    "oracleDependency": "absent",
+    "artifactVersion": 1
+  },
+  "codeHashes": {
+    "packages/agent/package.json": "ceaf2328fc7f5bdccbc54e6e97b1c832db7d82d37a8e8788f280488262d90877",
+    "packages/agent/src/durable-adapter.ts": "113cbcaeeaff136767efb60ffe02632f18551b6492c326ac8b5b37e5c17cb4d5",
+    "packages/agent/src/index.ts": "304d0c7b4776ea5b2b843aa55b1983c8d5fc3d2e3f5765af8a5ba34308657822",
+    "packages/agent/src/types.ts": "38202ce5d90dd5389c571f8f3c2e80e3c14f8d7009465c99a3a68d73174a849a",
+    "scripts/consumer-smoke.mjs": "d807e8c056f386dab3687ce5d0de1b875d2d20e6be0c01af41da05dbe9ad5cfb",
+    "scripts/pack-smoke.mjs": "56b8bfc7ad4f02c4b4c29a4d957a62730d063f0b92288b8ae964d4a6007dd62b",
+    "packages/agent/src/execution-types.ts": "68d2842c85f617e98062dff00fd43f53070269bba29739d75c6cf325df5a9a53",
+    "packages/agent/test/execution-disposal.test.ts": "cd4bbb04139e4999b764b1c4437d784219bacacbdec21713cd510505265e9905",
+    "packages/agent/test/execution-environment.test.ts": "ab19693240682e691775213247c424aa4932c7757ebe1761b744e4b1e7876153",
+    "packages/agent/test/execution-guards.test.ts": "33394bfcfd7a4f7ccee7384b16d612ec90b4abc0e8cb756d1d0b4da6c0bfbd41",
+    "packages/agent/test/execution-lifecycle.test.ts": "f6d16aae7322edfb93b58277b4325cc51d38114a22b3bfd99ad966810218d8ff",
+    "packages/agent/test/execution-native-revocation.test.ts": "2632e88086971a2853030ecfd55ca2df0a8222d39b1ae24364c5c905d8fa92af",
+    "packages/agent/test/execution-reader-failure.test.ts": "acee65b9e4ea30f5944569e93e44c638c65a366b8eb34aa99cec874770177dec",
+    "packages/agent/test/execution-runtime.test.ts": "52248b80ffb2b73bf10b324045396ffa52db7a53f7a6b086e1cb4d37f6a58c93",
+    "packages/agent/test/execution-shell.test.ts": "be6ad5d9efce91e93427e401d1311fe7a327857fc63d52307301ecbc00c0b306",
+    "scripts/consumer-execution.mjs": "8c83e1838faba7ec214160f783ea75b3f8a0a6e66e7d5acdde3077479530ab9e"
+  },
+  "manifestHashes": {
+    "package.json": "4cc468a6661ea57952fdda641631a40c23884a2b53cbf028d1ff5d17bc4f3012",
+    "package-lock.json": "530beae72ad25812a8caa632156216e7e39ecf808cea8c067220ddcffc4b242f",
+    "packages/agent/package.json": "ceaf2328fc7f5bdccbc54e6e97b1c832db7d82d37a8e8788f280488262d90877"
+  },
+  "evidenceHashes": {
+    "adjacent-tests.txt": "61e2d7e7eae183cdfbed5bb502c84951fa879b1fa663f6928f4882625da34a7e",
+    "build-1.txt": "0d1fe4d5fea92ed5dc05b098d3982eb6b98e29be9d9dab8274ea3ca9a4781072",
+    "build-2.txt": "0d57cc7d436a9ecd1d88ae3742f1dd69662d27b3d96b8cde49f6932e3c2fa7c6",
+    "build-3.txt": "c97bea73fff1fd9716f0e2d485f6d0f7948e2304aef434b0e76a7b49b6a24dac",
+    "check.txt": "70c4a59687684dd5d5fd022a6e9c0eaf88bb00f21d76bd69e9cd30b4f6acd8dd",
+    "consume-core.mjs": "24b62070b91ab6f4649ddc5e5d1e7bc4e2a25c74bcb180c86a071684bab6fa79",
+    "consumer-core-fixture-error.txt": "2f1b787f16cda0e979a2f0df214f9a68ca50f0db58339fbfe8546129467f9a7d",
+    "consumer-core.txt": "ef8fae9bd9848e1ac35ce7a31a94a63fe7a5f9fe1c1267a253a9e6be9adcd150",
+    "consumer.txt": "bedcc73e3b3d2c14c58e6846e2c53d1670ff61942635afbad5e8958b0f463c56",
+    "delivery-check.txt": "8975412acc711b2945c556dafed0ca133d434716997d597ea37c8556b1ea44bc",
+    "execution-tests.txt": "d3cf14e13114dd9a00fbada896823cd4efbe2a1a1721aa01f56a6299f46f8674",
+    "format-check.txt": "f20510a9da4717c51c4cffee6d0dd88d6c9a723d0a83711d01216f5b48961283",
+    "install.txt": "1c866018e24cad012b377421c7732d701196b9d601857effe2af1a53fe04b8de",
+    "openspec-check.txt": "142a61627f0c827be4fd727fc0c02f355066c7d16d1dea73f090d64b268fddf9",
+    "pre-promotion.txt": "e1957fe23e36d5e54e1520681a305d962485ee863bfefcf32ebde3f78c32162e",
+    "run-npm.mjs": "936abf8d9ecb7a3eb79ada56e48cd55e62349638575e9858ab4f685e42417f02",
+    "shell-control.txt": "d45af48e738e12f4c9b07acda4913ea0ab8c0ddb331c069daaea78ae5b794892",
+    "upstream-release.json": "af924751c4806af77d923090085ab6a1c0c1887fb487d8f8da5c1bb64b47cf52",
+    "workspace-build.txt": "1c583d8abf118d716ebb0794a6fe3fe4674f2ce8c3f3634231c22eb9c3146743"
+  },
+  "scope": "Deterministic loopback provider and local host execution; no MXC, external Dynamite pairing or full-repository pass assertion"
+}

@@ -403,6 +403,7 @@ export interface RuntimeLimits {
 }
 export interface ConversationProfile {
 	readonly id: string;
+	readonly execution?: import("./execution-types.ts").ExecutionConfiguration;
 	/** Bootstrap-approved project directory; inherits HostOptions.cwd when omitted. */
 	readonly cwd?: string;
 	/** Bootstrap-approved ID on the Runtime provider; inherits the default when omitted. */
@@ -718,6 +719,8 @@ export interface Runtime {
 	close(): Promise<void>;
 }
 export interface HostOptions {
+	/** Explicit environment ownership and native tool selection; omitted means no ambient execution fallback. */
+	execution?: import("./execution-types.ts").ExecutionConfiguration;
 	backend?: "durable";
 	cwd: string;
 	dataDir: string;

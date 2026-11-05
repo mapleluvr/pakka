@@ -1,0 +1,11 @@
+import { spawnSync } from 'node:child_process';
+import { mkdtempSync, realpathSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+const temp = realpathSync.native(tmpdir());
+const home = mkdtempSync(join(temp, 'pakka-env-test-'));
+const env = {};
+for (const key of ['PATH','PATHEXT','SystemRoot','WINDIR','COMSPEC']) if (process.env[key]) env[key] = process.env[key];
+Object.assign(env, { TEMP: temp, TMP: temp, HOME: home, USERPROFILE: home, PI_CODING_AGENT_DIR: home, PI_OFFLINE: '1', DO_NOT_TRACK: '1', NO_COLOR: '1' });
+const result = spawnSync(process.execPath, ['--experimental-strip-types','--expose-gc','--test','--test-concurrency=1', ...process.argv.slice(2)], { env, stdio: 'inherit' });
+process.exitCode = result.status ?? 1;

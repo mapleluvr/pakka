@@ -7,11 +7,12 @@ Pakka 维护版本固定的 Pi Durable 源补丁与可安装归档。补丁为 g
 | 版本与角色                 | 固定输入                                                                                                                                                                                                | 归档与身份                                                                                                                                          |
 | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 可重建基线 `1.0.3-pakka.1` | [baseline](../../patches/pi-durable/1.0.3-pakka.1/baseline.json)、[source patch](../../patches/pi-durable/1.0.3-pakka.1/source.patch)、[构建锁](../../patches/pi-durable/1.0.3-pakka.1/build-lock.json) | [安装包](../../packages/agent/vendor/earendil-works-pi-durable-1.0.3-pakka.1.tgz)、[artifact](../../patches/pi-durable/1.0.3-pakka.1/artifact.json) |
-| 生产依赖 `1.4.0-pakka.1`   | [baseline](../../patches/pi-durable/1.4.0-pakka.1/baseline.json)、[source patch](../../patches/pi-durable/1.4.0-pakka.1/source.patch)、[构建锁](../../patches/pi-durable/1.4.0-pakka.1/build-lock.json) | [安装包](../../packages/agent/vendor/earendil-works-pi-durable-1.4.0-pakka.1.tgz)、[artifact](../../patches/pi-durable/1.4.0-pakka.1/artifact.json) |
+| 可重建基线 `1.4.0-pakka.1`   | [baseline](../../patches/pi-durable/1.4.0-pakka.1/baseline.json)、[source patch](../../patches/pi-durable/1.4.0-pakka.1/source.patch)、[构建锁](../../patches/pi-durable/1.4.0-pakka.1/build-lock.json) | [安装包](../../packages/agent/vendor/earendil-works-pi-durable-1.4.0-pakka.1.tgz)、[artifact](../../patches/pi-durable/1.4.0-pakka.1/artifact.json) |
+| 生产依赖 `1.4.0-pakka.2`   | [baseline](../../patches/pi-durable/1.4.0-pakka.2/baseline.json)、[source patch](../../patches/pi-durable/1.4.0-pakka.2/source.patch)、[构建锁](../../patches/pi-durable/1.4.0-pakka.2/build-lock.json) | [安装包](../../packages/agent/vendor/earendil-works-pi-durable-1.4.0-pakka.2.tgz)、[artifact](../../patches/pi-durable/1.4.0-pakka.2/artifact.json) |
 
 各 baseline 固定上游 release、commit 与下游版本；artifact 记录源补丁、构建锁和归档的 SHA-256。1.4.0 补丁的公开依赖 cohort 为 pi-ai、Chord、pi-codemode、pi-telemetry `1.4.0`。
 
-生产选择由根及 agent 的 package.json/lock 绑定；`pack:agent` 在独立 staging 安装并捆绑所选实现，向仓库外消费者提供精确的下游依赖。生产 cohort 为 Pi AI/Chord/Telemetry 1.4.0 与 Durable 1.4.0-pakka.1；adapter 使用显式 checkpoint、持久任务 timer 和工具 output 契约。业务 Session 与 Compresser 各自使用 SQLite、WAL/FULL；领域工作与恢复关系见[持久化声明](dynamite-persistence.md)。
+生产选择由根及 agent 的 package.json/lock 绑定；`pack:agent` 在独立 staging 安装并捆绑所选实现，向仓库外消费者提供精确的下游依赖。生产 cohort 为 Pi AI/Chord/Telemetry 1.4.0 与 Durable 1.4.0-pakka.2；adapter 使用显式 checkpoint、持久任务 timer 和工具 output 契约。业务 Session 与 Compresser 各自使用 SQLite、WAL/FULL；领域工作与恢复关系见[持久化声明](dynamite-persistence.md)。
 
 ## 生成拒绝与请求检查
 
@@ -28,6 +29,12 @@ checks 具有请求/attempt 作用域，保存在执行中的回调链。恢复�
 
 Pakka 生产接入采用 OpenAI-completions，重试与自动压缩处于关闭状态。辅助 inference 使用各自的 allowlist、预算及 pre-payload source guard。
 
+## 执行环境接缝
+
+Pakka 通过 1.4.0 的公开 `HarnessOptions.env`、`ExecutionEnv`、`NodeExecutionEnv` 和 `/tools` 接入[执行环境](execution-environment.md)。执行配置与中性 driver 由宿主提供，原生对象保留在 adapter；合作工具接收 invocation 绑定的能力。配置的环境无法取得时，adapter 返回显式 block，由本页的原生事务结算处理。普通 hook/env 异常的 report-and-continue 不作为强制门禁。
+
+该接缝使用上述公开 API。源补丁负责 generation block/check/settlement；执行驱动、工具装配与插件承载属于宿主和 adapter 的能力。
+
 ## 构建与使用
 
 构建入口为 `npm run build:durable-patch -- <upstream-checkout> [patched-version]`，由[构建脚本](../../scripts/build-durable-patch.mjs)执行。省略版本参数时，构建与校验脚本从 `packages/agent/package.json` 的精确 vendor 依赖选择生产版本；显式参数用于选择固定补丁基线：
@@ -43,7 +50,7 @@ node scripts/verify-durable-patch.mjs
 4. 1.4.0 归档在独立 npm project 中以公开 exports/compiled dist 运行本地 HTTP 消费者。
 5. 将归档与身份清单写入所属版本目录。原 checkout 和已安装依赖保持各自内容。
 
-[完整性脚本](../../scripts/verify-durable-patch.mjs)按所选版本核对归档、源补丁和构建锁。详细命令见 [1.0.3 说明](../../patches/pi-durable/1.0.3-pakka.1/README.md)与 [1.4.0 说明](../../patches/pi-durable/1.4.0-pakka.1/README.md)。
+[完整性脚本](../../scripts/verify-durable-patch.mjs)按所选版本核对归档、源补丁和构建锁。详细命令见 [1.0.3 说明](../../patches/pi-durable/1.0.3-pakka.1/README.md)与 [1.4.0-pakka.2 说明](../../patches/pi-durable/1.4.0-pakka.2/README.md)。
 
 ## 回归与记录
 

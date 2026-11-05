@@ -37,9 +37,15 @@ try {
 
 `Runtime` 是 bootstrap 控制对象；`Host` 是一个 Conversation 的控制对象。每个 Host 分别连接 principal、激活 strategy 和绑定工具 invocation。调用方只获得冻结的 DTO 与身份绑定的命令 closure。Pi 的 Harness、Session、Conversation、Registry、Models 和 Tx 不通过公开接口返回。
 
-bootstrap 必须给出三项正的有限整数配额。额外 profile 接受允许的 `id`、instructions、配置的工具，以及可选的 `model` ID。省略 `model` 时沿用 HostOptions；显式值必须为 1–256 个 UTF-16 code units，不含控制字符或首尾空白。模型仍使用该 Runtime 固定的 provider、endpoint、宿主批准的凭据来源和主调用参数，profile 不能改写 credentials、cwd、storage path 或原始 extensions。创建相同 key/profile 返回已有 resource；同 key 的不同 profile 被拒绝。
+bootstrap 必须给出三项正的有限整数配额。额外 profile 接受允许的 `id`、instructions、配置的工具，以及可选的 `model` ID、批准 `cwd` 与 `execution`。省略 `model` 时沿用 HostOptions；显式值必须为 1–256 个 UTF-16 code units，不含控制字符或首尾空白。模型仍使用该 Runtime 固定的 provider、endpoint、宿主批准的凭据来源和主调用参数，profile 不能改写 credentials、storage path 或原始 extensions。创建相同 key/profile 返回已有 resource；同 key 的不同 profile 被拒绝。
 
 例如 `{ id: "reviewer", model: "approved-review-model", systemPrompt: "Review the requested work." }` 在启动时注册该确切模型 ID。通过受控 catalog 的配置操作切换 profile 时，model、instructions 和 tools 在同一 native commit 更新；原 incarnation 作废，下一次实际 provider 请求采用新模型。人类只能选其 profile ceiling 内的配置；重开校验模型所属的 profile identity，并保留已消费额度。设置与私密配置 replace/clear 的操作见 [WebUI 使用指南](../guides/WEBUI-GUIDE.md)。
+
+### 执行环境
+
+`HostOptions.execution` / `RuntimeOptions.execution` 接受 `ExecutionConfiguration`；profile 可覆盖，省略时继承默认配置。配置提供稳定的版本 ID、`open(target)` 和显式 `tools`（read/write/edit/bash/powershell）。目标包含实际 Session/Conversation/profile/cwd，managed 目标还有 incarnation。环境及工具选择进入重开配置核对，配置错误和名称冲突在存储建立前拒绝。
+
+`createLocalExecutionEnvironment()` 提供显式本机驱动；合作工具通过 `executionFor(scope)` 得到冻结的文件/命令能力。它不赋予 owner cleanup 权限，也不把直接调用宿主 fs 的插件变成沙箱代码。环境取得失败使用原生 block 阻止主模型 HTTP；模型权限仍独立执行。完整签名、数据、取消与资源寿命见[执行环境指南](../guides/EXECUTION-ENVIRONMENT.md)及[状态声明](../state/execution-environment.md)。
 
 ### 主模型凭据来源
 

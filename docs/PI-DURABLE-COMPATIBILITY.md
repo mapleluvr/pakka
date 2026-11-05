@@ -754,3 +754,21 @@ SDK 与生产 cohort 沿用条目 10–12：Durable 1.4.0-pakka.1，归档 SHA-2
 Windows / Node 24.18.0、独立 profile、真实 localhost provider：宿主 605 passed / 0 failed / 2 原有跳过，聚焦 31/31；Dynamite 381/381，原生生产 12/12；最终归档外部安装 68/68、436 HTTP、0 非预期 fixture 异常。公开声明、类型/构建与相关 OpenSpec strict 通过。真实进程中断后保持旧 writer claim；可信恢复后仅隔离未确认 child，不重放其请求，新的独立授权工作可运行。没有付费模型、用户凭据或 adversarial review。
 
 [当前 state](state/compressor-session.md)、[完整形成记录](changes/compressor-repair-session.md)、[验证与原始证据](verification/COMPRESSOR-CONVERSATION-ISOLATION.md)和[机器配对](../integrations/dynamite/compresser-conversation-pairing.json)承接本条。额外 P2/P3 merge 算法、语义质量、分层衰减/检索、历史 GC/迁移、跨 store 崩溃原子性及新 pair 默认/optional server/worker 激活仍未接受。旧错误计数、共享存储、请求/回执协议或来源授权边界改变时重跑精确归档矩阵并追加记录。
+
+## 条目 DURABLE-2026-11-05-14：公开 ExecutionEnv 接入
+
+用户选择保留 1.4.0 基线及现有补丁范围，先形成执行环境接口并验证，再考虑 MXC。Pakka 在 main `547c496` 的独立工作树中接出 Host/Runtime/profile 执行配置、显式原生 read/write/edit/bash/powershell、合作工具的 invocation 能力及资源收尾。Pi 可变 env/reader 留在 adapter。
+
+使用公开 HarnessOptions.env、NodeExecutionEnv 与 /tools；配置的环境取得失败通过已有 block/check/settlement 在零 HTTP 下结算。作用域撤销与驱动未知效果分开，未知结果/reader 错误和 cleanup 失败继续失败关闭。Durable source.patch、build-lock 和 vendor 归档未改，继续使用 `1.4.0-pakka.1` / SHA-256 `7fd9f3310dfa003a9077139a25faf93567922a065461fa3767dd5a1066efa891`，没有重新构建不同的 SDK。
+
+Windows x64 / Node 24.15.0、私有 profile、本地确定性 provider：新增 24/24、相邻 31/31；build/check 和补丁身份校验通过。候选 agent 0.7.0 归档 SHA-256 `54c6a25ac4ab4488b6a06eba2f54e06a99459dd3feba9d3a29581772a5a968e3` 在仓库外离线安装后通过 5 次 HTTP 的原生文件、argv 效果、清理与重开链路；未发布新版本。广泛回归没有全量通过结论，固定构建后的 12 文件对照与未修改基线有相同结果模式；完整范围与原始输出见[验证记录](verification/EXECUTION-ENVIRONMENT.md)。
+
+本条只覆盖上述宿主执行环境切片；本地驱动具有宿主权限。MXC、恶意插件承载、辅助 Compresser/WebUI 环境装配未在本次实现或验证，也未更新外部 Dynamite 配对。采用关系见[执行环境声明](state/execution-environment.md)、[变更摘要](changes/execution-environment.md)及其完整 OpenSpec 记录。环境协议、授权/撤销时序、恢复身份或 Pi cohort 改变时重跑相关矩阵并追加记录。
+
+## 条目 DURABLE-2026-11-05-15：ExecutionEnv 1.4.0-pakka.2 交付身份
+
+用户要求将接入以 `1.4.0-pakka.2` 命名提交。上游仍为 1.4.0 / `4a080252f06caf63a525d7873c5d94d3c23887e0`，`.2` source.patch 与 `.1` 相同，构建锁仅改变 Durable workspace 身份。Pakka 的公开环境接口和适配代码留在 adapter；根与 agent 依赖/lock 选择 `.2`，build/check 通过生产选择器校验归档，旧版本产物保留。
+
+两次独立构建各通过 SDK 113/113 及安装 HTTP 3/3，归档 SHA-256 均为 `12d21b230d40706618db4ac83747b9189b7d9070f023c2705bc5c8b521d90ecd`。Windows 首轮误选 WSL Bash 的失败，经单变量 PATH 对照后以 Git Bash 复跑，没有跳过用例或修改 SDK 源逻辑。
+
+Pakka 在实际安装的 `.2` 上通过 ExecutionEnv 24/24、相邻与版本选择 36/36、build/check。agent 0.7.0 归档 SHA-256 `f169cb32f9e2b7a5bf4c7596083c0ab2a89e816d3ecbb72ec271c2abbefe46f7` 的仓库外消费者通过执行环境 5 次与核心门禁 7 次 loopback HTTP；确认包内 cohort、blocked settlement、辅助预算、reload 和原生存储读取。核心包装器补齐已有 helper 所需的 Node parent-URL resolver flag 后通过；原错误保留。全部范围、原始输出、哈希和复跑命令见[.2 交付检查](verification/EXECUTION-ENVIRONMENT-PAKKA-2.md)。MXC 与独立 pakka-ei 设计另行推进，未在这份 SDK 归档中实现。

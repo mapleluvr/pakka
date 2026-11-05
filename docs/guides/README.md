@@ -4,6 +4,7 @@
 | ------------------------------------------------------ | ----------------------------------------------------- |
 | 浏览器里的 Conversation、模型、工作目录与常用面板      | [WebUI 使用与启动](WEBUI-GUIDE.md)                    |
 | 用脚本编写协作流程，供人和 Agent 设计、保存与验证      | [协作流程编程](MAS-WORKFLOWS.md)                      |
+| 原生文件/命令工具、合作插件与可替换执行驱动 | [执行环境](EXECUTION-ENVIRONMENT.md) |
 | Agent 关系画布、活动预览和交流日志                     | [MAS Board](MAS-BOARD.md)                             |
 | 显式 server 配置、连接文件、Node/browser client 和 CLI | [MAS 应用配置](MAS-APPLICATION-API.md)                |
 | Headless MAS 的产品范围、权限和正常重开                | [MAS 产品支持边界](MAS-PRODUCT-SUPPORT.md)            |

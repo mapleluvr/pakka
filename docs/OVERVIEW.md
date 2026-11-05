@@ -4,6 +4,8 @@ Pakka 将 Pi 的 Conversation、权限、持久化和 MAS 服务接到可选的 
 
 ## 当前工作
 
+[ExecutionEnv 接入](changes/execution-environment.md)以 Durable `1.4.0-pakka.2` 交付，保留现有拒绝与结算语义，以公开 env 接缝装配原生文件/命令工具及合作工具能力。两次 SDK 构建的归档一致；接入 24/24、相邻及工具选择 36/36、实际安装消费通过，见[.2 交付检查](verification/EXECUTION-ENVIRONMENT-PAKKA-2.md)。当前关系见[执行环境](state/execution-environment.md)及[所属 tasks](../openspec/changes/add-execution-environment/tasks.md)。MXC 驱动设计转入独立的 pakka-ei（environment infrastructure）仓库，Pakka 当前提供通用接缝。
+
 [协作流程编程指南](guides/MAS-WORKFLOWS.md)面向人和 Agent，以应用脚本组合现有 Runtime/MAS/DevPack 能力；提供 Mermaid、可运行示例、产物／状态保存和分级可行性验证。形成与实际检查见[变更摘要](changes/scripted-mas-workflows.md)及[所属 tasks](../openspec/changes/document-scripted-mas-workflows/tasks.md)。
 
 [Dynamite SQLite 持久化模式](changes/dynamite-sqlite-persistence.md)已实施：独立 Session/Compresser 存储、领域原子提交、固定计划与恢复、可信 writer 维护、增量历史读取。采用的对象和关系在[预期声明](state/dynamite-persistence.md)，两份实际安装归档见[固定配对](../integrations/dynamite/sqlite-persistence-pairing.json)，源码与检查的接续由[持久化 tasks](../openspec/changes/archive/2026-11-02-adopt-dynamite-sqlite-persistence/tasks.md)承接。
@@ -28,7 +30,7 @@ Pakka 将 Pi 的 Conversation、权限、持久化和 MAS 服务接到可选的 
 
 设置直达、命名及[规范采用与首批排版/焦点改进](changes/webui-frontend-guidelines.md)已实现；结果留在[指南 tasks](../openspec/changes/adopt-webui-frontend-guidelines/tasks.md)和[设置 tasks](../openspec/changes/correct-webui-settings-and-name/tasks.md)。后续队列由上述统一 tasks 承接。
 
-生产 package.json/lock 已选择 Pi AI/Chord/Telemetry `1.4.0` 与捆绑的 Durable `1.4.0-pakka.1`；[cohort 任务](../openspec/changes/prepare-durable-1-4-0-patch/tasks.md#4-后续产品接入)和追加兼容性账本记录本次接入与存储范围。开发 verification 的选用见[交付声明](state/delivery.md#verification-的选用)。
+生产 package.json/lock 选择 Pi AI/Chord/Telemetry `1.4.0` 与捆绑的 Durable `1.4.0-pakka.2`；[执行环境变更](changes/execution-environment.md)和追加兼容性账本承接当前交付身份，原 [cohort 任务](../openspec/changes/prepare-durable-1-4-0-patch/tasks.md#4-后续产品接入)保留形成时的接入与存储范围。开发 verification 的选用见[交付声明](state/delivery.md#verification-的选用)。
 
 后续文档工作是确定通用测试方法补全与 verification 历史瘦身的采用方案，见[本轮评估](../openspec/changes/streamline-verification-and-patch-state/design.md#验证方法与进一步瘦身)和[待决定任务](../openspec/changes/streamline-verification-and-patch-state/tasks.md#4-待决定的后续方案)。
 

@@ -5,6 +5,7 @@
 | 接口                                                  | 文档                                         |
 | ----------------------------------------------------- | -------------------------------------------- |
 | 多 Conversation runtime、受控 catalog、模型与目录配置 | [Runtime API](RUNTIME-API.md)                |
+| 执行环境、原生文件/Shell 工具与 invocation 能力 | [执行环境 API 与用法](../guides/EXECUTION-ENVIRONMENT.md) |
 | 策略 binding、projection、artifacts 和辅助 inference  | [Strategy API](STRATEGY-API.md)              |
 | 同 Session MAS membership、A2A、寿命与回执            | [MAS API](MAS-API.md)                        |
 | 跨 Session broker、受控 enrollment、worker 和恢复     | [Broker API](BROKER-API.md)                  |

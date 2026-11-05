@@ -1,0 +1,56 @@
+✖ execution: binary handles survive path replacement and expire with the tool invocation (145.0436ms)
+✔ execution: a caller abort terminates its real argv process without destroying the environment (891.3069ms)
+✖ execution: already-started operations finish before tool settlement even if its author omits await (166.6914ms)
+✔ execution: unknown cleanup keeps the writer claimed (49.3993ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 2
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3315.6995
+
+✖ failing tests:
+
+test at packages\agent\test\execution-lifecycle.test.ts:9:1
+✖ execution: binary handles survive path replacement and expire with the tool invocation (145.0436ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /OLD-HANDLE/. Input:
+  
+  'Check handle\n' +
+    'Updated system prompt section "system":\n' +
+    '\n' +
+    'PAKKA-SYSTEM\n' +
+    '\n' +
+    'Updated system prompt section "instructions":\n' +
+    '\n' +
+    '<instructions>\n' +
+    'PAKKA-SYSTEM\n' +
+    '</instructions>\n' +
+    'null\n' +
+    '<harness>\n' +
+    '[error] The expression evaluated to a falsy value:\n' +
+    '\n' +
+    '  assert.ok(scan.ok)\n' +
+    '\n' +
+    '</harness>'
+  
+      at TestContext.<anonymous> (file:///D:/Projects/kappa/migration-worktrees/pakka-execution-env-1.4.0/packages/agent/test/execution-lifecycle.test.ts:36:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'Check handle\nUpdated system prompt section "system":\n\nPAKKA-SYSTEM\n\nUpdated system prompt section "instructions":\n\n<instructions>\nPAKKA-SYSTEM\n</instructions>\nnull\n<harness>\n[error] The expression evaluated to a falsy value:\n\n  assert.ok(scan.ok)\n\n</harness>',
+    expected: /OLD-HANDLE/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at packages\agent\test\execution-lifecycle.test.ts:62:1
+✖ execution: already-started operations finish before tool settlement even if its author omits await (166.6914ms)
+  Error: Execution invocation is inactive
+      at check (file:///D:/Projects/kappa/migration-worktrees/pakka-execution-env-1.4.0/packages/agent/src/durable-adapter.ts:2550:82)
+      at convert (file:///D:/Projects/kappa/migration-worktrees/pakka-execution-env-1.4.0/packages/agent/src/durable-adapter.ts:278:46)
+      at result.<computed> [as exec] (file:///D:/Projects/kappa/migration-worktrees/pakka-execution-env-1.4.0/packages/agent/src/durable-adapter.ts:311:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)

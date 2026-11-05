@@ -1,0 +1,19 @@
+✖ execution: native edit cannot write after reload starts while its read was pending (165.7074ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1394.3251
+
+✖ failing tests:
+
+test at packages\agent\test\execution-native-revocation.test.ts:8:1
+✖ execution: native edit cannot write after reload starts while its read was pending (165.7074ms)
+  Error: Execution effects are unconfirmed
+      at file:///D:/Projects/kappa/migration-worktrees/pakka-execution-env-1.4.0/packages/agent/src/host.ts:493:24
+      at async TestContext.<anonymous> (file:///D:/Projects/kappa/migration-worktrees/pakka-execution-env-1.4.0/packages/agent/test/execution-native-revocation.test.ts:36:3)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3)

@@ -100,6 +100,7 @@ copyFileSync(
 );
 copyFileSync(join(root, "scripts", "consumer-types.ts"), join(consumer, "consumer-types.ts"));
 copyFileSync(join(root, "scripts", "consumer-runtime.mjs"), join(consumer, "runtime.mjs"));
+copyFileSync(join(root, "scripts", "consumer-execution.mjs"), join(consumer, "execution.mjs"));
 copyFileSync(join(root, "scripts", "consumer-mas.mjs"), join(consumer, "mas.mjs"));
 copyFileSync(join(root, "scripts", "consumer-broker.mjs"), join(consumer, "broker.mjs"));
 copyFileSync(join(root, "scripts", "consumer-devpack.mjs"), join(consumer, "devpack.mjs"));
@@ -207,6 +208,7 @@ writeFileSync(
 );
 console.log(run("smoke", [join(consumer, "smoke.mjs")], consumer));
 console.log(run("runtime", [join(consumer, "runtime.mjs")], consumer));
+console.log(run("execution", [join(consumer, "execution.mjs")], consumer));
 console.log(run("mas", [join(consumer, "mas.mjs")], consumer));
 console.log(run("broker", [join(consumer, "broker.mjs")], consumer));
 console.log(run("devpack", [join(consumer, "devpack.mjs")], consumer));

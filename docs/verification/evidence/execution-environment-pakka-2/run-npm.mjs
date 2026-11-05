@@ -1,0 +1,16 @@
+import { spawnSync } from 'node:child_process';
+import { mkdirSync, realpathSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+const root=process.cwd();
+const profile=join(root,'docs/.temp/release-1.4.0-pakka.2/profile');
+mkdirSync(profile,{recursive:true});
+const temp=realpathSync.native(tmpdir());
+const env={};
+for(const name of ['PATH','PATHEXT','SystemRoot','WINDIR','COMSPEC'])if(process.env[name])env[name]=process.env[name];
+env.PATH='C:/Program Files/Git/bin;'+env.PATH;
+Object.assign(env,{HOME:profile,USERPROFILE:profile,PI_CODING_AGENT_DIR:join(profile,'pi'),TEMP:temp,TMP:temp,TMPDIR:temp,PI_OFFLINE:'1',DO_NOT_TRACK:'1',NO_COLOR:'1',NPM_CONFIG_USERCONFIG:join(profile,'empty.npmrc'),NPM_CONFIG_CACHE:join(profile,'npm-cache')});
+const args=process.argv.slice(2);
+console.log(JSON.stringify({profile,args}));
+const result=spawnSync(process.execPath,['C:/Program Files/nodejs/node_modules/npm/bin/npm-cli.js',...args],{cwd:root,env,stdio:'inherit'});
+process.exitCode=result.status??1;

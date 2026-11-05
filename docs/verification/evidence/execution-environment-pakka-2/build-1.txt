@@ -1,0 +1,94 @@
+{"profile":"D:\\Projects\\kappa\\migration-worktrees\\pakka-execution-env-1.4.0\\docs\\.temp\\release-1.4.0-pakka.2\\profile","args":["run","build:durable-patch","--","D:/Projects/kappa/migration-worktrees/pakka-durable-1.4.0/docs/.temp/pi-v1.4.0","1.4.0-pakka.2"]}
+
+> pakka-workspace@0.1.0 build:durable-patch
+> node scripts/build-durable-patch.mjs D:/Projects/kappa/migration-worktrees/pakka-durable-1.4.0/docs/.temp/pi-v1.4.0 1.4.0-pakka.2
+
+4a080252f06caf63a525d7873c5d94d3c23887e0
+
+added 198 packages in 10s
+file:///D:/Projects/kappa/migration-worktrees/pakka-execution-env-1.4.0/scripts/build-durable-patch.mjs:26
+	if (result.status !== 0) throw new Error(`${command} failed:\n${result.stdout}\n${result.stderr}`);
+	                               ^
+
+Error: C:\Program Files\nodejs\node.exe failed:
+
+ RUN  v4.1.11 C:/Users/mapleland/AppData/Local/Temp/pakka-durable-build-f0Vcrn/packages/durable
+
+ ❯ test/harness-tools.test.ts (39 tests | 2 failed) 3758ms
+     × answers a failing command with its retained tail and diagnostics in order 2578ms
+     × reads, edits, and runs a command in one run, then answers 301ms
+
+ Test Files  1 failed | 4 passed (5)
+      Tests  2 failed | 111 passed (113)
+   Start at  16:13:16
+   Duration  4.94s (transform 2.13s, setup 1.76s, import 2.28s, tests 7.49s, environment 0ms)
+
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/harness-tools.test.ts > coding tools > answers a failing command with its retained tail and diagnostics in order
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ test/harness-tools.test.ts:914:43
+    912|    expect(result!.isError).toBe(true);
+    913|    const text = resultText(result!);
+    914|    expect(text.startsWith("line-1001\n")).toBe(true);
+       |                                           ^
+    915|    expect(ToolResultEntry.is(entry) && entry.data.diagnostics.map((dia…
+    916|     "full_output",
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  test/harness-tools.test.ts > coding tools > reads, edits, and runs a command in one run, then answers
+AssertionError: expected [ …(3) ] to deeply equal [ …(3) ]
+
+- Expected
++ Received
+
+@@ -10,10 +10,12 @@
+      false,
+      "Successfully replaced 1 block(s) in notes.txt.",
+    ],
+    [
+      "bash",
+-     false,
+-     "hello durable
+- ",
++     true,
++     "<3>WSL (13 - Relay) ERROR: CreateProcessCommon:640: execvpe(/bin/bash) failed: No such file or directory
++ |<harness>
++ [error] Command exited with code 1
++ </harness>",
+    ],
+  ]
+
+ ❯ test/harness-tools.test.ts:949:100
+    947|    expect(settled.status).toBe("done");
+    948|    const entries = await allEntries(root);
+    949|    expect(results(entries).map((result) => [result.toolName, result.is…
+       |                                                                                                    ^
+    950|     ["read", false, "hello world\n"],
+    951|     ["edit", false, "Successfully replaced 1 block(s) in notes.txt."],
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+    at run (file:///D:/Projects/kappa/migration-worktrees/pakka-execution-env-1.4.0/scripts/build-durable-patch.mjs:26:33)
+    at file:///D:/Projects/kappa/migration-worktrees/pakka-execution-env-1.4.0/scripts/build-durable-patch.mjs:99:1
+    at ModuleJob.run (node:internal/modules/esm/module_job:437:25)
+    at async node:internal/modules/esm/loader:639:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)
+
+Node.js v24.15.0
+npm notice
+npm notice New major version of npm available! 11.12.1 -> 12.2.2
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.2
+npm notice To update run: npm install -g npm@12.2.2
+npm notice

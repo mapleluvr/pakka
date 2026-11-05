@@ -8,6 +8,7 @@
 | ------------------------------------------ | -------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
 | [产品与范围](product.md)                   | 产品组成、用户目标、使用与支持条件           | 本页所链接的领域契约                                                                                             |
 | [Runtime 与 authority](runtime.md)         | 模块依赖、身份、调度、持久化关系             | [架构契约](../development/ARCHITECTURE.md)、[公开 API](../reference/README.md)、OpenSpec 领域场景                |
+| [执行环境](execution-environment.md) | 环境绑定、文件/命令能力、句柄与 owner 寿命 | [使用指南](../guides/EXECUTION-ENVIRONMENT.md)、[Runtime 场景补充](../../openspec/changes/add-execution-environment/specs/conversation-runtime/spec.md) |
 | [Compresser 会话](compressor-session.md)   | 共享容器、独立 Conversation 纠错与封存       | [会话 delta](../../openspec/changes/add-compressor-repair-session/specs/compressor-repair-session/spec.md)       |
 | [Dynamite 持久化](dynamite-persistence.md) | 工作计划、推理结果、产物与恢复提交           | [持久化 spec](../../openspec/specs/dynamite-persistence/spec.md)                                                 |
 | [Durable 源补丁](durable-patch.md)         | 下游补丁行为、基线、构建与安装产物           | 源补丁、机器身份清单、构建脚本及追加式兼容性账本                                                                 |

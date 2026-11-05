@@ -1,0 +1,39 @@
+✔ DurableAdapter is the default runtime created by createHost() (52.8667ms)
+✔ A-06: Generation gate blocks provider dispatch with providerCalls = 0 (78.2709ms)
+✔ A-05 & F-15: Two strategies independently append to separate artifact namespaces (47.0381ms)
+✔ A-04: Projection plan with summary: null omits source range without placeholder and preserves raw history (66.9614ms)
+✔ A-07: Tool execution occurs exactly once without duplicate side effects (62.7326ms)
+✔ A-03: Submission idempotency prevents second execution on identical payload (37.9735ms)
+✔ concurrent initial submissions do not let waitForIdle return before dispatch (1680.6391ms)
+✔ Durable entry frames preserve linear parentage (60.4577ms)
+✔ context views retain entries beyond Durable scan page size (47020.9393ms)
+✔ Durable verifier keeps the production version as its default (151.1206ms)
+✔ Durable verifier selects an explicitly requested patch version (130.5993ms)
+✔ Durable verifier detects tampering in the selected version independently (225.8204ms)
+✔ Durable verifier rejects a patch version containing path traversal (117.099ms)
+✔ prepared steering enters after tools and follow-up remains in native run (154.8674ms)
+✔ cancel only this principal's queued objects and allow released identity retry (77.4785ms)
+✔ cancel after drain before append preserves identities (reload=false) (67.2494ms)
+✔ cancel after drain before append preserves identities (reload=true) (81.1863ms)
+✔ reload revokes before waiting for active tool and rejects concurrent transition (116.3315ms)
+✔ session replacement releases pending queue and does not carry it into new session (77.9084ms)
+✔ host ABA invalidates capability even with original leaf and count restored (70.3676ms)
+✔ preparation crossing replacement cannot transfer into new scope (59.0297ms)
+✔ tool side effect then disk failure fails closed and does not replay committed input (5567.3559ms)
+✔ confirmed Compresser completion repairs the source seal after a real cross-store interruption (857.7182ms)
+✔ reload permits only existing attempt settlement and persists quarantine before returning (135.5621ms)
+✔ dispose awaits original attempt quarantine and stores it before releasing the writer (82.5525ms)
+✔ prepared SourceWork survives reopen with the same plan and fixed sources (157.5436ms)
+✔ ready checkpoint retains retry position and finite budget across reopen (68.8575ms)
+✔ ready work resumes its next confirmed attempt without replenishing the job budget (76.6869ms)
+✔ source plan metadata is checked against the immutable journal proof (77.9315ms)
+✔ a killed dispatch retains its exact reservation and cannot be replayed (628.7306ms)
+✔ sealed single-call output resumes local adoption without a second model request (69.4543ms)
+ℹ tests 31
+ℹ suites 0
+ℹ pass 31
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 63824.9027

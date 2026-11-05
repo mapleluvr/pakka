@@ -2,6 +2,7 @@
 
 完整的形成条件、选择、设计、任务与场景由 [OpenSpec](../../openspec/changes/)维护；本目录只提供摘要和完整引用，不复制第二套变更正文。当前预期见 [state](../state/README.md)，实际差距见[工作入口与领域任务](../OVERVIEW.md)。
 
+- [ExecutionEnv 接入](execution-environment.md)：1.4.0 基线的公开执行环境接缝、原生工具、合作工具能力与真实本地消费。
 - [应用脚本与协作流程指南](scripted-mas-workflows.md)：面向人和 Agent 的 Mermaid、可运行协作、产物／状态保存和分级可行性验证。
 - [Compresser 会话修复与封存](compressor-repair-session.md)：两类累计错误容忍、轨迹保留和原生基础设施调查；实现路线在报告决策点。
 - [辅助推理 Tool Calling 输出](auxiliary-tool-output.md)：来源绑定的结构化候选生产与独立 Dynamite 产物。

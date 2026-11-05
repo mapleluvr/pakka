@@ -117,6 +117,391 @@ import type {
 	RuntimeContextSource,
 } from "./types.ts";
 
+import { NodeExecutionEnv } from "@earendil-works/pi-durable/env/node";
+import {
+	FileError,
+	ExecutionError,
+	type ExecutionEnv,
+	type FileErrorCode,
+	type ExecutionErrorCode,
+} from "@earendil-works/pi-durable/env";
+import {
+	createReadTool,
+	createWriteTool,
+	createEditTool,
+	createBashTool,
+	createPowerShellTool,
+} from "@earendil-works/pi-durable/tools";
+import type {
+	ExecutionAccess,
+	ExecutionConfiguration,
+	ExecutionDriver,
+	ExecutionEnvironment,
+	ExecutionTarget,
+	ExecutionResult,
+	LocalExecutionOptions,
+} from "./execution-types.ts";
+
+// Fixed public filesystem operations. The count is the number of arguments before signal/Context.
+const executionMethods = {
+	absolutePath: 1,
+	joinPath: 1,
+	readTextFile: 1,
+	readTextLines: 2,
+	readBinaryFile: 1,
+	writeFile: 2,
+	appendFile: 2,
+	truncateFile: 2,
+	flushFile: 1,
+	renameFile: 2,
+	fileInfo: 1,
+	listDir: 1,
+	listFiles: 2,
+	canonicalPath: 1,
+	exists: 1,
+	createDir: 2,
+	remove: 2,
+	createTempDir: 1,
+	createTempFile: 1,
+	openBinaryReader: 2,
+	openTextLineReader: 1,
+	openDirReader: 1,
+	watch: 2,
+	exec: 2,
+} as const;
+type ExecutionCalls = Record<string, (...args: any[]) => any>;
+const readerMethods: Record<string, Readonly<Record<string, number>>> = {
+	openBinaryReader: { info: 0, read: 2, scanLines: 1 },
+	openTextLineReader: { readLine: 0 },
+	openDirReader: { next: 1 },
+	watch: {},
+};
+const executionScopes = new WeakMap<object, () => Promise<ExecutionAccess>>();
+class ExecutionAccessRevoked extends Error {}
+
+/** Only a currently executing, authentic Pakka tool invocation can acquire this facade. */
+export async function executionFor(scope: ToolInvocationScope): Promise<ExecutionAccess> {
+	const acquire = scope && executionScopes.get(scope);
+	if (!acquire) throw new Error("Execution invocation is inactive or foreign");
+	return acquire();
+}
+function executionContext(signal?: AbortSignal) {
+	return signal ? withAbortSignal(signal, BACKGROUND_CONTEXT) : BACKGROUND_CONTEXT;
+}
+function missingExecution(method: string): ExecutionResult<never> {
+	return copy({
+		ok: false,
+		error: {
+			code: method === "exec" ? "shell_unavailable" : "not_supported",
+			message: `Execution method unavailable: ${method}`,
+		},
+	});
+}
+function checkedExecutionResult(result: any): asserts result is { ok: boolean; value?: any; error?: any } {
+	if (
+		!result ||
+		typeof result !== "object" ||
+		typeof result.ok !== "boolean" ||
+		(!result.ok &&
+			(!result.error ||
+				!(
+					[
+						"aborted",
+						"not_found",
+						"permission_denied",
+						"not_directory",
+						"is_directory",
+						"invalid",
+						"not_supported",
+						"unknown",
+						"timeout",
+						"shell_unavailable",
+						"spawn_error",
+						"callback_error",
+					] satisfies (FileErrorCode | ExecutionErrorCode)[]
+				).includes(result.error.code) ||
+				typeof result.error.message !== "string"))
+	)
+		throw new Error("Invalid execution result; effects are unconfirmed");
+}
+function executionFailure(error: any) {
+	return copy({
+		code: error.code,
+		message: error.message,
+		...(typeof error.path === "string" ? { path: error.path } : {}),
+		...(typeof error.spillPath === "string" ? { spillPath: error.spillPath } : {}),
+	});
+}
+function nativeExecutionFailure(error: any, command = false) {
+	if (command) {
+		const codes = ["aborted", "timeout", "shell_unavailable", "spawn_error", "callback_error", "unknown"];
+		const result = new ExecutionError(
+			(codes.includes(error.code) ? error.code : "unknown") as ExecutionErrorCode,
+			error.message,
+		);
+		if (error.spillPath !== undefined) result.spillPath = error.spillPath;
+		return result;
+	}
+	const codes = [
+		"aborted",
+		"not_found",
+		"permission_denied",
+		"not_directory",
+		"is_directory",
+		"invalid",
+		"not_supported",
+		"unknown",
+	];
+	return new FileError(
+		(codes.includes(error.code) ? error.code : "unknown") as FileErrorCode,
+		error.message,
+		error.path,
+	);
+}
+
+/** Explicit ambient local execution, not a sandbox. All native objects remain in this module. */
+export function createLocalExecutionEnvironment(options: LocalExecutionOptions): ExecutionEnvironment {
+	const native = new NodeExecutionEnv({
+		cwd: options.cwd,
+		shellPath: options.shellPath,
+		shellEnv: options.shellEnv ? { ...options.shellEnv } : undefined,
+	});
+	const resources = new Set<() => Promise<void>>();
+	const commands = new Set<Promise<unknown>>();
+	let closing: Promise<void> | undefined;
+	const check = () => {
+		if (closing) throw new Error("Execution environment is closed");
+	};
+	const convert = (result: any, method: string): any => {
+		checkedExecutionResult(result);
+		if (!result.ok) return copy({ ok: false, error: executionFailure(result.error) });
+		if (readerMethods[method]) {
+			const reader = result.value as ExecutionCalls;
+			let closed: Promise<void> | undefined;
+			const close = () =>
+				(closed ??= Promise.resolve()
+					.then(() => reader.close(BACKGROUND_CONTEXT))
+					.then(() => {
+						resources.delete(close);
+					}));
+			resources.add(close);
+			const facade: Record<string, unknown> = { close, ...(method === "watch" ? { mode: reader.mode } : {}) };
+			for (const [name, count] of Object.entries(readerMethods[method]!)) {
+				facade[name] = async (...args: any[]) => {
+					check();
+					if (closed) throw new Error("Execution reader is closed");
+					const value = await reader[name]!(...args.slice(0, count), executionContext(args[count]));
+					return convert(value, name === "read" ? "readBinaryFile" : name);
+				};
+			}
+			return Object.freeze({ ok: true, value: Object.freeze(facade) });
+		}
+		return copy({
+			ok: true,
+			value:
+				method === "readBinaryFile" ? { base64: Buffer.from(result.value).toString("base64") } : result.value,
+		});
+	};
+	const result: Record<string, unknown> = { id: native.id, cwd: native.cwd };
+	for (const [method, count] of Object.entries(executionMethods)) {
+		result[method] = async (...raw: any[]) => {
+			check();
+			// SAFETY: method is from the fixed public operation table; the callable is checked and retains its native receiver.
+			const fn = (native as unknown as ExecutionCalls)[method];
+			if (typeof fn !== "function") return missingExecution(method);
+			const args = Array.from({ length: count }, (_, i) => raw[i]);
+			const context = executionContext(raw[count]);
+			if ((method === "writeFile" || method === "appendFile") && typeof args[1] !== "string")
+				args[1] = Buffer.from(args[1].base64, "base64");
+			if (method === "exec" && args[1]) {
+				const { onOutput, ...options } = args[1];
+				args[1] = {
+					...copy(options),
+					...(onOutput
+						? { onOutput: (text: string, _context: unknown, info: unknown) => onOutput(text, copy(info)) }
+						: {}),
+				};
+			}
+			if (method === "watch") {
+				const onChange = args[1];
+				args[1] = (change: any) =>
+					onChange(copy(change.error ? { error: executionFailure(change.error) } : change));
+			}
+			const pending = Promise.resolve(fn.apply(native, [...args, context]));
+			if (method === "exec") commands.add(pending);
+			try {
+				return convert(await pending, method);
+			} finally {
+				commands.delete(pending);
+			}
+		};
+	}
+	result.cleanup = () =>
+		(closing ??= Promise.resolve().then(async () => {
+			await native.cleanup(BACKGROUND_CONTEXT);
+			await Promise.all(commands);
+			await Promise.all([...resources].map((close) => close()));
+		}));
+	// SAFETY: every public method is installed from the fixed operation table, with signal and result/handle conversion.
+	return Object.freeze(result) as unknown as ExecutionEnvironment;
+}
+
+/** A driver is trusted host code, but its data and resource handles never become native Pi objects outside here. */
+function nativeExecutionEnvironment(driver: ExecutionDriver): ExecutionEnv {
+	const result: Record<string, unknown> = { id: driver.id, cwd: driver.cwd, cleanup: () => driver.cleanup() };
+	const convert = (value: any, method: string): any => {
+		checkedExecutionResult(value);
+		if (!value.ok) return { ok: false, error: nativeExecutionFailure(value.error, method === "exec") };
+		if (readerMethods[method]) {
+			const source = value.value as ExecutionCalls;
+			const reader: Record<string, unknown> = {
+				close: () => source.close(),
+				...(method === "watch" ? { mode: source.mode } : {}),
+			};
+			for (const [name, count] of Object.entries(readerMethods[method]!))
+				reader[name] = async (...args: any[]) =>
+					convert(
+						await source[name]!(...args.slice(0, count), args[count]?.abortSignal),
+						name === "read" ? "readBinaryFile" : name,
+					);
+			return { ok: true, value: reader };
+		}
+		return {
+			ok: true,
+			value:
+				method === "readBinaryFile"
+					? Buffer.from(value.value.base64, "base64")
+					: structuredClone(value.value),
+		};
+	};
+	for (const [method, count] of Object.entries(executionMethods)) {
+		result[method] = async (...raw: any[]) => {
+			// SAFETY: only fixed public operation names are selected; absent optional driver methods fail explicitly below.
+			const fn = (driver as unknown as ExecutionCalls)[method];
+			if (typeof fn !== "function") return convert(missingExecution(method), method);
+			const args = Array.from({ length: count }, (_, i) => raw[i]);
+			const context = raw[count];
+			if ((method === "writeFile" || method === "appendFile") && typeof args[1] !== "string")
+				args[1] = { base64: Buffer.from(args[1]).toString("base64") };
+			if (method === "exec" && args[1]) {
+				const { onOutput, ...options } = args[1];
+				args[1] = {
+					...copy(options),
+					...(onOutput ? { onOutput: (text: string, info: unknown) => onOutput(text, context, info) } : {}),
+				};
+			}
+			if (method === "watch") {
+				const onChange = args[1];
+				args[1] = (change: any) =>
+					onChange(change.error ? { error: nativeExecutionFailure(change.error) } : structuredClone(change));
+			}
+			return convert(await fn.apply(driver, [...args, context?.abortSignal]), method);
+		};
+	}
+	// SAFETY: all required native methods are installed, translating Context/results and retaining native handles here.
+	return result as unknown as ExecutionEnv;
+}
+
+function boundExecutionAccess(
+	driver: ExecutionDriver,
+	check: () => void,
+	admit: () => void,
+	track: <T>(work: () => Promise<T>) => Promise<T>,
+	signal: AbortSignal | undefined,
+	resources: Set<() => Promise<void>>,
+): ExecutionAccess {
+	const invoke = <T>(work: () => Promise<T>): Promise<T> => {
+		try {
+			admit();
+			return track(work);
+		} catch (error) {
+			return Promise.reject(error);
+		}
+	};
+	const result: Record<string, unknown> = { id: driver.id, cwd: driver.cwd };
+	const convert = async (value: any, method: string): Promise<any> => {
+		checkedExecutionResult(value);
+		if (!value.ok && ["unknown", "callback_error"].includes(value.error.code))
+			throw new Error(`Execution effects are unconfirmed: ${value.error.message}`);
+		if (!value.ok || !readerMethods[method]) {
+			check();
+			return copy(value);
+		}
+		const source = value.value as ExecutionCalls;
+		let closed: Promise<void> | undefined;
+		const close = () =>
+			(closed ??= Promise.resolve()
+				.then(() => source.close())
+				.then(() => {
+					resources.delete(close);
+				}));
+		resources.add(close);
+		try {
+			check();
+		} catch (error) {
+			await close();
+			throw error;
+		}
+		const reader: Record<string, unknown> = { close, ...(method === "watch" ? { mode: source.mode } : {}) };
+		for (const [name, count] of Object.entries(readerMethods[method]!))
+			reader[name] = (...args: any[]) =>
+				invoke(async () => {
+					check();
+					if (closed) throw new ExecutionAccessRevoked("Execution reader is closed");
+					const callSignal =
+						signal && args[count] ? AbortSignal.any([signal, args[count]]) : (signal ?? args[count]);
+					const data = await source[name]!(...args.slice(0, count).map((value) => copy(value)), callSignal);
+					return convert(data, name);
+				});
+		return Object.freeze({ ok: true, value: Object.freeze(reader) });
+	};
+	for (const [method, count] of Object.entries(executionMethods))
+		result[method] = (...raw: any[]) =>
+			invoke(async () => {
+				check();
+				// SAFETY: method belongs to the fixed public table; optional driver methods are tested before calling.
+				const fn = (driver as unknown as ExecutionCalls)[method];
+				if (typeof fn !== "function") return missingExecution(method);
+				const args = Array.from({ length: count }, (_, i) => raw[i]);
+				if (method === "exec" && args[1]) {
+					const { onOutput, ...options } = args[1];
+					args[1] = {
+						...copy(options),
+						...(onOutput
+							? {
+									onOutput: (text: string, info: unknown) => {
+										try {
+											check();
+										} catch (error) {
+											if (error instanceof ExecutionAccessRevoked) return;
+											throw error;
+										}
+										onOutput(text, copy(info));
+									},
+								}
+							: {}),
+					};
+					args[0] = copy(args[0]);
+				} else if (method === "watch") {
+					const onChange = args[1];
+					args[0] = copy(args[0]);
+					args[1] = (change: unknown) => {
+						try {
+							check();
+						} catch {
+							return;
+						}
+						onChange(copy(change));
+					};
+				} else for (let i = 0; i < count; i++) args[i] = copy(args[i]);
+				const callSignal =
+					signal && raw[count] ? AbortSignal.any([signal, raw[count]]) : (signal ?? raw[count]);
+				return convert(await fn.apply(driver, [...args, callSignal]), method);
+			});
+	// SAFETY: all access methods are installed with invocation checks; cleanup is deliberately absent from this facade.
+	return Object.freeze(result) as unknown as ExecutionAccess;
+}
+
 export type AdapterFrame = Pick<
 	ContextFrame,
 	| "sessionId"
@@ -1204,6 +1589,7 @@ async function openPersistentStorage(
 interface ProvenanceData {
 	sessionId: string;
 	cwd: string;
+	execution?: string;
 }
 
 type RuntimeRecord = {
@@ -1337,6 +1723,44 @@ function approvedDirectory(value: unknown, roots?: readonly string[]): string {
 		throw new MutationDenied("Unapproved working directory");
 	}
 }
+function prepareExecution(
+	configuration: ExecutionConfiguration | undefined,
+	tools: HostOptions["tools"],
+): ExecutionConfiguration | undefined {
+	if (configuration === undefined) return undefined;
+	if (!configuration || !validKey(configuration.id) || typeof configuration.open !== "function")
+		throw new Error("Invalid execution configuration");
+	const selected = configuration.tools ?? [];
+	if (
+		!Array.isArray(selected) ||
+		selected.some((name) => !["read", "write", "edit", "bash", "powershell"].includes(name)) ||
+		new Set(selected).size !== selected.length ||
+		selected.some((name) => tools?.some((tool) => tool.name === name))
+	)
+		throw new Error("Invalid or duplicate execution native tool selection");
+	const programs = configuration.powershellPrograms;
+	if (
+		programs !== undefined &&
+		(!Array.isArray(programs) ||
+			!programs.length ||
+			programs.some(
+				(program) =>
+					typeof program !== "string" || !program || program.length > 8192 || /[\x00-\x1f\x7f]/.test(program),
+			))
+	)
+		throw new Error("Invalid execution PowerShell programs");
+	return Object.freeze({
+		id: configuration.id,
+		open: configuration.open,
+		tools: Object.freeze([...selected]),
+		...(programs ? { powershellPrograms: Object.freeze([...programs]) } : {}),
+	});
+}
+function executionFingerprint(configuration?: ExecutionConfiguration): string | undefined {
+	return configuration
+		? hash([configuration.id, configuration.tools ?? [], configuration.powershellPrograms ?? null])
+		: undefined;
+}
 function profileHash(
 	options: HostOptions,
 	contextSources: readonly RuntimeContextSource[],
@@ -1349,6 +1773,7 @@ function profileHash(
 		cwd: resolve(options.cwd),
 		systemPrompt: options.systemPrompt ?? "",
 		...(selected.length ? { contextSources: selected.map(({ id, version }) => ({ id, version })) } : {}),
+		...(options.execution ? { execution: executionFingerprint(options.execution) } : {}),
 		tools: (options.tools ?? []).map(({ name, description, parameters }) => ({
 			name,
 			description,
@@ -1392,6 +1817,7 @@ function profileOptions(options: HostOptions, profile?: ConversationProfile): Ho
 		...options,
 		cwd,
 		model,
+		execution: prepareExecution(profile?.execution ?? options.execution, profile?.tools ?? options.tools),
 		systemPrompt: profile?.systemPrompt ?? options.systemPrompt,
 		tools: (profile?.tools ?? options.tools)?.map((tool) =>
 			Object.freeze({ ...tool, parameters: copy(tool.parameters) }),
@@ -1806,6 +2232,9 @@ function conversationId(value: string): ConversationId {
 }
 
 export class DurableAdapter {
+	#executionPending = new Map<string, Promise<{ driver: ExecutionDriver; native: ExecutionEnv }>>();
+	#executionOwners = new Set<() => Promise<void>>();
+	#executionCleanup: Promise<void> | undefined;
 	#harness: Harness;
 	#conversation: Conversation;
 	#sessionId: string;
@@ -1899,6 +2328,7 @@ export class DurableAdapter {
 		>,
 	): Promise<DurableAdapter> {
 		const profiles = new Map<string, HostOptions>([["default", profileOptions(options)]]);
+		options = profiles.get("default")!;
 		if (managedOptions) {
 			const limits = managedOptions.limits;
 			if (
@@ -1987,6 +2417,8 @@ export class DurableAdapter {
 					const prov = JSON.parse(readFileSync(provPath, "utf8")) as ProvenanceData;
 					if (resolve(prov.cwd) !== resolve(options.cwd))
 						throw new Error("Reopen must match cwd and session provenance");
+					if (prov.execution !== executionFingerprint(options.execution))
+						throw new Error("Reopen execution configuration mismatch");
 					sessionId = prov.sessionId;
 				} catch (e) {
 					if (e instanceof Error && e.message.startsWith("Reopen")) throw e;
@@ -2008,7 +2440,11 @@ export class DurableAdapter {
 					throw new Error("Reserved storage exists; explicit reopen required");
 				throw error;
 			}
-			const prov: ProvenanceData = { sessionId, cwd: resolve(options.cwd) };
+			const prov: ProvenanceData = {
+				sessionId,
+				cwd: resolve(options.cwd),
+				...(options.execution ? { execution: executionFingerprint(options.execution) } : {}),
+			};
 			await writeFile(join(storageDir, "provenance.json"), JSON.stringify(prov), "utf8");
 			sessionFile = join(storageDir, "main.sqlite");
 		}
@@ -2124,6 +2560,15 @@ export class DurableAdapter {
 				{
 					models: rawModels,
 					registry,
+					// Preparation may report-and-continue an env error. The generation gate below explicitly blocks it.
+					env: async ({ conversationId }) => {
+						const route = routes.get(conversationId);
+						try {
+							return route ? (await route.#execution())?.native : undefined;
+						} catch {
+							return undefined;
+						}
+					},
 					settings: {
 						steeringMode: options.steeringMode ?? "one-at-a-time",
 						stream: { maxRetries: 0 },
@@ -2292,36 +2737,181 @@ export class DurableAdapter {
 		}
 	}
 
+	async #execution(): Promise<{ driver: ExecutionDriver; native: ExecutionEnv } | undefined> {
+		const configuration = this.#options.execution;
+		if (!configuration) return undefined;
+		if (this.#disposed || this.#executionCleanup) throw new Error("Execution environment is closed");
+		const ref =
+			this.#managed &&
+			Object.values(this.#managed.state.resources).find(
+				(ref) => ref.conversationId === String(this.#conversation.id),
+			);
+		const target: ExecutionTarget = copy({
+			sessionId: this.#sessionId,
+			conversationId: String(this.#conversation.id),
+			profile: ref?.profile ?? "default",
+			...(ref ? { incarnation: ref.incarnation } : {}),
+			cwd: this.#options.cwd,
+		});
+		const key = hash([configuration.id, target]);
+		let pending = this.#executionPending.get(key);
+		if (!pending) {
+			pending = Promise.resolve().then(async () => {
+				const driver = await configuration.open(target);
+				const cleanup = driver?.cleanup;
+				this.#executionOwners.add(
+					typeof cleanup === "function"
+						? () => cleanup.call(driver)
+						: async () => {
+								throw new Error("Execution driver ownership is unconfirmed: missing cleanup");
+							},
+				);
+				if (
+					!driver ||
+					typeof driver.id !== "string" ||
+					!driver.id ||
+					driver.cwd !== target.cwd ||
+					typeof cleanup !== "function"
+				)
+					throw new Error("Invalid or mismatched execution environment");
+				return { driver, native: nativeExecutionEnvironment(driver) };
+			});
+			this.#executionPending.set(key, pending);
+		}
+		return pending;
+	}
+	async #closeExecution(): Promise<void> {
+		if (!this.#executionCleanup)
+			this.#executionCleanup = Promise.resolve().then(async () => {
+				await Promise.allSettled([...this.#executionPending.values()]);
+				const results = await Promise.allSettled(
+					[...this.#executionOwners].map((close) => Promise.resolve().then(close)),
+				);
+				const failure = results.find((result) => result.status === "rejected");
+				if (failure?.status === "rejected") throw failure.reason;
+			});
+		return this.#executionCleanup;
+	}
+	async #invokeExecutionTool<T>(
+		api: ToolExecutionApi,
+		context: Parameters<ExecutionEnv["exec"]>[2],
+		work: (scope: ToolInvocationScope) => Promise<T>,
+	): Promise<T> {
+		const run = this.activeRunScope ?? this.#control.runScope();
+		return this.#control.invoke(run, async (invocation) => {
+			const current = { api, active: true, signal: context.abortSignal };
+			const resources = new Set<() => Promise<void>>();
+			const pending = new Set<Promise<unknown>>();
+			let accepting = true;
+			let operationFailed = false;
+			const track = <R>(work: () => Promise<R>): Promise<R> => {
+				const operation = Promise.resolve().then(work);
+				pending.add(operation);
+				void operation.then(
+					() => pending.delete(operation),
+					(error) => {
+						if (!(error instanceof ExecutionAccessRevoked)) operationFailed = true;
+						pending.delete(operation);
+					},
+				);
+				return operation;
+			};
+			this.#nativeInvocations.set(invocation, current);
+			const check = () => {
+				if (!current.active || this.#disposed || context.abortSignal?.aborted)
+					throw new ExecutionAccessRevoked("Execution invocation is inactive");
+				try {
+					this.#control.checkInvocation(invocation);
+				} catch {
+					throw new ExecutionAccessRevoked("Execution invocation is stale");
+				}
+			};
+			const admit = () => {
+				check();
+				if (!accepting) throw new Error("Execution invocation is closing");
+			};
+			executionScopes.set(invocation, async () => {
+				admit();
+				const env = await this.#execution();
+				admit();
+				if (!env) throw new Error("Execution environment is not configured");
+				return boundExecutionAccess(env.driver, check, admit, track, context.abortSignal, resources);
+			});
+			try {
+				return await work(invocation);
+			} finally {
+				accepting = false;
+				await Promise.allSettled([...pending]);
+				current.active = false;
+				executionScopes.delete(invocation);
+				const closed = await Promise.allSettled([...resources].map((close) => Promise.resolve().then(close)));
+				const failure = closed.find((result) => result.status === "rejected");
+				if (failure?.status === "rejected") {
+					this.markFailed(new Error("Execution resource closure is unconfirmed"));
+					throw failure.reason;
+				}
+				if (operationFailed) this.markFailed(new Error("Execution effects are unconfirmed"));
+			}
+		});
+	}
+
 	static #extension(options: HostOptions, routes: Map<ConversationId, DurableAdapter>, profile: string) {
 		const resolveAdapter = (id: ConversationId) => {
 			const adapter = routes.get(id);
 			if (!adapter || adapter.#disposed) throw new Error("Conversation authority is not bound");
 			return adapter;
 		};
+		const factories = {
+			read: createReadTool,
+			write: createWriteTool,
+			edit: createEditTool,
+			bash: createBashTool,
+			powershell: () =>
+				createPowerShellTool({
+					programs: options.execution?.powershellPrograms
+						? [...options.execution.powershellPrograms]
+						: undefined,
+				}),
+		};
+		const nativeTools = (options.execution?.tools ?? []).map((name) => {
+			const tool = factories[name]();
+			return defineTool<TSchema>({
+				...tool,
+				execute: async (args, api, context) => {
+					const adapter = resolveAdapter(api.conversationId);
+					return adapter.#invokeExecutionTool(api, context, async (invocation) => {
+						const access = await executionFor(invocation);
+						const env = nativeExecutionEnvironment({
+							...access,
+							cleanup: async () => {
+								throw new Error("Execution cleanup belongs to the host");
+							},
+						});
+						return tool.execute(args as never, { ...api, env }, context);
+					});
+				},
+			});
+		});
 		return defineExtension({
 			name: profile === "default" ? "pakka-core-extension" : "pakka-profile-" + profile,
-			tools: (options.tools ?? []).map((tool) =>
-				defineTool({
-					name: tool.name,
-					description: tool.description,
-					// SAFETY: bootstrap tool parameters are JSON Schema; Durable validates arguments before execute.
-					parameters: tool.parameters as unknown as TSchema,
-					execute: async (args, api, context) => {
-						const adapter = resolveAdapter(api.conversationId);
-						const scope = adapter.activeRunScope ?? adapter.#control.runScope();
-						const result = await adapter.#control.invoke(scope, async (invocation) => {
-							const current = { api, active: true, signal: context.abortSignal };
-							adapter.#nativeInvocations.set(invocation, current);
-							try {
-								return await tool.execute(args as Record<string, unknown>, context.abortSignal, invocation);
-							} finally {
-								current.active = false;
-							}
-						});
-						return { output: [{ type: "text", text: result }] };
-					},
-				}),
-			),
+			tools: [
+				...nativeTools,
+				...(options.tools ?? []).map((tool) =>
+					defineTool({
+						name: tool.name,
+						description: tool.description,
+						// SAFETY: bootstrap tool parameters are JSON Schema; Durable validates arguments before execute.
+						parameters: tool.parameters as unknown as TSchema,
+						execute: async (args, api, context) => {
+							const adapter = resolveAdapter(api.conversationId);
+							const result = await adapter.#invokeExecutionTool(api, context, (invocation) =>
+								tool.execute(args as Record<string, unknown>, context.abortSignal, invocation),
+							);
+							return { output: [{ type: "text", text: result }] };
+						},
+					}),
+				),
+			],
 			sections: options.systemPrompt ? [section("system", () => options.systemPrompt, { tag: false })] : [],
 			hooks: [
 				hook(GenerationTask, {
@@ -2329,6 +2919,11 @@ export class DurableAdapter {
 						let adapter: DurableAdapter | undefined;
 						try {
 							adapter = resolveAdapter(api.conversationId);
+							try {
+								await adapter.#execution();
+							} catch {
+								return { block: "Execution environment unavailable" };
+							}
 							await adapter.refreshCache();
 							const permitted = await adapter.#control.project(context.abortSignal);
 							permitted.check();
@@ -2589,6 +3184,7 @@ export class DurableAdapter {
 				if (this.#managed!.closed) return;
 				this.#managed!.closed = true;
 				await this.#harness.close(BACKGROUND_CONTEXT);
+				await Promise.all([...this.#routes.values()].map((route) => route.#closeExecution()));
 				await this.#database?.close();
 				this.#managed!.unsubscribe?.();
 				await this.#releaseWriter?.();
@@ -4789,6 +5385,7 @@ export class DurableAdapter {
 			this.#stream = undefined;
 		}
 		await this.#conversation.abort(BACKGROUND_CONTEXT).catch(() => {});
+		await this.#closeExecution();
 		this.#routes.delete(this.#conversation.id);
 		if (!this.#managed) {
 			await this.#harness.close(BACKGROUND_CONTEXT);

@@ -1,0 +1,360 @@
+
+FILE apps/server/test/pocket-directories.test.ts
+TAP version 13
+# Subtest: WebUI directories: authorized browsing, independent changes and revocation use current resource authority
+not ok 1 - WebUI directories: authorized browsing, independent changes and revocation use current resource authority
+  ---
+  duration_ms: 62.8774
+  type: 'test'
+  location: 'D:\\Projects\\kappa\\migration-worktrees\\pakka-execution-env-control-1.4.0\\apps\\server\\test\\pocket-directories.test.ts:10:1'
+  failureType: 'testCodeFailure'
+  error: "EPERM: operation not permitted, symlink 'C:\\Users\\mapleland\\AppData\\Local\\Temp\\pakka-integration-u7GYRx\\outside' -> 'C:\\Users\\mapleland\\AppData\\Local\\Temp\\pakka-integration-u7GYRx\\workspace\\escape'"
+  code: 'EPERM'
+  stack: |-
+    async symlink (node:internal/fs/promises:1002:10)
+    async TestContext.<anonymous> (file:///D:/Projects/kappa/migration-worktrees/pakka-execution-env-control-1.4.0/apps/server/test/pocket-directories.test.ts:19:3)
+    async Test.run (node:internal/test_runner/test:1208:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1309.8909
+
+
+EXIT 1 
+
+FILE apps/server/test/pocket-hooks-boundaries.test.ts
+TAP version 13
+# Subtest: WebUI hooks unknown: a real admission followed by lost confirmation is retained across retries and writer reopen without a second HTTP
+ok 1 - WebUI hooks unknown: a real admission followed by lost confirmation is retained across retries and writer reopen without a second HTTP
+  ---
+  duration_ms: 155.9737
+  type: 'test'
+  ...
+# Subtest: WebUI hooks finite rate: 30 actual native inputs consume the hour quota and the 31st has no effect
+ok 2 - WebUI hooks finite rate: 30 actual native inputs consume the hour quota and the 31st has no effect
+  ---
+  duration_ms: 678.7218
+  type: 'test'
+  ...
+# Subtest: WebUI hooks finite bytes: oversized raw input has no effect and the exact 5 MiB bound fits the real native text limit
+ok 3 - WebUI hooks finite bytes: oversized raw input has no effect and the exact 5 MiB bound fits the real native text limit
+  ---
+  duration_ms: 69.1128
+  type: 'test'
+  ...
+1..3
+# tests 3
+# suites 0
+# pass 3
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1979.8826
+
+
+EXIT 0 
+
+FILE apps/server/test/pocket-people-boundaries.test.ts
+TAP version 13
+# Subtest: WebUI people: uncertain native storage closes authority rather than restoring a bootstrap owner
+not ok 1 - WebUI people: uncertain native storage closes authority rather than restoring a bootstrap owner
+  ---
+  duration_ms: 78.1218
+  type: 'test'
+  location: 'D:\\Projects\\kappa\\migration-worktrees\\pakka-execution-env-control-1.4.0\\apps\\server\\test\\pocket-people-boundaries.test.ts:112:1'
+  failureType: 'testCodeFailure'
+  error: "EBUSY: resource busy or locked, rename 'C:\\Users\\mapleland\\AppData\\Local\\Temp\\pakka-integration-3CQJmr\\profile\\sessions\\ccf196e2-e4a2-4e29-8699-9f30788099f1\\main.sqlite' -> 'C:\\Users\\mapleland\\AppData\\Local\\Temp\\pakka-integration-3CQJmr\\profile\\sessions\\ccf196e2-e4a2-4e29-8699-9f30788099f1\\main.sqlite.saved'"
+  code: 'EBUSY'
+  stack: |-
+    async rename (node:internal/fs/promises:785:10)
+    async TestContext.<anonymous> (file:///D:/Projects/kappa/migration-worktrees/pakka-execution-env-control-1.4.0/apps/server/test/pocket-people-boundaries.test.ts:120:3)
+    async Test.run (node:internal/test_runner/test:1208:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1170.9166
+
+
+EXIT 1 
+
+FILE apps/webui/test/transcript-parts-browser.test.ts
+TAP version 13
+# Subtest: WebUI transcript: valid image parts and a truncated tool declaration remain visible through real reopen and paging
+not ok 1 - WebUI transcript: valid image parts and a truncated tool declaration remain visible through real reopen and paging
+  ---
+  duration_ms: 120.1625
+  type: 'test'
+  location: 'D:\\Projects\\kappa\\migration-worktrees\\pakka-execution-env-control-1.4.0\\apps\\webui\\test\\transcript-parts-browser.test.ts:469:1'
+  failureType: 'testCodeFailure'
+  error: 'Conversation 11 does not exist'
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    #requireConversation (file:///D:/Projects/kappa/migration-worktrees/pakka-execution-env-control-1.4.0/node_modules/@earendil-works/pi-durable/dist/session/transaction.js:726:19)
+    async file:///D:/Projects/kappa/migration-worktrees/pakka-execution-env-control-1.4.0/node_modules/@earendil-works/pi-durable/dist/session/transaction.js:158:13
+  ...
+# Subtest: WebUI transcript: inherited tool results do not swallow a different live call with the same provider id
+not ok 2 - WebUI transcript: inherited tool results do not swallow a different live call with the same provider id
+  ---
+  duration_ms: 100.6943
+  type: 'test'
+  location: 'D:\\Projects\\kappa\\migration-worktrees\\pakka-execution-env-control-1.4.0\\apps\\webui\\test\\transcript-parts-browser.test.ts:634:1'
+  failureType: 'testCodeFailure'
+  error: 'Conversation 11 does not exist'
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    #requireConversation (file:///D:/Projects/kappa/migration-worktrees/pakka-execution-env-control-1.4.0/node_modules/@earendil-works/pi-durable/dist/session/transaction.js:726:19)
+    async file:///D:/Projects/kappa/migration-worktrees/pakka-execution-env-control-1.4.0/node_modules/@earendil-works/pi-durable/dist/session/transaction.js:158:13
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 0
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1406.5446
+
+
+EXIT 1 
+
+FILE packages/agent/test/strategy-omission.test.ts
+TAP version 13
+# Subtest: explicit null range omits an existing summary without resurrecting source or adding a placeholder
+ok 1 - explicit null range omits an existing summary without resurrecting source or adding a placeholder
+  ---
+  duration_ms: 113.9533
+  type: 'test'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1146.1651
+
+
+EXIT 0 
+
+FILE packages/mas/test/mas.test.ts
+TAP version 13
+# Subtest: M2 MAS: readiness barrier activates the entire roster on one durable commit
+not ok 1 - M2 MAS: readiness barrier activates the entire roster on one durable commit
+  ---
+  duration_ms: 65.6178
+  type: 'test'
+  location: 'D:\\Projects\\kappa\\migration-worktrees\\pakka-execution-env-control-1.4.0\\packages\\mas\\test\\mas.test.ts:14:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    0 !== 1
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 1
+  actual: 0
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///D:/Projects/kappa/migration-worktrees/pakka-execution-env-control-1.4.0/packages/mas/test/mas.test.ts:41:10)
+    async Test.run (node:internal/test_runner/test:1208:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3)
+  ...
+# Subtest: M2 MAS: activation keeps unfinished and uncertain members behind the readiness barrier
+ok 2 - M2 MAS: activation keeps unfinished and uncertain members behind the readiness barrier
+  ---
+  duration_ms: 32.4081
+  type: 'test'
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 1
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1084.7431
+
+
+EXIT 1 
+
+FILE packages/mas/test/unknown.test.ts
+TAP version 13
+# Subtest: M2 MAS: unknown create persistence keeps honest state and seals the Session
+not ok 1 - M2 MAS: unknown create persistence keeps honest state and seals the Session
+  ---
+  duration_ms: 56.1206
+  type: 'test'
+  location: 'D:\\Projects\\kappa\\migration-worktrees\\pakka-execution-env-control-1.4.0\\packages\\mas\\test\\unknown.test.ts:8:2'
+  failureType: 'testCodeFailure'
+  error: "EBUSY: resource busy or locked, unlink 'C:\\Users\\mapleland\\AppData\\Local\\Temp\\pakka-integration-hfz04p\\profile\\sessions\\7e0d2135-2e88-4a8b-9efc-52849f38bd7d\\main.sqlite'"
+  code: 'EBUSY'
+  ...
+# Subtest: M2 MAS: unknown deliver persistence keeps honest state and seals the Session
+not ok 2 - M2 MAS: unknown deliver persistence keeps honest state and seals the Session
+  ---
+  duration_ms: 29.0359
+  type: 'test'
+  location: 'D:\\Projects\\kappa\\migration-worktrees\\pakka-execution-env-control-1.4.0\\packages\\mas\\test\\unknown.test.ts:8:2'
+  failureType: 'testCodeFailure'
+  error: "EBUSY: resource busy or locked, unlink 'C:\\Users\\mapleland\\AppData\\Local\\Temp\\pakka-integration-YwLJre\\profile\\sessions\\da0574e2-60bf-42cf-8f90-b389d7b53cd1\\main.sqlite'"
+  code: 'EBUSY'
+  ...
+
+
+EXIT null ETIMEDOUT
+
+FILE apps/webui/test/extension-client.test.ts
+TAP version 13
+# Subtest: Extension client: original-result reads reject a different extension, request or actor without replay
+ok 1 - Extension client: original-result reads reject a different extension, request or actor without replay
+  ---
+  duration_ms: 51.8054
+  type: 'test'
+  ...
+# Subtest: Extension client: lost/malformed or mismatched response stays unknown and does not replay a write
+ok 2 - Extension client: lost/malformed or mismatched response stays unknown and does not replay a write
+  ---
+  duration_ms: 8.8501
+  type: 'test'
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 227.7427
+
+
+EXIT 0 
+
+FILE apps/webui/test/browser-input.test.ts
+TAP version 13
+# Subtest: Browser input driver: Enter activates a plain native button, not only synthetic key handlers
+not ok 1 - Browser input driver: Enter activates a plain native button, not only synthetic key handlers
+  ---
+  duration_ms: 1343.6095
+  type: 'test'
+  location: 'D:\\Projects\\kappa\\migration-worktrees\\pakka-execution-env-control-1.4.0\\apps\\webui\\test\\browser-input.test.ts:8:1'
+  failureType: 'testCodeFailure'
+  error: "EBUSY: resource busy or locked, unlink 'C:\\Users\\mapleland\\AppData\\Local\\Temp\\pakka-browser-input-U7Jx4D\\AppData\\LocalLow\\SogouPY\\LOG\\APP\\SGTool_41608.log'"
+  code: 'EBUSY'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1501.642
+
+
+EXIT 1 
+
+FILE apps/webui/test/browser-launch.test.ts
+TAP version 13
+# Subtest: Browser discovery: explicit executable is canonical and a broken override never falls back
+not ok 1 - Browser discovery: explicit executable is canonical and a broken override never falls back
+  ---
+  duration_ms: 4.6602
+  type: 'test'
+  location: 'D:\\Projects\\kappa\\migration-worktrees\\pakka-execution-env-control-1.4.0\\apps\\webui\\test\\browser-launch.test.ts:9:1'
+  failureType: 'testCodeFailure'
+  error: "EPERM: operation not permitted, symlink 'C:\\Program Files\\nodejs\\node.exe' -> 'C:\\Users\\mapleland\\AppData\\Local\\Temp\\pakka-browser-discovery-jgLRuF\\chromium'"
+  code: 'EPERM'
+  stack: |-
+    async symlink (node:internal/fs/promises:1002:10)
+    async TestContext.<anonymous> (file:///D:/Projects/kappa/migration-worktrees/pakka-execution-env-control-1.4.0/apps/webui/test/browser-launch.test.ts:12:3)
+    async Test.run (node:internal/test_runner/test:1208:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3)
+  ...
+# Subtest: Browser discovery: PATH finds a real executable and rejects a nonexecutable candidate
+not ok 2 - Browser discovery: PATH finds a real executable and rejects a nonexecutable candidate
+  ---
+  duration_ms: 4.6979
+  type: 'test'
+  location: 'D:\\Projects\\kappa\\migration-worktrees\\pakka-execution-env-control-1.4.0\\apps\\webui\\test\\browser-launch.test.ts:27:1'
+  failureType: 'testCodeFailure'
+  error: "EPERM: operation not permitted, symlink 'C:\\Program Files\\nodejs\\node.exe' -> 'C:\\Users\\mapleland\\AppData\\Local\\Temp\\pakka-browser-discovery-0vze1d\\google-chrome'"
+  code: 'EPERM'
+  stack: |-
+    async symlink (node:internal/fs/promises:1002:10)
+    async TestContext.<anonymous> (file:///D:/Projects/kappa/migration-worktrees/pakka-execution-env-control-1.4.0/apps/webui/test/browser-launch.test.ts:31:3)
+    async Test.run (node:internal/test_runner/test:1208:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:831:7)
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 0
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 156.6721
+
+
+EXIT 1 
+
+FILE apps/webui/test/browser-contribution.test.ts
+TAP version 13
+# Subtest: WebUI browser contribution: actual UI controls owned page, real frame renders, mobile viewer cannot act
+    # Subtest: recorded wrapper cannot resolve an unconfirmed native browser action
+    ok 1 - recorded wrapper cannot resolve an unconfirmed native browser action
+      ---
+      duration_ms: 138.0703
+      type: 'test'
+      ...
+    1..1
+not ok 1 - WebUI browser contribution: actual UI controls owned page, real frame renders, mobile viewer cannot act
+  ---
+  duration_ms: 30009.9023
+  type: 'test'
+  location: 'D:\\Projects\\kappa\\migration-worktrees\\pakka-execution-env-control-1.4.0\\apps\\webui\\test\\browser-contribution.test.ts:12:1'
+  failureType: 'testTimeoutFailure'
+  error: 'test timed out after 30000ms'
+  code: 'ERR_TEST_FAILURE'
+  ...
+
+
+EXIT null ETIMEDOUT
+
+FILE apps/server/test/pocket-browser.test.ts
+TAP version 13
+# Subtest: WebUI owned browser: real isolated page controls, actual screenshot decode and viewer/resource checks
+not ok 1 - WebUI owned browser: real isolated page controls, actual screenshot decode and viewer/resource checks
+  ---
+  duration_ms: 20007.2617
+  type: 'test'
+  location: 'D:\\Projects\\kappa\\migration-worktrees\\pakka-execution-env-control-1.4.0\\apps\\server\\test\\pocket-browser.test.ts:199:1'
+  failureType: 'testTimeoutFailure'
+  error: 'test timed out after 20000ms'
+  code: 'ERR_TEST_FAILURE'
+  ...
+
+
+EXIT null ETIMEDOUT

@@ -1,0 +1,2 @@
+{"name":"ambient PATH","status":1,"stdout":"","stderr":"<3>WSL (10 - Relay) ERROR: CreateProcessCommon:640: execvpe(/bin/bash) failed: No such file or directory\n"}
+{"name":"Git Bash first","status":0,"stdout":"probe-ok\n","stderr":""}
