@@ -1,29 +1,58 @@
 schema: spec-driven
 
 context: |
-  Pakka is a TypeScript/Node headless Pi integration with an optional WebUI.
-  Start at docs/OVERVIEW.md and the relevant docs/state mappings.
+  Pakka is a TypeScript/Node Pi Durable host and collaboration system.
+  The pakka command opens the WebUI; public SDKs support headless applications.
+  Start at docs/OVERVIEW.md, CONTRIBUTING.md and relevant docs/state mappings.
+  Git operations follow docs/development/GIT-WORKFLOW.md.
+  Inspect the current branch before commits, branches and PR management.
+  Daily work starts from fetched origin/dev on independent branches.
+  Work PRs target dev. Direct dev integration needs explicit batch authority
+  and passing local checks. A dev-to-main release PR needs explicit authority.
+  Never commit or push directly to main.
   OpenSpec owns complete proposal/design/tasks/specs and archive lifecycle.
-  docs/changes only summarizes and fully cites every related change and spec.
-  State describes expectations; status and fixed evidence describe actual results.
-  Public Pi SDK only; mutable native objects stay inside the durable adapter.
-  Preserve original request identity, native steering and fail-closed unknown effects.
-  Tests use real Pi and deterministic local providers, never user credentials.
+  docs/changes summarizes and fully cites every related change and spec.
+  State describes expectations; fixed evidence describes actual results.
+  Public Pi SDK only; native execution/storage objects stay in the adapter.
+  Trusted bootstrap supplies Models; WebUI loads public ModelRuntime config.
+  Preserve original request identity, native steering and fail-closed
+  unknown effects. Tests use real Pi and deterministic local providers,
+  never user credentials.
 
 rules:
   proposal:
-    - Separate operator requirements, prior agreements, design reasoning and observations.
+    - >-
+      Separate operator requirements, prior agreements, design reasoning
+      and observations.
     - Do not infer acceptance or supported scope from implementation progress.
   design:
-    - Preserve actual decision conditions and source/evidence references; do not invent earlier reasoning.
+    - >-
+      Preserve actual decision conditions and source/evidence references;
+      do not invent earlier reasoning.
   specs:
-    - Follow docs/state ownership mappings and retain exact authority and unknown-effect contracts.
-    - Never trim or split existing normative text solely to eliminate validation warnings.
+    - >-
+      Follow docs/state ownership mappings and retain exact authority
+      and unknown-effect contracts.
+    - >-
+      Never trim or split existing normative text solely to eliminate
+      validation warnings.
   tasks:
-    - Keep missing, failing, cancelled and BLOCKED gates visible with candidate identity.
+    - >-
+      Keep missing, failing, cancelled and BLOCKED gates visible
+      with candidate identity.
+    - >-
+      Separate work-branch delivery, dev integration, release PR
+      and OpenSpec archival status.
+    - >-
+      Record selected daily checks; authorized dev integration requires
+      local availability checks before push.
 
 operations:
   archive:
     guidance:
-      - Update docs/changes summaries to cite the archived change and every delta/resulting main spec.
-      - Do not archive incomplete product acceptance just because implementation tasks are checked.
+      - >-
+        Update docs/changes summaries to cite the archived change
+        and every delta/resulting main spec.
+      - >-
+        Do not archive incomplete product acceptance just because
+        implementation tasks are checked.

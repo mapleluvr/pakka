@@ -4,18 +4,18 @@
 
 ## 按产物关系阅读
 
-| 主题                                       | 本目录的职责                                 | 详细契约的维护位置                                                                                               |
-| ------------------------------------------ | -------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| [产品与范围](product.md)                   | 产品组成、用户目标、使用与支持条件           | 本页所链接的领域契约                                                                                             |
-| [Runtime 与 authority](runtime.md)         | 模块依赖、身份、调度、持久化关系             | [架构契约](../development/ARCHITECTURE.md)、[公开 API](../reference/README.md)、OpenSpec 领域场景                |
-| [执行环境](execution-environment.md) | 环境绑定、文件/命令能力、句柄与 owner 寿命 | [使用指南](../guides/EXECUTION-ENVIRONMENT.md)、[Runtime 场景补充](../../openspec/changes/add-execution-environment/specs/conversation-runtime/spec.md) |
-| [Compresser 会话](compressor-session.md)   | 共享容器、独立 Conversation 纠错与封存       | [会话 delta](../../openspec/changes/add-compressor-repair-session/specs/compressor-repair-session/spec.md)       |
-| [Dynamite 持久化](dynamite-persistence.md) | 工作计划、推理结果、产物与恢复提交           | [持久化 spec](../../openspec/specs/dynamite-persistence/spec.md)                                                 |
-| [Durable 源补丁](durable-patch.md)         | 下游补丁行为、基线、构建与安装产物           | 源补丁、机器身份清单、构建脚本及追加式兼容性账本                                                                 |
-| [MAS](mas.md)                              | 成员、通信、观测及界面贡献的关系             | MAS/Broker/DevPack API 与映射的 OpenSpec 场景                                                                    |
-| [WebUI 服务与扩展](webui.md)               | 人类权限、协作、受控服务、可选 facets        | [WebUI 开发契约](../development/WEBUI-DEVELOPMENT.md)及其领域场景                                                |
-| [前端交互](frontend.md)                    | Devin 主体、页面结构、Team、响应式和加载条件 | [Devin 场景](../../openspec/changes/adopt-devin-frontend/specs/devin-frontend/spec.md)；公开接口仍在开发契约/API |
-| [交付与验证](delivery.md)                  | 产物身份、证据要求和门禁关系                 | [验证方法](../development/VERIFICATION.md)、WebUI 开发契约第 9/10 节                                             |
+| 主题                                       | 本目录的职责                                 | 详细契约的维护位置                                                                                                                                      |
+| ------------------------------------------ | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [产品与范围](product.md)                   | 产品组成、用户目标、使用与支持条件           | 本页所链接的领域契约                                                                                                                                    |
+| [Runtime 与 authority](runtime.md)         | 模块依赖、身份、调度、持久化关系             | [架构契约](../development/ARCHITECTURE.md)、[公开 API](../reference/README.md)、OpenSpec 领域场景                                                       |
+| [执行环境](execution-environment.md)       | 环境绑定、文件/命令能力、句柄与 owner 寿命   | [使用指南](../guides/EXECUTION-ENVIRONMENT.md)、[Runtime 场景补充](../../openspec/changes/add-execution-environment/specs/conversation-runtime/spec.md) |
+| [Compresser 会话](compressor-session.md)   | 共享容器、独立 Conversation 纠错与封存       | [会话 delta](../../openspec/changes/add-compressor-repair-session/specs/compressor-repair-session/spec.md)                                              |
+| [Dynamite 持久化](dynamite-persistence.md) | 工作计划、推理结果、产物与恢复提交           | [持久化 spec](../../openspec/specs/dynamite-persistence/spec.md)                                                                                        |
+| [Durable 源补丁](durable-patch.md)         | 下游补丁行为、基线、构建与安装产物           | 源补丁、机器身份清单、构建脚本及追加式兼容性账本                                                                                                        |
+| [MAS](mas.md)                              | 成员、通信、观测及界面贡献的关系             | MAS/Broker/DevPack API 与映射的 OpenSpec 场景                                                                                                           |
+| [WebUI 服务与扩展](webui.md)               | 人类权限、协作、受控服务、可选 facets        | [WebUI 开发契约](../development/WEBUI-DEVELOPMENT.md)及其领域场景                                                                                       |
+| [前端交互](frontend.md)                    | Devin 主体、页面结构、Team、响应式和加载条件 | [Devin 场景](../../openspec/changes/adopt-devin-frontend/specs/devin-frontend/spec.md)；公开接口仍在开发契约/API                                        |
+| [交付与验证](delivery.md)                  | 产物身份、分支职责、证据要求和门禁关系       | [Git 协作](../development/GIT-WORKFLOW.md)、[验证方法](../development/VERIFICATION.md)、WebUI 开发契约第 9/10 节                                        |
 
 ## 与已有规范的分工
 
