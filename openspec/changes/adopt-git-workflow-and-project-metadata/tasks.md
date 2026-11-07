@@ -14,7 +14,7 @@
 - [x] 对照 GitRules 核对四类分支操作、PR 内容及权限。
 - [x] 检查相对链接、锚点、Markdown/YAML 格式和 YAML 解析。
 - [x] 确认产品、依赖与固定证据无差异，检查 git diff。
-- [ ] 在独立分支提交、推送并核对远端 SHA，创建或更新到 dev 的 PR。
+- [x] 在独立分支提交、推送并核对远端 SHA，创建或更新到 dev 的 PR。
 
 本轮选用纯文档/协作元数据检查，未选用模型调用、产品全量回归、独立 GUI 或对抗审查。集成与发布的强制条件由本次采用的 Git 规范承接；工作 PR 交付不代表已合并或发布。
 
@@ -28,3 +28,7 @@
 - `git diff --check` 通过；相对基线的 apps、packages、scripts、integrations、patches、package/lock 与 docs/verification diff 为空。
 
 原始本机检查输出和只读辅助器在 `docs/.temp/`，本记录保留检查方法、版本、范围与实际结论。
+
+## 工作分支交付
+
+主体文档提交为 `5efb5e188efbec3e04f66d44b78615a42d80dc26`，已推送 `pakka/git-workflow-docs` 并通过实际远端引用核对；[PR #2](https://github.com/mapleluvr/pakka/pull/2) 以 dev 为 base。随后同步本任务与 OVERVIEW 的交付状态。当前等待 PR 评审/集成，未合入 dev 或 main，OpenSpec change 保留活动状态。
