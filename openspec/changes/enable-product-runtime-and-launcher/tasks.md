@@ -20,7 +20,7 @@
 
 ## 后续独立切片
 
-- [ ] 长上下文与受控重试切片，核对预算/owner。
+- [ ] 长上下文由[默认 Dynamite 策略](../adopt-default-dynamite-context/tasks.md)承接，核对预算/owner；受控重试仍为独立待设计事项。
 - [ ] 附件和容量治理切片；不得以放大常数冒充生命周期。
 
 本机管理员重新登录恢复仍由[既有设计任务](../improve-webui-navigation-and-local-recovery/tasks.md)承接；`--recover` 是原 Session 打开，不是重新签发 owner 或清除锁。

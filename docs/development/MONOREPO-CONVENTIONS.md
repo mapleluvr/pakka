@@ -140,7 +140,7 @@ Durable ownership 是生命周期关系，不是 ACL。应用 ownership 变更�
 
 ## 8. 外部组件与验收
 
-Dynamite 由宿主显式选用。程序化接入遵循[持久化契约](../state/dynamite-persistence.md)，headless server 的可选贡献遵循 [Dynamite 配置 API](../reference/DYNAMITE-PRODUCT-API.md)及对应固定配对。
+默认 `pakka` 产品由受信任 bootstrap 装配 Dynamite，上下文政策见[产品声明](../state/product.md)。独立 SDK/headless 宿主选择自己的策略；agent 的依赖方向保持独立。程序化接入遵循[持久化契约](../state/dynamite-persistence.md)，既有 headless server 可选贡献遵循 [Dynamite 配置 API](../reference/DYNAMITE-PRODUCT-API.md)及对应固定配对。
 
 `@pakka/dynamite` 继续位于 [mapleluvr/pakka-dynamite](https://github.com/mapleluvr/pakka-dynamite)。其 engine/ports 与 Pakka adapter 可以在同一包内分层；engine 与 adapter 使用明确端口分层；算法通过宿主 inference/source 端口取得批准能力。
 
