@@ -1,0 +1,108 @@
+{
+  "baseline": "83246bacee72efe21d10b522588b211b9892b30f",
+  "branch": "pakka/long-lived-deliveries",
+  "node": "v24.15.0",
+  "files": [
+    {
+      "path": "apps/cli/test/maintenance.test.ts",
+      "bytes": 26144,
+      "sha256": "15dde4d74ed088271e0b27effc87660a2dec75f1ced8f956c29edfa34289e4a7"
+    },
+    {
+      "path": "apps/server/src/pocket-people.ts",
+      "bytes": 31417,
+      "sha256": "21e2d4bc0e15c035d220b0627f59ca7acc82523922ff59b91c3ed0f6446f566e"
+    },
+    {
+      "path": "apps/server/src/pocket.ts",
+      "bytes": 3781,
+      "sha256": "d62000589b1681fcba74df92bb9ad2d56152172283cb77b1e23eae22c6aa98b6"
+    },
+    {
+      "path": "apps/server/test/pocket-owner-recovery.test.ts",
+      "bytes": 5255,
+      "sha256": "576157749410ae24db70c2dd1e82dea372f1da173b3e4b9e852d198f26a6cadd"
+    },
+    {
+      "path": "apps/webui/src/launcher.ts",
+      "bytes": 21730,
+      "sha256": "8d83d836ba06f1490d70e7437dcbaff0e0daf868edeff84d0ed815f90d38733b"
+    },
+    {
+      "path": "apps/webui/src/maintenance-backup.ts",
+      "bytes": 16880,
+      "sha256": "04eaf4f5e747da0a5f3a58fb8ab95ab28e0c936d99bf7daa01fa472c96c953ea"
+    },
+    {
+      "path": "apps/webui/src/maintenance-preserve.ts",
+      "bytes": 6287,
+      "sha256": "75600f7ebcf0f11ecec02130816b2d0109ce0fd9f463a62bf29009678346b32d"
+    },
+    {
+      "path": "apps/webui/src/maintenance-producer.ts",
+      "bytes": 2996,
+      "sha256": "81e614b1a084c0a421598fd872aa4e5dc0e13210e524f96bb92d413043e1657b"
+    },
+    {
+      "path": "apps/webui/src/maintenance-release.ts",
+      "bytes": 18989,
+      "sha256": "e552eb73fbc1c60c52c054b89e12dff5fb6f0c39cf48d3694fd98d71dadd0ecb"
+    },
+    {
+      "path": "apps/webui/src/maintenance-restore.ts",
+      "bytes": 15448,
+      "sha256": "442045efefa253ae1f7e1af33f2bde6095f6ad5faaf35fce703f1a249b9f5d6a"
+    },
+    {
+      "path": "apps/webui/src/maintenance.ts",
+      "bytes": 16842,
+      "sha256": "5dac1a124c1d6ac5aaa1dae6faee1bb2e922ce67643c58f42b30745e2194cfb3"
+    },
+    {
+      "path": "apps/webui/src/private-files.ts",
+      "bytes": 5435,
+      "sha256": "f3707df6f966e64fe7cca41a21fa973cc95ab44ae09b8bdc25be4b7e1911ef44"
+    },
+    {
+      "path": "apps/webui/src/recovery-link.ts",
+      "bytes": 2897,
+      "sha256": "775d0c62e1d73e1f2b5e7cc35a6613b1dbbb215260a8883d279f8ce8c5ed8e83"
+    },
+    {
+      "path": "packages/agent/src/durable-adapter.ts",
+      "bytes": 229206,
+      "sha256": "d73283362365e7011d135994cc7573cc8cdd2bf8174cbd92ee17cb86da54ccd3"
+    },
+    {
+      "path": "packages/agent/src/index.ts",
+      "bytes": 538,
+      "sha256": "852b7ea04f66cba138ccc6facc00bb3613b818226b02aa298eb96ac8f8be3f76"
+    },
+    {
+      "path": "packages/agent/src/types.ts",
+      "bytes": 34472,
+      "sha256": "7c503af7a199ec84ca7df639ca4b24308b73439b0a2c8e937d3a5d7a3017de4b"
+    },
+    {
+      "path": "packages/agent/test/storage-maintenance.test.ts",
+      "bytes": 7982,
+      "sha256": "f4b6e1f2f759307b74bf7966e86e5d08fe0b8eb8c65c4bddee1f0e0af8dfb5fc"
+    },
+    {
+      "path": "scripts/consumer-maintenance.mjs",
+      "bytes": 5239,
+      "sha256": "6f585cc84a6a0555d3d3cf77487ba48180dc2120506cb06c2c3d550c7f2832ea"
+    },
+    {
+      "path": "scripts/pack-release.mjs",
+      "bytes": 2822,
+      "sha256": "a0f9f7905b8aa2cc5b23aa99b4c45837a46c1dbedee13883ab177c7a0521ca0c"
+    },
+    {
+      "path": "scripts/pack-smoke.mjs",
+      "bytes": 10630,
+      "sha256": "7f545dd8b04de4163e4e1b75cfb4e1b228f9bc41be1d5981c7796bfc99e2d71c"
+    }
+  ],
+  "sourceSha256": "0a962daae2e8600d809a5d1b5ad8217892f0bdbb5f26d8486c2614b585e85f68"
+}

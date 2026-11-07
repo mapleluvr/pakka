@@ -1,4 +1,5 @@
 import { spawnSync } from "node:child_process";
+import { writeReleaseManifest } from "./pack-release.mjs";
 import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
@@ -46,7 +47,7 @@ function run(name, args, cwd) {
 		encoding: "utf8",
 		// Cold installs of the bundled native cohort can exceed three minutes on Windows.
 		// Keep functional consumers bounded separately; do not retry a failed operation.
-		timeout: name.startsWith("install") ? 600000 : 180000,
+		timeout: name.startsWith("install") || name === "maintenance" ? 600000 : 180000,
 		maxBuffer: 4 * 1024 * 1024,
 	});
 	writeFileSync(
@@ -89,6 +90,7 @@ for (const name of ["protocol", "client", "cli", "server", "webui"])
 		[npmCli, "pack", "--ignore-scripts", "--pack-destination", consumer],
 		join(root, ["cli", "server", "webui"].includes(name) ? "apps" : "packages", name),
 	);
+await writeReleaseManifest(consumer);
 writeFileSync(
 	join(consumer, "package.json"),
 	JSON.stringify(
@@ -125,6 +127,7 @@ copyFileSync(join(root, "scripts", "consumer-broker.mjs"), join(consumer, "broke
 copyFileSync(join(root, "scripts", "consumer-devpack.mjs"), join(consumer, "devpack.mjs"));
 copyFileSync(join(root, "scripts", "consumer-apps.mjs"), join(consumer, "apps.mjs"));
 copyFileSync(join(root, "scripts", "consumer-launcher.mjs"), join(consumer, "launcher.mjs"));
+copyFileSync(join(root, "scripts", "consumer-maintenance.mjs"), join(consumer, "maintenance.mjs"));
 copyFileSync(join(root, "scripts", "consumer-product.mjs"), join(consumer, "product.mjs"));
 copyFileSync(join(root, "scripts", "consumer-pocket-services.mjs"), join(consumer, "pocket-services.mjs"));
 copyFileSync(join(root, "scripts", "consumer-mas-board.mjs"), join(consumer, "mas-board.mjs"));
@@ -234,6 +237,7 @@ console.log(run("broker", [join(consumer, "broker.mjs")], consumer));
 console.log(run("devpack", [join(consumer, "devpack.mjs")], consumer));
 console.log(run("apps", [join(consumer, "apps.mjs")], consumer));
 console.log(run("launcher", [join(consumer, "launcher.mjs")], consumer));
+console.log(run("maintenance", [join(consumer, "maintenance.mjs")], consumer));
 console.log(run("product", [join(consumer, "product.mjs")], consumer));
 console.log(run("pocket-services", [join(consumer, "pocket-services.mjs")], consumer));
 console.log(run("pocket-product", [join(consumer, "pocket-product.mjs")], consumer));

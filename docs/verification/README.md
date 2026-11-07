@@ -4,6 +4,8 @@
 
 | 核对对象                        | 记录                                                                                                         |
 | ------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| 本机登录、冷备份与升级恢复      | [维护内核、真实故障与安装升级/回退](LOCAL-MAINTENANCE-DELIVERY.md)                                           |
+| 长期投递与原请求核对            | [累计门槛解除、旧格式迁移与安装消费](LONG-LIVED-DELIVERIES.md)                                               |
 | Pi 原生配置与默认 WebUI 入口    | [Runtime 演进、Session 隔离与安装消费](PRODUCT-RUNTIME-LAUNCHER.md)                                          |
 | ExecutionEnv / 1.4.0-pakka.2    | [.2 复建、切换与安装消费](EXECUTION-ENVIRONMENT-PAKKA-2.md)                                                  |
 | ExecutionEnv / 1.4.0-pakka.1    | [初轮执行环境接入与安装消费](EXECUTION-ENVIRONMENT.md)                                                       |

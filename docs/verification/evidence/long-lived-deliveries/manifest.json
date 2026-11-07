@@ -1,0 +1,111 @@
+{
+  "recordedAt": "2026-11-07T11:52:11.539Z",
+  "baseline": "e7c938ef3b7c2005ef9db319bd84598c25ab8b23",
+  "branch": "pakka/long-lived-deliveries",
+  "sourceSha256": "911f6cb8d5e8df7634e18934bfa965ae7e5f99b466f01826c161a44a9adef26b",
+  "node": "v24.15.0",
+  "npm": "11.12.1",
+  "full": {
+    "tests": 816,
+    "pass": 814,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 2,
+    "duration_ms": 1376662.0638
+  },
+  "consumer": "C:\\Users\\mapleland\\AppData\\Local\\Temp\\pakka-packed-consumer-GEjE6B",
+  "archives": [
+    {
+      "name": "pakka-agent-0.7.0.tgz",
+      "bytes": 14728344,
+      "sha256": "aa6af7840895f4a6609482407032e6423e614b3ec405159e544aa777d74260f8"
+    },
+    {
+      "name": "pakka-cli-0.1.0.tgz",
+      "bytes": 1528,
+      "sha256": "a86c0ac1c38c2438f045971d16a86315451bacef0249d70c11c9ab4b74d30329"
+    },
+    {
+      "name": "pakka-client-0.1.0.tgz",
+      "bytes": 4493,
+      "sha256": "f69638bd5756110bdb87b9a41974a23d10106f2a8aa50e197d78416b8138e89d"
+    },
+    {
+      "name": "pakka-mas-0.4.0.tgz",
+      "bytes": 13570,
+      "sha256": "8d467427927cdd29424a09e2827777e01002bb006f480101bd5f74ed0660b56d"
+    },
+    {
+      "name": "pakka-mas-devpack-0.2.0.tgz",
+      "bytes": 42962,
+      "sha256": "f3e461ae02aa769725183f1cab13468769ab8ffb96650434279f39de481b5b80"
+    },
+    {
+      "name": "pakka-protocol-0.1.0.tgz",
+      "bytes": 13110,
+      "sha256": "82c8f76f22a6879a71c2c15680e742dbc775aad1e515f915cbe46b761355580e"
+    },
+    {
+      "name": "pakka-server-0.5.0.tgz",
+      "bytes": 83654,
+      "sha256": "888a590d591c265b0c214eb0ba87cd1d7faf782eb40783724f6789f3801e250e"
+    },
+    {
+      "name": "pakka-webui-0.1.0.tgz",
+      "bytes": 684895,
+      "sha256": "845d8d7e6b671f2d6b82b6c8c9a54b6ba8b0cdf2b1133f51dd7e65e2e120b5b3"
+    }
+  ],
+  "evidence": [
+    {
+      "name": "source.json",
+      "bytes": 2931,
+      "sha256": "e979232778f55919f32d44ad5476555161a0b06ab4c88dfc4107b5b870bcddce"
+    },
+    {
+      "name": "delivery-red.txt",
+      "bytes": 1529,
+      "sha256": "36e97a523d73341c4dd1ffe75d4df4bd543a964b11eede4d8f8961d6e323c061"
+    },
+    {
+      "name": "ports-red.txt",
+      "bytes": 3769,
+      "sha256": "47e088a5eca4f28d4d04dd9915e89444315c5f78fac139099a3cfb2fb60a16a8"
+    },
+    {
+      "name": "ports-green.txt",
+      "bytes": 2075,
+      "sha256": "299e14299626e95e730b40efaaf836e757aa4c7d82ab1188b8621fc3480e1d2b"
+    },
+    {
+      "name": "first-full.txt",
+      "bytes": 93009,
+      "sha256": "6f8f70a7d36a446309435002aebd74737fbaa87ae9d03a92e86f395f95220e98"
+    },
+    {
+      "name": "full.txt",
+      "bytes": 92333,
+      "sha256": "b77bc8b1c29f1ac222ee51decf359162c1c6e616d545fa57ecc2891816429a5a"
+    },
+    {
+      "name": "build.txt",
+      "bytes": 913,
+      "sha256": "e281478c1a6cce90985b5445d9450b2e1e8f560504219c1ae651d9d50b6b3506"
+    },
+    {
+      "name": "types.txt",
+      "bytes": 216,
+      "sha256": "34d110e626b71951d584f5bcf05dbc7c1cd140c888071a2c4bd31b790d2e06ab"
+    },
+    {
+      "name": "installed.txt",
+      "bytes": 4700,
+      "sha256": "53f67f6023866c7917ae29805cc95544549a5371195c7f161c1d513470afdc75"
+    },
+    {
+      "name": "installed-ports.txt",
+      "bytes": 82,
+      "sha256": "8a00e4661396cd186ddd90c846604418020f45c8c5a503453ce6b2301d008ff4"
+    }
+  ]
+}

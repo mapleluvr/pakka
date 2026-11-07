@@ -2,6 +2,44 @@ import type { Models, ModelThinkingLevel, Model, Api } from "@earendil-works/pi-
 
 export type Hook = "real_context.write" | "context_artifacts.write";
 export type Grant = Hook | "input.submit" | "branch.control" | "model.infer";
+export interface StorageMaintenanceWork {
+	readonly pendingTasks: number;
+	readonly queuedInputs: number;
+	readonly fingerprint: string;
+	readonly sample: readonly {
+		readonly kind: "task" | "input";
+		readonly id: string;
+		readonly conversationId: string;
+		readonly state: string;
+		readonly definition?: string;
+	}[];
+	readonly sampleTruncated: boolean;
+}
+/** Trusted offline access. Does not construct a Harness, scheduler, model or tool. */
+export interface StorageMaintenanceOptions {
+	readonly storageDir: string;
+	readonly expectedSessionId?: string;
+	readonly stores: readonly RuntimeStoreOptions[];
+}
+export interface StorageMaintenance {
+	readonly identity: {
+		readonly sessionId: string;
+		readonly storageDir: string;
+		readonly cwd?: string;
+		readonly kind: "runtime" | "compresser";
+	};
+	snapshot(namespace: string): Promise<RuntimeStoreSnapshot>;
+	work(): Promise<StorageMaintenanceWork>;
+	commit(
+		changes: readonly {
+			readonly namespace: string;
+			readonly expectedVersion: number;
+			readonly data: JsonObject;
+		}[],
+	): Promise<void>;
+	backup(destination: string): Promise<{ readonly sessionId: string; readonly file: string }>;
+	close(): Promise<void>;
+}
 export interface WriterRecoveryOptions {
 	readonly storageDir: string;
 	readonly expectedClaim: { readonly pid: number; readonly nonce: string };
@@ -617,7 +655,9 @@ export interface RuntimeView {
 /** Bootstrap-owned catalog. Data never grants authority and commands never expose native handles. */
 export interface CatalogOptions {
 	readonly namespace: string;
-	readonly maxDeliveries: number;
+	/** @deprecated Ignored compatibility input. Retained deliveries have no cumulative count limit. */
+	readonly maxDeliveries?: number;
+	/** Maximum queued/placed deliveries per recipient, independent of retained history. */
 	readonly maxPending: number;
 }
 export type MemberLifetime = "persistent" | "temporary" | "task-bound" | "background";

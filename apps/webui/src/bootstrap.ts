@@ -212,7 +212,7 @@ export async function startPocket(options: PocketProductOptions) {
 			createPocketWorkspace({
 				runtime,
 				people,
-				catalog: { namespace: "pocket.workspace", maxDeliveries: 512, maxPending: 32 },
+				catalog: { namespace: "pocket.workspace", maxPending: 32 },
 				profileCeiling: () => profiles,
 				beforeInput: (actor, ref) => collaboration.checkInput(actor, ref),
 				// Native jobs retain the creator, not a browser session; enforce the same current driver lease.

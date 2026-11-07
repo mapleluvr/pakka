@@ -1,0 +1,148 @@
+{
+  "schema": 1,
+  "workingSourceSha256": "0a962daae2e8600d809a5d1b5ad8217892f0bdbb5f26d8486c2614b585e85f68",
+  "comparison": "identical bytes or CRLF to LF only",
+  "crlfNormalizedFiles": 7,
+  "files": [
+    {
+      "path": "apps/cli/test/maintenance.test.ts",
+      "workingSha256": "15dde4d74ed088271e0b27effc87660a2dec75f1ced8f956c29edfa34289e4a7",
+      "gitIndexSha256": "15dde4d74ed088271e0b27effc87660a2dec75f1ced8f956c29edfa34289e4a7",
+      "gitBlob": "c0d346ef7dd2dea257e1a4b73ff1edf4f689a6a1",
+      "crlfNormalized": false
+    },
+    {
+      "path": "apps/server/src/pocket-people.ts",
+      "workingSha256": "21e2d4bc0e15c035d220b0627f59ca7acc82523922ff59b91c3ed0f6446f566e",
+      "gitIndexSha256": "d04dd9909ef3ebf67d95d37b1f67159dc997ff8b82742368f1a2d767c1bfe605",
+      "gitBlob": "afc4ed1357fbb703a44e80e4e8c9d07fba1990e6",
+      "crlfNormalized": true
+    },
+    {
+      "path": "apps/server/src/pocket.ts",
+      "workingSha256": "d62000589b1681fcba74df92bb9ad2d56152172283cb77b1e23eae22c6aa98b6",
+      "gitIndexSha256": "6611588ea95fe5707429e711eeed0502f23a16c26a58f13ab07540703c623e30",
+      "gitBlob": "f6a89fd94dc469552a00d3c857c829e403d161c0",
+      "crlfNormalized": true
+    },
+    {
+      "path": "apps/server/test/pocket-owner-recovery.test.ts",
+      "workingSha256": "576157749410ae24db70c2dd1e82dea372f1da173b3e4b9e852d198f26a6cadd",
+      "gitIndexSha256": "576157749410ae24db70c2dd1e82dea372f1da173b3e4b9e852d198f26a6cadd",
+      "gitBlob": "d377d9c2bd30ca679102d9f402837bc53df53382",
+      "crlfNormalized": false
+    },
+    {
+      "path": "apps/webui/src/launcher.ts",
+      "workingSha256": "8d83d836ba06f1490d70e7437dcbaff0e0daf868edeff84d0ed815f90d38733b",
+      "gitIndexSha256": "d1bcd10c0c15e19d34764c868fe3e78910213dc1a9d86cc6f5ac727d1fdfa270",
+      "gitBlob": "fc61715a18fb87fa9b823b49189e4713e547342d",
+      "crlfNormalized": true
+    },
+    {
+      "path": "apps/webui/src/maintenance-backup.ts",
+      "workingSha256": "04eaf4f5e747da0a5f3a58fb8ab95ab28e0c936d99bf7daa01fa472c96c953ea",
+      "gitIndexSha256": "04eaf4f5e747da0a5f3a58fb8ab95ab28e0c936d99bf7daa01fa472c96c953ea",
+      "gitBlob": "fb6c0260688bcdb26f6ecfb97e28af74b666c6e9",
+      "crlfNormalized": false
+    },
+    {
+      "path": "apps/webui/src/maintenance-preserve.ts",
+      "workingSha256": "75600f7ebcf0f11ecec02130816b2d0109ce0fd9f463a62bf29009678346b32d",
+      "gitIndexSha256": "75600f7ebcf0f11ecec02130816b2d0109ce0fd9f463a62bf29009678346b32d",
+      "gitBlob": "eb376e8e596b4839082697dcc6dd11d032d90b72",
+      "crlfNormalized": false
+    },
+    {
+      "path": "apps/webui/src/maintenance-producer.ts",
+      "workingSha256": "81e614b1a084c0a421598fd872aa4e5dc0e13210e524f96bb92d413043e1657b",
+      "gitIndexSha256": "81e614b1a084c0a421598fd872aa4e5dc0e13210e524f96bb92d413043e1657b",
+      "gitBlob": "d1eb02e4bf52f775cadf8f6ddbcc7756358834ba",
+      "crlfNormalized": false
+    },
+    {
+      "path": "apps/webui/src/maintenance-release.ts",
+      "workingSha256": "e552eb73fbc1c60c52c054b89e12dff5fb6f0c39cf48d3694fd98d71dadd0ecb",
+      "gitIndexSha256": "e552eb73fbc1c60c52c054b89e12dff5fb6f0c39cf48d3694fd98d71dadd0ecb",
+      "gitBlob": "dd249975fa492ab2d896cb0b3ef1dfbccee90765",
+      "crlfNormalized": false
+    },
+    {
+      "path": "apps/webui/src/maintenance-restore.ts",
+      "workingSha256": "442045efefa253ae1f7e1af33f2bde6095f6ad5faaf35fce703f1a249b9f5d6a",
+      "gitIndexSha256": "442045efefa253ae1f7e1af33f2bde6095f6ad5faaf35fce703f1a249b9f5d6a",
+      "gitBlob": "729e45bf3b41300c7f836a0786d17fd51e067c04",
+      "crlfNormalized": false
+    },
+    {
+      "path": "apps/webui/src/maintenance.ts",
+      "workingSha256": "5dac1a124c1d6ac5aaa1dae6faee1bb2e922ce67643c58f42b30745e2194cfb3",
+      "gitIndexSha256": "5dac1a124c1d6ac5aaa1dae6faee1bb2e922ce67643c58f42b30745e2194cfb3",
+      "gitBlob": "a298a3badc473e4a99fa758a578594ea6ef15a30",
+      "crlfNormalized": false
+    },
+    {
+      "path": "apps/webui/src/private-files.ts",
+      "workingSha256": "f3707df6f966e64fe7cca41a21fa973cc95ab44ae09b8bdc25be4b7e1911ef44",
+      "gitIndexSha256": "f3707df6f966e64fe7cca41a21fa973cc95ab44ae09b8bdc25be4b7e1911ef44",
+      "gitBlob": "2c453db48026edc3cd5b62c48714415b438f6467",
+      "crlfNormalized": false
+    },
+    {
+      "path": "apps/webui/src/recovery-link.ts",
+      "workingSha256": "775d0c62e1d73e1f2b5e7cc35a6613b1dbbb215260a8883d279f8ce8c5ed8e83",
+      "gitIndexSha256": "775d0c62e1d73e1f2b5e7cc35a6613b1dbbb215260a8883d279f8ce8c5ed8e83",
+      "gitBlob": "bdcbf22966d61b00beae3eab429e801817d753fb",
+      "crlfNormalized": false
+    },
+    {
+      "path": "packages/agent/src/durable-adapter.ts",
+      "workingSha256": "d73283362365e7011d135994cc7573cc8cdd2bf8174cbd92ee17cb86da54ccd3",
+      "gitIndexSha256": "58877e2f4e16815cffa3b6c54c128898adcab12f07e798390ac3f1bc57794570",
+      "gitBlob": "1739f91d160d396619c41a4999d94c229b171fe7",
+      "crlfNormalized": true
+    },
+    {
+      "path": "packages/agent/src/index.ts",
+      "workingSha256": "852b7ea04f66cba138ccc6facc00bb3613b818226b02aa298eb96ac8f8be3f76",
+      "gitIndexSha256": "03bf1f8bd78efa1e085fcb6035d61624e2a86434e934c46408d61b841d17a3d8",
+      "gitBlob": "91201b5e872a59a3e4306f4e99395875170172c2",
+      "crlfNormalized": true
+    },
+    {
+      "path": "packages/agent/src/types.ts",
+      "workingSha256": "7c503af7a199ec84ca7df639ca4b24308b73439b0a2c8e937d3a5d7a3017de4b",
+      "gitIndexSha256": "24d7f6dc7e6bd698d822861fded4d8bae7efb14eaeb7df3ffcae4b2c5500594a",
+      "gitBlob": "360aa9991b3e9a30b6adfafa77423b66da821ce1",
+      "crlfNormalized": true
+    },
+    {
+      "path": "packages/agent/test/storage-maintenance.test.ts",
+      "workingSha256": "f4b6e1f2f759307b74bf7966e86e5d08fe0b8eb8c65c4bddee1f0e0af8dfb5fc",
+      "gitIndexSha256": "f4b6e1f2f759307b74bf7966e86e5d08fe0b8eb8c65c4bddee1f0e0af8dfb5fc",
+      "gitBlob": "28a61ae7e1459874b42597f598f561b6d3cfcc9c",
+      "crlfNormalized": false
+    },
+    {
+      "path": "scripts/consumer-maintenance.mjs",
+      "workingSha256": "6f585cc84a6a0555d3d3cf77487ba48180dc2120506cb06c2c3d550c7f2832ea",
+      "gitIndexSha256": "6f585cc84a6a0555d3d3cf77487ba48180dc2120506cb06c2c3d550c7f2832ea",
+      "gitBlob": "c23ce3703751cee555626c404a07292106e75368",
+      "crlfNormalized": false
+    },
+    {
+      "path": "scripts/pack-release.mjs",
+      "workingSha256": "a0f9f7905b8aa2cc5b23aa99b4c45837a46c1dbedee13883ab177c7a0521ca0c",
+      "gitIndexSha256": "a0f9f7905b8aa2cc5b23aa99b4c45837a46c1dbedee13883ab177c7a0521ca0c",
+      "gitBlob": "57b92b9dd5791f2a4a0b2537bc18fa8a4255da68",
+      "crlfNormalized": false
+    },
+    {
+      "path": "scripts/pack-smoke.mjs",
+      "workingSha256": "7f545dd8b04de4163e4e1b75cfb4e1b228f9bc41be1d5981c7796bfc99e2d71c",
+      "gitIndexSha256": "cc25739d593651719adabec6e7f8606fa7dee24dd256a09de136ecbe52272f61",
+      "gitBlob": "14d2ef28d9e27b48ec19ad3845a82ea368e70e22",
+      "crlfNormalized": true
+    }
+  ]
+}

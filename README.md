@@ -5,6 +5,7 @@ Pakka 是基于 Pi Durable 的 Agent 宿主与协作系统。在 shell 中运行
 ## 使用入口
 
 - [WebUI 使用与启动](docs/guides/WEBUI-GUIDE.md)：配置 provider、登录、创建 Session/Conversation、设置与扩展。
+- [本机恢复与交付](docs/guides/LOCAL-MAINTENANCE.md)：恢复原身份登录、处理异常占用、冷备份、原位置恢复及固定归档升级。
 - [协作流程编程](docs/guides/MAS-WORKFLOWS.md)：Mermaid、可运行脚本、完成条件、产物与状态保存、分级可行性测试。
 - [MAS 应用指南](docs/guides/MAS-APPLICATION-API.md)：显式 loopback server、client token 和 CLI。
 - [API 参考](docs/reference/README.md)：Runtime、策略、MAS、DevPack 与 Broker。

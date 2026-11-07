@@ -9,7 +9,7 @@ MAS 服务通过 `@pakka/agent` 的公开控制端口，管理同 Session 的成
 ```ts
 import { createMas } from "@pakka/mas";
 
-const mas = await createMas({ runtime, namespace: "crew", maxDeliveries: 64, maxPending: 4 });
+const mas = await createMas({ runtime, namespace: "crew", maxPending: 4 });
 await mas.bootstrap([
 	{ key: "coordinator", owner: "operator" },
 	{ key: "worker", owner: "operator", profile: "reviewer" },
@@ -46,7 +46,11 @@ console.log(await caller.wait(sent.id));
 
 ## A2A 与回执
 
-identity 为 namespace + principal + source incarnation + requestId，payload fingerprint 包括完整 source、target、text 和 mode。相同请求复用原生 admission；相同 identity 下变更内容、模式或目标拒绝。记录保留整个 Session 生命周期，`maxDeliveries` 是不可回收的 retention 上限；`maxPending` 对每名收件人的 queued/placed 记录限流。达到容量时拒绝新 admission，不删除旧回执来允许重放。
+identity 为 namespace + principal + source incarnation + requestId，payload fingerprint 包括完整 source、target、text 和 mode。相同请求复用原生 admission；相同 identity 下变更内容、模式或目标拒绝。记录按 ID 独立持久保存，累计完成数不限制新 admission。`maxPending` 对每名收件人的 queued/placed 记录限流，已完成历史保留原请求去重与回执核对能力。
+
+`maxDeliveries?: number` 是已弃用的兼容字段，SDK 忽略其值；新配置只声明 namespace 与 maxPending。服务配置解析器若收到旧字段，仍要求它是正整数。namespace 和 maxPending 按持久配置核对；旧 maxDeliveries 的变化不阻止原 Session 重开。
+
+Catalog v2 使用轻量接纳索引及独立投递文档。v1 存储可被只读核对；第一次受授权写入在同一原生事务中核对旧 fingerprint/submission 关系、提取投递记录并更新索引。身份、消费和原回执不变。迁移提交失败保留 unknown，禁止自动补建或重放；正常关闭后只能重开原存储核对。迁移后的 v2 Catalog 需要本版或支持该格式的 Runtime，回退旧程序前须恢复一致的迁移前备份。
 
 忙碌收件人要求明确 `steer` 或 `followUp`，原生 post-tools/final placement 仍由 Durable 处理。idle 输入的 fingerprint、UserEntry、native submission、GenerationTask 和 LiveDoc 在同一次 commit 中创建。预算、投影和工具 invocation 继续走 gate。
 

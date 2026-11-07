@@ -1,5 +1,5 @@
 import { createHash, randomBytes, randomUUID, timingSafeEqual } from "node:crypto";
-import type { ConversationRef, JsonObject, Runtime } from "@pakka/agent";
+import type { ConversationRef, JsonObject, Runtime, StorageMaintenance } from "@pakka/agent";
 
 export type PocketRole = "viewer" | "sender" | "driver" | "admin";
 export type PocketPermission =
@@ -303,6 +303,111 @@ function decode(data: JsonObject, version: number, sessionId: string): State {
 	)
 		return bad();
 	return { schema: 1, sessionId, people, sessions, invites };
+}
+
+/** Trusted local maintenance; never exposed through an unauthenticated HTTP route. */
+export interface PocketOwnerRecovery {
+	readonly schema: 1;
+	readonly sessionId: string;
+	readonly ownerId: string;
+	readonly recoveryId: string;
+	readonly tokenHash: string;
+	readonly issuedAt: number;
+	readonly expiresAt: number;
+}
+export async function inspectPocketOwner(maintenance: StorageMaintenance) {
+	const bootstrap = await maintenance.snapshot("pocket.bootstrap");
+	if (
+		bootstrap.version === 0 ||
+		bootstrap.data.schema !== 2 ||
+		bootstrap.data.phase !== "ready" ||
+		!isId(bootstrap.data.ownerId)
+	)
+		throw new Error("Original product owner identity unavailable");
+	const snapshot = await maintenance.snapshot("pocket.people");
+	const state = decode(snapshot.data, snapshot.version, maintenance.identity.sessionId);
+	const owner = state.people.find((person) => person.id === bootstrap.data.ownerId);
+	if (!owner?.active || owner.role !== "admin" || owner.resources !== "*")
+		throw new Error("Original owner is not an active global admin");
+	return freeze({
+		sessionId: state.sessionId,
+		ownerId: owner.id,
+		name: owner.name,
+		activeLogins: state.sessions.filter((session) => session.personId === owner.id && session.active).length,
+	});
+}
+export async function recoverPocketOwner(
+	maintenance: StorageMaintenance,
+	input: { readonly recoveryId: string; readonly token: string; readonly now?: number },
+): Promise<PocketOwnerRecovery> {
+	const now = input.now ?? Date.now();
+	if (!/^[0-9a-f-]{36}$/.test(input.recoveryId) || !/^[A-Za-z0-9_-]{43}$/.test(input.token) || !isTime(now))
+		throw new Error("Invalid owner recovery identity");
+	const owner = await inspectPocketOwner(maintenance);
+	const namespace = "pocket.recovery." + input.recoveryId;
+	const previous = await maintenance.snapshot(namespace);
+	if (previous.version) {
+		const receipt = previous.data;
+		if (
+			receipt.schema !== 1 ||
+			receipt.sessionId !== owner.sessionId ||
+			receipt.ownerId !== owner.ownerId ||
+			receipt.recoveryId !== input.recoveryId ||
+			receipt.tokenHash !== digest(input.token) ||
+			!isTime(receipt.issuedAt) ||
+			!isTime(receipt.expiresAt) ||
+			receipt.expiresAt - receipt.issuedAt !== 600000
+		)
+			throw new Error("Owner recovery receipt conflict");
+		return freeze({
+			schema: 1,
+			sessionId: owner.sessionId,
+			ownerId: owner.ownerId,
+			recoveryId: input.recoveryId,
+			tokenHash: digest(input.token),
+			issuedAt: receipt.issuedAt,
+			expiresAt: receipt.expiresAt,
+		});
+	}
+	const snapshot = await maintenance.snapshot("pocket.people");
+	const state = decode(snapshot.data, snapshot.version, owner.sessionId);
+	for (const session of state.sessions) if (session.personId === owner.ownerId) session.active = false;
+	// Removed inactive credentials remain denied; execution receipts are in independent stores.
+	if (state.sessions.length >= MAX_SESSIONS)
+		state.sessions = state.sessions.filter((session) => session.personId !== owner.ownerId);
+	if (state.sessions.length >= MAX_SESSIONS) throw new Error("Active identity capacity exceeded");
+	const receipt: PocketOwnerRecovery = {
+		schema: 1,
+		sessionId: owner.sessionId,
+		ownerId: owner.ownerId,
+		recoveryId: input.recoveryId,
+		tokenHash: digest(input.token),
+		issuedAt: now,
+		expiresAt: now + 600000,
+	};
+	state.sessions.push({
+		id: "recovery." + input.recoveryId,
+		personId: owner.ownerId,
+		tokenHash: receipt.tokenHash,
+		csrfHash: digest(secret()),
+		expiresAt: receipt.expiresAt,
+		active: true,
+	});
+	decode(state, snapshot.version + 1, owner.sessionId);
+	await maintenance.commit([
+		{ namespace: "pocket.people", expectedVersion: snapshot.version, data: state },
+		{ namespace, expectedVersion: 0, data: { ...receipt } },
+	]);
+	return freeze(receipt);
+}
+/** Trusted restore invalidates browser logins and outstanding invitations, preserving people and grants. */
+export async function revokeRestoredPocketAccess(maintenance: StorageMaintenance): Promise<void> {
+	await inspectPocketOwner(maintenance);
+	const snapshot = await maintenance.snapshot("pocket.people");
+	const state = decode(snapshot.data, snapshot.version, maintenance.identity.sessionId);
+	for (const session of state.sessions) session.active = false;
+	for (const invite of state.invites) if (invite.status === "pending") invite.status = "revoked";
+	await maintenance.commit([{ namespace: "pocket.people", expectedVersion: snapshot.version, data: state }]);
 }
 
 /** One owner per Runtime/namespace. Persistence stays behind the controlled Durable CAS port. */

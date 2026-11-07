@@ -1,0 +1,58 @@
+{
+  "schema": 1,
+  "observedAt": "2026-11-07T16:11:40.367Z",
+  "sourceBaseline": "83246bacee72efe21d10b522588b211b9892b30f",
+  "branch": "pakka/long-lived-deliveries",
+  "gitIndexComparison": {
+    "paths": 20,
+    "crlfNormalizedFiles": 7,
+    "proof": "source-git-index.json"
+  },
+  "finalActiveLsp": {
+    "paths": 17,
+    "clean": 16,
+    "tooLarge": 1,
+    "typeCheckCoverage": "all paths covered by complete TypeScript project check"
+  },
+  "priorNavigationValidation": {
+    "strict": "failed on 3 pre-existing length warnings",
+    "deltaPath": "openspec/changes/improve-webui-navigation-and-local-recovery/specs/devin-frontend/spec.md",
+    "unchangedBlob": "c548979f945ade0ec664a51f11ee32d71d2a7ea6"
+  },
+  "candidateSourceSha256": "0a962daae2e8600d809a5d1b5ad8217892f0bdbb5f26d8486c2614b585e85f68",
+  "sourceFiles": 20,
+  "frozenBeforeAfter": true,
+  "environment": {
+    "node": "v24.15.0",
+    "npm": "11.12.1",
+    "platform": "win32",
+    "arch": "x64",
+    "piDurable": "1.4.0-pakka.2"
+  },
+  "build": "passed",
+  "types": "passed",
+  "full": {
+    "tests": 838,
+    "pass": 836,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 2,
+    "todo": 0
+  },
+  "installed": {
+    "status": "passed",
+    "steps": 34,
+    "archives": 8,
+    "releaseId": "1a7f3f618b268ec296a01455edace46bca71e1baee5a7513fa54eb2c2745992a",
+    "consumer": "C:\\Users\\mapleland\\AppData\\Local\\Temp\\pakka-packed-consumer-OE8F73",
+    "headless": "C:\\Users\\mapleland\\AppData\\Local\\Temp\\pakka-headless-consumer-hIsXxS",
+    "archiveBackup": "D:\\Projects\\pakka-works\\.backups\\2026-11-07-local-maintenance-release"
+  },
+  "rootPackageSha256": "f77084147f13aee646edc871cadefa5d5b4b67817cfce547fd0682a97b19828f",
+  "limits": [
+    "Windows execution only; POSIX not claimed",
+    "Supported local same-version upgrade/rollback exercised; no arbitrary historical migration promise",
+    "Original-location restore requires saved product locator; external project/Pi/trusted-host configuration not automatically archived",
+    "No full WebUI/multi-Runtime OOM bound proved"
+  ]
+}

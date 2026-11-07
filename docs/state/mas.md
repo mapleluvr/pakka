@@ -8,6 +8,8 @@ MAS 将同 Session 的 Conversation 注册为成员，并通过当前绑定身�
 
 相同 principal/source/request 与相同 payload/mode 核对原投递；冲突拒绝。queued、placed、generation 终态、应用回复和 unknown 分别表达投递阶段及确认情况。跨 Session broker 使用固定批准 endpoint、enrollment/outbox 和目标原生接纳，跨端传递冻结数据、逻辑引用与受控命令。输入投递按原身份去重和核对；provider、工具与文件系统效果由各自的效果域单独确认。
 
+同 Session 投递按[长期持久化契约](runtime.md#长期历史与投递)保存原身份，接纳使用每个收件人的未完成额度；保留历史与模型上下文分别管理。
+
 ## 关系与活动观测
 
 - 节点对应绑定数据源中的真实 Conversation；身份使用完整的 source/Session/Conversation 组合。

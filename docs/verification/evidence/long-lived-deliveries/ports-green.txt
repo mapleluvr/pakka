@@ -1,0 +1,27 @@
+✔ HTTP listeners replace Fetch-blocked ephemeral port 4045 before publishing their address (38.5797ms)
+✔ explicitly blocked HTTP port 4045 is refused before binding (0.9324ms)
+✔ HTTP listeners replace Fetch-blocked ephemeral port 4190 before publishing their address (6.1013ms)
+✔ explicitly blocked HTTP port 4190 is refused before binding (0.1672ms)
+✔ HTTP listeners replace Fetch-blocked ephemeral port 6679 before publishing their address (3.6271ms)
+✔ explicitly blocked HTTP port 6679 is refused before binding (0.1312ms)
+✔ M5 HTTP: host-bound source and native admission survive repeated message ID; copied receipt is not authority (168.3088ms)
+✔ M5 HTTP: four definitive guard families return correlated denied without native effects (83.5991ms)
+✔ M5 HTTP: opaque admission return-false cannot deny prior real callback effects (67.301ms)
+✔ M5 HTTP: opaque admission typed-error cannot deny prior real callback effects (64.5037ms)
+✔ M5 HTTP: actual native storage-write failure remains unknown rather than typed denial (11185.0808ms)
+✔ M5 HTTP: invalid wire/version/authority fields and unapproved origins cause zero provider effects (65.5025ms)
+✔ M5 HTTP: malformed UTF-8 refuses instead of substituting a model-visible message (54.4423ms)
+✔ M5 HTTP: expired issuer credential cannot create effects or be restored by new connection (56.8951ms)
+✔ M5 HTTP: issuer expiry during awaited admission is rechecked at the native commit boundary (582.1488ms)
+✔ M5 HTTP: queued native withdrawal, owner abort and retire preserve explicit effect boundaries (105.2751ms)
+✔ M5 HTTP: finite transport capacity refuses excess requests before an admission effect (72.2504ms)
+✔ M5 HTTP: issuer revocation during admission seals pending effect and cannot be renewed by reconnect (55.0264ms)
+✔ WebUI and its model endpoint remain reachable when the OS initially selects a blocked dynamic port (175.6921ms)
+ℹ tests 19
+ℹ suites 0
+ℹ pass 19
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 15245.4753

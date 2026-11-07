@@ -1,0 +1,270 @@
+{
+  "schema": 1,
+  "files": [
+    {
+      "path": "source-before.json",
+      "bytes": 3594,
+      "sha256": "b0ed7c340d606db4fe50dd9a49373ced3c7015d9a2456730436395bbda5e6205"
+    },
+    {
+      "path": "source-after.json",
+      "bytes": 3594,
+      "sha256": "b0ed7c340d606db4fe50dd9a49373ced3c7015d9a2456730436395bbda5e6205"
+    },
+    {
+      "path": "build.log",
+      "bytes": 913,
+      "sha256": "e281478c1a6cce90985b5445d9450b2e1e8f560504219c1ae651d9d50b6b3506"
+    },
+    {
+      "path": "types.log",
+      "bytes": 216,
+      "sha256": "34d110e626b71951d584f5bcf05dbc7c1cd140c888071a2c4bd31b790d2e06ab"
+    },
+    {
+      "path": "full.log",
+      "bytes": 94914,
+      "sha256": "7fd32276c1b69777bb2a9a0ba66e19e517fa62763fb475907ab70917460113ca"
+    },
+    {
+      "path": "installed.log",
+      "bytes": 5576,
+      "sha256": "2e614acfd81760292501d9f1c47f8d9a389893e42b8c95a2ee0f358e473385d1"
+    },
+    {
+      "path": "damaged-writer-red.log",
+      "bytes": 1135,
+      "sha256": "237eb4909be07a1c95d8ef7d1dabc36d1be99b9a53f6fcef7e60f5044214cfb7"
+    },
+    {
+      "path": "damaged-writer-green.log",
+      "bytes": 256,
+      "sha256": "d02149af2dd3887b7d89687b2c38aeefda70b14ab234f4e0fa1424917e2940b5"
+    },
+    {
+      "path": "host-gate-red.log",
+      "bytes": 934,
+      "sha256": "517d12de31c7c7d003d88b509a0cc16f0ef10c4c8f6908358b82715279dd16b0"
+    },
+    {
+      "path": "host-gate-green.log",
+      "bytes": 234,
+      "sha256": "e05709479476ff180c7508df1a5a54444367a3cfa6c0f1992904796c7a7e7b0b"
+    },
+    {
+      "path": "archives.json",
+      "bytes": 2484,
+      "sha256": "f1d9e0be3984cceadd007c48abcbd3e3d47cdecf5fc4ffe20087e005331daa52"
+    },
+    {
+      "path": "documents.json",
+      "bytes": 96,
+      "sha256": "3cd186123d8287329fc71706ef70a560c1ef0f2502cd707a486fa1d723ad948d"
+    },
+    {
+      "path": "openspec.json",
+      "bytes": 539,
+      "sha256": "ce0ab190bd608523a527ed079cb05445f6f971facac82798def526f4f397ac95"
+    },
+    {
+      "path": "prior-navigation-openspec.json",
+      "bytes": 1624,
+      "sha256": "7612d1a12dadc39aef57a4642fa19d19d224b36b7b0cd86a16211256c181d801"
+    },
+    {
+      "path": "final-active-lsp.txt",
+      "bytes": 518,
+      "sha256": "cba6e42fb50269cabf95d41bcd10bc0ff6a80569ee4a501989e61119e379700a"
+    },
+    {
+      "path": "cached-errors-before-active.txt",
+      "bytes": 803,
+      "sha256": "f9d9bb22b9f1b96adb881b3e86ae647f03224845834691c4bf6d3acf39ec7350"
+    },
+    {
+      "path": "workspace-errors-after-active.txt",
+      "bytes": 726,
+      "sha256": "ee53f5f61b027b9a79cbd19cdc67425facc0b88e2ad722b93300eb6dd59bb0ed"
+    },
+    {
+      "path": "source-git-index.json",
+      "bytes": 6958,
+      "sha256": "3648a3e60ee28494551f3d1982dfeb028d2645c80c022d2e96f501d10c811da4"
+    },
+    {
+      "path": "installed/pack.log",
+      "bytes": 1818472,
+      "sha256": "b1f7f781d53f0ee65419f0eb689274109bfa5ac6c0bd6bd00674cba17f841fdd"
+    },
+    {
+      "path": "installed/pack-mas.log",
+      "bytes": 1253,
+      "sha256": "0ffc924c14cfc8ebd46e902ed4cf61e763815a48a330c3b9e80f86aaec125af1"
+    },
+    {
+      "path": "installed/pack-devpack.log",
+      "bytes": 1953,
+      "sha256": "7ab16ef9aae20cc69bdcf05af801c89f45ad12535e83e43265e6c3217783c8b3"
+    },
+    {
+      "path": "installed/pack-protocol.log",
+      "bytes": 750,
+      "sha256": "92294e818da71788e952b7207ed801a56d52e2bad85146b90823a04342cc90fe"
+    },
+    {
+      "path": "installed/pack-client.log",
+      "bytes": 738,
+      "sha256": "44f2471bbb68bb70c17baeccea7d1452cf88bb29f51b90effc8ac040eb135bb1"
+    },
+    {
+      "path": "installed/pack-cli.log",
+      "bytes": 648,
+      "sha256": "cd4e5a550c1016f6229495b2b7aff7f0a8f8c4ecb6dc57a9bd4f95d517efb694"
+    },
+    {
+      "path": "installed/pack-server.log",
+      "bytes": 2713,
+      "sha256": "1b641c46f1b7cbec3528ff272af4320b716678854e9028199285e5e72bb4b526"
+    },
+    {
+      "path": "installed/pack-webui.log",
+      "bytes": 6157,
+      "sha256": "92949808d046d32f958cd02303db3b5cc7bcd597fb5d3bb95808581fbe95c455"
+    },
+    {
+      "path": "installed/install.log",
+      "bytes": 243,
+      "sha256": "eddb419d91f0f1e70d21b98f442918a2f53f9af7d66e1db48bd64aedb9bbf4b2"
+    },
+    {
+      "path": "installed/install-headless.log",
+      "bytes": 151,
+      "sha256": "4b10be9d4d09188ea6f4bfbb37708bd92e7fcb8a9cb631a47ab1e04f0c7a3095"
+    },
+    {
+      "path": "installed/devpack-headless.log",
+      "bytes": 260,
+      "sha256": "c05962c175675ffe70df51d4bd20b7d22bc4dfb0c9bb1abdcef6db5e3a2cb943"
+    },
+    {
+      "path": "installed/declarations.log",
+      "bytes": 122,
+      "sha256": "d4ff3d8534a10a5b0e1dcb03e6eb74fc528fbc180e42c013a65bcb3dd139d8b6"
+    },
+    {
+      "path": "installed/browser-declarations.log",
+      "bytes": 121,
+      "sha256": "c744803cf41dd17850bf7d5ff1ed3c7595d5036d6407a292d24dd412324cc968"
+    },
+    {
+      "path": "installed/dependency-tree.log",
+      "bytes": 125806,
+      "sha256": "c4956b98557fc2babd106a96b5b5f23cffd03e47d43c48793be0aded34d32cdf"
+    },
+    {
+      "path": "installed/smoke.log",
+      "bytes": 712,
+      "sha256": "0bf7fb800e4671fc6004fd91a80a4e1edd683e4254095a12d033090011e2a0de"
+    },
+    {
+      "path": "installed/runtime.log",
+      "bytes": 492,
+      "sha256": "674cfff04d0447ebbe345059cf7b3562db4c05d9f2f66888dd8d42a0b7648e07"
+    },
+    {
+      "path": "installed/execution.log",
+      "bytes": 293,
+      "sha256": "825886cf927fb15d9381c5fb5bf20a0b93be0ce17754b002e8bc179522062640"
+    },
+    {
+      "path": "installed/mas.log",
+      "bytes": 372,
+      "sha256": "f1487c9a9e6f3a5d314cbb58b988c15cb70161c5850731db1d0ead11f98c2395"
+    },
+    {
+      "path": "installed/broker.log",
+      "bytes": 277,
+      "sha256": "2d23e14688609833bbe198456c88243500fa3b79a94787a10a082b6f357bac71"
+    },
+    {
+      "path": "installed/devpack.log",
+      "bytes": 212,
+      "sha256": "c7cc4d6528ea258a1f17706f9c7535b5c0411042b5505a1251399c7e0f8a8ff8"
+    },
+    {
+      "path": "installed/apps.log",
+      "bytes": 260,
+      "sha256": "7a1aca3e8dad4f40e8898dfca593e03499ff3776350b16053155130cd1cd82cc"
+    },
+    {
+      "path": "installed/launcher.log",
+      "bytes": 250,
+      "sha256": "6b0162507b66a07a89fa3298e260d8836bed3a1a63d952c1d18ecc3b0c030807"
+    },
+    {
+      "path": "installed/maintenance.log",
+      "bytes": 997,
+      "sha256": "539f1c46b72616ad7c56f2bb233494fcaf789186e3b97deb379cc54b9e0cb1f4"
+    },
+    {
+      "path": "installed/product.log",
+      "bytes": 306,
+      "sha256": "3fda69bc8cdba17baecd1534658bd61e39e11f6fda9a67600c768950c2b5e9a6"
+    },
+    {
+      "path": "installed/pocket-services.log",
+      "bytes": 291,
+      "sha256": "40b1df22b5d555fa369823f77c6ac08d3a6184768a6d921c22f9cfcf9ee3f72f"
+    },
+    {
+      "path": "installed/pocket-product.log",
+      "bytes": 465,
+      "sha256": "5c79d1f2da4b35d79186c06afe44648cf6e20efd7d94ee6611ce72bbeb4d9e13"
+    },
+    {
+      "path": "installed/mas-board.log",
+      "bytes": 369,
+      "sha256": "037471836a74de1f10401cab2790126acec7d474af959f23a0807cf3caad1970"
+    },
+    {
+      "path": "installed/pocket-workflows.log",
+      "bytes": 314,
+      "sha256": "61bb6ce94446c050dae3607036720b5e4387d11d21d7897dc6bc11e9fcb6f40a"
+    },
+    {
+      "path": "installed/pocket-controlled.log",
+      "bytes": 306,
+      "sha256": "10451935cf0b46ecc4c8c184f0cc8b840efa0432ec28bb10d6efc2d922042156"
+    },
+    {
+      "path": "installed/pocket-notifications.log",
+      "bytes": 397,
+      "sha256": "742f27647239587860a9acf24f527b016b6c8fc9f1c79ded3aebcd2614d9345f"
+    },
+    {
+      "path": "installed/pocket-schedules.log",
+      "bytes": 414,
+      "sha256": "7e998a4e05bd49cbe2c24a26a3346fa40b92d855c4dd7a94c7fe44af84dcb357"
+    },
+    {
+      "path": "installed/pocket-memory.log",
+      "bytes": 431,
+      "sha256": "229fa0de4c859055981bc5041c35754c0298fae86a10249252685929f9c8a6cd"
+    },
+    {
+      "path": "installed/pocket-hooks.log",
+      "bytes": 466,
+      "sha256": "73b0b0446f0fd26e2f18160bb4d105d39244e156360e6d1dc7b92676d78e3dd2"
+    },
+    {
+      "path": "installed/pocket-voice.log",
+      "bytes": 194,
+      "sha256": "e76e02d18ec72fcf9ee91ccd330ae71d51aa7de1739647608412ed1fd957a242"
+    },
+    {
+      "path": "summary.json",
+      "bytes": 2074,
+      "sha256": "41da41d9b0a9d4364d7a48ec270553f6ee3b752404c996e4c17a891dae40fbb3"
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+Files checked: 17
+Total diagnostics: 0
+Concurrency: 4
+Wait budget: 2500ms
+Outcomes: clean=16, findings=0, unsupported=0, unavailable=0, failed=0, too_large=1, inconclusive=0
+
+Checks not confirmed: 1 (inconclusive/unavailable/unsupported/failed or not started).
+
+Files too large for LSP diagnostics:
+D:/Projects/pakka-works/pakka-long-lived-deliveries/packages/agent/src/durable-adapter.ts: file too large for LSP diagnostics (6132 lines > 5000 limit)
+
+result ok
+usage tokens=113 elapsed-ms=0 bytes=450 truncated=false

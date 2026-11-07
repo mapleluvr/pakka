@@ -23,6 +23,14 @@ Pi 集成使用公开 API。下游 [Durable 源补丁](durable-patch.md)为 gene
 - 策略通过 owner/lease、受控 frame、journal 和有限 inference job 工作；模型与工具效果使用宿主批准的端口和预算。
 - 辅助 inference 可声明一个 output tool；完整且符合 schema 的单次调用作为冻结 DTO 返回，经同一 job/source、预算、completion 与采用回执约束。调用的执行和产物采用由策略的受控端口承担。细则见 [Tool Calling 场景](../../openspec/changes/add-auxiliary-tool-output/specs/auxiliary-tool-output/spec.md)。
 
+## 长期历史与投递
+
+持久化服务于长期任务执行：原请求身份、完整输入、原生回执及历史持续保留。送给模型的上下文由受控策略选取，历史的持久容量与单次上下文窗口分别管理。
+
+同 Session Catalog 按请求 ID 保存独立投递记录，接纳索引只保存成员、顺序指针及每个收件人的未完成工作。新输入的接纳核对该收件人的 queued/placed 集合；已完成历史增长不构成累计次数额度。每次接纳仍满足当前权限、原生调度、预算和单次载荷条件。原请求复用、内容冲突、unknown 和 writer 约束按原身份继续执行。
+
+历史通过有界页读取；按 ID 核对原回执与历史页的选择相互独立。受控迁移在同一原生提交中保存拆分记录和索引，并保留原生 submission、Conversation 与 Session 身份。详细兼容条件见 [MAS API](../reference/MAS-API.md)，采用和迁移依据见[长期投递记录](../changes/long-lived-deliveries.md)。
+
 ## 契约定位
 
 | 领域                                   | 详细声明                                                                                                                                                                        |
