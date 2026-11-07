@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import { strict as assert } from "node:assert";
-import { mkdir, rename, rm } from "node:fs/promises";
+import { blockSqliteWrites } from "../../../packages/agent/test/native-storage.ts";
 import { runtimeFixture } from "../../../packages/agent/test/runtime-fixture.ts";
 import { createPocketPeople } from "../src/pocket-people.ts";
 
@@ -111,15 +111,12 @@ test("WebUI people: role changes invalidate old checks and a targeted sign-in pr
 // A failed native write must close old checks and must never restore a bootstrap owner.
 test("WebUI people: uncertain native storage closes authority rather than restoring a bootstrap owner", async () => {
 	const m = await runtimeFixture();
-	const file = m.runtime.view().sessionFile;
-	let moved = false;
+	let releaseWrites: (() => void) | undefined;
 	try {
 		const people = await createPocketPeople({ runtime: m.runtime, namespace: "test-people" });
 		const owner = await people.initializeOwner("Owner"),
 			admin = await people.authenticate(owner.token);
-		await rename(file, file + ".saved");
-		moved = true;
-		await mkdir(file);
+		releaseWrites = blockSqliteWrites(m.runtime.view().sessionFile);
 		await assert.rejects(
 			people.invite(admin, { requestId: "uncertain", role: "viewer", resources: "*", ttlMs: 60000 }),
 		);
@@ -128,10 +125,7 @@ test("WebUI people: uncertain native storage closes authority rather than restor
 		await assert.rejects(people.initializeOwner("Replacement"));
 		assert.equal(m.f.requests.length, 0);
 	} finally {
-		if (moved) {
-			await rm(file, { recursive: true, force: true });
-			await rename(file + ".saved", file);
-		}
+		releaseWrites?.();
 		await m.close();
 	}
 });

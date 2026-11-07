@@ -89,7 +89,7 @@ test(
 						],
 					},
 				}),
-				/profile\/limits mismatch/,
+				/profile mismatch/,
 			);
 			remove = true;
 			app = await startPocket({

@@ -91,7 +91,7 @@ HTTP `POST /rpc`，Content-Type `application/json`，Authorization `Bearer <dedi
 
 命令：`hello`、`snapshot`、`spawn`、`send`、`reply`、`receipt`、`wait`、`withdraw`、`inspect`、`abort`、`retire`、`configure`、`fork`、`revoke`。`spawn` 只创建当前 Session 的 persistent 成员，owner 由 server principal 确定；本版 RPC 不开放跨 Session template 申请或 task-bound lifetime。
 
-- `send`：`{op, target: AgentRef, input: {requestId, text, mode?}}`。mode 为 `prompt|steer|followUp`，后两者另需 `steer` grant，保留原生 placement timing。slash command 不属于普通 send。
+- `send`：`{op, target: AgentRef, input: {requestId, text, mode?}}`。mode 为 `prompt|steer|followUp`，后两者另需 `steer` grant，保留原生 placement timing。此端口不分发 WebUI 命令；斜杠开头的字面文本仍可发送。
 - `reply`：`{op, receiptId, input}`，目标/来源从原始持久回执推导，不由调用者声明。
 - `receipt|wait|withdraw`：`{op, id}`；复制另一身份的 receipt 不会取得访问权。
 - `spawn`：`{op, key, profile?}`；`configure` 只选择已批准 profile，`fork` 需要合法 entryId/owner。

@@ -6,7 +6,7 @@ import { createRuntime, type RuntimeOptions } from "../src/index.ts";
 if (!process.send || !process.argv[2]) throw new Error("Requires isolated test IPC and options");
 process.on("message", () => {});
 const options = JSON.parse(await readFile(process.argv[2], "utf8")) as RuntimeOptions;
-if (!options.endpoint.startsWith("http://127.0.0.1:") || options.apiKey !== "local-only")
+if (!options.endpoint?.startsWith("http://127.0.0.1:") || options.apiKey !== "local-only")
 	throw new Error("Requires the deterministic local fixture");
 const runtime = await createRuntime(options),
 	file = runtime.view().sessionFile;

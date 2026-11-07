@@ -53,12 +53,13 @@ package/app 的建立以实际消费者和可执行路径为依据；产品组�
 server bootstrap ──→ @pakka/agent + @pakka/mas + 可选 extensions/策略
 @pakka/mas       ──→ @pakka/agent 的受控 runtime ports
 MAS DevPack      ──→ principal-bound MAS port
-CLI / GUI        ──→ MAS client 或服务接口
+pakka 默认入口    ──→ @pakka/webui 产品启动装配
+CLI --connection / GUI ──→ MAS client 或服务接口
 Dynamite adapter ──→ principal-bound StrategyBinding
 @pakka/agent     ──→ 固定的 patched Durable + pi-ai/chord
 ```
 
-MAS 和 Dynamite 不依赖 CLI；agent 不反向 import MAS、DevPack 或 Dynamite。`apps/` 可以装配库，核心库不能依赖 app。pakka-webui 的明确例外仅为可选 extension facet peer-consume `@pakka/webui` 的纯 public SDK exports：不得 import executable、私有 store/router/backend startup；现有 Agent-only export 不加载 WebUI。纯 SDK、browser/backend graph 与安装消费者必须独立验收。默认启用、工具组合、模型 allowlist、凭据、预算与 worker 隔离由受信任 bootstrap 明确配置。
+MAS 和 Dynamite 不依赖 CLI；agent 不反向 import MAS、DevPack 或 Dynamite。`apps/` 可以装配库，核心库不能依赖 app。pakka-webui 的明确例外仅为可选 extension facet peer-consume `@pakka/webui` 的纯 public SDK exports：不得 import executable、私有 store/router/backend startup；现有 Agent-only export 不加载 WebUI。纯 SDK、browser/backend graph 与安装消费者必须独立验收。默认启用、工具组合、模型配置来源、认证、预算与 worker 隔离由受信任 bootstrap 明确装配；产品不再用 Agent profile 列表充当模型目录或另加逐模型 ACL。
 
 MAS policy 决定资源关系和可授予的动作；agent 在实际效果边界绑定调用身份、目标与有效期，并执行授权。MAS 通过窄端口完成登记和编排，不能取得可任意调用的原始事务或 Harness。可信 bootstrap 的控制端口与 agent-facing 端口必须分别授予。
 
@@ -66,7 +67,7 @@ MAS policy 决定资源关系和可授予的动作；agent 在实际效果边界
 
 ## 3. Pi、扩展与权限边界
 
-生产 Pi mutable objects 和凭据继续封装在 `packages/agent/src/durable-adapter.ts`。多 Conversation/Session 支持也必须经过该适配边界。其他组件接收冻结 DTO 与绑定身份的命令 closure；测试 oracle 不进入生产 graph、声明或安装产物。
+生产 Pi 执行和存储的可变对象继续封装在 `packages/agent/src/durable-adapter.ts`；多 Conversation/Session 支持也经过该适配边界。可信 bootstrap 可以构造或注入原生 `Models`/getter，WebUI 产品通过公开 Coding Agent `ModelRuntime` 加载模型与认证配置，但不构造 `AgentSession`；独立 agent SDK 不依赖 Coding Agent。操作型调用方接收冻结 DTO 与身份绑定的命令 closure，不能读回凭据或原生可变对象。测试 oracle 不进入生产 graph、声明或安装产物。
 
 [WebUI/扩展契约](WEBUI-DEVELOPMENT.md)定义可选 Agent、Backend、WebUI、Client facets，包含版本、激活/卸载、受限服务端口与 generation/invocation 生命周期。用户授权安装插件即确认代码可信，不代表每个被邀请人获得其业务权限，也不构成恶意插件沙箱。MAS Board 必须通过和另一份普通扩展相同的公开插槽实现；WebUI-only 不自动安装模型工具，Agent-only 不依赖 Web 产品启动。包入口不得通过自动发现、import 副作用或直接注册原生 Pi hook 绕过受控接口。
 
@@ -125,7 +126,7 @@ Durable ownership 是生命周期关系，不是 ACL。应用 ownership 变更�
 
 协议层只包含可序列化引用、命令、事件、错误、receipt、runtime schema 和版本协商；不能依赖 Node 文件系统、Pi runtime、server 启动或进程内 capability。TypeScript interface 不能替代消息 runtime validation。
 
-远端客户端使用认证身份和服务端授权。跨网络 authority 若需要传输，须单独设计可撤销、可审计的授权机制；不能把现有 WeakMap token JSON 化。GUI/CLI 不持有模型/provider 凭据、原始 Harness 或直接写 storage 的能力；连接服务所需的客户端认证使用独立 scope。
+远端客户端使用认证身份和服务端授权。跨网络 authority 若需要传输，须单独设计可撤销、可审计的授权机制；不能把现有 WeakMap token JSON 化。操作型客户端不能取得已保存的模型/provider 凭据、原始 Harness 或直接写 storage 的能力；连接服务所需的认证使用独立 scope。WebUI 原生认证表单可以一次性提交用户输入的凭据，提交后清空且不写入页面持久存储，不提供已存密钥回读；CLI 的可信本地启动装配与其远端协议客户端模式分别处理。
 
 ## 7. Durable patch 与包发布
 

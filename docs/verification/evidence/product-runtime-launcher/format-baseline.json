@@ -1,0 +1,23 @@
+{
+  "warningsUnchangedFromHEAD": true,
+  "base": "90fdf9594fef084c5be4011ff662814204b13de5",
+  "formatterVersion": "3.6.2",
+  "paths": [
+    "packages/agent/test/compresser-conversation.test.ts",
+    "packages/agent/test/compresser-crash.test.ts",
+    "packages/agent/test/compresser-session.test.ts",
+    "packages/agent/test/durable-integration.test.ts",
+    "packages/agent/test/source-work-conversation-child.ts",
+    "packages/agent/test/source-work-conversation.test.ts",
+    "packages/agent/test/sqlite-completion.test.ts",
+    "packages/agent/test/sqlite-journal.test.ts",
+    "packages/agent/test/strategy-adoption.test.ts",
+    "packages/agent/test/strategy-boundaries.test.ts",
+    "packages/agent/test/strategy-storage-budget.test.ts",
+    "packages/agent/test/strategy.test.ts",
+    "apps/webui/test/preferences-loading-browser.test.ts",
+    "integrations/dynamite/compresser-conversation-pairing.json",
+    "integrations/dynamite/compresser-trial-initial-pairing.json",
+    "integrations/dynamite/compresser-trial-pairing.json"
+  ]
+}

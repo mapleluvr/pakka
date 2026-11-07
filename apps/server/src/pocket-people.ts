@@ -43,7 +43,20 @@ export interface PocketInviteInput {
 	readonly resources: PocketResources;
 	readonly ttlMs: number;
 }
+export interface PocketAuthorityLease {
+	/** Identity of the existing browser login, not a new credential or permission. */
+	readonly id: string;
+	readonly signal: AbortSignal;
+	check(): void;
+	close(): void;
+}
 export interface PocketPeople {
+	/** A bounded, actively revocable scope for native asynchronous operations. */
+	lease(
+		actor: PocketAuthority,
+		permission: PocketPermission,
+		options?: { resourceId?: string; ttlMs?: number },
+	): PocketAuthorityLease;
 	/** Local trusted bootstrap only; never an unauthenticated network route. */
 	initializeOwner(name: string): Promise<PocketSession>;
 	authenticate(token: string): Promise<PocketAuthority>;
@@ -336,6 +349,10 @@ async function openPeople(
 		blockedPeople = new Set<string>(),
 		blockedSessions = new Set<string>(),
 		blockedInvites = new Set<string>();
+	const authorityWatchers = new Set<() => void>();
+	function notifyAuthority() {
+		for (const recheck of [...authorityWatchers]) recheck();
+	}
 	function ready() {
 		if (!available || runtime.view().phase !== "ready") deny();
 	}
@@ -353,9 +370,11 @@ async function openPeople(
 			if (snapshot.version >= version) {
 				state = next;
 				version = snapshot.version;
+				notifyAuthority();
 			}
 		} catch (error) {
 			available = false;
+			notifyAuthority();
 			throw error;
 		}
 	}
@@ -459,8 +478,10 @@ async function openPeople(
 					const next = await store.compareAndSet(version, draft, check);
 					state = decode(next.data, next.version, sessionId);
 					version = next.version;
+					notifyAuthority();
 				} catch (error) {
 					if (runtime.view().phase !== "ready") available = false;
+					notifyAuthority();
 					throw error;
 				}
 			}
@@ -474,6 +495,53 @@ async function openPeople(
 	}
 	await refresh();
 	return Object.freeze({
+		lease: (
+			actor: PocketAuthority,
+			permission: PocketPermission,
+			options: { resourceId?: string; ttlMs?: number } = {},
+		): PocketAuthorityLease => {
+			const { s } = bound(actor, permission, options.resourceId);
+			const ttlMs = options.ttlMs ?? 600000;
+			if (
+				!Number.isSafeInteger(ttlMs) ||
+				ttlMs < 1 ||
+				ttlMs > 600000 ||
+				authorityWatchers.size >= MAX_SESSIONS
+			)
+				throw new Error("Invalid bounded WebUI authorization scope");
+			const deadline = Math.min(s.expiresAt, time() + ttlMs);
+			const controller = new AbortController();
+			let timer: ReturnType<typeof setTimeout> | undefined;
+			let unsubscribe: (() => void) | undefined;
+			function close() {
+				if (controller.signal.aborted) return;
+				authorityWatchers.delete(recheck);
+				if (timer) clearTimeout(timer);
+				unsubscribe?.();
+				controller.abort(new Error("WebUI authorization ended"));
+			}
+			function check() {
+				try {
+					if (controller.signal.aborted || time() >= deadline) deny();
+					bound(actor, permission, options.resourceId);
+				} catch {
+					close();
+					deny();
+				}
+			}
+			function recheck() {
+				try {
+					check();
+				} catch {
+					/* Cancellation is delivered by the signal. */
+				}
+			}
+			authorityWatchers.add(recheck);
+			unsubscribe = runtime.root().subscribe(recheck);
+			timer = setTimeout(close, Math.max(1, deadline - time()));
+			timer.unref();
+			return Object.freeze({ id: s.id, signal: controller.signal, check, close });
+		},
 		current: (actor: PocketAuthority) => {
 			const id = bindings.get(actor);
 			if (!id) return deny();
@@ -640,6 +708,7 @@ async function openPeople(
 			const role = input.role,
 				resources = scope(input.resources);
 			for (const s of state.sessions) if (s.personId === id) blockedSessions.add(s.id);
+			notifyAuthority();
 			await mutate(
 				(draft) => {
 					const target = draft.people.find((p) => p.id === id && p.active);
@@ -689,6 +758,7 @@ async function openPeople(
 			)
 				return deny();
 			blockedPeople.add(id);
+			notifyAuthority();
 			await mutate(
 				(draft) => {
 					const target = draft.people.find((p) => p.id === id);
@@ -727,6 +797,7 @@ async function openPeople(
 			if (!id) return deny();
 			sessionFor(id);
 			blockedSessions.add(id);
+			notifyAuthority();
 			await mutate((draft) => {
 				const target = draft.sessions.find((s) => s.id === id);
 				if (!target) return deny();

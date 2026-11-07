@@ -11,6 +11,8 @@ import type {
 	Host,
 	Runtime,
 	RuntimeOptions,
+	RuntimeBudgetChange,
+	RuntimeBudgetQuery,
 	RuntimeStoreOptions,
 	RuntimeJobOptions,
 	DisplayWrite,
@@ -71,7 +73,14 @@ export async function createRuntime(options: RuntimeOptions): Promise<Runtime> {
 	return Object.freeze({
 		root: () => root,
 		view: () => port.view(),
+		budgetPolicy: (check: () => void) => port.budgetPolicy(check),
+		changeBudget: (input: RuntimeBudgetChange, check: () => void) => port.changeBudget(input, check),
+		budgetReceipt: (identity: Pick<RuntimeBudgetChange, "actorId" | "requestId">, check: () => void) =>
+			port.budgetReceipt(identity, check),
+		budgetHistory: (query: RuntimeBudgetQuery, check: () => void) => port.budgetHistory(query, check),
 		profileChoices: () => port.profileChoices(),
+		modelChoices: () => port.modelChoices(),
+		modelAllowed: (selection: string) => port.modelAllowed(selection),
 		configuration: (ref: ConversationRef) => port.configuration(ref),
 		directoryRoots: (profiles?: readonly string[]) => port.directoryRoots(profiles),
 		conversation: attach,

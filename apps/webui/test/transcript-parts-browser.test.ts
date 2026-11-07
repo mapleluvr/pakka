@@ -13,7 +13,7 @@ import {
 	type ConversationId,
 } from "@earendil-works/pi-durable";
 import { decodePocketResponse } from "@pakka/protocol/pocket";
-import { openNodeJsonlStorage } from "@earendil-works/pi-durable/storage/jsonl/node";
+import { openNodeSqliteStorage } from "@earendil-works/pi-durable/storage/sqlite/node";
 import { runtimeFixture } from "../../../packages/agent/test/runtime-fixture.ts";
 import type { ConversationRef, Receipt } from "../../../packages/agent/src/types.ts";
 import type { PocketConversationSource } from "../../server/src/pocket-workspace.ts";
@@ -77,9 +77,8 @@ async function seedHistory(m: Fixture, liveTool?: { execute(): Promise<string> }
 	const ref = before.runtime.view().conversations.find((ref) => ref.key !== "root")!;
 	const token = before.initialOwner!.token;
 	const sessionFile = before.runtime.view().sessionFile;
-	const directory = join(sessionFile, "..");
 	await before.close();
-	const storage = await openNodeJsonlStorage(directory, BACKGROUND_CONTEXT, { fsync: true });
+	const storage = await openNodeSqliteStorage(sessionFile);
 	const session = createSession(storage);
 	let resultEntryId = "";
 	try {

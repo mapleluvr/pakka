@@ -21,6 +21,7 @@ async function backFromSettings(page: FrontendPage) {
 	}
 }
 async function sidebarReady(page: FrontendPage) {
+	await page.wait('document.querySelector(".sidebar")');
 	await settleFrontend(page);
 	if (await page.evaluate('document.querySelector(".sidebar")?.getBoundingClientRect().right <= 0')) {
 		await toggleConversations(page);

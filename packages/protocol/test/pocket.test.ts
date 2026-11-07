@@ -121,11 +121,16 @@ test("WebUI protocol: bounded assistant error history survives both response and
 	);
 });
 
-// A slash text cannot bypass the human dispatcher by entering the raw model-input endpoint.
+// Plain text, including slash-prefixed paths, remains distinct from explicit UI commands.
 test("WebUI protocol: human display, explicit model work and person administration use finite separate commands", () => {
 	const commands = [
 		{ op: "display", target: ref, requestId: "card", kind: "card", text: "Not model input" },
 		{ op: "submit", target: ref, input: { requestId: "input", text: "Explicit work", mode: "followUp" } },
+		{
+			op: "submit",
+			target: ref,
+			input: { requestId: "slash", text: "/tmp/project inspect", mode: "prompt" },
+		},
 		{ op: "invite", requestId: "invite", role: "viewer", resources: ["c1"], ttlMs: 60000 },
 		{ op: "person.set", personId: "human-a", role: "sender", resources: ["c1"] },
 		{ op: "session.rotate" },
@@ -134,13 +139,7 @@ test("WebUI protocol: human display, explicit model work and person administrati
 	];
 	for (const command of commands)
 		assert.deepEqual(decodePocketRequest({ version: 2, requestId: "request", command }).command, command);
-	assert.throws(() =>
-		decodePocketRequest({
-			version: 2,
-			requestId: "request",
-			command: { op: "submit", target: ref, input: { requestId: "input", text: "/unknown", mode: "prompt" } },
-		}),
-	);
+
 	assert.throws(() =>
 		decodePocketRequest({
 			version: 2,

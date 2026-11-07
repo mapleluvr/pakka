@@ -9,6 +9,10 @@ export interface PocketManagedSession {
 	readonly name: string;
 	readonly cwd?: string;
 	readonly status: "ready" | "unknown" | "unavailable";
+	readonly problem?: {
+		readonly kind: "open-failed" | "runtime-unavailable" | "cleanup-unconfirmed";
+		readonly canReopen: boolean;
+	};
 }
 export interface PocketSessionCreation {
 	readonly requestId: string;
@@ -16,6 +20,8 @@ export interface PocketSessionCreation {
 	readonly cwd: string;
 }
 export interface PocketCreationDefaults {
+	/** Approved execution/instruction presets, separate from the model directory. */
+	readonly presets?: readonly string[];
 	readonly profile: string;
 	readonly model: string;
 	readonly cwd: string;
@@ -132,9 +138,20 @@ export interface PocketDirectoryView {
 	readonly places: readonly string[];
 	readonly truncated: boolean;
 }
+/** Native Pi thinking selectors carried as data, never an independent provider schema. */
+export type PocketThinkingLevel = "off" | "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
+export interface PocketConfigurationChange {
+	readonly model?: string;
+	readonly cwd?: string;
+	readonly thinkingLevel?: PocketThinkingLevel;
+}
 export interface PocketConfiguration {
 	readonly ref: AgentRef;
-	readonly current?: { readonly model: string; readonly cwd: string };
+	readonly current?: {
+		readonly model: string;
+		readonly cwd: string;
+		readonly thinkingLevel?: PocketThinkingLevel;
+	};
 	readonly choices: readonly { readonly id: string; readonly model: string; readonly cwd?: string }[];
 	readonly canConfigure: boolean;
 	readonly usage: PocketSnapshot["usage"];
@@ -285,7 +302,7 @@ export type PocketOriginalCommand =
 	| {
 			readonly op: "create";
 			readonly sessionId?: string;
-			readonly configuration?: { readonly model?: string; readonly cwd?: string };
+			readonly configuration?: PocketConfigurationChange;
 			readonly requestId: string;
 			readonly name: string;
 			readonly profile: string;
@@ -314,6 +331,7 @@ export type PocketCommand =
 	| { readonly op: "navigation.update"; readonly input: PocketNavigationUpdate }
 	| { readonly op: "navigation.lookup"; readonly original: PocketNavigationUpdate }
 	| { readonly op: "session.list" }
+	| { readonly op: "session.reopen"; readonly sessionId: string }
 	| ({ readonly op: "session.create" } & PocketSessionCreation)
 	| {
 			readonly op: "session.lookup";
@@ -343,7 +361,7 @@ export type PocketCommand =
 	| {
 			readonly op: "configure.agent";
 			readonly target: AgentRef;
-			readonly change: { readonly model?: string; readonly cwd?: string };
+			readonly change: PocketConfigurationChange;
 	  }
 	| {
 			readonly op: "directory.list";
@@ -404,6 +422,7 @@ export type PocketResult =
 			readonly canCreate: boolean;
 			readonly defaults?: PocketCreationDefaults;
 	  }
+	| { readonly kind: "session.state"; readonly session: PocketManagedSession }
 	| {
 			readonly kind: "managed.session";
 			readonly requestId: string;
@@ -414,6 +433,7 @@ export type PocketResult =
 			readonly versions: readonly [2];
 			readonly person: PocketPerson;
 			readonly sessionId: string;
+			readonly nativeModels?: boolean;
 	  }
 	| {
 			readonly kind: "list";
@@ -654,6 +674,17 @@ function snapshot(v: unknown): v is PocketSnapshot {
 }
 const configurationText = (v: unknown, max: number): v is string =>
 	string(v, max) && !!v && v.trim() === v && !/[\x00-\x1f\x7f]/.test(v);
+const thinkingLevel = (v: unknown): v is PocketThinkingLevel =>
+	typeof v === "string" && ["off", "minimal", "low", "medium", "high", "xhigh", "max"].includes(v);
+function configurationChange(v: unknown): v is PocketConfigurationChange {
+	return (
+		shape(v, [], ["model", "cwd", "thinkingLevel"]) &&
+		Object.keys(v).length > 0 &&
+		(v.model === undefined || configurationText(v.model, 256)) &&
+		(v.cwd === undefined || configurationText(v.cwd, 8192)) &&
+		(v.thinkingLevel === undefined || thinkingLevel(v.thinkingLevel))
+	);
+}
 const pathList = (v: unknown, max: number): v is string[] =>
 	Array.isArray(v) && v.length <= max && v.every((row) => configurationText(row, 8192));
 function directoryView(v: unknown): v is PocketDirectoryView {
@@ -671,8 +702,9 @@ function configuration(v: unknown): v is PocketConfiguration {
 	if (
 		!shape(v, ["ref", "choices", "canConfigure", "usage", "session"], ["current"]) ||
 		(v.current !== undefined &&
-			(!shape(v.current, ["model", "cwd"]) ||
-				!configurationText(v.current.model, 256) ||
+			(!shape(v.current, ["model", "cwd"], ["thinkingLevel"]) ||
+				(v.current.thinkingLevel !== undefined && !thinkingLevel(v.current.thinkingLevel)) ||
+				(v.current.model !== "" && !configurationText(v.current.model, 256)) ||
 				!configurationText(v.current.cwd, 8192))) ||
 		!ref(v.ref) ||
 		typeof v.canConfigure !== "boolean" ||
@@ -984,6 +1016,8 @@ function command(v: unknown): v is PocketCommand {
 			return shape(v, ["op", "input"]) && navigationUpdate(v.input);
 		case "navigation.lookup":
 			return shape(v, ["op", "original"]) && navigationUpdate(v.original);
+		case "session.reopen":
+			return shape(v, ["op", "sessionId"]) && identity(v.sessionId);
 		case "session.create":
 			return (
 				shape(v, ["op", "requestId", "name", "cwd"]) &&
@@ -1011,11 +1045,7 @@ function command(v: unknown): v is PocketCommand {
 			return (
 				shape(v, ["op", "requestId", "name", "profile"], ["inherit", "sessionId", "configuration"]) &&
 				(v.sessionId === undefined || identity(v.sessionId)) &&
-				(v.configuration === undefined ||
-					(shape(v.configuration, [], ["model", "cwd"]) &&
-						Object.keys(v.configuration).length > 0 &&
-						(v.configuration.model === undefined || configurationText(v.configuration.model, 256)) &&
-						(v.configuration.cwd === undefined || configurationText(v.configuration.cwd, 8192)))) &&
+				(v.configuration === undefined || configurationChange(v.configuration)) &&
 				(v.inherit === undefined || ref(v.inherit)) &&
 				identity(v.requestId) &&
 				identity(v.profile) &&
@@ -1024,14 +1054,7 @@ function command(v: unknown): v is PocketCommand {
 				!/[\x00-\x1f\x7f]/.test(v.name)
 			);
 		case "configure.agent":
-			return (
-				shape(v, ["op", "target", "change"]) &&
-				ref(v.target) &&
-				shape(v.change, [], ["model", "cwd"]) &&
-				Object.keys(v.change).length > 0 &&
-				(v.change.model === undefined || configurationText(v.change.model, 256)) &&
-				(v.change.cwd === undefined || configurationText(v.change.cwd, 8192))
-			);
+			return shape(v, ["op", "target", "change"]) && ref(v.target) && configurationChange(v.change);
 		case "creation.directories":
 			return (
 				shape(v, ["op"], ["path", "places"]) &&
@@ -1122,7 +1145,6 @@ function command(v: unknown): v is PocketCommand {
 				identity(v.input.requestId) &&
 				string(v.input.text, 65536) &&
 				!!v.input.text.trim() &&
-				!v.input.text.startsWith("/") &&
 				["prompt", "steer", "followUp"].includes(v.input.mode as string)
 			);
 		case "receipt":
@@ -1184,29 +1206,39 @@ function navigation(v: unknown): v is PocketNavigation {
 }
 function managedSession(v: unknown): v is PocketManagedSession {
 	return (
-		shape(v, ["id", "name", "status"], ["cwd"]) &&
+		shape(v, ["id", "name", "status"], ["cwd", "problem"]) &&
 		identity(v.id) &&
 		string(v.name, 80) &&
 		!!v.name.trim() &&
 		!/[\x00-\x1f\x7f]/.test(v.name) &&
 		["ready", "unknown", "unavailable"].includes(String(v.status)) &&
-		(v.cwd === undefined || configurationText(v.cwd, 8192))
+		(v.cwd === undefined || configurationText(v.cwd, 8192)) &&
+		(v.problem === undefined ||
+			(v.status === "unavailable" &&
+				shape(v.problem, ["kind", "canReopen"]) &&
+				["open-failed", "runtime-unavailable", "cleanup-unconfirmed"].includes(String(v.problem.kind)) &&
+				v.problem.canReopen === (v.problem.kind === "open-failed")))
 	);
 }
 function creationDefaults(v: unknown): v is PocketCreationDefaults {
 	return (
-		shape(v, ["profile", "model", "cwd", "choices"]) &&
+		shape(v, ["profile", "model", "cwd", "choices"], ["presets"]) &&
 		identity(v.profile) &&
-		configurationText(v.model, 256) &&
+		(v.presets === undefined ||
+			(Array.isArray(v.presets) &&
+				v.presets.length > 0 &&
+				v.presets.length <= 64 &&
+				v.presets.every(identity) &&
+				new Set(v.presets).size === v.presets.length &&
+				v.presets.includes(v.profile))) &&
+		(v.model === "" || configurationText(v.model, 256)) &&
 		configurationText(v.cwd, 8192) &&
 		Array.isArray(v.choices) &&
-		v.choices.length > 0 &&
 		v.choices.length <= 65 &&
 		v.choices.every(
 			(row) => shape(row, ["id", "model"]) && identity(row.id) && configurationText(row.model, 256),
 		) &&
-		new Set(v.choices.map((row) => row.model)).size === v.choices.length &&
-		v.choices.some((row) => row.model === v.model)
+		new Set(v.choices.map((row) => row.model)).size === v.choices.length
 	);
 }
 function result(v: unknown): v is PocketResult {
@@ -1228,6 +1260,8 @@ function result(v: unknown): v is PocketResult {
 				typeof v.canCreate === "boolean" &&
 				(v.canCreate ? creationDefaults(v.defaults) : v.defaults === undefined)
 			);
+		case "session.state":
+			return shape(v, ["kind", "session"]) && managedSession(v.session);
 		case "managed.session":
 			return (
 				shape(v, ["kind", "requestId", "session"]) &&
@@ -1236,7 +1270,8 @@ function result(v: unknown): v is PocketResult {
 			);
 		case "hello":
 			return (
-				shape(v, ["kind", "versions", "person", "sessionId"]) &&
+				shape(v, ["kind", "versions", "person", "sessionId"], ["nativeModels"]) &&
+				(v.nativeModels === undefined || typeof v.nativeModels === "boolean") &&
 				Array.isArray(v.versions) &&
 				v.versions.length === 1 &&
 				v.versions[0] === 2 &&

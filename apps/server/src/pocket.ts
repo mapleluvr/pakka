@@ -100,6 +100,7 @@ export type {
 	PocketPerson,
 	PocketSession,
 	PocketAuthority,
+	PocketAuthorityLease,
 	PocketPermission,
 	PocketInvite,
 	PocketRole,

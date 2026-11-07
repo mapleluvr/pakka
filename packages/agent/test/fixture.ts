@@ -1,4 +1,5 @@
 import { createServer } from "node:http";
+import { listenHttp } from "@pakka/server/http-listener";
 import { mkdtemp, mkdir, readFile, writeFile, appendFile, cp, realpath } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, basename } from "node:path";
@@ -18,6 +19,7 @@ export function deferred() {
 export type Payload = {
 	model: string;
 	max_tokens?: number;
+	reasoning_effort?: string;
 	messages: { role: string; content: unknown; [key: string]: unknown }[];
 	tools?: unknown[];
 };
@@ -98,9 +100,7 @@ export async function fixture(
 			response.destroy(error as Error);
 		});
 	});
-	await new Promise<void>((r) => server.listen(0, "127.0.0.1", r));
-	const address = server.address();
-	if (!address || typeof address === "string") throw new Error("No server port");
+	const address = await listenHttp(server, { host: "127.0.0.1" });
 	const cwd = join(root, "workspace"),
 		dataDir = join(root, "profile");
 	await mkdir(cwd);

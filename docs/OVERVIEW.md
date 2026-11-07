@@ -4,6 +4,8 @@ Pakka 将 Pi 的 Conversation、权限、持久化和 MAS 服务接到可选的 
 
 ## 当前工作
 
+[可演进 Runtime 与默认 WebUI 入口](changes/product-runtime-and-launcher.md)按用户授权解除固定模型装配及其关联门槛，完成无参数 `pakka` 启动工作台。原生 Models/配置加载、预算与配置演进、恢复、默认执行和 Session 隔离由[设计](../openspec/changes/enable-product-runtime-and-launcher/design.md)及[tasks](../openspec/changes/enable-product-runtime-and-launcher/tasks.md)承接；入口切片的原生配置、预算与 Session 恢复、默认本地执行和仓库外 pwsh 启动已完成；固定候选全量 805/803 pass/0 fail/2 skip、八包消费及剩余范围见[交付记录](verification/PRODUCT-RUNTIME-LAUNCHER.md)。本地接续在 `docs/.temp/active-plan.md`，其余未完成切片继续留在 tasks。
+
 [ExecutionEnv 接入](changes/execution-environment.md)以 Durable `1.4.0-pakka.2` 交付，保留现有拒绝与结算语义，以公开 env 接缝装配原生文件/命令工具及合作工具能力。两次 SDK 构建的归档一致；接入 24/24、相邻及工具选择 36/36、实际安装消费通过，见[.2 交付检查](verification/EXECUTION-ENVIRONMENT-PAKKA-2.md)。当前关系见[执行环境](state/execution-environment.md)及[所属 tasks](../openspec/changes/add-execution-environment/tasks.md)。MXC 驱动设计转入独立的 pakka-ei（environment infrastructure）仓库，Pakka 当前提供通用接缝。
 
 [协作流程编程指南](guides/MAS-WORKFLOWS.md)面向人和 Agent，以应用脚本组合现有 Runtime/MAS/DevPack 能力；提供 Mermaid、可运行示例、产物／状态保存和分级可行性验证。形成与实际检查见[变更摘要](changes/scripted-mas-workflows.md)及[所属 tasks](../openspec/changes/document-scripted-mas-workflows/tasks.md)。

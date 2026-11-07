@@ -26,9 +26,12 @@ import { createExtensionHost, type ExtensionSource } from "./extension-host.ts";
 import type { ExtensionService, PocketServiceContext } from "./backend.ts";
 import { createManagedSessions, type ManagedSessions } from "./sessions.ts";
 import { observeNotifications } from "./notification-monitor.ts";
+import type { ProductModelSource } from "./product-models.ts";
 export type { PocketServiceContext } from "./backend.ts";
 export interface PocketProductOptions {
 	readonly runtime: RuntimeOptions;
+	/** Trusted native configuration service, never supplied through browser RPC. */
+	readonly modelConfiguration?: ProductModelSource;
 	readonly owner: string;
 	readonly initial?: readonly { readonly name: string; readonly profile: string }[];
 	readonly profiles?: readonly string[];
@@ -48,6 +51,7 @@ export interface PocketProductOptions {
 		| "workspace"
 		| "collaboration"
 		| "credentials"
+		| "modelConfiguration"
 		| "notifications"
 		| "assets"
 		| "extensions"
@@ -137,7 +141,12 @@ export async function startPocket(options: PocketProductOptions) {
 	)
 		throw new Error("Invalid approved WebUI product configuration");
 	const assets = await publicAssets();
-	const bootstrapCredential = options.runtime.resolveApiKey ?? (() => options.runtime.apiKey);
+	const bootstrapCredential =
+		options.runtime.resolveApiKey ??
+		(() => {
+			if (!options.runtime.apiKey) throw new Error("Legacy provider credential is unavailable");
+			return options.runtime.apiKey;
+		});
 	let credentials: PocketCredentials | undefined;
 	const runtime = await createRuntime({
 		...options.runtime,
@@ -156,12 +165,12 @@ export async function startPocket(options: PocketProductOptions) {
 		notifications: PocketNotifications | undefined,
 		services: Readonly<Record<string, ExtensionService>> | undefined,
 		servicesDisposed = false;
-	const monitors: { close(): Promise<void> }[] = [];
+	const monitors = new Map<string, { close(): Promise<void> }>();
 	async function releaseServices() {
 		if (servicesDisposed) return;
 		servicesDisposed = true;
 		let failed = false;
-		for (const monitor of monitors) {
+		for (const monitor of monitors.values()) {
 			try {
 				await monitor.close();
 			} catch {
@@ -287,7 +296,8 @@ export async function startPocket(options: PocketProductOptions) {
 				});
 				if (notifications) {
 					try {
-						monitors.push(await observeNotifications(child, notifications));
+						await monitors.get(id)?.close();
+						monitors.set(id, await observeNotifications(child, notifications));
 					} catch (failure) {
 						await child.close();
 						throw failure;
@@ -310,7 +320,7 @@ export async function startPocket(options: PocketProductOptions) {
 			namespace: "pocket.notifications",
 		});
 		for (const source of sessions.runtimes())
-			monitors.push(await observeNotifications(source, notifications));
+			monitors.set(source.view().sessionId, await observeNotifications(source, notifications));
 		services =
 			typeof options.extensionServices === "function"
 				? await options.extensionServices(
@@ -341,6 +351,7 @@ export async function startPocket(options: PocketProductOptions) {
 			navigation: createPersonalNavigation({ runtime, people, workspace }),
 			collaboration,
 			credentials,
+			modelConfiguration: options.modelConfiguration,
 			notifications,
 			extensions,
 			assets,

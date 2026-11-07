@@ -54,6 +54,8 @@ import {
 	createModels,
 	createProvider,
 	validateToolCall,
+	getSupportedThinkingLevels,
+	type ModelThinkingLevel,
 	type Models,
 	type Model,
 	type Api,
@@ -67,6 +69,7 @@ import { copy, hash, json } from "./artifact-journal.ts";
 import type { JournalStorage, JournalMutation } from "./native-journal.ts";
 import { sourceWorkPlan, type StoredSourceWork, type SourceWorkMutation } from "./source-work.ts";
 import { planHistoryScan } from "./history-scan.ts";
+import { legacyModels, primaryModels, modelReference, modelKey, modelDTO } from "./model-access.ts";
 import { LifecycleTransitionRevoked } from "./strategy-control.ts";
 import type {
 	HostOptions,
@@ -92,6 +95,12 @@ import type {
 	ConversationConfiguration,
 	ConversationConfigurationChange,
 	RuntimeOptions,
+	RuntimeLimits,
+	RuntimeBudgetChange,
+	RuntimeBudgetSnapshot,
+	RuntimeBudgetReceipt,
+	RuntimeBudgetQuery,
+	RuntimeBudgetPage,
 	RuntimeView,
 	CatalogOptions,
 	CatalogMember,
@@ -534,6 +543,7 @@ export type Notice =
 	| { type: "consumed"; id: string }
 	| { type: "committed"; id: string; entryId: string }
 	| { type: "blocked"; id: string; reason: string }
+	| { type: "generation_error"; id?: string; reason: string }
 	| { type: "unknown"; id: string; reason: string }
 	| { type: "released"; id: string; reason: string }
 	| { type: "failed"; reason: string; sessionId?: string };
@@ -1598,6 +1608,8 @@ type RuntimeRecord = {
 	conversationCount: number;
 	budget: { primaryAttempts: number; auxiliaryAttempts: number };
 	strategyAttempts: Record<string, number>;
+	/** null only while upgrading a pre-policy Runtime document. */
+	policyVersion: number | null;
 	profiles: Record<string, string>;
 	resources: Record<
 		string,
@@ -1606,15 +1618,20 @@ type RuntimeRecord = {
 };
 const RuntimeDoc = defineDoc<RuntimeRecord>({
 	kind: "pakka.runtime",
-	version: 2,
+	version: 3,
 	checkpointWhen: () => true,
 	scope: "session",
 	migrate: (value, fromVersion) => {
-		if (fromVersion !== 1 || !value.budget || typeof value.budget !== "object" || Array.isArray(value.budget))
+		if (
+			![1, 2].includes(fromVersion) ||
+			!value.budget ||
+			typeof value.budget !== "object" ||
+			Array.isArray(value.budget)
+		)
 			throw new Error("Unsupported runtime schema");
 		if (!value.strategyAttempts && value.budget.auxiliaryAttempts !== 0)
 			throw new Error("Legacy managed strategy spending unknown; migration refused");
-		return { ...value, strategyAttempts: value.strategyAttempts ?? {} } as RuntimeRecord;
+		return { ...value, strategyAttempts: value.strategyAttempts ?? {}, policyVersion: null } as RuntimeRecord;
 	},
 	initial: () => ({
 		sessionId: "",
@@ -1622,10 +1639,93 @@ const RuntimeDoc = defineDoc<RuntimeRecord>({
 		conversationCount: 0,
 		budget: { primaryAttempts: 0, auxiliaryAttempts: 0 },
 		strategyAttempts: {},
+		policyVersion: null,
 		profiles: {},
 		resources: {},
 	}),
 });
+type BudgetHead = { version: number; bootstrapLimits: JsonRepresentation<RuntimeLimits> | null };
+const BudgetPolicyDoc = defineDoc<BudgetHead>({
+	kind: "pakka.budget-policy",
+	version: 1,
+	scope: "session",
+	checkpointWhen: () => true,
+	initial: () => ({ version: 0, bootstrapLimits: null }),
+});
+const BudgetHistoryDoc = defineDocFamily<{ receipt: JsonRepresentation<RuntimeBudgetReceipt> | null }, null>({
+	kind: "pakka.budget-history",
+	version: 1,
+	scope: "session",
+	family: true,
+	checkpointWhen: () => true,
+	initial: () => ({ receipt: null }),
+});
+const BudgetRequestDoc = defineDocFamily<{ version: number; fingerprint: string }, null>({
+	kind: "pakka.budget-request",
+	version: 1,
+	scope: "session",
+	family: true,
+	checkpointWhen: () => true,
+	initial: () => ({ version: 0, fingerprint: "" }),
+});
+function validBudgetLimits(value: unknown): value is RuntimeLimits {
+	return (
+		!!value &&
+		typeof value === "object" &&
+		!Array.isArray(value) &&
+		Object.keys(value).sort().join(",") === "maxAuxiliaryAttempts,maxConversations,maxPrimaryAttempts" &&
+		Object.values(value).every((limit) => Number.isSafeInteger(limit) && limit > 0)
+	);
+}
+function budgetHead(
+	state: Readonly<RuntimeRecord>,
+	policy: Readonly<BudgetHead> | undefined,
+): asserts policy is Readonly<BudgetHead> {
+	if (
+		!policy ||
+		!Number.isSafeInteger(policy.version) ||
+		policy.version < 0 ||
+		state.policyVersion !== policy.version ||
+		!validBudgetLimits(policy.bootstrapLimits)
+	)
+		throw new Error("Runtime budget policy identity is unavailable");
+}
+async function recordBudgetChange(
+	tx: Tx,
+	state: RuntimeRecord,
+	policy: BudgetHead,
+	input: {
+		source: RuntimeBudgetReceipt["source"];
+		actorId: string;
+		requestId: string;
+		reason: string;
+		limits: RuntimeLimits;
+		addedProfiles: string[];
+	},
+): Promise<RuntimeBudgetReceipt> {
+	budgetHead(state, policy);
+	if (policy.version === Number.MAX_SAFE_INTEGER) throw new MutationDenied("Budget policy version exhausted");
+	const version = policy.version + 1;
+	const row = await tx.doc(BudgetHistoryDoc, String(version), null);
+	if (row.receipt !== null) throw new Error("Budget history identity conflict");
+	const receipt: RuntimeBudgetReceipt = {
+		version,
+		source: input.source,
+		actorId: input.actorId,
+		requestId: input.requestId,
+		reason: input.reason,
+		at: Date.now(),
+		before: { ...state.limits },
+		after: { ...input.limits },
+		budget: { ...state.budget },
+		conversationCount: state.conversationCount,
+		addedProfiles: [...input.addedProfiles],
+	};
+	state.limits = { ...input.limits };
+	state.policyVersion = policy.version = version;
+	row.receipt = storedJson<JsonRepresentation<RuntimeBudgetReceipt>>(receipt);
+	return receipt;
+}
 interface ManagedState {
 	profiles: Map<string, HostOptions>;
 	profileHashes: Record<string, string>;
@@ -1641,7 +1741,16 @@ interface ManagedState {
 /** Internal pure-command seam. Never exports a Harness, Session, registry or Tx. */
 export interface ManagedAdapterPort {
 	view(): RuntimeView;
+	budgetPolicy(check: () => void): Promise<RuntimeBudgetSnapshot>;
+	changeBudget(input: RuntimeBudgetChange, check: () => void): Promise<RuntimeBudgetReceipt>;
+	budgetReceipt(
+		identity: Pick<RuntimeBudgetChange, "actorId" | "requestId">,
+		check: () => void,
+	): Promise<RuntimeBudgetReceipt | null>;
+	budgetHistory(query: RuntimeBudgetQuery, check: () => void): Promise<RuntimeBudgetPage>;
 	profileChoices(): readonly { readonly id: string; readonly model: string; readonly cwd: string }[];
+	modelChoices(): Promise<readonly ModelDTO[]>;
+	modelAllowed(selection: string): boolean;
 	profileOptions(id: string): HostOptions;
 	optionsFor(ref: ConversationRef): Promise<HostOptions>;
 	configuration(ref: ConversationRef): Promise<ConversationConfiguration>;
@@ -1768,8 +1877,7 @@ function profileHash(
 ): string {
 	const selected = contextSources.filter((source) => source.profiles.includes(profileId));
 	return hash({
-		endpoint: options.endpoint,
-		model: options.model,
+		...(options.models ? { modelAccess: "native-v1" } : { endpoint: options.endpoint, model: options.model }),
 		cwd: resolve(options.cwd),
 		systemPrompt: options.systemPrompt ?? "",
 		...(selected.length ? { contextSources: selected.map(({ id, version }) => ({ id, version })) } : {}),
@@ -1817,6 +1925,7 @@ function profileOptions(options: HostOptions, profile?: ConversationProfile): Ho
 		...options,
 		cwd,
 		model,
+		thinkingLevel: profile?.thinkingLevel ?? options.thinkingLevel,
 		execution: prepareExecution(profile?.execution ?? options.execution, profile?.tools ?? options.tools),
 		systemPrompt: profile?.systemPrompt ?? options.systemPrompt,
 		tools: (profile?.tools ?? options.tools)?.map((tool) =>
@@ -1865,6 +1974,15 @@ async function claimWriter(storageDir: string): Promise<() => Promise<void>> {
 	return release;
 }
 class MutationDenied extends Error {}
+/** This budget attempt was rejected before commit; any prior request still has its own receipt. */
+export class BudgetChangeRefusedError extends MutationDenied {
+	readonly code: "INVALID_REQUEST" | "CONFLICT";
+	constructor(code: "INVALID_REQUEST" | "CONFLICT", message: string) {
+		super(message);
+		this.name = "BudgetChangeRefusedError";
+		this.code = code;
+	}
+}
 class JournalConflict extends MutationDenied {
 	readonly version: number;
 	constructor(version: number) {
@@ -2463,52 +2581,7 @@ export class DurableAdapter {
 			);
 			openedStorage = storage;
 
-			const rawModels = createModels();
-			const mainProviderId = "pakka-provider-" + hash(options.endpoint).slice(0, 12);
-			const mainModelId = options.model;
-			const mainApiKey = options.apiKey;
-
-			rawModels.setProvider(
-				createProvider({
-					id: mainProviderId,
-					name: "pakka-main",
-					baseUrl: options.endpoint,
-					auth: {
-						apiKey: {
-							name: "Main API Key",
-							resolve: async () => {
-								try {
-									const apiKey = options.resolveApiKey ? await options.resolveApiKey() : mainApiKey;
-									if (
-										typeof apiKey !== "string" ||
-										!apiKey ||
-										apiKey.length > 4096 ||
-										/[\x00-\x1f\x7f]/.test(apiKey)
-									)
-										throw new Error("Unavailable credential");
-									return { auth: { apiKey, baseUrl: options.endpoint } };
-								} catch {
-									throw new Error("Configured provider credential unavailable");
-								}
-							},
-						},
-					},
-					api: { "openai-completions": oac },
-					models: [...new Set([...profiles.values()].map((profile) => profile.model))].map((modelId) => ({
-						id: modelId,
-						name: modelId,
-						provider: mainProviderId,
-						api: "openai-completions",
-						baseUrl: options.endpoint,
-						reasoning: false,
-						input: ["text"],
-						cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
-						contextWindow: 128000,
-						maxTokens: 4096,
-						compat: { maxTokensField: "max_tokens", supportsMidConvoSystemMessages: true },
-					})),
-				}),
-			);
+			const rawModels = legacyModels(options, profiles);
 
 			let adapterRef: DurableAdapter | undefined;
 
@@ -2558,7 +2631,7 @@ export class DurableAdapter {
 			const harness = await Harness.open(
 				storage,
 				{
-					models: rawModels,
+					models: options.models ?? rawModels,
 					registry,
 					// Preparation may report-and-continue an env error. The generation gate below explicitly blocks it.
 					env: async ({ conversationId }) => {
@@ -2589,7 +2662,8 @@ export class DurableAdapter {
 				throw new Error("Managed storage requires createRuntime; legacy bypass refused");
 			let conversation = await harness.root(BACKGROUND_CONTEXT, {
 				agent: {
-					model: { provider: mainProviderId, modelId: mainModelId },
+					model: modelReference(options),
+					thinkingLevel: options.thinkingLevel,
 					extensions: [ext],
 					instructions: options.systemPrompt ?? undefined,
 					cwd: options.cwd,
@@ -2600,6 +2674,9 @@ export class DurableAdapter {
 								const state = await tx.doc(RuntimeDoc);
 								state.sessionId = sessionId;
 								state.limits = { ...managedOptions.limits };
+								state.policyVersion = 0;
+								const policy = await tx.doc(BudgetPolicyDoc);
+								policy.bootstrapLimits = { ...managedOptions.limits };
 								state.profiles = { ...approvedHashes };
 								state.conversationCount = 1;
 								state.resources.root = {
@@ -2614,19 +2691,54 @@ export class DurableAdapter {
 					: {}),
 			});
 
-			const savedRuntime = managedOptions
-				? await harness.snapshot(RuntimeDoc, BACKGROUND_CONTEXT)
-				: undefined;
+			let savedRuntime = managedOptions ? await harness.snapshot(RuntimeDoc, BACKGROUND_CONTEXT) : undefined;
 			if (managedOptions) {
 				const expected = { ...approvedHashes };
 				if (
 					!savedRuntime ||
 					savedRuntime.sessionId !== sessionId ||
-					hash(savedRuntime.limits) !== hash(managedOptions.limits) ||
-					hash(savedRuntime.profiles) !== hash(expected)
+					!Object.hasOwn(savedRuntime.profiles, "default") ||
+					(savedRuntime.profiles["@cwdRoots"] ?? null) !== (expected["@cwdRoots"] ?? null) ||
+					Object.entries(savedRuntime.profiles).some(([id, fingerprint]) => expected[id] !== fingerprint) ||
+					Object.values(savedRuntime.resources).some(
+						(ref) => !expected[ref.profile] || savedRuntime!.profiles[ref.profile] !== expected[ref.profile],
+					)
 				) {
 					await harness.close(BACKGROUND_CONTEXT);
-					throw new Error("Managed runtime profile/limits mismatch");
+					throw new Error("Managed runtime profile mismatch; explicit migration required");
+				}
+				const priorPolicy = await harness.snapshot(BudgetPolicyDoc, BACKGROUND_CONTEXT);
+				if (savedRuntime.policyVersion === null) {
+					if (priorPolicy) throw new Error("Legacy budget policy identity conflict");
+				} else budgetHead(savedRuntime, priorPolicy);
+				const addedProfiles = Object.keys(expected).filter(
+					(id) => !Object.hasOwn(savedRuntime!.profiles, id),
+				);
+				const bootstrapChanged =
+					hash(priorPolicy?.bootstrapLimits ?? savedRuntime.limits) !== hash(managedOptions.limits);
+				if (!priorPolicy || addedProfiles.length || bootstrapChanged) {
+					await harness.commit(async (tx) => {
+						const state = await tx.doc(RuntimeDoc),
+							policy = await tx.doc(BudgetPolicyDoc);
+						if (state.policyVersion === null) {
+							policy.bootstrapLimits = { ...state.limits };
+							state.policyVersion = policy.version = 0;
+						}
+						if (addedProfiles.length || bootstrapChanged) {
+							await recordBudgetChange(tx, state, policy, {
+								source: "bootstrap",
+								actorId: "bootstrap",
+								requestId: `bootstrap-${policy.version + 1}`,
+								reason: "Trusted bootstrap configuration changed",
+								addedProfiles,
+								limits: bootstrapChanged ? managedOptions.limits : state.limits,
+							});
+							state.profiles = { ...expected };
+						}
+						policy.bootstrapLimits = { ...managedOptions.limits };
+					}, BACKGROUND_CONTEXT);
+					savedRuntime = await harness.snapshot(RuntimeDoc, BACKGROUND_CONTEXT);
+					if (!savedRuntime) throw new Error("Runtime policy initialization unavailable");
 				}
 				const activeRoot = savedRuntime.resources.root;
 				if (!activeRoot) {
@@ -2938,15 +3050,19 @@ export class DurableAdapter {
 								);
 								if (!target) throw new Error("Context Conversation is unavailable");
 								const ref = copy(target),
+									cwd = adapter.#options.cwd,
 									currentAdapter = adapter;
 								const check = () => {
 									currentAdapter.#validateReference(ref);
+									if (currentAdapter.#options.cwd !== cwd) throw new Error("Context directory changed");
 									if (context.abortSignal?.aborted) throw new Error("Context preparation aborted");
 								};
 								check();
 								let result: unknown;
 								try {
-									result = await source.render(Object.freeze({ target: ref, signal: context.abortSignal }));
+									result = await source.render(
+										Object.freeze({ target: ref, cwd, signal: context.abortSignal }),
+									);
 								} catch {
 									throw new Error("Context source unavailable");
 								}
@@ -3003,10 +3119,13 @@ export class DurableAdapter {
 						}
 					},
 					afterResponse: async (message, api) => {
-						if (message.stopReason === "error")
-							routes
-								.get(api.conversationId)
-								?.markFailed(new Error(message.errorMessage ?? "Provider failed"));
+						const adapter = routes.get(api.conversationId);
+						if (message.stopReason === "error" && adapter)
+							adapter.#notify({
+								type: "generation_error",
+								id: adapter.#primary,
+								reason: message.errorMessage ?? "Provider failed",
+							});
 					},
 				}),
 			],
@@ -3044,15 +3163,177 @@ export class DurableAdapter {
 		const agent = await conversation.agent(BACKGROUND_CONTEXT);
 		this.#validateReference(ref);
 		if (
-			!agent.model ||
-			agent.model.provider !== "pakka-provider-" + hash(profile.endpoint).slice(0, 12) ||
-			![...managed.profiles.values()].some((row) => row.model === agent.model!.modelId)
+			!profile.models &&
+			(!agent.model ||
+				agent.model.provider !== "pakka-provider-" + hash(profile.endpoint).slice(0, 12) ||
+				![...managed.profiles.values()].some((row) => row.model === agent.model!.modelId))
 		)
 			throw new Error("Stored model is not approved");
-		return { ...profile, model: agent.model.modelId, cwd: approvedDirectory(agent.cwd, managed.cwdRoots) };
+		const selected = agent.model
+			? profile.models
+				? modelKey({ provider: agent.model.provider, id: agent.model.modelId })
+				: agent.model.modelId
+			: "";
+		return {
+			...profile,
+			model: selected,
+			thinkingLevel: agent.thinkingLevel,
+			cwd: approvedDirectory(agent.cwd, managed.cwdRoots),
+		};
+	}
+	async #budgetRead<T>(check: () => void, read: () => Promise<T>): Promise<T> {
+		this.#managedReady();
+		checkAuthority(check);
+		try {
+			const result = await read();
+			this.#managedReady();
+			checkAuthority(check);
+			return copy(result);
+		} catch (error) {
+			if (!(error instanceof MutationDenied)) this.storageUnknown("Runtime budget read unavailable");
+			throw error;
+		}
+	}
+	#budgetPolicy(check: () => void): Promise<RuntimeBudgetSnapshot> {
+		return this.#budgetRead(check, () =>
+			this.#persist(async (tx) => {
+				const state = await tx.doc(RuntimeDoc),
+					policy = await tx.doc(BudgetPolicyDoc);
+				budgetHead(state, policy);
+				checkAuthority(check);
+				return {
+					version: policy.version,
+					limits: { ...state.limits },
+					budget: { ...state.budget },
+					conversationCount: state.conversationCount,
+				};
+			}),
+		);
+	}
+	async #changeBudget(raw: RuntimeBudgetChange, check: () => void): Promise<RuntimeBudgetReceipt> {
+		this.#managedReady();
+		checkAuthority(check);
+		if (
+			!raw ||
+			Object.keys(raw).sort().join(",") !== "actorId,expectedVersion,limits,reason,requestId" ||
+			!validKey(raw.actorId) ||
+			!validKey(raw.requestId) ||
+			!Number.isSafeInteger(raw.expectedVersion) ||
+			raw.expectedVersion < 0 ||
+			!validBudgetLimits(raw.limits) ||
+			typeof raw.reason !== "string" ||
+			!raw.reason.trim() ||
+			raw.reason.length > 512 ||
+			/[\x00-\x1f\x7f]/.test(raw.reason)
+		)
+			throw new BudgetChangeRefusedError("INVALID_REQUEST", "Invalid budget policy change");
+		const input = copy(raw),
+			key = hash([input.actorId, input.requestId]),
+			fingerprint = hash(input);
+		const receipt = await this.#persist(async (tx) => {
+			this.#managedReady();
+			const state = await tx.doc(RuntimeDoc),
+				policy = await tx.doc(BudgetPolicyDoc);
+			budgetHead(state, policy);
+			const request = await tx.doc(BudgetRequestDoc, key, null);
+			checkAuthority(check);
+			if (request.version > 0) {
+				if (request.fingerprint !== fingerprint)
+					throw new BudgetChangeRefusedError("CONFLICT", "Budget request identity conflict");
+				const row = await tx.doc(BudgetHistoryDoc, String(request.version), null);
+				if (
+					!row.receipt ||
+					row.receipt.version !== request.version ||
+					row.receipt.source !== "management" ||
+					row.receipt.actorId !== input.actorId ||
+					row.receipt.requestId !== input.requestId
+				)
+					throw new Error("Budget receipt identity unavailable");
+				checkAuthority(check);
+				return storedJson<RuntimeBudgetReceipt>(row.receipt);
+			}
+			if (input.expectedVersion !== policy.version)
+				throw new BudgetChangeRefusedError("CONFLICT", "Budget policy version conflict");
+			const result = await recordBudgetChange(tx, state, policy, {
+				...input,
+				source: "management",
+				addedProfiles: [],
+			});
+			request.version = result.version;
+			request.fingerprint = fingerprint;
+			checkAuthority(check);
+			return result;
+		});
+		checkAuthority(check);
+		return copy(receipt);
+	}
+	#budgetReceipt(
+		raw: Pick<RuntimeBudgetChange, "actorId" | "requestId">,
+		check: () => void,
+	): Promise<RuntimeBudgetReceipt | null> {
+		return this.#budgetRead(check, async () => {
+			if (
+				!raw ||
+				Object.keys(raw).sort().join(",") !== "actorId,requestId" ||
+				!validKey(raw.actorId) ||
+				!validKey(raw.requestId)
+			)
+				throw new MutationDenied("Invalid budget receipt identity");
+			const identity = copy(raw);
+			const request = await this.#harness.snapshot(
+				BudgetRequestDoc,
+				hash([identity.actorId, identity.requestId]),
+				BACKGROUND_CONTEXT,
+			);
+			if (!request) return null;
+			if (!Number.isSafeInteger(request.version) || request.version < 1)
+				throw new Error("Budget request identity unavailable");
+			const row = await this.#harness.snapshot(BudgetHistoryDoc, String(request.version), BACKGROUND_CONTEXT);
+			if (
+				!row?.receipt ||
+				row.receipt.version !== request.version ||
+				row.receipt.source !== "management" ||
+				row.receipt.actorId !== identity.actorId ||
+				row.receipt.requestId !== identity.requestId
+			)
+				throw new Error("Budget receipt identity unavailable");
+			return row.receipt;
+		});
+	}
+	#budgetHistory(raw: RuntimeBudgetQuery, check: () => void): Promise<RuntimeBudgetPage> {
+		return this.#budgetRead(check, async () => {
+			if (
+				!raw ||
+				Object.keys(raw).some((key) => !["limit", "beforeVersion"].includes(key)) ||
+				(raw.beforeVersion !== undefined &&
+					(!Number.isSafeInteger(raw.beforeVersion) || raw.beforeVersion < 1))
+			)
+				throw new MutationDenied("Invalid budget history query");
+			const limit = raw.limit ?? 50,
+				before = raw.beforeVersion;
+			if (!Number.isSafeInteger(limit) || limit < 1 || limit > 100)
+				throw new MutationDenied("Invalid budget history limit");
+			const policy = await this.#harness.snapshot(BudgetPolicyDoc, BACKGROUND_CONTEXT);
+			if (!policy || !Number.isSafeInteger(policy.version) || policy.version < 0)
+				throw new Error("Budget history identity unavailable");
+			let version = Math.min(policy.version, before === undefined ? policy.version : before - 1);
+			const items: RuntimeBudgetReceipt[] = [];
+			for (; version > 0 && items.length < limit; version--) {
+				const row = await this.#harness.snapshot(BudgetHistoryDoc, String(version), BACKGROUND_CONTEXT);
+				if (!row?.receipt || row.receipt.version !== version)
+					throw new Error("Budget history row unavailable");
+				items.push(row.receipt);
+			}
+			return { items, ...(version > 0 ? { nextBeforeVersion: version + 1 } : {}) };
+		});
 	}
 	#managedPort(): ManagedAdapterPort {
 		return Object.freeze({
+			budgetPolicy: (check: () => void) => this.#budgetPolicy(check),
+			changeBudget: (input: RuntimeBudgetChange, check: () => void) => this.#changeBudget(input, check),
+			budgetReceipt: (identity: Pick<RuntimeBudgetChange, "actorId" | "requestId">, check: () => void) =>
+				this.#budgetReceipt(identity, check),
+			budgetHistory: (query: RuntimeBudgetQuery, check: () => void) => this.#budgetHistory(query, check),
 			view: () => {
 				const managed = this.#managed!;
 				return copy({
@@ -3077,6 +3358,28 @@ export class DurableAdapter {
 						cwd: resolve(profile.cwd),
 					})),
 				),
+			modelAllowed: (selection: string) => {
+				this.#managedReady();
+				return this.#approvedModel(selection);
+			},
+			modelChoices: async () => {
+				this.#managedReady();
+				const source = primaryModels(this.#options, this.#rawModels);
+				const available = new Set((await source.getAvailable()).map(modelKey));
+				this.#managedReady();
+				const catalog = this.#options.models
+					? source.getModels()
+					: source.getModels(modelReference(this.#options)?.provider);
+				return copy(
+					catalog.map((model) =>
+						modelDTO(
+							model,
+							this.#options.models ? modelKey(model) : model.id,
+							available.has(modelKey(model)),
+						),
+					),
+				);
+			},
 			profileOptions: (id: string) => {
 				const profile = this.#managedReady().profiles.get(id);
 				if (!profile) throw new Error("Unapproved runtime profile");
@@ -3085,7 +3388,11 @@ export class DurableAdapter {
 			optionsFor: (ref: ConversationRef) => this.#conversationOptions(ref),
 			configuration: async (ref: ConversationRef) => {
 				const options = await this.#conversationOptions(ref);
-				return copy({ model: options.model, cwd: options.cwd });
+				return copy({
+					model: options.model,
+					cwd: options.cwd,
+					...(options.models ? { thinkingLevel: options.thinkingLevel } : {}),
+				});
 			},
 			directoryRoots: (ids?: readonly string[]) => {
 				const managed = this.#managedReady();
@@ -3129,12 +3436,10 @@ export class DurableAdapter {
 						profileId === "default" ? "pakka-core-extension" : "pakka-profile-" + profileId,
 					)!;
 					await configure(tx, created.id, {
-						model: {
-							provider: "pakka-provider-" + hash(profile.endpoint).slice(0, 12),
-							modelId: profile.model,
-						},
+						model: modelReference(profile, profile.model),
 						extensions: [extension],
 						instructions: profile.systemPrompt,
+						thinkingLevel: profile.thinkingLevel,
 						cwd: profile.cwd,
 					});
 					state.conversationCount++;
@@ -3739,7 +4044,8 @@ export class DurableAdapter {
 				const specs = rawSpecs.map((s) => {
 					if (!validKey(s.key)) throw new Error("Invalid member key");
 					const profile = s.profile ?? "default";
-					if (!this.#managedReady().profiles.has(profile)) throw new Error("Unapproved runtime profile");
+					const configuredProfile = this.#managedReady().profiles.get(profile);
+					if (!configuredProfile) throw new Error("Unapproved runtime profile");
 					const lifetime = s.lifetime ?? "persistent";
 					if (!["persistent", "temporary", "task-bound", "background"].includes(lifetime))
 						throw new Error("Invalid member lifetime");
@@ -3759,16 +4065,21 @@ export class DurableAdapter {
 							typeof configuration !== "object" ||
 							Array.isArray(configuration) ||
 							!Object.keys(configuration).length ||
-							Object.keys(configuration).some((key) => !["model", "cwd"].includes(key))
+							Object.keys(configuration).some((key) => !["model", "cwd", "thinkingLevel"].includes(key))
 						)
 							throw new Error("Invalid initial configuration");
-						if (
-							configuration.model !== undefined &&
-							![...this.#managedReady().profiles.values()].some((row) => row.model === configuration.model)
-						)
+						if (configuration.model !== undefined && !this.#approvedModel(configuration.model))
 							throw new Error("Unconfigured initial model");
 						if (configuration.cwd !== undefined)
 							approvedDirectory(configuration.cwd, this.#managedReady().cwdRoots);
+						if (
+							configuration.thinkingLevel !== undefined &&
+							!this.#approvedThinking(
+								configuration.model ?? configuredProfile.model,
+								configuration.thinkingLevel,
+							)
+						)
+							throw new Error("Unsupported initial thinking level");
 					}
 					return {
 						key: s.key,
@@ -3802,7 +4113,11 @@ export class DurableAdapter {
 						}
 					const inherited = new Map<
 						string,
-						{ model?: { provider: string; modelId: string }; cwd?: string }
+						{
+							model?: { provider: string; modelId: string };
+							cwd?: string;
+							thinkingLevel?: ModelThinkingLevel;
+						}
 					>();
 					for (const spec of specs) {
 						const inheritedRef =
@@ -3813,16 +4128,19 @@ export class DurableAdapter {
 							const source = requireMember(state, inheritedRef);
 							if (source.data.phase !== "active") throw new MutationDenied("Inheritance source inactive");
 							const agent = await tx.doc(AgentDoc, conversationId(inheritedRef.conversationId));
-							if (
-								!agent.model ||
-								![...this.#managedReady().profiles.values()].some(
-									(profile) => profile.model === agent.model!.modelId,
-								)
-							)
+							const selection = agent.model
+								? this.#options.models
+									? modelKey({ provider: agent.model.provider, id: agent.model.modelId })
+									: agent.model.modelId
+								: "";
+							if (agent.model ? !this.#approvedModel(selection) : !this.#options.models)
 								throw new MutationDenied("Unapproved inherited model");
 							inherited.set(spec.key, {
-								model: { provider: agent.model.provider, modelId: agent.model.modelId },
+								model: agent.model
+									? { provider: agent.model.provider, modelId: agent.model.modelId }
+									: undefined,
 								cwd: approvedDirectory(agent.cwd, this.#managedReady().cwdRoots),
+								thinkingLevel: agent.thinkingLevel,
 							});
 						}
 					}
@@ -3880,22 +4198,20 @@ export class DurableAdapter {
 							spec.profile === "default" ? "pakka-core-extension" : "pakka-profile-" + spec.profile,
 						)!;
 						await configure(tx, created.id, {
-							model: {
-								provider: "pakka-provider-" + hash(profile.endpoint).slice(0, 12),
-								modelId: profile.model,
-							},
+							model: modelReference(profile, profile.model),
 							extensions: [extension],
 							instructions: profile.systemPrompt,
+							thinkingLevel: profile.thinkingLevel,
 							cwd: profile.cwd,
 							...(inherited.get(spec.key) ?? {}),
 							...(spec.configuration?.model === undefined
 								? {}
 								: {
-										model: {
-											provider: "pakka-provider-" + hash(profile.endpoint).slice(0, 12),
-											modelId: spec.configuration.model,
-										},
+										model: modelReference(profile, spec.configuration.model),
 									}),
+							...(spec.configuration?.thinkingLevel === undefined
+								? {}
+								: { thinkingLevel: spec.configuration.thinkingLevel }),
 							...(spec.configuration?.cwd === undefined
 								? {}
 								: { cwd: approvedDirectory(spec.configuration.cwd, this.#managedReady().cwdRoots) }),
@@ -3942,22 +4258,23 @@ export class DurableAdapter {
 				validateRef(ref);
 				const change = copy(raw),
 					managed = this.#managedReady();
+				const route = this.#routes.get(conversationId(ref.conversationId));
+				if (!route || route.#disposed || route.#failedReason) throw new MutationDenied("Member not ready");
 				if (
 					!change ||
 					typeof change !== "object" ||
 					Array.isArray(change) ||
 					!Object.keys(change).length ||
-					Object.keys(change).some((key) => !["model", "cwd"].includes(key)) ||
+					Object.keys(change).some((key) => !["model", "cwd", "thinkingLevel"].includes(key)) ||
+					(Object.hasOwn(change, "thinkingLevel") &&
+						!this.#approvedThinking(change.model ?? route.#options.model, change.thinkingLevel)) ||
 					(Object.hasOwn(change, "model") &&
-						(typeof change.model !== "string" ||
-							![...managed.profiles.values()].some((profile) => profile.model === change.model)))
+						(typeof change.model !== "string" || !this.#approvedModel(change.model)))
 				)
 					throw new MutationDenied("Unapproved configuration change");
 				const cwd = Object.hasOwn(change, "cwd")
 					? approvedDirectory(change.cwd, managed.cwdRoots)
 					: undefined;
-				const route = this.#routes.get(conversationId(ref.conversationId));
-				if (!route || route.#disposed || route.#failedReason) throw new MutationDenied("Member not ready");
 				const configured = await this.#persist(async (tx) => {
 					const state = await tx.doc(CatalogDoc, options.namespace, seed),
 						runtime = await tx.doc(RuntimeDoc);
@@ -3976,13 +4293,11 @@ export class DurableAdapter {
 					await configure(tx, to, {
 						...(change.model !== undefined
 							? {
-									model: {
-										provider: "pakka-provider-" + hash(route.#options.endpoint).slice(0, 12),
-										modelId: change.model,
-									},
+									model: modelReference(route.#options, change.model),
 								}
 							: {}),
 						...(cwd !== undefined ? { cwd } : {}),
+						...(change.thinkingLevel !== undefined ? { thinkingLevel: change.thinkingLevel } : {}),
 					});
 					checkAuthority(check);
 					const next = { ...ref, incarnation: randomUUID() };
@@ -3995,6 +4310,7 @@ export class DurableAdapter {
 					...route.#options,
 					...(change.model !== undefined ? { model: change.model } : {}),
 					...(cwd !== undefined ? { cwd } : {}),
+					...(change.thinkingLevel !== undefined ? { thinkingLevel: change.thinkingLevel } : {}),
 				};
 				route.#control.configurationChanged();
 				await route.refreshCache();
@@ -4024,12 +4340,10 @@ export class DurableAdapter {
 						profileId === "default" ? "pakka-core-extension" : "pakka-profile-" + profileId,
 					)!;
 					await configure(tx, to, {
-						model: {
-							provider: "pakka-provider-" + hash(profile.endpoint).slice(0, 12),
-							modelId: profile.model,
-						},
+						model: modelReference(profile, profile.model),
 						extensions: [extension],
 						instructions: profile.systemPrompt,
+						thinkingLevel: profile.thinkingLevel,
 						cwd: profile.cwd,
 					});
 					checkAuthority(check);
@@ -4058,7 +4372,6 @@ export class DurableAdapter {
 					typeof original.text !== "string" ||
 					!original.text.trim() ||
 					original.text.length > 65536 ||
-					original.text.startsWith("/") ||
 					!["prompt", "steer", "followUp"].includes(original.mode)
 				)
 					throw new Error("Invalid delivery input");
@@ -4823,6 +5136,47 @@ export class DurableAdapter {
 		};
 	}
 
+	#approvedModel(selection: string): boolean {
+		if (!this.#options.models)
+			return [...this.#managedReady().profiles.values()].some((profile) => profile.model === selection);
+		try {
+			const ref = modelReference(this.#options, selection);
+			return !!ref && !!primaryModels(this.#options, this.#rawModels).getModel(ref.provider, ref.modelId);
+		} catch {
+			return false;
+		}
+	}
+
+	#approvedThinking(selection: string, value: unknown): boolean {
+		try {
+			const ref = modelReference(this.#options, selection);
+			const model = ref
+				? primaryModels(this.#options, this.#rawModels).getModel(ref.provider, ref.modelId)
+				: undefined;
+			return model ? getSupportedThinkingLevels(model).some((level) => level === value) : value === "off";
+		} catch {
+			return false;
+		}
+	}
+
+	#primaryModelDTO(): ModelDTO {
+		const ref = modelReference(this.#options);
+		const model = ref
+			? primaryModels(this.#options, this.#rawModels).getModel(ref.provider, ref.modelId)
+			: undefined;
+		const key = this.#options.models ? this.#options.model : "main";
+		if (model) return modelDTO(model, key, true);
+		return {
+			key,
+			model: this.#options.model,
+			name: this.#options.model,
+			reasoning: false,
+			contextWindow: 0,
+			maxOutputTokens: 0,
+			available: false,
+		};
+	}
+
 	frame(): AdapterFrame {
 		const total: { -readonly [K in keyof UsageDTO]: UsageDTO[K] } = {
 			input: 0,
@@ -4876,15 +5230,7 @@ export class DurableAdapter {
 					fingerprint: hash([entry, msgs]),
 				};
 			}),
-			model: {
-				key: "main",
-				model: this.#options.model,
-				name: this.#options.model,
-				reasoning: false,
-				contextWindow: 128000,
-				maxOutputTokens: 4096,
-				available: true,
-			},
+			model: this.#primaryModelDTO(),
 			usage: total,
 		});
 	}
@@ -5078,7 +5424,7 @@ export class DurableAdapter {
 							: settled.detail
 								? JSON.stringify(settled.detail)
 								: "Provider failed";
-					this.#notify({ type: "failed", reason: reasonStr });
+					this.#notify({ type: "generation_error", id, reason: reasonStr });
 				} else {
 					this.#notify({
 						type: "unknown",

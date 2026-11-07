@@ -16,7 +16,7 @@ test("WebUI directories: authorized browsing, independent changes and revocation
 			outside = join(m.f.root, "outside");
 		await mkdir(child);
 		await mkdir(outside);
-		await symlink(outside, join(m.f.cwd, "escape"), "dir");
+		await symlink(outside, join(m.f.cwd, "escape"), process.platform === "win32" ? "junction" : "dir");
 		await writeFile(join(m.f.cwd, "not-folder"), "file");
 		const people = await createPocketPeople({ runtime: m.runtime, namespace: "directory-people" });
 		const owner = await people.initializeOwner("Owner"),

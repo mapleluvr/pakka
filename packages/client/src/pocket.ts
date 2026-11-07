@@ -57,6 +57,8 @@ function correlated(command: PocketCommand, result: PocketResult, personId?: str
 			);
 		case "session.list":
 			return result.kind === "sessions";
+		case "session.reopen":
+			return result.kind === "session.state" && result.session.id === command.sessionId;
 		case "session.create":
 			return (
 				result.kind === "managed.session" &&

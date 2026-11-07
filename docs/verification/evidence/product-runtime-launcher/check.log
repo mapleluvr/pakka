@@ -1,0 +1,5 @@
+
+> pakka-workspace@0.1.0 check
+> node scripts/verify-durable-patch.mjs && tsc --noEmit -p tsconfig.test.json
+
+Verified pi-durable 1.4.0-pakka.2 (12d21b230d40706618db4ac83747b9189b7d9070f023c2705bc5c8b521d90ecd)

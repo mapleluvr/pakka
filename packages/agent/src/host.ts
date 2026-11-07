@@ -250,6 +250,10 @@ class Kernel {
 		if (n.type === "blocked") this.#receipt(n.id, { generation: { status: "blocked", reason: n.reason } });
 		if (n.type === "unknown") this.#receipt(n.id, { state: "unknown", reason: n.reason });
 		if (n.type === "released") this.#receipt(n.id, { state: "released", reason: n.reason });
+		if (n.type === "generation_error") {
+			if (this.#phase === "ready") this.#lastError = n.reason;
+			if (n.id) this.#receipt(n.id, { generation: { status: "failed", reason: n.reason } });
+		}
 		if (n.type === "failed") this.#fail(n.reason, n.sessionId);
 		if (n.type === "changed") this.#control.sourceChanged();
 	}
@@ -384,7 +388,6 @@ class Kernel {
 		if (typeof key !== "string" || !key || typeof text !== "string" || !text.trim())
 			throw new Error("Empty input");
 		if (!["prompt", "steer", "followUp"].includes(mode)) throw new Error("Unsupported input mode");
-		if (text.startsWith("/")) throw new Error("Pi commands/skills/templates unsupported");
 		const scope = this.#adapter.snapshot().sessionId;
 		const keyId = JSON.stringify([principal, scope, this.#branchId, key]);
 		const existingId = this.#keys.get(keyId),

@@ -12,6 +12,7 @@ import type {
 	CatalogMember,
 	JsonObject,
 	ConversationConfigurationChange,
+	ConversationConfiguration,
 } from "@pakka/agent";
 import type { PocketAuthority, PocketPeople, PocketPermission, PocketPerson } from "./pocket-people.ts";
 import {
@@ -68,7 +69,7 @@ export interface PocketInputReceipt {
 }
 export interface PocketConfiguration {
 	readonly ref: ConversationRef;
-	readonly current: { readonly model: string; readonly cwd: string };
+	readonly current: ConversationConfiguration;
 	readonly choices: readonly { readonly id: string; readonly model: string; readonly cwd?: string }[];
 	readonly canConfigure: boolean;
 	readonly usage: ConversationSnapshot["usage"];
@@ -375,16 +376,13 @@ export function createPocketWorkspace(options: PocketWorkspaceOptions): PocketWo
 					check("create");
 					profileCheck(saved.profile);
 					if (initialDirectory !== undefined && !directoryWithin(initialDirectory, roots())) denied();
-					if (
-						saved.configuration?.model !== undefined &&
-						!runtime.profileChoices().some((row) => row.model === saved.configuration!.model)
-					)
+					if (saved.configuration?.model !== undefined && !runtime.modelAllowed(saved.configuration.model))
 						denied();
 					if (from) check("manage", from);
 					if (saved.inherit) check("manage", saved.inherit);
 					if (
 						inheritedConfiguration &&
-						(!runtime.profileChoices().some((row) => row.model === inheritedConfiguration!.model) ||
+						((inheritedConfiguration.model !== "" && !runtime.modelAllowed(inheritedConfiguration.model)) ||
 							!directoryWithin(inheritedConfiguration.cwd, roots()))
 					)
 						denied();
@@ -416,7 +414,7 @@ export function createPocketWorkspace(options: PocketWorkspaceOptions): PocketWo
 						if (provider && !provider.canManage(inheritedRef)) denied();
 						const inherited = await runtime.configuration(inheritedRef);
 						inheritedConfiguration = inherited;
-						if (!runtime.profileChoices().some((row) => row.model === inherited.model)) denied();
+						if (inherited.model !== "" && !runtime.modelAllowed(inherited.model)) denied();
 						await resolveDirectory(inherited.cwd, roots());
 						authorize();
 					}
@@ -593,7 +591,7 @@ export function createPocketWorkspace(options: PocketWorkspaceOptions): PocketWo
 					const snapshot = await runtime.readConversation(ref, authorize, { limit: 1 });
 					const models = new Map<string, { id: string; model: string }>();
 					for (const { id, model } of runtime.profileChoices())
-						if (!models.has(model)) models.set(model, { id, model });
+						if (model && !models.has(model)) models.set(model, { id, model });
 					const choices = [...models.values()];
 					const view = runtime.view();
 					const configuration = await runtime.configuration(ref);
@@ -648,11 +646,7 @@ export function createPocketWorkspace(options: PocketWorkspaceOptions): PocketWo
 							authorize = () => {
 								check("manage", ref);
 								if (validatedCwd !== undefined && !directoryWithin(validatedCwd, roots())) denied();
-								if (
-									change?.model !== undefined &&
-									!runtime.profileChoices().some((row) => row.model === change.model)
-								)
-									denied();
+								if (change?.model !== undefined && !runtime.modelAllowed(change.model)) denied();
 							};
 						authorize();
 						const provider = await resource(ref, authorize);

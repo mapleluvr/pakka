@@ -42,10 +42,21 @@ export async function observeNotifications(runtime: Runtime, notifications: Pock
 	let task: Promise<void> | undefined;
 	const timer = setInterval(() => {
 		if (!closed && !task) {
-			task = scan(false);
-			void task.finally(() => {
-				task = undefined;
-			});
+			task = (async () => {
+				if (runtime.view().phase !== "ready") {
+					closed = true;
+					clearInterval(timer);
+					return;
+				}
+				await scan(false);
+			})()
+				.catch(() => {
+					closed = true;
+					clearInterval(timer);
+				})
+				.finally(() => {
+					task = undefined;
+				});
 		}
 	}, 100);
 	timer.unref();

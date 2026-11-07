@@ -339,8 +339,13 @@ export async function publicMemory(
 	await client.add({ requestId: "explicit-lesson", scope: "project", text: "Approved commands" });
 	// @ts-expect-error The host binds the author; callers cannot forge a human or Agent identity.
 	await client.add({ requestId: "forged", scope: "global", text: "forged", actorId: "another-person" });
-	// @ts-expect-error A source gets an exact reference and signal, never a provider credential.
-	void prepared.source.render({ target: ref, signal: new AbortController().signal, apiKey: "forged" });
+	void prepared.source.render({
+		target: ref,
+		cwd: "/approved",
+		signal: new AbortController().signal,
+		// @ts-expect-error A source gets an exact reference and signal, never a provider credential.
+		apiKey: "forged",
+	});
 	// @ts-expect-error Memory read DTOs are readonly; edits must carry their expectedVersion.
 	view.lessons[0]!.text = "rewrite";
 	return { root: workspaceMemoryExtensionRoot, source: prepared.source, tools: prepared.tools };
@@ -352,7 +357,7 @@ export async function managed(runtime: Runtime, options: RuntimeOptions, ref: Co
 	return { limits: options.limits, budget: runtime.view().budget, identity };
 }
 
-export function install(binding: StrategyBinding, invocation?: ToolInvocationScope) {
+export async function install(binding: StrategyBinding, invocation?: ToolInvocationScope) {
 	const frame: ContextFrame = binding.readFrame(invocation);
 	const basis: FrameBasis = frame.basis;
 	const models: readonly ModelDTO[] = binding.models();
@@ -368,7 +373,7 @@ export function install(binding: StrategyBinding, invocation?: ToolInvocationSco
 	const job: SourceJob = binding.createJob(basis, spec);
 	const scope: JobScope = job.scope;
 	const artifactScope: ArtifactScope = scope;
-	const receipt: ArtifactReceipt = binding.artifacts.append(artifactScope, {
+	const receipt: ArtifactReceipt = await binding.artifacts.append(artifactScope, {
 		expectedVersion: frame.artifacts.version,
 		records: [{ kind: "plan" }],
 	});

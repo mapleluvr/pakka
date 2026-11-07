@@ -8,6 +8,14 @@
 
 适配器通过 Durable 的公开 `HarnessOptions.env` 提供原生环境。`read`、`write`、`edit`、`bash`、`powershell` 按显式选择注册，和自定义工具使用同一 invocation 校验。配置错误与工具重名在建立 Session 存储前拒绝。配置了环境的 Conversation 在主模型请求前完成取得；取得失败用原生 block 结算已接纳输入，保持零 provider HTTP，缺失能力返回明确错误。
 
+## 默认本地产品装配
+
+无参数 `pakka` 的产品 bootstrap 显式装配本地环境：`default` 提供 read/write/edit 与 Windows PowerShell 或 POSIX Bash，`read-only` 仅注册 read。SDK 省略 execution 时仍不启用环境，不把产品默认反向变成所有 SDK 宿主的隐式权限。环境按原生 Conversation 当前 cwd 和 incarnation 建立；更改配置仍使旧绑定失效。
+
+命令子进程仅继承 PATH、系统目录、临时目录、用户目录和基本 locale 等明确运行变量，不继承模型宿主的凭据、Node 启动钩子或完整环境。可信工具显式提供的 env 属于其宿主授权。这是环境卫生，不是文件系统或网络沙箱；本地命令仍具有当前 OS 用户权限。
+
+产品资源源按每次 generation 的批准 cwd 使用 Pi 公开加载器读取 instructions，并提供 skills/templates 的元数据与文件位置。资源设置使用原生 global/project settings 的只读 skills/prompts 视图；不解析 packages，不执行扩展或 MCP，不覆写用户文件。资源正文与模板参数不因出现在索引中而自动加载或展开。数据快照不授予权限；Runtime 在实际请求派发前核对原引用、cwd 与 authority。
+
 ## 能力与数据
 
 合作工具通过 `executionFor(scope)` 取得冻结的 `ExecutionAccess`。它提供文件、目录、reader、watch、临时资源和命令能力，方法使用标准 AbortSignal；Pi Context、可变 env、原生 reader 和工具 API 留在 `durable-adapter.ts`。二进制数据使用冻结的 `{ base64 }` DTO，命令输出按 stdout/stderr 分开回调。工具能力不包含 owner 的 `cleanup()`。

@@ -4,6 +4,7 @@ export { createLocalExecutionEnvironment, executionFor } from "./durable-adapter
 export { createHost } from "./host.ts";
 export { createRuntime } from "./runtime.ts";
 export {
+	BudgetChangeRefusedError,
 	ConversationUnavailableError,
 	createCompresserSession,
 	recoverStorageWriter,

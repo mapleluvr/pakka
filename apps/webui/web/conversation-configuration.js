@@ -133,6 +133,11 @@ function modelMatches(choices, query) {
 		.map((match) => match.row);
 }
 export function ModelPicker(props) {
+	return props.models
+		? html`<${NativeModelPicker} ...${props} />`
+		: html`<${LegacyModelPicker} ...${props} />`;
+}
+function LegacyModelPicker(props) {
 	const { value, busy, close } = props,
 		[query, setQuery] = useState(""),
 		[index, setIndex] = useState(0),
@@ -213,6 +218,179 @@ export function ModelPicker(props) {
   <div class="pocket-model-keys pocket-secondary" aria-hidden="true"><span><${Icon} name="up"/><${Icon} name="down"/> Navigate</span><span><${Icon} name="enter"/> Select</span><span><kbd>Esc</kbd> Close</span></div>
   ${busy && html`<p role="status">Wait for current work and queued inputs to finish.</p>`}${change.status}
  </div></${Sheet}>`;
+}
+function NativeModelPicker(props) {
+	const { value, models, target, busy, close, error } = props;
+	const current = value.current?.model,
+		initialThinking = value.current?.thinkingLevel;
+	const [query, setQuery] = useState(""),
+		[page, setPage] = useState(null),
+		[offset, setOffset] = useState(0);
+	const [selected, setSelected] = useState(null),
+		[thinking, setThinking] = useState(initialThinking ?? "");
+	const [loading, setLoading] = useState(true),
+		[message, setMessage] = useState("");
+	const [index, setIndex] = useState(0),
+		input = useRef(null),
+		list = useRef(null),
+		listId = useId();
+	const generation = useRef(0),
+		request = useRef(null),
+		live = useRef(true),
+		change = useChange(props);
+	useEffect(
+		() => () => {
+			live.current = false;
+			request.current?.abort();
+			generation.current++;
+		},
+		[],
+	);
+	async function load(next = 0, revision) {
+		const operation = ++generation.current;
+		request.current?.abort();
+		const controller = new AbortController();
+		request.current = controller;
+		setLoading(true);
+		setMessage("");
+		try {
+			const result = await models.request(
+				{
+					op: "catalog",
+					query: { query, offset: next, limit: 50, ...(revision ? { revision } : {}) },
+					...(target
+						? { target: { sessionId: target.sessionId, conversationId: target.conversationId } }
+						: {}),
+				},
+				{ signal: controller.signal },
+			);
+			if (!live.current || generation.current !== operation) return;
+			setPage(result.page);
+			setOffset(next);
+			setIndex(0);
+			setSelected((previous) => previous ?? result.page.models.find((row) => row.key === current) ?? null);
+		} catch (failure) {
+			if (!live.current || generation.current !== operation) return;
+			setPage(null);
+			setMessage("The model catalogue could not be confirmed or has changed. Restart the search.");
+			if (failure.code === "UNAUTHORIZED") error(failure);
+		} finally {
+			if (live.current && generation.current === operation) setLoading(false);
+		}
+	}
+	useEffect(() => {
+		setLoading(true);
+		const timer = setTimeout(() => void load(), 120);
+		return () => {
+			clearTimeout(timer);
+			request.current?.abort();
+			generation.current++;
+		};
+	}, [query, models]);
+	useLayoutEffect(() => {
+		const row = list.current?.children[index];
+		if (!row) return;
+		const box = list.current.getBoundingClientRect(),
+			item = row.getBoundingClientRect();
+		if (item.top < box.top) list.current.scrollTop -= box.top - item.top;
+		else if (item.bottom > box.bottom) list.current.scrollTop += item.bottom - box.bottom;
+	}, [index, page]);
+	const blocked = loading || busy || change.pending || change.uncertain || !value.canConfigure;
+	function choose(row) {
+		if (!row || blocked) return;
+		setSelected(row);
+		setThinking((previous) =>
+			!previous || row.thinkingLevels?.includes(previous) ? previous : (row.thinkingLevels?.[0] ?? ""),
+		);
+	}
+	function keys(event) {
+		if (event.isComposing || event.keyCode === 229) return;
+		if (event.target !== input.current) return;
+		if (["ArrowDown", "ArrowUp"].includes(event.key)) {
+			event.preventDefault();
+			if (page?.models.length)
+				setIndex((index + (event.key === "ArrowDown" ? 1 : page.models.length - 1)) % page.models.length);
+		} else if (event.key === "Enter") {
+			event.preventDefault();
+			choose(page?.models[index]);
+		}
+	}
+	return html`<${Sheet} label="Select Model" close=${close} anchor=${props.anchor === undefined ? document.querySelector("[data-action=model]") : props.anchor} initialFocus="[data-model-search]">
+		<${Heading} title="Model Selection" label="Close model picker" close=${close} />
+		<div class="pocket-sheet-body pocket-model-picker" onKeyDown=${keys}>
+			<label class="pocket-model-search">Search Models<input ref=${input} data-model-search type="search" role="combobox" aria-label="Search models" placeholder="Provider, model or name" aria-autocomplete="list" aria-expanded="true" aria-controls=${listId} aria-activedescendant=${page?.models[index] ? listId + "-" + index : undefined} autocomplete="off" spellcheck="false" value=${query} onInput=${(event) => setQuery(event.currentTarget.value)} /></label>
+			<div class="pocket-model-index pocket-secondary"><span>Native Model Catalogue</span><span role="status"><span data-model-total>${page?.total ?? 0}</span> models</span></div>
+			<div ref=${list} id=${listId} role="listbox" aria-label="Native models" aria-busy=${loading}>${page?.models.map(
+				(row, position) =>
+					html`<button
+						type="button"
+						role="option"
+						id=${listId + "-" + position}
+						class="pocket-choice-row"
+						key=${row.key}
+						data-pick-model=${row.key}
+						aria-selected=${selected?.key === row.key}
+						tabindex=${position === index ? 0 : -1}
+						disabled=${blocked}
+						onFocus=${() => setIndex(position)}
+						onClick=${() => choose(row)}
+					>
+						<span
+							><strong>${row.name}</strong
+							><small>${row.key}${row.available ? "" : " · Authentication needed"}</small></span
+						>${selected?.key === row.key && html`<${Icon} name="check" />`}
+					</button>`,
+			)}</div>
+			${loading && html`<p role="status">Reading the model catalogue…</p>`}
+			${page?.total === 0 && !loading && html`<p role="status">No matching models. Models and providers can be configured in Settings.</p>`}
+			${page && html`<div class="pocket-form-actions"><button type="button" class="pill-btn" data-model-previous disabled=${loading || offset === 0} onClick=${() => void load(Math.max(0, offset - 50), page.revision)}>Previous</button><span class="pocket-secondary">${offset + (page.models.length ? 1 : 0)}–${offset + page.models.length}</span><button type="button" class="pill-btn" data-model-next disabled=${loading || page.nextOffset === undefined} onClick=${() => void load(page.nextOffset, page.revision)}>Next</button></div>`}
+			${
+				selected &&
+				html`<section
+					class="pocket-model-details"
+					data-model-capabilities
+					aria-label="Selected model capabilities"
+				>
+					<h3>${selected.name}</h3>
+					<code>${selected.key}</code>
+					<p>Context ${selected.contextWindow} tokens · Max output ${selected.maxOutputTokens} tokens</p>
+					<p>Input: ${selected.input?.join(", ") ?? "Not reported"}</p>
+					${selected.cost &&
+					html`<p>
+						USD / 1M tokens: input ${selected.cost.input}, output ${selected.cost.output}, cache read
+						${selected.cost.cacheRead}, cache write ${selected.cost.cacheWrite}
+					</p>`}<label
+						>Reasoning effort<select
+							aria-label="Reasoning effort"
+							value=${thinking}
+							disabled=${blocked}
+							onChange=${(event) => setThinking(event.currentTarget.value)}
+						>
+							${initialThinking === undefined &&
+							html`<option value="">Use native default</option>`}${selected.thinkingLevels?.map(
+								(level) => html`<option key=${level} value=${level}>${level}</option>`,
+							)}
+						</select></label
+					>${!selected.available &&
+					html`<p class="pocket-secondary">
+						This model can be selected now. Configure its authentication before sending work.
+					</p>`}
+				</section>`
+			}
+			${
+				message &&
+				html`<p role="status">${message}</p>
+					<button type="button" class="pill-btn" disabled=${loading} onClick=${() => void load()}>
+						Restart search
+					</button>`
+			}
+			<div class="pocket-form-actions"><button type="button" class="button primary" data-model-apply disabled=${blocked || !selected} onClick=${() => {
+				if (selected.key === current && thinking === (initialThinking ?? "")) close();
+				else void change.apply({ model: selected.key, ...(thinking ? { thinkingLevel: thinking } : {}) });
+			}}>Use model</button></div>
+			${busy && html`<p role="status">Wait for current work and queued inputs to finish.</p>`}${change.status}
+		</div>
+	</${Sheet}>`;
 }
 const placeKey = (person, server) => "pakka.directories." + server + "." + person.id;
 function readPlaces(key) {

@@ -4,8 +4,9 @@
 
 | 核对对象                        | 记录                                                                                                         |
 | ------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| ExecutionEnv / 1.4.0-pakka.2 | [.2 复建、切换与安装消费](EXECUTION-ENVIRONMENT-PAKKA-2.md) |
-| ExecutionEnv / 1.4.0-pakka.1 | [初轮执行环境接入与安装消费](EXECUTION-ENVIRONMENT.md) |
+| Pi 原生配置与默认 WebUI 入口    | [Runtime 演进、Session 隔离与安装消费](PRODUCT-RUNTIME-LAUNCHER.md)                                          |
+| ExecutionEnv / 1.4.0-pakka.2    | [.2 复建、切换与安装消费](EXECUTION-ENVIRONMENT-PAKKA-2.md)                                                  |
+| ExecutionEnv / 1.4.0-pakka.1    | [初轮执行环境接入与安装消费](EXECUTION-ENVIRONMENT.md)                                                       |
 | WebUI Invite Role 菜单/紧凑布局 | [邀请角色菜单记录](WEBUI-INVITATION-ROLE-MENU.md)                                                            |
 | WebUI 分组菜单与创建入口        | [菜单/入口记录](WEBUI-NAVIGATION-CONTROLS.md)                                                                |
 | WebUI 情境文案精简              | [文案验证](WEBUI-COPY-SIMPLIFICATION.md)                                                                     |

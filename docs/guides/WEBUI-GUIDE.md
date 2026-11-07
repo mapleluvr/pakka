@@ -11,10 +11,27 @@ pakka-webui 是可选的 Web 工作台。它提供普通 Conversation、原生�
 ```sh
 npm ci --ignore-scripts
 npm run build
-node apps/webui/dist/main.js --config /absolute/private/pakka.json --owner-file /absolute/private/owner-link.txt
+npm link --workspace @pakka/cli --ignore-scripts
+pakka
 ```
 
-安装归档后的入口为 `node_modules/.bin/pakka-webui`，使用同样的 `--config` 和 `--owner-file` 参数。下面是结构完整的启动配置示例，**目录、endpoint、模型 ID 和认证字符串是示例值**，需要替换为现有服务器目录及实际本地 provider 的配置：
+`pakka` 默认启动 WebUI 并打开浏览器，无需预先提供宿主 JSON、模型或凭据；也不增加首次使用 wizard。不链接 shell 命令时，可运行 `node apps/cli/dist/main.js`。`--no-open` 只启动服务，Ctrl+C 正常停止。以上使用本地源码 workspace；不假定这些私有包已发布到 npm。
+
+Pakka 产品定位和数据默认保存到 `~/.pakka`（可用 `PAKKA_HOME` 指定）。首次启动绑定当前目录，之后无参数运行会重开已记录工作区与原控制 Session，而不是根据新的 shell cwd 换库。Pi 原生配置使用 `PI_CODING_AGENT_DIR` 或 `~/.pi/agent`，与产品数据分开。
+
+模型/provider 可以随时配置：继续使用 Pi 配置工具编辑原生 `models.json`、`auth.json`、`settings.json`，然后在 **Settings → Models & Providers** 刷新或使用原生认证。无模型时可以管理 Session 和设置；明确选择模型并发送输入后才开始工作。原生默认模型/thinking 影响以后创建，不替换已有 Conversation 的选择。配置文件不等于执行扩展：外部工具写入的 Pi 原生模型配置可刷新，依赖 Coding Agent 扩展事件的自定义行为不会随文件一起执行。
+
+本地 `default` 预设提供 read/write/edit，以及 Windows PowerShell 或 POSIX Bash；`read-only` 预设只注册 read。工具以当前 OS 用户运行，不是沙箱。命令子进程不继承模型凭据或 Node 启动钩子，但仍能访问该用户的文件及网络。项目和用户 instructions、skills、templates 通过 Pi 原生本地发现读取；只展示 skills/templates 索引，不自动安装包、执行扩展/MCP 或展开模板正文。
+
+### 高级宿主装配
+
+显式配置优先级为命令行参数、`PAKKA_CONFIG`、已保存来源、`PAKKA_HOME/config.json`、默认本地装配。保留下面的旧 JSON 兼容入口；它不是普通用户启动 WebUI 的必要条件，也不是登记完整 Pi 模型目录的方式：
+
+```sh
+pakka --config /absolute/private/pakka.json --owner-file /absolute/private/owner-link.txt
+```
+
+`pakka-webui --config ... --owner-file ...` 仍可直接启动高级宿主。下面示例的目录、endpoint、模型 ID 和认证字符串需要替换为实际值；不要把真实凭据提交到仓库：
 
 ```json
 {
@@ -25,12 +42,6 @@ node apps/webui/dist/main.js --config /absolute/private/pakka.json --owner-file 
 		"endpoint": "http://127.0.0.1:8000/v1",
 		"model": "your-local-model-id",
 		"apiKey": "local-provider-key",
-		"profiles": [
-			{
-				"id": "alternate-model",
-				"model": "another-approved-model-id"
-			}
-		],
 		"limits": {
 			"maxConversations": 20,
 			"maxPrimaryAttempts": 2000,
@@ -39,18 +50,18 @@ node apps/webui/dist/main.js --config /absolute/private/pakka.json --owner-file 
 	},
 	"owner": "Owner",
 	"initial": [{ "name": "Work", "profile": "default" }],
-	"profiles": ["default", "alternate-model"],
+	"profiles": ["default"],
 	"transport": { "host": "127.0.0.1", "port": 45000 }
 }
 ```
 
-这是基本 Conversation 工作台配置。Files、Memory 等服务和外部插件由宿主另行装配，其入口随安装的贡献出现；具体示例见 [WebUI 开发规范](../development/WEBUI-DEVELOPMENT.md)。可信 ESM 启动模块可用 `--config-module /absolute/private/config.mjs` 加载，它是宿主代码，不是浏览器提交的配置。
+这是兼容的单-provider 宿主示例；JSON 模式不会隐式增加原生执行工具。Files、Memory 等服务与插件仍由宿主明确装配，其入口随安装贡献出现；具体示例见 [WebUI 开发规范](../development/WEBUI-DEVELOPMENT.md)。可信 ESM 启动模块可用 `--config-module /absolute/private/config.mjs` 加载，它是宿主代码，不是浏览器提交的配置。
 
-初次启动把 owner 登录链接写入指定的**新私有文件**，stdout 只输出 origin、serverId 和 sessionFile。配置、owner 文件及数据目录应放在受保护的位置。打开 owner 链接完成一次兑换后，浏览器保存人员会话并清除地址片段；请保护 Cookie 和邀请链接。
+初次启动把 owner 登录链接写入指定的新私有文件；默认位置为数据目录的 `owner-link.txt`，终端不打印登录 token。配置、owner 文件及数据目录应放在受保护的位置，并核对平台 ACL。打开 owner 链接兑换后，浏览器保存人员会话并清除地址片段；请保护 Cookie 和邀请链接。原 Session 重开不重新签发初始 owner。
 
 ## 2. Conversation、模型与工作目录
 
-从侧栏 **Sessions** 选择 Conversation；首页的 **New Session / New Conversation** 打开独立配置向导。填写名称，选择父 Session、模型和服务器目录，明确确认后创建并打开。没有可用父项时可先创建 Session，再创建 Conversation；部分成功保留已创建父项，unknown 保留原请求核对。创建不提交模型输入，进入会话后明确 **Send** 才开始工作。
+从侧栏 **Sessions** 选择 Conversation；首页的 **New Session / New Conversation** 打开独立配置向导。填写名称，选择父 Session、工具预设、模型/thinking 和服务器目录，明确确认后创建并打开。没有可用父项时可先创建 Session，再创建 Conversation；部分成功保留已创建父项，unknown 保留原请求核对。创建不提交模型输入，进入会话后明确 **Send** 才开始工作。
 
 输入模式按目的选择：
 
@@ -59,7 +70,7 @@ node apps/webui/dist/main.js --config /absolute/private/pakka.json --owner-file 
 - **Follow up**：使用原生 follow-up 队列。
 - **People Chat**：人类旁聊，不自动成为模型输入。
 
-模型按钮位于输入区，列出当前人员可配置的批准模型。搜索覆盖模型 ID 和配置标识；方向键移动高亮，Enter 确认，Escape 取消，当前模型有独立标记。当前集成使用宿主显式配置的同一 OpenAI-completions provider；菜单不承担供应商账号登录或发现服务。
+模型按钮位于输入区，查询完整原生目录，支持跨 provider 搜索和分页。方向键移动高亮，Enter 确认，Escape 取消；当前选择及真实模型能力单独显示，thinking level 使用该模型支持的级别。模型选择不要求新增 profile，也不改变工具预设。账号认证与配置刷新在 **Settings → Models & Providers**，不是模型选择菜单的副作用。
 
 工作目录入口位于 **Conversation 标题下方的服务器路径**。打开后可浏览批准位置、面包屑、最近目录、收藏或输入路径，点击 **Use this directory** 才应用。模型和目录分别保存，变更任意一个都保留另一个、指令和工具。新会话以及同基础 profile 的分叉继承当前选择。
 
@@ -73,7 +84,7 @@ node apps/webui/dist/main.js --config /absolute/private/pakka.json --owner-file 
 
 页面由侧栏、首页、Conversation、palette 和独立 Settings 组成，入口随已安装服务与当前授权呈现。桌面侧栏可通过侧栏顶部面板图标或 Ctrl/⌘ B 收起；手机该快捷键开关抽屉。搜索图标或 Ctrl/⌘ K 打开当前身份可见的 Conversation 搜索；在搜索 palette 中选择 **Include archived**，归档项可显式 **Restore**。会话页头搜索只筛选已加载的历史，不发送模型工作。
 
-侧栏底部 **Settings** 单击进入独立配置页，默认显示 **Appearance**。页内分类导航提供外观、Conversation settings（用量与凭据）、Notifications、管理员可见的 People & invitations 和 Extensions。Conversation 专属分类在选中会话后可用；手机上可横向滚动分类栏。**Back to app** 返回原页面并保留当前会话与未发送草稿。可选择 Dark / Light、默认 Inter、JetBrains Mono、系统无衬线或衬线字体，以及 14–24px 字号；合法的已保存字体／字号偏好继续生效。选择即时应用并保存到当前浏览器，代码块维持等宽显示。模型按钮在输入卡片内，Input mode 与 Send 同行；窄屏模型入口为带可访问名称的图标。
+侧栏底部 **Settings** 单击进入独立配置页，默认显示 **Appearance**。页内分类导航提供外观、Conversation settings（用量与凭据）、Notifications，以及按权限显示的 Models & Providers、预算、Session 管理、People & invitations 和 Extensions。Conversation 专属分类在选中会话后可用；手机上可横向滚动分类栏。**Back to app** 返回原页面并保留当前会话与未发送草稿。可选择 Dark / Light、默认 Inter、JetBrains Mono、系统无衬线或衬线字体，以及 14–24px 字号；合法的已保存字体／字号偏好继续生效。选择即时应用并保存到当前浏览器，代码块维持等宽显示。模型按钮在输入卡片内，Input mode 与 Send 同行；窄屏模型入口为带可访问名称的图标。
 
 ## 4. 人员、服务和插件
 
@@ -96,7 +107,13 @@ Team 使用单层页头与 **Graph / Activity / Agents** 三视图。选择成�
 
 ## 5. 正常关闭与重开
 
-正常停止 CLI 后，在原启动配置的 `runtime.reopenSessionFile` 填入 stdout 曾输出的确切 sessionFile，并保留原 dataDir、profile、limits 和批准根声明，再用同一入口启动。已有身份、资源、回执、实际模型／cwd 和已花额度按持久记录恢复，不重新签发 owner。
+正常停止后再次运行 `pakka`，启动器使用已保存的来源、工作区、端口和原 sessionFile 重开，无需手工编辑配置。已有身份、资源、回执、实际模型／cwd／thinking 和累计消费保持；重开不重新发送输入或签发 owner 凭据。
+
+未确认的启动会给出 `PAKKA_STARTUP_UNCONFIRMED`。确认原数据后可运行 `pakka --recover`；该动作只重开已记录的原身份，不清理 writer 锁、不补建丢失数据库、不猜测缺失定位，也不重放工作。损坏定位记录需依据原路径处理；高级宿主可显式提供同一个 `runtime.reopenSessionFile`。不要删除数据库、WAL 或 claim 来绕过故障。
+
+Session 管理设置显示不可用的已登记子 Session。健康 Session 可以继续使用；恢复原库之后，具有全局管理权限的用户可显式重开。原登记未知、仍持有但已封闭的 Runtime 或清理未确认的实例不能靠再次打开修复。
+
+预算设置展示累计消费和现行上限，并支持有审计的调整。相同启动配置不会覆盖管理修改；响应丢失时先查原请求，版本冲突后显式重读。调整不退款、不清零，也不改变未确认工作的结果。
 
 归档／恢复整理当前人的 Conversation 列表，保留原会话数据。MAS retire 另行停止成员准入并保存 tombstone；这两类操作均保留持久历史。
 

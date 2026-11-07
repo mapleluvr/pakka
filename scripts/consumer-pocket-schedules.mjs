@@ -180,7 +180,7 @@ try {
 	await page.wait('!document.querySelector("[data-schedule-reconcile]")');
 	assert.equal(await page.evaluate("globalThis.__scheduleWrites"), 1);
 	await until(() => requests.length === 1);
-	await page.wait('document.querySelector("[data-schedule-state]")?.textContent.includes("done")');
+	await page.wait('document.querySelector("[data-schedule-state=done]")');
 	const before = await ext(
 		page,
 		target,

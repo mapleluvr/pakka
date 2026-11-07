@@ -39,18 +39,37 @@ Object.assign(env, {
 	npm_execpath: npmCli,
 });
 function run(name, args, cwd) {
+	const startedAt = Date.now();
 	const r = spawnSync(process.execPath, ["--experimental-import-meta-resolve", ...args], {
 		cwd,
 		env,
 		encoding: "utf8",
-		timeout: 180000,
+		// Cold installs of the bundled native cohort can exceed three minutes on Windows.
+		// Keep functional consumers bounded separately; do not retry a failed operation.
+		timeout: name.startsWith("install") ? 600000 : 180000,
 		maxBuffer: 4 * 1024 * 1024,
 	});
 	writeFileSync(
 		join(artifacts, name + ".log"),
-		"cwd=" + cwd + "\n" + (r.stdout ?? "") + (r.stderr ?? "") + "\nexit=" + r.status + "\n",
+		"cwd=" +
+			cwd +
+			"\n" +
+			(r.stdout ?? "") +
+			(r.stderr ?? "") +
+			"\nexit=" +
+			r.status +
+			"\nsignal=" +
+			r.signal +
+			"\nerror=" +
+			r.error?.code +
+			"\nelapsedMs=" +
+			(Date.now() - startedAt) +
+			"\n",
 	);
-	if (r.status !== 0) throw new Error(name + " failed: " + r.stdout + "\n" + r.stderr);
+	if (r.status !== 0)
+		throw new Error(
+			name + " failed (" + (r.error?.code ?? r.signal ?? r.status) + "): " + r.stdout + "\n" + r.stderr,
+		);
 	return r.stdout;
 }
 run("pack", [join(root, "scripts", "pack-agent.mjs"), consumer], root);
@@ -105,6 +124,7 @@ copyFileSync(join(root, "scripts", "consumer-mas.mjs"), join(consumer, "mas.mjs"
 copyFileSync(join(root, "scripts", "consumer-broker.mjs"), join(consumer, "broker.mjs"));
 copyFileSync(join(root, "scripts", "consumer-devpack.mjs"), join(consumer, "devpack.mjs"));
 copyFileSync(join(root, "scripts", "consumer-apps.mjs"), join(consumer, "apps.mjs"));
+copyFileSync(join(root, "scripts", "consumer-launcher.mjs"), join(consumer, "launcher.mjs"));
 copyFileSync(join(root, "scripts", "consumer-product.mjs"), join(consumer, "product.mjs"));
 copyFileSync(join(root, "scripts", "consumer-pocket-services.mjs"), join(consumer, "pocket-services.mjs"));
 copyFileSync(join(root, "scripts", "consumer-mas-board.mjs"), join(consumer, "mas-board.mjs"));
@@ -213,6 +233,7 @@ console.log(run("mas", [join(consumer, "mas.mjs")], consumer));
 console.log(run("broker", [join(consumer, "broker.mjs")], consumer));
 console.log(run("devpack", [join(consumer, "devpack.mjs")], consumer));
 console.log(run("apps", [join(consumer, "apps.mjs")], consumer));
+console.log(run("launcher", [join(consumer, "launcher.mjs")], consumer));
 console.log(run("product", [join(consumer, "product.mjs")], consumer));
 console.log(run("pocket-services", [join(consumer, "pocket-services.mjs")], consumer));
 console.log(run("pocket-product", [join(consumer, "pocket-product.mjs")], consumer));

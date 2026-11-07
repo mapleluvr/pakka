@@ -1,6 +1,6 @@
 // pakka-webui workbench. Adapted from pi-pocket's app/composer/transcript patterns; authority is the public WebUI client.
 import { render } from "preact";
-import { useEffect, useLayoutEffect, useRef, useState } from "preact/hooks";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "preact/hooks";
 import htm from "htm";
 import { h } from "preact";
 import { Icon } from "@pakka/webui/components";
@@ -28,6 +28,10 @@ import { Appearance, readAppearance, applyAppearance } from "./appearance.js";
 import { Frontend, Glyph, Menu } from "./frontend.js";
 import { NativeComposer } from "./native-composer.js";
 import { SettingsNavigation, SettingsPage } from "./settings-page.js";
+import { createModelsClient } from "./models-client.js";
+import { ProductModelSettings, useProductModelSettings } from "./product-model-settings.js";
+import { BudgetSettings, useBudgetSettings } from "./budget-settings.js";
+import { SessionSettings, useSessionRecovery } from "./session-settings.js";
 
 const html = htm.bind(h);
 const csrf = () => /(?:^|; )pakka_csrf=([A-Za-z0-9_-]{43})(?:;|$)/.exec(document.cookie)?.[1] ?? null;
@@ -347,6 +351,13 @@ function App() {
 		[drawer, setDrawer] = useState(false),
 		[collapsed, setCollapsed] = useState(false),
 		[searchQuery, setSearchQuery] = useState("");
+	const [modelConnection, setModelConnection] = useState(null);
+	const modelTransport = useMemo(
+		() => modelConnection && createModelsClient({ serverId: modelConnection.serverId, csrf }),
+		[modelConnection?.serverId, modelConnection?.personId],
+	);
+	const models =
+		person?.id === modelConnection?.personId && modelConnection?.nativeModels ? modelTransport : null;
 	const settingsIntent = useRef(null);
 	function openSheet(page) {
 		settingsIntent.current = {};
@@ -421,6 +432,7 @@ function App() {
 		setDraft("");
 		setSessionDirectory(null);
 		setWorkspaceSessionId(null);
+		setModelConnection(null);
 	};
 	const error = (failure) => {
 		if (failure.code === "UNAUTHORIZED" || failure.code === "FORBIDDEN") {
@@ -438,12 +450,16 @@ function App() {
 		);
 	};
 	const configuration = useConversationConfiguration(selected, person, client, error);
+	const productModels = useProductModelSettings(models, error);
+	const budget = useBudgetSettings(person?.id === modelConnection?.personId ? modelTransport : null, error);
+	const sessionRecovery = useSessionRecovery(client, person?.id, refresh, error);
 	const creation = useCreation({
 		person,
 		workspaceSessionId,
 		configuration,
 		selected,
 		client,
+		models,
 		created: creationCompleted,
 		sessionCreated: (session) =>
 			setSessionDirectory(
@@ -470,12 +486,18 @@ function App() {
 			),
 		);
 	}
-	async function refresh() {
-		const hello = await client.request({ op: "hello" });
-		const list = await client.request({ op: "list" });
-		const directory = await client.request({ op: "session.list" });
-		if (!mounted.current) return;
+	async function refresh(options) {
+		const signal = options?.signal;
+		const hello = await client.request({ op: "hello" }, { signal });
+		const list = await client.request({ op: "list" }, { signal });
+		const directory = await client.request({ op: "session.list" }, { signal });
+		if (!mounted.current || options?.canPublish?.() === false) return;
 		setPerson(hello.person);
+		setModelConnection({
+			serverId: hello.serverId,
+			personId: hello.person.id,
+			nativeModels: hello.nativeModels === true,
+		});
 		setWorkspaceSessionId(hello.sessionId);
 		setSessionDirectory(directory);
 		acceptNavigation(list);
@@ -666,14 +688,15 @@ function App() {
 		event.preventDefault();
 		dictation.stop();
 		if (!selected || !draft.trim()) return;
-		if (draft.trimStart().startsWith("/")) {
-			await run(async () => {
-				if (await extensions.slash(draft)) setDraft("");
-			});
-			return;
-		}
 		const text = draft;
 		await run(async () => {
+			if (text.trimStart().startsWith("/")) {
+				const accepted = await extensions.slash(text);
+				if (accepted !== null) {
+					if (accepted) setDraft("");
+					return;
+				}
+			}
 			if (mode === "chat") {
 				const result = await client.request({
 					op: "collaboration.post",
@@ -899,8 +922,37 @@ function App() {
 			disabled: !selected,
 			open: () => settingsRoute("notifications"),
 		},
+		...(person.role === "admin" && models
+			? [
+					{
+						id: "models",
+						title: "Models & Providers",
+						category: "Workspace",
+						icon: "settings",
+						open: () => settingsRoute("models"),
+					},
+				]
+			: []),
+		...(sessionDirectory?.canCreate
+			? [
+					{
+						id: "sessions",
+						title: "Sessions",
+						category: "Workspace",
+						icon: "folder",
+						open: () => settingsRoute("sessions"),
+					},
+				]
+			: []),
 		...(person.role === "admin"
 			? [
+					{
+						id: "budget",
+						title: "Session Budget",
+						category: "Workspace",
+						icon: "settings",
+						open: () => settingsRoute("budget"),
+					},
 					{
 						id: "people",
 						title: "People & Invitations",
@@ -1150,6 +1202,9 @@ function App() {
 				error=${error}
 			/>`
 		}
+		${sheet === "models" && models && person.role === "admin" && html`<${ProductModelSettings} control=${productModels} close=${() => openSheet(null)} />`}
+		${sheet === "sessions" && sessionDirectory?.canCreate && html`<${SessionSettings} control=${sessionRecovery} sessions=${sessionDirectory.sessions} close=${() => openSheet(null)} />`}
+		${sheet === "budget" && person.role === "admin" && html`<${BudgetSettings} control=${budget} sessions=${sessionDirectory?.sessions ?? []} workspaceSessionId=${workspaceSessionId} defaultSessionId=${selected?.sessionId ?? workspaceSessionId} close=${() => openSheet(null)} />`}
 		${
 			(sheet === "model" || sheet === "directory") &&
 			selected &&
@@ -1159,6 +1214,7 @@ function App() {
 				target=${selected}
 				person=${person}
 				value=${configuration}
+				models=${models}
 				client=${client}
 				busy=${view?.live.busy ?? true}
 				applied=${configurationApplied}

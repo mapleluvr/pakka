@@ -15,6 +15,7 @@
 	},
 	"dependencies": {
 		"@pakka/client": "0.1.0",
-		"@pakka/protocol": "0.1.0"
+		"@pakka/protocol": "0.1.0",
+		"@pakka/webui": "0.1.0"
 	}
 }

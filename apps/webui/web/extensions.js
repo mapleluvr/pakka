@@ -56,11 +56,13 @@ export function useExtensions({ person, target, csrf, notice, error, navigate, o
 			}),
 		[person?.id],
 	);
+	const discovery = useRef(null);
 	const registry = useRef([]);
 	registry.current = registrations;
 	const activeInstances = useRef([]);
 	activeInstances.current = [surface, overlay].filter(Boolean);
 	useEffect(() => {
+		discovery.current = null;
 		setRegistrations([]);
 		setSurface(null);
 		setOverlay(null);
@@ -84,6 +86,7 @@ export function useExtensions({ person, target, csrf, notice, error, navigate, o
 					}
 				}
 				if (!active) return;
+				discovery.current = { client, personId: person.id, role: person.role, target: currentKey(target) };
 				setRegistrations(rows);
 				const keep = (instance) => {
 					if (!instance) return false;
@@ -102,6 +105,7 @@ export function useExtensions({ person, target, csrf, notice, error, navigate, o
 				setOverlay((old) => (keep(old) ? old : null));
 			} catch (failure) {
 				if (active) {
+					discovery.current = null;
 					setRegistrations([]);
 					setSurface(null);
 					setOverlay(null);
@@ -117,7 +121,7 @@ export function useExtensions({ person, target, csrf, notice, error, navigate, o
 			clearTimeout(timer);
 			controller.abort();
 		};
-	}, [client, person?.role, currentKey(target)]);
+	}, [client, person?.id, person?.role, currentKey(target)]);
 	const open = (registration, id, resource = latest.current.target) => {
 		const accepted = registry.current.find(
 				(row) =>
@@ -203,9 +207,10 @@ export function useExtensions({ person, target, csrf, notice, error, navigate, o
 			delete operation.promise;
 		}
 	};
-	const commands = registrations
-		.filter((row) => row.phase === "ready")
-		.flatMap((registration) => registration.manifest.commands.map((command) => ({ registration, command })));
+	const declaredCommands = registrations.flatMap((registration) =>
+		registration.manifest.commands.map((command) => ({ registration, command })),
+	);
+	const commands = declaredCommands.filter(({ registration }) => registration.phase === "ready");
 	const dispatch = async (registration, command, input = {}) => {
 		setPalette(false);
 		const personId = latest.current.person?.id,
@@ -255,11 +260,24 @@ export function useExtensions({ person, target, csrf, notice, error, navigate, o
 		}
 	};
 	const slash = async (text) => {
-		const match = /^\/([a-z][a-z0-9-]*)(?:\s+([\s\S]*))?$/.exec(text.trim()),
-			found = match && commands.find((row) => row.command.slash === match[1]);
-		if (!found) {
-			latest.current.notice("This command is unavailable. Slash commands do not send model input.");
-			return;
+		const match = /^\/([a-z][a-z0-9-]*)(?:\s+([\s\S]*))?$/.exec(text.trim());
+		if (!match) return null;
+		const known = discovery.current;
+		if (
+			!known ||
+			known.client !== client ||
+			known.personId !== latest.current.person?.id ||
+			known.role !== latest.current.person?.role ||
+			known.target !== currentKey(latest.current.target)
+		) {
+			latest.current.notice("Command catalog is unavailable. Try again after it reconnects.");
+			return false;
+		}
+		const found = declaredCommands.find((row) => row.command.slash === match[1]);
+		if (!found) return null;
+		if (found.registration.phase !== "ready") {
+			latest.current.notice("This command is unavailable.");
+			return false;
 		}
 		let input = {};
 		if (match[2]?.trim()) {
@@ -267,7 +285,7 @@ export function useExtensions({ person, target, csrf, notice, error, navigate, o
 				input = JSON.parse(match[2]);
 			} catch {
 				latest.current.notice("Command arguments must match its JSON schema.");
-				return;
+				return false;
 			}
 		}
 		return dispatch(found.registration, found.command, input);

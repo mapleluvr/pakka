@@ -978,6 +978,48 @@ details[open] > .pocket-disclosure > .pocket-icon:first-child {
 	flex: 1;
 	min-height: 0;
 }
+.pocket-native-model-settings,
+.pocket-model-sources {
+	min-width: 0;
+	overflow-wrap: anywhere;
+}
+.pocket-model-sources dd {
+	margin: 0 0 12px;
+}
+.pocket-provider-row {
+	padding-block: 16px;
+	border-bottom: 1px solid var(--border);
+}
+.pocket-native-auth {
+	padding-block: 16px;
+	border-block: 1px solid var(--border);
+}
+.pocket-session-recovery {
+	display: grid;
+	gap: 16px;
+	min-width: 0;
+	overflow-wrap: anywhere;
+}
+.pocket-session-recovery h2 {
+	margin: 0;
+	font-size: 1rem;
+}
+.pocket-session-recovery code {
+	white-space: pre-wrap;
+}
+.pocket-session-opening {
+	display: inline-flex;
+}
+@keyframes pocket-session-spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+@media (prefers-reduced-motion: no-preference) {
+	.pocket-session-opening svg {
+		animation: pocket-session-spin 1s linear infinite;
+	}
+}
 .settings-native,
 .settings-native-fields {
 	display: grid;

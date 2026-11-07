@@ -30,13 +30,21 @@ pakka-webui 的对应原生界面行为以 [Devin 离线生产前端](https://gi
 
 设置页的 Conversation 分类在选中会话后可用，人员管理入口按管理员权限呈现。手机分类栏支持横向滚动。Back to app 返回原页面并保留会话和未发送草稿。详细场景及命名契约见[设置与命名 delta](../../openspec/changes/correct-webui-settings-and-name/specs/devin-frontend/spec.md)，采用记录见[变更摘要](../changes/webui-settings-and-name.md)。
 
-模型目录按模型 ID 去重，只发布首个配置标识和模型 ID；拥有 Conversation 配置权限的人可选择目录中的任一模型。有限响应容纳现有 JSON 的默认模型加 64 项附加配置，最多 65 个不同模型；超出上限时拒绝响应。整组 Agent 预设的工具/指令授权独立于模型选择。模型/cwd 持久化、服务器目录 roots、incarnation 和配置拒绝的详细条件由[开发契约](../development/WEBUI-DEVELOPMENT.md#独立选择模型和-conversation-工作目录)维护。
+模型目录以原生 provider/modelId 组合寻址，分页搜索并展示真实能力；拥有 Conversation 配置权限的人可选择目录中的任一模型。旧配置响应的有限投影不代表完整可选目录，也不以 Agent profile 数量裁剪模型。当前 Conversation 的模型/thinking 与以后创建所用默认值分别管理；未选择模型是可显示的状态，不妨碍打开工作台与设置。整组 Agent 预设的工具/指令授权独立于模型选择。模型/cwd 持久化、服务器目录 roots、incarnation 和配置拒绝的详细条件由[开发契约](../development/WEBUI-DEVELOPMENT.md#独立选择模型和-conversation-工作目录)维护。
 
 Model Selection 为可用模型列表提供检索框，覆盖模型 ID 和配置标识；检索忽略大小写，空格与 `/` 分隔的词各自按顺序字符匹配，并将更紧密的匹配排在前面。打开时定位当前模型，输入查询后定位首个匹配；上下键循环移动候选高亮，搜索框保持输入焦点，Enter 明确确认，Escape 关闭并返回模型入口。候选位置/匹配总数始终可见，空结果为 0 / 0，当前已应用模型有独立标记。列表滚动保留搜索入口与位置反馈，触屏可直接选择。检索、移动和取消只改变本地呈现；明确选择后仍由原配置命令核验权限、busy 和 unknown。详细场景及形成记录见[模型索引 delta](../../openspec/changes/improve-webui-navigation-and-local-recovery/specs/devin-frontend/spec.md#requirement-model-selection-has-a-searchable-keyboard-index)与[设计 §6.4](../../openspec/changes/improve-webui-navigation-and-local-recovery/design.md#64-2026-10-25-model-selection-检索索引)。
 
+普通斜杠文本通过原输入路径发送，只有精确注册的命令进入 dispatcher。已注册命令的参数错误、不可用及执行拒绝不会回退成模型输入；命令目录未知时，疑似命令保留草稿，不把读取失败当成空目录。
+
+### 工作区设置
+
+Models & Providers 展示 Pi 原生配置来源、目录刷新和受权认证。密钥提交后清空，不写入页面持久存储或 Session；认证响应丢失时核对原交互，不重复提交答案。Session Budget 区分所属 Session、已消费额度、现行政策和版本；调整使用 CAS 与原请求核对，读取冲突后的政策不自动重新提交。
+
+Sessions 设置页展示每份受管存储的可用状态；单个子 Session 无法打开时仍可进入。获准的显式重开只针对原身份。打开响应丢失时保留原请求与待核对状态，离开设置页不清空；读取当前目录不重复重开，也不证明原请求由谁完成。打开结果已知但目录刷新失败时，保留已知结果并先重读状态，不能按过时列表再次打开。未知创建、仍持有的封闭 Runtime 和清理未确认状态不提供强制恢复按钮。
+
 ### 创建与导航
 
-New Session 创建独立的 Durable 存储与提交域，New Conversation 在确认的父 Session 内创建资源。向导提供名称、父项、初始模型与服务器工作目录，打开/取消仅改变表单草稿。Session 清单确认没有可用父项时预填待建 Session，显式确认后按 Session → Conversation 顺序创建；部分成功保留父项，unknown 保留原请求并先核对。成功打开 Conversation 后，明确 Send 才提交模型输入。
+New Session 创建独立的 Durable 存储与提交域，New Conversation 在确认的父 Session 内创建资源。创建表单提供名称、父项、获准 Agent 预设、初始模型/thinking 与服务器工作目录，打开/取消仅改变表单草稿。Session 清单确认没有可用父项时预填待建 Session，显式确认后按 Session → Conversation 顺序创建；部分成功保留父项，unknown 保留原请求并先核对。成功打开 Conversation 后，明确 Send 才提交模型输入。
 
 Sidebar 的 Sort Per Session 表达原生父子归属；Default 使用当前人的持久单层文件夹和未分类组。每个 Conversation 至多归入一个个人文件夹，删除文件夹后回到未分类；切换视图和归类仅改变个人导航元数据。读取、选择、SSE 与资源授权同时绑定 Session 和 Conversation，名称或裸 Conversation ID 不授予跨 Session 访问。详细创建、持久化与恢复条件见[创建场景](../../openspec/changes/improve-webui-navigation-and-local-recovery/specs/devin-frontend/spec.md#requirement-dedicated-creation-distinguishes-native-sessions-and-conversations)及[受管存储场景](../../openspec/changes/improve-webui-navigation-and-local-recovery/specs/devin-frontend/spec.md#requirement-managed-sessions-preserve-native-identity-and-authorization)。
 

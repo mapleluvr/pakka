@@ -20,13 +20,16 @@ npm run check
 npm run build
 ```
 
-启动 WebUI 使用显式、受保护的配置与 owner 文件：
+将当前源码安装的命令链接到 shell，随后在 pwsh / bash 中运行：
 
 ```sh
-node apps/webui/dist/main.js --config /absolute/private/pakka.json --owner-file /absolute/private/owner-link.txt
+npm link --workspace @pakka/cli --ignore-scripts
+pakka
 ```
 
-配置结构、目录权限和一次性登录说明见 [WebUI 指南](docs/guides/WEBUI-GUIDE.md)。模型 endpoint、模型标识、凭据来源、工具、权限和预算由宿主明确装配。
+`pakka` 默认启动 WebUI 并打开浏览器，不要求宿主 JSON、已选模型或首次使用 wizard。也可不改 shell 安装，直接运行 `node apps/cli/dist/main.js`。`pakka --no-open` 只启动服务，Ctrl+C 正常停止；下次运行重开已记录的原工作区与 Session。
+
+模型、provider 和认证沿用 Pi 原生目录，可继续使用外部配置工具，再在 **Settings → Models & Providers** 刷新或认证。默认本地编码预设装配原生文件与命令工具，另有只读预设；这些工具具有本机用户权限，并非沙箱。安装来源仍是本仓库或配套归档，不假定私有 workspace 已发布到 npm。高级宿主配置、私密 owner 文件、预算及恢复见 [WebUI 指南](docs/guides/WEBUI-GUIDE.md)。
 
 ## 单 Conversation
 
@@ -76,7 +79,7 @@ Prompt、Steer 和 Follow up 使用原生调度。停止等待、请求 abort、
 
 Dynamite 由宿主显式选用；固定配对及执行入口见 [integrations/dynamite](integrations/dynamite/README.md)。程序化 SQLite 接入和 headless server 可选贡献各遵循自己的配对与配置契约。
 
-Pi 可变对象与凭据留在 Durable adapter，调用方取得冻结 DTO 和身份绑定命令。受信任的 Node 工具与插件仍拥有宿主进程权限；Conversation、Session、package 和 OS process 是分别选择的边界。
+Pi 执行和存储的可变对象留在 Durable adapter；Models、凭据和原生配置加载器属于可信宿主装配。操作调用方取得冻结 DTO 和身份绑定命令。受信任的 Node 工具与插件仍拥有宿主进程权限；Conversation、Session、package 和 OS process 是分别选择的边界。
 
 ## 开发与维护
 

@@ -5,13 +5,14 @@ import { decodePocketResponse } from "@pakka/protocol/pocket";
 import { runtimeFixture } from "../../../packages/agent/test/runtime-fixture.ts";
 import { startPocket } from "../src/bootstrap.ts";
 import { ownedBrowser } from "./browser.ts";
-import { newConversation } from "./frontend-controls.ts";
 
 test(
-	"WebUI failed input: an unavailable recipient refuses new admission while its original receipt and spent attempts remain",
+	"WebUI recoverable model failure: new admission succeeds while its original receipt and spent attempts remain",
 	{ timeout: 15000 },
 	async () => {
-		const m = await runtimeFixture({}, undefined, () => ({ error: 400 }));
+		const m = await runtimeFixture({}, undefined, (_payload, n) =>
+			n === 1 ? { error: 400 } : { text: "EXPLICIT-RECOVERY-ANSWER" },
+		);
 		await m.runtime.close();
 		let app: Awaited<ReturnType<typeof startPocket>> | undefined;
 		try {
@@ -58,24 +59,28 @@ test(
 			await (await app.runtime.conversation(ref)).waitForIdle();
 			const original = await client.receipt(id);
 			assert.equal(original.status, "unanswered");
-			const blocked = await rpc({
-				op: "submit",
-				target: ref,
-				input: { ...input, requestId: "new", text: "NOT-ADMITTED" },
-			});
-			assert.equal(blocked.response.status, 409);
-			assert.ok("error" in blocked.decoded);
-			assert.deepEqual(
-				{ code: blocked.decoded.error.code, outcome: blocked.decoded.error.outcome },
-				{ code: "CONVERSATION_UNAVAILABLE", outcome: "denied" },
-			);
-			assert.doesNotMatch(JSON.stringify(blocked.decoded), /LOCAL-FAILURE/);
+			assert.equal((await client.configuration(ref)).canConfigure, true);
+			assert.equal(m.f.requests.length, 1, "the failure must not trigger an automatic retry");
 			const retryOriginal = await rpc({ op: "submit", target: ref, input });
 			assert.ok("result" in retryOriginal.decoded && retryOriginal.decoded.result.kind === "receipt");
 			assert.deepEqual(retryOriginal.decoded.result.receipt, original);
 			assert.equal(m.f.requests.length, 1);
 			assert.equal(app.runtime.view().budget.primaryAttempts, 1);
 			assert.deepEqual(await client.receipt(id), original);
+			const recovery = await rpc({
+				op: "submit",
+				target: ref,
+				input: { ...input, requestId: "new", text: "EXPLICIT-RECOVERY" },
+			});
+			assert.equal(recovery.response.status, 200);
+			assert.ok("result" in recovery.decoded && recovery.decoded.result.kind === "receipt");
+			const recoveredId = recovery.decoded.result.receipt.id;
+			await rpc({ op: "wait", id: recoveredId });
+			assert.equal((await client.receipt(recoveredId)).status, "done");
+			assert.deepEqual(await client.receipt(id), original);
+			assert.equal(m.f.requests.length, 2);
+			assert.equal(app.runtime.view().budget.primaryAttempts, 2);
+			assert.equal((await client.list()).length, 1, "recovery does not create a replacement Conversation");
 		} finally {
 			await app?.close();
 			await m.f.close();
@@ -84,11 +89,11 @@ test(
 );
 
 test(
-	"WebUI failed input browser: a known refusal explains how to continue without offering a meaningless retry or replaying the original",
+	"WebUI recoverable model failure browser: an explicit new input continues in the same Conversation without replay",
 	{ timeout: 30000 },
 	async () => {
 		const m = await runtimeFixture({}, undefined, (_payload, n) =>
-			n === 1 ? { error: 400 } : { text: "NEW-CONVERSATION-ANSWER" },
+			n === 1 ? { error: 400 } : { text: "EXPLICIT-RECOVERY-ANSWER" },
 		);
 		await m.runtime.close();
 		let app: Awaited<ReturnType<typeof startPocket>> | undefined;
@@ -116,32 +121,37 @@ test(
 			);
 			assert.deepEqual(presentation, { text: "not delivered", reason: "model_error" });
 			assert.doesNotMatch(String(receipt), /blocked|policy refused/);
-			await page.type("textarea[name=message]", "NOT-ADMITTED");
-			// A settled receipt does not imply the later activity snapshot has reached the browser.
-			await page.wait('document.querySelector("[data-action=send]")?.disabled === false');
-			await page.click("[data-action=send]");
-			await page.wait('document.body.innerText.includes("Start a new conversation")');
+			const refs = app.runtime.view().conversations;
+			const selectedId = await page.evaluate(
+				'document.querySelector("[data-conversation][aria-current=true]").dataset.conversation',
+			);
+			const target = refs.find((ref) => ref.conversationId === selectedId);
+			assert.ok(target);
+			const originalEntries = (await app.runtime.readConversation(target, () => {})).entries.map(
+				(entry) => entry.id,
+			);
 			assert.equal(
 				await page.evaluate(
 					'Array.from(document.querySelectorAll("button")).some(button => button.textContent.includes("Retry original request"))',
 				),
 				false,
 			);
-			assert.equal(
-				await page.evaluate('document.querySelector("textarea[name=message]").value'),
-				"NOT-ADMITTED",
-			);
 			assert.equal(await page.evaluate('document.querySelector(".pocket-receipt").textContent'), receipt);
 			assert.equal(m.f.requests.length, 1);
 			assert.equal(app.runtime.view().budget.primaryAttempts, 1);
-			await newConversation(page, "Fresh project");
-			await page.wait('document.querySelector(".pocket-title")?.textContent.includes("Fresh project")');
 			await page.wait('document.querySelector("[data-action=send]")?.disabled === false');
-			await page.type("textarea[name=message]", "EXPLICIT-FRESH-INPUT", { replace: true });
+			await page.type("textarea[name=message]", "EXPLICIT-RECOVERY-INPUT", { replace: true });
 			await page.click("[data-action=send]");
-			await page.wait('document.body.innerText.includes("NEW-CONVERSATION-ANSWER")');
+			await page.wait('document.body.innerText.includes("EXPLICIT-RECOVERY-ANSWER")');
 			assert.equal(m.f.requests.length, 2);
 			assert.equal(app.runtime.view().budget.primaryAttempts, 2);
+			assert.deepEqual(app.runtime.view().conversations, refs);
+			const entries = (await app.runtime.readConversation(target, () => {})).entries.map((entry) => entry.id);
+			assert.deepEqual(
+				entries.slice(0, originalEntries.length),
+				originalEntries,
+				"the original failure history remains",
+			);
 		} finally {
 			await browser?.close();
 			await app?.close();

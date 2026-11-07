@@ -1,0 +1,10 @@
+✔ Grouping menu: shared themed popup supports keyboard cancellation, explicit persisted choice and normal Tab without model input (5136.1861ms)
+✔ Home creation pair: equal transparent actions and a short gray divider retain alignment and real dialog behavior at 20px/phone sizes (5279.4993ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 12724.7103

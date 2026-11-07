@@ -1,17 +1,24 @@
 import { test } from "node:test";
 import { strict as assert } from "node:assert";
-import { chmod, mkdir, mkdtemp, rm, symlink, writeFile, realpath } from "node:fs/promises";
+import { chmod, copyFile, mkdir, mkdtemp, rm, symlink, writeFile, realpath } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { basename, dirname, join } from "node:path";
 import { browserExecutable } from "./browser.ts";
 
 // Test-only discovery must not silently replace a broken explicit choice or skip mandatory browsers.
 test("Browser discovery: explicit executable is canonical and a broken override never falls back", async () => {
 	const root = await mkdtemp(join(tmpdir(), "pakka-browser-discovery-"));
 	try {
-		await symlink(process.execPath, join(root, "chromium"), "file");
+		await symlink(
+			dirname(process.execPath),
+			join(root, "native"),
+			process.platform === "win32" ? "junction" : "dir",
+		);
 		assert.equal(
-			await browserExecutable({ PAKKA_TEST_CHROME: process.execPath, PATH: root }),
+			await browserExecutable({
+				PAKKA_TEST_CHROME: join(root, "native", basename(process.execPath)),
+				PATH: root,
+			}),
 			await realpath(process.execPath),
 		);
 		await assert.rejects(
@@ -28,8 +35,10 @@ test("Browser discovery: PATH finds a real executable and rejects a nonexecutabl
 	const root = await mkdtemp(join(tmpdir(), "pakka-browser-discovery-"));
 	try {
 		await mkdir(join(root, "chromium"));
-		await symlink(process.execPath, join(root, "google-chrome"), "file");
-		assert.equal(await browserExecutable({ PATH: root }, "linux"), await realpath(process.execPath));
+		const candidate = join(root, "google-chrome");
+		await copyFile(process.execPath, candidate);
+		await chmod(candidate, 0o700);
+		assert.equal(await browserExecutable({ PATH: root }, "linux"), await realpath(candidate));
 		await rm(join(root, "google-chrome"));
 		if (process.platform === "win32") await mkdir(join(root, "google-chrome"));
 		else {

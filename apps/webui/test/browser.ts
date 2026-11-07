@@ -2,6 +2,8 @@ import { spawn } from "node:child_process";
 import { constants } from "node:fs";
 import { access, mkdir, realpath, stat } from "node:fs/promises";
 import { delimiter, isAbsolute, join } from "node:path";
+import { createServer } from "node:http";
+import { listenHttp } from "@pakka/server/http-listener";
 
 type Value = Record<string, unknown>;
 
@@ -42,6 +44,11 @@ export async function browserExecutable(
 
 export async function ownedBrowser(dir: string, options: { readonly push?: boolean } = {}) {
 	const chrome = await browserExecutable();
+	const reservation = createServer();
+	const address = await listenHttp(reservation, { host: "127.0.0.1" });
+	await new Promise<void>((resolve, reject) =>
+		reservation.close((error) => (error ? reject(error) : resolve())),
+	);
 	const local = join(dir, "AppData", "Local"),
 		roaming = join(dir, "AppData", "Roaming");
 	await Promise.all([mkdir(local, { recursive: true }), mkdir(roaming, { recursive: true })]);
@@ -57,7 +64,7 @@ export async function ownedBrowser(dir: string, options: { readonly push?: boole
 			"--no-first-run",
 			"--no-default-browser-check",
 			"--remote-debugging-address=127.0.0.1",
-			"--remote-debugging-port=0",
+			"--remote-debugging-port=" + address.port,
 			"--user-data-dir=" + dir,
 			"about:blank",
 		],
@@ -66,42 +73,94 @@ export async function ownedBrowser(dir: string, options: { readonly push?: boole
 			env: { ...process.env, HOME: dir, USERPROFILE: dir, LOCALAPPDATA: local, APPDATA: roaming },
 		},
 	);
-	const exited = new Promise<void>((resolve) => processHandle.once("exit", () => resolve()));
+	const exited = new Promise<void>((resolve) => {
+		processHandle.once("exit", () => resolve());
+		processHandle.once("error", () => {
+			if (!processHandle.pid) resolve();
+		});
+	});
 	let stderr = "";
-	const endpoint = await new Promise<string>((resolve, reject) => {
-		const timer = setTimeout(() => {
-			processHandle.kill();
-			reject(new Error("Owned Chrome deadline: " + stderr));
-		}, 10000);
-		processHandle.once("error", (error) => {
-			clearTimeout(timer);
-			reject(error);
-		});
-		processHandle.once("exit", (code) => {
-			clearTimeout(timer);
-			reject(new Error("Owned Chrome exit " + code + ": " + stderr));
-		});
-		processHandle.stderr.on("data", (chunk) => {
-			stderr = (stderr + String(chunk)).slice(-8192);
-			const match = stderr.match(/DevTools listening on (ws:\/\/127\.0\.0\.1:[^\s]+)/);
-			if (match) {
-				clearTimeout(timer);
-				resolve(match[1]!);
-			}
-		});
-	});
-	const ws = new WebSocket(endpoint),
-		pending = new Map<number, { resolve: (value: Value) => void; reject: (error: Error) => void }>();
+	const ws = await (async () => {
+		let socket: WebSocket | undefined;
+		try {
+			const endpoint = await new Promise<string>((resolve, reject) => {
+				const timer = setTimeout(() => {
+					processHandle.kill();
+					reject(new Error("Owned Chrome deadline: " + stderr));
+				}, 10000);
+				processHandle.once("error", (error) => {
+					clearTimeout(timer);
+					reject(error);
+				});
+				processHandle.once("exit", (code) => {
+					clearTimeout(timer);
+					reject(new Error("Owned Chrome exit " + code + ": " + stderr));
+				});
+				processHandle.stderr.on("data", (chunk) => {
+					stderr = (stderr + String(chunk)).slice(-8192);
+					const match = stderr.match(/DevTools listening on (ws:\/\/127\.0\.0\.1:[^\s]+)/);
+					if (match) {
+						clearTimeout(timer);
+						resolve(match[1]!);
+					}
+				});
+			});
+			socket = new WebSocket(endpoint);
+			const connecting = socket;
+			await new Promise<void>((resolve, reject) => {
+				const timeout = setTimeout(() => reject(new Error("Owned Chrome CDP deadline")), 10000);
+				connecting.addEventListener(
+					"open",
+					() => {
+						clearTimeout(timeout);
+						resolve();
+					},
+					{ once: true },
+				);
+				connecting.addEventListener(
+					"error",
+					() => {
+						clearTimeout(timeout);
+						reject(new Error("Owned Chrome CDP failed"));
+					},
+					{ once: true },
+				);
+			});
+			return socket;
+		} catch (error) {
+			socket?.close();
+			if (processHandle.pid && processHandle.exitCode === null && processHandle.signalCode === null)
+				processHandle.kill();
+			await exited;
+			throw error;
+		}
+	})();
+	const pending = new Map<number, { resolve: (value: Value) => void; reject: (error: Error) => void }>();
 	let next = 0;
-	await new Promise<void>((resolve, reject) => {
-		ws.addEventListener("open", () => resolve(), { once: true });
-		ws.addEventListener("error", () => reject(new Error("Owned Chrome CDP failed")), { once: true });
-	});
+	const loadedDocuments = new Map<string, string>();
 	const workers = new Map<string, { registrationId: string; scopeURL: string }>();
 	const notifications = new Map<string, { origin: string; tag: string }[]>();
 	ws.addEventListener("message", (event) => {
 		try {
 			const v: unknown = JSON.parse(String(event.data));
+			if (
+				v &&
+				typeof v === "object" &&
+				"method" in v &&
+				v.method === "Page.lifecycleEvent" &&
+				"sessionId" in v &&
+				typeof v.sessionId === "string" &&
+				"params" in v &&
+				v.params &&
+				typeof v.params === "object" &&
+				"name" in v.params &&
+				v.params.name === "DOMContentLoaded" &&
+				"frameId" in v.params &&
+				typeof v.params.frameId === "string" &&
+				"loaderId" in v.params &&
+				typeof v.params.loaderId === "string"
+			)
+				loadedDocuments.set(v.sessionId + ":" + v.params.frameId, v.params.loaderId);
 			if (
 				v &&
 				typeof v === "object" &&
@@ -186,6 +245,7 @@ export async function ownedBrowser(dir: string, options: { readonly push?: boole
 			const attached = await call("Target.attachToTarget", { targetId: target.targetId, flatten: true });
 			const id = String(attached.sessionId);
 			await call("Page.enable", {}, id);
+			await call("Page.setLifecycleEventsEnabled", { enabled: true }, id);
 			await call("Runtime.enable", {}, id);
 			await call("ServiceWorker.enable", {}, id);
 			await call(
@@ -256,7 +316,19 @@ export async function ownedBrowser(dir: string, options: { readonly push?: boole
 					await call("Page.navigate", { url: target }, id);
 				},
 				reload: async () => {
+					const tree = await call("Page.getFrameTree", {}, id);
+					const frame = (tree.frameTree as Value).frame as Value;
+					if (typeof frame.id !== "string" || typeof frame.loaderId !== "string")
+						throw Error("Missing original main document identity");
+					const key = id + ":" + frame.id;
 					await call("Page.reload", {}, id);
+					const deadline = Date.now() + 8000;
+					while (Date.now() < deadline) {
+						const loaded = loadedDocuments.get(key);
+						if (loaded && loaded !== frame.loaderId) return;
+						await new Promise((resolve) => setTimeout(resolve, 40));
+					}
+					throw Error("Browser reload document deadline");
 				},
 				type: async (selector: string, text: string, options?: { readonly replace?: boolean }) => {
 					await evaluate("document.querySelector(" + JSON.stringify(selector) + ").focus()");
@@ -336,11 +408,11 @@ export async function ownedBrowser(dir: string, options: { readonly push?: boole
 					const point = await evaluate(
 						"(()=>{const e=document.querySelector(" +
 							JSON.stringify(selector) +
-							");if(!e||e.disabled)return null;e.scrollIntoView({block:'center',inline:'nearest',behavior:'instant'});const r=e.getBoundingClientRect(),x=r.x+r.width*" +
+							");if(!e||e.disabled)return {issue:e?'disabled':'missing'};e.scrollIntoView({block:'center',inline:'nearest',behavior:'instant'});const r=e.getBoundingClientRect(),x=r.x+r.width*" +
 							offset.x +
 							",y=r.y+r.height*" +
 							offset.y +
-							",p=document.elementFromPoint(x,y);return r.width&&r.height&&p&&e.contains(p)?{x,y}:null})()",
+							",p=document.elementFromPoint(x,y);return r.width&&r.height&&p&&e.contains(p)?{x,y}:{issue:'not-visible-or-covered',rect:{left:r.x,top:r.y,width:r.width,height:r.height},hit:p?{tag:p.tagName,classes:String(p.className)}:null,animations:document.getAnimations().map(a=>a.playState)}})()",
 					);
 					if (
 						!point ||
@@ -350,7 +422,7 @@ export async function ownedBrowser(dir: string, options: { readonly push?: boole
 						typeof point.x !== "number" ||
 						typeof point.y !== "number"
 					)
-						throw new Error("Browser control not interactable: " + selector);
+						throw new Error("Browser control not interactable: " + selector + ": " + JSON.stringify(point));
 					// Test-only scheduling seam: preserve the original pointer coordinates while real UI work completes.
 					await options.beforePress?.();
 					await call(
@@ -380,6 +452,7 @@ export async function ownedBrowser(dir: string, options: { readonly push?: boole
 				},
 				close: async () => {
 					notifications.delete(id);
+					for (const key of loadedDocuments.keys()) if (key.startsWith(id + ":")) loadedDocuments.delete(key);
 					if (typeof context.browserContextId === "string")
 						await call("Target.disposeBrowserContext", { browserContextId: context.browserContextId });
 					else await call("Target.closeTarget", { targetId: target.targetId });

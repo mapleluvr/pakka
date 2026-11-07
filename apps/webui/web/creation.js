@@ -14,6 +14,7 @@ export function useCreation({
 	configuration,
 	selected,
 	client,
+	models,
 	created,
 	sessionCreated,
 	error,
@@ -100,7 +101,9 @@ export function useCreation({
 				sessionId: parent?.id ?? "",
 				sessionName: "New Session",
 				name: "",
+				profile: listed.defaults.profile,
 				model: source?.model ?? listed.defaults.model,
+				thinkingLevel: source?.thinkingLevel ?? listed.defaults.thinkingLevel,
 				cwd: source?.cwd ?? parent?.cwd ?? listed.defaults.cwd,
 				withConversation: true,
 			});
@@ -162,8 +165,12 @@ export function useCreation({
 			requestId: crypto.randomUUID(),
 			sessionId: row.parent?.id ?? row.sessionId,
 			name: row.name.trim(),
-			profile: row.defaults.profile,
-			configuration: { model: row.model, cwd: row.cwd },
+			profile: row.profile ?? row.defaults.profile,
+			configuration: {
+				model: row.model,
+				cwd: row.cwd,
+				...(row.thinkingLevel ? { thinkingLevel: row.thinkingLevel } : {}),
+			},
 		};
 		update({
 			...row,
@@ -299,7 +306,7 @@ export function useCreation({
 		label = value?.kind === "session" ? "New Session" : "New Conversation",
 		configurationValue = value?.defaults && {
 			...value.defaults,
-			current: { model: value.model, cwd: value.cwd },
+			current: { model: value.model, cwd: value.cwd, thinkingLevel: value.thinkingLevel },
 			canConfigure: true,
 		};
 	return {
@@ -371,6 +378,16 @@ export function useCreation({
 										value=${value.name}
 										onInput=${(event) => field("name", event.currentTarget.value)}
 								/></label>
+								${value.defaults.presets?.length > 1 &&
+								html`<label class="creation-field"
+									>Agent Preset<select
+										name="profile"
+										value=${value.profile}
+										onChange=${(event) => field("profile", event.currentTarget.value)}
+									>
+										${value.defaults.presets.map((id) => html`<option key=${id} value=${id}>${id}</option>`)}
+									</select></label
+								>`}
 								<div class="creation-field">
 									<span>Model</span
 									><button
@@ -414,7 +431,7 @@ export function useCreation({
 				${unknown(value) && html`<div class="creation-reconciliation"><code>${value.conversationRequest?.requestId ?? value.sessionRequest?.requestId}</code><button type="button" class="pill-btn" data-action="check-creation" disabled=${value.pending} onClick=${inspect}>Check Original Creation</button></div>`}
 				${value.phase === "session-created" && html`<section class="creation-parent"><strong>${value.parent.name}</strong><code>${value.parent.id}</code><button type="button" class="button primary" onClick=${() => update({ ...value, complete: false, withConversation: true, phase: "editing" })}>New Conversation in This Session</button></section>`}
 			</div>
-			${picker === "model" && html`<${ModelPicker} value=${configurationValue} client=${client} error=${error} anchor=${null} draftChange=${draftConfiguration} close=${() => setPicker(null)} />`}
+			${picker === "model" && html`<${ModelPicker} value=${configurationValue} client=${client} models=${models} error=${error} anchor=${null} draftChange=${draftConfiguration} close=${() => setPicker(null)} />`}
 			${picker === "directory" && html`<${DirectoryPicker} value=${configurationValue} person=${person} client=${client} error=${error} draftChange=${draftConfiguration} loadDirectories=${(input) => client.request({ op: "creation.directories", ...input })} close=${() => setPicker(null)} />`}
 		</${Sheet}>`,
 		recovery:

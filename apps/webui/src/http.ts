@@ -16,6 +16,7 @@ import {
 	POCKET_MAX_BYTES,
 } from "@pakka/protocol/pocket";
 import { identity } from "@pakka/protocol";
+import { listenHttp } from "@pakka/server/http-listener";
 import QRCode from "qrcode";
 import {
 	PocketCollaborationConflict,
@@ -27,11 +28,22 @@ import {
 } from "@pakka/server/pocket";
 import type { PocketCommand, PocketErrorCode } from "@pakka/protocol/pocket";
 import type { ExtensionHost } from "./backend.ts";
-import { SessionCreationConflict, SessionCreationRefused, type ManagedSessions } from "./sessions.ts";
+import {
+	SessionCreationConflict,
+	SessionCreationRefused,
+	SessionReopenRefused,
+	type ManagedSessions,
+} from "./sessions.ts";
 import { ExtensionRefusal } from "./extension-host.ts";
 import { NavigationRefusal, type PersonalNavigation } from "./navigation.ts";
 import { decodeExtensionRequest, decodeExtensionResponse } from "./extension-rpc.ts";
 import { decodeValue, publicPath } from "./extension.ts";
+import type { ProductModelSource } from "./product-models.ts";
+import {
+	decodeProductModelRequest,
+	executeProductModelRequest,
+	ProductModelRequestError,
+} from "./product-model-rpc.ts";
 
 export interface PocketHttpOptions {
 	readonly runtime: Runtime;
@@ -41,6 +53,7 @@ export interface PocketHttpOptions {
 	readonly navigation?: PersonalNavigation;
 	readonly collaboration?: PocketCollaboration;
 	readonly credentials?: PocketCredentials;
+	readonly modelConfiguration?: ProductModelSource;
 	readonly notifications?: PocketNotifications;
 	readonly host?: string;
 	readonly port?: number;
@@ -198,6 +211,7 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 		? // HTML parsing normalizes CRLF and CR before CSP hashes the script text.
 			" 'sha256-" + createHash("sha256").update(importMap.replace(/\r\n?/g, "\n")).digest("base64") + "'"
 		: "";
+	const modelLifetime = new AbortController();
 	const serverId = randomUUID(),
 		notificationWork = new Set<Promise<unknown>>(),
 		streams = new Set<ServerResponse>();
@@ -316,6 +330,7 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 			case "creation.directories":
 			case "session.create":
 			case "session.lookup":
+			case "session.reopen":
 			case "create":
 			case "fork":
 				permission = "create";
@@ -409,6 +424,7 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 					versions: [2],
 					person: people.current(a),
 					sessionId: runtime.view().sessionId,
+					...(options.modelConfiguration ? { nativeModels: true } : {}),
 				};
 			case "navigation.read":
 			case "navigation.update":
@@ -446,6 +462,17 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 				guard(() => people.current(a));
 				if (canCreate) guard(() => people.check(a, "create"));
 				return { kind: "sessions", sessions, canCreate, ...(defaults ? { defaults } : {}) };
+			}
+			case "session.reopen": {
+				if (!options.sessions) throw new Refusal(404, "UNSUPPORTED", true);
+				try {
+					const session = await options.sessions.reopen(a, command.sessionId, signal);
+					guard(() => people.check(a, "create"));
+					return { kind: "session.state", session };
+				} catch (error) {
+					if (error instanceof SessionReopenRefused) throw new Refusal(409, "CONFLICT", true);
+					throw error;
+				}
 			}
 			case "session.create":
 			case "session.lookup": {
@@ -774,6 +801,44 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 					send(res, 200, { version: 2, person: session.person, expiresAt: session.expiresAt });
 					return;
 				}
+				if (req.method === "POST" && url.pathname === "/pocket/models/rpc" && !url.search) {
+					const raw = await json(req);
+					if (raw && typeof raw === "object" && "requestId" in raw && identity(raw.requestId))
+						requestId = raw.requestId;
+					const a = await actor(req);
+					guard(() => a.verifyCsrf(header(req, "x-pakka-csrf")));
+					try {
+						const parsed = decodeProductModelRequest(raw);
+						if (!options.modelConfiguration && !parsed.command.op.startsWith("budget."))
+							throw new Refusal(404, "UNSUPPORTED", true);
+						dispatched = true;
+						const result = await executeProductModelRequest(
+							{
+								source: options.modelConfiguration,
+								people,
+								actor: a,
+								signal: modelLifetime.signal,
+								runtimeFor: (sessionId) => {
+									if (sessionId === runtime.view().sessionId) return runtime;
+									if (!options.sessions) throw new Error("Managed Session unavailable");
+									return options.sessions.runtimeFor({ sessionId });
+								},
+							},
+							parsed,
+						);
+						guard(() => people.current(a));
+						if (Buffer.byteLength(JSON.stringify(result), "utf8") > POCKET_MAX_BYTES)
+							throw new Error("Configuration response exceeds transport capacity");
+						send(res, 200, { version: 2, requestId, serverId, result });
+					} catch (error) {
+						if (error instanceof ProductModelRequestError) {
+							const status = { FORBIDDEN: 403, INVALID_REQUEST: 400, CONFLICT: 409 }[error.code];
+							throw new Refusal(status, error.code, true);
+						}
+						throw error;
+					}
+					return;
+				}
 				if (req.method === "POST" && url.pathname === "/pocket/extensions/rpc" && !url.search) {
 					if (!options.extensions) throw new Refusal(404, "UNSUPPORTED");
 					const raw = await json(req);
@@ -1068,18 +1133,7 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 	server.requestTimeout = 15000;
 	server.headersTimeout = 10000;
 	server.keepAliveTimeout = 5000;
-	await new Promise<void>((resolve, reject) => {
-		server.once("error", reject);
-		server.listen(port, host, () => {
-			server.removeListener("error", reject);
-			resolve();
-		});
-	});
-	const address = server.address();
-	if (!address || typeof address === "string") {
-		server.close();
-		throw new Error("WebUI listener missing");
-	}
+	const address = await listenHttp(server, { host, port });
 	listeningHost = `${host.includes(":") ? `[${host}]` : host}:${address.port}`;
 	publicHost = external?.host ?? listeningHost;
 	origin = external?.origin ?? `http://${listeningHost}`;
@@ -1089,6 +1143,7 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 		close: async () => {
 			if (closed) return;
 			closed = true;
+			modelLifetime.abort();
 			for (const stream of streams) stream.end();
 			await new Promise<void>((resolve, reject) => {
 				server.close((error) => (error ? reject(error) : resolve()));

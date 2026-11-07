@@ -1,11 +1,13 @@
 // CDP pipe framing adapted from pi-pocket@de612d5622cd (MIT); see apps/webui/LICENSE.pi-pocket.
 import { spawn, type ChildProcess } from "node:child_process";
 import { createHash } from "node:crypto";
-import { access, lstat, mkdir, mkdtemp, rm } from "node:fs/promises";
-import { dirname, isAbsolute, join } from "node:path";
+import { access, lstat, mkdir, mkdtemp } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { isAbsolute, join } from "node:path";
 import type { Readable, Writable } from "node:stream";
 import type { ConversationRef, JsonObject, Runtime } from "@pakka/agent";
 import { browserNetwork } from "./pocket-browser-network.ts";
+import { cleanupBrowserProfile } from "./browser-profile-cleanup.ts";
 import type { PocketAuthority, PocketPeople } from "./pocket-people.ts";
 
 export interface PocketBrowserView {
@@ -338,7 +340,7 @@ export async function createPocketBrowser(options: PocketBrowserOptions): Promis
 					resolve();
 				});
 			});
-		if (profile) await rm(profile, { recursive: true, force: true, maxRetries: 4, retryDelay: 100 });
+		if (profile) await cleanupBrowserProfile(profile);
 		pages.clear();
 		if (networkError) throw Error("Owned browser network shutdown unconfirmed");
 	}
@@ -346,7 +348,8 @@ export async function createPocketBrowser(options: PocketBrowserOptions): Promis
 		ready();
 		if (starting) return starting;
 		starting = (async () => {
-			profile = await mkdtemp(join(dirname(runtime.view().sessionFile), "pocket-owned-browser-"));
+			// OS/browser caches have a separate private lifetime and are not part of Session backups.
+			profile = await mkdtemp(join(tmpdir(), "pocket-owned-browser-"));
 			const local = join(profile, "AppData", "Local"),
 				roaming = join(profile, "AppData", "Roaming");
 			await Promise.all([mkdir(local, { recursive: true }), mkdir(roaming, { recursive: true })]);

@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { BACKGROUND_CONTEXT } from "@earendil-works/chord/context";
 import { openNodeSqliteStorage } from "@earendil-works/pi-durable/storage/sqlite/node";
-import type { Cursor, Page, DocumentRecord, StoredDocument } from "@earendil-works/pi-durable";
+import type { Cursor, Page, DocumentId, DocumentRecord, StoredDocument } from "@earendil-works/pi-durable";
 
 /** Reads an actual consistent SQLite backup using public Storage queries.
  * Oracle JSONL is read unchanged; SQLite records are a readable snapshot, not
@@ -109,6 +109,28 @@ export function blockSqliteWrites(file: string): () => void {
 			released = true;
 		}
 	};
+}
+
+/** An explicitly owned test marker, committed through public Storage, not a second Harness.
+ * Two markers bracket an operation: their sequence difference minus one counts its durable commits.
+ * The marker has no provider messages or application authority and is retained only in test storage. */
+export async function markNativeCommit(file: string): Promise<number> {
+	const storage = await openNodeSqliteStorage(file);
+	try {
+		const id = await storage.mintId<DocumentId>();
+		return await storage.commit(
+			[
+				{
+					type: "document.create",
+					record: { id, kind: "test.commit-marker", key: String(id), scope: { kind: "session" } },
+					content: { kind: "base", version: 1, value: {} },
+				},
+			],
+			BACKGROUND_CONTEXT,
+		);
+	} finally {
+		await storage.close(BACKGROUND_CONTEXT);
+	}
 }
 
 /** Consistent read of one logical document; no raw SQLite page assertions. */

@@ -1,3 +1,5 @@
+import type { Models, ModelThinkingLevel, Model, Api } from "@earendil-works/pi-ai";
+
 export type Hook = "real_context.write" | "context_artifacts.write";
 export type Grant = Hook | "input.submit" | "branch.control" | "model.infer";
 export interface WriterRecoveryOptions {
@@ -31,7 +33,7 @@ export interface Receipt {
 	readonly entryId?: string;
 	readonly reason?: string;
 	/** Generation outcome is independent of whether this input was persisted. */
-	readonly generation?: { readonly status: "blocked"; readonly reason: string };
+	readonly generation?: { readonly status: "blocked" | "failed"; readonly reason: string };
 }
 export interface View {
 	/** Storage/provenance identity; sessionId keeps its legacy meaning. */
@@ -117,9 +119,13 @@ export interface ProjectedEntryDTO {
 }
 export interface ModelDTO {
 	readonly key: string;
+	readonly provider?: string;
+	readonly input?: readonly ("text" | "image")[];
+	readonly cost?: Readonly<Model<Api>["cost"]>;
 	readonly model: string;
 	readonly name: string;
 	readonly reasoning: boolean;
+	readonly thinkingLevels?: readonly ModelThinkingLevel[];
 	readonly contextWindow: number;
 	readonly maxOutputTokens: number;
 	readonly available: boolean;
@@ -401,13 +407,48 @@ export interface RuntimeLimits {
 	readonly maxPrimaryAttempts: number;
 	readonly maxAuxiliaryAttempts: number;
 }
+export interface RuntimeBudgetSnapshot {
+	readonly version: number;
+	readonly limits: RuntimeLimits;
+	readonly budget: { readonly primaryAttempts: number; readonly auxiliaryAttempts: number };
+	readonly conversationCount: number;
+}
+export interface RuntimeBudgetChange {
+	readonly actorId: string;
+	readonly requestId: string;
+	readonly expectedVersion: number;
+	readonly limits: RuntimeLimits;
+	readonly reason: string;
+}
+export interface RuntimeBudgetReceipt {
+	readonly version: number;
+	readonly source: "bootstrap" | "management";
+	readonly actorId: string;
+	readonly requestId: string;
+	readonly reason: string;
+	readonly at: number;
+	readonly before: RuntimeLimits;
+	readonly after: RuntimeLimits;
+	readonly budget: RuntimeBudgetSnapshot["budget"];
+	readonly conversationCount: number;
+	readonly addedProfiles: readonly string[];
+}
+export interface RuntimeBudgetQuery {
+	readonly beforeVersion?: number;
+	readonly limit?: number;
+}
+export interface RuntimeBudgetPage {
+	readonly items: readonly RuntimeBudgetReceipt[];
+	readonly nextBeforeVersion?: number;
+}
 export interface ConversationProfile {
 	readonly id: string;
 	readonly execution?: import("./execution-types.ts").ExecutionConfiguration;
 	/** Bootstrap-approved project directory; inherits HostOptions.cwd when omitted. */
 	readonly cwd?: string;
-	/** Bootstrap-approved ID on the Runtime provider; inherits the default when omitted. */
+	/** Native provider/model key (or legacy provider model ID); inherits the default when omitted. */
 	readonly model?: string;
+	readonly thinkingLevel?: ModelThinkingLevel;
 	readonly systemPrompt?: string;
 	readonly tools?: HostOptions["tools"];
 }
@@ -423,17 +464,24 @@ export interface RuntimeContextSource {
 	/** Explicit approved profile selection; no implicit activation by a WebUI facet. */
 	readonly profiles: readonly string[];
 	render(
-		input: Readonly<{ target: ConversationRef; signal: AbortSignal | undefined }>,
+		/** Current approved native Conversation cwd, including later directory changes. */
+		input: Readonly<{ target: ConversationRef; cwd: string; signal: AbortSignal | undefined }>,
 	): RuntimeContextValue | Promise<RuntimeContextValue>;
 }
 export interface ConversationConfiguration {
 	readonly model: string;
 	readonly cwd: string;
+	readonly thinkingLevel?: ModelThinkingLevel;
 }
-export type ConversationConfigurationChange = { readonly model?: string; readonly cwd?: string };
+export type ConversationConfigurationChange = {
+	readonly model?: string;
+	readonly cwd?: string;
+	readonly thinkingLevel?: ModelThinkingLevel;
+};
 export interface RuntimeOptions extends HostOptions {
 	/** Explicit server directory roots; defaults to the approved profiles' cwd trees. Not an OS sandbox. */
 	readonly cwdRoots?: readonly string[];
+	/** Initial policy. A changed bootstrap value is audited; unchanged values preserve later management adjustments. */
 	readonly limits: RuntimeLimits;
 	/** Trusted UUID for create-once storage placement; an existing directory requires explicit reopen. */
 	readonly reservedSessionId?: string;
@@ -698,8 +746,19 @@ export interface RuntimeStore {
 export interface Runtime {
 	root(): Host;
 	view(): RuntimeView;
+	budgetPolicy(check: () => void): Promise<RuntimeBudgetSnapshot>;
+	changeBudget(input: RuntimeBudgetChange, check: () => void): Promise<RuntimeBudgetReceipt>;
+	budgetReceipt(
+		identity: Pick<RuntimeBudgetChange, "actorId" | "requestId">,
+		check: () => void,
+	): Promise<RuntimeBudgetReceipt | null>;
+	budgetHistory(query: RuntimeBudgetQuery, check: () => void): Promise<RuntimeBudgetPage>;
 	/** Host-only public metadata; contains no credentials, instructions or tool code. */
 	profileChoices(): readonly { readonly id: string; readonly model: string; readonly cwd: string }[];
+	/** Detached native catalog; never credentials, endpoints or mutable Models. */
+	modelChoices(): Promise<readonly ModelDTO[]>;
+	/** Current catalog membership only; this does not grant access or resolve credentials. */
+	modelAllowed(selection: string): boolean;
 	configuration(ref: ConversationRef): Promise<ConversationConfiguration>;
 	directoryRoots(profiles?: readonly string[]): readonly string[];
 	createConversation(spec: ConversationSpec): Promise<ConversationRef>;
@@ -724,9 +783,14 @@ export interface HostOptions {
 	backend?: "durable";
 	cwd: string;
 	dataDir: string;
-	endpoint: string;
+	/** Trusted native Models/configuration source. Read again for each use, as in Durable. */
+	models?: Models | (() => Models);
+	/** Legacy compatibility only; not required when native Models are supplied. */
+	endpoint?: string;
+	/** Native provider/model key, or an empty string for an unselected native model. */
 	model: string;
-	apiKey: string;
+	apiKey?: string;
+	thinkingLevel?: ModelThinkingLevel;
 	/** Optional trusted host source. Called for each future primary credential resolution; no ambient credential discovery. */
 	resolveApiKey?: () => string | Promise<string>;
 	systemPrompt?: string;

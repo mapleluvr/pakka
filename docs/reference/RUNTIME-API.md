@@ -6,6 +6,10 @@ Runtime API 只供受信任宿主装配；跨 Session A2A 与 worker 见 [Broker
 
 ## 创建与访问
 
+主模型可由可信宿主通过 `models: Models | (() => Models)` 注入。getter 在使用时读取当前目录；模型引用使用 `modelChoices()` 返回的 `key`（`encodeURIComponent(provider) + "/" + modelId`），不以 Agent profile 别名代替。`model: ""` 表示尚未选择模型，可以打开和管理 Session；选择与认证满足后才可生成。`thinkingLevel` 独立保存。WebUI 的 Pi 原生配置加载器属于产品装配，独立 SDK 不自动读取 Coding Agent 的配置。
+
+以下例子演示保留的显式 endpoint/model/apiKey 兼容装配；原生 Models 模式无需这套 endpoint/凭据字段。
+
 ```ts
 import { createRuntime } from "@pakka/agent";
 
@@ -37,9 +41,9 @@ try {
 
 `Runtime` 是 bootstrap 控制对象；`Host` 是一个 Conversation 的控制对象。每个 Host 分别连接 principal、激活 strategy 和绑定工具 invocation。调用方只获得冻结的 DTO 与身份绑定的命令 closure。Pi 的 Harness、Session、Conversation、Registry、Models 和 Tx 不通过公开接口返回。
 
-bootstrap 必须给出三项正的有限整数配额。额外 profile 接受允许的 `id`、instructions、配置的工具，以及可选的 `model` ID、批准 `cwd` 与 `execution`。省略 `model` 时沿用 HostOptions；显式值必须为 1–256 个 UTF-16 code units，不含控制字符或首尾空白。模型仍使用该 Runtime 固定的 provider、endpoint、宿主批准的凭据来源和主调用参数，profile 不能改写 credentials、storage path 或原始 extensions。创建相同 key/profile 返回已有 resource；同 key 的不同 profile 被拒绝。
+bootstrap 必须给出三项正的有限整数初始配额。额外 profile 接受允许的 `id`、instructions、配置的工具，以及可选的 `model`、`thinkingLevel`、批准 `cwd` 与 `execution`。省略模型时沿用宿主默认；原生 Models 模式支持跨 provider 的完整模型引用，兼容模式使用显式装配的单 provider 模型 ID。profile 不接管 credentials 或 storage path。创建相同 key/profile 返回已有 resource；同 key 的不同 profile 被拒绝。
 
-例如 `{ id: "reviewer", model: "approved-review-model", systemPrompt: "Review the requested work." }` 在启动时注册该确切模型 ID。通过受控 catalog 的配置操作切换 profile 时，model、instructions 和 tools 在同一 native commit 更新；原 incarnation 作废，下一次实际 provider 请求采用新模型。人类只能选其 profile ceiling 内的配置；重开校验模型所属的 profile identity，并保留已消费额度。设置与私密配置 replace/clear 的操作见 [WebUI 使用指南](../guides/WEBUI-GUIDE.md)。
+整组 profile 配置在同一 native commit 更新相关模型、instructions 和 tools，原 incarnation 作废。人类的 profile ceiling 约束整组工具/指令预设；独立模型选择按原生目录与 Conversation 配置权限校验，不要求为每个模型新增 profile。新增批准 profile 可登记到原 Session，已登记执行定义仍按持久指纹核对。设置、模型刷新与认证见 [WebUI 使用指南](../guides/WEBUI-GUIDE.md)。
 
 ### 执行环境
 
@@ -47,21 +51,23 @@ bootstrap 必须给出三项正的有限整数配额。额外 profile 接受允�
 
 `createLocalExecutionEnvironment()` 提供显式本机驱动；合作工具通过 `executionFor(scope)` 得到冻结的文件/命令能力。它不赋予 owner cleanup 权限，也不把直接调用宿主 fs 的插件变成沙箱代码。环境取得失败使用原生 block 阻止主模型 HTTP；模型权限仍独立执行。完整签名、数据、取消与资源寿命见[执行环境指南](../guides/EXECUTION-ENVIRONMENT.md)及[状态声明](../state/execution-environment.md)。
 
-### 主模型凭据来源
+### 主模型目录与凭据来源
+
+原生 Models 模式由传入的 Pi provider 负责凭据解析、模型能力与请求兼容；Pakka 不复制它的认证 schema。产品使用公开 ModelRuntime 读取 Pi 模型/认证目录，并通过原生 login/logout 管理凭据。以下 resolver 与单主密钥覆盖仅属于显式 legacy 装配。
 
 `HostOptions.resolveApiKey?: () => string | Promise<string>` 是可选、仅由受信任宿主提供的主模型凭据来源。不传时继续使用显式 `apiKey`；传入时，每次原生主请求解析凭据都会调用它，resolver 拒绝或返回非法值时失败封闭，不回退、发现环境凭据或发出 provider HTTP。对外只保留通用错误，原异常中的私密文本不进入原生输出。这是 adapter 对公开 auth callback 的配置，不修改 Durable，也不序列化到 browser/worker 配置。辅助 inference 的既有独立配置不受它隐式改写。
 
 pakka-webui 保留宿主已有 resolver 作为初始来源，仅全局管理员的专用 replace/clear 操作建立覆盖；clear 后正常重开仍不回退原值。已解析凭据或已开始的请求不会被 retroactive 撤销，已准备的调用不因凭据失败退还额度。服务端私密存储和备份必须按凭据数据保护：清除当前来源不承诺物理擦除持久历史或加密。
 
-`runtime.profileChoices()` 只向受信任宿主返回冻结的 `{ id, model }[]`，不包含 instructions、工具代码或密钥。WebUI 模型目录按 model ID 去重后发布标识和模型，不叠加逐模型名单；该列表本身不是授予配置权限，整组 Agent 预设的工具/指令 ceiling 另行约束。
+`runtime.profileChoices()` 向受信任宿主返回冻结的 `{ id, model, cwd }[]`，不包含 instructions、工具代码或密钥。`await runtime.modelChoices()` 独立返回原生模型 DTO：完整 key、provider/model/name、输入种类、上下文/输出上限、thinking levels、目录声明价格及认证可用提示。`modelAllowed(key)` 只检查当前目录成员资格，不授予权限或解析凭据；available 也不是服务端认证成功的保证。
 
-受控 catalog 的 `CatalogEnroll.configuration?: { model?: string; cwd?: string }` 将初始模型/目录与新 Conversation 在同一原生提交中建立，不通过创建后再配置实现。非空对象只允许这两个字段：模型必须来自该 Runtime 已配置目录，cwd 必须通过原有目录 roots；它不替换基础预设的工具或 instructions，不接纳首条模型输入。WebUI 创建端口另以原请求身份和指纹核对参数，不将创建后配置当作创建的原子效果。
+受控 catalog 的 `CatalogEnroll.configuration?: { model?: string; cwd?: string; thinkingLevel?: ModelThinkingLevel }` 将初始配置与新 Conversation 在同一原生提交中建立。非空变更对象只允许这三个字段：模型必须来自当前目录，cwd 必须通过批准 roots，thinking 必须是支持的等级。它不替换基础预设的工具或 instructions，不接纳首条模型输入；继承保留模型、目录和 thinking。WebUI 创建端口另以原请求身份和指纹核对参数。
 
 ## 受信任的当前上下文贡献
 
 `RuntimeOptions.contextSources` 接受宿主明确选择的 `RuntimeContextSource[]`。每个来源声明稳定的 `id`、正整数 `version` 和获准的 `profiles`；只有所选 profile 的主请求调用它。注册表在打开 storage 前复制并验证，来源身份参与这些 profile 的持久身份，正常重开拒绝未确认的定义替换。更改 renderer 实现时，宿主应显式更改定义版本。
 
-`render({ target, signal })` 接收冻结的精确 `ConversationRef` 与取消信号，可以异步读取宿主服务，返回 `{ text, check }`。`text: null` 明确省略本次贡献；单源最多 32768 个 UTF-16 code units，全部来源合计最多 65536。`check()` 必须同步完成并返回 `undefined`，重新校验读取时捕获的状态；异步/thenable 返回、额外结果字段、非法文本或私密来源错误都阻止实际 provider dispatch。检查覆盖异步凭据解析之后的效果边界；已准备的 attempt 不因迟到失效退还。
+`render({ target, cwd, signal })` 接收冻结的精确 `ConversationRef`、当前原生 Conversation 的批准工作目录与取消信号，可以异步读取宿主服务，返回 `{ text, check }`。`text: null` 明确省略本次贡献；单源最多 32768 个 UTF-16 code units，全部来源合计最多 65536。`check()` 必须同步完成并返回 `undefined`，重新校验读取时捕获的状态；异步/thenable 返回、额外结果字段、非法文本或私密来源错误都阻止实际 provider dispatch。检查覆盖异步凭据解析之后的效果边界；已准备的 attempt 不因迟到失效退还。
 
 这些文本只装入当前主请求的临时 system sections，不改写 raw Conversation history，也不成为永久重放的 instructions。历史中的用户内容或真实工具结果仍保留原始含义。调用方不会取得 Pi Harness、Conversation、Tx、provider 凭据或可伪造的原生 scope。通过原有公开准备 callback 保留既有的权限、projection、receipt 与配额检查。
 
@@ -75,7 +81,7 @@ pakka-webui 保留宿主已有 resolver 作为初始来源，仅全局管理员�
 - 同名 principal/strategy 各自绑定 scope。单 Conversation journal 的 namespace 为 strategy 和 journal kind；managed journal v2 的地址组合 Session、Conversation、strategy 和 journal kind。
 - navigation 创建 native fork，发布新的 Conversation/incarnation/provider identity。既有 Host closure 继续代表该 key 的当前 Conversation，调用方通过 `runtime.view()` 取新的 resource reference。
 
-`pakka.runtime` document schema v2 保存 Session 配额、已消费预算、strategy attempt totals、批准的 profile 身份和 Conversation resources。普通重开核对这些持久字段，恢复原资源及额度。
+`pakka.runtime` document schema v3 保存 Session 配额、累计消费、strategy attempt totals、批准 profile 身份、Conversation resources 和预算政策版本。预算政策、按版本审计与原请求索引保存在独立原生 documents。v1/v2 仅在消费可归因时升级；新版缺失政策记录会拒绝重开，不作为旧版自动补齐。
 
 ## 调度、预算与失败
 
@@ -83,9 +89,17 @@ pakka-webui 保留宿主已有 resolver 作为初始来源，仅全局管理员�
 
 主调用与辅助调用在 dispatch 前分别提交 Session 汇总 attempt reservation；`InferencePolicy.maxCalls` 另由同一次 commit 对 strategy+Session 累计，新 Conversation/fork/reopen 不扩大它。每个 Conversation 的 job 上限和独立 inference audit 继续执行；取消、未知结果、调用在实际 HTTP 之前失效均不退还已提交的 reservation。数字表示保守调用尝试上限，不是账单、token 总额或精确 HTTP 次数。
 
-可归因的 provider/run 失败留在该 Conversation。另一成员可继续工作；同 Session 的未知 storage、commit/adoption、未分类 report 则封闭所有成员。一个新 Harness 仍在同一 Node 进程，不能隔离进程退出或 OOM。
+普通 provider/run 失败保留原生错误轨迹与原回执，回到 idle 后允许显式的新输入或配置修正，不自动重放旧请求。另一成员可继续工作；同 Session 的未知 storage、commit/adoption、未分类 report 则封闭所有成员。一个新 Harness 仍在同一 Node 进程，不能隔离进程退出或 OOM。
 
 `Host.dispose()/reload()` 只处理该 Conversation；managed Host 的 `newSession()` 被拒绝。managed 的 pending fork 在 `busy` 中可见；legacy 兼容入口保留同步连续 branch/ABA 的观察语义，调用方等待 `waitForIdle()` 后再确认 native fork 完成。`Runtime.close()` 管理共享 Harness/storage 关闭。运行时不允许第二个 writer 重开同一 storage：使用 `pakka-writer.json` 的独占 claim。只有已知 writer 成功关闭后才删除 claim；发现旧 claim 时 fail closed，不依据 PID 或超时自动抢占。受信任宿主可调用 `recoverStorageWriter({ storageDir, expectedClaim: { pid, nonce } })`：排他维护门禁下只读核对数据库身份，确认原进程已退出且 claim 精确匹配后释放原 claim。命令不启动模型、不改写数据库／WAL；具体接口见 [维护命令](STRATEGY-API.md#trusted-writer-maintenance)。
+
+### 预算政策与审计
+
+- `budgetPolicy(check)` 返回 `{ version, limits, budget, conversationCount }`。
+- `changeBudget({ actorId, requestId, expectedVersion, limits, reason }, check)` 在一个原生事务内提交政策、审计和原请求索引；相同请求及内容返回原回执，旧版本新请求或内容冲突拒绝。
+- `budgetReceipt({ actorId, requestId }, check)` 核对原请求；`budgetHistory(query, check)` 按版本分页。宿主绑定实际 actor，浏览器不能自行授予该控制权。
+- 提交前明确拒绝可由公开 `BudgetChangeRefusedError` 区分；存储未知或写后授权失效仍按所属失败域处理，不被解释为无效果。
+- 提高或降低额度均保留累计消费。降至消费以下只阻止新预留；原 bootstrap 重开保留管理调整，明确变更 bootstrap limits 才形成新政策。
 
 ## 取消与重开
 
@@ -93,7 +107,7 @@ pakka-webui 保留宿主已有 resolver 作为初始来源，仅全局管理员�
 
 通过 Host receipt event 或 `client.receipt(id)` 观察撤回确认。相同 key 重试必须保持原 text/mode，且前一 admission 已 released；换 mode 是幂等冲突。
 
-`createRuntime({ ...options, reopenSessionFile })` 验证 provenance、持久 runtime profile identity 与 limits，恢复所有现存成员的 authority 后才允许 progress。纯重开/inspection 不发送 HTTP。Session quotas 与 Conversation identity 保留，旧 capability、lease、tool scope、Host closure 不复活。Host 的直接输入回执 ledger 仍是进程内状态；不要把这条兼容路径用作跨重启 A2A 去重。
+`createRuntime({ ...options, reopenSessionFile })` 验证 provenance、已登记 profile、批准目录及预算政策，按受控配置演进登记新增 profile 或额度变化，恢复所有现存成员的 authority 后才允许 progress。纯重开/inspection 不发送 HTTP。Session quotas 与 Conversation identity 保留，旧 capability、lease、tool scope、Host closure 不复活。Host 的直接输入回执 ledger 仍是进程内状态；不要把这条兼容路径用作跨重启 A2A 去重。
 
 ## Coordinator store 与明确 storage 地址
 
@@ -105,7 +119,7 @@ pakka-webui 保留宿主已有 resolver 作为初始来源，仅全局管理员�
 
 受信任 bootstrap 使用 `runtime.readConversation(ref, check, { limit, beforeEntryId })` 取得冻结的 `ConversationSnapshot`：已提交消息、display records、live tools 和 usage。只投影所选 Conversation，不返回原生 handles、system/config/provider identity。异步读取完成后重验 `check`。每页最多 256 entries，JSON envelope 上限 2 MiB；`truncated` 表示当前页受限。使用响应的 `olderBeforeId` 作为下一页的 `beforeEntryId` 读取更早记录。读取只作授权观察，不启动模型或提交存储。
 
-`runtime.writeDisplay(ref, { namespace, actorId, requestId, kind: "card" | "chat", text }, check)` 在原生 commit line 绑定引用与授权。相同 scope/request/payload 稳定去重，正常 reopen 后保留 receipt；不同 actor/namespace 不共用请求。显示内容没有模型贡献，不推进 model head、不替换原 requester。每 Conversation 最多 512 个去重记录，text 最多 16384 个 UTF-16 code units；容量超限明确拒绝，不删除旧 receipt 来伪造新准入。
+`runtime.writeDisplay(ref, { namespace, actorId, requestId, kind: "card" | "chat", text }, check)` 在原生 commit line 绑定引用与授权。相同 scope/request/payload 稳定去重，正常 reopen 后保留 receipt；不同 actor/namespace 不共用请求。显示内容没有模型贡献，不推进 model head、不替换原 requester。每 Conversation/display namespace 最多 4096 个去重记录，text 最多 16384 个 UTF-16 code units；容量超限明确拒绝，不删除旧 receipt 来伪造新准入。
 
 `check` 是宿主提供的同步检查，**拒绝时必须 throw**，不是浏览器传来的 grant 或返回 boolean 的 policy。两项命令都不是远端 API，不能直接交给模型或 Web 客户端。usage 的 token 值可展示，未提供权威价格时 `cost` 保持 `null`，不能把默认零价格说成免费。
 

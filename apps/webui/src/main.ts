@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { readFile, writeFile, lstat, realpath } from "node:fs/promises";
-import { resolve, isAbsolute } from "node:path";
+import { isAbsolute } from "node:path";
 import type { ExtensionFacet } from "./extension.ts";
 import { pathToFileURL } from "node:url";
 import { startPocket, type PocketProductOptions } from "./bootstrap.ts";
@@ -206,7 +206,7 @@ const productKeys = [
 	"notifications",
 ] as const;
 /** Explicit local host code, not a manifest action, browser request, or untrusted configuration decoder. */
-async function loadPocketModule(path: string): Promise<PocketProductOptions> {
+export async function loadPocketModule(path: string): Promise<PocketProductOptions> {
 	if (!isAbsolute(path) || !path.endsWith(".mjs"))
 		throw new Error("Explicit absolute ESM configuration required");
 	const stat = await lstat(path);

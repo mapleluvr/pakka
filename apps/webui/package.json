@@ -11,6 +11,10 @@
 			"types": "./dist/bootstrap.d.ts",
 			"import": "./dist/bootstrap.js"
 		},
+		"./launcher": {
+			"types": "./dist/launcher.d.ts",
+			"import": "./dist/launcher.js"
+		},
 		"./http": {
 			"types": "./dist/http.d.ts",
 			"import": "./dist/http.js"
@@ -53,6 +57,8 @@
 		"build": "tsc -p tsconfig.json"
 	},
 	"dependencies": {
+		"@earendil-works/pi-ai": "1.4.0",
+		"@earendil-works/pi-coding-agent": "1.4.0",
 		"@pakka/agent": "0.7.0",
 		"@pakka/client": "0.1.0",
 		"@pakka/protocol": "0.1.0",

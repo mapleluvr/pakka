@@ -8,17 +8,33 @@ import { createHost } from "@pakka/agent";
 import { readConversationEntries } from "./consumer-native-storage.mjs";
 const consumer = dirname(fileURLToPath(import.meta.url));
 await assert.rejects(createHost({ backend: "oracle" }), /Unsupported production backend/);
-const require = createRequire(import.meta.url);
 const runtimeRequire = createRequire(import.meta.resolve("@pakka/agent"));
 const versions = {};
 const dependencyTree = JSON.parse(await readFile(join(consumer, "dependency-tree.json"), "utf8"));
-function assertNoOracle(node) {
-	assert.equal(Object.hasOwn(node.dependencies ?? {}, "@earendil-works/pi-coding-agent"), false);
-	for (const child of Object.values(node.dependencies ?? {})) assertNoOracle(child);
+function assertNativeLoaderBoundary(node, owner = "consumer") {
+	for (const [name, child] of Object.entries(node.dependencies ?? {})) {
+		if (name === "@earendil-works/pi-coding-agent")
+			assert.equal(owner, "@pakka/webui", "Coding Agent is only an approved WebUI configuration dependency");
+		assertNativeLoaderBoundary(child, name);
+	}
 }
-assertNoOracle(dependencyTree);
-assert.throws(() => runtimeRequire.resolve("@earendil-works/pi-coding-agent"), { code: "MODULE_NOT_FOUND" });
-assert.throws(() => require.resolve("@earendil-works/pi-coding-agent"), { code: "MODULE_NOT_FOUND" });
+const nativeLoader = { dependencies: { "@earendil-works/pi-coding-agent": {} } };
+assertNativeLoaderBoundary({ dependencies: { "@pakka/webui": nativeLoader } });
+for (const owner of ["@pakka/agent", "@pakka/cli"])
+	assert.throws(
+		() => assertNativeLoaderBoundary({ dependencies: { [owner]: nativeLoader } }),
+		/only an approved WebUI/,
+	);
+assert.throws(
+	() =>
+		assertNativeLoaderBoundary({
+			dependencies: { "@pakka/webui": { dependencies: { "@pakka/agent": nativeLoader } } },
+		}),
+	/only an approved WebUI/,
+);
+assertNativeLoaderBoundary(dependencyTree);
+// Full GUI installs may hoist the approved loader. Physical SDK isolation is
+// checked separately in the headless consumer, not inferred from ancestor lookup.
 for (const name of ["pi-ai", "chord", "pi-durable", "pi-telemetry"]) {
 	for (const dir of runtimeRequire.resolve.paths("@earendil-works/" + name)) {
 		let data;
@@ -218,7 +234,8 @@ try {
 			projectorAfterReload: "verified",
 			rangeOmission: "verified",
 			generationBlock: "verified",
-			oracleDependency: "absent",
+			sdkCodingAgentDependency: "absent",
+			webuiConfigurationDependency: "approved",
 			artifactVersion: receipt.version,
 		}),
 	);

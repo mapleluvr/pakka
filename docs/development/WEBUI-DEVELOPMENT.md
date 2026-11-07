@@ -69,7 +69,7 @@ MAS Board 必须通过右侧的通用贡献方式实现。不为 MAS 增加特�
 | operation policy | read/write、deadline、cancel、request identity、conflict、unknown 如何表达？ |
 | presentation     | private notice、shared card、interface、receipt 各自的可见域                 |
 
-输入 slash、点击 suggestion 或按钮走同一 dispatcher。保留 built-in/template/skill 名称规则；冲突不以“最后加载覆盖”解决。Status/settings 命令不自动发 prompt、不改变 requester；显式 send-work 才调用受控 input/A2A，并返回真正的 native receipt。
+已注册 slash、suggestion 和按钮使用同一 dispatcher；精确命令名以外的斜杠文本是普通输入。已注册命令的参数错误、不可用或执行拒绝保留草稿，不回退为模型输入；无法确认命令目录时，不将疑似命令解释为空目录中的普通文字。保留 built-in/template/skill 名称规则；冲突不以“最后加载覆盖”解决。Status/settings 命令不自动发 prompt、不改变 requester；显式 send-work 才调用受控 input/A2A，并返回真正的 native receipt。
 
 Card 是显示记录，不是偷偷添加 system/user message。必须用下一次真实 provider payload 验证它不进模型，而不是只看前端没有渲染成聊天气泡。
 
@@ -99,9 +99,11 @@ Card 是显示记录，不是偷偷添加 system/user message。必须用下一�
 4. 私有 toast 只回当前操作者；shared card/notes 明确共享 scope；人类 side chat/presence 默认不进入模型。
 5. 已存 provider secret 不回填表单，不进 URL、command history、browser persistent storage、task/entry、广播或 export。配置敏感值区分 keep/replace/clear；provider credentials 不成为通用 plugin client 字段。外部 Webhook 的专用 URL secret 是显式授权 setup 的独立契约，不能套用为 provider key 的返回接口。
 
-pakka-webui 的主 provider key 使用独立 `credential.status / credential.replace / credential.clear` 命令，不进入扩展 command palette 或通用 settings 回填。只有具备全局安装权限的当前人类可调用；scoped admin 也不能改变全 Session 的凭据。写请求带稳定 request ID 和预期 version，只返回 `{ version, configured }`。表单提交即清空输入，未知响应后只能显式读取当前状态，不自动重发密钥；读到当前配置不等于证明原写操作的完整历史。
+原生模型模式通过公开 ModelRuntime 使用 Pi 的 `models.json`、`auth.json` 与 `settings.json`。模型目录和配置来源可以读取、刷新；provider 登录/登出由当前全局管理权限约束，并绑定发起浏览器的登录身份。API key/OAuth 交互仅在私密流程中传递，角色撤销、退出和到期取消原生授权；输入提交即清空，响应丢失后核对原交互，不自动重发密钥。状态只展示公开认证信息；原生密钥不进入页面持久存储、通用 operation 或 Session。
 
-owned 私密服务会持久保存显式提交的值，供未来原生主请求解析；保留已有启动 resolver，直到明确替换/清除。清除会阻止后续解析且重开不回退，但不撤回已发请求、不擦除旧持久日志，也不宣称加密。它的稳定写回执有每 Session 256 次的上限，不以自动遗忘回执扩大容量。
+显式 legacy 装配保留独立 `credential.status / credential.replace / credential.clear` 命令，不进入扩展 command palette 或通用 settings 回填。只有具备全局安装权限的当前人类可调用；scoped admin 也不能改变全 Session 的凭据。写请求带稳定 request ID 和预期 version，只返回 `{ version, configured }`。表单提交即清空输入，未知响应后只能显式读取当前状态，不自动重发密钥；读到当前配置不等于证明原写操作的完整历史。
+
+legacy owned 私密服务会持久保存显式提交的值，供未来原生主请求解析；保留已有启动 resolver，直到明确替换/清除。清除会阻止后续解析且重开不回退，但不撤回已发请求、不擦除旧持久日志，也不宣称加密。它的稳定写回执有每 Session 256 次的上限，不以自动遗忘回执扩大容量。
 
 通知使用独立的 `notification.status / subscribe / unsubscribe / preferences` 有限命令，设备与偏好绑定当前人类，当前 Conversation 在服务端校验。`PocketServiceContext.notifications` 是受信任 producer；浏览器命令不能决定通知收件人或文案。pending/unknown 的真实 push 不自动重发；worker 在显示和导航前用当前 Cookie 读取 metadata，HTTP 接受不作为 OS 显示的证据。状态仅返回公开 VAPID key、偏好和当前资源设备的 `{ id, subscriptionKey }`；摘要匹配真实 PushSubscription，丢注册响应后的核对不再写注册，也不返回 endpoint/auth/private VAPID。保留上限为每 Session 256 个事件、512 个控制操作、128 个设备与 128 份个人偏好；单人最多 10 个活动设备，每设备最多 64 个资源，store 最大 1 MiB。容量耗尽拒绝新增。VAPID 私钥和订阅材料由受保护存储保留，不进入模型或状态响应；HTTP 接受与操作系统实际显示分别确认。
 
@@ -130,18 +132,20 @@ Verification 的选用与记录按[通用方法](VERIFICATION.md#选用与记录
 
 ### 独立选择模型和 Conversation 工作目录
 
-模型入口位于消息输入区，点击紧凑的模型按钮选择**已配置 provider 的可用模型**。具有 Conversation 配置权限的人可选择目录内任一模型；该目录由 `runtime.model` 与 `runtime.profiles[].model` 派生，模型-only 路径不使用逐模型/逐 Session ACL，也不要求在顶层 `profiles` 再声明一遍。候选按模型 ID 去重，保留首次出现顺序和首个配置标识，只发布标识与模型 ID，不携带另一个预设的 cwd、工具或指令。有限响应最多 65 项，对齐 JSON 的默认模型加 64 个附加配置；第 66 项仍拒绝。HTTP server 与客户端应一起更新，客户端按相同的 65 项上限解析该有限目录。当前模型置顶；所有列表都提供搜索，支持按模型 ID 或配置标识进行不区分大小写的多词模糊检索（空格或 `/` 分词、词内字符有序匹配）。选择器参考 Pi TUI `/model` 的输入焦点、上下键循环、高亮候选、Enter 确认、Escape 关闭及位置/匹配总数反馈；实际已应用模型有独立标记。检索和键盘移动不提交配置，空结果下 Enter 无效果，中文等输入法组合期间不把 Enter 当作选择。headless 配置使用同一 OpenAI-completions provider 下的明确模型目录，endpoint 与凭据由宿主提供。
+模型入口位于消息输入区，点击紧凑模型按钮查询可信宿主的原生 Pi 目录。具有 Conversation 配置权限的人可选择目录内任一模型；完整引用包含 provider/modelId，模型目录与 Agent profile 分开。候选显示真实输入类型、上下文与输出上限、thinking 等级及目录价格，不携带另一个预设的 cwd、工具或指令。原生产品使用有界分页与服务端搜索，兼容配置响应的 65 项前缀不是完整目录，也不限制其余模型。legacy 单 provider 装配仍可从其显式配置生成兼容目录。
+
+当前模型独立显示；未选模型用 `model: ""` 表示，仍可进入设置和管理 Session。选择器参考 Pi TUI `/model` 的输入焦点、上下键循环、高亮候选、Enter 确认、Escape 关闭及位置/匹配总数反馈。检索和键盘移动不提交配置，空结果下 Enter 无效果，中文等输入法组合期间不把 Enter 当作选择。用户通过原有 Pi 工具编辑原生文件后可刷新；默认模型影响新建 Conversation，刷新不会覆盖既有选择或发送生成请求。
 
 工作目录入口**只在 Conversation 标题下方**，Settings 不提供目录变更入口。点击当前服务器路径打开目录选择器：
 
 - Locations 是宿主批准的位置；目录浏览、面包屑、上一级和粘贴绝对路径均只在这些位置内导航。
 - 最近使用与收藏保存在当前浏览器，按 server/person 隔离，退出时清除；服务端每次重新验证快捷路径，越权、失效及逃出批准范围的符号链接不展示。
 - 浏览或关闭不会修改 Conversation；只有 **Use this directory** 明确应用。手机使用单栏滚动内容与固定确认区，默认最短目标为宽∶高 3∶5。
-- 新会话默认继承当前模型和目录；同一基础 profile 的分叉也继承独立选择。两者都不隐式替换指令或工具。
+- 新会话默认继承当前模型、目录和 thinking；同一基础 profile 的分叉也继承独立选择。它们都不隐式替换指令或工具。
 
-Pi Durable 公开 configure 支持 model/cwd 局部修改。Pakka 使用这个接口将二者分别持久化：换模型只更新模型，换目录只更新 cwd。成功应用会更换 incarnation、撤销旧绑定，保留历史和已花额度；不搬文件、不重放工作。已有工作或队列未清空时拒绝切换，不自动取消工作。未知结果只能读取当前配置核对，不自动重试。Viewer 可查看当前模型和路径，但不能打开配置菜单、浏览服务器目录或修改它们。
+Pi Durable 公开 configure 支持 model/cwd/thinkingLevel 局部修改。Pakka 分别持久化选定字段；成功应用更换 incarnation、撤销旧绑定，保留历史和已花额度，不搬文件、不重放工作。已有工作或队列未清空时拒绝切换，不自动取消工作。未知结果只能读取当前配置核对，不自动重试。Viewer 可查看当前配置，但不能打开配置菜单、浏览服务器目录或修改它们。
 
-目录浏览沿用服务器 roots 约束：默认使用 `runtime.cwd` 及整组 Agent 预设允许的目录作为可浏览根目录。可通过可选的 `runtime.cwdRoots` 一次批准项目根树，新子项目无需新增“模型 × 目录”profile。下面是需合并进完整启动配置的片段，不能代替 endpoint、凭据、limits 等其他必需字段：
+目录浏览沿用服务器 roots 约束：默认使用 `runtime.cwd` 及整组 Agent 预设允许的目录作为可浏览根目录。可通过可选的 `runtime.cwdRoots` 一次批准项目根树，新子项目无需新增“模型 × 目录”profile。下面是显式 legacy JSON 宿主配置的局部片段；完整装配仍须提供其模型访问与初始 limits。无参数产品入口则由 Pi 原生模型来源和本地预设装配，无需这份 JSON：
 
 ```json
 {
@@ -160,23 +164,29 @@ Pi Durable 公开 configure 支持 model/cwd 局部修改。Pakka 使用这个�
 
 `cwdRoots` 是宿主批准的全局目录位置，当前能够管理 Conversation 的角色可在其中选择；未显式配置时，从该角色可使用的整组 Agent 预设推导位置。它支持 JSON、ESM 与 worker 配置，必须是现有绝对目录。路径为**运行服务器上的路径**，不是手机本地路径，也不构成文件系统沙箱。Files & changes 的 roots 是独立批准的权限，切换 cwd 不会扩大它们。
 
-现存 Session 的 profile/limits/显式 cwdRoots 身份仍锁定，重开必须保持原声明；不能改配置文件后静默扩大旧工作权限。未配置 cwdRoots 的 Session 使用原批准目录中的子目录。正常重开从原生 Conversation 配置恢复实际模型、目录及额度，而非从基础 profile 猜测。
+现存 Session 的已登记 profile 与批准目录边界按原指纹核对；可登记新增预设，不能通过同名替换隐式改变已有执行权限。额度使用独立的版本政策、原请求索引和审计，允许受权调整且保留累计消费。正常重开从原生 Conversation 配置恢复模型、目录及 thinking，不从基础 profile 猜测，也不以原 bootstrap 覆盖管理调整。
 
 基础 profile、顶层 `profiles`/服务端 `profileCeiling` 与整组 configure API 用于完整 Agent 预设的工具/指令权限；单独模型选择不据此筛选或改变预设。未知模型仍按服务配置目录拒绝；`canConfigure` 与实际 `manage` 资源写权限一致，目录读取、凭据及扩展安装继续各自处理真实效果。
 
 ### Session 管理、创建与个人导航
 
-创建不复用首页消息框：New Session / New Conversation 使用独立配置向导。`session.list` 对有创建权限者返回的 defaults 与 `creation.directories` 是只读草稿来源，不创建资源、不发送模型输入，也不增加模型授权。`session.list / session.create / session.lookup` 分别读取当前授权父项、以稳定 requestId 创建、只读核对原 `{requestId,name,cwd}`；清单失败不被转换为空清单。
+New Session / New Conversation 使用独立创建表单。`session.list` 对有创建权限者返回 defaults 与获准 presets，`creation.directories` 提供批准目录；这些只读来源不创建资源、不发送模型输入。Agent 预设选择独立于模型目录，本地产品可选择 coding 或 read-only，后端继续校验整组预设权限。`session.list / session.create / session.lookup` 分别读取当前授权父项、以稳定 requestId 创建、只读核对原请求；清单失败不被转换为空清单。
 
-管理目录位于控制 Session 的 `pocket.sessions` namespace，最多 31 个新增 Session，加已有控制 Session 最多 32 项。它先持久记录保留的 Session ID 和 unknown，再以公开 `createRuntime` 打开独立 storage/writer，原生初始化和 ready 注册均确认后才发布。重开沿原 ID、目录与固定宿主预算配置，不自动清理 writer claim、重做 unknown 初始化或重放输入；现有预算消费不重置。已确认子存储无法重开时，工作区启动失败并报告原身份，不发布空目录。它不是跨 Session 的 Runtime、总预算域或进程隔离。
+管理目录位于控制 Session 的 `pocket.sessions` namespace，最多 31 个新增 Session，加已有控制 Session 最多 32 项。它先持久记录保留的 Session ID 和 unknown，再以公开 `createRuntime` 打开独立 storage/writer，原生初始化和 ready 注册均确认后才发布。重开沿原 ID 与目录，保留预算消费；unknown 初始化、writer claim 和历史输入分别保留原边界。已确认子存储打开失败时，保留 unavailable 登记，健康 Session 继续服务；该目录不是跨 Session 的 Runtime、总预算域或进程隔离。
 
-`create` 在明确的 sessionId 内创建 Conversation；可选 `configuration: {model?,cwd?}` 与创建同次原生提交，不替换整组 Agent 预设。没有可用父项时，确认执行 Session → Conversation 两步，保留各自原请求；父项成功后不因第二步失败重建或删除。请求未知时仅 lookup，明确确认才接续第二步。待核对身份保存在当前页面状态，关闭并重开对话框可读取；整页刷新重新加载资源清单，未确认创建草稿仅在原页面存续。
+具备全局 Session 创建权限的人可在设置中发起 `session.reopen`，仅尝试打开启动时未能取得 Runtime 的原登记。活跃 writer、运行中已封闭或清理未确认的 Runtime、unknown 初始化、缺失/损坏/异属数据库继续拒绝；不补库、不清锁、不重放。客户端核对返回的原 Session ID，打开与发布前重验权限。响应未知时只读目录核对，不以可用状态证明原请求完成者；打开已确认而目录刷新失败时，先重读目录，不能按旧状态再次打开。
+
+`create` 在明确的 sessionId 内创建 Conversation；可选 `configuration: {model?,cwd?,thinkingLevel?}` 与创建同次原生提交，不替换整组 Agent 预设。没有可用父项时，确认执行 Session → Conversation 两步，保留各自原请求；父项成功后不因第二步失败重建或删除。请求未知时仅 lookup，明确确认才接续第二步。待核对身份保存在当前页面状态，关闭并重开对话框可读取；整页刷新重新加载资源清单，未确认创建草稿仅在原页面存续。
 
 读取、SSE、协作、通知、扩展服务与 Native 操作按完整 Session/Conversation 地址选择所属 Runtime。资源 grant 同样区分两级身份；原单 Session 裸 ID 兼容授权只代表原控制 Session，不向同号的新 Session 扩权。receipt/wait/withdraw 保留原生 receipt ID，sessionId 作为单独寻址字段；客户端同时核对响应父项，不用重编码的 ID 冒充新原生回执。
 
 有限 envelope 为 v2。server、静态前端与 `@pakka/client` / `@pakka/protocol` 必须按相同字段与完整资源键成套解析。仅具裸 Conversation ID 的兼容 grant 归属控制 Session；grant 解析与 wire decoder 版本分别核对。
 
 `navigation.read / navigation.update / navigation.lookup` 在控制 Session 的每人独立 namespace 保存单层个人文件夹与视图。每人最多 32 个文件夹、256 条归类，更新使用版本 CAS 与最近 16 个原请求结果；过期请求也不能绕过版本重做。分组为 Sort Per Session 或 Default，Conversation 至多归入一个文件夹，删除只回到 Uncategorized（未分类）；归类需当前 read 权限，不要求 manage 或新文件夹 ACL。授权读取过滤隐藏资源，但无关编辑保留它们的已有归类。unknown 先核对，不自动重发。
+
+### 预算管理
+
+预算设置按所选 Session 显示政策版本、三项额度、累计消费及历史。受权调整携带 actor/request/expectedVersion，政策与审计同一原生事务提交；降低额度不退款，关闭页面不取消已接受操作。明确冲突后先显式读取现行政策；响应丢失保留原请求，使用只读 receipt 核对，不分配新身份重发。只有提交前明确拒绝可映射 denied，存储或写后状态未知继续封闭。完整宿主接口见 [Runtime API](../reference/RUNTIME-API.md#预算政策与审计)。
 
 ## 10. 分阶段 Computer Use 实操验收
 

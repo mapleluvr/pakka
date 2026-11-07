@@ -68,8 +68,8 @@ test("M1: equal strategy IDs use independent physical journals and projection pe
 			bb = binding(cb, "same-strategy");
 		const fa = ba.readFrame(),
 			fb = bb.readFrame();
-		const ja = (await ba.artifacts.append(fa.basis, { expectedVersion: 0, records: [{ only: "A" }] }));
-		const jb = (await bb.artifacts.append(fb.basis, { expectedVersion: 0, records: [{ only: "B" }] }));
+		const ja = await ba.artifacts.append(fa.basis, { expectedVersion: 0, records: [{ only: "A" }] });
+		const jb = await bb.artifacts.append(fb.basis, { expectedVersion: 0, records: [{ only: "B" }] });
 		assert.equal(ja.status, "committed");
 		assert.equal(jb.status, "committed");
 		assert.notEqual(ja.journalPath, jb.journalPath);
@@ -129,7 +129,7 @@ function barrier() {
 	return { promise, resolve };
 }
 
-test("M1: one failed/disposed Conversation does not close its peer or Harness", async () => {
+test("M1: one model-error/disposed Conversation does not close its peer or Harness", async () => {
 	const m = await managed({}, limits, (payload) =>
 		text(payload).includes("LOCAL-FAILURE-A") ? { error: 500 } : { text: "peer-alive" },
 	);
@@ -140,7 +140,8 @@ test("M1: one failed/disposed Conversation does not close its peer or Harness", 
 			ub = b.connect("user", ["input.submit"]);
 		await ua.submit({ key: "bad", text: "LOCAL-FAILURE-A" });
 		await a.waitForIdle();
-		assert.equal(a.view().phase, "failed");
+		assert.equal(a.view().phase, "ready");
+		assert.equal(m.f.requests.length, 1, "model failure does not automatically replay the request");
 		assert.equal(b.view().phase, "ready");
 		assert.equal(m.runtime.view().phase, "ready");
 		await a.dispose();
@@ -272,7 +273,8 @@ test("M1: fork publishes a new resource reference and leaves peer identity/capab
 		assert.equal(await m.runtime.conversation(current), a);
 		assert.equal(await m.runtime.conversation(peerRef), b);
 		assert.equal(
-			(await bound.artifacts.append(frame.basis, { expectedVersion: 0, records: [{ untouched: true }] })).status,
+			(await bound.artifacts.append(frame.basis, { expectedVersion: 0, records: [{ untouched: true }] }))
+				.status,
 			"committed",
 		);
 		await user.submit({ key: "after-fork", text: "AFTER-FORK-A" });
@@ -300,7 +302,8 @@ test("M1: managed restore reopens the active fork and child journals without ins
 		const oldBound = binding(owner, "saved"),
 			saved = oldBound.readFrame();
 		assert.equal(
-			(await oldBound.artifacts.append(saved.basis, { expectedVersion: 0, records: [{ persisted: "B" }] })).status,
+			(await oldBound.artifacts.append(saved.basis, { expectedVersion: 0, records: [{ persisted: "B" }] }))
+				.status,
 			"committed",
 		);
 		const currentRoot = m.runtime.view().conversations.find((ref) => ref.key === "root")!;
