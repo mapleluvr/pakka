@@ -8,7 +8,7 @@
 - [Vercel Web Interface Guidelines 原文](frontend-guides/vercel-web-interface-guidelines.md)：键盘与焦点、表单、导航、反馈、触控、动画、性能、主题和原生语义。保存上游原文，按附带 [MIT license](frontend-guides/vercel-LICENSE.txt)使用。
 - [来源与校验信息](frontend-guides/sources.json)：URL、取得时间、Git revision 和 SHA-256。更新指南时重新阅读差异，记录实际采用的调整。
 
-以上是持续采用的开发指南，不是每轮自动执行的 Verification 清单。开发检查针对实际改动与风险选用。Verification 是可选活动；跳过时在所属任务或变更记录一次，后续历史按实际进行的活动记录。
+以上指南用于持续开发。日常检查针对实际改动与风险选用，选用和跳过在所属任务或变更记录一次。批量集成与发布按 [Git 协作规范](GIT-WORKFLOW.md)执行相应门禁，实际结果保留在其候选记录。
 
 ## 行为依据
 
