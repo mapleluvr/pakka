@@ -617,7 +617,9 @@ export interface RuntimeView {
 /** Bootstrap-owned catalog. Data never grants authority and commands never expose native handles. */
 export interface CatalogOptions {
 	readonly namespace: string;
-	readonly maxDeliveries: number;
+	/** @deprecated Ignored compatibility input. Retained deliveries have no cumulative count limit. */
+	readonly maxDeliveries?: number;
+	/** Maximum queued/placed deliveries per recipient, independent of retained history. */
 	readonly maxPending: number;
 }
 export type MemberLifetime = "persistent" | "temporary" | "task-bound" | "background";

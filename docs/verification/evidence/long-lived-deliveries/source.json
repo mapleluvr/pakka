@@ -1,0 +1,88 @@
+{
+  "baseline": "e7c938ef3b7c2005ef9db319bd84598c25ab8b23",
+  "branch": "pakka/long-lived-deliveries",
+  "node": "v24.15.0",
+  "files": [
+    {
+      "path": "apps/server/src/bootstrap.ts",
+      "bytes": 13067,
+      "sha256": "511119a27395672ea8f4295b48e1b6023449f5452d683749440ed2497365c9e3"
+    },
+    {
+      "path": "apps/server/src/http-listener.ts",
+      "bytes": 2233,
+      "sha256": "baf6535ce0a88e541be8a56aca2e7a22ce189a38adbce48c1fefdae4a66b72a6"
+    },
+    {
+      "path": "apps/server/src/pocket-approvals.ts",
+      "bytes": 13827,
+      "sha256": "b0b24e9157fc882fb2cb01392dc77fb79975e8396fb93742fed765b16f1291cc"
+    },
+    {
+      "path": "apps/server/src/pocket-memory.ts",
+      "bytes": 31013,
+      "sha256": "59a4c0eb374b5148bdaf7a96503d9d31aa312d33d2281d6655e7e8eb3054d9b0"
+    },
+    {
+      "path": "apps/server/src/worker-ipc.ts",
+      "bytes": 9033,
+      "sha256": "9bd43b0ce213961086f072cdfc663ad1c80a46263b578afc0ae3392292a52d30"
+    },
+    {
+      "path": "apps/server/test/bootstrap.test.ts",
+      "bytes": 3460,
+      "sha256": "92d803a2173869069673ce38486a50f22c55020962b77d7f75f6815b6166d260"
+    },
+    {
+      "path": "apps/server/test/http-listener.test.ts",
+      "bytes": 1739,
+      "sha256": "a69df6c356225bcd42fc0a72fdd0d134c18849df4797c6c6497109b93420db37"
+    },
+    {
+      "path": "apps/server/test/worker-validation.test.ts",
+      "bytes": 2336,
+      "sha256": "0acbe64cc1ff524069ff6ed969cc50968a3871587180b01a1467cf84a8a45d6b"
+    },
+    {
+      "path": "apps/server/test/workers.test.ts",
+      "bytes": 9551,
+      "sha256": "144e6438f6633fac8aad7f8e8a1b34587e6f72fe2cf44c846b5744fde5e046e0"
+    },
+    {
+      "path": "apps/webui/src/bootstrap.ts",
+      "bytes": 13307,
+      "sha256": "453f7f5d0b87d51a69c5a6fbd6c16f58ee0d70ac16d946318dc1903dd9d709dd"
+    },
+    {
+      "path": "packages/agent/src/durable-adapter.ts",
+      "bytes": 220227,
+      "sha256": "e0a1148706c2b4f7a01d4d3f48751426478170c646fe32895254ebc6083d783c"
+    },
+    {
+      "path": "packages/agent/src/types.ts",
+      "bytes": 33249,
+      "sha256": "18f3f7e0b4b7781c75f882730a082af2a37fe336f45cc27b68b6863c250938c4"
+    },
+    {
+      "path": "packages/agent/test/catalog-long-lived.test.ts",
+      "bytes": 4766,
+      "sha256": "74de2af7d6a069c4b4db980942e0b1e2c35996c15867152cca0dded507f2748a"
+    },
+    {
+      "path": "packages/agent/test/catalog-migration.test.ts",
+      "bytes": 5537,
+      "sha256": "90525d97f74dec91a41941f8d2bcb44cdf50a7d983d2c59b45fc6a6bfc490a4d"
+    },
+    {
+      "path": "scripts/consumer-broker.mjs",
+      "bytes": 6952,
+      "sha256": "24b687fcd8d2e4e464539d3cdd6b0d768449749a9d0dfd8ec344a6969bc66f65"
+    },
+    {
+      "path": "scripts/consumer-mas.mjs",
+      "bytes": 5178,
+      "sha256": "aac81c41554746c1f4aa90528f262a763b4f35348aaf42478582de68838f7f06"
+    }
+  ],
+  "sourceSha256": "911f6cb8d5e8df7634e18934bfa965ae7e5f99b466f01826c161a44a9adef26b"
+}

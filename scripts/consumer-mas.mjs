@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { createServer } from "node:http";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createRuntime } from "@pakka/agent";
@@ -44,7 +44,7 @@ const options = {
 	model: "local",
 	limits: { maxConversations: 4, maxPrimaryAttempts: 3, maxAuxiliaryAttempts: 1 },
 };
-const config = { namespace: "crew", maxDeliveries: 8, maxPending: 2 };
+const config = { namespace: "crew", maxPending: 2 };
 let runtime, reopened;
 try {
 	runtime = await createRuntime(options);

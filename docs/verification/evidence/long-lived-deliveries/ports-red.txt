@@ -1,0 +1,76 @@
+✔ HTTP listeners replace Fetch-blocked ephemeral port 4045 before publishing their address (53.2736ms)
+✔ explicitly blocked HTTP port 4045 is refused before binding (1.4497ms)
+✖ HTTP listeners replace Fetch-blocked ephemeral port 4190 before publishing their address (2.1428ms)
+✖ explicitly blocked HTTP port 4190 is refused before binding (1.6103ms)
+✖ HTTP listeners replace Fetch-blocked ephemeral port 6679 before publishing their address (1.1354ms)
+✖ explicitly blocked HTTP port 6679 is refused before binding (1.4848ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 2
+ℹ fail 4
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 280.8199
+
+✖ failing tests:
+
+test at apps\server\test\http-listener.test.ts:8:1
+✖ HTTP listeners replace Fetch-blocked ephemeral port 4190 before publishing their address (2.1428ms)
+  AssertionError [ERR_ASSERTION]: the published port must be usable by Fetch and browsers
+      at TestContext.<anonymous> (file:///D:/Projects/pakka-works/pakka-long-lived-deliveries/apps/server/test/http-listener.test.ts:21:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 4190,
+    expected: 4190,
+    operator: 'notStrictEqual',
+    diff: 'simple'
+  }
+
+test at apps\server\test\http-listener.test.ts:32:1
+✖ explicitly blocked HTTP port 4190 is refused before binding (1.6103ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async TestContext.<anonymous> (file:///D:/Projects/pakka-works/pakka-long-lived-deliveries/apps/server/test/http-listener.test.ts:35:3)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: { code: 'ERR_UNSAFE_HTTP_PORT' },
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at apps\server\test\http-listener.test.ts:8:1
+✖ HTTP listeners replace Fetch-blocked ephemeral port 6679 before publishing their address (1.1354ms)
+  AssertionError [ERR_ASSERTION]: the published port must be usable by Fetch and browsers
+      at TestContext.<anonymous> (file:///D:/Projects/pakka-works/pakka-long-lived-deliveries/apps/server/test/http-listener.test.ts:21:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 6679,
+    expected: 6679,
+    operator: 'notStrictEqual',
+    diff: 'simple'
+  }
+
+test at apps\server\test\http-listener.test.ts:32:1
+✖ explicitly blocked HTTP port 6679 is refused before binding (1.4848ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async TestContext.<anonymous> (file:///D:/Projects/pakka-works/pakka-long-lived-deliveries/apps/server/test/http-listener.test.ts:35:3)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: { code: 'ERR_UNSAFE_HTTP_PORT' },
+    operator: 'rejects',
+    diff: 'simple'
+  }

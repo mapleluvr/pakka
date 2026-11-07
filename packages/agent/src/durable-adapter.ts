@@ -2054,19 +2054,52 @@ type StoredDelivery = {
 	/** Optional on legacy v1 records; observation must not invent a time. */
 	at?: number;
 };
+type CatalogIndex = {
+	order: number;
+	latest: string | null;
+	recipients: Record<string, string>;
+	pending: Record<string, string[]>;
+};
 type CatalogRecord = {
 	version: number;
-	options: { namespace: string; maxDeliveries: number; maxPending: number };
+	options: { namespace: string; maxDeliveries?: number; maxPending: number };
 	members: Record<string, StoredMember>;
-	deliveries: Record<string, StoredDelivery>;
+	/** Present only in v1 data awaiting transactional extraction. */
+	deliveries?: Record<string, StoredDelivery>;
+	index?: CatalogIndex;
 };
 const CatalogDoc = defineDocFamily<CatalogRecord, JsonRepresentation<CatalogOptions>>({
 	kind: "pakka.catalog",
+	version: 2,
+	checkpointWhen: () => true,
+	scope: "session",
+	family: true,
+	initial: (options) => ({
+		version: 0,
+		options: { namespace: options.namespace, maxPending: options.maxPending },
+		members: {},
+		index: { order: 0, latest: null, recipients: {}, pending: {} },
+	}),
+	migrate: (value, fromVersion) => {
+		if (fromVersion !== 1 || !value.deliveries || value.index !== undefined)
+			throw new Error("Invalid legacy catalog layout");
+		return storedJson<CatalogRecord>(value);
+	},
+});
+type CatalogDeliveryRecord = {
+	namespace: string;
+	record: StoredDelivery | null;
+	order: number;
+	previous: string | null;
+	previousTarget: string | null;
+};
+const CatalogDeliveryDoc = defineDocFamily<CatalogDeliveryRecord, null>({
+	kind: "pakka.catalog-delivery",
 	version: 1,
 	checkpointWhen: () => true,
 	scope: "session",
 	family: true,
-	initial: (options) => ({ version: 0, options: { ...options }, members: {}, deliveries: {} }),
+	initial: () => ({ namespace: "", record: null, order: 0, previous: null, previousTarget: null }),
 });
 const CoordinatorDoc = defineDocFamily<
 	JsonRepresentation<{ version: number; options: RuntimeStoreOptions; data: JsonObject }>,
@@ -3850,20 +3883,86 @@ export class DurableAdapter {
 		this.#managedReady();
 		if (
 			!validKey(rawOptions.namespace) ||
-			[rawOptions.maxDeliveries, rawOptions.maxPending].some((n) => !Number.isSafeInteger(n) || n <= 0) ||
-			rawOptions.maxPending > rawOptions.maxDeliveries
+			!Number.isSafeInteger(rawOptions.maxPending) ||
+			rawOptions.maxPending <= 0
 		)
 			throw new Error("Invalid finite catalog options");
-		const options = copy({
-			namespace: rawOptions.namespace,
-			maxDeliveries: rawOptions.maxDeliveries,
-			maxPending: rawOptions.maxPending,
-		});
+		const options = copy({ namespace: rawOptions.namespace, maxPending: rawOptions.maxPending });
 		const seed = { ...options };
+		const optionsMatch = (state: Readonly<CatalogRecord>) => {
+			if (state.options.namespace !== options.namespace || state.options.maxPending !== options.maxPending)
+				throw new MutationDenied("Catalog options conflict");
+			if ((!state.index && !state.deliveries) || (state.index && state.deliveries))
+				throw new Error("Invalid catalog layout");
+		};
+		const deliveryId = (spec: CatalogDeliverySpec) =>
+			"catalog-" +
+			hash([options.namespace, spec.principal, spec.source?.incarnation ?? null, spec.requestId]);
+		const validateDelivery = (id: string, record: StoredDelivery) => {
+			if (record.id !== id || deliveryId(record.spec) !== id || record.fingerprint !== hash(record.spec))
+				throw new Error("Invalid retained delivery fingerprint/identity");
+			return record;
+		};
 		const read = async () => {
 			this.#managedReady();
 			const state = await this.#harness.snapshot(CatalogDoc, options.namespace, BACKGROUND_CONTEXT);
-			if (state && hash(state.options) !== hash(options)) throw new Error("Catalog options conflict");
+			if (state) optionsMatch(state);
+			return state;
+		};
+		const readDelivery = async (id: string, state: Readonly<CatalogRecord> | undefined) => {
+			const legacy = state?.deliveries?.[id];
+			if (legacy)
+				return {
+					namespace: options.namespace,
+					record: validateDelivery(id, legacy),
+					order: 0,
+					previous: null,
+					previousTarget: null,
+				};
+			if (!state?.index) return undefined;
+			const doc = await this.#harness.snapshot(CatalogDeliveryDoc, id, BACKGROUND_CONTEXT);
+			if (!doc?.record || doc.namespace !== options.namespace) return undefined;
+			validateDelivery(id, doc.record);
+			if (!Number.isSafeInteger(doc.order) || doc.order < 1 || doc.order > state.index.order)
+				throw new Error("Invalid delivery order");
+			return doc;
+		};
+		const appendDelivery = async (tx: Tx, index: CatalogIndex, record: StoredDelivery) => {
+			const doc = await tx.doc(CatalogDeliveryDoc, record.id, null);
+			if (doc.record) throw new Error("Delivery storage identity already exists");
+			const to = record.spec.target.conversationId;
+			doc.namespace = options.namespace;
+			doc.record = storedJson<StoredDelivery>(record);
+			doc.order = ++index.order;
+			doc.previous = index.latest;
+			doc.previousTarget = index.recipients[to] ?? null;
+			index.latest = record.id;
+			index.recipients[to] = record.id;
+		};
+		const mutableState = async (tx: Tx, check: () => void) => {
+			checkAuthority(check);
+			const state = await tx.doc(CatalogDoc, options.namespace, seed);
+			optionsMatch(state);
+			if (!state.index) {
+				const index: CatalogIndex = { order: 0, latest: null, recipients: {}, pending: {} };
+				for (const [id, record] of Object.entries(state.deliveries!)) {
+					checkAuthority(check);
+					validateDelivery(id, record);
+					const native = await tx.submissionByRequest(
+						conversationId(record.spec.target.conversationId),
+						"pakka.catalog." + id,
+					);
+					if (!native || native.id !== record.submissionId)
+						throw new Error("Legacy catalog admission provenance missing");
+					await appendDelivery(tx, index, record);
+					if (native.status === "queued" || native.status === "placed")
+						(index.pending[record.spec.target.conversationId] ??= []).push(id);
+				}
+				state.index = index;
+				delete state.deliveries;
+				delete state.options.maxDeliveries;
+			}
+			checkAuthority(check);
 			return state;
 		};
 		const view = async () => {
@@ -3886,9 +3985,6 @@ export class DurableAdapter {
 			if (!member) throw new MutationDenied("Foreign catalog member reference");
 			return member;
 		};
-		const optionsMatch = (state: CatalogRecord) => {
-			if (hash(state.options) !== hash(options)) throw new MutationDenied("Catalog options conflict");
-		};
 		const status = async (stored: StoredDelivery): Promise<DeliveryReceipt> => {
 			const native = await this.#harness.submission(stored.submissionId as SubmissionId, BACKGROUND_CONTEXT);
 			if (!native) {
@@ -3909,7 +4005,8 @@ export class DurableAdapter {
 		};
 		const find = async (id: string, check: () => void) => {
 			checkAuthority(check);
-			const stored = (await read())?.deliveries[id];
+			if (!validKey(id)) throw new MutationDenied("Invalid delivery receipt identity");
+			const stored = (await readDelivery(id, await read()))?.record;
 			if (!stored) throw new Error("Unknown delivery receipt");
 			checkAuthority(check);
 			return stored;
@@ -3923,7 +4020,7 @@ export class DurableAdapter {
 				return { key, data: storedJson<StoredMember["data"]>(data) };
 			});
 			await this.#persist(async (tx) => {
-				const state = await tx.doc(CatalogDoc, options.namespace, seed);
+				const state = await mutableState(tx, check);
 				optionsMatch(state);
 				if (state.version !== expectedVersion) throw new MutationDenied("Catalog revision conflict");
 				for (const change of batch) {
@@ -3931,6 +4028,7 @@ export class DurableAdapter {
 					if (!member) throw new MutationDenied("Member missing");
 					if (change.data.phase === "active") {
 						validateRef(member.ref);
+
 						const route = this.#routes.get(conversationId(member.ref.conversationId));
 						if (!route || route.#disposed || route.#failedReason)
 							throw new MutationDenied("Member not ready");
@@ -3953,7 +4051,7 @@ export class DurableAdapter {
 			lookupReceipt: async (id: string, check: () => void) => {
 				checkAuthority(check);
 				if (!validKey(id)) throw new MutationDenied("Invalid delivery receipt identity");
-				const stored = (await read())?.deliveries[id];
+				const stored = (await readDelivery(id, await read()))?.record;
 				checkAuthority(check);
 				if (!stored) return null;
 				const value = await status(stored);
@@ -3977,20 +4075,43 @@ export class DurableAdapter {
 					throw new MutationDenied("Invalid bounded history query/limit");
 				const state = await read();
 				checkAuthority(check);
-				const rows = Object.values(state?.deliveries ?? {})
-					.reverse()
-					.filter((row) => {
+				const allowed = (row: StoredDelivery) => {
+					checkAuthority(check);
+					const result = accepts ? accepts(copy(row.spec)) : true;
+					if (typeof result !== "boolean") throw new MutationDenied("History scope must be synchronous");
+					return result;
+				};
+				const limit = query.limit ?? 32;
+				let rows: StoredDelivery[] = [];
+				if (!state?.index) {
+					rows = Object.values(state?.deliveries ?? {})
+						.reverse()
+						.filter(allowed);
+					const boundary = query.cursor === undefined ? -1 : rows.findIndex((row) => row.id === query.cursor);
+					if (query.cursor !== undefined && boundary < 0)
+						throw new MutationDenied("Invalid history cursor for current scope");
+					rows = rows.slice(boundary + 1, boundary + limit + 2);
+				} else {
+					let next = state.index.latest,
+						order = state.index.order + 1;
+					if (query.cursor !== undefined) {
+						const cursor = await readDelivery(query.cursor, state);
+						if (!cursor?.record || !allowed(cursor.record))
+							throw new MutationDenied("Invalid history cursor for current scope");
+						next = cursor.previous;
+						order = cursor.order;
+					}
+					while (next && rows.length <= limit) {
 						checkAuthority(check);
-						if (!accepts) return true;
-						const allowed = accepts(copy(row.spec));
-						if (typeof allowed !== "boolean") throw new MutationDenied("History scope must be synchronous");
-						return allowed;
-					});
-				const boundary = query.cursor === undefined ? -1 : rows.findIndex((row) => row.id === query.cursor);
-				if (query.cursor !== undefined && boundary < 0)
-					throw new MutationDenied("Invalid history cursor for current scope");
-				const limit = query.limit ?? 32,
-					selected = rows.slice(boundary + 1, boundary + 1 + limit);
+						const doc = await readDelivery(next, state);
+						if (!doc?.record || doc.order >= order)
+							throw new Error("Catalog history index missing or invalid");
+						if (allowed(doc.record)) rows.push(doc.record);
+						next = doc.previous;
+						order = doc.order;
+					}
+				}
+				const selected = rows.slice(0, limit);
 				const items: import("./types.ts").CatalogDeliveryObservation[] = [];
 				for (const row of selected) {
 					checkAuthority(check);
@@ -4010,9 +4131,7 @@ export class DurableAdapter {
 				checkAuthority(check);
 				return copy({
 					items,
-					...(rows.length > boundary + 1 + limit && selected.length
-						? { nextCursor: selected.at(-1)!.id }
-						: {}),
+					...(rows.length > limit && selected.length ? { nextCursor: selected.at(-1)!.id } : {}),
 				});
 			},
 			received: async (ref: ConversationRef, check: () => void) => {
@@ -4021,10 +4140,29 @@ export class DurableAdapter {
 				if (!state) throw new MutationDenied("Catalog member missing");
 				requireMember(state, ref);
 				const incoming: DeliveryReceipt[] = [];
-				for (const stored of Object.values(state.deliveries)) {
-					if (hash(stored.spec.target) !== hash(ref)) continue;
-					checkAuthority(check);
-					incoming.push(await status(stored));
+				if (!state.index) {
+					for (const stored of Object.values(state.deliveries!)) {
+						if (hash(stored.spec.target) !== hash(ref)) continue;
+						checkAuthority(check);
+						incoming.push(await status(stored));
+					}
+				} else {
+					let next: string | null = state.index.recipients[ref.conversationId] ?? null,
+						order = state.index.order + 1;
+					while (next) {
+						checkAuthority(check);
+						const doc = await readDelivery(next, state);
+						if (
+							!doc?.record ||
+							doc.order >= order ||
+							doc.record.spec.target.conversationId !== ref.conversationId
+						)
+							throw new Error("Catalog recipient index missing or invalid");
+						if (hash(doc.record.spec.target) === hash(ref)) incoming.push(await status(doc.record));
+						next = doc.previousTarget;
+						order = doc.order;
+					}
+					incoming.reverse();
 				}
 				checkAuthority(check);
 				return copy(incoming);
@@ -4095,7 +4233,7 @@ export class DurableAdapter {
 					};
 				});
 				const committed = await this.#persist(async (tx) => {
-					const state = await tx.doc(CatalogDoc, options.namespace, seed),
+					const state = await mutableState(tx, check),
 						runtime = await tx.doc(RuntimeDoc);
 					optionsMatch(state);
 					if (specs.some((s) => Object.hasOwn(state.members, s.key)))
@@ -4103,6 +4241,7 @@ export class DurableAdapter {
 					if (runtime.conversationCount + specs.length > runtime.limits.maxConversations)
 						throw new MutationDenied("Session Conversation limit exhausted");
 					for (const spec of specs) if (spec.source) validateRef(spec.source);
+
 					for (const spec of specs)
 						if (spec.taskId !== undefined) {
 							const native = await tx.task(spec.taskId);
@@ -4276,9 +4415,10 @@ export class DurableAdapter {
 					? approvedDirectory(change.cwd, managed.cwdRoots)
 					: undefined;
 				const configured = await this.#persist(async (tx) => {
-					const state = await tx.doc(CatalogDoc, options.namespace, seed),
+					const state = await mutableState(tx, check),
 						runtime = await tx.doc(RuntimeDoc);
 					optionsMatch(state);
+
 					const found = requireMember(state, ref),
 						to = conversationId(ref.conversationId);
 					if (
@@ -4324,9 +4464,10 @@ export class DurableAdapter {
 				const route = this.#routes.get(conversationId(ref.conversationId));
 				if (!route || route.#disposed || route.#failedReason) throw new MutationDenied("Member not ready");
 				const configured = await this.#persist(async (tx) => {
-					const state = await tx.doc(CatalogDoc, options.namespace, seed),
+					const state = await mutableState(tx, check),
 						runtime = await tx.doc(RuntimeDoc);
 					optionsMatch(state);
+
 					const found = requireMember(state, ref),
 						to = conversationId(ref.conversationId);
 					if (
@@ -4384,7 +4525,7 @@ export class DurableAdapter {
 				let committed: StoredDelivery;
 				try {
 					committed = await this.#persist(async (tx) => {
-						const state = await tx.doc(CatalogDoc, options.namespace, seed);
+						const state = await mutableState(tx, check);
 						optionsMatch(state);
 						const target = requireMember(state, spec.target);
 						if (spec.source) {
@@ -4392,6 +4533,7 @@ export class DurableAdapter {
 							if (source.data.phase !== "active") throw new MutationDenied("Source admission inactive");
 							if (source.ownerTaskId !== undefined) {
 								const owner = await tx.task(Number(source.ownerTaskId) as TaskId);
+
 								if (!owner || owner.abortRequested || owner.state.status === "terminal")
 									throw new MutationDenied("Source owner task ended");
 							}
@@ -4399,10 +4541,10 @@ export class DurableAdapter {
 							if (!from || from.#disposed || from.#failedReason)
 								throw new MutationDenied("Source Conversation not ready");
 						}
-						const old = state.deliveries[id];
+						const saved = await tx.doc(CatalogDeliveryDoc, id, null);
+						const old = saved.namespace === options.namespace ? saved.record : null;
 						if (old) {
-							if (old.fingerprint !== hash(old.spec))
-								throw new Error("Invalid retained delivery fingerprint");
+							validateDelivery(id, old);
 							const admission = (value: CatalogDeliverySpec) => {
 								const payload = { ...value };
 								delete payload.initiator;
@@ -4415,7 +4557,11 @@ export class DurableAdapter {
 							return storedJson<StoredDelivery>(old);
 						}
 						if (spec.replyTo) {
-							const original = state.deliveries[spec.replyTo]?.spec;
+							const reply = await tx.doc(CatalogDeliveryDoc, spec.replyTo, null);
+							const original =
+								reply.namespace === options.namespace && reply.record
+									? validateDelivery(spec.replyTo, reply.record).spec
+									: undefined;
 							const logical = (a: ConversationRef, b: ConversationRef) =>
 								a.sessionId === b.sessionId && a.conversationId === b.conversationId;
 							if (
@@ -4437,8 +4583,6 @@ export class DurableAdapter {
 							)
 								throw new MutationDenied("Recipient owner task ended");
 						}
-						if (Object.keys(state.deliveries).length >= options.maxDeliveries)
-							throw new MutationDenied("Catalog delivery retention capacity exhausted");
 						const to = conversationId(target.ref.conversationId),
 							live = await tx.doc(LiveDoc, to),
 							inbox = await tx.doc(InboxDoc, to);
@@ -4446,16 +4590,14 @@ export class DurableAdapter {
 							throw new MutationDenied("Recipient busy; explicit steer/followUp required");
 						if (!live.run && inbox.items.length)
 							throw new MutationDenied("Recipient has unresolved inbox boundary");
-						const pending = Object.values(state.deliveries).filter(
-							(d) => d.spec.target.conversationId === String(to),
-						);
-						let unsettled = 0;
-						for (const record of pending) {
-							const existing = await tx.submissionByRequest(to, "pakka.catalog." + record.id);
+						const pending: string[] = [];
+						for (const retainedId of state.index!.pending[String(to)] ?? []) {
+							checkAuthority(check);
+							const existing = await tx.submissionByRequest(to, "pakka.catalog." + retainedId);
 							if (!existing) throw new Error("Catalog admission provenance missing");
-							if (existing.status === "placed" || existing.status === "queued") unsettled++;
+							if (existing.status === "placed" || existing.status === "queued") pending.push(retainedId);
 						}
-						if (unsettled >= options.maxPending)
+						if (pending.length >= options.maxPending)
 							throw new MutationDenied("Recipient pending delivery limit exhausted");
 						const existing = await tx.submissionByRequest(to, requestId);
 						if (existing) throw new Error("Native admission exists without catalog fingerprint");
@@ -4498,7 +4640,8 @@ export class DurableAdapter {
 						}
 						checkAuthority(check);
 						const record: StoredDelivery = { id, spec, fingerprint, submissionId, at: Date.now() };
-						state.deliveries[id] = record;
+						await appendDelivery(tx, state.index!, record);
+						state.index!.pending[String(to)] = [...pending, id];
 						state.version++;
 						return copy(record);
 					});

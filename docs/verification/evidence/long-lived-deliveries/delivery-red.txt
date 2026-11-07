@@ -1,0 +1,26 @@
+✖ delivery history: a legacy retention setting does not limit completed work (139.3908ms)
+✖ delivery history: crosses 512, reopens the same Session and reconciles the original without replay (30827.6465ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 0
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 31955.722
+
+✖ failing tests:
+
+test at packages\agent\test\catalog-long-lived.test.ts:8:1
+✖ delivery history: a legacy retention setting does not limit completed work (139.3908ms)
+  Error: Catalog delivery retention capacity exhausted
+      at file:///D:/Projects/pakka-works/pakka-long-lived-deliveries/packages/agent/src/durable-adapter.ts:4441:14
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async #runCommit (file:///D:/Projects/pakka-works/pakka-long-lived-deliveries/node_modules/@earendil-works/pi-durable/dist/session/session.js:526:22)
+
+test at packages\agent\test\catalog-long-lived.test.ts:21:1
+✖ delivery history: crosses 512, reopens the same Session and reconciles the original without replay (30827.6465ms)
+  Error: Catalog delivery retention capacity exhausted
+      at file:///D:/Projects/pakka-works/pakka-long-lived-deliveries/packages/agent/src/durable-adapter.ts:4441:14
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async #runCommit (file:///D:/Projects/pakka-works/pakka-long-lived-deliveries/node_modules/@earendil-works/pi-durable/dist/session/session.js:526:22)

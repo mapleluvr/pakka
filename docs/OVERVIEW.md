@@ -4,7 +4,7 @@ Pakka 将 Pi Durable 的 Conversation、权限、持久化与 MAS 协作能力�
 
 ## 当前工作
 
-[Git 协作与项目元数据](changes/git-workflow-and-project-metadata.md)的文档同步与检查已完成，[PR #2](https://github.com/mapleluvr/pakka/pull/2) 等待评审/集成；[所属 tasks](../openspec/changes/adopt-git-workflow-and-project-metadata/tasks.md)保存结果与交付状态。当前暂无进行中的产品实现；后续工作从下列领域任务选定，按[贡献指南](../CONTRIBUTING.md)从最新 `origin/dev` 建立独立分支。
+[长期投递记录](changes/long-lived-deliveries.md)已完成实现与验证，正在提交工作分支并创建到 dev 的 PR；接续入口为[所属 tasks](../openspec/changes/retain-long-lived-deliveries/tasks.md)。[PR #2](https://github.com/mapleluvr/pakka/pull/2) 的 Git 协作规范已合入 dev；独立的默认 Dynamite 预期由 [PR #3](https://github.com/mapleluvr/pakka/pull/3) 承接。后续按[贡献指南](../CONTRIBUTING.md)从最新 `origin/dev` 建立工作分支。
 
 本地执行安排在已忽略的 `docs/.temp/active-plan.md`；文件缺失时从所属 tasks 接续。
 

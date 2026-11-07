@@ -34,7 +34,7 @@ Server config 的结构示例（全部值均为占位符，不是可用凭据）
 			"maxAuxiliaryAttempts": 8
 		}
 	},
-	"mas": { "namespace": "product", "maxDeliveries": 128, "maxPending": 8 },
+	"mas": { "namespace": "product", "maxPending": 8 },
 	"members": [
 		{ "key": "root", "owner": "operator" },
 		{ "key": "peer", "owner": "peer" }

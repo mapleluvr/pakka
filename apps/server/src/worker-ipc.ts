@@ -167,7 +167,7 @@ export function configuration(value: unknown): asserts value is WorkerConfigurat
 	keys(catalog, ["namespace", "maxDeliveries", "maxPending"]);
 	if (
 		!identity(catalog.namespace) ||
-		![catalog.maxDeliveries, catalog.maxPending].every(
+		![catalog.maxPending, ...(catalog.maxDeliveries === undefined ? [] : [catalog.maxDeliveries])].every(
 			(field) => typeof field === "number" && Number.isSafeInteger(field) && field > 0,
 		)
 	)

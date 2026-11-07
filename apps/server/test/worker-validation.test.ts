@@ -4,6 +4,28 @@ import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { fixture } from "../../../packages/agent/test/fixture.ts";
 import { createWorkerManager } from "../src/worker-manager.ts";
+import { configuration } from "../src/worker-ipc.ts";
+
+test("worker catalog accepts pending protection without a lifetime quota", async () => {
+	const f = await fixture();
+	try {
+		configuration({
+			runtime: {
+				cwd: f.cwd,
+				dataDir: f.dataDir,
+				endpoint: f.endpoint,
+				model: "local-model",
+				apiKey: "local-only",
+				reservedSessionId: "91383703-b5ca-441c-81de-72b487a3e2b8",
+				limits: { maxConversations: 4, maxPrimaryAttempts: 8, maxAuxiliaryAttempts: 2 },
+			},
+			catalog: { namespace: "members", maxPending: 2 },
+		});
+		assert.equal(f.requests.length, 0);
+	} finally {
+		await f.close();
+	}
+});
 
 // Missing early UUID validation accepts these presets before probing a derived path or spawning a child.
 for (const reservedSessionId of [
