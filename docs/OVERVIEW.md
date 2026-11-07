@@ -4,7 +4,7 @@ Pakka 将 Pi Durable 的 Conversation、权限、持久化与 MAS 协作能力�
 
 ## 当前工作
 
-[长期投递记录](changes/long-lived-deliveries.md)通过 [PR #4](https://github.com/mapleluvr/pakka/pull/4) 提交到 dev 待评审；本轮按操作者授权追加[本机维护与交付](changes/local-maintenance-and-delivery.md)，已完成的维护流程及固定检查见[验证记录](verification/LOCAL-MAINTENANCE-DELIVERY.md)，资源治理由[所属 tasks](../openspec/changes/add-local-maintenance-and-delivery/tasks.md)接续。[PR #2](https://github.com/mapleluvr/pakka/pull/2) 的 Git 协作规范已合入 dev；独立的默认 Dynamite 预期由 [PR #3](https://github.com/mapleluvr/pakka/pull/3) 承接。后续按[贡献指南](../CONTRIBUTING.md)从最新 `origin/dev` 建立工作分支。
+[长期投递记录](changes/long-lived-deliveries.md)通过 [PR #4](https://github.com/mapleluvr/pakka/pull/4) 提交到 dev 待评审；按操作者授权，[本机维护与交付](changes/local-maintenance-and-delivery.md)也已实现、推送并追加到同一 PR，固定检查见[验证记录](verification/LOCAL-MAINTENANCE-DELIVERY.md)，资源治理由[所属 tasks](../openspec/changes/add-local-maintenance-and-delivery/tasks.md)接续。[PR #2](https://github.com/mapleluvr/pakka/pull/2) 的 Git 协作规范已合入 dev；独立的默认 Dynamite 预期由 [PR #3](https://github.com/mapleluvr/pakka/pull/3) 承接。后续按[贡献指南](../CONTRIBUTING.md)从最新 `origin/dev` 建立工作分支。
 
 本地执行安排在已忽略的 `docs/.temp/active-plan.md`；文件缺失时从所属 tasks 接续。
 
