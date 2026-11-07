@@ -79,7 +79,7 @@ Prompt、Steer 和 Follow up 使用原生调度。停止等待、请求 abort、
 | `@pakka/webui`                      | 工作台与公开扩展 SDK                            |
 | `@pakka/dynamite`                   | 独立仓库中的上下文策略、产物与宿主端口适配      |
 
-Dynamite 由宿主显式选用；固定配对及执行入口见 [integrations/dynamite](integrations/dynamite/README.md)。程序化 SQLite 接入和 headless server 可选贡献各遵循自己的配对与配置契约。
+默认 `pakka` 产品已采用启用 Dynamite 的上下文策略方向，启动器接入仍待实现，进展见[所属任务](openspec/changes/adopt-default-dynamite-context/tasks.md)。独立 SDK/headless 宿主选择自己的策略装配；既有固定配对及执行入口见 [integrations/dynamite](integrations/dynamite/README.md)，程序化 SQLite 接入和 headless server 贡献各遵循自己的配对与配置契约。
 
 Pi 执行和存储的可变对象留在 Durable adapter；Models、凭据和原生配置加载器属于可信宿主装配。操作调用方取得冻结 DTO 和身份绑定命令。受信任的 Node 工具与插件仍拥有宿主进程权限；Conversation、Session、package 和 OS process 是分别选择的边界。
 

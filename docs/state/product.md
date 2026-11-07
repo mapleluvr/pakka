@@ -26,13 +26,17 @@ Pakka 提供受控 Pi 运行时、MAS 服务与可选 pakka-webui Web 工作台�
 
 服务行为细则见 [WebUI](webui.md)，界面结构与交互见[前端](frontend.md)，多 Agent 关系见 [MAS](mas.md)。
 
-## 数据、信任与可选策略
+## 数据、信任与上下文策略
 
 pakka-webui 使用独立数据目录保存本产品的人类身份、邀请、设置与协作数据；Conversation 和原生工作由受控 Runtime 管理。MAS 通过自己的受控服务和公共扩展槽提供成员、通信与资源控制。
 
 安装扩展的授权以其代码可信为前提。扩展在宿主进程或同源前端环境中执行；业务 API 按当前人类身份、资源 scope 与权限检查读取和效果。存储重开、writer 所有权及效果核对由 [Runtime](runtime.md) 的条件约束。
 
-默认策略使用 native context。宿主可显式选择固定支持配对中的 Dynamite，为选定的初始 persistent 成员绑定策略。配置、产物配对与静态成员条件见 [Dynamite 产品 API](../reference/DYNAMITE-PRODUCT-API.md)。
+无参数 `pakka` 的产品装配默认启用 `@pakka/dynamite`，管理业务 Conversation 的长上下文。受信任 bootstrap 负责策略服务及业务 Conversation 的创建、绑定、重开与关闭；每项压缩工作使用当前批准的来源、模型、辅助预算和采用权限。工作台呈现策略是否可用及其工作状态，模型或压缩配置暂不可用时仍可进入管理界面。
+
+Pi 原生自动 compaction 与 Dynamite 的上下文投影由同一产品政策协调，业务 Conversation 的上下文改写具有单一策略所有者。长期 Compresser Session 与结果采用遵循 [Compresser 契约](compressor-session.md)和[持久化契约](dynamite-persistence.md)。
+
+`@pakka/dynamite` 保持独立仓库与包；独立 SDK/headless 消费者由宿主选择策略装配。固定 headless 配对的配置与静态成员条件见 [Dynamite 产品 API](../reference/DYNAMITE-PRODUCT-API.md)。默认产品策略的采用与实施入口见[形成记录](../changes/default-dynamite-context.md)。
 
 ## 形成记录
 
