@@ -1,14 +1,15 @@
-import { randomUUID } from "node:crypto";
+import { randomUUID, createHash } from "node:crypto";
 import { readFileSync, realpathSync, existsSync, statSync, lstatSync } from "node:fs";
 import { mkdir, writeFile, open, readFile, unlink, mkdtemp, rm } from "node:fs/promises";
 import { DatabaseSync, backup } from "node:sqlite";
 import { tmpdir } from "node:os";
-import { join, resolve, relative, isAbsolute, dirname } from "node:path";
+import { join, resolve, relative, isAbsolute, dirname, basename, toNamespacedPath } from "node:path";
 import { isDeepStrictEqual } from "node:util";
 import { BACKGROUND_CONTEXT, withAbortSignal } from "@earendil-works/chord/context";
 import type { JsonValue as ChordJsonValue, JsonRepresentation } from "@earendil-works/chord";
 import {
 	Harness,
+	createSession,
 	createRegistry,
 	defineTool,
 	defineExtension,
@@ -74,6 +75,8 @@ import { LifecycleTransitionRevoked } from "./strategy-control.ts";
 import type {
 	HostOptions,
 	WriterRecoveryOptions,
+	StorageMaintenanceOptions,
+	StorageMaintenance,
 	WriterRecoveryReceipt,
 	ArtifactReceipt,
 	ArtifactSnapshot,
@@ -1541,6 +1544,238 @@ export async function recoverStorageWriter(options: WriterRecoveryOptions): Prom
 	}
 }
 
+/** Offline kernel only: no registry, scheduler, provider, tool or extension is installed. */
+export async function openStorageMaintenance(
+	options: StorageMaintenanceOptions,
+): Promise<StorageMaintenance> {
+	const storageDir = realpathSync(options.storageDir);
+	if (resolve(options.storageDir) !== storageDir || !lstatSync(storageDir).isDirectory())
+		throw new Error("Maintenance physical storage identity mismatch");
+	const approved = new Map(options.stores.map((value) => [value.namespace, copy(value)]));
+	if (
+		approved.size !== options.stores.length ||
+		options.stores.some(
+			(value) =>
+				!validKey(value.namespace) ||
+				!Number.isSafeInteger(value.maxBytes) ||
+				value.maxBytes < 1 ||
+				value.maxBytes > 16 * 1024 * 1024,
+		)
+	)
+		throw new Error("Invalid approved maintenance namespaces");
+	await probeExistingStorage(storageDir);
+	const release = await claimWriter(storageDir, true);
+	let owner: OwnedSqlite | undefined;
+	let session: ReturnType<typeof createSession> | undefined;
+	let closed = false,
+		inspectionFailed = false;
+	try {
+		const storage = await openPersistentStorage(storageDir, true, (value) => {
+			owner = value;
+		});
+		session = createSession(storage);
+		const kernel = session;
+		const runtime = await kernel.snapshot(RuntimeDoc, BACKGROUND_CONTEXT);
+		const compressor = runtime ? undefined : await kernel.snapshot(CompresserPolicyDoc, BACKGROUND_CONTEXT);
+		const sessionId = runtime?.sessionId ?? compressor?.sessionId;
+		if (!sessionId || (options.expectedSessionId !== undefined && options.expectedSessionId !== sessionId))
+			throw new Error("Maintenance Session identity mismatch");
+		let cwd: string | undefined;
+		if (runtime) {
+			const provenance = JSON.parse(
+				await readFile(join(storageDir, "provenance.json"), "utf8"),
+			) as ProvenanceData;
+			if (
+				provenance.sessionId !== sessionId ||
+				typeof provenance.cwd !== "string" ||
+				!isAbsolute(provenance.cwd)
+			)
+				throw new Error("Maintenance provenance identity mismatch");
+			cwd = provenance.cwd;
+		}
+		const ready = () => {
+			if (closed || inspectionFailed) throw new Error("Maintenance is closed/unknown");
+		};
+		const choice = (namespace: string) => {
+			ready();
+			const selected = approved.get(namespace);
+			if (!selected) throw new MutationDenied("Unapproved maintenance namespace");
+			return selected;
+		};
+		const checkOptions = (actual: RuntimeStoreOptions, expected: RuntimeStoreOptions) => {
+			if (hash(actual) !== hash(expected)) throw new MutationDenied("Maintenance store options conflict");
+		};
+		return Object.freeze({
+			identity: Object.freeze({
+				sessionId,
+				storageDir,
+				...(cwd ? { cwd } : {}),
+				kind: runtime ? ("runtime" as const) : ("compresser" as const),
+			}),
+			snapshot: async (namespace: string) => {
+				const selected = choice(namespace);
+				const state = await kernel.snapshot(CoordinatorDoc, namespace, BACKGROUND_CONTEXT);
+				ready();
+				if (!state) return copy({ version: 0, data: {} });
+				checkOptions(state.options, selected);
+				return copy({ version: state.version, data: state.data });
+			},
+			work: async () => {
+				ready();
+				try {
+					return await kernel.commit(async (tx) => {
+						let pendingTasks = 0,
+							queuedInputs = 0;
+						const digest = createHash("sha256"),
+							sample: {
+								kind: "task" | "input";
+								id: string;
+								conversationId: string;
+								state: string;
+								definition?: string;
+							}[] = [];
+						let cursor: Parameters<typeof storage.scanTasks>[2];
+						do {
+							const page = await tx.scanTasks({ order: "ascending" }, 64, cursor);
+							for (const task of page.items)
+								if (task.state.status !== "terminal") {
+									pendingTasks++;
+									digest.update("task:" + JSON.stringify(task) + "\n");
+									if (sample.length < 128)
+										sample.push({
+											kind: "task",
+											id: String(task.id),
+											conversationId: String(task.conversationId),
+											state: task.state.status,
+											definition: task.kind,
+										});
+								}
+							cursor = page.next;
+						} while (cursor);
+						cursor = undefined;
+						do {
+							const page = await storage.scanSubmissions(
+								{ order: "ascending" },
+								64,
+								cursor,
+								BACKGROUND_CONTEXT,
+							);
+							for (const input of page.items)
+								if (input.status === "queued" || input.status === "placed") {
+									queuedInputs++;
+									digest.update("input:" + JSON.stringify(input) + "\n");
+									if (sample.length < 128)
+										sample.push({
+											kind: "input",
+											id: String(input.id),
+											conversationId: String(input.conversationId),
+											state: input.status,
+										});
+								}
+							cursor = page.next;
+						} while (cursor);
+						ready();
+						return copy({
+							pendingTasks,
+							queuedInputs,
+							fingerprint: digest.digest("hex"),
+							sample,
+							sampleTruncated: pendingTasks + queuedInputs > sample.length,
+						});
+					}, BACKGROUND_CONTEXT);
+				} catch (error) {
+					inspectionFailed = true;
+					throw error;
+				}
+			},
+			commit: async (changes: Parameters<StorageMaintenance["commit"]>[0]) => {
+				ready();
+				if (!changes.length || new Set(changes.map((value) => value.namespace)).size !== changes.length)
+					throw new MutationDenied("Invalid maintenance mutation set");
+				const inputs = changes.map((change) => {
+					const selected = choice(change.namespace);
+					if (
+						!Number.isSafeInteger(change.expectedVersion) ||
+						change.expectedVersion < 0 ||
+						change.expectedVersion >= Number.MAX_SAFE_INTEGER
+					)
+						throw new MutationDenied("Invalid maintenance CAS version");
+					json(change.data);
+					if (Buffer.byteLength(JSON.stringify(change.data)) > selected.maxBytes)
+						throw new MutationDenied("Maintenance store capacity exceeded");
+					return { ...change, data: storedJson<JsonRepresentation<JsonObject>>(change.data), selected };
+				});
+				await kernel.commit(async (tx) => {
+					for (const input of inputs) {
+						const state = await tx.doc(CoordinatorDoc, input.namespace, { ...input.selected });
+						checkOptions(state.options, input.selected);
+						if (state.version !== input.expectedVersion) throw new MutationDenied("Maintenance CAS conflict");
+						state.data = input.data;
+						state.version++;
+					}
+				}, BACKGROUND_CONTEXT);
+			},
+			backup: async (destination: string) => {
+				ready();
+				const file = resolve(destination);
+				const reserved = await open(file, "wx", 0o600);
+				await reserved.close();
+				const reader = new DatabaseSync(toNamespacedPath(join(storageDir, SQLITE_DESCRIPTION.file)), {
+					readOnly: true,
+				});
+				try {
+					if (reader.prepare("PRAGMA quick_check").get()?.quick_check !== "ok")
+						throw new Error("Storage integrity check failed");
+					await backup(reader, toNamespacedPath(file));
+				} finally {
+					reader.close();
+				}
+				ready();
+				const snapshot = new DatabaseSync(toNamespacedPath(file), { readOnly: true });
+				try {
+					if (
+						snapshot.prepare("PRAGMA application_id").get()?.application_id !== SQLITE_APPLICATION_ID ||
+						snapshot.prepare("PRAGMA quick_check").get()?.quick_check !== "ok"
+					)
+						throw new Error("Backup identity/integrity mismatch");
+				} finally {
+					snapshot.close();
+				}
+				return copy({ sessionId, file });
+			},
+			close: async () => {
+				if (closed) return;
+				closed = true;
+				await kernel.close(BACKGROUND_CONTEXT);
+				const end = await kernel.closed;
+				await owner?.close();
+				// A failed kernel cannot prove that its last mutation was adopted; keep ownership for explicit recovery.
+				if (end.reason === "failed" || inspectionFailed)
+					throw new Error("Maintenance storage outcome unknown; writer retained");
+				await release();
+			},
+		});
+	} catch (error) {
+		let safe = true;
+		if (session) {
+			try {
+				await session.close(BACKGROUND_CONTEXT);
+				const end = await session.closed;
+				safe = end.reason === "closed";
+			} catch {
+				safe = false;
+			}
+		}
+		try {
+			await owner?.close();
+		} catch {
+			safe = false;
+		}
+		if (safe) await release();
+		throw error;
+	}
+}
+
 /** Public Pi database/storage adapters, with explicit ownership before initialization. */
 async function openPersistentStorage(
 	storageDir: string,
@@ -1933,11 +2168,20 @@ function profileOptions(options: HostOptions, profile?: ConversationProfile): Ho
 		),
 	});
 }
-async function claimWriter(storageDir: string): Promise<() => Promise<void>> {
+function productStorageHeld(dataDir: string): boolean {
+	return (
+		existsSync(join(dirname(dataDir), basename(dataDir) + ".pakka-maintenance.json")) ||
+		existsSync(join(dataDir, "pakka-product-maintenance.json")) ||
+		existsSync(join(dataDir, "pakka-restored-hold.json"))
+	);
+}
+async function claimWriter(storageDir: string, offline = false): Promise<() => Promise<void>> {
+	const held = () =>
+		existsSync(join(storageDir, "pakka-maintenance.json")) ||
+		(!offline && [storageDir, dirname(storageDir), dirname(dirname(storageDir))].some(productStorageHeld));
 	const path = join(storageDir, "pakka-writer.json"),
 		nonce = randomUUID();
-	if (existsSync(join(storageDir, "pakka-maintenance.json")))
-		throw new Error("Pakka storage maintenance is locked");
+	if (held()) throw new Error("Pakka storage maintenance is locked");
 	let descriptor;
 	try {
 		descriptor = await open(path, "wx");
@@ -1967,7 +2211,7 @@ async function claimWriter(storageDir: string): Promise<() => Promise<void>> {
 	};
 	// Maintenance may start while the exclusive file creation is queued.
 	// Recheck before any database is opened, then release only our own claim.
-	if (existsSync(join(storageDir, "pakka-maintenance.json"))) {
+	if (held()) {
 		await release();
 		throw new Error("Pakka storage maintenance is locked");
 	}
@@ -2545,6 +2789,8 @@ export class DurableAdapter {
 			!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(reserved)
 		)
 			throw new Error("Invalid reserved Session identity");
+		if (productStorageHeld(options.dataDir))
+			throw new Error("Pakka product maintenance/restored execution is held");
 		const sessionsDir = join(options.dataDir, "sessions");
 		await mkdir(sessionsDir, { recursive: true });
 

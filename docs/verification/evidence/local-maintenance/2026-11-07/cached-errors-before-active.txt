@@ -1,0 +1,12 @@
+pakka-long-lived-deliveries\apps\webui\src\maintenance-producer.ts  🔴 2 blocking  1W  6 hints  cwd=D:\Projects\pakka-works\pakka-long-lived-deliveries\apps\webui
+  🔴 L24: without try/catch — throws on invalid input [ast-grep:unchecked-throwing-call]
+  🔴 L58: without try/catch — throws on invalid input [ast-grep:unchecked-throwing-call]
+pakka-long-lived-deliveries\apps\webui\src\maintenance-preserve.ts  🔴 1 blocking  6 hints  cwd=D:\Projects\pakka-works\pakka-long-lived-deliveries\apps\webui
+  🔴 L46: without try/catch — throws on invalid input [ast-grep:unchecked-throwing-call]
+Summary (17 files diagnosed this session):
+  🔴 3 blocking errors
+  1 warning
+  12 hint/info (style — not counted as warnings)
+
+result ok
+usage tokens=184 elapsed-ms=0 bytes=735 truncated=false

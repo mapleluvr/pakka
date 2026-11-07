@@ -1,0 +1,10 @@
+pakka-webui-launcher\scripts\consumer-smoke.mjs  🔴 1 blocking  1W  2 hints  cwd=D:\Projects\pakka-works\pakka-webui-launcher\scripts
+  🔴 L13: without try/catch — throws on invalid input [ast-grep:unchecked-throwing-call-js]
+Summary (225 files diagnosed this session):
+  🔴 1 blocking error
+  1 warning
+  2 hint/info (style — not counted as warnings)
+suppressed by disposition: 12 finding(s) dropped from this result because they're marked false-positive/won't-fix, disabled by `.pi-lens.json` rule policy, or suppressed by an inline `pi-lens-ignore` comment. Not a clean verdict for those locations — they were found, then intentionally hidden.
+
+result ok
+usage tokens=165 elapsed-ms=0 bytes=658 truncated=false

@@ -115,6 +115,35 @@ pakka-webui 保留宿主已有 resolver 作为初始来源，仅全局管理员�
 
 `reservedSessionId` 是受信任 bootstrap 选择的 lowercase UUID storage/provenance 地址，不是 provider identity。它具有 create-once 语义；已存在目录不会被覆盖。重开必须明确指定同一 owned storage 的 `reopenSessionFile`，且 provenance、runtime 配置与 reservation 均匹配。worker manager 使用这条接口恢复固定 placement；未知初始化和遗留 writer claim 不允许分配替代目录或自动抢占。
 
+## 离线存储维护
+
+`openStorageMaintenance({ storageDir, expectedSessionId?, stores })` 是受信任的本机停服入口，打开原存储的公开 Pi Session 内核，不创建 Harness、scheduler、provider 或 Job 定义。它仍需要物理来源、原 Session 和独占 writer 核对，不能用来接管存活进程。产品维护/恢复门禁由启动器与 adapter 共用。
+
+返回冻结 `StorageMaintenance`：
+
+- `identity` 含原 `sessionId/storageDir/kind` 及可选 `cwd`。
+- `snapshot(namespace)` 与 `commit(changes)` 只允许 `stores` 明确批准的命名空间及字节预算；多项 CAS 在同一事务中检查 `expectedVersion` 并提交。未知提交保持封闭。
+- `work()` 返回未完成 task/input 的数量、完整身份指纹及有限样本，`sampleTruncated` 不等于已完成检查。检查不装配任务处理器、不修改原生状态。
+- `backup(destination)` 对原 SQLite 存储生成一致快照并核对完整性/身份，不是跨域备份协调器。
+- `close()` 关闭维护内核并按已确认结果释放 writer；调用方必须在 `finally` 中关闭。
+
+```ts
+import { openStorageMaintenance } from "@pakka/agent";
+const storage = await openStorageMaintenance({
+	storageDir: "/absolute/product/sessions/original-uuid",
+	expectedSessionId: "original-uuid",
+	stores: [],
+});
+try {
+	console.log(await storage.work());
+	await storage.backup("/absolute/new-private-snapshot.sqlite");
+} finally {
+	await storage.close();
+}
+```
+
+目标必须是实际原 UUID，示例不是可直接运行的存储地址。该端口只交给可信维护程序，不能作为浏览器或模型的通用权限。跨 Session 一致性、认证失效、目录发布及恢复停机由[产品维护层](../state/local-maintenance.md)负责。
+
 ## Conversation 读取与显示端口
 
 受信任 bootstrap 使用 `runtime.readConversation(ref, check, { limit, beforeEntryId })` 取得冻结的 `ConversationSnapshot`：已提交消息、display records、live tools 和 usage。只投影所选 Conversation，不返回原生 handles、system/config/provider identity。异步读取完成后重验 `check`。每页最多 256 entries，JSON envelope 上限 2 MiB；`truncated` 表示当前页受限。使用响应的 `olderBeforeId` 作为下一页的 `beforeEntryId` 读取更早记录。读取只作授权观察，不启动模型或提交存储。

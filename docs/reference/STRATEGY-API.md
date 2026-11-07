@@ -161,16 +161,16 @@ Lifecycle transitions revoke new work first. They allow only settlement/quaranti
 
 ## Trusted Writer Maintenance
 
-`recoverStorageWriter({ storageDir, expectedClaim: { pid, nonce } })` is a bootstrap-only command for a closed/killed writer. It acquires an exclusive maintenance gate, checks database identity read-only, refuses a live or unconfirmable process, and rechecks the exact claim before releasing it. It returns a frozen `WriterRecoveryReceipt`; it does not open a model or alter database/WAL content. Normal opens still refuse residual claims. A failed or unknown close retains its claim.
+`recoverStorageWriter({ storageDir, expectedClaim: { pid, nonce } })` is a bootstrap-only command for a closed/killed writer. It acquires an exclusive maintenance gate, checks database identity read-only, refuses a live or unconfirmable process, and rechecks the exact claim before releasing it. It returns a frozen `WriterRecoveryReceipt`; it does not open a model or alter database/WAL content. Normal opens still refuse residual claims. A failed or unknown close retains its claim. Product operators use `pakka recover writer`; no-Harness coordinator inspection and snapshots use [offline maintenance](RUNTIME-API.md#离线存储维护). Restoring a verified backup may preserve a damaged original and its confirmed-dead claim as raw evidence without invoking writer release or claiming database health.
 
 ## Exported Declaration Sources
 
 The authoritative declarations are exported by [the package root](../../packages/agent/src/index.ts) from [types.ts](../../packages/agent/src/types.ts). Installed declaration checks are available through `npm run smoke:package`.
 
-| Surface                                      | Declaration                                                                                                  |
-| -------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| Frames and projection authority              | `ContextFrame`, `FrameBasis`, `JobScope`, `ToolInvocationScope`, `ProjectionPlan`                            |
-| Durable artifact submission and confirmation | `ArtifactSnapshot`, `ArtifactReceipt`, `StrategyArtifacts`, `SourceWorkCheckpoint`                           |
-| Planned work, inference and recovery         | `SourceJobSpec`, `SourceJob`, `SourceWorkSnapshot`, `InferenceRequest`, `InferenceResult`, `StrategyBinding` |
-| Native Compresser facade and diagnostics     | `CompresserSession`, `CompresserSnapshot`, `InferenceCallValidator`                                          |
-| Trusted lifecycle and storage maintenance    | `HostOptions`, `RuntimeOptions`, `WriterRecoveryOptions`, `WriterRecoveryReceipt`                            |
+| Surface                                      | Declaration                                                                                                                                                    |
+| -------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Frames and projection authority              | `ContextFrame`, `FrameBasis`, `JobScope`, `ToolInvocationScope`, `ProjectionPlan`                                                                              |
+| Durable artifact submission and confirmation | `ArtifactSnapshot`, `ArtifactReceipt`, `StrategyArtifacts`, `SourceWorkCheckpoint`                                                                             |
+| Planned work, inference and recovery         | `SourceJobSpec`, `SourceJob`, `SourceWorkSnapshot`, `InferenceRequest`, `InferenceResult`, `StrategyBinding`                                                   |
+| Native Compresser facade and diagnostics     | `CompresserSession`, `CompresserSnapshot`, `InferenceCallValidator`                                                                                            |
+| Trusted lifecycle and storage maintenance    | `HostOptions`, `RuntimeOptions`, `WriterRecoveryOptions`, `WriterRecoveryReceipt`, `StorageMaintenanceOptions`, `StorageMaintenance`, `StorageMaintenanceWork` |

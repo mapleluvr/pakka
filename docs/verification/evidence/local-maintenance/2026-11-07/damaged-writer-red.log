@@ -1,0 +1,30 @@
+✖ restore recovers a corrupted database with an exited writer while preserving original bytes or recording absence (41117.2527ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 41264.8674
+
+✖ failing tests:
+
+test at apps\cli\test\maintenance.test.ts:388:2
+✖ restore recovers a corrupted database with an exited writer while preserving original bytes or recording absence (41117.2527ms)
+  AssertionError [ERR_ASSERTION]: PAKKA_MAINTENANCE: Original storage writer must be stopped/recovered before preserving bytes
+  
+  
+  1 !== 0
+  
+      at TestContext.<anonymous> (file:///D:/Projects/pakka-works/pakka-long-lived-deliveries/apps/cli/test/maintenance.test.ts:413:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

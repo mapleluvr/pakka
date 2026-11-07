@@ -1,0 +1,75 @@
+{
+  "schema": 1,
+  "sourceBaseline": "83246bacee72efe21d10b522588b211b9892b30f",
+  "candidateSourceSha256": "0a962daae2e8600d809a5d1b5ad8217892f0bdbb5f26d8486c2614b585e85f68",
+  "releaseId": "1a7f3f618b268ec296a01455edace46bca71e1baee5a7513fa54eb2c2745992a",
+  "consumer": "C:\\Users\\mapleland\\AppData\\Local\\Temp\\pakka-packed-consumer-OE8F73",
+  "backup": "D:\\Projects\\pakka-works\\.backups\\2026-11-07-local-maintenance-release",
+  "files": [
+    {
+      "file": "pakka-agent-0.7.0.tgz",
+      "bytes": 14731137,
+      "sha256": "23dfc1e39513e67b0fee66f029ea289ef77a4f24404412c2c98d161321cfdc26"
+    },
+    {
+      "file": "pakka-cli-0.1.0.tgz",
+      "bytes": 1528,
+      "sha256": "a86c0ac1c38c2438f045971d16a86315451bacef0249d70c11c9ab4b74d30329"
+    },
+    {
+      "file": "pakka-client-0.1.0.tgz",
+      "bytes": 4493,
+      "sha256": "f69638bd5756110bdb87b9a41974a23d10106f2a8aa50e197d78416b8138e89d"
+    },
+    {
+      "file": "pakka-mas-0.4.0.tgz",
+      "bytes": 13570,
+      "sha256": "8d467427927cdd29424a09e2827777e01002bb006f480101bd5f74ed0660b56d"
+    },
+    {
+      "file": "pakka-mas-devpack-0.2.0.tgz",
+      "bytes": 42962,
+      "sha256": "f3e461ae02aa769725183f1cab13468769ab8ffb96650434279f39de481b5b80"
+    },
+    {
+      "file": "pakka-protocol-0.1.0.tgz",
+      "bytes": 13110,
+      "sha256": "82c8f76f22a6879a71c2c15680e742dbc775aad1e515f915cbe46b761355580e"
+    },
+    {
+      "file": "pakka-server-0.5.0.tgz",
+      "bytes": 84870,
+      "sha256": "1777a342ca312754b4277fd01936e3e589354b0498da554765fa04e0a9275f05"
+    },
+    {
+      "file": "pakka-webui-0.1.0.tgz",
+      "bytes": 707796,
+      "sha256": "8888573e1d8396d5855ab9e33a02d865e356497b9406d8c1e83acaf8bbab7706"
+    },
+    {
+      "file": "release.json",
+      "bytes": 1819,
+      "sha256": "a3e5f64e8e02fe8ccb8df5e5c25c0fc595c8bf1d4d98d551eb41445ba45d5860"
+    },
+    {
+      "file": "package.json",
+      "bytes": 612,
+      "sha256": "2e0104a90efa5bc19a7db1c5d645ce07294f15b329bd8877e9e874bbb13227e4"
+    },
+    {
+      "file": "package-lock.json",
+      "bytes": 157195,
+      "sha256": "8e3a4180407eddcc8fbd08b0d100096a752ec4cbbc97f4a9574e0d1a9d50987b"
+    },
+    {
+      "file": "release-package.json",
+      "bytes": 533,
+      "sha256": "49acdd59b4f79631a6a6500fac6cf59775df86861460821300321c4b31ebf07d"
+    },
+    {
+      "file": "release-package-lock.json",
+      "bytes": 144993,
+      "sha256": "2fea43083c073478f77c5e89e0ab7bcc6a5249adcb2bcedac7d3691edc41807b"
+    }
+  ]
+}

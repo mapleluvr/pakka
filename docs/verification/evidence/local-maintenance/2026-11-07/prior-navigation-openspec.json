@@ -1,0 +1,46 @@
+{
+  "items": [
+    {
+      "id": "improve-webui-navigation-and-local-recovery",
+      "type": "change",
+      "valid": false,
+      "issues": [
+        {
+          "level": "WARNING",
+          "path": "devin-frontend/spec.md",
+          "message": "ADDED \"Model selection uses a configured catalogue rather than per-model grants\": Requirement text is very long (>500 characters). Move examples and edge cases into scenarios, or split it into separate requirements that each state one behavior."
+        },
+        {
+          "level": "WARNING",
+          "path": "devin-frontend/spec.md",
+          "message": "ADDED \"Model selection has a searchable keyboard index\": Requirement text is very long (>500 characters). Move examples and edge cases into scenarios, or split it into separate requirements that each state one behavior."
+        },
+        {
+          "level": "WARNING",
+          "path": "devin-frontend/spec.md",
+          "message": "ADDED \"Compound labels and forms retain typographic separation\": Requirement text is very long (>500 characters). Move examples and edge cases into scenarios, or split it into separate requirements that each state one behavior."
+        }
+      ],
+      "durationMs": 26
+    }
+  ],
+  "summary": {
+    "totals": {
+      "items": 1,
+      "passed": 0,
+      "failed": 1
+    },
+    "byType": {
+      "change": {
+        "items": 1,
+        "passed": 0,
+        "failed": 1
+      }
+    }
+  },
+  "version": "1.0",
+  "root": {
+    "path": "D:\\Projects\\pakka-works\\pakka-long-lived-deliveries",
+    "source": "nearest"
+  }
+}

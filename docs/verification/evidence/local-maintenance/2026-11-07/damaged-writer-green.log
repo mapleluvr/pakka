@@ -1,0 +1,9 @@
+✔ restore recovers a corrupted database with an exited writer while preserving original bytes or recording absence (81653.3825ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 81787.6749
