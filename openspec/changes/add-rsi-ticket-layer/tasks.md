@@ -22,8 +22,8 @@
 
 - [x] 4.1 Run affected tests, type/build checks and installed public consumer checks against exact built archives.
 - [x] 4.2 Record evidence and update state, API/navigation and formation records; validate documentation and OpenSpec.
-- [ ] 4.3 Inspect final diff, preserve other worktrees, commit only owned changes with an empty index, and deliver the work branch/PR to dev under repository policy.
+- [x] 4.3 Inspect final diff, preserve other worktrees, commit only owned changes with an empty index, and deliver the work branch/PR to dev under repository policy.
 
 Verification: 18/18 affected native/SQLite/MAS/browser regressions; workspace check/build; active LSP on 11 RSI production files; full package smoke including installed RSI and headless declarations; exact archive/install byte and lock integrity checks; direct desktop/mobile inspection; OpenSpec strict validation and 184 local documentation links. Fixed identities and scoped limits are in [the evidence record](../../../docs/verification/RSI-TICKET-LAYER.md).
 
-Dev integration and a release PR remain separate from this work-branch delivery. No subagent review or paid model trial is selected for this thin service slice under the operator's existing instructions.
+Delivery: implementation commit `a68598a21130a7f80ded65dffc522b85535ba2c6` published on `feat/rsi-ticket-layer`; [PR #5](https://github.com/mapleluvr/pakka/pull/5) targets `dev`. Follow-up delivery-record edits are documentation-only. Dev integration, a release PR and OpenSpec archival remain separate from this work-branch delivery. No subagent review or paid model trial is selected for this thin service slice under the operator's existing instructions.

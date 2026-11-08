@@ -4,6 +4,8 @@
 
 2026-11-09 本地完成 `@pakka/rsi@0.1.0` 和 `@pakka/memo@0.1.0` 的实现/消费检查。基线为成功 fetch 的 `origin/dev` `e7c938ef3b7c2005ef9db319bd84598c25ab8b23`，工作分支 `feat/rsi-ticket-layer`；原 checkout 和其他 worktrees 未改动。
 
+本次验证对应实现提交 `a68598a21130a7f80ded65dffc522b85535ba2c6`；后续交付记录更新只改文档，不改变已检验的代码或归档。
+
 本次是可选工单服务，不是完整 RSI 业务流程。Memo 只有无 I/O 的包入口。实现、工具、UI、MAS 和示例均使用既有公开接口，没有改动 Runtime、Durable 或已有产品的执行逻辑。
 
 [产物身份](rsi-ticket-artifacts.json)固定所有新增包/消费脚本及 workspace metadata 的逐文件 SHA-256、实际归档 SHA-256 与 npm integrity。源码清单摘要为 `94ee4e20d14e6b512a296f5ccc6caca78e5037c4be374e80b52585fb3f90a3ec`。
@@ -27,7 +29,7 @@
 | 新增安装 RSI consumer                           | PASS：真实 Bot tools → 认证 HTTP extension API → MAS worker tools → 正常重开；[原始结果](rsi-ticket-evidence/installed-rsi.log)      |
 | headless consumer                               | PASS：未安装/不可解析 WebUI、Preact、Coding Agent 时，RSI/Memo 与既有 DevPack 入口可用；[原始结果](rsi-ticket-evidence/headless.log) |
 | 归档/安装比对                                   | 两个新包全部安装文件与本地打包输入逐字节一致，tarball SHA-512 与消费者 lock integrity 相同，安装目录不是 workspace symlink           |
-| 格式与文档                                      | 改动包/脚本/metadata 的 Prettier 检查通过；OpenSpec 严格校验通过，文档链接与 diff 在交付前检查                                       |
+| 格式与文档                                      | 改动包/脚本/metadata 的 Prettier 检查通过；OpenSpec 严格校验、184 个相对文档链接与 diff 检查通过                                     |
 
 安装消费者未携带 workspace overrides、私有源码、测试 oracle 或用户模型配置。RSI consumer 只访问本地确定性 HTTP provider，共 **5 次**模型请求：inbox 原生提交及继续回复，worker 原生查询、原生回报及完成回复。工单最终为 `closed`、原 MAS delivery 为 `done`，作者为 `agent:inbox`、结果作者为 `agent:worker`；正常重开后数据完全相同且请求仍为 5。工单 CRUD/观察本身不触发模型请求。
 
@@ -60,4 +62,4 @@
 
 服务有明确容量，没有无限历史/自动 GC。工单提交与 MAS admission 不是跨存储原子事务；如果投递成功却没有可保存的 receipt，保留 unknown 并阻止替代派发，当前版本没有自动 reconciliation 工作流。关闭 UI 不取消工作，正常重开不恢复任意 JS 调用栈。生产启用需显式装配工具、服务、角色和 handler 路由。
 
-按操作者既有指令未使用 subagent review；上述源码复核、浏览器实操及证据核对均由主会话完成，不表述为独立第三方验收。工作分支 PR、合入 dev 和 OpenSpec archive 分别记录；本次未执行 dev/main 集成或 npm 发布。
+按操作者既有指令未使用 subagent review；上述源码复核、浏览器实操及证据核对均由主会话完成，不表述为独立第三方验收。工作分支已提交并推送，[PR #5](https://github.com/mapleluvr/pakka/pull/5) 指向 `dev`；合入 dev 和 OpenSpec archive 分别处理。本次未执行 dev/main 集成或 npm 发布。

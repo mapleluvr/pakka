@@ -4,7 +4,7 @@ Pakka 将 Pi Durable 的 Conversation、权限、持久化与 MAS 协作能力�
 
 ## 当前工作
 
-[RSI 工单薄层与 Memo 初始化](changes/rsi-ticket-layer.md)已形成服务、原生工具、公开 UI/MAS 对接和可运行装配；当前进行固定候选安装验证与交付。采用边界见 [RSI state](state/rsi.md)，任务和后续接续见[所属 tasks](../openspec/changes/add-rsi-ticket-layer/tasks.md)。后续工作按[贡献指南](../CONTRIBUTING.md)从最新 `origin/dev` 建立独立分支。
+[RSI 工单薄层与 Memo 初始化](changes/rsi-ticket-layer.md)已完成服务、原生工具、公开 UI/MAS 对接、可运行装配与选定验证；[PR #5](https://github.com/mapleluvr/pakka/pull/5) 指向 `dev`，等待评审/集成。采用边界见 [RSI state](state/rsi.md)，任务和后续接续见[所属 tasks](../openspec/changes/add-rsi-ticket-layer/tasks.md)。后续工作按[贡献指南](../CONTRIBUTING.md)从最新 `origin/dev` 建立独立分支。
 
 本地执行安排在已忽略的 `docs/.temp/active-plan.md`；文件缺失时从所属 tasks 接续。
 
