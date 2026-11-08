@@ -2,6 +2,7 @@
 
 完整的形成条件、选择、设计、任务与场景由 [OpenSpec](../../openspec/changes/)维护；本目录只提供摘要和完整引用，不复制第二套变更正文。当前预期见 [state](../state/README.md)，实际差距见[工作入口与领域任务](../OVERVIEW.md)。
 
+- [RSI 工单薄层与 Memo 初始化](rsi-ticket-layer.md)：持久工单、简单角色、原生工具、显式 MAS 派发与公开 UI；Memo 保留包骨架。
 - [Git 协作与项目元数据](git-workflow-and-project-metadata.md)：工作分支 → dev → main 的授权、PR 与验证条件，以及贡献入口和 state-evo 文档接续。
 - [可演进 Runtime 与默认入口](product-runtime-and-launcher.md)：Pi 原生模型/认证、配置与预算演进、Session 隔离、默认执行与 `pakka → WebUI`。
 - [ExecutionEnv 接入](execution-environment.md)：1.4.0 基线的公开执行环境接缝、原生工具、合作工具能力与真实本地消费。

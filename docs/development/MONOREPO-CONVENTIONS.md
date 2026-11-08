@@ -13,7 +13,9 @@ pakka/
 │   ├── mas/                   @pakka/mas：资源、所有权策略、A2A 与恢复
 │   ├── mas-devpack/            @pakka/mas-devpack：可选 Agent contribution 和公开 Web facets
 │   ├── protocol/              @pakka/protocol：browser-safe schemas
-│   └── client/                @pakka/client：共享连接与受控请求
+│   ├── client/                @pakka/client：共享连接与受控请求
+│   ├── rsi/                   @pakka/rsi：持久工单、Agent 工具与可选 UI/MAS 接点
+│   └── memo/                  @pakka/memo：待定义功能的私有包骨架
 ├── apps/
 │   ├── server/                装配、认证、transport 与 worker 启动
 │   ├── cli/                   操作员命令入口
@@ -60,6 +62,8 @@ Dynamite adapter ──→ principal-bound StrategyBinding
 ```
 
 MAS 和 Dynamite 不依赖 CLI；agent 不反向 import MAS、DevPack 或 Dynamite。`apps/` 可以装配库，核心库不能依赖 app。pakka-webui 的明确例外仅为可选 extension facet peer-consume `@pakka/webui` 的纯 public SDK exports：不得 import executable、私有 store/router/backend startup；现有 Agent-only export 不加载 WebUI。纯 SDK、browser/backend graph 与安装消费者必须独立验收。默认启用、工具组合、模型配置来源、认证、预算与 worker 隔离由受信任 bootstrap 明确装配；产品不再用 Agent profile 列表充当模型目录或另加逐模型 ACL。
+
+`@pakka/rsi` 是独立的工单消费者/可选 extension，不向 agent/MAS 内核加入业务阶段。其 `/backend`、`/client`、`/webui` 同样只使用纯公开 SDK；headless 入口不加载 WebUI/Preact。操作者明确要求初始化的 `@pakka/memo` 是暂不含功能的私有包例外，RSI 不依赖它，后续功能须另定语义与实际消费路径。
 
 MAS policy 决定资源关系和可授予的动作；agent 在实际效果边界绑定调用身份、目标与有效期，并执行授权。MAS 通过窄端口完成登记和编排，不能取得可任意调用的原始事务或 Harness。可信 bootstrap 的控制端口与 agent-facing 端口必须分别授予。
 

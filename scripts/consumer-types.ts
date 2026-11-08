@@ -1,3 +1,46 @@
+import { createTicketService, type TicketActor } from "@pakka/rsi";
+import { createTicketTools } from "@pakka/rsi/agent";
+import { createMasTicketDispatcher } from "@pakka/rsi/mas";
+import { ticketExtensionService, rsiExtensionRoot } from "@pakka/rsi/backend";
+import "@pakka/memo";
+
+export async function publicTicketService(
+	runtime: Runtime,
+	scope: ToolInvocationScope,
+	source: ConversationRef,
+	context: PocketServiceContext,
+	masClient: MasClient,
+) {
+	const actor: TicketActor = { id: "im-bot", role: () => "submitter", check() {} };
+	const service = await createTicketService({
+		runtime,
+		namespace: "tickets",
+		handlers: [{ id: "worker", label: "Worker", actorId: "worker" }],
+		dispatcher: createMasTicketDispatcher({
+			routes: [{ handlerId: "worker", target: source, client: masClient }],
+		}),
+	});
+	const bound = service.forInvocation({ actor, source }, scope);
+	await bound.submit({ requestId: "original", title: "Idea", body: "Evidence", sources: [] });
+	await bound.submit({
+		requestId: "forged",
+		title: "Idea",
+		body: "Evidence",
+		sources: [],
+		// @ts-expect-error Business arguments cannot declare their author.
+		authorId: "owner",
+	});
+	// @ts-expect-error Edits always require the version the caller actually observed.
+	await bound.edit({ requestId: "stale", id: "ticket", title: "Idea", body: "Evidence", sources: [] });
+	return {
+		root: rsiExtensionRoot,
+		service: ticketExtensionService(context, service),
+		tools: createTicketTools({
+			resolve: (invocation) => service.forInvocation({ actor, source }, invocation),
+		}),
+	};
+}
+
 import {
 	defineBackend,
 	type BackendContext,
