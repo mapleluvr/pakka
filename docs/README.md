@@ -13,6 +13,8 @@
 | 公共 API 和开发方法          | [reference](reference/README.md)、[development](development/README.md)               |
 | 核对固定版本事实             | [verification](verification/README.md)、[历史阶段](archive/README.md)                |
 
+[RSI 工单](reference/RSI-API.md)提供 Bot、UI 与 MAS 的薄接点；可运行装配见 [RSI package](../packages/rsi/README.md)。
+
 ## 维护边界
 
 - state 描述产物的当前预期并映射详细契约。README 提供产品、使用和贡献入口；AGENTS 与 OpenSpec context 引用同一套协作规则。

@@ -35,7 +35,7 @@ Windows 独立命令需重新设置隔离 HOME/USERPROFILE/PI_CODING_AGENT_DIR�
 
 ## 仓库外安装与产物身份
 
-`npm run smoke:package` 生成并安装八个实际归档，运行公开声明、实际 executable、浏览器与消费者。选用仓库外安装检查时，执行身份 preflight，核对源码/门禁 helper/资产、归档/lock/安装逐文件内容及消费者结果。漏源码、损坏归档和身份篡改反例必须在 build/install 前被拒绝。
+`npm run smoke:package` 生成并安装十个实际归档，运行公开声明、实际 executable、浏览器与消费者。选用仓库外安装检查时，执行身份 preflight，核对源码/门禁 helper/资产、归档/lock/安装逐文件内容及消费者结果。漏源码、损坏归档和身份篡改反例必须在 build/install 前被拒绝。
 
 需要完整前端候选检查时使用 `scripts/verify-devin-r2.ps1`，在固定快照上串行保存 check、syntax、build、扩大、全量和 package 原始结果。失败退出、取消或 NOT_RUN 不覆盖为后续局部通过。
 

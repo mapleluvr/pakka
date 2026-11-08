@@ -6,21 +6,28 @@ import { fileURLToPath } from "node:url";
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
 const consumer = realpathSync.native(mkdtempSync(join(tmpdir(), "pakka-packed-consumer-")));
 const versions = Object.fromEntries(
-	["agent", "mas", "mas-devpack", "protocol", "client", "cli", "server", "webui"].map((name) => {
-		try {
-			return [
-				name,
-				JSON.parse(
-					readFileSync(
-						join(root, ["server", "cli", "webui"].includes(name) ? "apps" : "packages", name, "package.json"),
-						"utf8",
-					),
-				).version,
-			];
-		} catch (error) {
-			throw new Error("Invalid " + name + " package metadata", { cause: error });
-		}
-	}),
+	["agent", "mas", "mas-devpack", "protocol", "client", "cli", "server", "webui", "rsi", "memo"].map(
+		(name) => {
+			try {
+				return [
+					name,
+					JSON.parse(
+						readFileSync(
+							join(
+								root,
+								["server", "cli", "webui"].includes(name) ? "apps" : "packages",
+								name,
+								"package.json",
+							),
+							"utf8",
+						),
+					).version,
+				];
+			} catch (error) {
+				throw new Error("Invalid " + name + " package metadata", { cause: error });
+			}
+		},
+	),
 );
 const artifacts = join(root, "artifacts", "package-smoke");
 mkdirSync(artifacts, { recursive: true });
@@ -83,7 +90,7 @@ run(
 	[npmCli, "pack", "--ignore-scripts", "--pack-destination", consumer],
 	join(root, "packages", "mas-devpack"),
 );
-for (const name of ["protocol", "client", "cli", "server", "webui"])
+for (const name of ["protocol", "client", "cli", "server", "webui", "rsi", "memo"])
 	run(
 		"pack-" + name,
 		[npmCli, "pack", "--ignore-scripts", "--pack-destination", consumer],
@@ -105,6 +112,8 @@ writeFileSync(
 				"@pakka/client": `file:./pakka-client-${versions.client}.tgz`,
 				"@pakka/cli": `file:./pakka-cli-${versions.cli}.tgz`,
 				"@pakka/webui": `file:./pakka-webui-${versions.webui}.tgz`,
+				"@pakka/rsi": `file:./pakka-rsi-${versions.rsi}.tgz`,
+				"@pakka/memo": `file:./pakka-memo-${versions.memo}.tgz`,
 			},
 			devDependencies: { typescript: "7.0.2", "@types/node": "26.6.4" },
 		},
@@ -118,6 +127,8 @@ copyFileSync(
 	join(consumer, "consumer-native-storage.mjs"),
 );
 copyFileSync(join(root, "scripts", "consumer-types.ts"), join(consumer, "consumer-types.ts"));
+copyFileSync(join(root, "scripts", "consumer-rsi.mjs"), join(consumer, "rsi.mjs"));
+copyFileSync(join(root, "packages", "rsi", "examples", "workbench.mjs"), join(consumer, "rsi-workbench.mjs"));
 copyFileSync(join(root, "scripts", "consumer-runtime.mjs"), join(consumer, "runtime.mjs"));
 copyFileSync(join(root, "scripts", "consumer-execution.mjs"), join(consumer, "execution.mjs"));
 copyFileSync(join(root, "scripts", "consumer-mas.mjs"), join(consumer, "mas.mjs"));
@@ -173,7 +184,7 @@ run(
 // A separate sibling install must not resolve optional browser peers from this full consumer's node_modules.
 const headless = realpathSync.native(mkdtempSync(join(tmpdir(), "pakka-headless-consumer-")));
 const headlessDependencies = {};
-for (const name of ["agent", "mas", "mas-devpack"]) {
+for (const name of ["agent", "mas", "mas-devpack", "rsi", "memo"]) {
 	const archive = `pakka-${name}-${versions[name]}.tgz`;
 	copyFileSync(join(consumer, archive), join(headless, archive));
 	headlessDependencies["@pakka/" + name] = "file:./" + archive;
@@ -226,6 +237,7 @@ writeFileSync(
 	join(consumer, "dependency-tree.json"),
 	run("dependency-tree", [npmCli, "ls", "--all", "--json"], consumer),
 );
+console.log(run("rsi", [join(consumer, "rsi.mjs")], consumer));
 console.log(run("smoke", [join(consumer, "smoke.mjs")], consumer));
 console.log(run("runtime", [join(consumer, "runtime.mjs")], consumer));
 console.log(run("execution", [join(consumer, "execution.mjs")], consumer));

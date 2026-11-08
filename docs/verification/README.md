@@ -26,6 +26,8 @@
 | 2026-10-21 文档清理与外置恢复   | [清理记录](DOCUMENTATION-CLEANUP.md)                                                                         |
 | 更早阶段                        | [历史资料索引](../archive/README.md)                                                                         |
 
+[RSI 工单验证记录](RSI-TICKET-LAYER.md)保存 Bot 原生工具、持久化/权限、MAS、桌面/手机及仓库外安装消费的候选结果。
+
 ## 静态调查（不构成产品验收）
 
 - [UI 澄清文案调查](WEBUI-COPY-AUDIT.md)：全仓前端及内置扩展的删除建议、待用户决定项和应保留状态；尚未批量采用或删改。

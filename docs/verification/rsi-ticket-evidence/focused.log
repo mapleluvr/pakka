@@ -1,0 +1,26 @@
+✔ ticket tools: a real native call submits, then edits and queries the same durable ticket (159.5896ms)
+✔ ticket tools: revoking contribution during resolution blocks the native write and yields a bounded denial (61.0732ms)
+✔ MAS tickets: explicit dispatch captures a revision; native completion remains separate from ticket closure (117.0294ms)
+✔ MAS tickets: a delayed earlier native observation cannot replace a confirmed terminal delivery (56.3043ms)
+✔ MAS tickets: lost send result retains unknown run and repeated dispatch never redelivers (52.0654ms)
+✔ tickets: submission returns a durable receipt without inference; author edits retain source revisions and original requests (64.6797ms)
+✔ tickets: foreign authors cannot read/edit; assignment allows only the named handler and list pagination filters first (39.6025ms)
+✔ tickets: concurrent revisions cannot overwrite each other; revocation during asynchronous preparation prevents a commit (31.3319ms)
+✔ tickets: normal Runtime reopen preserves revisions, state and mutation receipts without restarting work (41.2201ms)
+✔ tickets: invalid authority fields and exhausted capacity cannot create records; corrupt state is refused rather than reset (33.0565ms)
+✔ tickets: malformed JSON state cannot commit a status outside the declared scalar schema (30.8329ms)
+✔ tickets: a role downgrade during the real CAS boundary prevents manager effects (29.6575ms)
+✔ tickets: a committed write whose authority ends before publication stays unknown, with its receipt recoverable (31.3203ms)
+✔ tickets: real SQLite write failure never returns accepted or drops an earlier ticket (11205.5258ms)
+✔ ticket history stays readable through the real WebUI decoder when long revisions exhaust capacity (70.4823ms)
+✔ tickets UI: lost submission response is reconciled without duplicates; edits and reports reopen on desktop and mobile (1688.5501ms)
+✔ tickets Backend: refreshing a native run remains readable for a ticket with large progress history (133.6092ms)
+✔ tickets Backend: current people roles filter records, reject foreign edits and revoke held bindings (104.7013ms)
+ℹ tests 18
+ℹ suites 0
+ℹ pass 18
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 17730.4349

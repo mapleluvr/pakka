@@ -8,6 +8,7 @@ Pakka 提供受控 Pi 运行时、MAS 服务与可选 pakka-webui Web 工作台�
 - [Pi Durable 源补丁](durable-patch.md)提供 generation 的策略拒绝与请求级检查，包含固定基线、源补丁、构建输入及生产安装归档。
 - `@pakka/mas` 提供成员、通信、资源控制及有界多 Session 协调。
 - `@pakka/mas-devpack` 提供可选 Agent/Backend/WebUI/Client facets。
+- `@pakka/rsi` 提供可选的[工单服务](rsi.md)、原生工具、UI 和 MAS 接点；业务 workflow 可替换。`@pakka/memo` 仅初始化包，其功能语义待单独定义，RSI 不依赖它。
 - `@pakka/protocol` 与 `@pakka/client` 提供有限、可验证、browser-safe 的协议和客户端。
 - server、CLI 和 `@pakka/webui` 是应用入口。无参数 `pakka` 默认启动 WebUI，`--connection` 保留协议客户端用法。pakka-webui 作为单一产品包携带同名 `pakka-webui` 可执行入口、Web 资产及纯公开 SDK 子路径。
 

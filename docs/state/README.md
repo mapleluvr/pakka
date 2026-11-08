@@ -17,6 +17,8 @@
 | [前端交互](frontend.md)                    | Devin 主体、页面结构、Team、响应式和加载条件 | [Devin 场景](../../openspec/changes/adopt-devin-frontend/specs/devin-frontend/spec.md)；公开接口仍在开发契约/API                                        |
 | [交付与验证](delivery.md)                  | 产物身份、分支职责、证据要求和门禁关系       | [Git 协作](../development/GIT-WORKFLOW.md)、[验证方法](../development/VERIFICATION.md)、WebUI 开发契约第 9/10 节                                        |
 
+[RSI 工单](rsi.md)维护 Bot、UI、MAS 的薄服务边界；字段、权限与恢复语义由 [RSI API](../reference/RSI-API.md)承载。Memo 功能语义待单独讨论。
+
 ## 与已有规范的分工
 
 - `docs/state/` 是整体预期入口，并承载产品范围和前端交互声明。API 字段、权限和细粒度场景沿用上表指向的位置，不建立另一套同名定义。

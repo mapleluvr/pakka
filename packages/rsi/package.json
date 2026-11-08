@@ -1,0 +1,58 @@
+{
+	"name": "@pakka/rsi",
+	"version": "0.1.0",
+	"private": true,
+	"type": "module",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.js"
+		},
+		"./agent": {
+			"types": "./dist/agent.d.ts",
+			"import": "./dist/agent.js"
+		},
+		"./mas": {
+			"types": "./dist/mas.d.ts",
+			"import": "./dist/mas.js"
+		},
+		"./backend": {
+			"types": "./dist/backend.d.ts",
+			"import": "./dist/backend.js"
+		},
+		"./client": {
+			"types": "./dist/browser/client.d.ts",
+			"import": "./dist/browser/client.js"
+		},
+		"./webui": {
+			"types": "./dist/browser/index.d.ts",
+			"import": "./dist/browser/index.js"
+		}
+	},
+	"files": [
+		"dist",
+		"README.md",
+		"examples"
+	],
+	"scripts": {
+		"build": "tsc -p tsconfig.json",
+		"build:webui": "tsc -p tsconfig.webui.json && node scripts/write-manifest.mjs"
+	},
+	"peerDependencies": {
+		"@pakka/agent": "0.7.0",
+		"@pakka/mas": "0.4.0",
+		"@pakka/webui": "0.1.0",
+		"preact": "11.0.1"
+	},
+	"peerDependenciesMeta": {
+		"@pakka/mas": {
+			"optional": true
+		},
+		"@pakka/webui": {
+			"optional": true
+		},
+		"preact": {
+			"optional": true
+		}
+	}
+}
