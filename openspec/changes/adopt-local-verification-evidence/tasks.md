@@ -5,7 +5,11 @@
 - [x] Add ignore rules for new raw-evidence directories, TAP and local ZIPs without removing existing tracked evidence.
 - [x] Check scoped document links/anchors, formatting, YAML/OpenSpec and ignore behavior; inspect all proposed artifacts.
 - [x] Preserve this change's raw checks in a local bundle and record only key results plus its whole SHA-256.
-- [ ] Commit/push the independent branch, verify the live remote SHA and open its PR to dev without merging.
+- [x] Commit/push the independent branch, verify the live remote SHA and open its PR to dev without merging.
+
+## Delivery
+
+[PR #7](https://github.com/mapleluvr/pakka/pull/7) targets dev and remains open. Policy commit `c5df6e7877216ea9d57fd175fe44a77a3643066d` was pushed and checked against the live remote ref; closing metadata is recorded separately. No dev/main integration or evidence upload was performed.
 
 ## Verification selection
 

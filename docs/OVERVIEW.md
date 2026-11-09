@@ -4,7 +4,7 @@ Pakka 将 Pi Durable 的 Conversation、权限、持久化与 MAS 协作能力�
 
 ## 当前工作
 
-[本地验证证据与提交检查](changes/local-verification-evidence.md)已采用：验证目录只跟踪关键信息和本地证据包整体 hash，原始证据不上 GitHub，云端由用户接管；每次提交及 PR 创建/更新前检查完整产物。规范同步和交付由[所属 tasks](../openspec/changes/adopt-local-verification-evidence/tasks.md)承接。现有 PR 及已发布证据的清理另行处理。
+[本地验证证据与提交检查](changes/local-verification-evidence.md)已采用：验证目录只跟踪关键信息和本地证据包整体 hash，原始证据不上 GitHub，云端由用户接管；每次提交及 PR 创建/更新前检查完整产物。规范同步与检查已完成，[PR #7](https://github.com/mapleluvr/pakka/pull/7) 等待评审/集成；[所属 tasks](../openspec/changes/adopt-local-verification-evidence/tasks.md)保存实际结果。现有 PR 及已发布证据的清理另行处理。
 
 [Git 协作与项目元数据](changes/git-workflow-and-project-metadata.md)已通过 [PR #2](https://github.com/mapleluvr/pakka/pull/2) 合入 dev；[所属 tasks](../openspec/changes/adopt-git-workflow-and-project-metadata/tasks.md)保留原结果。当前无产品源码修改；后续工作按[贡献指南](../CONTRIBUTING.md)从最新 `origin/dev` 建立独立分支。
 
