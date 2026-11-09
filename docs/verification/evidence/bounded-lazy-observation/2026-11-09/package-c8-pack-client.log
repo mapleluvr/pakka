@@ -1,0 +1,25 @@
+cwd=D:\Projects\pakka-works\pakka-lazy-webui\packages\client
+pakka-client-0.1.0.tgz
+npm notice
+npm notice package: @pakka/client@0.1.0
+npm notice Tarball Contents
+npm notice 1.3kB dist/index.d.ts
+npm notice 5.3kB dist/index.js
+npm notice 2.1kB dist/pocket.d.ts
+npm notice 17.1kB dist/pocket.js
+npm notice 423B package.json
+npm notice Tarball Details
+npm notice name: @pakka/client
+npm notice version: 0.1.0
+npm notice filename: pakka-client-0.1.0.tgz
+npm notice package size: 5.6 kB
+npm notice unpacked size: 26.2 kB
+npm notice shasum: 2eff5633a2745b9004bc3b29157a5e6f7a7d2bd5
+npm notice integrity: sha512-koKQ5lQE/XaSk[...]DsltWwYySGLjQ==
+npm notice total files: 5
+npm notice
+
+exit=0
+signal=null
+error=undefined
+elapsedMs=715

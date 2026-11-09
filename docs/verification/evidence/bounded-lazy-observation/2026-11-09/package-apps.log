@@ -1,0 +1,7 @@
+cwd=C:\Users\mapleland\AppData\Local\Temp\pakka-packed-consumer-sb1EI0
+Pakka installed server/client/CLI smoke passed: 2 local HTTP requests; fresh reconnect and repeated admission produced no extra dispatch.
+
+exit=0
+signal=null
+error=undefined
+elapsedMs=1760

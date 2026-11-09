@@ -1,0 +1,76 @@
+✔ MAS Agent controls are a separate dismissible sheet at 1440x900 (2456.3754ms)
+✔ MAS Agent controls are a separate dismissible sheet at 360x600 (3198.9019ms)
+✔ MAS Agent controls are a separate dismissible sheet at 390x650 (3339.068ms)
+✖ MAS retired Agents can be hidden and restored across reload without losing exchanges or history (2413.6761ms)
+✖ Model picker: larger approved catalog is searchable and keyboard selection changes neither cwd nor provider budget (10114.61ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 3
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 24348.6662
+
+✖ failing tests:
+
+test at apps\webui\test\mas-board-presentation.test.ts:163:1
+✖ MAS retired Agents can be hidden and restored across reload without losing exchanges or history (2413.6761ms)
+  AssertionError [ERR_ASSERTION]: Native mode change saves personal presentation by its DOM commit, before a later paint or reload
+  + actual - expected
+  
+    {
+      list: true,
+      modes: [
+  +     'canvas'
+  -     'list'
+      ]
+    }
+  
+      at TestContext.<anonymous> (file:///D:/Projects/pakka-works/pakka-lazy-webui/apps/webui/test/mas-board-presentation.test.ts:206:10)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: { list: true, modes: [ 'canvas' ] },
+    expected: { list: true, modes: [ 'list' ] },
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at apps\webui\test\model-picker-browser.test.ts:8:1
+✖ Model picker: larger approved catalog is searchable and keyboard selection changes neither cwd nor provider budget (10114.61ms)
+  Error: Browser condition deadline: document.activeElement?.getAttribute("aria-label")==="Close model picker": Owner
+  New Session
+  New Conversation
+  Ctrl
+  O
+  Commands & Extensions
+  Conversations
+  Default
+  Uncategorized
+  Models
+  Workspace Session
+  Recent
+  ADMIN
+  Models
+  C:\Users\mapleland\AppData\Local\Temp\pakka-integration-yIGtoR\workspace
+  ·
+  Ready
+  Message
+  Prompt
+  local-model
+  Model Selection
+  Search Models
+  Configured Models
+  1 / 1
+  alternate-10
+  choice-10
+  Navigate
+  Select
+  Esc
+  Close
+      at Object.wait (file:///D:/Projects/pakka-works/pakka-lazy-webui/apps/webui/test/browser.ts:445:12)
+      at async TestContext.<anonymous> (file:///D:/Projects/pakka-works/pakka-lazy-webui/apps/webui/test/model-picker-browser.test.ts:47:4)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3)

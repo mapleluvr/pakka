@@ -1,0 +1,297 @@
+{
+  "schema": 1,
+  "branch": "pakka/lazy-webui-observation",
+  "baselineHead": "aa83eedecc92ec3d7b0f46010814344da721b0c6",
+  "node": "v24.15.0",
+  "sourceSha256": "9d4a86314df2238a7d63421293b89d98654179f249549847dceb246720481bbc",
+  "sourceFiles": 600,
+  "browserVendorSha256": "d12efbe6149601db2b6d44451ddd1358d42a864e030f4123918bf07501b81576",
+  "packages": [
+    {
+      "name": "@pakka/agent",
+      "version": "0.7.0",
+      "file": "pakka-agent-0.7.0.tgz",
+      "bytes": 14752721,
+      "sha256": "e3374f0d7b6dec78542cfbb47bf1c531ef1fa21d9f39e2b3be1117a929466ff6"
+    },
+    {
+      "name": "@pakka/mas",
+      "version": "0.4.0",
+      "file": "pakka-mas-0.4.0.tgz",
+      "bytes": 13570,
+      "sha256": "8d467427927cdd29424a09e2827777e01002bb006f480101bd5f74ed0660b56d"
+    },
+    {
+      "name": "@pakka/mas-devpack",
+      "version": "0.2.0",
+      "file": "pakka-mas-devpack-0.2.0.tgz",
+      "bytes": 43088,
+      "sha256": "97e58b8365c0723a97dfc1c6e3190d395d0300dd4961b4cb5f28099dd6ef0c8c"
+    },
+    {
+      "name": "@pakka/protocol",
+      "version": "0.1.0",
+      "file": "pakka-protocol-0.1.0.tgz",
+      "bytes": 14381,
+      "sha256": "e74e576fc093620b53590b33505a09a78e6d728fb0b77d2c1c980223043f15c4"
+    },
+    {
+      "name": "@pakka/client",
+      "version": "0.1.0",
+      "file": "pakka-client-0.1.0.tgz",
+      "bytes": 5614,
+      "sha256": "3f97d9009d516c36903ca68e48a8e45aa5d6b38b7ba62296d9b01851b5d5024a"
+    },
+    {
+      "name": "@pakka/cli",
+      "version": "0.1.0",
+      "file": "pakka-cli-0.1.0.tgz",
+      "bytes": 1528,
+      "sha256": "a86c0ac1c38c2438f045971d16a86315451bacef0249d70c11c9ab4b74d30329"
+    },
+    {
+      "name": "@pakka/server",
+      "version": "0.5.0",
+      "file": "pakka-server-0.5.0.tgz",
+      "bytes": 85430,
+      "sha256": "49754522f077c5d7a56d9f2fa8b6283a6aac30ad1bf3d5d0ae83d10db94d08e0"
+    },
+    {
+      "name": "@pakka/webui",
+      "version": "0.1.0",
+      "file": "pakka-webui-0.1.0.tgz",
+      "bytes": 739585,
+      "sha256": "e9de924973602930e043cfc77f64e647e6e908423d22d9e12d45d427728880ea"
+    }
+  ],
+  "packageSteps": [
+    {
+      "name": "pack",
+      "exit": 0,
+      "signal": null,
+      "evidence": "package-c8-pack.log"
+    },
+    {
+      "name": "pack-cli",
+      "exit": 0,
+      "signal": null,
+      "evidence": "package-c8-pack-cli.log"
+    },
+    {
+      "name": "pack-client",
+      "exit": 0,
+      "signal": null,
+      "evidence": "package-c8-pack-client.log"
+    },
+    {
+      "name": "pack-devpack",
+      "exit": 0,
+      "signal": null,
+      "evidence": "package-c8-pack-devpack.log"
+    },
+    {
+      "name": "pack-mas",
+      "exit": 0,
+      "signal": null,
+      "evidence": "package-c8-pack-mas.log"
+    },
+    {
+      "name": "pack-protocol",
+      "exit": 0,
+      "signal": null,
+      "evidence": "package-c8-pack-protocol.log"
+    },
+    {
+      "name": "pack-server",
+      "exit": 0,
+      "signal": null,
+      "evidence": "package-c8-pack-server.log"
+    },
+    {
+      "name": "pack-webui",
+      "exit": 0,
+      "signal": null,
+      "evidence": "package-c8-pack-webui.log"
+    },
+    {
+      "name": "install",
+      "exit": 0,
+      "signal": null,
+      "evidence": "package-c8-install.log"
+    },
+    {
+      "name": "install-headless",
+      "exit": 0,
+      "signal": null,
+      "evidence": "package-c8-install-headless.log"
+    },
+    {
+      "name": "devpack-headless",
+      "exit": 0,
+      "signal": null,
+      "evidence": "package-c8-devpack-headless.log"
+    },
+    {
+      "name": "declarations",
+      "exit": 0,
+      "signal": null,
+      "evidence": "package-c8-declarations.log"
+    },
+    {
+      "name": "browser-declarations",
+      "exit": 0,
+      "signal": null,
+      "evidence": "package-c8-browser-declarations.log"
+    },
+    {
+      "name": "dependency-tree",
+      "exit": 0,
+      "signal": null,
+      "evidence": "package-c8-dependency-tree.log"
+    },
+    {
+      "name": "smoke",
+      "exit": 0,
+      "signal": null,
+      "evidence": "package-c8-smoke.log"
+    },
+    {
+      "name": "runtime",
+      "exit": 0,
+      "signal": null,
+      "evidence": "package-c8-runtime.log"
+    },
+    {
+      "name": "execution",
+      "exit": 0,
+      "signal": null,
+      "evidence": "package-c8-execution.log"
+    },
+    {
+      "name": "mas",
+      "exit": 0,
+      "signal": null,
+      "evidence": "package-c8-mas.log"
+    },
+    {
+      "name": "broker",
+      "exit": 0,
+      "signal": null,
+      "evidence": "package-c8-broker.log"
+    },
+    {
+      "name": "devpack",
+      "exit": 0,
+      "signal": null,
+      "evidence": "package-c8-devpack.log"
+    },
+    {
+      "name": "apps",
+      "exit": 0,
+      "signal": null,
+      "evidence": "package-c8-apps.log"
+    },
+    {
+      "name": "launcher",
+      "exit": 0,
+      "signal": null,
+      "evidence": "package-c8-launcher.log"
+    },
+    {
+      "name": "maintenance",
+      "exit": 0,
+      "signal": null,
+      "evidence": "package-c8-maintenance.log"
+    },
+    {
+      "name": "product",
+      "exit": 0,
+      "signal": null,
+      "evidence": "package-c8-product.log"
+    },
+    {
+      "name": "pocket-services",
+      "exit": 0,
+      "signal": null,
+      "evidence": "package-c8-pocket-services.log"
+    },
+    {
+      "name": "pocket-product",
+      "exit": 0,
+      "signal": null,
+      "evidence": "package-c8-pocket-product.log"
+    },
+    {
+      "name": "mas-board",
+      "exit": 0,
+      "signal": null,
+      "evidence": "package-c8-mas-board.log"
+    },
+    {
+      "name": "pocket-workflows",
+      "exit": 0,
+      "signal": null,
+      "evidence": "package-c8-pocket-workflows.log"
+    },
+    {
+      "name": "pocket-controlled",
+      "exit": 0,
+      "signal": null,
+      "evidence": "package-c8-pocket-controlled.log"
+    },
+    {
+      "name": "pocket-notifications",
+      "exit": 0,
+      "signal": null,
+      "evidence": "package-c8-pocket-notifications.log"
+    },
+    {
+      "name": "pocket-schedules",
+      "exit": 0,
+      "signal": null,
+      "evidence": "package-c8-pocket-schedules.log"
+    },
+    {
+      "name": "pocket-memory",
+      "exit": 0,
+      "signal": null,
+      "evidence": "package-c8-pocket-memory.log"
+    },
+    {
+      "name": "pocket-hooks",
+      "exit": 0,
+      "signal": null,
+      "evidence": "package-c8-pocket-hooks.log"
+    },
+    {
+      "name": "pocket-voice",
+      "exit": 0,
+      "signal": null,
+      "evidence": "package-c8-pocket-voice.log"
+    }
+  ],
+  "previousC6SourceSha256": "2da67e30885c7f70b5a68124c8d7c28a87afe37da7143da0621d9399f7dfd263",
+  "previousC7SourceSha256": "25b9c236b8689bbff31f425342af9e36fdb87602c00b3bd4f12016cdaefa23fb",
+  "c6ToC7TestOnlyDelta": [
+    "apps/webui/test/schedules-recovery.test.ts"
+  ],
+  "c7ToC8TestOnlyDelta": [
+    "apps/server/test/http-listener.test.ts",
+    "apps/webui/test/http-listener.test.ts"
+  ],
+  "earlierLongHistoryMeasurement": {
+    "sourceSha256": "2ee0336462a2eea41fd1a708fa26db2723baa5da7f41aa81704bc3ea6c243b91",
+    "deltaToFinal": [
+      "apps/server/test/http-listener.test.ts",
+      "apps/webui/test/http-listener.test.ts",
+      "apps/webui/test/lazy-content-browser.test.ts",
+      "apps/webui/test/schedules-recovery.test.ts",
+      "apps/webui/web/content-reader.js",
+      "packages/agent/src/conversation-preview.ts",
+      "packages/agent/src/durable-adapter.ts",
+      "packages/agent/src/types.ts",
+      "packages/agent/test/live-preview.test.ts"
+    ],
+    "identityIsNotRetroactivelyChanged": true
+  }
+}

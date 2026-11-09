@@ -69,7 +69,28 @@ export interface PocketJsonObject {
 	readonly [key: string]: PocketJson;
 }
 export type PocketJson = null | string | number | boolean | readonly PocketJson[] | PocketJsonObject;
-export type PocketPart =
+/** Display locator only: current person/resource authority is checked separately for every range. */
+export type PocketContentReference = PocketJsonObject & {
+	readonly id: string;
+	readonly source: "entry" | "live";
+	readonly entryId?: string;
+	readonly sourceConversationId?: string;
+	readonly taskId?: string;
+	readonly callId?: string;
+	readonly revision: string;
+	readonly path: string;
+	readonly encoding: "text" | "json" | "base64";
+	readonly byteLength: number;
+	readonly previewComplete: boolean;
+};
+export interface PocketContentChunk {
+	readonly reference: PocketContentReference;
+	readonly text: string;
+	readonly offset: number;
+	readonly nextOffset: number;
+	readonly complete: boolean;
+}
+export type PocketPart = (
 	| { readonly type: "text"; readonly text: string }
 	| { readonly type: "thinking"; readonly thinking: string }
 	| { readonly type: "image"; readonly data: string; readonly mimeType: string }
@@ -78,7 +99,8 @@ export type PocketPart =
 			readonly id: string;
 			readonly name: string;
 			readonly arguments: PocketJsonObject;
-	  };
+	  }
+) & { readonly contentReference?: PocketContentReference };
 export interface PocketMessage {
 	readonly role: "user" | "assistant" | "toolResult";
 	readonly content: string | readonly PocketPart[];
@@ -88,6 +110,8 @@ export interface PocketMessage {
 	readonly stopReason?: string;
 	/** Original assistant error reason, bounded like transcript text; no native provider object. */
 	readonly errorMessage?: string;
+	readonly contentReference?: PocketContentReference;
+	readonly errorReference?: PocketContentReference;
 }
 export interface PocketDisplay {
 	readonly namespace: string;
@@ -95,6 +119,7 @@ export interface PocketDisplay {
 	readonly requestId: string;
 	readonly kind: "card" | "chat";
 	readonly text: string;
+	readonly contentReference?: PocketContentReference;
 }
 export interface PocketSnapshot {
 	readonly ref: AgentRef;
@@ -119,6 +144,9 @@ export interface PocketSnapshot {
 			readonly status: "pending" | "running" | "done";
 			readonly taskId?: string;
 			readonly output?: string;
+			readonly contentReference?: PocketContentReference;
+			readonly droppedBytes?: number;
+			readonly droppedLines?: number;
 		}[];
 	};
 	readonly usage: {
@@ -129,6 +157,17 @@ export interface PocketSnapshot {
 		readonly totalTokens: number;
 		readonly cost: number | null;
 	};
+}
+/** Changes to the last bounded hot snapshot, not deletions from the durable archive. */
+export interface PocketSnapshotPatch {
+	readonly ref: AgentRef;
+	readonly baseSequence: number;
+	readonly entries?: PocketSnapshot["entries"];
+	readonly entryIds?: readonly string[];
+	readonly entriesTruncated?: boolean;
+	readonly olderBeforeId?: string | null;
+	readonly live?: PocketSnapshot["live"];
+	readonly usage?: PocketSnapshot["usage"];
 }
 export interface PocketDirectoryView {
 	readonly path: string;
@@ -375,6 +414,21 @@ export type PocketCommand =
 			readonly page?: { readonly limit?: number; readonly beforeEntryId?: string };
 	  }
 	| {
+			readonly op: "preview";
+			readonly target: AgentRef;
+			readonly page?: {
+				readonly limit?: number;
+				readonly beforeEntryId?: string;
+				readonly maxBytes?: number;
+			};
+	  }
+	| {
+			readonly op: "content.read";
+			readonly target: AgentRef;
+			readonly reference: PocketContentReference;
+			readonly range: { readonly offset: number; readonly length: number };
+	  }
+	| {
 			readonly op: "display";
 			readonly target: AgentRef;
 			readonly requestId: string;
@@ -463,6 +517,7 @@ export type PocketResult =
 	| { readonly kind: "credential"; readonly status: PocketCredentialStatus }
 	| { readonly kind: "collaboration"; readonly snapshot: PocketCollaborationView }
 	| { readonly kind: "conversation"; readonly snapshot: PocketSnapshot }
+	| { readonly kind: "content"; readonly target: AgentRef; readonly chunk: PocketContentChunk }
 	| {
 			readonly kind: "people";
 			readonly people: readonly PocketPerson[];
@@ -514,6 +569,7 @@ export type PocketEvent = {
 	readonly sequence: number;
 } & (
 	| { readonly kind: "conversation"; readonly snapshot: PocketSnapshot }
+	| { readonly kind: "conversation.patch"; readonly patch: PocketSnapshotPatch }
 	| { readonly kind: "collaboration"; readonly snapshot: PocketCollaborationView }
 	| { readonly kind: "resnapshot" | "invalidated" }
 );
@@ -561,23 +617,52 @@ const invite = (v: unknown): v is PocketInvite =>
 	["pending", "redeemed", "revoked"].includes(v.status as string);
 const entryId = (v: unknown): v is string =>
 	typeof v === "string" && v.length > 0 && v.length <= 256 && !/[\x00-\x1f\x7f]/.test(v);
+const contentReference = (v: unknown): v is PocketContentReference =>
+	shape(
+		v,
+		["id", "source", "revision", "path", "encoding", "byteLength", "previewComplete"],
+		["entryId", "sourceConversationId", "taskId", "callId"],
+	) &&
+	typeof v.id === "string" &&
+	/^[a-f0-9]{64}$/.test(v.id) &&
+	["entry", "live"].includes(String(v.source)) &&
+	(v.source === "entry" ? entryId(v.entryId) : v.entryId === undefined) &&
+	(v.sourceConversationId === undefined || identity(v.sourceConversationId)) &&
+	(v.taskId === undefined || entryId(v.taskId)) &&
+	(v.callId === undefined || entryId(v.callId)) &&
+	identity(v.revision) &&
+	string(v.path, 1024) &&
+	v.path.startsWith("/") &&
+	!/[\x00-\x1f\x7f]/.test(v.path) &&
+	["text", "json", "base64"].includes(String(v.encoding)) &&
+	integer(v.byteLength) &&
+	typeof v.previewComplete === "boolean";
+const contentChunk = (v: unknown): v is PocketContentChunk =>
+	shape(v, ["reference", "text", "offset", "nextOffset", "complete"]) &&
+	contentReference(v.reference) &&
+	string(v.text, 65536) &&
+	integer(v.offset, 0, v.reference.byteLength) &&
+	integer(v.nextOffset, v.offset, Math.min(v.reference.byteLength, v.offset + 65536)) &&
+	typeof v.complete === "boolean" &&
+	v.complete === (v.nextOffset === v.reference.byteLength) &&
+	(v.nextOffset > v.offset || v.complete);
 const part = (v: unknown): v is PocketPart => {
-	if (!record(v)) return false;
+	if (!record(v) || (v.contentReference !== undefined && !contentReference(v.contentReference))) return false;
 	switch (v.type) {
 		case "text":
-			return shape(v, ["type", "text"]) && string(v.text);
+			return shape(v, ["type", "text"], ["contentReference"]) && string(v.text);
 		case "thinking":
-			return shape(v, ["type", "thinking"]) && string(v.thinking);
+			return shape(v, ["type", "thinking"], ["contentReference"]) && string(v.thinking);
 		case "image":
 			return (
-				shape(v, ["type", "data", "mimeType"]) &&
+				shape(v, ["type", "data", "mimeType"], ["contentReference"]) &&
 				string(v.data, 1024 * 1024) &&
 				string(v.mimeType, 100) &&
 				/^image\/[a-zA-Z0-9.+-]+$/.test(v.mimeType)
 			);
 		case "toolCall":
 			return (
-				shape(v, ["type", "id", "name", "arguments"]) &&
+				shape(v, ["type", "id", "name", "arguments"], ["contentReference"]) &&
 				entryId(v.id) &&
 				entryId(v.name) &&
 				record(v.arguments)
@@ -587,33 +672,76 @@ const part = (v: unknown): v is PocketPart => {
 	}
 };
 const message = (v: unknown): v is PocketMessage => {
-	if (!record(v)) return false;
+	if (
+		!record(v) ||
+		(v.contentReference !== undefined && !contentReference(v.contentReference)) ||
+		(v.errorReference !== undefined && !contentReference(v.errorReference))
+	)
+		return false;
 	const content =
 		string(v.content) || (Array.isArray(v.content) && v.content.length <= 256 && v.content.every(part));
 	if (!content) return false;
-	if (v.role === "user") return shape(v, ["role", "content"]);
+	if (v.role === "user") return shape(v, ["role", "content"], ["contentReference"]);
 	if (v.role === "assistant")
 		return (
-			shape(v, ["role", "content"], ["stopReason", "errorMessage"]) &&
+			shape(v, ["role", "content"], ["stopReason", "errorMessage", "contentReference", "errorReference"]) &&
 			(v.errorMessage === undefined || string(v.errorMessage)) &&
 			(v.stopReason === undefined ||
 				["stop", "length", "toolUse", "error", "aborted"].includes(v.stopReason as string))
 		);
 	return (
 		v.role === "toolResult" &&
-		shape(v, ["role", "content", "toolCallId", "toolName", "isError"]) &&
+		shape(v, ["role", "content", "toolCallId", "toolName", "isError"], ["contentReference"]) &&
 		entryId(v.toolCallId) &&
 		entryId(v.toolName) &&
 		typeof v.isError === "boolean"
 	);
 };
 const display = (v: unknown): v is PocketDisplay =>
-	shape(v, ["namespace", "actorId", "requestId", "kind", "text"]) &&
+	shape(v, ["namespace", "actorId", "requestId", "kind", "text"], ["contentReference"]) &&
+	(v.contentReference === undefined || contentReference(v.contentReference)) &&
 	identity(v.namespace) &&
 	identity(v.actorId) &&
 	identity(v.requestId) &&
 	["chat", "card"].includes(v.kind as string) &&
 	string(v.text, 16384);
+function snapshotPatch(v: unknown): v is PocketSnapshotPatch {
+	if (
+		!shape(
+			v,
+			["ref", "baseSequence"],
+			["entries", "entryIds", "entriesTruncated", "olderBeforeId", "live", "usage"],
+		) ||
+		!ref(v.ref) ||
+		!integer(v.baseSequence, 1) ||
+		Object.keys(v).length < 3 ||
+		(v.entriesTruncated !== undefined && typeof v.entriesTruncated !== "boolean") ||
+		(v.olderBeforeId !== undefined && v.olderBeforeId !== null && !entryId(v.olderBeforeId)) ||
+		(v.entryIds !== undefined &&
+			(!Array.isArray(v.entryIds) ||
+				v.entryIds.length > 256 ||
+				!v.entryIds.every(entryId) ||
+				new Set(v.entryIds).size !== v.entryIds.length))
+	)
+		return false;
+	const candidate = {
+		ref: v.ref,
+		entries: v.entries ?? [],
+		entriesTruncated: v.entriesTruncated ?? typeof v.olderBeforeId === "string",
+		...(typeof v.olderBeforeId === "string" ? { olderBeforeId: v.olderBeforeId } : {}),
+		live: v.live ?? { busy: false, tools: [] },
+		usage: v.usage ?? { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, totalTokens: 0, cost: 0 },
+	};
+	if (
+		!snapshot(candidate) ||
+		new Set(candidate.entries.map((entry) => entry.id)).size !== candidate.entries.length
+	)
+		return false;
+	return (
+		v.entryIds === undefined ||
+		candidate.entries.every((entry) => (v.entryIds as readonly string[]).includes(entry.id))
+	);
+}
 function snapshot(v: unknown): v is PocketSnapshot {
 	if (
 		!shape(v, ["ref", "entries", "entriesTruncated", "live", "usage"], ["olderBeforeId"]) ||
@@ -655,7 +783,14 @@ function snapshot(v: unknown): v is PocketSnapshot {
 	if (
 		!v.live.tools.every(
 			(t) =>
-				shape(t, ["callId", "name", "status"], ["taskId", "output"]) &&
+				shape(
+					t,
+					["callId", "name", "status"],
+					["taskId", "output", "contentReference", "droppedBytes", "droppedLines"],
+				) &&
+				(t.contentReference === undefined || contentReference(t.contentReference)) &&
+				(t.droppedBytes === undefined || integer(t.droppedBytes)) &&
+				(t.droppedLines === undefined || integer(t.droppedLines)) &&
 				entryId(t.callId) &&
 				entryId(t.name) &&
 				["pending", "running", "done"].includes(t.status as string) &&
@@ -1129,6 +1264,25 @@ function command(v: unknown): v is PocketCommand {
 						(v.page.limit === undefined || integer(v.page.limit, 1, 256)) &&
 						(v.page.beforeEntryId === undefined || entryId(v.page.beforeEntryId))))
 			);
+		case "preview":
+			return (
+				shape(v, ["op", "target"], ["page"]) &&
+				ref(v.target) &&
+				(v.page === undefined ||
+					(shape(v.page, [], ["limit", "beforeEntryId", "maxBytes"]) &&
+						(v.page.limit === undefined || integer(v.page.limit, 1, 256)) &&
+						(v.page.beforeEntryId === undefined || entryId(v.page.beforeEntryId)) &&
+						(v.page.maxBytes === undefined || integer(v.page.maxBytes, 16384, 256 * 1024))))
+			);
+		case "content.read":
+			return (
+				shape(v, ["op", "target", "reference", "range"]) &&
+				ref(v.target) &&
+				contentReference(v.reference) &&
+				shape(v.range, ["offset", "length"]) &&
+				integer(v.range.offset, 0, v.reference.byteLength) &&
+				integer(v.range.length, 8, 65536)
+			);
 		case "display":
 			return (
 				shape(v, ["op", "target", "requestId", "kind", "text"]) &&
@@ -1352,6 +1506,8 @@ function result(v: unknown): v is PocketResult {
 			return shape(v, ["kind", "configuration"]) && configuration(v.configuration);
 		case "conversation":
 			return shape(v, ["kind", "snapshot"]) && snapshot(v.snapshot);
+		case "content":
+			return shape(v, ["kind", "target", "chunk"]) && ref(v.target) && contentChunk(v.chunk);
 		case "collaboration":
 			return shape(v, ["kind", "snapshot"]) && collaboration(v.snapshot);
 		case "people":
@@ -1475,15 +1631,19 @@ export function decodePocketEvent(value: unknown): PocketEvent {
 	return decode(
 		value,
 		(v): v is PocketEvent =>
-			shape(v, ["version", "serverId", "streamId", "sequence", "kind"], ["snapshot"]) &&
+			shape(v, ["version", "serverId", "streamId", "sequence", "kind"], ["snapshot", "patch"]) &&
 			v.version === 2 &&
 			identity(v.serverId) &&
 			identity(v.streamId) &&
 			integer(v.sequence) &&
 			(v.kind === "conversation"
-				? snapshot(v.snapshot)
-				: v.kind === "collaboration"
-					? collaboration(v.snapshot)
-					: ["resnapshot", "invalidated"].includes(v.kind as string) && v.snapshot === undefined),
+				? v.patch === undefined && snapshot(v.snapshot)
+				: v.kind === "conversation.patch"
+					? v.snapshot === undefined && snapshotPatch(v.patch) && v.patch.baseSequence < v.sequence
+					: v.kind === "collaboration"
+						? v.patch === undefined && collaboration(v.snapshot)
+						: ["resnapshot", "invalidated"].includes(v.kind as string) &&
+							v.snapshot === undefined &&
+							v.patch === undefined),
 	);
 }

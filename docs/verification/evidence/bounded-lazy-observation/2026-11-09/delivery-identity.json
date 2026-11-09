@@ -1,0 +1,247 @@
+{
+  "schema": 1,
+  "branch": "pakka/lazy-webui-observation",
+  "baselineHead": "aa83eedecc92ec3d7b0f46010814344da721b0c6",
+  "node": "v24.15.0",
+  "sourceSha256": "2ee0336462a2eea41fd1a708fa26db2723baa5da7f41aa81704bc3ea6c243b91",
+  "sourceFiles": 599,
+  "browserVendorSha256": "d12efbe6149601db2b6d44451ddd1358d42a864e030f4123918bf07501b81576",
+  "packages": [
+    {
+      "name": "@pakka/agent",
+      "version": "0.7.0",
+      "file": "pakka-agent-0.7.0.tgz",
+      "bytes": 14751931,
+      "sha256": "53db938c1d60516e5f144fe59c629b9b965e9860c9b57308a5206fb912a2a04e"
+    },
+    {
+      "name": "@pakka/mas",
+      "version": "0.4.0",
+      "file": "pakka-mas-0.4.0.tgz",
+      "bytes": 13570,
+      "sha256": "8d467427927cdd29424a09e2827777e01002bb006f480101bd5f74ed0660b56d"
+    },
+    {
+      "name": "@pakka/mas-devpack",
+      "version": "0.2.0",
+      "file": "pakka-mas-devpack-0.2.0.tgz",
+      "bytes": 43088,
+      "sha256": "97e58b8365c0723a97dfc1c6e3190d395d0300dd4961b4cb5f28099dd6ef0c8c"
+    },
+    {
+      "name": "@pakka/protocol",
+      "version": "0.1.0",
+      "file": "pakka-protocol-0.1.0.tgz",
+      "bytes": 14381,
+      "sha256": "e74e576fc093620b53590b33505a09a78e6d728fb0b77d2c1c980223043f15c4"
+    },
+    {
+      "name": "@pakka/client",
+      "version": "0.1.0",
+      "file": "pakka-client-0.1.0.tgz",
+      "bytes": 5614,
+      "sha256": "3f97d9009d516c36903ca68e48a8e45aa5d6b38b7ba62296d9b01851b5d5024a"
+    },
+    {
+      "name": "@pakka/cli",
+      "version": "0.1.0",
+      "file": "pakka-cli-0.1.0.tgz",
+      "bytes": 1528,
+      "sha256": "a86c0ac1c38c2438f045971d16a86315451bacef0249d70c11c9ab4b74d30329"
+    },
+    {
+      "name": "@pakka/server",
+      "version": "0.5.0",
+      "file": "pakka-server-0.5.0.tgz",
+      "bytes": 85430,
+      "sha256": "49754522f077c5d7a56d9f2fa8b6283a6aac30ad1bf3d5d0ae83d10db94d08e0"
+    },
+    {
+      "name": "@pakka/webui",
+      "version": "0.1.0",
+      "file": "pakka-webui-0.1.0.tgz",
+      "bytes": 739399,
+      "sha256": "86ec10e2a05ccf0e2dfd9dd1de21f5f9e2330672db6707e2bc979dedb905e775"
+    }
+  ],
+  "packageSteps": [
+    {
+      "name": "pack",
+      "exit": 0,
+      "signal": null
+    },
+    {
+      "name": "pack-cli",
+      "exit": 0,
+      "signal": null
+    },
+    {
+      "name": "pack-client",
+      "exit": 0,
+      "signal": null
+    },
+    {
+      "name": "pack-devpack",
+      "exit": 0,
+      "signal": null
+    },
+    {
+      "name": "pack-mas",
+      "exit": 0,
+      "signal": null
+    },
+    {
+      "name": "pack-protocol",
+      "exit": 0,
+      "signal": null
+    },
+    {
+      "name": "pack-server",
+      "exit": 0,
+      "signal": null
+    },
+    {
+      "name": "pack-webui",
+      "exit": 0,
+      "signal": null
+    },
+    {
+      "name": "install",
+      "exit": 0,
+      "signal": null
+    },
+    {
+      "name": "install-headless",
+      "exit": 0,
+      "signal": null
+    },
+    {
+      "name": "devpack-headless",
+      "exit": 0,
+      "signal": null
+    },
+    {
+      "name": "declarations",
+      "exit": 0,
+      "signal": null
+    },
+    {
+      "name": "browser-declarations",
+      "exit": 0,
+      "signal": null
+    },
+    {
+      "name": "dependency-tree",
+      "exit": 0,
+      "signal": null
+    },
+    {
+      "name": "smoke",
+      "exit": 0,
+      "signal": null
+    },
+    {
+      "name": "runtime",
+      "exit": 0,
+      "signal": null
+    },
+    {
+      "name": "execution",
+      "exit": 0,
+      "signal": null
+    },
+    {
+      "name": "mas",
+      "exit": 0,
+      "signal": null
+    },
+    {
+      "name": "broker",
+      "exit": 0,
+      "signal": null
+    },
+    {
+      "name": "devpack",
+      "exit": 0,
+      "signal": null
+    },
+    {
+      "name": "apps",
+      "exit": 0,
+      "signal": null
+    },
+    {
+      "name": "launcher",
+      "exit": 0,
+      "signal": null
+    },
+    {
+      "name": "maintenance",
+      "exit": 0,
+      "signal": null
+    },
+    {
+      "name": "product",
+      "exit": 0,
+      "signal": null
+    },
+    {
+      "name": "pocket-services",
+      "exit": 0,
+      "signal": null
+    },
+    {
+      "name": "pocket-product",
+      "exit": 0,
+      "signal": null
+    },
+    {
+      "name": "mas-board",
+      "exit": 0,
+      "signal": null
+    },
+    {
+      "name": "pocket-workflows",
+      "exit": 0,
+      "signal": null
+    },
+    {
+      "name": "pocket-controlled",
+      "exit": 0,
+      "signal": null
+    },
+    {
+      "name": "pocket-notifications",
+      "exit": 0,
+      "signal": null
+    },
+    {
+      "name": "pocket-schedules",
+      "exit": 0,
+      "signal": null
+    },
+    {
+      "name": "pocket-memory",
+      "exit": 0,
+      "signal": null
+    },
+    {
+      "name": "pocket-hooks",
+      "exit": 0,
+      "signal": null
+    },
+    {
+      "name": "pocket-voice",
+      "exit": 0,
+      "signal": null
+    }
+  ],
+  "measuredProductBaseline": {
+    "sourceSha256": "8db751fa34c83b8024dbd4ad153590cb77bf2f85b9eeb9bd037d17b36664fbd9",
+    "testOnlyDelta": [
+      "apps/webui/test/browser.ts",
+      "apps/webui/test/lazy-content-browser.test.ts",
+      "scripts/consumer-pocket-schedules.mjs"
+    ]
+  }
+}

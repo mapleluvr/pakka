@@ -1,6 +1,6 @@
 # 前端交互
 
-详细场景见 [devin-frontend spec](../../openspec/changes/adopt-devin-frontend/specs/devin-frontend/spec.md)，形成记录及全部关联变更见[采用摘要](../changes/devin-frontend-adoption.md)。本页描述跨页面关系；服务字段与调用条件由对应领域细则维护。
+详细场景见 [devin-frontend spec](../../openspec/changes/adopt-devin-frontend/specs/devin-frontend/spec.md)，形成记录及全部关联变更见[采用摘要](../changes/devin-frontend-adoption.md)。本页描述跨页面关系；服务字段与调用条件由对应领域细则维护。长历史、工具内容与按需 DOM 的预期由[观察与完整内容](conversation-observation.md)及[有界懒加载场景](../../openspec/changes/add-bounded-lazy-observation/specs/devin-frontend/spec.md)共同维护。
 
 ## 基座与真实状态
 

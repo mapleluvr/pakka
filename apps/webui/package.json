@@ -54,7 +54,7 @@
 		"contributions"
 	],
 	"scripts": {
-		"build": "tsc -p tsconfig.json"
+		"build": "tsc -p tsconfig.json && node scripts/build-browser-vendors.mjs"
 	},
 	"dependencies": {
 		"@earendil-works/pi-ai": "1.4.0",
@@ -63,6 +63,7 @@
 		"@pakka/client": "0.1.0",
 		"@pakka/protocol": "0.1.0",
 		"@pakka/server": "0.5.0",
+		"@tanstack/virtual-core": "3.19.11",
 		"dompurify": "3.4.16",
 		"htm": "3.1.1",
 		"marked": "18.1.0",
@@ -72,6 +73,7 @@
 	"devDependencies": {
 		"@types/pngjs": "6.0.5",
 		"@types/qrcode": "1.5.6",
+		"esbuild": "0.28.2",
 		"jsqr": "1.4.0",
 		"pngjs": "7.0.0"
 	}

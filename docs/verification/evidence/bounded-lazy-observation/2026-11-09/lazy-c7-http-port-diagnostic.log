@@ -1,0 +1,30 @@
+✖ HTTP listeners replace Fetch-blocked ephemeral port 4045 before publishing their address (38.9112ms)
+✔ explicitly blocked HTTP port 4045 is refused before binding (1.4976ms)
+✔ HTTP listeners replace Fetch-blocked ephemeral port 4190 before publishing their address (32.9612ms)
+✔ explicitly blocked HTTP port 4190 is refused before binding (0.2759ms)
+✔ HTTP listeners replace Fetch-blocked ephemeral port 6679 before publishing their address (11.8413ms)
+✔ explicitly blocked HTTP port 6679 is refused before binding (0.3507ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 5
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 399.1487
+
+✖ failing tests:
+
+test at apps\server\test\http-listener.test.ts:8:2
+✖ HTTP listeners replace Fetch-blocked ephemeral port 4045 before publishing their address (38.9112ms)
+  Error: listen EACCES: permission denied 127.0.0.1:4045
+      at Server.setupListenHandle [as _listen2] (node:net:1986:21)
+      at listenInCluster (node:net:2065:12)
+      at node:net:2274:7
+      at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+    code: 'EACCES',
+    errno: -4092,
+    syscall: 'listen',
+    address: '127.0.0.1',
+    port: 4045
+  }

@@ -130,6 +130,14 @@ Verification 的选用与记录按[通用方法](VERIFICATION.md#选用与记录
 
 只修改文档时检查文档结构、链接和格式，不重跑无变化的模型矩阵。代码实施后的通过依赖实际消费者与精确产物，不依赖 OpenSpec checkbox 或截图单独自证。
 
+### 被动观察与完整原文
+
+普通产品根／子 Runtime 默认冷观察。页面使用 v2 `preview`、`content.read` 及 `mode=preview` 的观察端口；旧完整 SDK/read 语义不被静默截断。预览按条数与字节封顶，大文字、参数和图片通过原来源/版本引用按需读取，不能每轮先创建完整 native watch 再裁剪。
+
+观察流按 333 ms 合并变化，无变化只小心跳，长流与短控制请求分开计量。多资源请求必须整体通过当前权限校验；浏览器合并状态只接受同 server/person/Session/resource/stream 的确切基线和连续版本，缺页重新读而不是补空数据。可用 SharedWorker 时同身份页面共享连接，回退直连仍保留浏览器连接池限制。
+
+历史用固定的虚拟化内核与原行 key 管理绝对定位、测量、前插锚点及唯一焦点行，原文、正文缓存与 DOM 分别受预算约束；不能将 CSS 折叠或缓存淘汰称为存档删除。标准构建产出 browser vendor 与输入/输出摘要，运行时不安装或改写依赖。接口见 [Runtime API](../reference/RUNTIME-API.md#冷观察预览与完整内容)，操作见[使用指南](../guides/WEBUI-GUIDE.md#历史工具摘要与完整原文)，预期见[观察声明](../state/conversation-observation.md)。
+
 ### 独立选择模型和 Conversation 工作目录
 
 模型入口位于消息输入区，点击紧凑模型按钮查询可信宿主的原生 Pi 目录。具有 Conversation 配置权限的人可选择目录内任一模型；完整引用包含 provider/modelId，模型目录与 Agent profile 分开。候选显示真实输入类型、上下文与输出上限、thinking 等级及目录价格，不携带另一个预设的 cwd、工具或指令。原生产品使用有界分页与服务端搜索，兼容配置响应的 65 项前缀不是完整目录，也不限制其余模型。legacy 单 provider 装配仍可从其显式配置生成兼容目录。

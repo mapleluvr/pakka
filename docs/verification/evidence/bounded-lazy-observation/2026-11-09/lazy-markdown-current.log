@@ -1,0 +1,4 @@
+markdownlint-cli2 v0.24.0 (markdownlint v0.42.0)
+Finding: docs/state/durable-patch.md patches/pi-durable/1.4.0-pakka.3/README.md docs/state/conversation-observation.md docs/changes/bounded-lazy-observation.md
+Linting: 4 files
+Summary: 0 issues in 0 files

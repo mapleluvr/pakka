@@ -49,7 +49,7 @@ for (const name of ["pi-ai", "chord", "pi-durable", "pi-telemetry"]) {
 		break;
 	}
 	assert.ok(versions[name], "Installed package metadata missing: " + name);
-	assert.equal(versions[name], name === "pi-durable" ? "1.4.0-pakka.2" : "1.4.0");
+	assert.equal(versions[name], name === "pi-durable" ? "1.4.0-pakka.3" : "1.4.0");
 }
 await assert.rejects(import("@pakka/agent/dist/pi-adapter.js"), { code: "ERR_PACKAGE_PATH_NOT_EXPORTED" });
 await assert.rejects(import("@pakka/agent/dist/durable-adapter.js"), {

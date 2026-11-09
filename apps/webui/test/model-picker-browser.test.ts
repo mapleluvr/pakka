@@ -39,6 +39,15 @@ test(
 				await page.evaluate('document.querySelector("[data-pick-model]").dataset.pickModel'),
 				"alternate-10",
 			);
+			await page.wait('document.querySelector("[data-pick-model=alternate-10]")?.disabled===false');
+			// A native disabled roving option must not become the focus trap's last element.
+			// Only its DOM disabled state is staged; runtime model/cwd/authority/budget remain untouched.
+			await page.evaluate('document.querySelector("[data-pick-model=alternate-10]").disabled=true');
+			await page.key("Tab");
+			await page.wait('document.activeElement?.getAttribute("aria-label")==="Close model picker"');
+			await page.key("Tab", true);
+			await page.wait('document.activeElement?.getAttribute("aria-label")==="Search models"');
+			await page.evaluate('document.querySelector("[data-pick-model=alternate-10]").disabled=false');
 			await page.key("Tab");
 			await page.wait('document.activeElement?.dataset.pickModel==="alternate-10"');
 			await page.key("Enter");

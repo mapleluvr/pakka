@@ -64,6 +64,7 @@ test(
 			assert.equal((await runtime.configuration(ref)).model, "alpha/reasoner");
 			assert.equal(p.f.requests.length, 0);
 			await page.type("textarea[name=message]", "Read and attempt to overwrite the protected file");
+			await page.wait('document.querySelector("[data-action=send]")?.disabled===false');
 			await page.click("[data-action=send]");
 			await page.wait('document.querySelector(".pocket-receipt")?.dataset.receiptStatus === "done"');
 			assert.equal(p.f.requests.length, 3);

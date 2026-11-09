@@ -118,6 +118,10 @@ async function seedHistory(m: Fixture, liveTool?: { execute(): Promise<string> }
 					},
 				],
 			});
+			// Leave more than one preview page between declaration and result so an explicitly
+			// paged, genuinely lazy window can still contain an orphan before its older declaration.
+			for (let index = 0; index < 60; index++)
+				await tx.appendEntry(id, { kind: `test.between.${index}`, data: { index } });
 			const resultEntry = await tx.appendEntry(ToolResultEntry, id, {
 				model: [
 					{
@@ -513,6 +517,30 @@ test(
 			await pageInBrowser.wait(
 				'document.querySelector(".message-list") && !document.querySelector(".message-list").textContent.includes("Connecting")',
 			);
+			// The preview tail is byte/count bounded and old body DOM is genuinely absent.
+			// Explicitly page up to the orphan result, then open it before checking its parts.
+			for (let index = 0; index < 4; index++) {
+				const cursor = await pageInBrowser.evaluate(
+					'document.querySelector("[data-action=show-earlier]").dataset.historyBefore',
+				);
+				await pageInBrowser.click("[data-action=show-earlier]");
+				await pageInBrowser.wait(
+					'document.querySelector("[data-action=show-earlier]").dataset.historyBefore !== ' +
+						JSON.stringify(cursor),
+				);
+			}
+			await pageInBrowser.evaluate('document.querySelector(".conversation-scroll").scrollTop = 0');
+			await pageInBrowser.wait('document.querySelector("[data-call-id=call-orphan]") !== null');
+			assert.equal(
+				await pageInBrowser.evaluate(
+					'document.querySelector("[data-call-id=call-orphan] [data-tool-output]") === null',
+				),
+				true,
+			);
+			await pageInBrowser.click("[data-call-id=call-orphan] > summary");
+			await pageInBrowser.wait(
+				'document.querySelector("[data-call-id=call-orphan] [data-tool-output]")?.textContent === "ORPHAN-RESULT"',
+			);
 			const visible = (await pageInBrowser.evaluate(
 				`(()=>{const placeholders=[...document.querySelectorAll(".part-unrenderable")];const orphan=document.querySelector('[data-call-id="call-orphan"]');return {placeholders:placeholders.map(node=>({text:node.textContent,type:node.dataset.partType,mime:node.dataset.partMime,visible:!!(node.offsetWidth||node.offsetHeight)})),orphan:orphan?{text:orphan.textContent,note:orphan.querySelector("[data-tool-orphan]")?.textContent,result:orphan.querySelector("[data-tool-output]")?.textContent}:null}})()`,
 			)) as {
@@ -712,6 +740,12 @@ test(
 			await send(page, "LIVE-SAME-ID");
 			await page.wait(
 				'document.querySelectorAll("[data-call-id=call-orphan]").length > 0 && [...document.querySelectorAll("[data-call-id=call-orphan]")].some(card=>card.dataset.toolStatus==="running")',
+			);
+			await page.evaluate(
+				'document.querySelectorAll("[data-call-id=call-orphan]").forEach(card => card.open = true)',
+			);
+			await page.wait(
+				'[...document.querySelectorAll("[data-call-id=call-orphan] [data-tool-output]")].some(node => node.textContent === "ORPHAN-RESULT")',
 			);
 			const during = (await page.evaluate(
 				`[...document.querySelectorAll('[data-call-id="call-orphan"]')].map(card=>({source:card.dataset.sourceConversation,status:card.dataset.toolStatus,output:card.querySelector('[data-tool-output]')?.textContent}))`,

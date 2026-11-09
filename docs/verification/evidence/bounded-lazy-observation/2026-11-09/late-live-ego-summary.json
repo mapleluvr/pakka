@@ -1,0 +1,105 @@
+{
+  "schema": 1,
+  "browserVersion": "0.6.2.8",
+  "testedProductSourceSha256": "2da67e30885c7f70b5a68124c8d7c28a87afe37da7143da0621d9399f7dfd263",
+  "deliveredSourceSha256": "9d4a86314df2238a7d63421293b89d98654179f249549847dceb246720481bbc",
+  "testOnlyDeltaFromTestedProduct": [
+    "apps/webui/test/schedules-recovery.test.ts",
+    "apps/server/test/http-listener.test.ts",
+    "apps/webui/test/http-listener.test.ts"
+  ],
+  "servedReaderSha256": "30cbb5d805872bd83f06e3629c11e5fb184750700e92f8563359f19fc8054f0e",
+  "spaceId": 15,
+  "previousMissingSpaceId": 14,
+  "replacementSpaceExplicitlyAuthorized": true,
+  "originalSessionReopened": true,
+  "noNativeReseeding": true,
+  "syntheticArgumentBytes": 786468,
+  "snapshotBytes": 1043,
+  "folded": {
+    "cards": [
+      {
+        "open": false,
+        "bodyNodes": 0,
+        "readers": 0,
+        "images": 0
+      },
+      {
+        "open": false,
+        "bodyNodes": 0,
+        "readers": 0,
+        "images": 0
+      }
+    ],
+    "elements": 324
+  },
+  "expanded": {
+    "first": true,
+    "last": true,
+    "sourceCapture": true,
+    "bodyBytes": 595,
+    "lineNodes": 4,
+    "readers": [
+      {
+        "scope": "preview",
+        "copyLabel": "Copy preview",
+        "queryLabel": "Find literal text in preview",
+        "originalDownload": 0
+      },
+      {
+        "scope": "preview",
+        "copyLabel": "Copy preview",
+        "queryLabel": "Find literal text in preview",
+        "originalDownload": 0
+      }
+    ],
+    "domElements": 352
+  },
+  "search": {
+    "negative": {
+      "scope": "preview",
+      "status": "Not found in this preview; the complete original was not searched.",
+      "completeOriginalNotSearched": true,
+      "download": 0,
+      "queryLength": 300
+    },
+    "positive": true
+  },
+  "sourceOracle": {
+    "sourceContainsNeedle": true,
+    "nativeReadOnly": true,
+    "queryLength": 300,
+    "sourceUnmodified": true
+  },
+  "collapsed": {
+    "cards": 2,
+    "bodyNodes": 0,
+    "readers": 0,
+    "images": 0,
+    "elements": 324
+  },
+  "cleanup": {
+    "taskSpaceFinished": true,
+    "keptPages": 0,
+    "modelRequests": 0,
+    "writerClaims": 0,
+    "closedAcknowledged": true,
+    "serverExitCode": 0
+  },
+  "beforeFix": {
+    "candidate": "C5 module loaded before the presentation-scope fix",
+    "loaded": {
+      "copy": "Copy original",
+      "queryLabel": "Find literal text in original"
+    },
+    "result": "Not found in this complete original.",
+    "queryLength": 300,
+    "needleExistsInNativeSource": true
+  },
+  "limitations": [
+    "synthetic static LiveDoc fixture, not a real execution or capacity test",
+    "full long-history load measurements retain the earlier C4 identity",
+    "copy button scope and wording verified; no claim of inspecting the user clipboard",
+    "private cookies, credentials, native databases and long source content are not included"
+  ]
+}

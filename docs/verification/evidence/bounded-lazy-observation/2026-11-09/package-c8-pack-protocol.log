@@ -1,0 +1,25 @@
+cwd=D:\Projects\pakka-works\pakka-lazy-webui\packages\protocol
+pakka-protocol-0.1.0.tgz
+npm notice
+npm notice package: @pakka/protocol@0.1.0
+npm notice Tarball Contents
+npm notice 3.3kB dist/index.d.ts
+npm notice 8.4kB dist/index.js
+npm notice 21.0kB dist/pocket.d.ts
+npm notice 42.4kB dist/pocket.js
+npm notice 370B package.json
+npm notice Tarball Details
+npm notice name: @pakka/protocol
+npm notice version: 0.1.0
+npm notice filename: pakka-protocol-0.1.0.tgz
+npm notice package size: 14.4 kB
+npm notice unpacked size: 75.5 kB
+npm notice shasum: 025efbdf6417d68a63f94957e37e6cec0d67fc69
+npm notice integrity: sha512-tDtcc5q/hCg5H[...]U0+k92mT9lxuQ==
+npm notice total files: 5
+npm notice
+
+exit=0
+signal=null
+error=undefined
+elapsedMs=684

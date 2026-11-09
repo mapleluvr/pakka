@@ -1,0 +1,7 @@
+cwd=C:\Users\mapleland\AppData\Local\Temp\pakka-packed-consumer-jyBRYo
+{"status":"passed","consumer":"C:\\Users\\mapleland\\AppData\\Local\\Temp\\pakka-packed-consumer-jyBRYo","isolatedHome":"C:\\Users\\mapleland\\AppData\\Local\\Temp\\pakka-installed-upgrade-uockvZ\\home","sessionId":"ecd7422a-0682-432b-b7bf-7f08b9870640","releaseId":"648f860fd7876750d419aa30c8b61ad5277cfdb42982681ba724c3d08bcdcdd4","backup":"C:\\Users\\mapleland\\AppData\\Local\\Temp\\pakka-installed-upgrade-uockvZ\\home\\maintenance\\upgrade-648f860fd7876750d419aa30c8b61ad5277cfdb42982681ba724c3d08bcdcdd4\\before-upgrade","restoreId":"f246b545-312b-4ae1-a70d-7f128e7ee637","checks":["fixed archives","scripts-disabled staged install","cold snapshot","no-Harness health","selected entry delegation","original Session reopen","data-aware rollback","restored hold","new owner credential","explicit resume","rollback original-receipt replay without replacing new work"]}
+
+exit=0
+signal=null
+error=undefined
+elapsedMs=321580

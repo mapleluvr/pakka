@@ -1,0 +1,7 @@
+cwd=C:\Users\mapleland\AppData\Local\Temp\pakka-packed-consumer-sb1EI0
+{"installedHooks":true,"modelHttp":3,"spentAttempts":3,"lostCreationNeverReplayed":true,"unsignedHeaderCannotReplay":true,"keyRotation":true,"webuiRemovalPreservesIngress":true,"viewerPrivateSetupDenied":true,"evidence":"C:\\Users\\mapleland\\AppData\\Local\\Temp\\pakka-packed-consumer-sb1EI0\\hooks-run-5e5090af-c3d7-46ef-9955-c9f12e759c69"}
+
+exit=0
+signal=null
+error=undefined
+elapsedMs=10978

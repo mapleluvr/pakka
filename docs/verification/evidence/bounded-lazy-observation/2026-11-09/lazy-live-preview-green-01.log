@@ -1,0 +1,27 @@
+✔ WebUI patch projection: unchanged completed outputs do not recur in a live-only update (3.9012ms)
+✔ WebUI patch projection: hot-page movement and usage changes reconstruct exactly without claiming archive deletion (0.3337ms)
+✔ WebUI bounded stream: idle does not re-send complete snapshots and a native commit sends only its changed entry (6396.9785ms)
+✔ WebUI transport: a live observer does not occupy the only short control request slot (111.4822ms)
+✔ WebUI multiplexed observer: one connection serves selected exact resources and rejects a partially unauthorized set before bytes (113.131ms)
+✔ WebUI HTTP preview: large display stays summarized and original ranges remain permission-bound without model work (207.142ms)
+✔ Cold observation: boot and previews mark the execution frame unloaded rather than hydrating the archive (1114.6843ms)
+✔ Cold observation: submitting explicitly materializes context and retains native committed receipt semantics (161.6101ms)
+✔ Conversation preview: large tool text and original image stay readable without putting either whole body in a page (1484.7322ms)
+✔ Conversation preview: a byte page advances through history rather than turning a large entry into a permanent stop (612.4594ms)
+✔ Entry preview: a 14 MB string becomes a bounded head/tail projection with an exact original span (406.9628ms)
+✔ Entry preview: all native scalars, escaped keys, empty containers and proto-named arguments remain ordinary data (1.9455ms)
+✔ Entry preview: bounded independent string fragments reconstruct Unicode, escapes and lone surrogates exactly (61.5882ms)
+✔ Entry preview: malformed input, premature EOF and oversized keys do not publish a plausible partial record (0.5121ms)
+✔ Live preview: large string arguments stay bounded while retaining the call identity (122.4595ms)
+✔ Live preview: wide collection arguments stay bounded while retaining the call identity (92.4116ms)
+✔ Live preview: small arguments retain their actual values (71.0772ms)
+✔ Live preview: provider errors have bounded first/last text (78.3931ms)
+✔ Live preview: native capture omissions remain distinct from a display preview (73.2927ms)
+ℹ tests 19
+ℹ suites 0
+ℹ pass 19
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 19558.8533

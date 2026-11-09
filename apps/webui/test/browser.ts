@@ -399,6 +399,8 @@ export async function ownedBrowser(dir: string, options: { readonly push?: boole
 					selector: string,
 					options: {
 						readonly beforePress?: () => Promise<void>;
+						/** Preserve the viewport after an explicit geometry-ready check. */
+						readonly scroll?: boolean;
 						readonly offset?: { readonly x: number; readonly y: number };
 					} = {},
 				) => {
@@ -408,7 +410,9 @@ export async function ownedBrowser(dir: string, options: { readonly push?: boole
 					const point = await evaluate(
 						"(()=>{const e=document.querySelector(" +
 							JSON.stringify(selector) +
-							");if(!e||e.disabled)return {issue:e?'disabled':'missing'};e.scrollIntoView({block:'center',inline:'nearest',behavior:'instant'});const r=e.getBoundingClientRect(),x=r.x+r.width*" +
+							");if(!e||e.disabled)return {issue:e?'disabled':'missing'};if(" +
+							(options.scroll !== false) +
+							")e.scrollIntoView({block:'center',inline:'nearest',behavior:'instant'});const r=e.getBoundingClientRect(),x=r.x+r.width*" +
 							offset.x +
 							",y=r.y+r.height*" +
 							offset.y +

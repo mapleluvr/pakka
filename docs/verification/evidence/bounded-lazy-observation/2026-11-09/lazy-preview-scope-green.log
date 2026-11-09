@@ -1,0 +1,19 @@
+✔ lazy browser: folded tool keeps no body/media DOM, expanded original is ranged and line-virtualized, collapse releases nodes (3060.3781ms)
+✔ lazy browser: a large in-flight argument stays a preview and source capture omissions remain explicit (2606.3966ms)
+✔ original search: Unicode literal crossing two ranges reports its original UTF-8 byte offset, never concatenates the full archive (1.4156ms)
+✔ original search: JSON-source coordinates remain separate from decoded text positions and allow next-match continuation (0.397ms)
+✔ original search: explicit cancellation and invalid progress stop rather than claim a completed search (0.4921ms)
+✔ original search: full no-match is explicit and the next scan may start at an existing original range (0.2357ms)
+✔ Live preview: large string arguments stay bounded while retaining the call identity (159.2969ms)
+✔ Live preview: wide collection arguments stay bounded while retaining the call identity (129.2076ms)
+✔ Live preview: small arguments retain their actual values (93.1356ms)
+✔ Live preview: provider errors have bounded first/last text (107.5258ms)
+✔ Live preview: native capture omissions remain distinct from a display preview (92.5087ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 11
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 9493.7051

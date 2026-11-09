@@ -1,0 +1,14 @@
+✔ lazy browser: folded tool keeps no body/media DOM, expanded original is ranged and line-virtualized, collapse releases nodes (2758.586ms)
+✔ MAS Agent controls are a separate dismissible sheet at 1440x900 (2539.8589ms)
+✔ MAS Agent controls are a separate dismissible sheet at 360x600 (3223.5589ms)
+✔ MAS Agent controls are a separate dismissible sheet at 390x650 (3229.6584ms)
+✔ MAS retired Agents can be hidden and restored across reload without losing exchanges or history (3295.1606ms)
+✔ Model picker: larger approved catalog is searchable and keyboard selection changes neither cwd nor provider budget (1967.0873ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 21256.6331

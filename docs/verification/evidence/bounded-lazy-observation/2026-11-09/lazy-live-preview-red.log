@@ -1,0 +1,58 @@
+✖ Live preview: large string arguments stay bounded while retaining the call identity (102.6854ms)
+✖ Live preview: wide collection arguments stay bounded while retaining the call identity (100.8647ms)
+✔ Live preview: small arguments retain their actual values (51ms)
+✖ Live preview: provider errors have bounded first/last text (79.8837ms)
+✖ Live preview: native capture omissions remain distinct from a display preview (53.0858ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 1
+ℹ fail 4
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1616.0003
+
+✖ failing tests:
+
+test at packages\agent\test\live-preview.test.ts:38:2
+✖ Live preview: large string arguments stay bounded while retaining the call identity (102.6854ms)
+  Error: Conversation preview byte capacity exceeded
+      at #previewConversation (file:///D:/Projects/pakka-works/pakka-lazy-webui/packages/agent/src/durable-adapter.ts:4120:34)
+      at async TestContext.<anonymous> (file:///D:/Projects/pakka-works/pakka-lazy-webui/packages/agent/test/live-preview.test.ts:45:21)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3)
+
+test at packages\agent\test\live-preview.test.ts:38:2
+✖ Live preview: wide collection arguments stay bounded while retaining the call identity (100.8647ms)
+  Error: Conversation preview byte capacity exceeded
+      at #previewConversation (file:///D:/Projects/pakka-works/pakka-lazy-webui/packages/agent/src/durable-adapter.ts:4120:34)
+      at async TestContext.<anonymous> (file:///D:/Projects/pakka-works/pakka-lazy-webui/packages/agent/test/live-preview.test.ts:45:21)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7)
+
+test at packages\agent\test\live-preview.test.ts:76:1
+✖ Live preview: provider errors have bounded first/last text (79.8837ms)
+  Error: Conversation preview byte capacity exceeded
+      at #previewConversation (file:///D:/Projects/pakka-works/pakka-lazy-webui/packages/agent/src/durable-adapter.ts:4120:34)
+      at async TestContext.<anonymous> (file:///D:/Projects/pakka-works/pakka-lazy-webui/packages/agent/test/live-preview.test.ts:82:20)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7)
+
+test at packages\agent\test\live-preview.test.ts:90:1
+✖ Live preview: native capture omissions remain distinct from a display preview (53.0858ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + undefined
+  - 1234
+  
+      at TestContext.<anonymous> (file:///D:/Projects/pakka-works/pakka-lazy-webui/packages/agent/test/live-preview.test.ts:97:10)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: 1234,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

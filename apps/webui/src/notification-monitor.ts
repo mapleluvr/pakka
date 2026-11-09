@@ -6,14 +6,22 @@ import type { PocketNotifications } from "@pakka/server/pocket";
 export async function observeNotifications(runtime: Runtime, notifications: PocketNotifications) {
 	let closed = false;
 	const seen = new Set<string>();
+	const revisions = new Map<string, number>();
 	const check = () => {
 		if (closed || runtime.view().phase !== "ready") throw Error("Notification observation ended");
 	};
 	async function scan(seed: boolean) {
-		for (const ref of runtime.view().conversations) {
+		const refs = runtime.view().conversations;
+		const active = new Set(refs.map((ref) => JSON.stringify([ref.conversationId, ref.incarnation])));
+		for (const key of revisions.keys()) if (!active.has(key)) revisions.delete(key);
+		for (const ref of refs) {
 			if (closed) return;
 			try {
-				const snapshot = await runtime.readConversation(ref, check, { limit: 32 });
+				const key = JSON.stringify([ref.conversationId, ref.incarnation]);
+				const revision = runtime.observationRevision(ref, check);
+				if (!seed && revisions.get(key) === revision) continue;
+				const snapshot = await runtime.previewConversation(ref, check, { limit: 32, maxBytes: 128 * 1024 });
+				revisions.set(key, revision);
 				for (const entry of snapshot.entries) {
 					const identity = createHash("sha256")
 						.update(JSON.stringify([ref.sessionId, ref.conversationId, entry.id]))
@@ -23,6 +31,7 @@ export async function observeNotifications(runtime: Runtime, notifications: Pock
 					if (seen.size > 2048) seen.delete(seen.values().next().value!);
 					if (
 						seed ||
+						entry.sourceConversationId !== undefined ||
 						!entry.messages.some((message) => message.role === "assistant" && message.stopReason === "stop")
 					)
 						continue;
@@ -58,14 +67,15 @@ export async function observeNotifications(runtime: Runtime, notifications: Pock
 					task = undefined;
 				});
 		}
-	}, 100);
+	}, 333);
 	timer.unref();
 	return Object.freeze({
 		close: async () => {
-			if (closed) return;
 			closed = true;
 			clearInterval(timer);
 			await task;
+			revisions.clear();
+			seen.clear();
 		},
 	});
 }

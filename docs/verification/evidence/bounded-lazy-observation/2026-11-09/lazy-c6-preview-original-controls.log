@@ -1,0 +1,19 @@
+✔ WebUI original download: authorized streaming delivers exact original bytes and a foreign target does not deliver an attachment (216.3746ms)
+✔ WebUI history browser: explicit earlier pages remain searchable across live updates without implicit inference (3341.3611ms)
+✔ WebUI transcript: one real tool keeps its identity, expanded card and result across the live/committed handoff (3357.085ms)
+✔ WebUI transcript: a native tool error remains identifiable in its collapsed result card (3193.8344ms)
+✔ WebUI transcript: an expanded streamed tool call survives its first committed entry (4282.3134ms)
+✔ WebUI transcript: valid image parts and a truncated tool declaration remain visible through real reopen and paging (4043.7221ms)
+✔ WebUI transcript: real chunked generation exposes a live Streaming message, then clears it (4018.6545ms)
+✔ WebUI transcript: inherited tool results do not swallow a different live call with the same provider id (4445.7259ms)
+✔ WebUI receipt: a known policy refusal is blocked, not mislabeled as a permission denial (3317.121ms)
+✔ WebUI receipt: a real host unknown is needs review through a registered Conversation source (3524.9544ms)
+✔ WebUI receipt: withdrawing queued input is not described as a policy refusal (4199.6728ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 11
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 43169.0381

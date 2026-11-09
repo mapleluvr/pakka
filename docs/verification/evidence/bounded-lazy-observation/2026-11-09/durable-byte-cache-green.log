@@ -1,0 +1,33 @@
+
+> pakka-workspace@0.1.0 build:durable-patch
+> node scripts/build-durable-patch.mjs artifacts/pi-upstream-1.4.0 1.4.0-pakka.3
+
+4a080252f06caf63a525d7873c5d94d3c23887e0
+
+added 198 packages in 10s
+
+ RUN  v4.1.11 C:/Users/MAPLEL~1/AppData/Local/Temp/pakka-durable-build-m9OrFh/packages/durable
+
+
+ Test Files  8 passed (8)
+      Tests  183 passed (183)
+   Start at  13:40:51
+   Duration  3.98s (transform 2.84s, setup 4.05s, import 4.60s, tests 8.65s, environment 1ms)
+
+added 137 packages in 36s
+
+ RUN  v4.1.11 C:/Users/MAPLEL~1/AppData/Local/Temp/pakka-durable-consumer-lFOsJQ
+
+ ✓ pakka-entry-archive.test.ts > Durable archive: metadata and exact bounded bytes preserve original records without full decode 94ms
+ ✓ pakka-entry-archive.test.ts > Durable archive: fork cutoffs, unrelated IDs and both scan orders match the original ancestry 17ms
+ ✓ pakka-generation-http.test.ts > Pakka generation policy with real loopback HTTP > explicit block retains native receipts and idle; allowing a later input really reaches HTTP 170ms
+ ✓ pakka-generation-http.test.ts > Pakka generation policy with real loopback HTTP > revocation after an awaited provider payload transform blocks before HTTP 5ms
+ ✓ pakka-generation-http.test.ts > Pakka generation policy with real loopback HTTP > ordinary hook exceptions still report and continue to actual HTTP 11ms
+ ✓ pakka-entry-archive.test.ts > Durable archive: repeated ranges reuse bounded raw bytes without letting a reader poison source or fork visibility 404ms
+
+ Test Files  2 passed (2)
+      Tests  6 passed (6)
+   Start at  13:41:33
+   Duration  1.06s (transform 41ms, setup 0ms, import 770ms, tests 704ms, environment 0ms)
+{"consumer":"C:\\Users\\MAPLEL~1\\AppData\\Local\\Temp\\pakka-durable-consumer-lFOsJQ","installedVersion":"1.4.0-pakka.3"}
+{"stage":"C:\\Users\\MAPLEL~1\\AppData\\Local\\Temp\\pakka-durable-build-m9OrFh","destination":"D:\\Projects\\pakka-works\\pakka-lazy-webui\\packages\\agent\\vendor\\earendil-works-pi-durable-1.4.0-pakka.3.tgz","sha256":"fc1268481542417fd1ada943854c5972cd2b42c9456a6f60cc78a68ba70c2761"}

@@ -38,7 +38,7 @@ async function withPicker(
 		await page.click("[data-conversation]");
 		await page.wait('document.querySelector("[data-action=model]")?.disabled===false');
 		await page.click("[data-action=model]");
-		await page.wait('document.querySelector("[data-pick-model]")');
+		await page.wait('document.querySelector("[data-pick-model]")?.disabled===false');
 		await run(page, app, m);
 	} finally {
 		await browser?.close();
@@ -273,6 +273,7 @@ test(
 					'document.querySelector("[data-action=model]")?.textContent.includes("alternate-10")',
 				);
 				await page.type('textarea[name="message"]', "INDEX-CONFIRM");
+				await page.wait('document.querySelector("[data-action=send]")?.disabled===false');
 				await page.click("[data-action=send]");
 				await page.wait('document.querySelector("main").textContent.includes("LOCAL-ANSWER")');
 				assert.equal(m.f.requests.length, 1);

@@ -54,7 +54,7 @@ test(
 			);
 			await owner.click('[aria-label="Close settings"]');
 			await owner.click("[data-action=model]");
-			await owner.wait('document.querySelector("[data-pick-model]")');
+			await owner.wait('document.querySelector("[data-pick-model]")?.disabled===false');
 			assert.deepEqual(
 				await owner.evaluate(
 					'[...document.querySelectorAll("[data-pick-model]")].map(row=>row.dataset.pickModel)',
@@ -68,6 +68,7 @@ test(
 			);
 			assert.equal(await owner.evaluate('document.querySelector("[data-action=cwd]").title'), m.f.cwd);
 			await owner.type("textarea[name=message]", "ACTUAL-SETTINGS-WORK");
+			await owner.wait('document.querySelector("[data-action=send]")?.disabled===false');
 			await owner.click("[data-action=send]");
 			await owner.wait('document.querySelector("main").textContent.includes("LOCAL-ANSWER")');
 			assert.equal(m.f.requests.length, 1);

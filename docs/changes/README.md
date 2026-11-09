@@ -2,6 +2,7 @@
 
 完整的形成条件、选择、设计、任务与场景由 [OpenSpec](../../openspec/changes/)维护；本目录只提供摘要和完整引用，不复制第二套变更正文。当前预期见 [state](../state/README.md)，实际差距见[工作入口与领域任务](../OVERVIEW.md)。
 
+- [有界观察与 DOM 懒加载](bounded-lazy-observation.md)：333 ms 小预览、按需完整内容、虚拟窗口与预算化空闲补取。
 - [本机维护与交付](local-maintenance-and-delivery.md)：原 owner 私密恢复、无执行引擎维护、完整冷备份、停机恢复与固定归档升级；附近期 OOM 任务。
 - [长期投递记录](long-lived-deliveries.md)：原请求独立存储、按未完成工作接纳、累计历史持续保留及旧格式原子迁移。
 - [Git 协作与项目元数据](git-workflow-and-project-metadata.md)：工作分支 → dev → main 的授权、PR 与验证条件，以及贡献入口和 state-evo 文档接续。

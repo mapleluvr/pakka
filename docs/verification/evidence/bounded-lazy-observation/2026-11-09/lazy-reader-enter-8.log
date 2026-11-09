@@ -1,0 +1,9 @@
+✔ lazy browser: folded tool keeps no body/media DOM, expanded original is ranged and line-virtualized, collapse releases nodes (3402.3517ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 5253.5597

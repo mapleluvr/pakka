@@ -1,0 +1,23 @@
+cwd=D:\Projects\pakka-works\pakka-lazy-webui\apps\cli
+pakka-cli-0.1.0.tgz
+npm notice
+npm notice package: @pakka/cli@0.1.0
+npm notice Tarball Contents
+npm notice 196B dist/main.d.ts
+npm notice 3.1kB dist/main.js
+npm notice 361B package.json
+npm notice Tarball Details
+npm notice name: @pakka/cli
+npm notice version: 0.1.0
+npm notice filename: pakka-cli-0.1.0.tgz
+npm notice package size: 1.5 kB
+npm notice unpacked size: 3.7 kB
+npm notice shasum: 2e87639e99a092a84628f8076e8b6246eaddc2c9
+npm notice integrity: sha512-lUCQ49DG9WyVn[...]44ojRLgCc4aqQ==
+npm notice total files: 3
+npm notice
+
+exit=0
+signal=null
+error=undefined
+elapsedMs=656

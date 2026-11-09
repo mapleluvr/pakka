@@ -200,7 +200,17 @@ test(
 			"No dangling creation or communication edge remains on the canvas",
 		);
 		assert.equal(await page.evaluate('!!document.querySelector(".graph-selection")'), false);
+		await page.evaluate(
+			`document.querySelector("[data-board-mode=list]").addEventListener("click",async()=>{await Promise.resolve();await Promise.resolve();const keys=Object.keys(localStorage).filter(key=>key.startsWith("pakka.mas-board.view.v2:")&&key.endsWith(".mode"));globalThis.__boardPresentationCommit={list:!!document.querySelector(".graph-agent-list"),modes:keys.map(key=>localStorage.getItem(key))};},{once:true})`,
+		);
 		await page.click("[data-board-mode=list]");
+		await page.wait("globalThis.__boardPresentationCommit !== undefined");
+		assert.deepEqual(
+			await page.evaluate("globalThis.__boardPresentationCommit"),
+			{ list: true, modes: ["list"] },
+			"Native mode change saves personal presentation by its DOM commit, before a later paint or reload",
+		);
+		await page.evaluate("delete globalThis.__boardPresentationCommit");
 		assert.equal(
 			await page.evaluate('document.querySelectorAll(".graph-agent-list [data-member]").length'),
 			1,

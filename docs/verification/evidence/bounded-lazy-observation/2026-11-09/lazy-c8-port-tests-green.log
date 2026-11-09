@@ -1,0 +1,15 @@
+✔ HTTP listeners close Fetch-blocked reported port 4045 before publishing a rebound address (53.7563ms)
+✔ explicitly blocked HTTP port 4045 is refused before binding (1.323ms)
+✔ HTTP listeners close Fetch-blocked reported port 4190 before publishing a rebound address (10.3326ms)
+✔ explicitly blocked HTTP port 4190 is refused before binding (0.2625ms)
+✔ HTTP listeners close Fetch-blocked reported port 6679 before publishing a rebound address (6.0469ms)
+✔ explicitly blocked HTTP port 6679 is refused before binding (0.2579ms)
+✔ WebUI and its model endpoint remain reachable after rejecting a reported blocked dynamic port (201.6758ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2059.9975

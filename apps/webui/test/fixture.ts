@@ -4,7 +4,7 @@ import { createPocketPeople, createPocketWorkspace } from "@pakka/server/pocket"
 import { decodePocketResponse } from "@pakka/protocol/pocket";
 import { createPocketHttp } from "../src/http.ts";
 
-export async function fixture() {
+export async function fixture(transport: { readonly maxConnections?: number } = {}) {
 	const m = await runtimeFixture();
 	const people = await createPocketPeople({ runtime: m.runtime, namespace: "people" });
 	const session = await people.initializeOwner("Owner");
@@ -17,7 +17,7 @@ export async function fixture() {
 	});
 	const client = workspace.bind(actor),
 		ref = await client.create({ requestId: "one", name: "Work", profile: "default" });
-	const http = await createPocketHttp({ runtime: m.runtime, people, workspace, pollMs: 20 });
+	const http = await createPocketHttp({ runtime: m.runtime, people, workspace, pollMs: 20, ...transport });
 	async function exchange(token: string, kind: "session" | "invite", name?: string) {
 		const response = await fetch(http.origin + "/pocket/exchange", {
 			method: "POST",

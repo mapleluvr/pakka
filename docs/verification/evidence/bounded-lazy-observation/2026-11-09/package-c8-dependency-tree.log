@@ -1,0 +1,3148 @@
+cwd=C:\Users\mapleland\AppData\Local\Temp\pakka-packed-consumer-jyBRYo
+{
+  "name": "pakka-external-smoke",
+  "dependencies": {
+    "@pakka/agent": {
+      "version": "0.7.0",
+      "resolved": "file:C:\\Users\\mapleland\\AppData\\Local\\Temp\\pakka-packed-consumer-jyBRYo\\pakka-agent-0.7.0.tgz",
+      "overridden": false,
+      "dependencies": {
+        "@earendil-works/chord": {
+          "version": "1.4.0",
+          "overridden": false,
+          "dependencies": {
+            "@earendil-works/pi-telemetry": {
+              "version": "1.4.0"
+            },
+            "typebox": {
+              "version": "1.3.27",
+              "overridden": false
+            }
+          }
+        },
+        "@earendil-works/pi-ai": {
+          "version": "1.4.0",
+          "overridden": false,
+          "dependencies": {
+            "@anthropic-ai/sdk": {
+              "version": "0.129.0",
+              "overridden": false,
+              "dependencies": {
+                "json-schema-to-ts": {
+                  "version": "3.1.1",
+                  "overridden": false,
+                  "dependencies": {
+                    "@babel/runtime": {
+                      "version": "7.29.13",
+                      "overridden": false
+                    },
+                    "ts-algebra": {
+                      "version": "2.0.0",
+                      "overridden": false
+                    }
+                  }
+                },
+                "standardwebhooks": {
+                  "version": "1.1.1",
+                  "overridden": false,
+                  "dependencies": {
+                    "@stablelib/base64": {
+                      "version": "1.0.1",
+                      "overridden": false
+                    },
+                    "fast-sha256": {
+                      "version": "1.3.0",
+                      "overridden": false
+                    }
+                  }
+                },
+                "zod": {
+                  "version": "4.6.7"
+                }
+              }
+            },
+            "@aws-sdk/client-bedrock-runtime": {
+              "version": "3.1127.0",
+              "overridden": false,
+              "dependencies": {
+                "@aws-sdk/core": {
+                  "version": "3.980.1",
+                  "overridden": false,
+                  "dependencies": {
+                    "@aws-sdk/types": {
+                      "version": "3.975.0"
+                    },
+                    "@aws-sdk/xml-builder": {
+                      "version": "3.972.42",
+                      "overridden": false,
+                      "dependencies": {
+                        "@smithy/types": {
+                          "version": "4.20.0"
+                        },
+                        "tslib": {
+                          "version": "2.9.1"
+                        }
+                      }
+                    },
+                    "@aws/lambda-invoke-store": {
+                      "version": "0.3.0",
+                      "overridden": false
+                    },
+                    "@smithy/core": {
+                      "version": "3.39.0"
+                    },
+                    "@smithy/signature-v4": {
+                      "version": "5.7.5"
+                    },
+                    "@smithy/types": {
+                      "version": "4.20.0"
+                    },
+                    "bowser": {
+                      "version": "2.15.0",
+                      "overridden": false
+                    },
+                    "tslib": {
+                      "version": "2.9.1"
+                    }
+                  }
+                },
+                "@aws-sdk/credential-provider-node": {
+                  "version": "3.972.94",
+                  "overridden": false,
+                  "dependencies": {
+                    "@aws-sdk/credential-provider-env": {
+                      "version": "3.972.82",
+                      "overridden": false,
+                      "dependencies": {
+                        "@aws-sdk/core": {
+                          "version": "3.980.1"
+                        },
+                        "@aws-sdk/types": {
+                          "version": "3.975.0"
+                        },
+                        "@smithy/core": {
+                          "version": "3.39.0"
+                        },
+                        "@smithy/types": {
+                          "version": "4.20.0"
+                        },
+                        "tslib": {
+                          "version": "2.9.1"
+                        }
+                      }
+                    },
+                    "@aws-sdk/credential-provider-http": {
+                      "version": "3.972.84",
+                      "overridden": false,
+                      "dependencies": {
+                        "@aws-sdk/core": {
+                          "version": "3.980.1"
+                        },
+                        "@aws-sdk/types": {
+                          "version": "3.975.0"
+                        },
+                        "@smithy/core": {
+                          "version": "3.39.0"
+                        },
+                        "@smithy/fetch-http-handler": {
+                          "version": "5.8.1"
+                        },
+                        "@smithy/node-http-handler": {
+                          "version": "4.14.2",
+                          "overridden": false,
+                          "dependencies": {
+                            "@smithy/core": {
+                              "version": "3.39.0"
+                            },
+                            "@smithy/types": {
+                              "version": "4.20.0"
+                            },
+                            "tslib": {
+                              "version": "2.9.1"
+                            }
+                          }
+                        },
+                        "@smithy/types": {
+                          "version": "4.20.0"
+                        },
+                        "tslib": {
+                          "version": "2.9.1"
+                        }
+                      }
+                    },
+                    "@aws-sdk/credential-provider-ini": {
+                      "version": "3.973.27",
+                      "overridden": false,
+                      "dependencies": {
+                        "@aws-sdk/core": {
+                          "version": "3.980.1"
+                        },
+                        "@aws-sdk/credential-provider-env": {
+                          "version": "3.972.82"
+                        },
+                        "@aws-sdk/credential-provider-http": {
+                          "version": "3.972.84"
+                        },
+                        "@aws-sdk/credential-provider-login": {
+                          "version": "3.972.89",
+                          "overridden": false,
+                          "dependencies": {
+                            "@aws-sdk/core": {
+                              "version": "3.980.1"
+                            },
+                            "@aws-sdk/nested-clients": {
+                              "version": "3.998.1"
+                            },
+                            "@aws-sdk/types": {
+                              "version": "3.975.0"
+                            },
+                            "@smithy/core": {
+                              "version": "3.39.0"
+                            },
+                            "@smithy/types": {
+                              "version": "4.20.0"
+                            },
+                            "tslib": {
+                              "version": "2.9.1"
+                            }
+                          }
+                        },
+                        "@aws-sdk/credential-provider-process": {
+                          "version": "3.972.82"
+                        },
+                        "@aws-sdk/credential-provider-sso": {
+                          "version": "3.973.26"
+                        },
+                        "@aws-sdk/credential-provider-web-identity": {
+                          "version": "3.972.88"
+                        },
+                        "@aws-sdk/nested-clients": {
+                          "version": "3.998.1"
+                        },
+                        "@aws-sdk/types": {
+                          "version": "3.975.0"
+                        },
+                        "@smithy/core": {
+                          "version": "3.39.0"
+                        },
+                        "@smithy/credential-provider-imds": {
+                          "version": "4.5.2"
+                        },
+                        "@smithy/types": {
+                          "version": "4.20.0"
+                        },
+                        "tslib": {
+                          "version": "2.9.1"
+                        }
+                      }
+                    },
+                    "@aws-sdk/credential-provider-process": {
+                      "version": "3.972.82",
+                      "overridden": false,
+                      "dependencies": {
+                        "@aws-sdk/core": {
+                          "version": "3.980.1"
+                        },
+                        "@aws-sdk/types": {
+                          "version": "3.975.0"
+                        },
+                        "@smithy/core": {
+                          "version": "3.39.0"
+                        },
+                        "@smithy/types": {
+                          "version": "4.20.0"
+                        },
+                        "tslib": {
+                          "version": "2.9.1"
+                        }
+                      }
+                    },
+                    "@aws-sdk/credential-provider-sso": {
+                      "version": "3.973.26",
+                      "overridden": false,
+                      "dependencies": {
+                        "@aws-sdk/core": {
+                          "version": "3.980.1"
+                        },
+                        "@aws-sdk/nested-clients": {
+                          "version": "3.998.1"
+                        },
+                        "@aws-sdk/token-providers": {
+                          "version": "3.1164.0",
+                          "overridden": false,
+                          "dependencies": {
+                            "@aws-sdk/core": {
+                              "version": "3.980.1"
+                            },
+                            "@aws-sdk/nested-clients": {
+                              "version": "3.998.1"
+                            },
+                            "@aws-sdk/types": {
+                              "version": "3.975.0"
+                            },
+                            "@smithy/core": {
+                              "version": "3.39.0"
+                            },
+                            "@smithy/types": {
+                              "version": "4.20.0"
+                            },
+                            "tslib": {
+                              "version": "2.9.1"
+                            }
+                          }
+                        },
+                        "@aws-sdk/types": {
+                          "version": "3.975.0"
+                        },
+                        "@smithy/core": {
+                          "version": "3.39.0"
+                        },
+                        "@smithy/types": {
+                          "version": "4.20.0"
+                        },
+                        "tslib": {
+                          "version": "2.9.1"
+                        }
+                      }
+                    },
+                    "@aws-sdk/credential-provider-web-identity": {
+                      "version": "3.972.88",
+                      "overridden": false,
+                      "dependencies": {
+                        "@aws-sdk/core": {
+                          "version": "3.980.1"
+                        },
+                        "@aws-sdk/nested-clients": {
+                          "version": "3.998.1"
+                        },
+                        "@aws-sdk/types": {
+                          "version": "3.975.0"
+                        },
+                        "@smithy/core": {
+                          "version": "3.39.0"
+                        },
+                        "@smithy/types": {
+                          "version": "4.20.0"
+                        },
+                        "tslib": {
+                          "version": "2.9.1"
+                        }
+                      }
+                    },
+                    "@aws-sdk/types": {
+                      "version": "3.975.0"
+                    },
+                    "@smithy/core": {
+                      "version": "3.39.0"
+                    },
+                    "@smithy/credential-provider-imds": {
+                      "version": "4.5.2",
+                      "overridden": false,
+                      "dependencies": {
+                        "@smithy/core": {
+                          "version": "3.39.0"
+                        },
+                        "@smithy/types": {
+                          "version": "4.20.0"
+                        },
+                        "tslib": {
+                          "version": "2.9.1"
+                        }
+                      }
+                    },
+                    "@smithy/types": {
+                      "version": "4.20.0"
+                    },
+                    "tslib": {
+                      "version": "2.9.1"
+                    }
+                  }
+                },
+                "@aws-sdk/eventstream-handler-node": {
+                  "version": "3.972.40",
+                  "overridden": false,
+                  "dependencies": {
+                    "@aws-sdk/types": {
+                      "version": "3.975.0"
+                    },
+                    "@smithy/core": {
+                      "version": "3.39.0"
+                    },
+                    "@smithy/types": {
+                      "version": "4.20.0"
+                    },
+                    "tslib": {
+                      "version": "2.9.1"
+                    }
+                  }
+                },
+                "@aws-sdk/middleware-eventstream": {
+                  "version": "3.972.36",
+                  "overridden": false,
+                  "dependencies": {
+                    "@aws-sdk/types": {
+                      "version": "3.975.0"
+                    },
+                    "@smithy/core": {
+                      "version": "3.39.0"
+                    },
+                    "@smithy/types": {
+                      "version": "4.20.0"
+                    },
+                    "tslib": {
+                      "version": "2.9.1"
+                    }
+                  }
+                },
+                "@aws-sdk/middleware-websocket": {
+                  "version": "3.972.64",
+                  "overridden": false,
+                  "dependencies": {
+                    "@aws-sdk/core": {
+                      "version": "3.980.1"
+                    },
+                    "@aws-sdk/types": {
+                      "version": "3.975.0"
+                    },
+                    "@smithy/core": {
+                      "version": "3.39.0"
+                    },
+                    "@smithy/fetch-http-handler": {
+                      "version": "5.8.1"
+                    },
+                    "@smithy/signature-v4": {
+                      "version": "5.7.5"
+                    },
+                    "@smithy/types": {
+                      "version": "4.20.0"
+                    },
+                    "tslib": {
+                      "version": "2.9.1"
+                    }
+                  }
+                },
+                "@aws-sdk/token-providers": {
+                  "version": "3.1127.0",
+                  "overridden": false,
+                  "dependencies": {
+                    "@aws-sdk/core": {
+                      "version": "3.980.1"
+                    },
+                    "@aws-sdk/nested-clients": {
+                      "version": "3.998.1",
+                      "overridden": false,
+                      "dependencies": {
+                        "@aws-sdk/core": {
+                          "version": "3.980.1"
+                        },
+                        "@aws-sdk/signature-v4-multi-region": {
+                          "version": "3.996.51",
+                          "overridden": false,
+                          "dependencies": {
+                            "@aws-sdk/types": {
+                              "version": "3.975.0"
+                            },
+                            "@smithy/signature-v4": {
+                              "version": "5.7.5"
+                            },
+                            "@smithy/types": {
+                              "version": "4.20.0"
+                            },
+                            "tslib": {
+                              "version": "2.9.1"
+                            }
+                          }
+                        },
+                        "@aws-sdk/types": {
+                          "version": "3.975.0"
+                        },
+                        "@smithy/core": {
+                          "version": "3.39.0"
+                        },
+                        "@smithy/fetch-http-handler": {
+                          "version": "5.8.1"
+                        },
+                        "@smithy/node-http-handler": {
+                          "version": "4.14.2",
+                          "overridden": false,
+                          "dependencies": {
+                            "@smithy/core": {
+                              "version": "3.39.0"
+                            },
+                            "@smithy/types": {
+                              "version": "4.20.0"
+                            },
+                            "tslib": {
+                              "version": "2.9.1"
+                            }
+                          }
+                        },
+                        "@smithy/types": {
+                          "version": "4.20.0"
+                        },
+                        "tslib": {
+                          "version": "2.9.1"
+                        }
+                      }
+                    },
+                    "@aws-sdk/types": {
+                      "version": "3.975.0"
+                    },
+                    "@smithy/core": {
+                      "version": "3.39.0"
+                    },
+                    "@smithy/types": {
+                      "version": "4.20.0"
+                    },
+                    "tslib": {
+                      "version": "2.9.1"
+                    }
+                  }
+                },
+                "@aws-sdk/types": {
+                  "version": "3.975.0",
+                  "overridden": false,
+                  "dependencies": {
+                    "@smithy/types": {
+                      "version": "4.20.0"
+                    },
+                    "tslib": {
+                      "version": "2.9.1"
+                    }
+                  }
+                },
+                "@smithy/core": {
+                  "version": "3.39.0",
+                  "overridden": false,
+                  "dependencies": {
+                    "@smithy/types": {
+                      "version": "4.20.0"
+                    },
+                    "tslib": {
+                      "version": "2.9.1"
+                    }
+                  }
+                },
+                "@smithy/fetch-http-handler": {
+                  "version": "5.8.1",
+                  "overridden": false,
+                  "dependencies": {
+                    "@smithy/core": {
+                      "version": "3.39.0"
+                    },
+                    "@smithy/types": {
+                      "version": "4.20.0"
+                    },
+                    "tslib": {
+                      "version": "2.9.1"
+                    }
+                  }
+                },
+                "@smithy/node-http-handler": {
+                  "version": "4.12.1"
+                },
+                "@smithy/types": {
+                  "version": "4.20.0",
+                  "overridden": false,
+                  "dependencies": {
+                    "tslib": {
+                      "version": "2.9.1"
+                    }
+                  }
+                },
+                "tslib": {
+                  "version": "2.9.1",
+                  "overridden": false
+                }
+              }
+            },
+            "@earendil-works/pi-telemetry": {
+              "version": "1.4.0"
+            },
+            "@google/genai": {
+              "version": "2.21.0",
+              "overridden": false,
+              "dependencies": {
+                "@modelcontextprotocol/sdk": {
+                  "version": "1.25.2"
+                },
+                "google-auth-library": {
+                  "version": "10.9.1",
+                  "overridden": false,
+                  "dependencies": {
+                    "base64-js": {
+                      "version": "1.5.1",
+                      "overridden": false
+                    },
+                    "ecdsa-sig-formatter": {
+                      "version": "1.0.11",
+                      "overridden": false,
+                      "dependencies": {
+                        "safe-buffer": {
+                          "version": "5.2.1",
+                          "overridden": false
+                        }
+                      }
+                    },
+                    "gaxios": {
+                      "version": "7.3.1",
+                      "overridden": false,
+                      "dependencies": {
+                        "extend": {
+                          "version": "3.0.2",
+                          "overridden": false
+                        },
+                        "https-proxy-agent": {
+                          "version": "7.0.6",
+                          "overridden": false,
+                          "dependencies": {
+                            "agent-base": {
+                              "version": "7.1.4",
+                              "overridden": false
+                            },
+                            "debug": {
+                              "version": "4.4.3"
+                            }
+                          }
+                        },
+                        "node-fetch": {
+                          "version": "3.3.2",
+                          "overridden": false,
+                          "dependencies": {
+                            "data-uri-to-buffer": {
+                              "version": "4.0.1",
+                              "overridden": false
+                            },
+                            "fetch-blob": {
+                              "version": "3.2.0",
+                              "overridden": false,
+                              "dependencies": {
+                                "node-domexception": {
+                                  "version": "1.0.0",
+                                  "overridden": false
+                                },
+                                "web-streams-polyfill": {
+                                  "version": "3.3.3",
+                                  "overridden": false
+                                }
+                              }
+                            },
+                            "formdata-polyfill": {
+                              "version": "4.0.10",
+                              "overridden": false,
+                              "dependencies": {
+                                "fetch-blob": {
+                                  "version": "3.2.0"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "gcp-metadata": {
+                      "version": "8.1.2",
+                      "overridden": false,
+                      "dependencies": {
+                        "gaxios": {
+                          "version": "7.3.1"
+                        },
+                        "google-logging-utils": {
+                          "version": "1.1.3"
+                        },
+                        "json-bigint": {
+                          "version": "1.0.0",
+                          "overridden": false,
+                          "dependencies": {
+                            "bignumber.js": {
+                              "version": "9.3.1",
+                              "overridden": false
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "google-logging-utils": {
+                      "version": "1.1.3",
+                      "overridden": false
+                    },
+                    "jws": {
+                      "version": "4.0.1",
+                      "overridden": false,
+                      "dependencies": {
+                        "jwa": {
+                          "version": "2.0.1",
+                          "overridden": false,
+                          "dependencies": {
+                            "buffer-equal-constant-time": {
+                              "version": "1.0.1",
+                              "overridden": false
+                            },
+                            "ecdsa-sig-formatter": {
+                              "version": "1.0.11"
+                            },
+                            "safe-buffer": {
+                              "version": "5.2.1"
+                            }
+                          }
+                        },
+                        "safe-buffer": {
+                          "version": "5.2.1"
+                        }
+                      }
+                    }
+                  }
+                },
+                "p-retry": {
+                  "version": "4.6.2",
+                  "overridden": false,
+                  "dependencies": {
+                    "@types/retry": {
+                      "version": "0.12.0",
+                      "overridden": false
+                    },
+                    "retry": {
+                      "version": "0.13.1",
+                      "overridden": false
+                    }
+                  }
+                },
+                "protobufjs": {
+                  "version": "7.6.6",
+                  "overridden": false,
+                  "dependencies": {
+                    "@protobufjs/aspromise": {
+                      "version": "1.1.2",
+                      "overridden": false
+                    },
+                    "@protobufjs/base64": {
+                      "version": "1.1.2",
+                      "overridden": false
+                    },
+                    "@protobufjs/codegen": {
+                      "version": "2.0.5",
+                      "overridden": false
+                    },
+                    "@protobufjs/eventemitter": {
+                      "version": "1.1.1",
+                      "overridden": false
+                    },
+                    "@protobufjs/fetch": {
+                      "version": "1.1.1",
+                      "overridden": false,
+                      "dependencies": {
+                        "@protobufjs/aspromise": {
+                          "version": "1.1.2"
+                        }
+                      }
+                    },
+                    "@protobufjs/float": {
+                      "version": "1.0.2",
+                      "overridden": false
+                    },
+                    "@protobufjs/path": {
+                      "version": "1.1.2",
+                      "overridden": false
+                    },
+                    "@protobufjs/pool": {
+                      "version": "1.1.0",
+                      "overridden": false
+                    },
+                    "@protobufjs/utf8": {
+                      "version": "1.1.2",
+                      "overridden": false
+                    },
+                    "@types/node": {
+                      "version": "26.6.6",
+                      "overridden": false,
+                      "dependencies": {
+                        "undici-types": {
+                          "version": "8.9.0",
+                          "overridden": false
+                        }
+                      }
+                    },
+                    "long": {
+                      "version": "5.3.2",
+                      "overridden": false
+                    }
+                  }
+                },
+                "ws": {
+                  "version": "8.22.2",
+                  "overridden": false,
+                  "dependencies": {
+                    "bufferutil": {},
+                    "utf-8-validate": {}
+                  }
+                }
+              }
+            },
+            "@smithy/node-http-handler": {
+              "version": "4.12.1",
+              "overridden": false,
+              "dependencies": {
+                "@smithy/core": {
+                  "version": "3.39.0"
+                },
+                "@smithy/types": {
+                  "version": "4.20.0"
+                },
+                "tslib": {
+                  "version": "2.9.1"
+                }
+              }
+            },
+            "http-proxy-agent": {
+              "version": "9.1.0",
+              "overridden": false,
+              "dependencies": {
+                "agent-base": {
+                  "version": "9.0.0",
+                  "overridden": false
+                },
+                "debug": {
+                  "version": "4.4.3",
+                  "overridden": false,
+                  "dependencies": {
+                    "ms": {
+                      "version": "2.1.3",
+                      "overridden": false
+                    }
+                  }
+                },
+                "proxy-agent-negotiate": {
+                  "version": "1.1.0",
+                  "overridden": false,
+                  "dependencies": {
+                    "kerberos": {}
+                  }
+                }
+              }
+            },
+            "https-proxy-agent": {
+              "version": "9.1.0",
+              "overridden": false,
+              "dependencies": {
+                "agent-base": {
+                  "version": "9.0.0"
+                },
+                "debug": {
+                  "version": "4.4.3"
+                },
+                "proxy-agent-negotiate": {
+                  "version": "1.1.0"
+                }
+              }
+            },
+            "openai": {
+              "version": "7.19.0",
+              "overridden": false,
+              "dependencies": {
+                "@aws-sdk/credential-provider-node": {
+                  "version": "3.972.94"
+                },
+                "@smithy/hash-node": {},
+                "@smithy/signature-v4": {
+                  "version": "5.7.5",
+                  "overridden": false,
+                  "dependencies": {
+                    "@smithy/core": {
+                      "version": "3.39.0"
+                    },
+                    "@smithy/types": {
+                      "version": "4.20.0"
+                    },
+                    "tslib": {
+                      "version": "2.9.1"
+                    }
+                  }
+                },
+                "undici": {
+                  "version": "8.10.2"
+                },
+                "ws": {
+                  "version": "8.22.2"
+                },
+                "zod": {
+                  "version": "4.6.7"
+                }
+              }
+            },
+            "partial-json": {
+              "version": "0.1.7",
+              "overridden": false
+            },
+            "typebox": {
+              "version": "1.3.27"
+            }
+          }
+        },
+        "@earendil-works/pi-durable": {
+          "version": "1.4.0-pakka.3",
+          "overridden": false,
+          "dependencies": {
+            "@earendil-works/chord": {
+              "version": "1.4.0"
+            },
+            "@earendil-works/pi-ai": {
+              "version": "1.4.0"
+            },
+            "@earendil-works/pi-codemode": {
+              "version": "1.4.0",
+              "overridden": false,
+              "dependencies": {
+                "quickjs-wasi": {
+                  "version": "3.6.2",
+                  "overridden": false
+                }
+              }
+            },
+            "@earendil-works/pi-telemetry": {
+              "version": "1.4.0"
+            },
+            "@silvia-odwyer/photon": {
+              "version": "0.3.3",
+              "overridden": false
+            },
+            "diff": {
+              "version": "8.0.4",
+              "overridden": false
+            },
+            "typebox": {
+              "version": "1.3.27"
+            }
+          }
+        },
+        "@earendil-works/pi-telemetry": {
+          "version": "1.4.0",
+          "overridden": false
+        },
+        "@modelcontextprotocol/sdk": {
+          "version": "1.25.2",
+          "resolved": "https://registry.npmjs.org/@modelcontextprotocol/sdk/-/sdk-1.25.2.tgz",
+          "overridden": false,
+          "dependencies": {
+            "@cfworker/json-schema": {},
+            "@hono/node-server": {
+              "version": "1.19.18",
+              "resolved": "https://registry.npmjs.org/@hono/node-server/-/node-server-1.19.18.tgz",
+              "overridden": false,
+              "dependencies": {
+                "hono": {
+                  "version": "4.13.17",
+                  "resolved": "https://registry.npmjs.org/hono/-/hono-4.13.17.tgz",
+                  "overridden": false
+                }
+              }
+            },
+            "ajv-formats": {
+              "version": "3.0.1",
+              "resolved": "https://registry.npmjs.org/ajv-formats/-/ajv-formats-3.0.1.tgz",
+              "overridden": false,
+              "dependencies": {
+                "ajv": {
+                  "version": "8.20.0"
+                }
+              }
+            },
+            "ajv": {
+              "version": "8.20.0",
+              "resolved": "https://registry.npmjs.org/ajv/-/ajv-8.20.0.tgz",
+              "overridden": false,
+              "dependencies": {
+                "fast-deep-equal": {
+                  "version": "3.1.3",
+                  "resolved": "https://registry.npmjs.org/fast-deep-equal/-/fast-deep-equal-3.1.3.tgz",
+                  "overridden": false
+                },
+                "fast-uri": {
+                  "version": "3.1.9",
+                  "resolved": "https://registry.npmjs.org/fast-uri/-/fast-uri-3.1.9.tgz",
+                  "overridden": false
+                },
+                "json-schema-traverse": {
+                  "version": "1.0.0",
+                  "resolved": "https://registry.npmjs.org/json-schema-traverse/-/json-schema-traverse-1.0.0.tgz",
+                  "overridden": false
+                },
+                "require-from-string": {
+                  "version": "2.0.2",
+                  "resolved": "https://registry.npmjs.org/require-from-string/-/require-from-string-2.0.2.tgz",
+                  "overridden": false
+                }
+              }
+            },
+            "content-type": {
+              "version": "1.0.5",
+              "resolved": "https://registry.npmjs.org/content-type/-/content-type-1.0.5.tgz",
+              "overridden": false
+            },
+            "cors": {
+              "version": "2.8.6",
+              "resolved": "https://registry.npmjs.org/cors/-/cors-2.8.6.tgz",
+              "overridden": false,
+              "dependencies": {
+                "object-assign": {
+                  "version": "4.1.1",
+                  "resolved": "https://registry.npmjs.org/object-assign/-/object-assign-4.1.1.tgz",
+                  "overridden": false
+                },
+                "vary": {
+                  "version": "1.1.2",
+                  "resolved": "https://registry.npmjs.org/vary/-/vary-1.1.2.tgz",
+                  "overridden": false
+                }
+              }
+            },
+            "cross-spawn": {
+              "version": "7.0.6",
+              "resolved": "https://registry.npmjs.org/cross-spawn/-/cross-spawn-7.0.6.tgz",
+              "overridden": false,
+              "dependencies": {
+                "path-key": {
+                  "version": "3.1.1",
+                  "resolved": "https://registry.npmjs.org/path-key/-/path-key-3.1.1.tgz",
+                  "overridden": false
+                },
+                "shebang-command": {
+                  "version": "2.0.0",
+                  "resolved": "https://registry.npmjs.org/shebang-command/-/shebang-command-2.0.0.tgz",
+                  "overridden": false,
+                  "dependencies": {
+                    "shebang-regex": {
+                      "version": "3.0.0",
+                      "resolved": "https://registry.npmjs.org/shebang-regex/-/shebang-regex-3.0.0.tgz",
+                      "overridden": false
+                    }
+                  }
+                },
+                "which": {
+                  "version": "2.0.2",
+                  "resolved": "https://registry.npmjs.org/which/-/which-2.0.2.tgz",
+                  "overridden": false,
+                  "dependencies": {
+                    "isexe": {
+                      "version": "2.0.0",
+                      "resolved": "https://registry.npmjs.org/isexe/-/isexe-2.0.0.tgz",
+                      "overridden": false
+                    }
+                  }
+                }
+              }
+            },
+            "eventsource-parser": {
+              "version": "3.1.1",
+              "resolved": "https://registry.npmjs.org/eventsource-parser/-/eventsource-parser-3.1.1.tgz",
+              "overridden": false
+            },
+            "eventsource": {
+              "version": "3.0.7",
+              "resolved": "https://registry.npmjs.org/eventsource/-/eventsource-3.0.7.tgz",
+              "overridden": false,
+              "dependencies": {
+                "eventsource-parser": {
+                  "version": "3.1.1"
+                }
+              }
+            },
+            "express-rate-limit": {
+              "version": "7.5.1",
+              "resolved": "https://registry.npmjs.org/express-rate-limit/-/express-rate-limit-7.5.1.tgz",
+              "overridden": false,
+              "dependencies": {
+                "express": {
+                  "version": "5.3.0"
+                }
+              }
+            },
+            "express": {
+              "version": "5.3.0",
+              "resolved": "https://registry.npmjs.org/express/-/express-5.3.0.tgz",
+              "overridden": false,
+              "dependencies": {
+                "accepts": {
+                  "version": "2.0.0",
+                  "resolved": "https://registry.npmjs.org/accepts/-/accepts-2.0.0.tgz",
+                  "overridden": false,
+                  "dependencies": {
+                    "mime-types": {
+                      "version": "3.0.2"
+                    },
+                    "negotiator": {
+                      "version": "1.1.0",
+                      "resolved": "https://registry.npmjs.org/negotiator/-/negotiator-1.1.0.tgz",
+                      "overridden": false,
+                      "dependencies": {
+                        "content-type": {
+                          "version": "2.1.0",
+                          "resolved": "https://registry.npmjs.org/content-type/-/content-type-2.1.0.tgz",
+                          "overridden": false
+                        }
+                      }
+                    }
+                  }
+                },
+                "body-parser": {
+                  "version": "2.4.0",
+                  "resolved": "https://registry.npmjs.org/body-parser/-/body-parser-2.4.0.tgz",
+                  "overridden": false,
+                  "dependencies": {
+                    "bytes": {
+                      "version": "3.1.2"
+                    },
+                    "content-type": {
+                      "version": "2.1.0",
+                      "resolved": "https://registry.npmjs.org/content-type/-/content-type-2.1.0.tgz",
+                      "overridden": false
+                    },
+                    "debug": {
+                      "version": "4.4.3"
+                    },
+                    "http-errors": {
+                      "version": "2.0.1"
+                    },
+                    "iconv-lite": {
+                      "version": "0.7.3"
+                    },
+                    "on-finished": {
+                      "version": "2.4.2"
+                    },
+                    "qs": {
+                      "version": "6.17.1"
+                    },
+                    "raw-body": {
+                      "version": "3.0.2"
+                    },
+                    "type-is": {
+                      "version": "2.1.0"
+                    }
+                  }
+                },
+                "content-disposition": {
+                  "version": "2.0.1",
+                  "resolved": "https://registry.npmjs.org/content-disposition/-/content-disposition-2.0.1.tgz",
+                  "overridden": false
+                },
+                "content-type": {
+                  "version": "2.1.0",
+                  "resolved": "https://registry.npmjs.org/content-type/-/content-type-2.1.0.tgz",
+                  "overridden": false
+                },
+                "cookie-signature": {
+                  "version": "1.2.2",
+                  "resolved": "https://registry.npmjs.org/cookie-signature/-/cookie-signature-1.2.2.tgz",
+                  "overridden": false
+                },
+                "cookie": {
+                  "version": "0.7.2",
+                  "resolved": "https://registry.npmjs.org/cookie/-/cookie-0.7.2.tgz",
+                  "overridden": false
+                },
+                "debug": {
+                  "version": "4.4.3",
+                  "resolved": "https://registry.npmjs.org/debug/-/debug-4.4.3.tgz",
+                  "overridden": false,
+                  "dependencies": {
+                    "ms": {
+                      "version": "2.1.3",
+                      "resolved": "https://registry.npmjs.org/ms/-/ms-2.1.3.tgz",
+                      "overridden": false
+                    }
+                  }
+                },
+                "depd": {
+                  "version": "2.0.0",
+                  "resolved": "https://registry.npmjs.org/depd/-/depd-2.0.0.tgz",
+                  "overridden": false
+                },
+                "encodeurl": {
+                  "version": "2.0.1",
+                  "resolved": "https://registry.npmjs.org/encodeurl/-/encodeurl-2.0.1.tgz",
+                  "overridden": false
+                },
+                "escape-html": {
+                  "version": "1.0.3",
+                  "resolved": "https://registry.npmjs.org/escape-html/-/escape-html-1.0.3.tgz",
+                  "overridden": false
+                },
+                "etag": {
+                  "version": "1.8.1",
+                  "resolved": "https://registry.npmjs.org/etag/-/etag-1.8.1.tgz",
+                  "overridden": false
+                },
+                "finalhandler": {
+                  "version": "2.1.1",
+                  "resolved": "https://registry.npmjs.org/finalhandler/-/finalhandler-2.1.1.tgz",
+                  "overridden": false,
+                  "dependencies": {
+                    "debug": {
+                      "version": "4.4.3"
+                    },
+                    "encodeurl": {
+                      "version": "2.0.1"
+                    },
+                    "escape-html": {
+                      "version": "1.0.3"
+                    },
+                    "on-finished": {
+                      "version": "2.4.2"
+                    },
+                    "parseurl": {
+                      "version": "1.3.3"
+                    },
+                    "statuses": {
+                      "version": "2.0.2"
+                    }
+                  }
+                },
+                "fresh": {
+                  "version": "2.0.0",
+                  "resolved": "https://registry.npmjs.org/fresh/-/fresh-2.0.0.tgz",
+                  "overridden": false
+                },
+                "http-errors": {
+                  "version": "2.0.1",
+                  "resolved": "https://registry.npmjs.org/http-errors/-/http-errors-2.0.1.tgz",
+                  "overridden": false,
+                  "dependencies": {
+                    "depd": {
+                      "version": "2.0.0"
+                    },
+                    "inherits": {
+                      "version": "2.0.4",
+                      "resolved": "https://registry.npmjs.org/inherits/-/inherits-2.0.4.tgz",
+                      "overridden": false
+                    },
+                    "setprototypeof": {
+                      "version": "1.2.0",
+                      "resolved": "https://registry.npmjs.org/setprototypeof/-/setprototypeof-1.2.0.tgz",
+                      "overridden": false
+                    },
+                    "statuses": {
+                      "version": "2.0.2"
+                    },
+                    "toidentifier": {
+                      "version": "1.0.1",
+                      "resolved": "https://registry.npmjs.org/toidentifier/-/toidentifier-1.0.1.tgz",
+                      "overridden": false
+                    }
+                  }
+                },
+                "merge-descriptors": {
+                  "version": "2.0.0",
+                  "resolved": "https://registry.npmjs.org/merge-descriptors/-/merge-descriptors-2.0.0.tgz",
+                  "overridden": false
+                },
+                "mime-types": {
+                  "version": "3.0.2",
+                  "resolved": "https://registry.npmjs.org/mime-types/-/mime-types-3.0.2.tgz",
+                  "overridden": false,
+                  "dependencies": {
+                    "mime-db": {
+                      "version": "1.54.0",
+                      "resolved": "https://registry.npmjs.org/mime-db/-/mime-db-1.54.0.tgz",
+                      "overridden": false
+                    }
+                  }
+                },
+                "on-finished": {
+                  "version": "2.4.2",
+                  "resolved": "https://registry.npmjs.org/on-finished/-/on-finished-2.4.2.tgz",
+                  "overridden": false,
+                  "dependencies": {
+                    "ee-first": {
+                      "version": "1.1.1",
+                      "resolved": "https://registry.npmjs.org/ee-first/-/ee-first-1.1.1.tgz",
+                      "overridden": false
+                    }
+                  }
+                },
+                "once": {
+                  "version": "1.4.0",
+                  "resolved": "https://registry.npmjs.org/once/-/once-1.4.0.tgz",
+                  "overridden": false,
+                  "dependencies": {
+                    "wrappy": {
+                      "version": "1.0.2",
+                      "resolved": "https://registry.npmjs.org/wrappy/-/wrappy-1.0.2.tgz",
+                      "overridden": false
+                    }
+                  }
+                },
+                "parseurl": {
+                  "version": "1.3.3",
+                  "resolved": "https://registry.npmjs.org/parseurl/-/parseurl-1.3.3.tgz",
+                  "overridden": false
+                },
+                "proxy-addr": {
+                  "version": "2.0.8",
+                  "resolved": "https://registry.npmjs.org/proxy-addr/-/proxy-addr-2.0.8.tgz",
+                  "overridden": false,
+                  "dependencies": {
+                    "forwarded": {
+                      "version": "0.2.0",
+                      "resolved": "https://registry.npmjs.org/forwarded/-/forwarded-0.2.0.tgz",
+                      "overridden": false
+                    },
+                    "ipaddr.js": {
+                      "version": "1.9.1",
+                      "resolved": "https://registry.npmjs.org/ipaddr.js/-/ipaddr.js-1.9.1.tgz",
+                      "overridden": false
+                    }
+                  }
+                },
+                "qs": {
+                  "version": "6.17.1",
+                  "resolved": "https://registry.npmjs.org/qs/-/qs-6.17.1.tgz",
+                  "overridden": false,
+                  "dependencies": {
+                    "es-define-property": {
+                      "version": "1.0.1",
+                      "resolved": "https://registry.npmjs.org/es-define-property/-/es-define-property-1.0.1.tgz",
+                      "overridden": false
+                    },
+                    "side-channel": {
+                      "version": "1.1.1",
+                      "resolved": "https://registry.npmjs.org/side-channel/-/side-channel-1.1.1.tgz",
+                      "overridden": false,
+                      "dependencies": {
+                        "es-errors": {
+                          "version": "1.3.0",
+                          "resolved": "https://registry.npmjs.org/es-errors/-/es-errors-1.3.0.tgz",
+                          "overridden": false
+                        },
+                        "object-inspect": {
+                          "version": "1.13.4",
+                          "resolved": "https://registry.npmjs.org/object-inspect/-/object-inspect-1.13.4.tgz",
+                          "overridden": false
+                        },
+                        "side-channel-list": {
+                          "version": "1.0.1",
+                          "resolved": "https://registry.npmjs.org/side-channel-list/-/side-channel-list-1.0.1.tgz",
+                          "overridden": false,
+                          "dependencies": {
+                            "es-errors": {
+                              "version": "1.3.0"
+                            },
+                            "object-inspect": {
+                              "version": "1.13.4"
+                            }
+                          }
+                        },
+                        "side-channel-map": {
+                          "version": "1.0.1",
+                          "resolved": "https://registry.npmjs.org/side-channel-map/-/side-channel-map-1.0.1.tgz",
+                          "overridden": false,
+                          "dependencies": {
+                            "call-bound": {
+                              "version": "1.0.4",
+                              "resolved": "https://registry.npmjs.org/call-bound/-/call-bound-1.0.4.tgz",
+                              "overridden": false,
+                              "dependencies": {
+                                "call-bind-apply-helpers": {
+                                  "version": "1.0.2",
+                                  "resolved": "https://registry.npmjs.org/call-bind-apply-helpers/-/call-bind-apply-helpers-1.0.2.tgz",
+                                  "overridden": false,
+                                  "dependencies": {
+                                    "es-errors": {
+                                      "version": "1.3.0"
+                                    },
+                                    "function-bind": {
+                                      "version": "1.1.2"
+                                    }
+                                  }
+                                },
+                                "get-intrinsic": {
+                                  "version": "1.3.0"
+                                }
+                              }
+                            },
+                            "es-errors": {
+                              "version": "1.3.0"
+                            },
+                            "get-intrinsic": {
+                              "version": "1.3.0",
+                              "resolved": "https://registry.npmjs.org/get-intrinsic/-/get-intrinsic-1.3.0.tgz",
+                              "overridden": false,
+                              "dependencies": {
+                                "call-bind-apply-helpers": {
+                                  "version": "1.0.2"
+                                },
+                                "es-define-property": {
+                                  "version": "1.0.1"
+                                },
+                                "es-errors": {
+                                  "version": "1.3.0"
+                                },
+                                "es-object-atoms": {
+                                  "version": "1.1.2",
+                                  "resolved": "https://registry.npmjs.org/es-object-atoms/-/es-object-atoms-1.1.2.tgz",
+                                  "overridden": false,
+                                  "dependencies": {
+                                    "es-errors": {
+                                      "version": "1.3.0"
+                                    }
+                                  }
+                                },
+                                "function-bind": {
+                                  "version": "1.1.2",
+                                  "resolved": "https://registry.npmjs.org/function-bind/-/function-bind-1.1.2.tgz",
+                                  "overridden": false
+                                },
+                                "get-proto": {
+                                  "version": "1.0.1",
+                                  "resolved": "https://registry.npmjs.org/get-proto/-/get-proto-1.0.1.tgz",
+                                  "overridden": false,
+                                  "dependencies": {
+                                    "dunder-proto": {
+                                      "version": "1.0.1",
+                                      "resolved": "https://registry.npmjs.org/dunder-proto/-/dunder-proto-1.0.1.tgz",
+                                      "overridden": false,
+                                      "dependencies": {
+                                        "call-bind-apply-helpers": {
+                                          "version": "1.0.2"
+                                        },
+                                        "es-errors": {
+                                          "version": "1.3.0"
+                                        },
+                                        "gopd": {
+                                          "version": "1.2.0"
+                                        }
+                                      }
+                                    },
+                                    "es-object-atoms": {
+                                      "version": "1.1.2"
+                                    }
+                                  }
+                                },
+                                "gopd": {
+                                  "version": "1.2.0",
+                                  "resolved": "https://registry.npmjs.org/gopd/-/gopd-1.2.0.tgz",
+                                  "overridden": false
+                                },
+                                "has-symbols": {
+                                  "version": "1.1.0",
+                                  "resolved": "https://registry.npmjs.org/has-symbols/-/has-symbols-1.1.0.tgz",
+                                  "overridden": false
+                                },
+                                "hasown": {
+                                  "version": "2.0.4",
+                                  "resolved": "https://registry.npmjs.org/hasown/-/hasown-2.0.4.tgz",
+                                  "overridden": false,
+                                  "dependencies": {
+                                    "function-bind": {
+                                      "version": "1.1.2"
+                                    }
+                                  }
+                                },
+                                "math-intrinsics": {
+                                  "version": "1.1.0",
+                                  "resolved": "https://registry.npmjs.org/math-intrinsics/-/math-intrinsics-1.1.0.tgz",
+                                  "overridden": false
+                                }
+                              }
+                            },
+                            "object-inspect": {
+                              "version": "1.13.4"
+                            }
+                          }
+                        },
+                        "side-channel-weakmap": {
+                          "version": "1.0.2",
+                          "resolved": "https://registry.npmjs.org/side-channel-weakmap/-/side-channel-weakmap-1.0.2.tgz",
+                          "overridden": false,
+                          "dependencies": {
+                            "call-bound": {
+                              "version": "1.0.4"
+                            },
+                            "es-errors": {
+                              "version": "1.3.0"
+                            },
+                            "get-intrinsic": {
+                              "version": "1.3.0"
+                            },
+                            "object-inspect": {
+                              "version": "1.13.4"
+                            },
+                            "side-channel-map": {
+                              "version": "1.0.1"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "range-parser": {
+                  "version": "1.3.0",
+                  "resolved": "https://registry.npmjs.org/range-parser/-/range-parser-1.3.0.tgz",
+                  "overridden": false
+                },
+                "router": {
+                  "version": "2.2.0",
+                  "resolved": "https://registry.npmjs.org/router/-/router-2.2.0.tgz",
+                  "overridden": false,
+                  "dependencies": {
+                    "debug": {
+                      "version": "4.4.3"
+                    },
+                    "depd": {
+                      "version": "2.0.0"
+                    },
+                    "is-promise": {
+                      "version": "4.0.0",
+                      "resolved": "https://registry.npmjs.org/is-promise/-/is-promise-4.0.0.tgz",
+                      "overridden": false
+                    },
+                    "parseurl": {
+                      "version": "1.3.3"
+                    },
+                    "path-to-regexp": {
+                      "version": "8.4.2",
+                      "resolved": "https://registry.npmjs.org/path-to-regexp/-/path-to-regexp-8.4.2.tgz",
+                      "overridden": false
+                    }
+                  }
+                },
+                "send": {
+                  "version": "1.2.1",
+                  "resolved": "https://registry.npmjs.org/send/-/send-1.2.1.tgz",
+                  "overridden": false,
+                  "dependencies": {
+                    "debug": {
+                      "version": "4.4.3"
+                    },
+                    "encodeurl": {
+                      "version": "2.0.1"
+                    },
+                    "escape-html": {
+                      "version": "1.0.3"
+                    },
+                    "etag": {
+                      "version": "1.8.1"
+                    },
+                    "fresh": {
+                      "version": "2.0.0"
+                    },
+                    "http-errors": {
+                      "version": "2.0.1"
+                    },
+                    "mime-types": {
+                      "version": "3.0.2"
+                    },
+                    "ms": {
+                      "version": "2.1.3"
+                    },
+                    "on-finished": {
+                      "version": "2.4.2"
+                    },
+                    "range-parser": {
+                      "version": "1.3.0"
+                    },
+                    "statuses": {
+                      "version": "2.0.2"
+                    }
+                  }
+                },
+                "serve-static": {
+                  "version": "2.2.1",
+                  "resolved": "https://registry.npmjs.org/serve-static/-/serve-static-2.2.1.tgz",
+                  "overridden": false,
+                  "dependencies": {
+                    "encodeurl": {
+                      "version": "2.0.1"
+                    },
+                    "escape-html": {
+                      "version": "1.0.3"
+                    },
+                    "parseurl": {
+                      "version": "1.3.3"
+                    },
+                    "send": {
+                      "version": "1.2.1"
+                    }
+                  }
+                },
+                "statuses": {
+                  "version": "2.0.2",
+                  "resolved": "https://registry.npmjs.org/statuses/-/statuses-2.0.2.tgz",
+                  "overridden": false
+                },
+                "type-is": {
+                  "version": "2.1.0",
+                  "resolved": "https://registry.npmjs.org/type-is/-/type-is-2.1.0.tgz",
+                  "overridden": false,
+                  "dependencies": {
+                    "content-type": {
+                      "version": "2.1.0",
+                      "resolved": "https://registry.npmjs.org/content-type/-/content-type-2.1.0.tgz",
+                      "overridden": false
+                    },
+                    "media-typer": {
+                      "version": "1.1.1",
+                      "resolved": "https://registry.npmjs.org/media-typer/-/media-typer-1.1.1.tgz",
+                      "overridden": false
+                    },
+                    "mime-types": {
+                      "version": "3.0.2"
+                    }
+                  }
+                },
+                "vary": {
+                  "version": "1.1.2"
+                }
+              }
+            },
+            "jose": {
+              "version": "6.2.16",
+              "resolved": "https://registry.npmjs.org/jose/-/jose-6.2.16.tgz",
+              "overridden": false
+            },
+            "json-schema-typed": {
+              "version": "8.0.2",
+              "resolved": "https://registry.npmjs.org/json-schema-typed/-/json-schema-typed-8.0.2.tgz",
+              "overridden": false
+            },
+            "pkce-challenge": {
+              "version": "5.0.1",
+              "resolved": "https://registry.npmjs.org/pkce-challenge/-/pkce-challenge-5.0.1.tgz",
+              "overridden": false
+            },
+            "raw-body": {
+              "version": "3.0.2",
+              "resolved": "https://registry.npmjs.org/raw-body/-/raw-body-3.0.2.tgz",
+              "overridden": false,
+              "dependencies": {
+                "bytes": {
+                  "version": "3.1.2",
+                  "resolved": "https://registry.npmjs.org/bytes/-/bytes-3.1.2.tgz",
+                  "overridden": false
+                },
+                "http-errors": {
+                  "version": "2.0.1"
+                },
+                "iconv-lite": {
+                  "version": "0.7.3",
+                  "resolved": "https://registry.npmjs.org/iconv-lite/-/iconv-lite-0.7.3.tgz",
+                  "overridden": false,
+                  "dependencies": {
+                    "safer-buffer": {
+                      "version": "2.1.2",
+                      "resolved": "https://registry.npmjs.org/safer-buffer/-/safer-buffer-2.1.2.tgz",
+                      "overridden": false
+                    }
+                  }
+                },
+                "unpipe": {
+                  "version": "1.0.0",
+                  "resolved": "https://registry.npmjs.org/unpipe/-/unpipe-1.0.0.tgz",
+                  "overridden": false
+                }
+              }
+            },
+            "zod-to-json-schema": {
+              "version": "3.25.2",
+              "resolved": "https://registry.npmjs.org/zod-to-json-schema/-/zod-to-json-schema-3.25.2.tgz",
+              "overridden": false,
+              "dependencies": {
+                "zod": {
+                  "version": "4.6.7"
+                }
+              }
+            },
+            "zod": {
+              "version": "4.6.7",
+              "resolved": "https://registry.npmjs.org/zod/-/zod-4.6.7.tgz",
+              "overridden": false
+            }
+          }
+        }
+      }
+    },
+    "@pakka/cli": {
+      "version": "0.1.0",
+      "resolved": "file:C:\\Users\\mapleland\\AppData\\Local\\Temp\\pakka-packed-consumer-jyBRYo\\pakka-cli-0.1.0.tgz",
+      "overridden": false,
+      "dependencies": {
+        "@pakka/client": {
+          "version": "0.1.0"
+        },
+        "@pakka/protocol": {
+          "version": "0.1.0"
+        },
+        "@pakka/webui": {
+          "version": "0.1.0"
+        }
+      }
+    },
+    "@pakka/client": {
+      "version": "0.1.0",
+      "resolved": "file:C:\\Users\\mapleland\\AppData\\Local\\Temp\\pakka-packed-consumer-jyBRYo\\pakka-client-0.1.0.tgz",
+      "overridden": false,
+      "dependencies": {
+        "@pakka/protocol": {
+          "version": "0.1.0"
+        }
+      }
+    },
+    "@pakka/mas-devpack": {
+      "version": "0.2.0",
+      "resolved": "file:C:\\Users\\mapleland\\AppData\\Local\\Temp\\pakka-packed-consumer-jyBRYo\\pakka-mas-devpack-0.2.0.tgz",
+      "overridden": false,
+      "dependencies": {
+        "@pakka/agent": {
+          "version": "0.7.0"
+        },
+        "@pakka/mas": {
+          "version": "0.4.0"
+        },
+        "@pakka/webui": {
+          "version": "0.1.0"
+        },
+        "preact": {
+          "version": "11.0.1",
+          "resolved": "https://registry.npmjs.org/preact/-/preact-11.0.1.tgz",
+          "overridden": false,
+          "dependencies": {
+            "preact-render-to-string": {}
+          }
+        }
+      }
+    },
+    "@pakka/mas": {
+      "version": "0.4.0",
+      "resolved": "file:C:\\Users\\mapleland\\AppData\\Local\\Temp\\pakka-packed-consumer-jyBRYo\\pakka-mas-0.4.0.tgz",
+      "overridden": false,
+      "dependencies": {
+        "@pakka/agent": {
+          "version": "0.7.0"
+        }
+      }
+    },
+    "@pakka/protocol": {
+      "version": "0.1.0",
+      "resolved": "file:C:\\Users\\mapleland\\AppData\\Local\\Temp\\pakka-packed-consumer-jyBRYo\\pakka-protocol-0.1.0.tgz",
+      "overridden": false
+    },
+    "@pakka/server": {
+      "version": "0.5.0",
+      "resolved": "file:C:\\Users\\mapleland\\AppData\\Local\\Temp\\pakka-packed-consumer-jyBRYo\\pakka-server-0.5.0.tgz",
+      "overridden": false,
+      "dependencies": {
+        "@pakka/agent": {
+          "version": "0.7.0"
+        },
+        "@pakka/dynamite": {},
+        "@pakka/mas-devpack": {
+          "version": "0.2.0"
+        },
+        "@pakka/mas": {
+          "version": "0.4.0"
+        },
+        "@pakka/protocol": {
+          "version": "0.1.0"
+        }
+      }
+    },
+    "@pakka/webui": {
+      "version": "0.1.0",
+      "resolved": "file:C:\\Users\\mapleland\\AppData\\Local\\Temp\\pakka-packed-consumer-jyBRYo\\pakka-webui-0.1.0.tgz",
+      "overridden": false,
+      "dependencies": {
+        "@earendil-works/pi-ai": {
+          "version": "1.4.0",
+          "resolved": "https://registry.npmjs.org/@earendil-works/pi-ai/-/pi-ai-1.4.0.tgz",
+          "overridden": false,
+          "dependencies": {
+            "@anthropic-ai/sdk": {
+              "version": "0.129.0",
+              "resolved": "https://registry.npmjs.org/@anthropic-ai/sdk/-/sdk-0.129.0.tgz",
+              "overridden": false,
+              "dependencies": {
+                "json-schema-to-ts": {
+                  "version": "3.1.1",
+                  "resolved": "https://registry.npmjs.org/json-schema-to-ts/-/json-schema-to-ts-3.1.1.tgz",
+                  "overridden": false,
+                  "dependencies": {
+                    "@babel/runtime": {
+                      "version": "7.29.13",
+                      "resolved": "https://registry.npmjs.org/@babel/runtime/-/runtime-7.29.13.tgz",
+                      "overridden": false
+                    },
+                    "ts-algebra": {
+                      "version": "2.0.0",
+                      "resolved": "https://registry.npmjs.org/ts-algebra/-/ts-algebra-2.0.0.tgz",
+                      "overridden": false
+                    }
+                  }
+                },
+                "standardwebhooks": {
+                  "version": "1.1.1",
+                  "resolved": "https://registry.npmjs.org/standardwebhooks/-/standardwebhooks-1.1.1.tgz",
+                  "overridden": false,
+                  "dependencies": {
+                    "@stablelib/base64": {
+                      "version": "1.0.1",
+                      "resolved": "https://registry.npmjs.org/@stablelib/base64/-/base64-1.0.1.tgz",
+                      "overridden": false
+                    },
+                    "fast-sha256": {
+                      "version": "1.3.0",
+                      "resolved": "https://registry.npmjs.org/fast-sha256/-/fast-sha256-1.3.0.tgz",
+                      "overridden": false
+                    }
+                  }
+                },
+                "zod": {
+                  "version": "4.6.7"
+                }
+              }
+            },
+            "@aws-sdk/client-bedrock-runtime": {
+              "version": "3.1127.0",
+              "resolved": "https://registry.npmjs.org/@aws-sdk/client-bedrock-runtime/-/client-bedrock-runtime-3.1127.0.tgz",
+              "overridden": false,
+              "dependencies": {
+                "@aws-sdk/core": {
+                  "version": "3.980.1",
+                  "resolved": "https://registry.npmjs.org/@aws-sdk/core/-/core-3.980.1.tgz",
+                  "overridden": false,
+                  "dependencies": {
+                    "@aws-sdk/types": {
+                      "version": "3.975.0"
+                    },
+                    "@aws-sdk/xml-builder": {
+                      "version": "3.972.42",
+                      "resolved": "https://registry.npmjs.org/@aws-sdk/xml-builder/-/xml-builder-3.972.42.tgz",
+                      "overridden": false,
+                      "dependencies": {
+                        "@smithy/types": {
+                          "version": "4.20.0"
+                        },
+                        "tslib": {
+                          "version": "2.9.1"
+                        }
+                      }
+                    },
+                    "@aws/lambda-invoke-store": {
+                      "version": "0.3.0",
+                      "resolved": "https://registry.npmjs.org/@aws/lambda-invoke-store/-/lambda-invoke-store-0.3.0.tgz",
+                      "overridden": false
+                    },
+                    "@smithy/core": {
+                      "version": "3.39.0"
+                    },
+                    "@smithy/signature-v4": {
+                      "version": "5.7.5"
+                    },
+                    "@smithy/types": {
+                      "version": "4.20.0"
+                    },
+                    "bowser": {
+                      "version": "2.15.0",
+                      "resolved": "https://registry.npmjs.org/bowser/-/bowser-2.15.0.tgz",
+                      "overridden": false
+                    },
+                    "tslib": {
+                      "version": "2.9.1"
+                    }
+                  }
+                },
+                "@aws-sdk/credential-provider-node": {
+                  "version": "3.972.94",
+                  "resolved": "https://registry.npmjs.org/@aws-sdk/credential-provider-node/-/credential-provider-node-3.972.94.tgz",
+                  "overridden": false,
+                  "dependencies": {
+                    "@aws-sdk/credential-provider-env": {
+                      "version": "3.972.82",
+                      "resolved": "https://registry.npmjs.org/@aws-sdk/credential-provider-env/-/credential-provider-env-3.972.82.tgz",
+                      "overridden": false,
+                      "dependencies": {
+                        "@aws-sdk/core": {
+                          "version": "3.980.1"
+                        },
+                        "@aws-sdk/types": {
+                          "version": "3.975.0"
+                        },
+                        "@smithy/core": {
+                          "version": "3.39.0"
+                        },
+                        "@smithy/types": {
+                          "version": "4.20.0"
+                        },
+                        "tslib": {
+                          "version": "2.9.1"
+                        }
+                      }
+                    },
+                    "@aws-sdk/credential-provider-http": {
+                      "version": "3.972.84",
+                      "resolved": "https://registry.npmjs.org/@aws-sdk/credential-provider-http/-/credential-provider-http-3.972.84.tgz",
+                      "overridden": false,
+                      "dependencies": {
+                        "@aws-sdk/core": {
+                          "version": "3.980.1"
+                        },
+                        "@aws-sdk/types": {
+                          "version": "3.975.0"
+                        },
+                        "@smithy/core": {
+                          "version": "3.39.0"
+                        },
+                        "@smithy/fetch-http-handler": {
+                          "version": "5.8.1"
+                        },
+                        "@smithy/node-http-handler": {
+                          "version": "4.14.2",
+                          "resolved": "https://registry.npmjs.org/@smithy/node-http-handler/-/node-http-handler-4.14.2.tgz",
+                          "overridden": false,
+                          "dependencies": {
+                            "@smithy/core": {
+                              "version": "3.39.0"
+                            },
+                            "@smithy/types": {
+                              "version": "4.20.0"
+                            },
+                            "tslib": {
+                              "version": "2.9.1"
+                            }
+                          }
+                        },
+                        "@smithy/types": {
+                          "version": "4.20.0"
+                        },
+                        "tslib": {
+                          "version": "2.9.1"
+                        }
+                      }
+                    },
+                    "@aws-sdk/credential-provider-ini": {
+                      "version": "3.973.27",
+                      "resolved": "https://registry.npmjs.org/@aws-sdk/credential-provider-ini/-/credential-provider-ini-3.973.27.tgz",
+                      "overridden": false,
+                      "dependencies": {
+                        "@aws-sdk/core": {
+                          "version": "3.980.1"
+                        },
+                        "@aws-sdk/credential-provider-env": {
+                          "version": "3.972.82"
+                        },
+                        "@aws-sdk/credential-provider-http": {
+                          "version": "3.972.84"
+                        },
+                        "@aws-sdk/credential-provider-login": {
+                          "version": "3.972.89",
+                          "resolved": "https://registry.npmjs.org/@aws-sdk/credential-provider-login/-/credential-provider-login-3.972.89.tgz",
+                          "overridden": false,
+                          "dependencies": {
+                            "@aws-sdk/core": {
+                              "version": "3.980.1"
+                            },
+                            "@aws-sdk/nested-clients": {
+                              "version": "3.998.1"
+                            },
+                            "@aws-sdk/types": {
+                              "version": "3.975.0"
+                            },
+                            "@smithy/core": {
+                              "version": "3.39.0"
+                            },
+                            "@smithy/types": {
+                              "version": "4.20.0"
+                            },
+                            "tslib": {
+                              "version": "2.9.1"
+                            }
+                          }
+                        },
+                        "@aws-sdk/credential-provider-process": {
+                          "version": "3.972.82"
+                        },
+                        "@aws-sdk/credential-provider-sso": {
+                          "version": "3.973.26"
+                        },
+                        "@aws-sdk/credential-provider-web-identity": {
+                          "version": "3.972.88"
+                        },
+                        "@aws-sdk/nested-clients": {
+                          "version": "3.998.1"
+                        },
+                        "@aws-sdk/types": {
+                          "version": "3.975.0"
+                        },
+                        "@smithy/core": {
+                          "version": "3.39.0"
+                        },
+                        "@smithy/credential-provider-imds": {
+                          "version": "4.5.2"
+                        },
+                        "@smithy/types": {
+                          "version": "4.20.0"
+                        },
+                        "tslib": {
+                          "version": "2.9.1"
+                        }
+                      }
+                    },
+                    "@aws-sdk/credential-provider-process": {
+                      "version": "3.972.82",
+                      "resolved": "https://registry.npmjs.org/@aws-sdk/credential-provider-process/-/credential-provider-process-3.972.82.tgz",
+                      "overridden": false,
+                      "dependencies": {
+                        "@aws-sdk/core": {
+                          "version": "3.980.1"
+                        },
+                        "@aws-sdk/types": {
+                          "version": "3.975.0"
+                        },
+                        "@smithy/core": {
+                          "version": "3.39.0"
+                        },
+                        "@smithy/types": {
+                          "version": "4.20.0"
+                        },
+                        "tslib": {
+                          "version": "2.9.1"
+                        }
+                      }
+                    },
+                    "@aws-sdk/credential-provider-sso": {
+                      "version": "3.973.26",
+                      "resolved": "https://registry.npmjs.org/@aws-sdk/credential-provider-sso/-/credential-provider-sso-3.973.26.tgz",
+                      "overridden": false,
+                      "dependencies": {
+                        "@aws-sdk/core": {
+                          "version": "3.980.1"
+                        },
+                        "@aws-sdk/nested-clients": {
+                          "version": "3.998.1"
+                        },
+                        "@aws-sdk/token-providers": {
+                          "version": "3.1164.0",
+                          "resolved": "https://registry.npmjs.org/@aws-sdk/token-providers/-/token-providers-3.1164.0.tgz",
+                          "overridden": false,
+                          "dependencies": {
+                            "@aws-sdk/core": {
+                              "version": "3.980.1"
+                            },
+                            "@aws-sdk/nested-clients": {
+                              "version": "3.998.1"
+                            },
+                            "@aws-sdk/types": {
+                              "version": "3.975.0"
+                            },
+                            "@smithy/core": {
+                              "version": "3.39.0"
+                            },
+                            "@smithy/types": {
+                              "version": "4.20.0"
+                            },
+                            "tslib": {
+                              "version": "2.9.1"
+                            }
+                          }
+                        },
+                        "@aws-sdk/types": {
+                          "version": "3.975.0"
+                        },
+                        "@smithy/core": {
+                          "version": "3.39.0"
+                        },
+                        "@smithy/types": {
+                          "version": "4.20.0"
+                        },
+                        "tslib": {
+                          "version": "2.9.1"
+                        }
+                      }
+                    },
+                    "@aws-sdk/credential-provider-web-identity": {
+                      "version": "3.972.88",
+                      "resolved": "https://registry.npmjs.org/@aws-sdk/credential-provider-web-identity/-/credential-provider-web-identity-3.972.88.tgz",
+                      "overridden": false,
+                      "dependencies": {
+                        "@aws-sdk/core": {
+                          "version": "3.980.1"
+                        },
+                        "@aws-sdk/nested-clients": {
+                          "version": "3.998.1"
+                        },
+                        "@aws-sdk/types": {
+                          "version": "3.975.0"
+                        },
+                        "@smithy/core": {
+                          "version": "3.39.0"
+                        },
+                        "@smithy/types": {
+                          "version": "4.20.0"
+                        },
+                        "tslib": {
+                          "version": "2.9.1"
+                        }
+                      }
+                    },
+                    "@aws-sdk/types": {
+                      "version": "3.975.0"
+                    },
+                    "@smithy/core": {
+                      "version": "3.39.0"
+                    },
+                    "@smithy/credential-provider-imds": {
+                      "version": "4.5.2",
+                      "resolved": "https://registry.npmjs.org/@smithy/credential-provider-imds/-/credential-provider-imds-4.5.2.tgz",
+                      "overridden": false,
+                      "dependencies": {
+                        "@smithy/core": {
+                          "version": "3.39.0"
+                        },
+                        "@smithy/types": {
+                          "version": "4.20.0"
+                        },
+                        "tslib": {
+                          "version": "2.9.1"
+                        }
+                      }
+                    },
+                    "@smithy/types": {
+                      "version": "4.20.0"
+                    },
+                    "tslib": {
+                      "version": "2.9.1"
+                    }
+                  }
+                },
+                "@aws-sdk/eventstream-handler-node": {
+                  "version": "3.972.40",
+                  "resolved": "https://registry.npmjs.org/@aws-sdk/eventstream-handler-node/-/eventstream-handler-node-3.972.40.tgz",
+                  "overridden": false,
+                  "dependencies": {
+                    "@aws-sdk/types": {
+                      "version": "3.975.0"
+                    },
+                    "@smithy/core": {
+                      "version": "3.39.0"
+                    },
+                    "@smithy/types": {
+                      "version": "4.20.0"
+                    },
+                    "tslib": {
+                      "version": "2.9.1"
+                    }
+                  }
+                },
+                "@aws-sdk/middleware-eventstream": {
+                  "version": "3.972.36",
+                  "resolved": "https://registry.npmjs.org/@aws-sdk/middleware-eventstream/-/middleware-eventstream-3.972.36.tgz",
+                  "overridden": false,
+                  "dependencies": {
+                    "@aws-sdk/types": {
+                      "version": "3.975.0"
+                    },
+                    "@smithy/core": {
+                      "version": "3.39.0"
+                    },
+                    "@smithy/types": {
+                      "version": "4.20.0"
+                    },
+                    "tslib": {
+                      "version": "2.9.1"
+                    }
+                  }
+                },
+                "@aws-sdk/middleware-websocket": {
+                  "version": "3.972.64",
+                  "resolved": "https://registry.npmjs.org/@aws-sdk/middleware-websocket/-/middleware-websocket-3.972.64.tgz",
+                  "overridden": false,
+                  "dependencies": {
+                    "@aws-sdk/core": {
+                      "version": "3.980.1"
+                    },
+                    "@aws-sdk/types": {
+                      "version": "3.975.0"
+                    },
+                    "@smithy/core": {
+                      "version": "3.39.0"
+                    },
+                    "@smithy/fetch-http-handler": {
+                      "version": "5.8.1"
+                    },
+                    "@smithy/signature-v4": {
+                      "version": "5.7.5"
+                    },
+                    "@smithy/types": {
+                      "version": "4.20.0"
+                    },
+                    "tslib": {
+                      "version": "2.9.1"
+                    }
+                  }
+                },
+                "@aws-sdk/token-providers": {
+                  "version": "3.1127.0",
+                  "resolved": "https://registry.npmjs.org/@aws-sdk/token-providers/-/token-providers-3.1127.0.tgz",
+                  "overridden": false,
+                  "dependencies": {
+                    "@aws-sdk/core": {
+                      "version": "3.980.1"
+                    },
+                    "@aws-sdk/nested-clients": {
+                      "version": "3.998.1",
+                      "resolved": "https://registry.npmjs.org/@aws-sdk/nested-clients/-/nested-clients-3.998.1.tgz",
+                      "overridden": false,
+                      "dependencies": {
+                        "@aws-sdk/core": {
+                          "version": "3.980.1"
+                        },
+                        "@aws-sdk/signature-v4-multi-region": {
+                          "version": "3.996.51",
+                          "resolved": "https://registry.npmjs.org/@aws-sdk/signature-v4-multi-region/-/signature-v4-multi-region-3.996.51.tgz",
+                          "overridden": false,
+                          "dependencies": {
+                            "@aws-sdk/types": {
+                              "version": "3.975.0"
+                            },
+                            "@smithy/signature-v4": {
+                              "version": "5.7.5"
+                            },
+                            "@smithy/types": {
+                              "version": "4.20.0"
+                            },
+                            "tslib": {
+                              "version": "2.9.1"
+                            }
+                          }
+                        },
+                        "@aws-sdk/types": {
+                          "version": "3.975.0"
+                        },
+                        "@smithy/core": {
+                          "version": "3.39.0"
+                        },
+                        "@smithy/fetch-http-handler": {
+                          "version": "5.8.1"
+                        },
+                        "@smithy/node-http-handler": {
+                          "version": "4.14.2",
+                          "resolved": "https://registry.npmjs.org/@smithy/node-http-handler/-/node-http-handler-4.14.2.tgz",
+                          "overridden": false,
+                          "dependencies": {
+                            "@smithy/core": {
+                              "version": "3.39.0"
+                            },
+                            "@smithy/types": {
+                              "version": "4.20.0"
+                            },
+                            "tslib": {
+                              "version": "2.9.1"
+                            }
+                          }
+                        },
+                        "@smithy/types": {
+                          "version": "4.20.0"
+                        },
+                        "tslib": {
+                          "version": "2.9.1"
+                        }
+                      }
+                    },
+                    "@aws-sdk/types": {
+                      "version": "3.975.0"
+                    },
+                    "@smithy/core": {
+                      "version": "3.39.0"
+                    },
+                    "@smithy/types": {
+                      "version": "4.20.0"
+                    },
+                    "tslib": {
+                      "version": "2.9.1"
+                    }
+                  }
+                },
+                "@aws-sdk/types": {
+                  "version": "3.975.0",
+                  "resolved": "https://registry.npmjs.org/@aws-sdk/types/-/types-3.975.0.tgz",
+                  "overridden": false,
+                  "dependencies": {
+                    "@smithy/types": {
+                      "version": "4.20.0"
+                    },
+                    "tslib": {
+                      "version": "2.9.1"
+                    }
+                  }
+                },
+                "@smithy/core": {
+                  "version": "3.39.0",
+                  "resolved": "https://registry.npmjs.org/@smithy/core/-/core-3.39.0.tgz",
+                  "overridden": false,
+                  "dependencies": {
+                    "@smithy/types": {
+                      "version": "4.20.0"
+                    },
+                    "tslib": {
+                      "version": "2.9.1"
+                    }
+                  }
+                },
+                "@smithy/fetch-http-handler": {
+                  "version": "5.8.1",
+                  "resolved": "https://registry.npmjs.org/@smithy/fetch-http-handler/-/fetch-http-handler-5.8.1.tgz",
+                  "overridden": false,
+                  "dependencies": {
+                    "@smithy/core": {
+                      "version": "3.39.0"
+                    },
+                    "@smithy/types": {
+                      "version": "4.20.0"
+                    },
+                    "tslib": {
+                      "version": "2.9.1"
+                    }
+                  }
+                },
+                "@smithy/node-http-handler": {
+                  "version": "4.12.1"
+                },
+                "@smithy/types": {
+                  "version": "4.20.0",
+                  "resolved": "https://registry.npmjs.org/@smithy/types/-/types-4.20.0.tgz",
+                  "overridden": false,
+                  "dependencies": {
+                    "tslib": {
+                      "version": "2.9.1"
+                    }
+                  }
+                },
+                "tslib": {
+                  "version": "2.9.1",
+                  "resolved": "https://registry.npmjs.org/tslib/-/tslib-2.9.1.tgz",
+                  "overridden": false
+                }
+              }
+            },
+            "@earendil-works/pi-telemetry": {
+              "version": "1.4.0",
+              "resolved": "https://registry.npmjs.org/@earendil-works/pi-telemetry/-/pi-telemetry-1.4.0.tgz",
+              "overridden": false
+            },
+            "@google/genai": {
+              "version": "2.21.0",
+              "resolved": "https://registry.npmjs.org/@google/genai/-/genai-2.21.0.tgz",
+              "overridden": false,
+              "dependencies": {
+                "@modelcontextprotocol/sdk": {
+                  "version": "1.25.2"
+                },
+                "google-auth-library": {
+                  "version": "10.9.1",
+                  "resolved": "https://registry.npmjs.org/google-auth-library/-/google-auth-library-10.9.1.tgz",
+                  "overridden": false,
+                  "dependencies": {
+                    "base64-js": {
+                      "version": "1.5.1",
+                      "resolved": "https://registry.npmjs.org/base64-js/-/base64-js-1.5.1.tgz",
+                      "overridden": false
+                    },
+                    "ecdsa-sig-formatter": {
+                      "version": "1.0.11",
+                      "resolved": "https://registry.npmjs.org/ecdsa-sig-formatter/-/ecdsa-sig-formatter-1.0.11.tgz",
+                      "overridden": false,
+                      "dependencies": {
+                        "safe-buffer": {
+                          "version": "5.2.1",
+                          "resolved": "https://registry.npmjs.org/safe-buffer/-/safe-buffer-5.2.1.tgz",
+                          "overridden": false
+                        }
+                      }
+                    },
+                    "gaxios": {
+                      "version": "7.3.1",
+                      "resolved": "https://registry.npmjs.org/gaxios/-/gaxios-7.3.1.tgz",
+                      "overridden": false,
+                      "dependencies": {
+                        "extend": {
+                          "version": "3.0.2",
+                          "resolved": "https://registry.npmjs.org/extend/-/extend-3.0.2.tgz",
+                          "overridden": false
+                        },
+                        "https-proxy-agent": {
+                          "version": "7.0.6",
+                          "resolved": "https://registry.npmjs.org/https-proxy-agent/-/https-proxy-agent-7.0.6.tgz",
+                          "overridden": false,
+                          "dependencies": {
+                            "agent-base": {
+                              "version": "7.1.4",
+                              "resolved": "https://registry.npmjs.org/agent-base/-/agent-base-7.1.4.tgz",
+                              "overridden": false
+                            },
+                            "debug": {
+                              "version": "4.4.3"
+                            }
+                          }
+                        },
+                        "node-fetch": {
+                          "version": "3.3.2",
+                          "resolved": "https://registry.npmjs.org/node-fetch/-/node-fetch-3.3.2.tgz",
+                          "overridden": false,
+                          "dependencies": {
+                            "data-uri-to-buffer": {
+                              "version": "4.0.1",
+                              "resolved": "https://registry.npmjs.org/data-uri-to-buffer/-/data-uri-to-buffer-4.0.1.tgz",
+                              "overridden": false
+                            },
+                            "fetch-blob": {
+                              "version": "3.2.0",
+                              "resolved": "https://registry.npmjs.org/fetch-blob/-/fetch-blob-3.2.0.tgz",
+                              "overridden": false,
+                              "dependencies": {
+                                "node-domexception": {
+                                  "version": "1.0.0",
+                                  "resolved": "https://registry.npmjs.org/node-domexception/-/node-domexception-1.0.0.tgz",
+                                  "overridden": false
+                                },
+                                "web-streams-polyfill": {
+                                  "version": "3.3.3",
+                                  "resolved": "https://registry.npmjs.org/web-streams-polyfill/-/web-streams-polyfill-3.3.3.tgz",
+                                  "overridden": false
+                                }
+                              }
+                            },
+                            "formdata-polyfill": {
+                              "version": "4.0.10",
+                              "resolved": "https://registry.npmjs.org/formdata-polyfill/-/formdata-polyfill-4.0.10.tgz",
+                              "overridden": false,
+                              "dependencies": {
+                                "fetch-blob": {
+                                  "version": "3.2.0"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "gcp-metadata": {
+                      "version": "8.1.2",
+                      "resolved": "https://registry.npmjs.org/gcp-metadata/-/gcp-metadata-8.1.2.tgz",
+                      "overridden": false,
+                      "dependencies": {
+                        "gaxios": {
+                          "version": "7.3.1"
+                        },
+                        "google-logging-utils": {
+                          "version": "1.1.3"
+                        },
+                        "json-bigint": {
+                          "version": "1.0.0",
+                          "resolved": "https://registry.npmjs.org/json-bigint/-/json-bigint-1.0.0.tgz",
+                          "overridden": false,
+                          "dependencies": {
+                            "bignumber.js": {
+                              "version": "9.3.1",
+                              "resolved": "https://registry.npmjs.org/bignumber.js/-/bignumber.js-9.3.1.tgz",
+                              "overridden": false
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "google-logging-utils": {
+                      "version": "1.1.3",
+                      "resolved": "https://registry.npmjs.org/google-logging-utils/-/google-logging-utils-1.1.3.tgz",
+                      "overridden": false
+                    },
+                    "jws": {
+                      "version": "4.0.1",
+                      "resolved": "https://registry.npmjs.org/jws/-/jws-4.0.1.tgz",
+                      "overridden": false,
+                      "dependencies": {
+                        "jwa": {
+                          "version": "2.0.1",
+                          "resolved": "https://registry.npmjs.org/jwa/-/jwa-2.0.1.tgz",
+                          "overridden": false,
+                          "dependencies": {
+                            "buffer-equal-constant-time": {
+                              "version": "1.0.1",
+                              "resolved": "https://registry.npmjs.org/buffer-equal-constant-time/-/buffer-equal-constant-time-1.0.1.tgz",
+                              "overridden": false
+                            },
+                            "ecdsa-sig-formatter": {
+                              "version": "1.0.11"
+                            },
+                            "safe-buffer": {
+                              "version": "5.2.1"
+                            }
+                          }
+                        },
+                        "safe-buffer": {
+                          "version": "5.2.1"
+                        }
+                      }
+                    }
+                  }
+                },
+                "p-retry": {
+                  "version": "4.6.2",
+                  "resolved": "https://registry.npmjs.org/p-retry/-/p-retry-4.6.2.tgz",
+                  "overridden": false,
+                  "dependencies": {
+                    "@types/retry": {
+                      "version": "0.12.0",
+                      "resolved": "https://registry.npmjs.org/@types/retry/-/retry-0.12.0.tgz",
+                      "overridden": false
+                    },
+                    "retry": {
+                      "version": "0.13.1",
+                      "resolved": "https://registry.npmjs.org/retry/-/retry-0.13.1.tgz",
+                      "overridden": false
+                    }
+                  }
+                },
+                "protobufjs": {
+                  "version": "7.6.6",
+                  "resolved": "https://registry.npmjs.org/protobufjs/-/protobufjs-7.6.6.tgz",
+                  "overridden": false,
+                  "dependencies": {
+                    "@protobufjs/aspromise": {
+                      "version": "1.1.2",
+                      "resolved": "https://registry.npmjs.org/@protobufjs/aspromise/-/aspromise-1.1.2.tgz",
+                      "overridden": false
+                    },
+                    "@protobufjs/base64": {
+                      "version": "1.1.2",
+                      "resolved": "https://registry.npmjs.org/@protobufjs/base64/-/base64-1.1.2.tgz",
+                      "overridden": false
+                    },
+                    "@protobufjs/codegen": {
+                      "version": "2.0.5",
+                      "resolved": "https://registry.npmjs.org/@protobufjs/codegen/-/codegen-2.0.5.tgz",
+                      "overridden": false
+                    },
+                    "@protobufjs/eventemitter": {
+                      "version": "1.1.1",
+                      "resolved": "https://registry.npmjs.org/@protobufjs/eventemitter/-/eventemitter-1.1.1.tgz",
+                      "overridden": false
+                    },
+                    "@protobufjs/fetch": {
+                      "version": "1.1.1",
+                      "resolved": "https://registry.npmjs.org/@protobufjs/fetch/-/fetch-1.1.1.tgz",
+                      "overridden": false,
+                      "dependencies": {
+                        "@protobufjs/aspromise": {
+                          "version": "1.1.2"
+                        }
+                      }
+                    },
+                    "@protobufjs/float": {
+                      "version": "1.0.2",
+                      "resolved": "https://registry.npmjs.org/@protobufjs/float/-/float-1.0.2.tgz",
+                      "overridden": false
+                    },
+                    "@protobufjs/path": {
+                      "version": "1.1.2",
+                      "resolved": "https://registry.npmjs.org/@protobufjs/path/-/path-1.1.2.tgz",
+                      "overridden": false
+                    },
+                    "@protobufjs/pool": {
+                      "version": "1.1.0",
+                      "resolved": "https://registry.npmjs.org/@protobufjs/pool/-/pool-1.1.0.tgz",
+                      "overridden": false
+                    },
+                    "@protobufjs/utf8": {
+                      "version": "1.1.2",
+                      "resolved": "https://registry.npmjs.org/@protobufjs/utf8/-/utf8-1.1.2.tgz",
+                      "overridden": false
+                    },
+                    "@types/node": {
+                      "version": "26.6.4"
+                    },
+                    "long": {
+                      "version": "5.3.2",
+                      "resolved": "https://registry.npmjs.org/long/-/long-5.3.2.tgz",
+                      "overridden": false
+                    }
+                  }
+                },
+                "ws": {
+                  "version": "8.22.2",
+                  "resolved": "https://registry.npmjs.org/ws/-/ws-8.22.2.tgz",
+                  "overridden": false,
+                  "dependencies": {
+                    "bufferutil": {},
+                    "utf-8-validate": {}
+                  }
+                }
+              }
+            },
+            "@smithy/node-http-handler": {
+              "version": "4.12.1",
+              "resolved": "https://registry.npmjs.org/@smithy/node-http-handler/-/node-http-handler-4.12.1.tgz",
+              "overridden": false,
+              "dependencies": {
+                "@smithy/core": {
+                  "version": "3.39.0"
+                },
+                "@smithy/types": {
+                  "version": "4.20.0"
+                },
+                "tslib": {
+                  "version": "2.9.1"
+                }
+              }
+            },
+            "http-proxy-agent": {
+              "version": "9.1.0",
+              "resolved": "https://registry.npmjs.org/http-proxy-agent/-/http-proxy-agent-9.1.0.tgz",
+              "overridden": false,
+              "dependencies": {
+                "agent-base": {
+                  "version": "9.0.0",
+                  "resolved": "https://registry.npmjs.org/agent-base/-/agent-base-9.0.0.tgz",
+                  "overridden": false
+                },
+                "debug": {
+                  "version": "4.4.3"
+                },
+                "proxy-agent-negotiate": {
+                  "version": "1.1.0",
+                  "resolved": "https://registry.npmjs.org/proxy-agent-negotiate/-/proxy-agent-negotiate-1.1.0.tgz",
+                  "overridden": false,
+                  "dependencies": {
+                    "kerberos": {}
+                  }
+                }
+              }
+            },
+            "https-proxy-agent": {
+              "version": "9.1.0",
+              "resolved": "https://registry.npmjs.org/https-proxy-agent/-/https-proxy-agent-9.1.0.tgz",
+              "overridden": false,
+              "dependencies": {
+                "agent-base": {
+                  "version": "9.0.0"
+                },
+                "debug": {
+                  "version": "4.4.3"
+                },
+                "proxy-agent-negotiate": {
+                  "version": "1.1.0"
+                }
+              }
+            },
+            "openai": {
+              "version": "7.19.0",
+              "resolved": "https://registry.npmjs.org/openai/-/openai-7.19.0.tgz",
+              "overridden": false,
+              "dependencies": {
+                "@aws-sdk/credential-provider-node": {
+                  "version": "3.972.94"
+                },
+                "@smithy/hash-node": {},
+                "@smithy/signature-v4": {
+                  "version": "5.7.5",
+                  "resolved": "https://registry.npmjs.org/@smithy/signature-v4/-/signature-v4-5.7.5.tgz",
+                  "overridden": false,
+                  "dependencies": {
+                    "@smithy/core": {
+                      "version": "3.39.0"
+                    },
+                    "@smithy/types": {
+                      "version": "4.20.0"
+                    },
+                    "tslib": {
+                      "version": "2.9.1"
+                    }
+                  }
+                },
+                "undici": {
+                  "version": "8.10.2"
+                },
+                "ws": {
+                  "version": "8.22.2"
+                },
+                "zod": {
+                  "version": "4.6.7"
+                }
+              }
+            },
+            "partial-json": {
+              "version": "0.1.7",
+              "resolved": "https://registry.npmjs.org/partial-json/-/partial-json-0.1.7.tgz",
+              "overridden": false
+            },
+            "typebox": {
+              "version": "1.3.27",
+              "resolved": "https://registry.npmjs.org/typebox/-/typebox-1.3.27.tgz",
+              "overridden": false
+            }
+          }
+        },
+        "@earendil-works/pi-coding-agent": {
+          "version": "1.4.0",
+          "resolved": "https://registry.npmjs.org/@earendil-works/pi-coding-agent/-/pi-coding-agent-1.4.0.tgz",
+          "overridden": false,
+          "dependencies": {
+            "@earendil-works/pi-agent-core": {
+              "version": "1.4.0",
+              "resolved": "https://registry.npmjs.org/@earendil-works/pi-agent-core/-/pi-agent-core-1.4.0.tgz",
+              "overridden": false,
+              "dependencies": {
+                "@earendil-works/pi-ai": {
+                  "version": "1.4.0"
+                },
+                "typebox": {
+                  "version": "1.3.27"
+                }
+              }
+            },
+            "@earendil-works/pi-ai": {
+              "version": "1.4.0"
+            },
+            "@earendil-works/pi-codemode": {
+              "version": "1.4.0",
+              "resolved": "https://registry.npmjs.org/@earendil-works/pi-codemode/-/pi-codemode-1.4.0.tgz",
+              "overridden": false,
+              "dependencies": {
+                "quickjs-wasi": {
+                  "version": "3.6.2"
+                }
+              }
+            },
+            "@earendil-works/pi-mcp": {
+              "version": "1.4.0",
+              "resolved": "https://registry.npmjs.org/@earendil-works/pi-mcp/-/pi-mcp-1.4.0.tgz",
+              "overridden": false,
+              "dependencies": {
+                "cross-spawn": {
+                  "version": "7.0.6"
+                }
+              }
+            },
+            "@earendil-works/pi-tui": {
+              "version": "1.4.0",
+              "resolved": "https://registry.npmjs.org/@earendil-works/pi-tui/-/pi-tui-1.4.0.tgz",
+              "overridden": false,
+              "dependencies": {
+                "get-east-asian-width": {
+                  "version": "1.6.0",
+                  "resolved": "https://registry.npmjs.org/get-east-asian-width/-/get-east-asian-width-1.6.0.tgz",
+                  "overridden": false
+                },
+                "marked-cjk-friendly": {
+                  "version": "0.1.2",
+                  "resolved": "https://registry.npmjs.org/marked-cjk-friendly/-/marked-cjk-friendly-0.1.2.tgz",
+                  "overridden": false,
+                  "dependencies": {
+                    "marked": {
+                      "version": "18.1.0"
+                    }
+                  }
+                },
+                "marked": {
+                  "version": "18.0.11",
+                  "resolved": "https://registry.npmjs.org/marked/-/marked-18.0.11.tgz",
+                  "overridden": false
+                }
+              }
+            },
+            "@silvia-odwyer/photon-node": {
+              "version": "0.3.4",
+              "resolved": "https://registry.npmjs.org/@silvia-odwyer/photon-node/-/photon-node-0.3.4.tgz",
+              "overridden": false
+            },
+            "brace-expansion": {
+              "version": "5.0.12",
+              "resolved": "https://registry.npmjs.org/brace-expansion/-/brace-expansion-5.0.12.tgz",
+              "overridden": false,
+              "dependencies": {
+                "balanced-match": {
+                  "version": "4.0.4",
+                  "resolved": "https://registry.npmjs.org/balanced-match/-/balanced-match-4.0.4.tgz",
+                  "overridden": false
+                }
+              }
+            },
+            "chalk": {
+              "version": "6.0.0",
+              "resolved": "https://registry.npmjs.org/chalk/-/chalk-6.0.0.tgz",
+              "overridden": false
+            },
+            "cross-spawn": {
+              "version": "7.0.6"
+            },
+            "diff": {
+              "version": "8.0.4",
+              "resolved": "https://registry.npmjs.org/diff/-/diff-8.0.4.tgz",
+              "overridden": false
+            },
+            "grok-mermaid": {
+              "version": "0.2.3",
+              "resolved": "https://registry.npmjs.org/grok-mermaid/-/grok-mermaid-0.2.3.tgz",
+              "overridden": false
+            },
+            "highlight.js": {
+              "version": "10.7.3",
+              "resolved": "https://registry.npmjs.org/highlight.js/-/highlight.js-10.7.3.tgz",
+              "overridden": false
+            },
+            "hosted-git-info": {
+              "version": "9.0.3",
+              "resolved": "https://registry.npmjs.org/hosted-git-info/-/hosted-git-info-9.0.3.tgz",
+              "overridden": false,
+              "dependencies": {
+                "lru-cache": {
+                  "version": "11.5.3",
+                  "resolved": "https://registry.npmjs.org/lru-cache/-/lru-cache-11.5.3.tgz",
+                  "overridden": false
+                }
+              }
+            },
+            "ignore": {
+              "version": "7.0.8",
+              "resolved": "https://registry.npmjs.org/ignore/-/ignore-7.0.8.tgz",
+              "overridden": false
+            },
+            "jiti": {
+              "version": "2.7.0",
+              "resolved": "https://registry.npmjs.org/jiti/-/jiti-2.7.0.tgz",
+              "overridden": false
+            },
+            "minimatch": {
+              "version": "10.2.6",
+              "resolved": "https://registry.npmjs.org/minimatch/-/minimatch-10.2.6.tgz",
+              "overridden": false,
+              "dependencies": {
+                "brace-expansion": {
+                  "version": "5.0.12"
+                }
+              }
+            },
+            "proper-lockfile": {
+              "version": "4.1.2",
+              "resolved": "https://registry.npmjs.org/proper-lockfile/-/proper-lockfile-4.1.2.tgz",
+              "overridden": false,
+              "dependencies": {
+                "graceful-fs": {
+                  "version": "4.2.11",
+                  "resolved": "https://registry.npmjs.org/graceful-fs/-/graceful-fs-4.2.11.tgz",
+                  "overridden": false
+                },
+                "retry": {
+                  "version": "0.12.0",
+                  "resolved": "https://registry.npmjs.org/retry/-/retry-0.12.0.tgz",
+                  "overridden": false
+                },
+                "signal-exit": {
+                  "version": "3.0.7",
+                  "resolved": "https://registry.npmjs.org/signal-exit/-/signal-exit-3.0.7.tgz",
+                  "overridden": false
+                }
+              }
+            },
+            "quickjs-wasi": {
+              "version": "3.6.2",
+              "resolved": "https://registry.npmjs.org/quickjs-wasi/-/quickjs-wasi-3.6.2.tgz",
+              "overridden": false
+            },
+            "semver": {
+              "version": "7.8.5",
+              "resolved": "https://registry.npmjs.org/semver/-/semver-7.8.5.tgz",
+              "overridden": false
+            },
+            "typebox": {
+              "version": "1.3.27"
+            },
+            "undici": {
+              "version": "8.10.2",
+              "resolved": "https://registry.npmjs.org/undici/-/undici-8.10.2.tgz",
+              "overridden": false
+            },
+            "yaml": {
+              "version": "2.9.0",
+              "resolved": "https://registry.npmjs.org/yaml/-/yaml-2.9.0.tgz",
+              "overridden": false
+            }
+          }
+        },
+        "@pakka/agent": {
+          "version": "0.7.0"
+        },
+        "@pakka/client": {
+          "version": "0.1.0"
+        },
+        "@pakka/protocol": {
+          "version": "0.1.0"
+        },
+        "@pakka/server": {
+          "version": "0.5.0"
+        },
+        "@tanstack/virtual-core": {
+          "version": "3.19.11",
+          "resolved": "https://registry.npmjs.org/@tanstack/virtual-core/-/virtual-core-3.19.11.tgz",
+          "overridden": false
+        },
+        "dompurify": {
+          "version": "3.4.16",
+          "resolved": "https://registry.npmjs.org/dompurify/-/dompurify-3.4.16.tgz",
+          "overridden": false,
+          "dependencies": {
+            "@types/trusted-types": {
+              "version": "2.0.7",
+              "resolved": "https://registry.npmjs.org/@types/trusted-types/-/trusted-types-2.0.7.tgz",
+              "overridden": false
+            }
+          }
+        },
+        "htm": {
+          "version": "3.1.1",
+          "resolved": "https://registry.npmjs.org/htm/-/htm-3.1.1.tgz",
+          "overridden": false
+        },
+        "marked": {
+          "version": "18.1.0",
+          "resolved": "https://registry.npmjs.org/marked/-/marked-18.1.0.tgz",
+          "overridden": false
+        },
+        "preact": {
+          "version": "11.0.1"
+        },
+        "qrcode": {
+          "version": "1.5.4",
+          "resolved": "https://registry.npmjs.org/qrcode/-/qrcode-1.5.4.tgz",
+          "overridden": false,
+          "dependencies": {
+            "dijkstrajs": {
+              "version": "1.0.3",
+              "resolved": "https://registry.npmjs.org/dijkstrajs/-/dijkstrajs-1.0.3.tgz",
+              "overridden": false
+            },
+            "pngjs": {
+              "version": "5.0.0",
+              "resolved": "https://registry.npmjs.org/pngjs/-/pngjs-5.0.0.tgz",
+              "overridden": false
+            },
+            "yargs": {
+              "version": "15.4.1",
+              "resolved": "https://registry.npmjs.org/yargs/-/yargs-15.4.1.tgz",
+              "overridden": false,
+              "dependencies": {
+                "cliui": {
+                  "version": "6.0.0",
+                  "resolved": "https://registry.npmjs.org/cliui/-/cliui-6.0.0.tgz",
+                  "overridden": false,
+                  "dependencies": {
+                    "string-width": {
+                      "version": "4.2.3"
+                    },
+                    "strip-ansi": {
+                      "version": "6.0.1",
+                      "resolved": "https://registry.npmjs.org/strip-ansi/-/strip-ansi-6.0.1.tgz",
+                      "overridden": false,
+                      "dependencies": {
+                        "ansi-regex": {
+                          "version": "5.0.1",
+                          "resolved": "https://registry.npmjs.org/ansi-regex/-/ansi-regex-5.0.1.tgz",
+                          "overridden": false
+                        }
+                      }
+                    },
+                    "wrap-ansi": {
+                      "version": "6.2.0",
+                      "resolved": "https://registry.npmjs.org/wrap-ansi/-/wrap-ansi-6.2.0.tgz",
+                      "overridden": false,
+                      "dependencies": {
+                        "ansi-styles": {
+                          "version": "4.3.0",
+                          "resolved": "https://registry.npmjs.org/ansi-styles/-/ansi-styles-4.3.0.tgz",
+                          "overridden": false,
+                          "dependencies": {
+                            "color-convert": {
+                              "version": "2.0.1",
+                              "resolved": "https://registry.npmjs.org/color-convert/-/color-convert-2.0.1.tgz",
+                              "overridden": false,
+                              "dependencies": {
+                                "color-name": {
+                                  "version": "1.1.4",
+                                  "resolved": "https://registry.npmjs.org/color-name/-/color-name-1.1.4.tgz",
+                                  "overridden": false
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "string-width": {
+                          "version": "4.2.3"
+                        },
+                        "strip-ansi": {
+                          "version": "6.0.1"
+                        }
+                      }
+                    }
+                  }
+                },
+                "decamelize": {
+                  "version": "1.2.0",
+                  "resolved": "https://registry.npmjs.org/decamelize/-/decamelize-1.2.0.tgz",
+                  "overridden": false
+                },
+                "find-up": {
+                  "version": "4.1.0",
+                  "resolved": "https://registry.npmjs.org/find-up/-/find-up-4.1.0.tgz",
+                  "overridden": false,
+                  "dependencies": {
+                    "locate-path": {
+                      "version": "5.0.0",
+                      "resolved": "https://registry.npmjs.org/locate-path/-/locate-path-5.0.0.tgz",
+                      "overridden": false,
+                      "dependencies": {
+                        "p-locate": {
+                          "version": "4.1.0",
+                          "resolved": "https://registry.npmjs.org/p-locate/-/p-locate-4.1.0.tgz",
+                          "overridden": false,
+                          "dependencies": {
+                            "p-limit": {
+                              "version": "2.3.0",
+                              "resolved": "https://registry.npmjs.org/p-limit/-/p-limit-2.3.0.tgz",
+                              "overridden": false,
+                              "dependencies": {
+                                "p-try": {
+                                  "version": "2.2.0",
+                                  "resolved": "https://registry.npmjs.org/p-try/-/p-try-2.2.0.tgz",
+                                  "overridden": false
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "path-exists": {
+                      "version": "4.0.0",
+                      "resolved": "https://registry.npmjs.org/path-exists/-/path-exists-4.0.0.tgz",
+                      "overridden": false
+                    }
+                  }
+                },
+                "get-caller-file": {
+                  "version": "2.0.5",
+                  "resolved": "https://registry.npmjs.org/get-caller-file/-/get-caller-file-2.0.5.tgz",
+                  "overridden": false
+                },
+                "require-directory": {
+                  "version": "2.1.1",
+                  "resolved": "https://registry.npmjs.org/require-directory/-/require-directory-2.1.1.tgz",
+                  "overridden": false
+                },
+                "require-main-filename": {
+                  "version": "2.0.0",
+                  "resolved": "https://registry.npmjs.org/require-main-filename/-/require-main-filename-2.0.0.tgz",
+                  "overridden": false
+                },
+                "set-blocking": {
+                  "version": "2.0.0",
+                  "resolved": "https://registry.npmjs.org/set-blocking/-/set-blocking-2.0.0.tgz",
+                  "overridden": false
+                },
+                "string-width": {
+                  "version": "4.2.3",
+                  "resolved": "https://registry.npmjs.org/string-width/-/string-width-4.2.3.tgz",
+                  "overridden": false,
+                  "dependencies": {
+                    "emoji-regex": {
+                      "version": "8.0.0",
+                      "resolved": "https://registry.npmjs.org/emoji-regex/-/emoji-regex-8.0.0.tgz",
+                      "overridden": false
+                    },
+                    "is-fullwidth-code-point": {
+                      "version": "3.0.0",
+                      "resolved": "https://registry.npmjs.org/is-fullwidth-code-point/-/is-fullwidth-code-point-3.0.0.tgz",
+                      "overridden": false
+                    },
+                    "strip-ansi": {
+                      "version": "6.0.1"
+                    }
+                  }
+                },
+                "which-module": {
+                  "version": "2.0.1",
+                  "resolved": "https://registry.npmjs.org/which-module/-/which-module-2.0.1.tgz",
+                  "overridden": false
+                },
+                "y18n": {
+                  "version": "4.0.3",
+                  "resolved": "https://registry.npmjs.org/y18n/-/y18n-4.0.3.tgz",
+                  "overridden": false
+                },
+                "yargs-parser": {
+                  "version": "18.1.3",
+                  "resolved": "https://registry.npmjs.org/yargs-parser/-/yargs-parser-18.1.3.tgz",
+                  "overridden": false,
+                  "dependencies": {
+                    "camelcase": {
+                      "version": "5.3.1",
+                      "resolved": "https://registry.npmjs.org/camelcase/-/camelcase-5.3.1.tgz",
+                      "overridden": false
+                    },
+                    "decamelize": {
+                      "version": "1.2.0"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "@types/node": {
+      "version": "26.6.4",
+      "resolved": "https://registry.npmjs.org/@types/node/-/node-26.6.4.tgz",
+      "overridden": false,
+      "dependencies": {
+        "undici-types": {
+          "version": "8.9.0",
+          "resolved": "https://registry.npmjs.org/undici-types/-/undici-types-8.9.0.tgz",
+          "overridden": false
+        }
+      }
+    },
+    "typescript": {
+      "version": "7.0.2",
+      "resolved": "https://registry.npmjs.org/typescript/-/typescript-7.0.2.tgz",
+      "overridden": false,
+      "dependencies": {
+        "@typescript/typescript-aix-ppc64": {},
+        "@typescript/typescript-darwin-arm64": {},
+        "@typescript/typescript-darwin-x64": {},
+        "@typescript/typescript-freebsd-arm64": {},
+        "@typescript/typescript-freebsd-x64": {},
+        "@typescript/typescript-linux-arm": {},
+        "@typescript/typescript-linux-arm64": {},
+        "@typescript/typescript-linux-loong64": {},
+        "@typescript/typescript-linux-mips64el": {},
+        "@typescript/typescript-linux-ppc64": {},
+        "@typescript/typescript-linux-riscv64": {},
+        "@typescript/typescript-linux-s390x": {},
+        "@typescript/typescript-linux-x64": {},
+        "@typescript/typescript-netbsd-arm64": {},
+        "@typescript/typescript-netbsd-x64": {},
+        "@typescript/typescript-openbsd-arm64": {},
+        "@typescript/typescript-openbsd-x64": {},
+        "@typescript/typescript-sunos-x64": {},
+        "@typescript/typescript-win32-arm64": {},
+        "@typescript/typescript-win32-x64": {
+          "version": "7.0.2",
+          "resolved": "https://registry.npmjs.org/@typescript/typescript-win32-x64/-/typescript-win32-x64-7.0.2.tgz",
+          "overridden": false
+        }
+      }
+    }
+  }
+}
+
+exit=0
+signal=null
+error=undefined
+elapsedMs=1019

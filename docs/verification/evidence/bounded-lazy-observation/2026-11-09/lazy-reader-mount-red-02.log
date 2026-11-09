@@ -1,0 +1,37 @@
+✖ lazy browser: folded tool keeps no body/media DOM, expanded original is ranged and line-virtualized, collapse releases nodes (1910.7423ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3217.3042
+
+✖ failing tests:
+
+test at apps\webui\test\lazy-content-browser.test.ts:17:1
+✖ lazy browser: folded tool keeps no body/media DOM, expanded original is ranged and line-virtualized, collapse releases nodes (1910.7423ms)
+  AssertionError [ERR_ASSERTION]: A fresh reader starts its first range before advertising another enabled range command
+  + actual - expected
+  
+    {
+      blocked: [
+  +     false,
+  +     false
+  -     true,
+  -     true
+      ],
+      count: 2
+    }
+  
+      at TestContext.<anonymous> (file:///D:/Projects/pakka-works/pakka-lazy-webui/apps/webui/test/lazy-content-browser.test.ts:117:11)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: { count: 2, blocked: [ false, false ] },
+    expected: { count: 2, blocked: [ true, true ] },
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }

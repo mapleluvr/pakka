@@ -1,0 +1,40 @@
+{
+  "schema": 1,
+  "files": [
+    {
+      "file": "ego-summary.json",
+      "bytes": 12517,
+      "sha256": "d80d8c2836015609a58939beb9977816ba07c930c81e89b698b818068a74bea7"
+    },
+    {
+      "file": "delivery-identity.json",
+      "bytes": 5120,
+      "sha256": "48eaf48cb3f3a7214f89bb892412c0d4a2fb23009cdfeacf00edf7752b571626"
+    },
+    {
+      "file": "lazy-final-source-04.json",
+      "bytes": 91932,
+      "sha256": "d32ebb28dd7926d9259a9808cf846b6730009387b5f6e67cc0a6dd1ed7f67321"
+    },
+    {
+      "file": "lazy-final-full-04.log",
+      "bytes": 101185,
+      "sha256": "e53df5a3e95101921d46f3425a005f47afaaace8e4cec78eef7f709646ceb17d"
+    },
+    {
+      "file": "lazy-final-full-04.tap",
+      "bytes": 229810,
+      "sha256": "1b57d3ff0c422d64643d2a9ff3b5076f885184a501adff425f9ada99f276bd52"
+    },
+    {
+      "file": "lazy-final-package-smoke-04.log",
+      "bytes": 5576,
+      "sha256": "341fabe8687eb5570cf79849c4578b7018790dfd2fbba5a73441fbc88c02b823"
+    },
+    {
+      "file": "durable-byte-cache-green.log",
+      "bytes": 2119,
+      "sha256": "42394b8f64ac62570ee3b1f8d7df3a941c5869dbd63d96b0d102ae999c19a75d"
+    }
+  ]
+}

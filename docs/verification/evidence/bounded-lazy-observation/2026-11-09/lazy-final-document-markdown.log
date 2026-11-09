@@ -1,0 +1,4 @@
+markdownlint-cli2 v0.24.0 (markdownlint v0.42.0)
+Finding: docs/verification/README.md docs/state/durable-patch.md docs/changes/bounded-lazy-observation.md docs/verification/BOUNDED-LAZY-OBSERVATION.md
+Linting: 4 files
+Summary: 0 issues in 0 files

@@ -1,0 +1,31 @@
+✔ lazy browser: folded tool keeps no body/media DOM, expanded original is ranged and line-virtualized, collapse releases nodes (3193.8678ms)
+✖ lazy browser: a large in-flight argument stays a preview and source capture omissions remain explicit (2542.3427ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 1
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 7221.8028
+
+✖ failing tests:
+
+test at apps\webui\test\lazy-content-browser.test.ts:257:1
+✖ lazy browser: a large in-flight argument stays a preview and source capture omissions remain explicit (2542.3427ms)
+  AssertionError [ERR_ASSERTION]: a clipped preview cannot establish absence from the native source
+  + actual - expected
+  
+  + 'Not found in this complete original.'
+  - 'Not found in this preview; the complete original is not available here yet.'
+  
+      at TestContext.<anonymous> (file:///D:/Projects/pakka-works/pakka-lazy-webui/apps/webui/test/lazy-content-browser.test.ts:362:11)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'Not found in this complete original.',
+    expected: 'Not found in this preview; the complete original is not available here yet.',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

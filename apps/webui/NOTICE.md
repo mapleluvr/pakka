@@ -2,6 +2,8 @@
 
 pakka-webui adapts the pi-pocket Web workbench, interaction patterns, theme/CSS and fonts from Tanner Middleton's pi-pocket. The adopted UI baseline is `TannerMidd/pi-pocket@de612d5622cdc66b6b8b4900c650c6f2efdf4c63`; command/interface design also references `mapleluvr/pi-pocket@58a4fdcc88ed755023aea9fac897735fca7396fe` (issue #35 Phase 2).
 
+The history viewport uses the exact npm package `@tanstack/virtual-core` 3.19.11. The reproducible esbuild browser bundle defines the build-time production environment and is served locally; the MIT copyright and permission notice is retained in `licenses/virtual-core-MIT.txt`.
+
 The original MIT copyright and permission notice is retained in `LICENSE.pi-pocket`. The included JetBrains Mono font and its SIL Open Font License are retained together in `web/fonts/`. Dependency code (Preact, htm, marked, DOMPurify and QRCode) is consumed from the exact declared npm packages and retains their respective package licenses.
 
 The Devin-like shell adopts the static reference structure and original LF CSS from `mapleluvr/devin-ui-comparison@ed20cec` (`clean-room/current`) and binds them to Pakka services. The included Inter variable font is redistributed under the SIL Open Font License in `web/fonts/Inter-OFL.txt`. No Devin production bundle, production stylesheet, authenticated dump, organization data or screenshot is shipped. Source selection, license identities and adoption scope are recorded in the [adoption change](../../openspec/changes/adopt-devin-frontend/design.md).

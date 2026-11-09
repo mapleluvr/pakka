@@ -1,0 +1,490 @@
+{
+  "schema": 1,
+  "sourceSha256": "2ee0336462a2eea41fd1a708fa26db2723baa5da7f41aa81704bc3ea6c243b91",
+  "measuredProductBaseline": {
+    "sourceSha256": "8db751fa34c83b8024dbd4ad153590cb77bf2f85b9eeb9bd037d17b36664fbd9",
+    "testOnlyDelta": [
+      "apps/webui/test/browser.ts",
+      "apps/webui/test/lazy-content-browser.test.ts",
+      "scripts/consumer-pocket-schedules.mjs"
+    ]
+  },
+  "browser": {
+    "name": "ego lite",
+    "version": "0.6.2.8"
+  },
+  "platform": {
+    "node": "v24.15.0",
+    "os": "win32",
+    "architecture": "x64"
+  },
+  "fixture": {
+    "sourceFileBytes": 345625465,
+    "sourceFileSha256": "50a54e4a7fb3bf9b820bfe29a1ebe440271710966045fd5458126f5a4b534f17",
+    "sourceLines": 7375,
+    "importedRecords": 7276,
+    "modelEntries": 4650,
+    "fullEntryDraftBytes": 329529914,
+    "normalizedHistorySha256": "a09759da601f27e12630f50e234bd60e6541c074d73b447b515562bfb1a6110d",
+    "fidelity": {
+      "sameImmutableSource": true,
+      "sameAncestry": true,
+      "sameNormalizer": true,
+      "originalTextAndImagesPreserved": true,
+      "metadataNotExecuted": true,
+      "sourceUnchanged": true,
+      "independentNativeSessionIdentities": true
+    }
+  },
+  "coldOpen": {
+    "runtimes": 2,
+    "elapsedMs": 130.8878000000002,
+    "memory": {
+      "heapUsed": 27585672,
+      "rss": 137826304,
+      "heapTotal": 63459328,
+      "external": 13866561,
+      "arrayBuffers": 2882541
+    },
+    "modelRequests": 0
+  },
+  "longHistory": {
+    "spaceId": 12,
+    "pages": [
+      {
+        "page": 1,
+        "elapsedMs": 12135.833400000003,
+        "virtualRows": 20,
+        "domElements": 532,
+        "foldedBodyNodes": 0
+      },
+      {
+        "page": 2,
+        "elapsedMs": 1196.6312,
+        "virtualRows": 11,
+        "domElements": 565,
+        "foldedBodyNodes": 0
+      },
+      {
+        "page": 3,
+        "elapsedMs": 1115.9135999999999,
+        "virtualRows": 17,
+        "domElements": 687,
+        "foldedBodyNodes": 0
+      },
+      {
+        "page": 4,
+        "elapsedMs": 1212.5518999999986,
+        "virtualRows": 17,
+        "domElements": 502,
+        "foldedBodyNodes": 0
+      },
+      {
+        "page": 5,
+        "elapsedMs": 1103.6088000000018,
+        "virtualRows": 17,
+        "domElements": 502,
+        "foldedBodyNodes": 0
+      },
+      {
+        "page": 6,
+        "elapsedMs": 1106.8399999999965,
+        "virtualRows": 14,
+        "domElements": 602,
+        "foldedBodyNodes": 0
+      },
+      {
+        "page": 7,
+        "elapsedMs": 1106.3851999999897,
+        "virtualRows": 16,
+        "domElements": 733,
+        "foldedBodyNodes": 0
+      },
+      {
+        "page": 8,
+        "elapsedMs": 1125.4267999999865,
+        "virtualRows": 10,
+        "domElements": 565,
+        "foldedBodyNodes": 0
+      },
+      {
+        "page": 9,
+        "elapsedMs": 1089.7837,
+        "virtualRows": 16,
+        "domElements": 676,
+        "foldedBodyNodes": 0
+      },
+      {
+        "page": 10,
+        "elapsedMs": 1436.0613000000012,
+        "virtualRows": 18,
+        "domElements": 700,
+        "foldedBodyNodes": 0
+      },
+      {
+        "page": 11,
+        "elapsedMs": 1165.001799999969,
+        "virtualRows": 10,
+        "domElements": 565,
+        "foldedBodyNodes": 0
+      },
+      {
+        "page": 12,
+        "elapsedMs": 931.3134000000427,
+        "virtualRows": 16,
+        "domElements": 625,
+        "foldedBodyNodes": 0
+      },
+      {
+        "page": 13,
+        "elapsedMs": 1092.5063000000082,
+        "virtualRows": 24,
+        "domElements": 572,
+        "foldedBodyNodes": 0
+      },
+      {
+        "page": 14,
+        "elapsedMs": 1132.7765999999829,
+        "virtualRows": 20,
+        "domElements": 651,
+        "foldedBodyNodes": 0
+      }
+    ],
+    "maxVirtualRows": 24,
+    "maxDomElements": 733,
+    "browser": {
+      "page": "p1",
+      "memory": {
+        "usedSize": 7957512,
+        "totalSize": 13107200,
+        "embedderHeapUsedSize": 5522696,
+        "backingStorageSize": 968383
+      },
+      "dom": {
+        "elements": 651,
+        "textChars": 2349,
+        "virtualRows": 20,
+        "toolCards": 11,
+        "originalLines": 0,
+        "originalReaders": 0,
+        "images": 0,
+        "viewport": {
+          "width": 2048,
+          "height": 1202
+        },
+        "scroll": {
+          "top": 3840,
+          "height": 54972,
+          "viewport": 1005
+        },
+        "window": {
+          "virtualHistory": "true",
+          "windowScrolling": "false",
+          "following": "false",
+          "windowStart": "24",
+          "windowEnd": "34",
+          "windowTotal": "54835.57592391968"
+        }
+      }
+    },
+    "server": {
+      "heapUsed": 27411512,
+      "rss": 170250240,
+      "heapTotal": 33378304,
+      "external": 47369113,
+      "arrayBuffers": 36390862
+    },
+    "modelRequests": 0
+  },
+  "originalText": {
+    "spaceId": 13,
+    "search": {
+      "matched": true,
+      "lines": 2
+    },
+    "download": {
+      "bytes": 1593,
+      "sha256": "fff50240dfef73e7f49ce3dcdfd4bb3d874ecd0c4a1425b02ab697d7319c5b7f",
+      "parsedAsOriginalJson": true
+    },
+    "expanded": {
+      "page": "p1",
+      "memory": {
+        "usedSize": 7791824,
+        "totalSize": 16515072,
+        "embedderHeapUsedSize": 4598944,
+        "backingStorageSize": 630576
+      },
+      "dom": {
+        "elements": 620,
+        "textChars": 4737,
+        "virtualRows": 11,
+        "toolCards": 11,
+        "originalLines": 16,
+        "originalReaders": 3,
+        "images": 0,
+        "viewport": {
+          "width": 2048,
+          "height": 1202
+        },
+        "scroll": {
+          "top": 3840,
+          "height": 56181,
+          "viewport": 1005
+        },
+        "window": {
+          "virtualHistory": "true",
+          "windowScrolling": "false",
+          "following": "false",
+          "windowStart": "24",
+          "windowEnd": "25",
+          "windowTotal": "56044.82592391968"
+        }
+      }
+    },
+    "collapsed": {
+      "page": "p1",
+      "memory": {
+        "usedSize": 8384920,
+        "totalSize": 17301504,
+        "embedderHeapUsedSize": 4725624,
+        "backingStorageSize": 636318
+      },
+      "dom": {
+        "elements": 561,
+        "textChars": 2149,
+        "virtualRows": 11,
+        "toolCards": 11,
+        "originalLines": 0,
+        "originalReaders": 0,
+        "images": 0,
+        "viewport": {
+          "width": 2048,
+          "height": 1202
+        },
+        "scroll": {
+          "top": 3840,
+          "height": 56491,
+          "viewport": 1005
+        },
+        "window": {
+          "virtualHistory": "true",
+          "windowScrolling": "false",
+          "following": "false",
+          "windowStart": "24",
+          "windowEnd": "25",
+          "windowTotal": "56354.525997161865"
+        }
+      }
+    }
+  },
+  "originalImage": {
+    "spaceId": 13,
+    "collapsedBefore": {
+      "images": 0
+    },
+    "dispatched": "native-mouse-at-hit-verified-summary",
+    "loaded": {
+      "width": 1536,
+      "height": 1024,
+      "images": 1
+    },
+    "elapsedMs": 1526.2594999999274,
+    "download": {
+      "bytes": 1958156,
+      "sha256": "7c345cb7f9428d1afd2199b63ca2a3d45bf6016956ad4d848a359d1b79aa7b7d",
+      "sourceHashMatched": true
+    },
+    "expanded": {
+      "page": "p1",
+      "memory": {
+        "usedSize": 8706112,
+        "totalSize": 17563648,
+        "embedderHeapUsedSize": 7839752,
+        "backingStorageSize": 660207
+      },
+      "dom": {
+        "elements": 682,
+        "textChars": 5526,
+        "virtualRows": 12,
+        "toolCards": 11,
+        "originalLines": 26,
+        "originalReaders": 4,
+        "images": 1,
+        "viewport": {
+          "width": 2048,
+          "height": 1202
+        },
+        "scroll": {
+          "top": 16961.599609375,
+          "height": 56032,
+          "viewport": 1005
+        },
+        "window": {
+          "virtualHistory": "true",
+          "windowScrolling": "false",
+          "following": "false",
+          "windowStart": "115",
+          "windowEnd": "117",
+          "windowTotal": "55896.15035247803"
+        }
+      }
+    },
+    "collapsed": {
+      "page": "p1",
+      "memory": {
+        "usedSize": 8846208,
+        "totalSize": 17563648,
+        "embedderHeapUsedSize": 7881880,
+        "backingStorageSize": 666198
+      },
+      "dom": {
+        "elements": 593,
+        "textChars": 2532,
+        "virtualRows": 12,
+        "toolCards": 11,
+        "originalLines": 0,
+        "originalReaders": 0,
+        "images": 0,
+        "viewport": {
+          "width": 2048,
+          "height": 1202
+        },
+        "scroll": {
+          "top": 15256,
+          "height": 56032,
+          "viewport": 1005
+        },
+        "window": {
+          "virtualHistory": "true",
+          "windowScrolling": "false",
+          "following": "false",
+          "windowStart": "115",
+          "windowEnd": "117",
+          "windowTotal": "55896.15035247803"
+        }
+      }
+    },
+    "server": {
+      "heapUsed": 28444520,
+      "rss": 278257664,
+      "heapTotal": 166809600,
+      "external": 47401022,
+      "arrayBuffers": 36392172
+    },
+    "modelRequests": 0
+  },
+  "multiPageIdle": {
+    "spaceId": 13,
+    "pages": 4,
+    "targets": [
+      "original",
+      "original duplicate",
+      "independent original",
+      "image control"
+    ],
+    "elapsedMs": 30087.1688000001,
+    "cpuSampleCount": 30,
+    "cpuPercentSingleCore": 2.0177412379172526,
+    "heapUsedMean": 28846240.35274319,
+    "rssMean": 171872536.1692953,
+    "maxHeapUsed": 30137576,
+    "maxRss": 171888640,
+    "wireRoutes": {
+      "/pocket/rpc": {
+        "requests": 1,
+        "bytes": 2457,
+        "active": 0,
+        "peakActive": 0
+      },
+      "/pocket/extensions/rpc": {
+        "requests": 118,
+        "bytes": 19706,
+        "active": 0,
+        "peakActive": 0
+      },
+      "/pocket/events": {
+        "requests": 0,
+        "bytes": 13,
+        "active": 1,
+        "peakActive": 1
+      },
+      "/pocket/content/download": {
+        "requests": 0,
+        "bytes": 0,
+        "active": 0,
+        "peakActive": 0
+      }
+    },
+    "totalHttpBodyBytes": 22176,
+    "listElapsedMs": 3.699999988079071,
+    "modelRequests": 0,
+    "measurementNotes": [
+      "four real pages sharing one workbench SSE; original p1/p2, independent original p3, image control p4",
+      "active frames are not primed in this window",
+      "includes experimental timer/control-file sampling and notification extension short RPCs",
+      "SSE bytes are server wire accounting of write/end, not all browser HTTP bytes"
+    ]
+  },
+  "passiveUpdates": {
+    "spaceId": 13,
+    "count": 5,
+    "delaysAfterCommitMs": [
+      276,
+      363,
+      263,
+      283,
+      357
+    ],
+    "averageAfterCommitMs": 308.4,
+    "modelRequests": 0,
+    "includesBrowserHarnessWaitAndSampling": true
+  },
+  "executionFrame": {
+    "target": "one original conversation",
+    "elapsedMs": 3309.9909000000002,
+    "before": {
+      "heapUsed": 28476552,
+      "rss": 280772608,
+      "heapTotal": 166809600,
+      "external": 47401022,
+      "arrayBuffers": 36392172
+    },
+    "after": {
+      "heapUsed": 717546104,
+      "rss": 943853568,
+      "heapTotal": 857739264,
+      "external": 47401422,
+      "arrayBuffers": 36392572
+    },
+    "modelRequests": 0,
+    "noGenerationOrTools": true
+  },
+  "cleanup": {
+    "browserTaskSpaceFinished": true,
+    "taskSpaceId": 13,
+    "serverProcessExited": true,
+    "claimRecordsRemaining": 0,
+    "modelRequests": 0,
+    "isolatedDataPreserved": true,
+    "originalHistorySourceReadOnly": true,
+    "afterClose": {
+      "heapUsed": 25036152,
+      "rss": 370855936,
+      "heapTotal": 163139584,
+      "external": 11049873,
+      "arrayBuffers": 41023
+    },
+    "remainingObservationStreams": 0,
+    "closedAcknowledged": true
+  },
+  "limitations": [
+    "no deliberate OOM and no global Runtime/worker capacity certification",
+    "full execution context can remain proportional to active history despite bounded browsing",
+    "native per-record encoding/query temporary memory can depend on that one record size",
+    "notification extension still uses independent small RPCs",
+    "same shared worker scope only; unsupported browsers use per-page direct fallback",
+    "old 0.6.2.7 / aa83eed measurements retain their original identities",
+    "14-page sample belongs to space 12; original text/image, multi-page and final cleanup belong to space 13; both use the same C3 product source and same isolated databases"
+  ]
+}
