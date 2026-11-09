@@ -6,6 +6,8 @@ export { createHost } from "./host.ts";
 export { createRuntime } from "./runtime.ts";
 export {
 	BudgetChangeRefusedError,
+	RecordsRequestRefusedError,
+	RecordsPublicationError,
 	ConversationUnavailableError,
 	createCompresserSession,
 	recoverStorageWriter,

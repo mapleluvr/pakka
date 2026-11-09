@@ -542,6 +542,72 @@ for (const point of ["credential.json", "receipt.json"]) {
 	);
 }
 
+test("A-3: records-only restored work requires explicit fingerprint", { timeout: 180000 }, async () => {
+	const f = await setup();
+	try {
+		await f.running.stop();
+		const seed = `import {createLocalProduct} from ${JSON.stringify(new URL("../../webui/dist/product-runtime.js", import.meta.url).href)};import {createRuntime} from ${JSON.stringify(new URL("../../../packages/agent/dist/index.js", import.meta.url).href)};
+ const product=await createLocalProduct({cwd:${JSON.stringify(f.root)},dataDir:${JSON.stringify(join(f.home, "data"))},agentDir:${JSON.stringify(join(f.root, "pi"))}});
+ const runtime=await createRuntime({...product.runtime,reopenSessionFile:${JSON.stringify(f.ready.sessionFile)}});
+ await runtime.records({namespace:"review-pending"}).commit({requestId:"planned",reads:[{key:"run",version:0}],writes:[{key:"run",data:{stage:"planned"}}],append:[],work:[{key:"run",state:"planned"}]},()=>{});
+ await runtime.close();`;
+		const seeded = await childScript(f, seed);
+		assert.equal(seeded.code, 0, seeded.stderr);
+		const out = join(f.root, "pending-record-backup");
+		const backed = await f.launch(["backup", "--out", out, "--confirm", f.sessionId]).done;
+		assert.equal(backed.code, 0, backed.stderr);
+		const restored = await f.launch(["restore", "--from", out, "--confirm", f.sessionId]).done;
+		assert.equal(restored.code, 0, restored.stderr);
+		const id = JSON.parse(restored.stdout).restoreId;
+		const preview = await f.launch(["restore", "--resume", id]).done;
+		assert.equal(preview.code, 0, preview.stderr);
+		const view = JSON.parse(preview.stdout);
+		const confirm = await f.launch(["restore", "--resume", id, "--confirm", f.sessionId]).done;
+		console.log(JSON.stringify({ case: "A-3", view, confirmCode: confirm.code }));
+		assert.equal(confirm.code, 1);
+		assert.match(view.reviewWork, /^[0-9a-f]{64}$/);
+		assert.equal(view.pendingTasks, 0);
+		assert.equal(view.queuedInputs, 0);
+		assert.equal(view.pendingRecords, 1);
+		const wrong = await f.launch([
+			"restore",
+			"--resume",
+			id,
+			"--confirm",
+			f.sessionId,
+			"--review-work",
+			"0".repeat(64),
+		]).done;
+		assert.equal(wrong.code, 1);
+		await access(join(f.home, "data", "pakka-restored-hold.json"));
+		const startup = await f.launch(["--no-open", "--control-stdin"]).done;
+		assert.equal(startup.code, 1);
+		assert.match(startup.stderr, /MAINTENANCE_REQUIRED/);
+		const resumed = await f.launch([
+			"restore",
+			"--resume",
+			id,
+			"--confirm",
+			f.sessionId,
+			"--review-work",
+			view.reviewWork,
+		]).done;
+		assert.equal(resumed.code, 0, resumed.stderr);
+		assert.equal(JSON.parse(resumed.stdout).workReview.pendingRecords, 1);
+		const journal = JSON.parse(
+			await readFile(join(f.home, "maintenance", "restore-" + id, "operation.json"), "utf8"),
+		);
+		assert.equal(journal.workReview.fingerprint, view.reviewWork);
+		assert.equal(journal.workReview.pendingRecords, 1);
+		const verify = `import {openStorageMaintenance} from ${JSON.stringify(new URL("../../../packages/agent/dist/index.js", import.meta.url).href)};const store=await openStorageMaintenance({storageDir:${JSON.stringify(dirname(f.ready.sessionFile))},expectedSessionId:${JSON.stringify(f.sessionId)},stores:[]});try{console.log(JSON.stringify(await store.work()));}finally{await store.close();}`;
+		const retained = await childScript(f, verify);
+		assert.equal(retained.code, 0, retained.stderr);
+		assert.equal(JSON.parse(retained.stdout).pendingRecords, 1);
+	} finally {
+		await f.running.stop();
+	}
+});
+
 test("restored unfinished work requires explicit acknowledgement of its exact durable fingerprint", async () => {
 	const f = await setup();
 	try {

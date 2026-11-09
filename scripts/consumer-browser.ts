@@ -1,3 +1,12 @@
+import { readTicketResult, ticketCall } from "@pakka/rsi/client";
+import { Tickets } from "@pakka/rsi/webui";
+export function publicTicketsBrowser({ context }: WebInterfaceProps) {
+	const value = readTicketResult("list", { status: "ok", value: { items: [], cursor: null } });
+	void ticketCall(context, "get", { id: "ticket" });
+	// @ts-expect-error Browser ticket results have no Runtime authority.
+	value.runtime.createConversation({ key: "forged" });
+	return h(Tickets, { context });
+}
 import * as masBrowser from "@pakka/mas-devpack/client";
 import { Button, Stack, Field } from "@pakka/webui/components";
 import type { WebInterfaceProps } from "@pakka/webui/ui";

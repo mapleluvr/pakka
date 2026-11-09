@@ -19,6 +19,8 @@
 | [本机维护与交付](local-maintenance.md)        | 原身份恢复、离线存储、冷备份/恢复与程序选择  | [维护指南](../guides/LOCAL-MAINTENANCE.md)、[Runtime API](../reference/RUNTIME-API.md#离线存储维护)                                                                                                      |
 | [交付与验证](delivery.md)                     | 产物身份、分支职责、证据要求和门禁关系       | [Git 协作](../development/GIT-WORKFLOW.md)、[验证方法](../development/VERIFICATION.md)、WebUI 开发契约第 9/10 节                                                                                         |
 
+工单领域见 [RSI](rsi.md)及 [RSI API](../reference/RSI-API.md)，场景在 [长期工单变更](../../openspec/changes/persist-rsi-ticket-records/)。
+
 ## 与已有规范的分工
 
 - `docs/state/` 是整体预期入口，并承载产品范围和前端交互声明。API 字段、权限和细粒度场景沿用上表指向的位置，不建立另一套同名定义。

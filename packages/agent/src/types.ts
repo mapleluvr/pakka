@@ -5,9 +5,10 @@ export type Grant = Hook | "input.submit" | "branch.control" | "model.infer";
 export interface StorageMaintenanceWork {
 	readonly pendingTasks: number;
 	readonly queuedInputs: number;
+	readonly pendingRecords: number;
 	readonly fingerprint: string;
 	readonly sample: readonly {
-		readonly kind: "task" | "input";
+		readonly kind: "task" | "input" | "record";
 		readonly id: string;
 		readonly conversationId: string;
 		readonly state: string;
@@ -787,6 +788,8 @@ export interface RuntimeCatalog {
 	): Promise<CatalogHistoryPage>;
 	/** Missing originals are returned as null; this never enters admission. */
 	lookupReceipt(id: string, check: () => void): Promise<DeliveryReceipt | null>;
+	/** Pure exact-request observation; no admission hook, input placement or execution. */
+	lookupRequest(spec: CatalogDeliverySpec, check: () => void): Promise<DeliveryReceipt | null>;
 	/** Recipient-only delivery metadata; no peer transcript or payload body. */
 	received(ref: ConversationRef, check: () => void): Promise<readonly DeliveryReceipt[]>;
 	checkInvocation(ref: ConversationRef, scope: ToolInvocationScope): void;
@@ -826,6 +829,51 @@ export interface RuntimeStore {
 	snapshot(): Promise<RuntimeStoreSnapshot>;
 	compareAndSet(expectedVersion: number, data: JsonObject, check: () => void): Promise<RuntimeStoreSnapshot>;
 }
+/** Namespace-scoped bootstrap storage. Each operation revalidates current host authority. */
+export interface RuntimeRecordsOptions {
+	readonly namespace: string;
+}
+export interface RuntimeRecord {
+	readonly key: string;
+	readonly version: number;
+	readonly data: JsonObject | null;
+}
+export interface RuntimeRecordsCommit {
+	readonly requestId: string;
+	readonly reads: readonly { readonly key: string; readonly version: number }[];
+	readonly writes: readonly { readonly key: string; readonly data: JsonObject }[];
+	readonly append: readonly { readonly stream: string; readonly data: JsonObject }[];
+	/** Active responsibilities, updated atomically with their exact-key writes. null retires one. */
+	readonly work?: readonly { readonly key: string; readonly state: string | null }[];
+	/** Permanently freeze this namespace’s legacy RuntimeStore at the exact version for migration. */
+	readonly freezeLegacy?: { readonly expectedVersion: number; readonly maxBytes: number };
+}
+export interface RuntimeRecordsReceipt {
+	readonly requestId: string;
+	readonly sequence: number;
+	readonly fingerprint: string;
+}
+export interface RuntimeRecordsQuery {
+	readonly stream: string;
+	readonly cursor?: string;
+	readonly limit?: number;
+	readonly maxBytes?: number;
+}
+export interface RuntimeRecordsPage {
+	/** Cursor before the first item, for projections whose decoded byte budget is smaller. */
+	readonly startCursor: string | null;
+	readonly items: readonly { readonly position: number; readonly data: JsonObject }[];
+	readonly cursor: string | null;
+}
+/** Finite multi-record transactions and append-only streams in the owning Session. */
+export interface RuntimeRecords {
+	get(key: string, check: () => void): Promise<RuntimeRecord>;
+	receipt(requestId: string, check: () => void): Promise<RuntimeRecordsReceipt | null>;
+	commit(input: RuntimeRecordsCommit, check: () => void): Promise<RuntimeRecordsReceipt>;
+	page(query: RuntimeRecordsQuery, check: () => void): Promise<RuntimeRecordsPage>;
+	/** Small stream revision; no item bodies are materialized. */
+	revision(stream: string, check: () => void): Promise<number>;
+}
 /** Trusted bootstrap/control plane, not an agent-facing permission grant. */
 export interface Runtime {
 	root(): Host;
@@ -848,6 +896,7 @@ export interface Runtime {
 	createConversation(spec: ConversationSpec): Promise<ConversationRef>;
 	catalog(options: CatalogOptions): RuntimeCatalog;
 	store(options: RuntimeStoreOptions): RuntimeStore;
+	records(options: RuntimeRecordsOptions): RuntimeRecords;
 	jobs(options: RuntimeJobOptions): RuntimeJobs;
 	/** Passive scoped snapshot. The check runs before native acquisition and again before publishing. */
 	readConversation(

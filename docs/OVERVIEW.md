@@ -4,9 +4,9 @@ Pakka 将 Pi Durable 的 Conversation、权限、持久化与 MAS 协作能力�
 
 ## 当前工作
 
-[长期投递记录](changes/long-lived-deliveries.md)、[本机维护交付](changes/local-maintenance-and-delivery.md)与[有界观察/懒加载](changes/bounded-lazy-observation.md)按授权重组为干净的 [PR #8 → dev](https://github.com/mapleluvr/pakka/pull/8)，尚未合并。原候选与关键结果分别见[持久化](verification/LONG-LIVED-DELIVERIES.md)、[维护](verification/LOCAL-MAINTENANCE-DELIVERY.md)和[观察](verification/BOUNDED-LAZY-OBSERVATION.md)；原始证据只在受限本地包保全。#4/#6 已关闭，对应远端分支及已合并 #7 的远端分支已删除；原本地 refs/worktrees 保留，PR #5 及其分支未改动。重组检查见[验证记录](verification/CLEAN-DELIVERY-REORGANIZATION.md)。
+[RSI 长期工单持久化](changes/rsi-persistence.md) 已完成实现与独立复审：承接 #5 的 UI/Bot/MAS 薄层，采用按记录原子存储、详情分页、原请求核对及显式恢复。当前预期见 [RSI](state/rsi.md)，固定结果见[验证摘要](verification/RSI-PERSISTENCE.md)，分支交付由 [tasks](../openspec/changes/persist-rsi-ticket-records/tasks.md) 接续。
 
-[本地验证证据与提交检查](changes/local-verification-evidence.md)已通过 [PR #7](https://github.com/mapleluvr/pakka/pull/7) 合入 dev：Git 只跟踪关键信息与完整本地证据包整体 hash，原始证据不上 GitHub，云端由用户处理。后续工作按[贡献指南](../CONTRIBUTING.md)从最新 `origin/dev` 建立独立分支。
+[PR #8](https://github.com/mapleluvr/pakka/pull/8) 已合入 dev；长期投递、本机维护和懒观察的关键结果保留在各自 [verification](verification/README.md)。原始验证证据只在本地归档，Git 仅记录关键结果和整体 hash。
 
 本地执行安排在已忽略的 `docs/.temp/active-plan.md`；文件缺失时从所属 tasks 接续。
 

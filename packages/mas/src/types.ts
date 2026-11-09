@@ -71,6 +71,8 @@ export interface MasClient {
 	discover(): readonly Member[];
 	inspect(ref: ConversationRef): Promise<Member>;
 	send(target: ConversationRef, input: SendSpec): Promise<DeliveryReceipt>;
+	/** Queries this sender’s original request without admission or execution. */
+	lookup(target: ConversationRef, input: SendSpec): Promise<DeliveryReceipt | null>;
 	reply(receiptId: string, input: SendSpec): Promise<DeliveryReceipt>;
 	receipt(id: string): Promise<DeliveryReceipt>;
 	wait(id: string, signal?: AbortSignal): Promise<DeliveryReceipt>;

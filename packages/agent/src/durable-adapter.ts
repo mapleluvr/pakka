@@ -119,6 +119,11 @@ import type {
 	RuntimeCatalog,
 	RuntimeStore,
 	RuntimeStoreOptions,
+	RuntimeRecords,
+	RuntimeRecordsOptions,
+	RuntimeRecordsCommit,
+	RuntimeRecordsQuery,
+	RuntimeRecordsReceipt,
 	DeliveryReceipt,
 	CatalogDeliverySpec,
 	JsonObject,
@@ -1585,7 +1590,7 @@ export async function openStorageMaintenance(
 		const storage = await openPersistentStorage(storageDir, true, (value) => {
 			owner = value;
 		});
-		session = createSession(storage);
+		session = createSession(storage, { documentRetentionMs: 0 });
 		const kernel = session;
 		const runtime = await kernel.snapshot(RuntimeDoc, BACKGROUND_CONTEXT);
 		const compressor = runtime ? undefined : await kernel.snapshot(CompresserPolicyDoc, BACKGROUND_CONTEXT);
@@ -1640,7 +1645,7 @@ export async function openStorageMaintenance(
 							queuedInputs = 0;
 						const digest = createHash("sha256"),
 							sample: {
-								kind: "task" | "input";
+								kind: "task" | "input" | "record";
 								id: string;
 								conversationId: string;
 								state: string;
@@ -1686,13 +1691,34 @@ export async function openStorageMaintenance(
 								}
 							cursor = page.next;
 						} while (cursor);
+						const records = await tx.doc(RecordWorkDoc);
+						const entries = Object.entries(records.items).sort(([a], [b]) => a.localeCompare(b));
+						for (const [address, item] of entries) {
+							const current = await tx.doc(RecordCellDoc, address, null);
+							if (
+								!current.data ||
+								hash(current.data) !== item.fingerprint ||
+								address !== hash([item.namespace, "key", item.key])
+							)
+								throw new Error("Record work checkpoint mismatch");
+							digest.update("record:" + JSON.stringify(item) + "\n");
+							if (sample.length < 128)
+								sample.push({
+									kind: "record",
+									id: item.key,
+									conversationId: "",
+									state: item.state,
+									definition: item.namespace,
+								});
+						}
 						ready();
 						return copy({
+							pendingRecords: entries.length,
 							pendingTasks,
 							queuedInputs,
 							fingerprint: digest.digest("hex"),
 							sample,
-							sampleTruncated: pendingTasks + queuedInputs > sample.length,
+							sampleTruncated: pendingTasks + queuedInputs + entries.length > sample.length,
 						});
 					}, BACKGROUND_CONTEXT);
 				} catch (error) {
@@ -2006,6 +2032,7 @@ export interface ManagedAdapterPort {
 	createConversation(spec: ConversationSpec): Promise<ConversationRef>;
 	catalog(options: CatalogOptions): RuntimeCatalog;
 	store(options: RuntimeStoreOptions): RuntimeStore;
+	records(options: RuntimeRecordsOptions): RuntimeRecords;
 	jobs(options: RuntimeJobOptions): RuntimeJobs;
 	readConversation(
 		ref: ConversationRef,
@@ -2243,6 +2270,22 @@ async function claimWriter(storageDir: string, offline = false): Promise<() => P
 	return release;
 }
 class MutationDenied extends Error {}
+/** A records request was rejected without committing effects. */
+export class RecordsRequestRefusedError extends MutationDenied {
+	readonly code: "invalid" | "conflict" | "capacity" | "denied";
+	constructor(code: "invalid" | "conflict" | "capacity" | "denied", message: string) {
+		super(message);
+		this.code = code;
+		this.name = "RecordsRequestRefusedError";
+	}
+}
+/** The commit is durable, but current authority cannot publish its result. Reconcile the original request. */
+export class RecordsPublicationError extends Error {
+	constructor() {
+		super("Records commit is durable but publication authority ended; reconcile original request");
+		this.name = "RecordsPublicationError";
+	}
+}
 /** This budget attempt was rejected before commit; any prior request still has its own receipt. */
 export class BudgetChangeRefusedError extends MutationDenied {
 	readonly code: "INVALID_REQUEST" | "CONFLICT";
@@ -2380,6 +2423,67 @@ const CoordinatorDoc = defineDocFamily<
 	scope: "session",
 	family: true,
 	initial: (options) => ({ version: 0, options: { ...options }, data: {} }),
+});
+const RecordLegacyFenceDoc = defineDocFamily<{ frozen: boolean; version: number }, null>({
+	kind: "pakka.record-legacy-fence",
+	version: 1,
+	checkpointWhen: () => true,
+	scope: "session",
+	family: true,
+	initial: () => ({ frozen: false, version: 0 }),
+});
+const RecordCellDoc = defineDocFamily<{ version: number; data: JsonRepresentation<JsonObject> | null }, null>(
+	{
+		kind: "pakka.record-cell",
+		version: 1,
+		checkpointWhen: () => true,
+		scope: "session",
+		family: true,
+		initial: () => ({ version: 0, data: null }),
+	},
+);
+const RecordWorkDoc = defineDoc<{
+	items: Record<string, { namespace: string; key: string; state: string; fingerprint: string }>;
+}>({
+	kind: "pakka.record-work",
+	version: 1,
+	checkpointWhen: () => true,
+	scope: "session",
+	initial: () => ({ items: {} }),
+});
+const RecordSequenceDoc = defineDocFamily<{ sequence: number }, null>({
+	kind: "pakka.record-sequence",
+	version: 1,
+	checkpointWhen: () => true,
+	scope: "session",
+	family: true,
+	initial: () => ({ sequence: 0 }),
+});
+const RecordReceiptDoc = defineDocFamily<{ receipt: JsonRepresentation<RuntimeRecordsReceipt> | null }, null>(
+	{
+		kind: "pakka.record-receipt",
+		version: 1,
+		checkpointWhen: () => true,
+		scope: "session",
+		family: true,
+		initial: () => ({ receipt: null }),
+	},
+);
+const RecordStreamDoc = defineDocFamily<{ count: number }, null>({
+	kind: "pakka.record-stream",
+	version: 1,
+	checkpointWhen: () => true,
+	scope: "session",
+	family: true,
+	initial: () => ({ count: 0 }),
+});
+const RecordItemDoc = defineDocFamily<{ data: JsonRepresentation<JsonObject> | null }, null>({
+	kind: "pakka.record-item",
+	version: 1,
+	checkpointWhen: () => true,
+	scope: "session",
+	family: true,
+	initial: () => ({ data: null }),
 });
 const DisplayEntry = defineEntry<JsonRepresentation<DisplayWrite>>("pakka.display");
 const DisplayReceipts = defineDocFamily<
@@ -2705,6 +2809,7 @@ export class DurableAdapter {
 	>();
 	#routes = new Map<ConversationId, DurableAdapter>();
 	#managed: ManagedState | undefined;
+	#boundedRecords = false;
 	#releaseWriter: (() => Promise<void>) | undefined;
 	#database: OwnedSqlite | undefined;
 	#storage: SqliteStorage | undefined;
@@ -2956,6 +3061,9 @@ export class DurableAdapter {
 						}
 					},
 					settings: {
+						get documentRetentionMs() {
+							return adapterRef && adapterRef.#boundedRecords ? 0 : undefined;
+						},
 						steeringMode: options.steeringMode ?? "one-at-a-time",
 						stream: { maxRetries: 0 },
 						compaction: { enabled: false },
@@ -3727,6 +3835,7 @@ export class DurableAdapter {
 			validateReference: (ref: ConversationRef) => this.#validateReference(ref),
 			catalog: (options: CatalogOptions) => this.#catalog(options),
 			store: (options: RuntimeStoreOptions) => this.#store(options),
+			records: (options: RuntimeRecordsOptions) => this.#records(options),
 			jobs: (options: RuntimeJobOptions) => this.#jobs(options),
 			readConversation: (ref: ConversationRef, check: () => void, options?: ConversationReadOptions) =>
 				this.#readConversation(ref, check, options),
@@ -4302,6 +4411,299 @@ export class DurableAdapter {
 			entryId,
 		});
 	}
+	#records(raw: RuntimeRecordsOptions): RuntimeRecords {
+		this.#managedReady();
+		this.#boundedRecords = true;
+		if (!raw || !validKey(raw.namespace))
+			throw new RecordsRequestRefusedError("invalid", "Invalid records namespace");
+		const namespace = raw.namespace;
+		const address = (kind: string, key: string) => hash([namespace, kind, key]);
+		const name = (value: unknown): value is string =>
+			typeof value === "string" && value.length > 0 && value.length <= 256 && !/[\u0000-\u001f]/u.test(value);
+		const authority = (check: () => void) =>
+			checkAuthority(() => {
+				this.#managedReady();
+				check();
+			});
+		const read = async <T>(check: () => void, load: () => Promise<T>): Promise<T> => {
+			authority(check);
+			let value: T;
+			try {
+				value = await load();
+			} catch (error) {
+				if (!(error instanceof MutationDenied)) this.storageUnknown("Records read unknown: " + String(error));
+				throw error;
+			}
+			authority(check);
+			return copy(value);
+		};
+		const object = (value: JsonObject) => {
+			try {
+				json(value);
+			} catch {
+				throw new RecordsRequestRefusedError("invalid", "Invalid record JSON");
+			}
+			if (
+				!value ||
+				typeof value !== "object" ||
+				Array.isArray(value) ||
+				Buffer.byteLength(JSON.stringify(value)) > 384 * 1024
+			)
+				throw new RecordsRequestRefusedError("capacity", "Record byte capacity exceeded");
+		};
+		return Object.freeze({
+			revision: async (stream: string, check: () => void) => {
+				if (!name(stream)) throw new RecordsRequestRefusedError("invalid", "Invalid stream identity");
+				return read(
+					check,
+					async () =>
+						(await this.#harness.snapshot(RecordStreamDoc, address("stream", stream), BACKGROUND_CONTEXT))
+							?.count ?? 0,
+				);
+			},
+			get: async (key: string, check: () => void) => {
+				if (!name(key)) throw new RecordsRequestRefusedError("invalid", "Invalid record key");
+				return read(check, async () => {
+					const state = await this.#harness.snapshot(RecordCellDoc, address("key", key), BACKGROUND_CONTEXT);
+					return { key, version: state?.version ?? 0, data: state?.data ?? null };
+				});
+			},
+			receipt: async (requestId: string, check: () => void) => {
+				if (!name(requestId))
+					throw new RecordsRequestRefusedError("invalid", "Invalid records request identity");
+				return read(
+					check,
+					async () =>
+						(
+							await this.#harness.snapshot(
+								RecordReceiptDoc,
+								address("receipt", requestId),
+								BACKGROUND_CONTEXT,
+							)
+						)?.receipt ?? null,
+				);
+			},
+			commit: async (rawInput: RuntimeRecordsCommit, check: () => void) => {
+				const beforeCommit = () => {
+					try {
+						authority(check);
+					} catch {
+						throw new RecordsRequestRefusedError("denied", "Records authority refused before commit");
+					}
+				};
+				beforeCommit();
+				if (
+					!rawInput ||
+					!name(rawInput.requestId) ||
+					!Array.isArray(rawInput.reads) ||
+					!Array.isArray(rawInput.writes) ||
+					!Array.isArray(rawInput.append) ||
+					rawInput.reads.length > 128 ||
+					rawInput.writes.length > 64 ||
+					rawInput.append.length > 64
+				)
+					throw new RecordsRequestRefusedError("invalid", "Invalid bounded records transaction");
+				for (const value of rawInput.reads)
+					if (
+						!value ||
+						!name(value.key) ||
+						!Number.isSafeInteger(value.version) ||
+						value.version < 0 ||
+						value.version >= Number.MAX_SAFE_INTEGER
+					)
+						throw new RecordsRequestRefusedError("invalid", "Invalid record version");
+				if (
+					rawInput.freezeLegacy &&
+					(!Number.isSafeInteger(rawInput.freezeLegacy.expectedVersion) ||
+						rawInput.freezeLegacy.expectedVersion < 0 ||
+						!Number.isSafeInteger(rawInput.freezeLegacy.maxBytes) ||
+						rawInput.freezeLegacy.maxBytes < 1 ||
+						rawInput.freezeLegacy.maxBytes > 16 * 1024 * 1024)
+				)
+					throw new RecordsRequestRefusedError("invalid", "Invalid legacy migration boundary");
+				const expectations = new Map(rawInput.reads.map((r) => [r.key, r.version]));
+				if (
+					expectations.size !== rawInput.reads.length ||
+					new Set(rawInput.writes.map((w) => w.key)).size !== rawInput.writes.length
+				)
+					throw new RecordsRequestRefusedError("invalid", "Duplicate record key");
+				for (const value of rawInput.writes) {
+					if (!value || !name(value.key) || !expectations.has(value.key))
+						throw new RecordsRequestRefusedError("invalid", "Every write requires a read version");
+					object(value.data);
+				}
+				for (const value of rawInput.append) {
+					if (!value || !name(value.stream))
+						throw new RecordsRequestRefusedError("invalid", "Invalid stream identity");
+					object(value.data);
+				}
+				if (rawInput.work !== undefined && (!Array.isArray(rawInput.work) || rawInput.work.length > 64))
+					throw new RecordsRequestRefusedError("invalid", "Invalid active work set");
+				for (const item of rawInput.work ?? [])
+					if (
+						!item ||
+						!name(item.key) ||
+						(item.state !== null && (!name(item.state) || item.state.length > 64)) ||
+						!rawInput.writes.some((row) => row.key === item.key)
+					)
+						throw new RecordsRequestRefusedError("invalid", "Work requires an exact record write");
+				if (new Set((rawInput.work ?? []).map((item) => item.key)).size !== (rawInput.work?.length ?? 0))
+					throw new RecordsRequestRefusedError("invalid", "Duplicate work key");
+				if (Buffer.byteLength(JSON.stringify(rawInput)) > 1024 * 1024)
+					throw new RecordsRequestRefusedError("capacity", "Transaction byte capacity exceeded");
+				const input = copy(rawInput),
+					fingerprint = hash(input);
+				const result = await this.#persist(async (tx) => {
+					beforeCommit();
+					const saved = await tx.doc(RecordReceiptDoc, address("receipt", input.requestId), null);
+					if (saved.receipt) {
+						if (saved.receipt.fingerprint !== fingerprint)
+							throw new RecordsRequestRefusedError("conflict", "Records request identity conflict");
+						beforeCommit();
+						return storedJson<RuntimeRecordsReceipt>(saved.receipt);
+					}
+					if (input.freezeLegacy) {
+						const fence = await tx.doc(RecordLegacyFenceDoc, namespace, null);
+						const old = await tx.doc(CoordinatorDoc, namespace, {
+							namespace,
+							maxBytes: input.freezeLegacy.maxBytes,
+						});
+						if (
+							old.version !== input.freezeLegacy.expectedVersion ||
+							old.options.maxBytes !== input.freezeLegacy.maxBytes ||
+							fence.frozen
+						)
+							throw new RecordsRequestRefusedError("conflict", "Legacy migration snapshot conflict");
+						fence.frozen = true;
+						fence.version = old.version;
+					}
+					for (const item of input.reads) {
+						const state = await tx.doc(RecordCellDoc, address("key", item.key), null);
+						if (state.version !== item.version)
+							throw new RecordsRequestRefusedError("conflict", "Record version conflict: " + item.key);
+					}
+					for (const item of input.writes) {
+						const state = await tx.doc(RecordCellDoc, address("key", item.key), null);
+						state.data = storedJson<JsonRepresentation<JsonObject>>(item.data);
+						state.version++;
+					}
+					for (const item of input.append) {
+						const streamKey = address("stream", item.stream);
+						const head = await tx.doc(RecordStreamDoc, streamKey, null);
+						if (!Number.isSafeInteger(head.count) || head.count >= Number.MAX_SAFE_INTEGER)
+							throw new RecordsRequestRefusedError("capacity", "Stream sequence exhausted");
+						head.count++;
+						const row = await tx.doc(RecordItemDoc, streamKey + "." + head.count, null);
+						if (row.data !== null) throw new Error("Record stream item already exists");
+						row.data = storedJson<JsonRepresentation<JsonObject>>(item.data);
+					}
+					const work = await tx.doc(RecordWorkDoc);
+					for (const item of input.writes) {
+						const id = address("key", item.key);
+						if (work.items[id]) work.items[id]!.fingerprint = hash(item.data);
+					}
+					for (const item of input.work ?? []) {
+						const id = address("key", item.key);
+						if (item.state === null) delete work.items[id];
+						else
+							work.items[id] = {
+								namespace,
+								key: item.key,
+								state: item.state,
+								fingerprint: hash(input.writes.find((row) => row.key === item.key)!.data),
+							};
+					}
+					if (Object.keys(work.items).length > 1024 || Buffer.byteLength(JSON.stringify(work)) > 1024 * 1024)
+						throw new RecordsRequestRefusedError("capacity", "Active record work capacity exceeded");
+					const head = await tx.doc(RecordSequenceDoc, namespace, null);
+					if (!Number.isSafeInteger(head.sequence) || head.sequence >= Number.MAX_SAFE_INTEGER)
+						throw new RecordsRequestRefusedError("capacity", "Records sequence exhausted");
+					head.sequence++;
+					saved.receipt = { requestId: input.requestId, sequence: head.sequence, fingerprint };
+					beforeCommit();
+					return storedJson<RuntimeRecordsReceipt>(saved.receipt);
+				});
+				try {
+					authority(check);
+				} catch {
+					throw new RecordsPublicationError();
+				}
+				return copy(result);
+			},
+			page: async (rawQuery: RuntimeRecordsQuery, check: () => void) => {
+				if (!rawQuery || !name(rawQuery.stream))
+					throw new RecordsRequestRefusedError("invalid", "Invalid stream query");
+				const query = copy(rawQuery),
+					limit = query.limit ?? 32,
+					maxBytes = query.maxBytes ?? 256 * 1024;
+				if (
+					!Number.isSafeInteger(limit) ||
+					limit < 1 ||
+					limit > 128 ||
+					!Number.isSafeInteger(maxBytes) ||
+					maxBytes < 1024 ||
+					maxBytes > 1024 * 1024
+				)
+					throw new RecordsRequestRefusedError("capacity", "Invalid stream page budget");
+				const streamKey = address("stream", query.stream),
+					binding = hash([this.#sessionId, namespace, query.stream]);
+				let position: number | undefined;
+				if (query.cursor !== undefined) {
+					try {
+						if (typeof query.cursor !== "string" || query.cursor.length > 1024) throw Error();
+						const cursor = JSON.parse(Buffer.from(query.cursor, "base64url").toString("utf8"));
+						if (
+							!cursor ||
+							cursor.binding !== binding ||
+							!Number.isSafeInteger(cursor.position) ||
+							cursor.position < 1
+						)
+							throw Error();
+						position = cursor.position;
+					} catch {
+						throw new RecordsRequestRefusedError("invalid", "Invalid stream cursor");
+					}
+				}
+				return read(check, async () => {
+					const head = await this.#harness.snapshot(RecordStreamDoc, streamKey, BACKGROUND_CONTEXT);
+					if (position === undefined) position = head?.count ?? 0;
+					if (position > (head?.count ?? 0))
+						throw new RecordsRequestRefusedError("invalid", "Stream cursor beyond history");
+					const startCursor = position
+						? Buffer.from(JSON.stringify({ binding, position })).toString("base64url")
+						: null;
+					const items: { position: number; data: JsonObject }[] = [];
+					let bytes = 768;
+					while (position > 0 && items.length < limit) {
+						authority(check);
+						const item = await this.#harness.snapshot(
+							RecordItemDoc,
+							streamKey + "." + position,
+							BACKGROUND_CONTEXT,
+						);
+						if (!item?.data) throw new Error("Record stream has a missing item");
+						const row = { position, data: item.data },
+							size = Buffer.byteLength(JSON.stringify(row)) + 1;
+						if (bytes + size > maxBytes) {
+							if (!items.length)
+								throw new RecordsRequestRefusedError("capacity", "Stream item exceeds page byte budget");
+							break;
+						}
+						items.push(row);
+						bytes += size;
+						position--;
+					}
+					return {
+						items,
+						startCursor,
+						cursor: position
+							? Buffer.from(JSON.stringify({ binding, position })).toString("base64url")
+							: null,
+					};
+				});
+			},
+		});
+	}
 	#store(rawOptions: RuntimeStoreOptions): RuntimeStore {
 		this.#managedReady();
 		if (
@@ -4354,6 +4756,8 @@ export class DurableAdapter {
 				};
 				authority();
 				const result = await this.#persist(async (tx) => {
+					const fence = await tx.doc(RecordLegacyFenceDoc, options.namespace, null);
+					if (fence.frozen) throw new MutationDenied("Legacy coordinator is frozen for records migration");
 					const state = await tx.doc(CoordinatorDoc, options.namespace, options);
 					optionsMatch(state);
 					if (state.version !== expectedVersion) throw new MutationDenied("Coordinator CAS conflict");
@@ -4667,6 +5071,41 @@ export class DurableAdapter {
 		};
 		return Object.freeze({
 			snapshot: view,
+			lookupRequest: async (original: CatalogDeliverySpec, check: () => void) => {
+				checkAuthority(check);
+				if (
+					!original ||
+					!validKey(original.requestId) ||
+					!validKey(original.principal) ||
+					typeof original.text !== "string" ||
+					!original.text.trim() ||
+					original.text.length > 65536 ||
+					!["prompt", "steer", "followUp"].includes(original.mode)
+				)
+					throw new MutationDenied("Invalid original request");
+				const spec = copy(original),
+					state = await read();
+				if (!state) throw new MutationDenied("Original catalog missing");
+				requireMember(state, spec.target);
+				if (spec.source) requireMember(state, spec.source);
+				const stored = (await readDelivery(deliveryId(spec), state))?.record;
+				checkAuthority(check);
+				if (!stored) return null;
+				const identity = (value: CatalogDeliverySpec) => ({
+					requestId: value.requestId,
+					principal: value.principal,
+					source: value.source,
+					target: value.target,
+					text: value.text,
+					mode: value.mode,
+					replyTo: value.replyTo ?? null,
+				});
+				if (hash(identity(stored.spec)) !== hash(identity(spec)))
+					throw new MutationDenied("Original delivery payload/route identity conflict");
+				const value = await status(stored);
+				checkAuthority(check);
+				return value;
+			},
 			lookupReceipt: async (id: string, check: () => void) => {
 				checkAuthority(check);
 				if (!validKey(id)) throw new MutationDenied("Invalid delivery receipt identity");
@@ -5990,9 +6429,7 @@ export class DurableAdapter {
 		};
 	}
 
-	frame(): AdapterFrame {
-		if (this.#lazyObservation && !this.#executionCacheLoaded)
-			throw new MutationDenied("Cold execution frame is not loaded; prepareExecution is required");
+	#frameUsage(): UsageDTO {
 		const total: { -readonly [K in keyof UsageDTO]: UsageDTO[K] } = {
 			input: 0,
 			output: 0,
@@ -6013,6 +6450,13 @@ export class DurableAdapter {
 				}
 			}
 		}
+
+		return total;
+	}
+
+	frame(): AdapterFrame {
+		if (this.#lazyObservation && !this.#executionCacheLoaded)
+			throw new MutationDenied("Cold execution frame is not loaded; prepareExecution is required");
 
 		return copy({
 			sessionId: this.#sessionId,
@@ -6046,7 +6490,7 @@ export class DurableAdapter {
 				};
 			}),
 			model: this.#primaryModelDTO(),
-			usage: total,
+			usage: this.#frameUsage(),
 		});
 	}
 

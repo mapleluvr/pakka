@@ -115,6 +115,14 @@ pakka-webui 保留宿主已有 resolver 作为初始来源，仅全局管理员�
 
 `reservedSessionId` 是受信任 bootstrap 选择的 lowercase UUID storage/provenance 地址，不是 provider identity。它具有 create-once 语义；已存在目录不会被覆盖。重开必须明确指定同一 owned storage 的 `reopenSessionFile`，且 provenance、runtime 配置与 reservation 均匹配。worker manager 使用这条接口恢复固定 placement；未知初始化和遗留 writer claim 不允许分配替代目录或自动抢占。
 
+## 按记录持久化
+
+`runtime.records({ namespace })` 提供按键 `get`、原事务 `receipt`、有限 `commit`、游标流 `page` 与轻量 `revision`。每个 commit 的 reads/writes/append/work 在同一原生事务中检查版本、当前授权并保存原回执。`RecordsRequestRefusedError` 表示本次事务确定未提交的 invalid/conflict/capacity/denied；跨构建入口可按 name 与 code 校验错误。提交已完成但发布时失去权限返回 `RecordsPublicationError`，调用者保留原 requestId 并按未知结果核对；不得标为本次无效果。未确认存储继续按 Session 失败域处理。相同事务身份的原回执不代表当前调用获得执行资格；需要抢占执行的消费者使用独立 attempt requestId 和逐记录版本 CAS，业务请求的幂等身份独立保存。
+
+历史流最近优先，每页由条数与编码字节预算限制；startCursor 指向本页第一项之前，供正文投影在实际字节预算不足时续行。活动工作在同一事务更新，终结后移出活动索引，历史和回执保持可读。freezeLegacy 在精确版本原子冻结同 namespace 的 RuntimeStore 写入，供显式迁移使用。输入/事务/页面/活动记录的边界和实际消费者见 [RSI API](RSI-API.md)。
+
+使用 records 的 Runtime 通过公开 Pi settings 释放未观察文档；单次批量操作仍受事务预算限制。普通 SDK 调用返回 frozen DTO，宿主承担 namespace 与 check 的授权装配。
+
 ## 离线存储维护
 
 `openStorageMaintenance({ storageDir, expectedSessionId?, stores })` 是受信任的本机停服入口，打开原存储的公开 Pi Session 内核，不创建 Harness、scheduler、provider 或 Job 定义。它仍需要物理来源、原 Session 和独占 writer 核对，不能用来接管存活进程。产品维护/恢复门禁由启动器与 adapter 共用。
@@ -123,7 +131,7 @@ pakka-webui 保留宿主已有 resolver 作为初始来源，仅全局管理员�
 
 - `identity` 含原 `sessionId/storageDir/kind` 及可选 `cwd`。
 - `snapshot(namespace)` 与 `commit(changes)` 只允许 `stores` 明确批准的命名空间及字节预算；多项 CAS 在同一事务中检查 `expectedVersion` 并提交。未知提交保持封闭。
-- `work()` 返回未完成 task/input 的数量、完整身份指纹及有限样本，`sampleTruncated` 不等于已完成检查。检查不装配任务处理器、不修改原生状态。
+- `work()` 返回未完成 task/input/record 的数量（pendingTasks、queuedInputs、pendingRecords）、完整身份指纹及有限样本，`sampleTruncated` 不等于已完成检查。检查不装配任务处理器、不修改原生状态。
 - `backup(destination)` 对原 SQLite 存储生成一致快照并核对完整性/身份，不是跨域备份协调器。
 - `close()` 关闭维护内核并按已确认结果释放 writer；调用方必须在 `finally` 中关闭。
 
