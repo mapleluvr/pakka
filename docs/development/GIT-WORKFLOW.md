@@ -45,11 +45,33 @@ git switch -c pakka/<task-slug> --no-track origin/dev
 
 继续在该分支保存所属任务。阶段完成或操作者要求提 PR 时，检查该 head 是否已有指向 `dev` 的 Open PR：已有则推送更新，没有则新建。后续独立任务从最新 `origin/dev` 建立自己的工作分支。
 
-提交前复读 diff 和文件清单，运行 `git diff --check`，核对暂存区仅含交付内容。凭据、数据库、会话数据、依赖目录和临时日志留在各自受保护位置；有意纳入版本控制的 vendor 或验证证据按所属清单核对。
+提交前复读 diff 和文件清单，运行 `git diff --check`，核对暂存区仅含交付内容。凭据、数据库、会话数据、依赖目录和原始验证证据留在各自受保护的本地位置；产品必需的 vendor、源码补丁和构建锁按交付契约核对。
 
 推送前核对 remote URL 与完整 refspec。普通推送保留已发布历史；远端前进或拒绝时先核对差异，不用 force 绕过。成功后通过 `git ls-remote --heads origin <ref>` 读取实际远端 SHA，再报告完成。
 
-### 工作分支 → dev PR
+## 提交与 PR 产物检查
+
+每次提交及创建/更新 PR 前，必须检查完整产物；这项提交卫生检查独立于是否选用 Verification。提交检查暂存区，PR 检查相对实际 base 的完整范围，包含继承提交，而不只是最后一笔提交。
+
+```sh
+git status --short
+git diff --cached --name-status
+git diff --cached --numstat
+git diff --cached --stat
+git diff --cached --check
+git diff --name-status origin/dev...HEAD
+git diff --numstat origin/dev...HEAD
+git diff --stat origin/dev...HEAD
+```
+
+成功 fetch 后使用实际 PR base；发布 PR 则检查 `origin/main...HEAD`。逐项确认文件职责，检查大文件的字节大小与正文，解释行数突增、重复候选、生成文件和二进制内容。不能只凭扩展名、路径、总行数或既有 ignore 规则判定可提交。
+
+- `docs/verification/` 只跟踪关键信息与完整本地证据包的整体 SHA-256；原始日志/TAP、截图、npm pack 逐文件输出、完整依赖树、中间候选和重复清单留在本地证据包。
+- 原始证据和证据包不提交 Git，也不上传 GitHub 附件、Release 或 Actions artifacts；云端存储由用户处理。不得 `git add -f` 绕过此要求。
+- 核对暂存区及完整 PR diff 中没有证据包、原始证据、凭据、数据库或会话数据。产品必需的代码、测试、许可、vendor、源码补丁和构建锁按其交付契约核对，不与验证过程输出混淆。
+- 仓库中的验证记录保留候选、环境、范围、实际结果、必要限制，以及本地包名、字节大小和整体 SHA-256；不复制包内逐文件清单或原始控制台输出。包的形成与本地保全见[验证记录与本地证据包](VERIFICATION.md#验证记录与本地证据包)。
+
+## 工作分支 → dev PR
 
 PR 以 `dev` 为 base，即使托管平台默认分支是 `main`，也应明确指定。PR 标题和正文描述最终变更及其行为，正文包含：
 

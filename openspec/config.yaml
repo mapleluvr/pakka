@@ -12,7 +12,11 @@ context: |
   Never commit or push directly to main.
   OpenSpec owns complete proposal/design/tasks/specs and archive lifecycle.
   docs/changes summarizes and fully cites every related change and spec.
-  State describes expectations; fixed evidence describes actual results.
+  State describes expectations; verification records retain key results
+  and a whole local evidence-bundle SHA-256 only. Raw evidence stays in
+  local bundles, never GitHub uploads; cloud storage belongs to the operator.
+  Inspect staged artifacts and the full PR-base diff before every commit
+  and PR creation/update, including large files and redundant outputs.
   Public Pi SDK only; native execution/storage objects stay in the adapter.
   Trusted bootstrap supplies Models; WebUI loads public ModelRuntime config.
   Preserve original request identity, native steering and fail-closed

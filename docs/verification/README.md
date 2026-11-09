@@ -1,9 +1,10 @@
 # 固定版本验证记录
 
-本目录保存按版本和环境限定的结果及必要证据。通用方法在[验证工作方式](../development/VERIFICATION.md)，当前工作由 [OVERVIEW](../OVERVIEW.md)和所指 OpenSpec tasks 承接。
+本目录只保存按版本和环境限定的关键信息，以及完整本地证据包的包名、字节大小和整体 SHA-256。原始验证证据与证据包在本地保留，不上传 GitHub；云端存储由用户处理。包内逐文件清单、原始日志/TAP、截图和重复候选输出不进入本目录，执行步骤见[本地证据包](../development/VERIFICATION.md#验证记录与本地证据包)。通用方法在[验证工作方式](../development/VERIFICATION.md)，当前工作由 [OVERVIEW](../OVERVIEW.md)和所指 OpenSpec tasks 承接。
 
 | 核对对象                        | 记录                                                                                                         |
 | ------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| 本地验证证据提交规范            | [文档、ignore 与产物检查](LOCAL-EVIDENCE-POLICY.md)                                                          |
 | Pi 原生配置与默认 WebUI 入口    | [Runtime 演进、Session 隔离与安装消费](PRODUCT-RUNTIME-LAUNCHER.md)                                          |
 | ExecutionEnv / 1.4.0-pakka.2    | [.2 复建、切换与安装消费](EXECUTION-ENVIRONMENT-PAKKA-2.md)                                                  |
 | ExecutionEnv / 1.4.0-pakka.1    | [初轮执行环境接入与安装消费](EXECUTION-ENVIRONMENT.md)                                                       |
