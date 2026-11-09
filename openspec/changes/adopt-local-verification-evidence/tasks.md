@@ -9,7 +9,7 @@
 
 ## Delivery
 
-[PR #7](https://github.com/mapleluvr/pakka/pull/7) targets dev and remains open. Policy commit `c5df6e7877216ea9d57fd175fe44a77a3643066d` was pushed and checked against the live remote ref; closing metadata is recorded separately. No dev/main integration or evidence upload was performed.
+[PR #7](https://github.com/mapleluvr/pakka/pull/7) was merged by the operator into dev at `2f84881ba21b5a464ab3f7f3f8017efcdc6bcf58`. Original policy commit `c5df6e7877216ea9d57fd175fe44a77a3643066d` and final head `bda6df8697bb2b3929609a60030682d774846a83` retain their identities. The completed remote policy branch was removed during the separately authorized PR #8 closeout; its original local ref/worktree remains. No agent-performed dev/main integration or evidence upload occurred.
 
 ## Verification selection
 
@@ -17,4 +17,4 @@ This change is documents and ignore rules only. Select scoped document/metadata/
 
 ## Historical scope
 
-Existing PR #4/#6 evidence and published identities remain unchanged. Their cleanup, any history rewrite and cloud upload are separate operator-controlled work.
+Original PR #4/#6 published identities and local evidence are preserved. The operator separately authorized their clean replacement and remote-branch cleanup via [PR #8](https://github.com/mapleluvr/pakka/pull/8); see the [reorganization checks](../../../docs/verification/CLEAN-DELIVERY-REORGANIZATION.md). Original local refs/worktrees remain. Remote deletion does not claim historical GitHub objects are purged; no published-history rewrite or cloud upload was performed.

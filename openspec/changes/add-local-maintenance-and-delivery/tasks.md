@@ -8,7 +8,7 @@
 - [x] Original-location staged restore, durable publication journal, auth invalidation and execution hold/review. Includes damaged/missing source, real exited original claim and interrupted publication.
 - [x] Pinned release upgrade, pre-upgrade backup, no-effect health and data-aware rollback. Installed consumer confirms activation, original Session reopen and receipt-only repeated rollback after new work.
 - [x] Scoped + installed regressions; final build/types/full regression; durable evidence. 838 total / 836 pass / 0 fail / 2 original platform skips; 8 archives and 34 independent installed steps passed.
-- [x] State, guides, original recovery tasks and PR #4 updated; remote SHA checked. Implementation `3a1d08816d3cc3723c1e6c6db613e30649c13b1e` was pushed to the existing open PR #4; no dev/main merge.
+- [x] State, guides, original recovery tasks and PR #4 updated; remote SHA checked. Implementation `3a1d08816d3cc3723c1e6c6db613e30649c13b1e` was originally pushed to PR #4. It is now closed and replaced by [clean PR #8](https://github.com/mapleluvr/pakka/pull/8); the superseded remote branch is removed, original local ref/worktree retained, and no dev/main merge performed.
 
 ## Current verification
 
