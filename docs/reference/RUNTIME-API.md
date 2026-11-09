@@ -148,6 +148,16 @@ try {
 
 受信任 bootstrap 使用 `runtime.readConversation(ref, check, { limit, beforeEntryId })` 取得冻结的 `ConversationSnapshot`：已提交消息、display records、live tools 和 usage。只投影所选 Conversation，不返回原生 handles、system/config/provider identity。异步读取完成后重验 `check`。每页最多 256 entries，JSON envelope 上限 2 MiB；`truncated` 表示当前页受限。使用响应的 `olderBeforeId` 作为下一页的 `beforeEntryId` 读取更早记录。读取只作授权观察，不启动模型或提交存储。
 
+### 冷观察、预览与完整内容
+
+独立 SDK 的 `RuntimeOptions.observation` 默认 `"eager"`，保留既有完整执行视图。受信任宿主可显式选 `"lazy"`；普通 WebUI 的根／子 Session 默认使用该模式。`Host.view().historyLoaded === false` 表示执行历史尚未装载，不表示档案为空；查看目录、预览、详情和通知不会自动准备执行上下文。
+
+`runtime.previewConversation(ref, check, { limit, beforeEntryId, maxBytes })` 返回有界展示投影：页同时受条数和至多 256 KiB 字节限制，使用 `olderBeforeId` 前翻；完整存档并未裁剪。文本、参数和图片携带 `ConversationContentReference`，其中 `source/entryId/sourceConversationId/taskId/callId/path/revision` 定位原已发布字段。引用不授予权限，也不是客户端可以修改后获得另一资源的路径。
+
+`runtime.readContent(ref, reference, { offset, length }, check)` 每次读取至多 64 KiB 的原来源范围，返回 `{ reference, text, offset, nextOffset, complete }`。等待前后检查原目标、当前 read 权限、分叉可见性和确切内容版本。范围坐标沿用来源编码字节；`text` 已解码，不能以其字符长度计算下一原文位置，必须使用 `nextOffset`。JSON 转义和 Unicode 字节边界仍能逐块重建原字段值。范围失效、版本变化、撤权或读取未确认都拒绝／要求重新核对，不串联别处同号调用，也不把未知状态伪造为完成。
+
+`runtime.observationRevision(ref, check)` 是廉价进程内变化标记，不是持久游标、正文版本或授权。`runtime.prepareExecution(ref, check)` 在显式需要时装载保留完整语义的执行 frame；该调用自身不启动任务。真正执行仍按原权限、预算、受控策略及 native scheduler 契约准备上下文。本读取／展示模式不代替执行 frame 的容量、全局 Runtime 字节预算或 worker 故障隔离。
+
 `runtime.writeDisplay(ref, { namespace, actorId, requestId, kind: "card" | "chat", text }, check)` 在原生 commit line 绑定引用与授权。相同 scope/request/payload 稳定去重，正常 reopen 后保留 receipt；不同 actor/namespace 不共用请求。显示内容没有模型贡献，不推进 model head、不替换原 requester。每 Conversation/display namespace 最多 4096 个去重记录，text 最多 16384 个 UTF-16 code units；容量超限明确拒绝，不删除旧 receipt 来伪造新准入。
 
 `check` 是宿主提供的同步检查，**拒绝时必须 throw**，不是浏览器传来的 grant 或返回 boolean 的 policy。两项命令都不是远端 API，不能直接交给模型或 Web 客户端。usage 的 token 值可展示，未提供权威价格时 `cost` 保持 `null`，不能把默认零价格说成免费。

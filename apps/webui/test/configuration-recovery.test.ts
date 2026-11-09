@@ -41,7 +41,7 @@ test(
 			await login(page);
 			await page.wait('document.querySelector("[data-action=model]")?.disabled===false');
 			await page.click("[data-action=model]");
-			await page.wait('document.querySelector("[data-pick-model]")');
+			await page.wait('document.querySelector("[data-pick-model]")?.disabled===false');
 			const before = app.runtime.view().conversations.find((ref) => ref.key !== "root")!;
 			await page.evaluate(
 				`(()=>{const original=globalThis.fetch;globalThis.__configureCount=0;globalThis.__restoreFetch=()=>{globalThis.fetch=original;};globalThis.fetch=async(...args)=>{if(typeof args[1]?.body==='string'&&JSON.parse(args[1].body).command?.op==='configure.agent'){globalThis.__configureCount++;const response=await original(...args);await response.arrayBuffer();throw Error('TEST LOST COMMITTED CONFIGURATION RESPONSE');}return original(...args);};})()`,

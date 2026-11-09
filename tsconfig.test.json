@@ -6,6 +6,7 @@
 		"strict": true,
 		"skipLibCheck": true,
 		"noEmit": true,
+		"allowJs": true,
 		"allowImportingTsExtensions": true
 	},
 	"include": [

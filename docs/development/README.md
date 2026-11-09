@@ -19,6 +19,8 @@
 
 ## 文档维护
 
+[Markdown 配置](../../.markdownlint.json)与项目 Prettier 的 tab 缩进保持一致：代码围栏内保留代码缩进，正文仍检查 hard tabs。长行和同级标题的设置承接 lint 基线。格式化不改写固定原生构建锁文件或 digest-bound 验证记录，忽略范围见[格式配置](../../.prettierignore)；其完整性由所属 hash 校验核对，不能通过重新生成 hash 接受格式化改写。
+
 1. **接续**：OVERVIEW 指向当前工作与所属 OpenSpec tasks；读取相关声明和 `docs/.temp/active-plan.md`。临时文件不存在时，从这些 tracked 入口恢复具体待办。
 2. **预期**：采用的范围、条件和行为写成无历史声明。state 按模块/行为关系组织；已有 API 或 OpenSpec 场景在其位置维护细则，领域页提供映射，不随讨论轮次追加小规格。
 3. **来路**：初始形成、补充、替换或撤销的完整记录写入 OpenSpec change 的 proposal/design/tasks/specs，按原生命周期维护。docs/changes 只总结，必须完整链接 change 目录、各 artifact、全部 delta 和有关主 spec；多项变更逐项列全。说明当时条件，区分用户要求、既有约定、设计推导和观察。

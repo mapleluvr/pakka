@@ -157,8 +157,8 @@ try {
 	await page.click("[data-interface=workspace-schedules-schedules]");
 	await page.wait('document.querySelector("[data-schedule-add]")');
 	await page.type("[data-schedule-text]", "ONCE-INSTALLED-LOST-SCHEDULE");
-	await page.evaluate('document.querySelector("[data-schedule-delay]").value=""');
-	await page.type("[data-schedule-delay]", "2");
+	await page.type("[data-schedule-delay]", "2", { replace: true });
+	assert.equal(await page.evaluate('document.querySelector("[data-schedule-delay]").value'), "2");
 	await page.evaluate(
 		`(()=>{const original=globalThis.fetch;globalThis.__scheduleWrites=0;globalThis.__restoreScheduleFetch=()=>{globalThis.fetch=original;};globalThis.fetch=async(...args)=>{if(typeof args[1]?.body==='string'&&args[1].body.includes('"action":"add"')){globalThis.__scheduleWrites++;globalThis.__originalSchedule=JSON.parse(args[1].body).command.call;const response=await original(...args);await response.arrayBuffer();throw Error('TEST LOST COMMITTED SCHEDULE RESPONSE');}return original(...args);};})()`,
 	);
@@ -190,10 +190,8 @@ try {
 	);
 	assert.equal(before.length, 1);
 	assert.equal((await rpc(page, { op: "wait", id: before[0].deliveryId })).receipt.status, "done");
-	await page.evaluate('document.querySelector("[data-schedule-text]").value=""');
-	await page.type("[data-schedule-text]", "AFTER-REOPEN-WITHOUT-WEBUI-FACET");
-	await page.evaluate('document.querySelector("[data-schedule-delay]").value=""');
-	await page.type("[data-schedule-delay]", "5");
+	await page.type("[data-schedule-text]", "AFTER-REOPEN-WITHOUT-WEBUI-FACET", { replace: true });
+	await page.type("[data-schedule-delay]", "5", { replace: true });
 	assert.equal(await page.evaluate('document.querySelector("[data-schedule-delay]").value'), "5");
 	await page.click("[data-schedule-add]");
 	await page.wait('document.querySelectorAll("[data-schedule]").length===2');

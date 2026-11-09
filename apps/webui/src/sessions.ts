@@ -293,6 +293,10 @@ export async function createManagedSessions(options: {
 				directories: (ref, input) => clientFor(actor, ref).directories(ref, input),
 				fork: (ref, input) => clientFor(actor, ref).fork(ref, input),
 				read: (ref, page) => clientFor(actor, ref).read(ref, page),
+				preview: (ref, page, check) => clientFor(actor, ref).preview(ref, page, check),
+				observationRevision: (ref) => clientFor(actor, ref).observationRevision(ref),
+				readContent: (ref, reference, range, check) =>
+					clientFor(actor, ref).readContent(ref, reference, range, check),
 				display: (ref, input) => clientFor(actor, ref).display(ref, input),
 				submit: (ref, input) => clientFor(actor, ref).submit(ref, input),
 				receipt: (nativeId, sessionId) => routeReceipt(actor, nativeId, "receipt", sessionId),

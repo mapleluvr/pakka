@@ -115,6 +115,12 @@ async function publicAssets() {
 			body: await readFile(fileURLToPath(import.meta.resolve(specifier!))),
 		});
 	}
+	assets.set("/vendor/virtual-core.js", {
+		type: types.js!,
+		body: await readFile(
+			fileURLToPath(new URL("./browser-virtual-core.js", import.meta.resolve("@pakka/webui"))),
+		),
+	});
 	assets.set("/sdk/extension-rpc.js", {
 		type: types.js!,
 		body: await readFile(
@@ -150,6 +156,7 @@ export async function startPocket(options: PocketProductOptions) {
 	let credentials: PocketCredentials | undefined;
 	const runtime = await createRuntime({
 		...options.runtime,
+		observation: options.runtime.observation ?? "lazy",
 		resolveApiKey: async () => {
 			if (!credentials) throw new Error("Private configuration is not yet bound");
 			return credentials.resolve();
@@ -285,6 +292,7 @@ export async function startPocket(options: PocketProductOptions) {
 			open: async ({ id, cwd, reopen }) => {
 				const child = await createRuntime({
 					...options.runtime,
+					observation: options.runtime.observation ?? "lazy",
 					dataDir: options.runtime.dataDir,
 					cwd,
 					cwdRoots: runtime.directoryRoots(profiles),

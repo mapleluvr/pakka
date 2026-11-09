@@ -28,6 +28,7 @@ artifacts/
 # Audited downstream Durable dependency, paired with patches/pi-durable metadata.
 !packages/agent/vendor/earendil-works-pi-durable-1.0.3-pakka.1.tgz
 !packages/agent/vendor/earendil-works-pi-durable-1.4.0-pakka.1.tgz
+!packages/agent/vendor/earendil-works-pi-durable-1.4.0-pakka.3.tgz
 
 # --- Pakka runtime state -----------------------------------------------------
 .pakka/

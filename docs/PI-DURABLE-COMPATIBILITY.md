@@ -772,3 +772,66 @@ Windows x64 / Node 24.15.0、私有 profile、本地确定性 provider：新增 
 两次独立构建各通过 SDK 113/113 及安装 HTTP 3/3，归档 SHA-256 均为 `12d21b230d40706618db4ac83747b9189b7d9070f023c2705bc5c8b521d90ecd`。Windows 首轮误选 WSL Bash 的失败，经单变量 PATH 对照后以 Git Bash 复跑，没有跳过用例或修改 SDK 源逻辑。
 
 Pakka 在实际安装的 `.2` 上通过 ExecutionEnv 24/24、相邻与版本选择 36/36、build/check。agent 0.7.0 归档 SHA-256 `f169cb32f9e2b7a5bf4c7596083c0ab2a89e816d3ecbb72ec271c2abbefe46f7` 的仓库外消费者通过执行环境 5 次与核心门禁 7 次 loopback HTTP；确认包内 cohort、blocked settlement、辅助预算、reload 和原生存储读取。核心包装器补齐已有 helper 所需的 Node parent-URL resolver flag 后通过；原错误保留。全部范围、原始输出、哈希和复跑命令见[.2 交付检查](verification/EXECUTION-ENVIRONMENT-PAKKA-2.md)。MXC 与独立 pakka-ei 设计另行推进，未在这份 SDK 归档中实现。
+
+## 条目 DURABLE-2026-11-09-16：公开字节档案与冷观察接入
+
+- ID: DURABLE-2026-11-09-16
+- 状态: verified within the recorded source/installed-consumer scope
+- 升级范围: 生产 `1.4.0-pakka.2` → `1.4.0-pakka.3`；上游 Pi 仍为 `1.4.0` / `4a080252f06caf63a525d7873c5d94d3c23887e0`。
+- 关联条目: related `DURABLE-2026-11-05-15`；generation block/check/settlement 和公开 ExecutionEnv 语义继续复验，旧版本证据保留原身份。
+- 固定输入: [.3 baseline](../patches/pi-durable/1.4.0-pakka.3/baseline.json)、[source patch](../patches/pi-durable/1.4.0-pakka.3/source.patch)、[build lock](../patches/pi-durable/1.4.0-pakka.3/build-lock.json)、[artifact](../patches/pi-durable/1.4.0-pakka.3/artifact.json)。
+- 归档 SHA-256: `fc1268481542417fd1ada943854c5972cd2b42c9456a6f60cc78a68ba70c2761`；source patch `792ca4e9834388d554191a7447b7375f5b3edd64daff9188ec03b2444c3fb0f1`；build lock `ca3268301b14f94ae04e5898968ddac98c9b7d26ba949416c39010adcf5f1d87`。
+- 根锁选择: resolved `file:packages/agent/vendor/earendil-works-pi-durable-1.4.0-pakka.3.tgz`，integrity `sha512-xE1R1SHAbxVppNi+t2bjgg7E33BiuAiiLdIhHest2xsHLKDzpJFOe+hqcqLyBJUvnx5fFNs/VV/qkk6Jmwtx5Q==`。Pi AI/Chord/Telemetry/pi-codemode cohort 为 `1.4.0`。
+- 环境: Windows x64、Node `24.15.0`，隔离构建与本地确定性 HTTP；没有手工修改已安装 SDK，没有付费模型或用户凭据读取。
+
+### 变化与前后代码
+
+原 SQLite `entry`/`scanEntries` 先返回完整记录并解析 JSON。Pakka 的 aa83eed adapter 在观察与冷打开中积累完整档案；单条约 2.6 MB 的图片记录也超过 2 MiB wire 观察预算。分页 DTO 条数不能约束这些底层读取。
+
+变更前 `packages/agent/package.json` 的实际选择：
+
+```json
+"@earendil-works/pi-durable": "file:vendor/earendil-works-pi-durable-1.4.0-pakka.2.tgz"
+```
+
+变更后同一位置选择：
+
+```json
+"@earendil-works/pi-durable": "file:vendor/earendil-works-pi-durable-1.4.0-pakka.3.tgz"
+```
+
+新增公开声明来自 `.3 source.patch` 的 `storage/types.ts`，旧 `Storage` 没有 `entryArchive`：
+
+```ts
+export interface EntryArchive {
+	header(conversationId: ConversationId, id: EntryId, context: Context): Promise<EntryHeader | undefined>;
+	scan(
+		query: EntryQuery,
+		limit: number,
+		cursor: Cursor | undefined,
+		context: Context,
+	): Promise<Page<EntryHeader, Cursor>>;
+	read(
+		conversationId: ConversationId,
+		id: EntryId,
+		range: EntryArchiveRange,
+		context: Context,
+	): Promise<EntryArchiveChunk | undefined>;
+}
+```
+
+`Storage` 的可选 `readonly entryArchive?: EntryArchive` 是可信后端能力；header/scan 返回原 Entry、分叉来源、不可变提交身份和编码大小，read 最多返回 64 KiB 连续 UTF-8 档案字节。原 `entry`、完整 context、生成和持久回执 API 保持各自语义；不具备该能力的后端仍使用原完整接口。Pakka 按原 Session/Conversation/来源/版本检查 ACL，并在异步读取后重新授权，原生分叉范围不替代应用权限。
+
+SQLite 使用最多 32 MiB 编码 LRU，加一个串行取得的行及有界 header 缓存；大于窗口的记录继续范围读取。缓存减少对同一大记录的重复编码/查询，但单条后端临时工作仍可能随记录大小增长，不宣称所有工作只占 64 KiB。范围坐标是持久 JSON 编码字节，不把解码后正文的字符位置用于下一块偏移。
+
+### 固定验证
+
+补丁构建入口仍为 `npm run build:durable-patch -- <固定上游 checkout> 1.4.0-pakka.3`，并以 `node scripts/verify-durable-patch.mjs` 核对全部输入/归档。最终独立 staging 运行 baseline 所列 8 文件、183 项通过；独立 npm project 安装该归档后，以公开 exports/compiled dist 运行 2 文件、6 项通过。原输出在[固定结果与本地证据包](verification/BOUNDED-LAZY-OBSERVATION.md)定位；证据位置按已采用的本地保全规范整理，原输出与结果身份保持。
+
+此矩阵覆盖原生 generation block、awaited payload 后撤权、普通 hook 异常、恢复/队列/工具/SQLite，以及新增大记录 header/range、Unicode 重建、分叉可见范围、版本拒绝、并发字节缓存和失效处理。Pakka 对原生接缝的权限、cold frame、预览与完整内容映射也进入最终源码回归：887 项中 885 pass、0 fail、2 既有平台 skip；类型、构建和八归档 34 步仓库外安装消费通过。安装包的 blocked 结算、原请求核对、真实 worker、取消/授权、完整 SDK 读取和原 Session 重开保持原断言。
+
+详细方法、最终 599 文件源码哈希、各包身份与 ego 原长历史复测见[交付检查](verification/BOUNDED-LAZY-OBSERVATION.md)。两份大 Session 冷打开约 27.59 MB heap；显式准备其中一条 Conversation 的完整 execution frame 后约 717.55 MB heap，模型请求为 0。这区分浏览路径与执行上下文，不表示全局 OOM 或活跃 Runtime 字节预算已经解决。
+
+### 失效与接续
+
+SDK commit/version/integrity、Storage/header/range/commitSeq/分叉语义、SQLite 编码缓存、generation hook/receipt 或 Pakka 权限边界变化时，重跑受影响源码和独立安装矩阵并追加账本。只有等价的上游公开档案读取、已有 generation 门禁、Unicode/分叉/缓存/恢复与安装消费者都通过时，才切换相应源补丁；不将旧配对哈希倒写为新版本。本条不更新外部 Dynamite 固定配对，也不把浏览优化当作 worker 进程隔离或 OOM 恢复。

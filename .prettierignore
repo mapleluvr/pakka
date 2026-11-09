@@ -2,6 +2,8 @@ node_modules/
 **/dist/
 artifacts/
 package-lock.json
+# Raw dependency lockfiles are part of digest-bound Durable build provenance.
+patches/pi-durable/**/build-lock.json
 # Immutable adopted upstream theme, checked against its pinned source and license.
 apps/webui/web/pocket.css
 # Pinned Devin frontend Git blob; validated by devin-reference.test.ts.

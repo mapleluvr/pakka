@@ -5,6 +5,7 @@
 | 核对对象                        | 记录                                                                                                         |
 | ------------------------------- | ------------------------------------------------------------------------------------------------------------ |
 | 本地验证证据提交规范            | [文档、ignore 与产物检查](LOCAL-EVIDENCE-POLICY.md)                                                          |
+| 有界观察、原文与 DOM 懒加载     | [冷打开、333 ms 增量、原长历史与固定安装消费](BOUNDED-LAZY-OBSERVATION.md)                                   |
 | 本机登录、冷备份与升级恢复      | [维护内核、真实故障与安装升级/回退](LOCAL-MAINTENANCE-DELIVERY.md)                                           |
 | 长期投递与原请求核对            | [累计门槛解除、旧格式迁移与安装消费](LONG-LIVED-DELIVERIES.md)                                               |
 | Pi 原生配置与默认 WebUI 入口    | [Runtime 演进、Session 隔离与安装消费](PRODUCT-RUNTIME-LAUNCHER.md)                                          |

@@ -107,6 +107,7 @@ test(
 				'document.querySelector("#replyInput") && !document.querySelector("#replyInput").disabled',
 			);
 			await page.type("#replyInput", "EXPLICIT-SEND-AFTER-CREATION");
+			await page.wait('document.querySelector("[data-action=send]")?.disabled===false');
 			await page.click('[data-action="send"]');
 			await page.wait('document.querySelector("[data-receipt-status=done]")');
 			assert.equal(m.f.requests.length, 1);

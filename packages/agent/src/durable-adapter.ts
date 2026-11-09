@@ -27,6 +27,7 @@ import {
 	AgentDoc,
 	defineTask,
 	LiveDoc,
+	UsageDoc,
 	configure,
 	ProviderDoc,
 	type Tx,
@@ -39,6 +40,7 @@ import {
 	type Storage,
 	type Cursor,
 	type EntryRecord,
+	type EntryHeader,
 	type EntryDraft,
 	type EntryId,
 	type TaskId,
@@ -70,6 +72,12 @@ import { copy, hash, json } from "./artifact-journal.ts";
 import type { JournalStorage, JournalMutation } from "./native-journal.ts";
 import { sourceWorkPlan, type StoredSourceWork, type SourceWorkMutation } from "./source-work.ts";
 import { planHistoryScan } from "./history-scan.ts";
+import { indexEntryJson, decodeEntryStringRange } from "./entry-preview.ts";
+import {
+	projectConversationEntry,
+	previewLiveArguments,
+	type IndexedConversationEntry,
+} from "./conversation-preview.ts";
 import { legacyModels, primaryModels, modelReference, modelKey, modelDTO } from "./model-access.ts";
 import { LifecycleTransitionRevoked } from "./strategy-control.ts";
 import type {
@@ -117,6 +125,10 @@ import type {
 	ConversationProfile,
 	ConversationSnapshot,
 	ConversationReadOptions,
+	ConversationPreviewOptions,
+	ConversationContentReference,
+	ConversationContentRange,
+	ConversationContentChunk,
 	TranscriptMessage,
 	DisplayWrite,
 	DisplayReceipt,
@@ -2000,6 +2012,19 @@ export interface ManagedAdapterPort {
 		check: () => void,
 		options?: ConversationReadOptions,
 	): Promise<ConversationSnapshot>;
+	observationRevision(ref: ConversationRef, check: () => void): number;
+	prepareExecution(ref: ConversationRef, check: () => void): Promise<void>;
+	previewConversation(
+		ref: ConversationRef,
+		check: () => void,
+		options?: ConversationPreviewOptions,
+	): Promise<ConversationSnapshot>;
+	readContent(
+		ref: ConversationRef,
+		reference: ConversationContentReference,
+		range: ConversationContentRange,
+		check: () => void,
+	): Promise<ConversationContentChunk>;
 	writeDisplay(ref: ConversationRef, input: DisplayWrite, check: () => void): Promise<DisplayReceipt>;
 	attach(
 		ref: ConversationRef,
@@ -2639,6 +2664,15 @@ export class DurableAdapter {
 	#options: HostOptions;
 	#rawModels: Models;
 	#stream: AgentEventStream | undefined;
+	#lazyObservation = false;
+	#executionCacheLoaded = false;
+	#statusUnsubscribe: (() => void) | undefined;
+	#statusEpoch = 0;
+	#previewEntries = new Map<string, { value: IndexedConversationEntry; bytes: number }>();
+	#previewEntriesBytes = 0;
+	#previewPages = new Map<string, { value: ConversationSnapshot; bytes: number }>();
+	#previewPagesBytes = 0;
+	#previewVersion = 0;
 	#run: Promise<void> | undefined;
 	#primary: string | undefined;
 	#runScope: RunScopeToken | undefined;
@@ -2719,7 +2753,7 @@ export class DurableAdapter {
 		control: AdapterControl,
 		managedOptions?: Pick<
 			RuntimeOptions,
-			"limits" | "profiles" | "cwdRoots" | "reservedSessionId" | "jobs" | "contextSources"
+			"limits" | "profiles" | "cwdRoots" | "reservedSessionId" | "jobs" | "contextSources" | "observation"
 		>,
 	): Promise<DurableAdapter> {
 		const profiles = new Map<string, HostOptions>([["default", profileOptions(options)]]);
@@ -3065,6 +3099,7 @@ export class DurableAdapter {
 					closed: false,
 				};
 				adapter.#managed.unsubscribe = harness.subscribeCommits((publication) => {
+					adapter.#previewVersion++;
 					for (const change of publication.changes)
 						if (change.type === "document" && change.record.kind === "pakka.runtime" && change.value)
 							adapter.#managed!.state = change.value as RuntimeRecord;
@@ -3113,8 +3148,10 @@ export class DurableAdapter {
 				});
 			}
 
-			if (managedOptions)
+			if (managedOptions) {
 				adapter.#options = await adapter.#conversationOptions(savedRuntime!.resources.root!);
+				adapter.#lazyObservation = managedOptions.observation === "lazy";
+			}
 			await adapter.#initStream();
 			await adapter.refreshCache();
 			return adapter;
@@ -3315,7 +3352,7 @@ export class DurableAdapter {
 							} catch {
 								return { block: "Execution environment unavailable" };
 							}
-							await adapter.refreshCache();
+							await adapter.refreshCache(true);
 							const permitted = await adapter.#control.project(context.abortSignal);
 							permitted.check();
 							if ("block" in permitted) return { block: permitted.block };
@@ -3693,6 +3730,33 @@ export class DurableAdapter {
 			jobs: (options: RuntimeJobOptions) => this.#jobs(options),
 			readConversation: (ref: ConversationRef, check: () => void, options?: ConversationReadOptions) =>
 				this.#readConversation(ref, check, options),
+			observationRevision: (ref: ConversationRef, check: () => void) => {
+				checkAuthority(() => {
+					this.#validateReference(ref);
+					check();
+				});
+				return this.#previewVersion;
+			},
+			prepareExecution: async (ref: ConversationRef, check: () => void) => {
+				const authorize = () =>
+					checkAuthority(() => {
+						this.#validateReference(ref);
+						check();
+					});
+				authorize();
+				const route = this.#routes.get(conversationId(ref.conversationId));
+				if (!route || route.#disposed) throw new MutationDenied("Conversation execution frame is not bound");
+				await route.refreshCache(true);
+				authorize();
+			},
+			previewConversation: (ref: ConversationRef, check: () => void, options?: ConversationPreviewOptions) =>
+				this.#previewConversation(ref, check, options),
+			readContent: (
+				ref: ConversationRef,
+				reference: ConversationContentReference,
+				range: ConversationContentRange,
+				check: () => void,
+			) => this.#readContent(ref, reference, range, check),
 			writeDisplay: (ref: ConversationRef, input: DisplayWrite, check: () => void) =>
 				this.#writeDisplay(ref, input, check),
 			createConversation: async (spec: ConversationSpec): Promise<ConversationRef> => {
@@ -3754,6 +3818,7 @@ export class DurableAdapter {
 				adapter.#managed = this.#managed;
 				adapter.#inferenceModels = this.#inferenceModels;
 				adapter.#storage = this.#storage;
+				adapter.#lazyObservation = this.#lazyObservation;
 				this.#routes.set(id, adapter);
 				await adapter.#initStream();
 				await adapter.refreshCache();
@@ -3761,6 +3826,8 @@ export class DurableAdapter {
 			},
 			waitForIdle: async () => {
 				this.#managedReady();
+				// This is an explicit progress-enabling command, unlike cold metadata/history reads.
+				await Promise.all([...this.#routes.values()].map((adapter) => adapter.refreshCache(true)));
 				await this.#harness.waitForIdle(BACKGROUND_CONTEXT);
 				await Promise.all([...this.#routes.values()].map((adapter) => adapter.idle()));
 			},
@@ -3875,6 +3942,312 @@ export class DurableAdapter {
 		// Native cleanup yields: recheck after it, with no further await before publication.
 		authorize();
 		return copy(result);
+	}
+	async #indexedEntry(
+		ref: ConversationRef,
+		header: EntryHeader,
+		authorize: () => void,
+	): Promise<IndexedConversationEntry> {
+		const key = JSON.stringify([ref.conversationId, String(header.id), String(header.commitSeq)]);
+		const cached = this.#previewEntries.get(key);
+		if (cached) {
+			this.#previewEntries.delete(key);
+			this.#previewEntries.set(key, cached);
+			authorize();
+			return cached.value;
+		}
+		const archive = this.#storage?.entryArchive;
+		if (!archive) throw new MutationDenied("Bounded archive observation is unavailable");
+		const index = await indexEntryJson(async (offset, length) => {
+			authorize();
+			const chunk = await archive.read(
+				conversationId(ref.conversationId),
+				header.id,
+				{ offset, length, commitSeq: header.commitSeq },
+				BACKGROUND_CONTEXT,
+			);
+			authorize();
+			if (!chunk || chunk.commitSeq !== header.commitSeq || chunk.byteLength !== header.byteLength)
+				throw new MutationDenied("Original entry revision changed or disappeared");
+			return chunk.bytes;
+		}, header.byteLength);
+		const value = projectConversationEntry(index, header, ref);
+		const bytes = Buffer.byteLength(
+			JSON.stringify({ entry: value.entry, contents: [...value.contents.values()] }),
+			"utf8",
+		);
+		if (bytes <= 2 * 1024 * 1024) {
+			for (; this.#previewEntriesBytes + bytes > 2 * 1024 * 1024 && this.#previewEntries.size; ) {
+				const oldest = this.#previewEntries.entries().next().value;
+				if (!oldest) break;
+				this.#previewEntries.delete(oldest[0]);
+				this.#previewEntriesBytes -= oldest[1].bytes;
+			}
+			const previous = this.#previewEntries.get(key);
+			if (previous) this.#previewEntriesBytes -= previous.bytes;
+			this.#previewEntries.set(key, { value, bytes });
+			this.#previewEntriesBytes += bytes;
+		}
+		authorize();
+		return value;
+	}
+	async #previewConversation(
+		rawRef: ConversationRef,
+		check: () => void,
+		rawOptions: ConversationPreviewOptions = {},
+	): Promise<ConversationSnapshot> {
+		const ref = copy(rawRef),
+			options = copy(rawOptions);
+		if (
+			!options ||
+			typeof options !== "object" ||
+			Array.isArray(options) ||
+			Object.keys(options).some((key) => !["limit", "beforeEntryId", "maxBytes"].includes(key)) ||
+			(options.limit !== undefined &&
+				(!Number.isSafeInteger(options.limit) || options.limit < 1 || options.limit > 256)) ||
+			(options.maxBytes !== undefined &&
+				(!Number.isSafeInteger(options.maxBytes) ||
+					options.maxBytes < 16384 ||
+					options.maxBytes > 256 * 1024)) ||
+			(options.beforeEntryId !== undefined &&
+				(!/^[1-9]\d*$/.test(options.beforeEntryId) || !Number.isSafeInteger(Number(options.beforeEntryId))))
+		)
+			throw new MutationDenied("Invalid bounded Conversation preview options");
+		const authorize = () =>
+			checkAuthority(() => {
+				this.#validateReference(ref);
+				check();
+			});
+		authorize();
+		const route = this.#routes.get(conversationId(ref.conversationId));
+		if (!route || route.#disposed) throw new MutationDenied("Conversation observation is not bound");
+		const version = this.#previewVersion;
+		const key = JSON.stringify([ref, options, version]);
+		const cached = this.#previewPages.get(key);
+		if (cached) {
+			this.#previewPages.delete(key);
+			this.#previewPages.set(key, cached);
+			authorize();
+			return copy(cached.value);
+		}
+		const archive = this.#storage?.entryArchive;
+		if (!archive) throw new MutationDenied("Bounded archive observation is unavailable");
+		const id = conversationId(ref.conversationId);
+		if (options.beforeEntryId !== undefined) {
+			const boundary = await archive.header(id, Number(options.beforeEntryId) as EntryId, BACKGROUND_CONTEXT);
+			authorize();
+			if (!boundary) throw new MutationDenied("Unknown Conversation preview boundary");
+		}
+		const headers = await archive.scan(
+			{
+				conversationId: id,
+				order: "descending",
+				...(options.beforeEntryId ? { maxEntryId: (Number(options.beforeEntryId) - 1) as EntryId } : {}),
+			},
+			options.limit ?? 64,
+			undefined,
+			BACKGROUND_CONTEXT,
+		);
+		authorize();
+		const [live, usage] = await Promise.all([
+			this.#harness.snapshot(LiveDoc, id, BACKGROUND_CONTEXT),
+			this.#harness.snapshot(UsageDoc, id, BACKGROUND_CONTEXT),
+		]);
+		authorize();
+		const total = { ...usageDTO() };
+		for (const item of [...Object.values(usage?.models ?? {}), ...Object.values(usage?.tools ?? {})]) {
+			const value = usageDTO(item);
+			total.input += value.input;
+			total.output += value.output;
+			total.cacheRead += value.cacheRead;
+			total.cacheWrite += value.cacheWrite;
+			total.totalTokens += value.totalTokens;
+			if (value.cost !== null) total.cost = (total.cost ?? 0) + value.cost;
+		}
+		const snippet = (value: string) =>
+			value.length <= 4096
+				? value
+				: value.slice(0, 1024) + "\n… [live display preview] …\n" + value.slice(-1024);
+		const original = live?.generation?.message;
+		let message: TranscriptMessage | undefined;
+		if (original) {
+			const content = original.content.map((part) => {
+				if (part.type === "text") return { ...part, text: snippet(part.text) };
+				if (part.type === "thinking") return { ...part, thinking: snippet(part.thinking) };
+				if (part.type === "toolCall") return { ...part, arguments: previewLiveArguments(part.arguments) };
+				return part;
+			});
+			message = transcriptMessage({
+				...original,
+				content,
+				...(original.errorMessage === undefined ? {} : { errorMessage: snippet(original.errorMessage) }),
+			});
+			if (message?.stopReason === "pending") {
+				const { stopReason: _pending, ...partial } = message;
+				message = partial;
+			}
+		}
+		const result: ConversationSnapshot = {
+			ref,
+			entries: [],
+			entriesTruncated: false,
+			live: {
+				busy: live?.run !== undefined,
+				...(message ? { message } : {}),
+				tools: (live?.tools ?? []).map((tool) => ({
+					callId: tool.callId,
+					name: tool.name,
+					status: tool.status,
+					...(tool.taskId === undefined ? {} : { taskId: String(tool.taskId) }),
+					...(tool.output === undefined ? {} : { output: snippet(tool.output) }),
+					...(tool.droppedBytes === undefined ? {} : { droppedBytes: tool.droppedBytes }),
+					...(tool.droppedLines === undefined ? {} : { droppedLines: tool.droppedLines }),
+				})),
+			},
+			usage: total,
+		};
+		const entries: ConversationSnapshot["entries"][number][] = [];
+		const maxBytes = options.maxBytes ?? 256 * 1024;
+		let bytes = Buffer.byteLength(JSON.stringify(result), "utf8") + 256;
+		for (const header of headers.items) {
+			const item = await this.#indexedEntry(ref, header, authorize);
+			const size = Buffer.byteLength(JSON.stringify(item.entry), "utf8") + 1;
+			if (bytes + size > maxBytes) {
+				if (!entries.length) throw new MutationDenied("One preview exceeds the selected byte page capacity");
+				break;
+			}
+			entries.push(item.entry);
+			bytes += size;
+		}
+		const older = headers.next !== undefined || entries.length < headers.items.length;
+		const first = entries.at(-1);
+		const page: ConversationSnapshot = {
+			...result,
+			entries: entries.reverse(),
+			entriesTruncated: older,
+			...(older && first ? { olderBeforeId: first.id } : {}),
+		};
+		const measured = Buffer.byteLength(JSON.stringify(page), "utf8");
+		if (measured > maxBytes) throw new MutationDenied("Conversation preview byte capacity exceeded");
+		if (version === this.#previewVersion && measured <= 2 * 1024 * 1024) {
+			for (; this.#previewPagesBytes + measured > 2 * 1024 * 1024 && this.#previewPages.size; ) {
+				const oldest = this.#previewPages.entries().next().value;
+				if (!oldest) break;
+				this.#previewPages.delete(oldest[0]);
+				this.#previewPagesBytes -= oldest[1].bytes;
+			}
+			const previous = this.#previewPages.get(key);
+			if (previous) this.#previewPagesBytes -= previous.bytes;
+			this.#previewPages.set(key, { value: page, bytes: measured });
+			this.#previewPagesBytes += measured;
+		}
+		authorize();
+		return copy(page);
+	}
+	async #readContent(
+		rawRef: ConversationRef,
+		rawReference: ConversationContentReference,
+		rawRange: ConversationContentRange,
+		check: () => void,
+	): Promise<ConversationContentChunk> {
+		const ref = copy(rawRef),
+			reference = copy(rawReference),
+			range = copy(rawRange);
+		const authorize = () =>
+			checkAuthority(() => {
+				this.#validateReference(ref);
+				check();
+			});
+		authorize();
+		if (
+			!reference ||
+			reference.source !== "entry" ||
+			typeof reference.entryId !== "string" ||
+			!/^[1-9]\d*$/.test(reference.entryId) ||
+			!Number.isSafeInteger(Number(reference.entryId)) ||
+			!range ||
+			Object.keys(range).some((key) => !["offset", "length"].includes(key)) ||
+			!Number.isSafeInteger(range.offset) ||
+			range.offset < 0 ||
+			!Number.isSafeInteger(range.length) ||
+			range.length < 8 ||
+			range.length > 65536
+		)
+			throw new MutationDenied("Invalid original content reference/range");
+		const archive = this.#storage?.entryArchive;
+		if (!archive) throw new MutationDenied("Bounded archive observation is unavailable");
+		const id = conversationId(ref.conversationId),
+			entry = Number(reference.entryId) as EntryId;
+		const header = await archive.header(id, entry, BACKGROUND_CONTEXT);
+		authorize();
+		if (
+			!header ||
+			String(header.commitSeq) !== reference.revision ||
+			(reference.sourceConversationId !== undefined &&
+				String(header.conversationId) !== reference.sourceConversationId)
+		)
+			throw new MutationDenied("Original content source revision/visibility changed");
+		const indexed = await this.#indexedEntry(ref, header, authorize);
+		const original = indexed.contents.get(reference.id);
+		// Missing owner attribution does not bypass visibility: the header above was acquired through this exact ref.
+		const normalized =
+			original && reference.sourceConversationId === undefined
+				? { ...reference, sourceConversationId: original.reference.sourceConversationId }
+				: reference;
+		if (
+			!original ||
+			!isDeepStrictEqual(original.reference, normalized) ||
+			range.offset > reference.byteLength
+		)
+			throw new MutationDenied("Unknown/altered original content reference");
+		const read = async (offset: number, length: number) => {
+			authorize();
+			const chunk = await archive.read(
+				id,
+				entry,
+				{ offset, length, commitSeq: header.commitSeq },
+				BACKGROUND_CONTEXT,
+			);
+			authorize();
+			if (!chunk || chunk.commitSeq !== header.commitSeq || chunk.byteLength !== header.byteLength)
+				throw new MutationDenied("Original content source changed");
+			return chunk.bytes;
+		};
+		let text: string, nextOffset: number;
+		if (original.span.encoding === "json-string") {
+			const value = await decodeEntryStringRange(read, original.span, range.offset, range.length);
+			text = value.text;
+			nextOffset = value.nextOffset;
+		} else {
+			const size = Math.min(range.length, original.span.byteLength - range.offset);
+			if (size === 0) {
+				text = "";
+				nextOffset = range.offset;
+			} else {
+				const bytes = await read(original.span.offset + range.offset, size);
+				let end = bytes.length;
+				for (; end > 0 && end < original.span.byteLength - range.offset && (bytes[end - 1]! & 192) === 128; )
+					end--;
+				if (end < bytes.length) {
+					const lead = bytes[end - 1];
+					const width = lead !== undefined && lead >= 240 ? 4 : lead !== undefined && lead >= 224 ? 3 : 2;
+					if (bytes.length - end + 1 >= width) end = bytes.length;
+					else end--;
+				}
+				if (end === bytes.length && end > 0 && bytes[end - 1]! >= 194) end--;
+				if (end < 1) throw new MutationDenied("Original content range cannot make progress");
+				text = Buffer.from(bytes.subarray(0, end)).toString("utf8");
+				nextOffset = range.offset + end;
+			}
+		}
+		authorize();
+		return copy({
+			reference,
+			text,
+			offset: range.offset,
+			nextOffset,
+			complete: nextOffset === reference.byteLength,
+		});
 	}
 	async #writeDisplay(
 		rawRef: ConversationRef,
@@ -5040,15 +5413,54 @@ export class DurableAdapter {
 	}
 
 	async #initStream(): Promise<void> {
+		this.#statusUnsubscribe?.();
+		this.#statusUnsubscribe = undefined;
+		const epoch = ++this.#statusEpoch;
 		if (this.#stream) {
 			await this.#stream.stop().catch(() => {});
 			this.#stream = undefined;
 		}
+		if (this.#lazyObservation) {
+			// Subscribe first, then acquire only pi.live. A later committed live revision wins the seed race.
+			// No watchEvents/viewState mount: those intentionally hydrate the full active transcript.
+			const id = this.#conversation.id;
+			let liveRevision = 0;
+			this.#statusUnsubscribe = this.#harness.subscribeCommits((publication) => {
+				if (this.#disposed || epoch !== this.#statusEpoch) return;
+				let changed = false;
+				for (const change of publication.changes) {
+					if (
+						change.type === "document" &&
+						change.conversationId === id &&
+						change.record.kind === "pi.live"
+					) {
+						liveRevision++;
+						const live = change.value as LiveState | null;
+						this.#activeRuns = live?.run === undefined ? 0 : 1;
+					} else if (change.type === "entry" && change.value.conversationId === id) changed = true;
+					else if (change.type === "submission" && change.value.conversationId === id)
+						this.#observeSubmission(change.value);
+					else if (
+						change.type === "task" &&
+						change.value.conversationId === id &&
+						change.value.state.status === "terminal"
+					) {
+						const outcome = change.value.state.outcome;
+						if (outcome.status === "faulted") this.markFailed(new Error(outcome.error.message));
+						else if (outcome.status === "orphaned") this.markFailed(new Error(outcome.reason));
+					}
+				}
+				if (changed) this.#notify({ type: "changed" });
+			});
+			const revision = liveRevision;
+			const live = await this.#harness.snapshot(LiveDoc, id, BACKGROUND_CONTEXT);
+			if (epoch === this.#statusEpoch && liveRevision === revision)
+				this.#activeRuns = live?.run === undefined ? 0 : 1;
+			return;
+		}
 		this.#stream = await watchEvents(this.#harness, this.#conversation.id, BACKGROUND_CONTEXT);
 		this.#stream.start(async (batch) => {
-			for (const event of batch) {
-				this.#handleEvent(event);
-			}
+			for (const event of batch) this.#handleEvent(event);
 		});
 	}
 
@@ -5439,19 +5851,26 @@ export class DurableAdapter {
 		}
 	}
 
-	refreshCache(): Promise<void> {
-		const operation = this.#cacheRefresh.then(() => this.#refreshCacheOnce());
+	refreshCache(execution = false): Promise<void> {
+		const operation = this.#cacheRefresh.then(() =>
+			this.#refreshCacheOnce(execution || !this.#lazyObservation),
+		);
 		this.#cacheRefresh = operation.then(
 			() => {},
 			() => {},
 		);
 		return operation;
 	}
-	async #refreshCacheOnce(): Promise<void> {
+	async #refreshCacheOnce(execution: boolean): Promise<void> {
 		if (this.#failedReason) return;
 		try {
 			const conversation = this.#conversation;
 			await this.#refreshJournals();
+			if (!execution) {
+				const provider = await this.#harness.snapshot(ProviderDoc, conversation.id, BACKGROUND_CONTEXT);
+				if (conversation === this.#conversation) this.#providerSessionId = provider?.sessionId;
+				return;
+			}
 			const ctx = await conversation.context(BACKGROUND_CONTEXT);
 			const provider = await this.#harness.snapshot(ProviderDoc, conversation.id, BACKGROUND_CONTEXT);
 			const conversationId = String(conversation.id),
@@ -5484,6 +5903,7 @@ export class DurableAdapter {
 			if (plan.reset) this.#allEntries = additions;
 			else this.#allEntries.push(...additions);
 			this.#historyConversationId = conversationId;
+			this.#executionCacheLoaded = true;
 		} catch (e) {
 			const reason = e instanceof Error ? e.message : String(e);
 			this.markFailed(new Error(reason));
@@ -5507,7 +5927,11 @@ export class DurableAdapter {
 			conversationId: String(this.#conversation.id),
 			providerSessionId: this.#providerSessionId,
 			sessionFile: this.#sessionFile,
-			leafId: this.#activeEntries.length > 0 ? String(this.#activeEntries.at(-1)!.id) : null,
+			historyLoaded: this.#executionCacheLoaded,
+			leafId:
+				this.#executionCacheLoaded && this.#activeEntries.length > 0
+					? String(this.#activeEntries.at(-1)!.id)
+					: null,
 			entries: this.#allEntries.map((e) => ({
 				id: String(e.id),
 				type: e.kind,
@@ -5567,6 +5991,8 @@ export class DurableAdapter {
 	}
 
 	frame(): AdapterFrame {
+		if (this.#lazyObservation && !this.#executionCacheLoaded)
+			throw new MutationDenied("Cold execution frame is not loaded; prepareExecution is required");
 		const total: { -readonly [K in keyof UsageDTO]: UsageDTO[K] } = {
 			input: 0,
 			output: 0,
@@ -6115,12 +6541,26 @@ export class DurableAdapter {
 	async dispose(): Promise<void> {
 		await Promise.all([...this.#pendingQueue]);
 		this.#disposed = true;
+		this.#statusEpoch++;
+		this.#statusUnsubscribe?.();
+		this.#statusUnsubscribe = undefined;
 		if (this.#stream) {
 			await this.#stream.stop().catch(() => {});
 			this.#stream = undefined;
 		}
 		await this.#conversation.abort(BACKGROUND_CONTEXT).catch(() => {});
 		await this.#closeExecution();
+		this.#previewEntries.clear();
+		this.#previewEntriesBytes = 0;
+		this.#previewPages.clear();
+		this.#previewPagesBytes = 0;
+		if (this.#lazyObservation) {
+			this.#activeEntries = [];
+			this.#allEntries = [];
+			this.#contextMessages = [];
+			this.#contributions = [];
+			this.#executionCacheLoaded = false;
+		}
 		this.#routes.delete(this.#conversation.id);
 		if (!this.#managed) {
 			await this.#harness.close(BACKGROUND_CONTEXT);

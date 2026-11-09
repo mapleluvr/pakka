@@ -1,5 +1,5 @@
 import { Fragment, h, type TargetedKeyboardEvent, type TargetedPointerEvent } from "preact";
-import { useEffect, useMemo, useRef, useState } from "preact/hooks";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "preact/hooks";
 import { Icon } from "@pakka/webui/components";
 import type { WebInterfaceProps } from "@pakka/webui/ui";
 import {
@@ -360,7 +360,8 @@ function GraphView({
 			{ intervalMs: 700 },
 		);
 	}, [context, refSignature]);
-	useEffect(() => {
+	// Save presentation with its DOM commit; an immediate reload must not read the previous visible choice.
+	useLayoutEffect(() => {
 		try {
 			localStorage.setItem(`${viewKey}.positions`, JSON.stringify(savedPositions));
 			localStorage.setItem(`${viewKey}.hiddenMembers`, JSON.stringify([...hiddenMembers]));
@@ -370,14 +371,14 @@ function GraphView({
 			/* Personal presentation is independent of runtime work. */
 		}
 	}, [savedPositions, hiddenMembers, hiddenAgents, mode]);
-	useEffect(() => {
+	useLayoutEffect(() => {
 		try {
 			localStorage.setItem(viewKey, JSON.stringify([...hidden]));
 		} catch {
 			/* View preference storage is optional. */
 		}
 	}, [hidden]);
-	useEffect(() => {
+	useLayoutEffect(() => {
 		try {
 			if (selected) localStorage.setItem(`${viewKey}.selected`, selected);
 			else localStorage.removeItem(`${viewKey}.selected`);
@@ -387,7 +388,7 @@ function GraphView({
 			/* View preference storage is optional. */
 		}
 	}, [selected, selectedEdge]);
-	useEffect(() => {
+	useLayoutEffect(() => {
 		try {
 			localStorage.setItem(`${viewKey}.screen`, screen);
 			localStorage.setItem(`${viewKey}.phase`, phase);

@@ -1,6 +1,17 @@
-import { decodePocketRequest, decodePocketResponse, POCKET_MAX_BYTES } from "@pakka/protocol/pocket";
+import {
+	decodePocketRequest,
+	decodePocketResponse,
+	decodePocketEvent,
+	POCKET_MAX_BYTES,
+} from "@pakka/protocol/pocket";
 import { identity } from "@pakka/protocol";
-import type { AgentRef, PocketCommand, PocketResult, PocketErrorCode } from "@pakka/protocol/pocket";
+import type {
+	AgentRef,
+	PocketCommand,
+	PocketResult,
+	PocketErrorCode,
+	PocketSnapshot,
+} from "@pakka/protocol/pocket";
 export type * from "@pakka/protocol/pocket";
 export interface PocketClientOptions {
 	readonly endpoint: string;
@@ -36,6 +47,86 @@ const sameRef = (a: AgentRef, b: AgentRef): boolean =>
 	a.conversationId === b.conversationId &&
 	a.incarnation === b.incarnation &&
 	a.profile === b.profile;
+export interface PocketObservedSnapshot {
+	readonly serverId: string;
+	readonly streamId: string;
+	/** Last Conversation frame, not the sequence of unrelated team/resource events. */
+	readonly sequence: number;
+	readonly snapshot: PocketSnapshot;
+}
+export class PocketObservationGap extends Error {
+	constructor() {
+		super("WebUI observation requires a fresh scoped snapshot");
+		this.name = "PocketObservationGap";
+	}
+}
+/** Pure bounded reconstruction. Missing bases/rows never become invented empty text or another resource. */
+export function applyPocketObservation(
+	previous: PocketObservedSnapshot | undefined,
+	raw: unknown,
+	expected: { readonly serverId: string; readonly target: AgentRef },
+): PocketObservedSnapshot | undefined {
+	const event = decodePocketEvent(raw);
+	const gap = (): never => {
+		throw new PocketObservationGap();
+	};
+	if (event.serverId !== expected.serverId) return gap();
+	if (event.kind !== "conversation" && event.kind !== "conversation.patch") {
+		if (event.kind === "collaboration") return previous;
+		return gap();
+	}
+	const target = event.kind === "conversation" ? event.snapshot.ref : event.patch.ref;
+	if (!sameRef(target, expected.target)) return gap();
+	let snapshot: PocketSnapshot;
+	if (event.kind === "conversation") {
+		if (previous?.streamId === event.streamId && event.sequence <= previous.sequence) return gap();
+		snapshot = event.snapshot;
+	} else {
+		if (
+			!previous ||
+			previous.serverId !== event.serverId ||
+			previous.streamId !== event.streamId ||
+			previous.sequence !== event.patch.baseSequence ||
+			!sameRef(previous.snapshot.ref, target)
+		)
+			return gap();
+		const patch = event.patch;
+		const rows = new Map(previous.snapshot.entries.map((entry) => [entry.id, entry]));
+		for (const entry of patch.entries ?? []) {
+			if (patch.entryIds === undefined && !rows.has(entry.id)) return gap();
+			rows.set(entry.id, entry);
+		}
+		const ids = patch.entryIds ?? previous.snapshot.entries.map((entry) => entry.id);
+		const entries = ids.map((id) => rows.get(id) ?? gap());
+		const { olderBeforeId: oldBoundary, ...prior } = previous.snapshot;
+		const truncated = patch.entriesTruncated ?? prior.entriesTruncated;
+		const boundary = patch.olderBeforeId === undefined ? oldBoundary : patch.olderBeforeId;
+		snapshot = {
+			...prior,
+			entries,
+			entriesTruncated: truncated,
+			...(truncated && boundary !== null && boundary !== undefined ? { olderBeforeId: boundary } : {}),
+			...(patch.live === undefined ? {} : { live: patch.live }),
+			...(patch.usage === undefined ? {} : { usage: patch.usage }),
+		};
+	}
+	// Validate the derived hot page with the same snapshot contract and detach/freeze it.
+	const checked = decodePocketEvent({
+		version: 2,
+		serverId: event.serverId,
+		streamId: event.streamId,
+		sequence: event.sequence,
+		kind: "conversation",
+		snapshot,
+	});
+	if (checked.kind !== "conversation") return gap();
+	return Object.freeze({
+		serverId: event.serverId,
+		streamId: event.streamId,
+		sequence: event.sequence,
+		snapshot: checked.snapshot,
+	});
+}
 function correlated(command: PocketCommand, result: PocketResult, personId?: string): boolean {
 	switch (command.op) {
 		case "hello":
@@ -160,6 +251,33 @@ function correlated(command: PocketCommand, result: PocketResult, personId?: str
 			);
 		case "read":
 			return result.kind === "conversation" && sameRef(command.target, result.snapshot.ref);
+		case "preview":
+			return (
+				result.kind === "conversation" &&
+				sameRef(command.target, result.snapshot.ref) &&
+				new TextEncoder().encode(JSON.stringify(result.snapshot)).byteLength <=
+					(command.page?.maxBytes ?? 256 * 1024)
+			);
+		case "content.read":
+			return (
+				result.kind === "content" &&
+				sameRef(command.target, result.target) &&
+				[
+					"id",
+					"source",
+					"entryId",
+					"sourceConversationId",
+					"taskId",
+					"callId",
+					"revision",
+					"path",
+					"encoding",
+					"byteLength",
+					"previewComplete",
+				].every((key) => command.reference[key] === result.chunk.reference[key]) &&
+				result.chunk.offset === command.range.offset &&
+				result.chunk.nextOffset <= command.range.offset + command.range.length
+			);
 		case "collaboration.read":
 		case "collaboration.post":
 		case "collaboration.note":
