@@ -93,7 +93,13 @@ export type {
 	PocketDriverInput,
 	PocketPresence,
 } from "./pocket-collaboration.js";
-export { createPocketPeople } from "./pocket-people.js";
+export {
+	createPocketPeople,
+	inspectPocketOwner,
+	recoverPocketOwner,
+	revokeRestoredPocketAccess,
+} from "./pocket-people.js";
+export type { PocketOwnerRecovery } from "./pocket-people.js";
 export type {
 	PocketPeople,
 	PocketPeopleOptions,

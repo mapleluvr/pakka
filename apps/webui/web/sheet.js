@@ -94,7 +94,7 @@ export function Sheet({ label, close, children, anchor, initialFocus, variant = 
 		if (event.key !== "Tab") return;
 		const nodes = [
 			...panel.current.querySelectorAll(
-				'button:not(:disabled),input:not(:disabled),select:not(:disabled),textarea:not(:disabled),a[href],summary,[tabindex="0"]',
+				'button:not(:disabled),input:not(:disabled),select:not(:disabled),textarea:not(:disabled),a[href],summary,[tabindex="0"]:not(:disabled)',
 			),
 		].filter((node) => node.tabIndex >= 0 && !node.hidden && node.getClientRects().length);
 		if (!nodes.length) {

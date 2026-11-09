@@ -115,6 +115,12 @@ async function publicAssets() {
 			body: await readFile(fileURLToPath(import.meta.resolve(specifier!))),
 		});
 	}
+	assets.set("/vendor/virtual-core.js", {
+		type: types.js!,
+		body: await readFile(
+			fileURLToPath(new URL("./browser-virtual-core.js", import.meta.resolve("@pakka/webui"))),
+		),
+	});
 	assets.set("/sdk/extension-rpc.js", {
 		type: types.js!,
 		body: await readFile(
@@ -150,6 +156,7 @@ export async function startPocket(options: PocketProductOptions) {
 	let credentials: PocketCredentials | undefined;
 	const runtime = await createRuntime({
 		...options.runtime,
+		observation: options.runtime.observation ?? "lazy",
 		resolveApiKey: async () => {
 			if (!credentials) throw new Error("Private configuration is not yet bound");
 			return credentials.resolve();
@@ -212,7 +219,7 @@ export async function startPocket(options: PocketProductOptions) {
 			createPocketWorkspace({
 				runtime,
 				people,
-				catalog: { namespace: "pocket.workspace", maxDeliveries: 512, maxPending: 32 },
+				catalog: { namespace: "pocket.workspace", maxPending: 32 },
 				profileCeiling: () => profiles,
 				beforeInput: (actor, ref) => collaboration.checkInput(actor, ref),
 				// Native jobs retain the creator, not a browser session; enforce the same current driver lease.
@@ -285,6 +292,7 @@ export async function startPocket(options: PocketProductOptions) {
 			open: async ({ id, cwd, reopen }) => {
 				const child = await createRuntime({
 					...options.runtime,
+					observation: options.runtime.observation ?? "lazy",
 					dataDir: options.runtime.dataDir,
 					cwd,
 					cwdRoots: runtime.directoryRoots(profiles),

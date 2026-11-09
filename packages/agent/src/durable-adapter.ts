@@ -1,14 +1,15 @@
-import { randomUUID } from "node:crypto";
+import { randomUUID, createHash } from "node:crypto";
 import { readFileSync, realpathSync, existsSync, statSync, lstatSync } from "node:fs";
 import { mkdir, writeFile, open, readFile, unlink, mkdtemp, rm } from "node:fs/promises";
 import { DatabaseSync, backup } from "node:sqlite";
 import { tmpdir } from "node:os";
-import { join, resolve, relative, isAbsolute, dirname } from "node:path";
+import { join, resolve, relative, isAbsolute, dirname, basename, toNamespacedPath } from "node:path";
 import { isDeepStrictEqual } from "node:util";
 import { BACKGROUND_CONTEXT, withAbortSignal } from "@earendil-works/chord/context";
 import type { JsonValue as ChordJsonValue, JsonRepresentation } from "@earendil-works/chord";
 import {
 	Harness,
+	createSession,
 	createRegistry,
 	defineTool,
 	defineExtension,
@@ -26,6 +27,7 @@ import {
 	AgentDoc,
 	defineTask,
 	LiveDoc,
+	UsageDoc,
 	configure,
 	ProviderDoc,
 	type Tx,
@@ -38,6 +40,7 @@ import {
 	type Storage,
 	type Cursor,
 	type EntryRecord,
+	type EntryHeader,
 	type EntryDraft,
 	type EntryId,
 	type TaskId,
@@ -69,11 +72,19 @@ import { copy, hash, json } from "./artifact-journal.ts";
 import type { JournalStorage, JournalMutation } from "./native-journal.ts";
 import { sourceWorkPlan, type StoredSourceWork, type SourceWorkMutation } from "./source-work.ts";
 import { planHistoryScan } from "./history-scan.ts";
+import { indexEntryJson, decodeEntryStringRange } from "./entry-preview.ts";
+import {
+	projectConversationEntry,
+	previewLiveArguments,
+	type IndexedConversationEntry,
+} from "./conversation-preview.ts";
 import { legacyModels, primaryModels, modelReference, modelKey, modelDTO } from "./model-access.ts";
 import { LifecycleTransitionRevoked } from "./strategy-control.ts";
 import type {
 	HostOptions,
 	WriterRecoveryOptions,
+	StorageMaintenanceOptions,
+	StorageMaintenance,
 	WriterRecoveryReceipt,
 	ArtifactReceipt,
 	ArtifactSnapshot,
@@ -114,6 +125,10 @@ import type {
 	ConversationProfile,
 	ConversationSnapshot,
 	ConversationReadOptions,
+	ConversationPreviewOptions,
+	ConversationContentReference,
+	ConversationContentRange,
+	ConversationContentChunk,
 	TranscriptMessage,
 	DisplayWrite,
 	DisplayReceipt,
@@ -1541,6 +1556,238 @@ export async function recoverStorageWriter(options: WriterRecoveryOptions): Prom
 	}
 }
 
+/** Offline kernel only: no registry, scheduler, provider, tool or extension is installed. */
+export async function openStorageMaintenance(
+	options: StorageMaintenanceOptions,
+): Promise<StorageMaintenance> {
+	const storageDir = realpathSync(options.storageDir);
+	if (resolve(options.storageDir) !== storageDir || !lstatSync(storageDir).isDirectory())
+		throw new Error("Maintenance physical storage identity mismatch");
+	const approved = new Map(options.stores.map((value) => [value.namespace, copy(value)]));
+	if (
+		approved.size !== options.stores.length ||
+		options.stores.some(
+			(value) =>
+				!validKey(value.namespace) ||
+				!Number.isSafeInteger(value.maxBytes) ||
+				value.maxBytes < 1 ||
+				value.maxBytes > 16 * 1024 * 1024,
+		)
+	)
+		throw new Error("Invalid approved maintenance namespaces");
+	await probeExistingStorage(storageDir);
+	const release = await claimWriter(storageDir, true);
+	let owner: OwnedSqlite | undefined;
+	let session: ReturnType<typeof createSession> | undefined;
+	let closed = false,
+		inspectionFailed = false;
+	try {
+		const storage = await openPersistentStorage(storageDir, true, (value) => {
+			owner = value;
+		});
+		session = createSession(storage);
+		const kernel = session;
+		const runtime = await kernel.snapshot(RuntimeDoc, BACKGROUND_CONTEXT);
+		const compressor = runtime ? undefined : await kernel.snapshot(CompresserPolicyDoc, BACKGROUND_CONTEXT);
+		const sessionId = runtime?.sessionId ?? compressor?.sessionId;
+		if (!sessionId || (options.expectedSessionId !== undefined && options.expectedSessionId !== sessionId))
+			throw new Error("Maintenance Session identity mismatch");
+		let cwd: string | undefined;
+		if (runtime) {
+			const provenance = JSON.parse(
+				await readFile(join(storageDir, "provenance.json"), "utf8"),
+			) as ProvenanceData;
+			if (
+				provenance.sessionId !== sessionId ||
+				typeof provenance.cwd !== "string" ||
+				!isAbsolute(provenance.cwd)
+			)
+				throw new Error("Maintenance provenance identity mismatch");
+			cwd = provenance.cwd;
+		}
+		const ready = () => {
+			if (closed || inspectionFailed) throw new Error("Maintenance is closed/unknown");
+		};
+		const choice = (namespace: string) => {
+			ready();
+			const selected = approved.get(namespace);
+			if (!selected) throw new MutationDenied("Unapproved maintenance namespace");
+			return selected;
+		};
+		const checkOptions = (actual: RuntimeStoreOptions, expected: RuntimeStoreOptions) => {
+			if (hash(actual) !== hash(expected)) throw new MutationDenied("Maintenance store options conflict");
+		};
+		return Object.freeze({
+			identity: Object.freeze({
+				sessionId,
+				storageDir,
+				...(cwd ? { cwd } : {}),
+				kind: runtime ? ("runtime" as const) : ("compresser" as const),
+			}),
+			snapshot: async (namespace: string) => {
+				const selected = choice(namespace);
+				const state = await kernel.snapshot(CoordinatorDoc, namespace, BACKGROUND_CONTEXT);
+				ready();
+				if (!state) return copy({ version: 0, data: {} });
+				checkOptions(state.options, selected);
+				return copy({ version: state.version, data: state.data });
+			},
+			work: async () => {
+				ready();
+				try {
+					return await kernel.commit(async (tx) => {
+						let pendingTasks = 0,
+							queuedInputs = 0;
+						const digest = createHash("sha256"),
+							sample: {
+								kind: "task" | "input";
+								id: string;
+								conversationId: string;
+								state: string;
+								definition?: string;
+							}[] = [];
+						let cursor: Parameters<typeof storage.scanTasks>[2];
+						do {
+							const page = await tx.scanTasks({ order: "ascending" }, 64, cursor);
+							for (const task of page.items)
+								if (task.state.status !== "terminal") {
+									pendingTasks++;
+									digest.update("task:" + JSON.stringify(task) + "\n");
+									if (sample.length < 128)
+										sample.push({
+											kind: "task",
+											id: String(task.id),
+											conversationId: String(task.conversationId),
+											state: task.state.status,
+											definition: task.kind,
+										});
+								}
+							cursor = page.next;
+						} while (cursor);
+						cursor = undefined;
+						do {
+							const page = await storage.scanSubmissions(
+								{ order: "ascending" },
+								64,
+								cursor,
+								BACKGROUND_CONTEXT,
+							);
+							for (const input of page.items)
+								if (input.status === "queued" || input.status === "placed") {
+									queuedInputs++;
+									digest.update("input:" + JSON.stringify(input) + "\n");
+									if (sample.length < 128)
+										sample.push({
+											kind: "input",
+											id: String(input.id),
+											conversationId: String(input.conversationId),
+											state: input.status,
+										});
+								}
+							cursor = page.next;
+						} while (cursor);
+						ready();
+						return copy({
+							pendingTasks,
+							queuedInputs,
+							fingerprint: digest.digest("hex"),
+							sample,
+							sampleTruncated: pendingTasks + queuedInputs > sample.length,
+						});
+					}, BACKGROUND_CONTEXT);
+				} catch (error) {
+					inspectionFailed = true;
+					throw error;
+				}
+			},
+			commit: async (changes: Parameters<StorageMaintenance["commit"]>[0]) => {
+				ready();
+				if (!changes.length || new Set(changes.map((value) => value.namespace)).size !== changes.length)
+					throw new MutationDenied("Invalid maintenance mutation set");
+				const inputs = changes.map((change) => {
+					const selected = choice(change.namespace);
+					if (
+						!Number.isSafeInteger(change.expectedVersion) ||
+						change.expectedVersion < 0 ||
+						change.expectedVersion >= Number.MAX_SAFE_INTEGER
+					)
+						throw new MutationDenied("Invalid maintenance CAS version");
+					json(change.data);
+					if (Buffer.byteLength(JSON.stringify(change.data)) > selected.maxBytes)
+						throw new MutationDenied("Maintenance store capacity exceeded");
+					return { ...change, data: storedJson<JsonRepresentation<JsonObject>>(change.data), selected };
+				});
+				await kernel.commit(async (tx) => {
+					for (const input of inputs) {
+						const state = await tx.doc(CoordinatorDoc, input.namespace, { ...input.selected });
+						checkOptions(state.options, input.selected);
+						if (state.version !== input.expectedVersion) throw new MutationDenied("Maintenance CAS conflict");
+						state.data = input.data;
+						state.version++;
+					}
+				}, BACKGROUND_CONTEXT);
+			},
+			backup: async (destination: string) => {
+				ready();
+				const file = resolve(destination);
+				const reserved = await open(file, "wx", 0o600);
+				await reserved.close();
+				const reader = new DatabaseSync(toNamespacedPath(join(storageDir, SQLITE_DESCRIPTION.file)), {
+					readOnly: true,
+				});
+				try {
+					if (reader.prepare("PRAGMA quick_check").get()?.quick_check !== "ok")
+						throw new Error("Storage integrity check failed");
+					await backup(reader, toNamespacedPath(file));
+				} finally {
+					reader.close();
+				}
+				ready();
+				const snapshot = new DatabaseSync(toNamespacedPath(file), { readOnly: true });
+				try {
+					if (
+						snapshot.prepare("PRAGMA application_id").get()?.application_id !== SQLITE_APPLICATION_ID ||
+						snapshot.prepare("PRAGMA quick_check").get()?.quick_check !== "ok"
+					)
+						throw new Error("Backup identity/integrity mismatch");
+				} finally {
+					snapshot.close();
+				}
+				return copy({ sessionId, file });
+			},
+			close: async () => {
+				if (closed) return;
+				closed = true;
+				await kernel.close(BACKGROUND_CONTEXT);
+				const end = await kernel.closed;
+				await owner?.close();
+				// A failed kernel cannot prove that its last mutation was adopted; keep ownership for explicit recovery.
+				if (end.reason === "failed" || inspectionFailed)
+					throw new Error("Maintenance storage outcome unknown; writer retained");
+				await release();
+			},
+		});
+	} catch (error) {
+		let safe = true;
+		if (session) {
+			try {
+				await session.close(BACKGROUND_CONTEXT);
+				const end = await session.closed;
+				safe = end.reason === "closed";
+			} catch {
+				safe = false;
+			}
+		}
+		try {
+			await owner?.close();
+		} catch {
+			safe = false;
+		}
+		if (safe) await release();
+		throw error;
+	}
+}
+
 /** Public Pi database/storage adapters, with explicit ownership before initialization. */
 async function openPersistentStorage(
 	storageDir: string,
@@ -1765,6 +2012,19 @@ export interface ManagedAdapterPort {
 		check: () => void,
 		options?: ConversationReadOptions,
 	): Promise<ConversationSnapshot>;
+	observationRevision(ref: ConversationRef, check: () => void): number;
+	prepareExecution(ref: ConversationRef, check: () => void): Promise<void>;
+	previewConversation(
+		ref: ConversationRef,
+		check: () => void,
+		options?: ConversationPreviewOptions,
+	): Promise<ConversationSnapshot>;
+	readContent(
+		ref: ConversationRef,
+		reference: ConversationContentReference,
+		range: ConversationContentRange,
+		check: () => void,
+	): Promise<ConversationContentChunk>;
 	writeDisplay(ref: ConversationRef, input: DisplayWrite, check: () => void): Promise<DisplayReceipt>;
 	attach(
 		ref: ConversationRef,
@@ -1933,11 +2193,20 @@ function profileOptions(options: HostOptions, profile?: ConversationProfile): Ho
 		),
 	});
 }
-async function claimWriter(storageDir: string): Promise<() => Promise<void>> {
+function productStorageHeld(dataDir: string): boolean {
+	return (
+		existsSync(join(dirname(dataDir), basename(dataDir) + ".pakka-maintenance.json")) ||
+		existsSync(join(dataDir, "pakka-product-maintenance.json")) ||
+		existsSync(join(dataDir, "pakka-restored-hold.json"))
+	);
+}
+async function claimWriter(storageDir: string, offline = false): Promise<() => Promise<void>> {
+	const held = () =>
+		existsSync(join(storageDir, "pakka-maintenance.json")) ||
+		(!offline && [storageDir, dirname(storageDir), dirname(dirname(storageDir))].some(productStorageHeld));
 	const path = join(storageDir, "pakka-writer.json"),
 		nonce = randomUUID();
-	if (existsSync(join(storageDir, "pakka-maintenance.json")))
-		throw new Error("Pakka storage maintenance is locked");
+	if (held()) throw new Error("Pakka storage maintenance is locked");
 	let descriptor;
 	try {
 		descriptor = await open(path, "wx");
@@ -1967,7 +2236,7 @@ async function claimWriter(storageDir: string): Promise<() => Promise<void>> {
 	};
 	// Maintenance may start while the exclusive file creation is queued.
 	// Recheck before any database is opened, then release only our own claim.
-	if (existsSync(join(storageDir, "pakka-maintenance.json"))) {
+	if (held()) {
 		await release();
 		throw new Error("Pakka storage maintenance is locked");
 	}
@@ -2054,19 +2323,52 @@ type StoredDelivery = {
 	/** Optional on legacy v1 records; observation must not invent a time. */
 	at?: number;
 };
+type CatalogIndex = {
+	order: number;
+	latest: string | null;
+	recipients: Record<string, string>;
+	pending: Record<string, string[]>;
+};
 type CatalogRecord = {
 	version: number;
-	options: { namespace: string; maxDeliveries: number; maxPending: number };
+	options: { namespace: string; maxDeliveries?: number; maxPending: number };
 	members: Record<string, StoredMember>;
-	deliveries: Record<string, StoredDelivery>;
+	/** Present only in v1 data awaiting transactional extraction. */
+	deliveries?: Record<string, StoredDelivery>;
+	index?: CatalogIndex;
 };
 const CatalogDoc = defineDocFamily<CatalogRecord, JsonRepresentation<CatalogOptions>>({
 	kind: "pakka.catalog",
+	version: 2,
+	checkpointWhen: () => true,
+	scope: "session",
+	family: true,
+	initial: (options) => ({
+		version: 0,
+		options: { namespace: options.namespace, maxPending: options.maxPending },
+		members: {},
+		index: { order: 0, latest: null, recipients: {}, pending: {} },
+	}),
+	migrate: (value, fromVersion) => {
+		if (fromVersion !== 1 || !value.deliveries || value.index !== undefined)
+			throw new Error("Invalid legacy catalog layout");
+		return storedJson<CatalogRecord>(value);
+	},
+});
+type CatalogDeliveryRecord = {
+	namespace: string;
+	record: StoredDelivery | null;
+	order: number;
+	previous: string | null;
+	previousTarget: string | null;
+};
+const CatalogDeliveryDoc = defineDocFamily<CatalogDeliveryRecord, null>({
+	kind: "pakka.catalog-delivery",
 	version: 1,
 	checkpointWhen: () => true,
 	scope: "session",
 	family: true,
-	initial: (options) => ({ version: 0, options: { ...options }, members: {}, deliveries: {} }),
+	initial: () => ({ namespace: "", record: null, order: 0, previous: null, previousTarget: null }),
 });
 const CoordinatorDoc = defineDocFamily<
 	JsonRepresentation<{ version: number; options: RuntimeStoreOptions; data: JsonObject }>,
@@ -2362,6 +2664,15 @@ export class DurableAdapter {
 	#options: HostOptions;
 	#rawModels: Models;
 	#stream: AgentEventStream | undefined;
+	#lazyObservation = false;
+	#executionCacheLoaded = false;
+	#statusUnsubscribe: (() => void) | undefined;
+	#statusEpoch = 0;
+	#previewEntries = new Map<string, { value: IndexedConversationEntry; bytes: number }>();
+	#previewEntriesBytes = 0;
+	#previewPages = new Map<string, { value: ConversationSnapshot; bytes: number }>();
+	#previewPagesBytes = 0;
+	#previewVersion = 0;
 	#run: Promise<void> | undefined;
 	#primary: string | undefined;
 	#runScope: RunScopeToken | undefined;
@@ -2442,7 +2753,7 @@ export class DurableAdapter {
 		control: AdapterControl,
 		managedOptions?: Pick<
 			RuntimeOptions,
-			"limits" | "profiles" | "cwdRoots" | "reservedSessionId" | "jobs" | "contextSources"
+			"limits" | "profiles" | "cwdRoots" | "reservedSessionId" | "jobs" | "contextSources" | "observation"
 		>,
 	): Promise<DurableAdapter> {
 		const profiles = new Map<string, HostOptions>([["default", profileOptions(options)]]);
@@ -2512,6 +2823,8 @@ export class DurableAdapter {
 			!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(reserved)
 		)
 			throw new Error("Invalid reserved Session identity");
+		if (productStorageHeld(options.dataDir))
+			throw new Error("Pakka product maintenance/restored execution is held");
 		const sessionsDir = join(options.dataDir, "sessions");
 		await mkdir(sessionsDir, { recursive: true });
 
@@ -2786,6 +3099,7 @@ export class DurableAdapter {
 					closed: false,
 				};
 				adapter.#managed.unsubscribe = harness.subscribeCommits((publication) => {
+					adapter.#previewVersion++;
 					for (const change of publication.changes)
 						if (change.type === "document" && change.record.kind === "pakka.runtime" && change.value)
 							adapter.#managed!.state = change.value as RuntimeRecord;
@@ -2834,8 +3148,10 @@ export class DurableAdapter {
 				});
 			}
 
-			if (managedOptions)
+			if (managedOptions) {
 				adapter.#options = await adapter.#conversationOptions(savedRuntime!.resources.root!);
+				adapter.#lazyObservation = managedOptions.observation === "lazy";
+			}
 			await adapter.#initStream();
 			await adapter.refreshCache();
 			return adapter;
@@ -3036,7 +3352,7 @@ export class DurableAdapter {
 							} catch {
 								return { block: "Execution environment unavailable" };
 							}
-							await adapter.refreshCache();
+							await adapter.refreshCache(true);
 							const permitted = await adapter.#control.project(context.abortSignal);
 							permitted.check();
 							if ("block" in permitted) return { block: permitted.block };
@@ -3414,6 +3730,33 @@ export class DurableAdapter {
 			jobs: (options: RuntimeJobOptions) => this.#jobs(options),
 			readConversation: (ref: ConversationRef, check: () => void, options?: ConversationReadOptions) =>
 				this.#readConversation(ref, check, options),
+			observationRevision: (ref: ConversationRef, check: () => void) => {
+				checkAuthority(() => {
+					this.#validateReference(ref);
+					check();
+				});
+				return this.#previewVersion;
+			},
+			prepareExecution: async (ref: ConversationRef, check: () => void) => {
+				const authorize = () =>
+					checkAuthority(() => {
+						this.#validateReference(ref);
+						check();
+					});
+				authorize();
+				const route = this.#routes.get(conversationId(ref.conversationId));
+				if (!route || route.#disposed) throw new MutationDenied("Conversation execution frame is not bound");
+				await route.refreshCache(true);
+				authorize();
+			},
+			previewConversation: (ref: ConversationRef, check: () => void, options?: ConversationPreviewOptions) =>
+				this.#previewConversation(ref, check, options),
+			readContent: (
+				ref: ConversationRef,
+				reference: ConversationContentReference,
+				range: ConversationContentRange,
+				check: () => void,
+			) => this.#readContent(ref, reference, range, check),
 			writeDisplay: (ref: ConversationRef, input: DisplayWrite, check: () => void) =>
 				this.#writeDisplay(ref, input, check),
 			createConversation: async (spec: ConversationSpec): Promise<ConversationRef> => {
@@ -3475,6 +3818,7 @@ export class DurableAdapter {
 				adapter.#managed = this.#managed;
 				adapter.#inferenceModels = this.#inferenceModels;
 				adapter.#storage = this.#storage;
+				adapter.#lazyObservation = this.#lazyObservation;
 				this.#routes.set(id, adapter);
 				await adapter.#initStream();
 				await adapter.refreshCache();
@@ -3482,6 +3826,8 @@ export class DurableAdapter {
 			},
 			waitForIdle: async () => {
 				this.#managedReady();
+				// This is an explicit progress-enabling command, unlike cold metadata/history reads.
+				await Promise.all([...this.#routes.values()].map((adapter) => adapter.refreshCache(true)));
 				await this.#harness.waitForIdle(BACKGROUND_CONTEXT);
 				await Promise.all([...this.#routes.values()].map((adapter) => adapter.idle()));
 			},
@@ -3596,6 +3942,312 @@ export class DurableAdapter {
 		// Native cleanup yields: recheck after it, with no further await before publication.
 		authorize();
 		return copy(result);
+	}
+	async #indexedEntry(
+		ref: ConversationRef,
+		header: EntryHeader,
+		authorize: () => void,
+	): Promise<IndexedConversationEntry> {
+		const key = JSON.stringify([ref.conversationId, String(header.id), String(header.commitSeq)]);
+		const cached = this.#previewEntries.get(key);
+		if (cached) {
+			this.#previewEntries.delete(key);
+			this.#previewEntries.set(key, cached);
+			authorize();
+			return cached.value;
+		}
+		const archive = this.#storage?.entryArchive;
+		if (!archive) throw new MutationDenied("Bounded archive observation is unavailable");
+		const index = await indexEntryJson(async (offset, length) => {
+			authorize();
+			const chunk = await archive.read(
+				conversationId(ref.conversationId),
+				header.id,
+				{ offset, length, commitSeq: header.commitSeq },
+				BACKGROUND_CONTEXT,
+			);
+			authorize();
+			if (!chunk || chunk.commitSeq !== header.commitSeq || chunk.byteLength !== header.byteLength)
+				throw new MutationDenied("Original entry revision changed or disappeared");
+			return chunk.bytes;
+		}, header.byteLength);
+		const value = projectConversationEntry(index, header, ref);
+		const bytes = Buffer.byteLength(
+			JSON.stringify({ entry: value.entry, contents: [...value.contents.values()] }),
+			"utf8",
+		);
+		if (bytes <= 2 * 1024 * 1024) {
+			for (; this.#previewEntriesBytes + bytes > 2 * 1024 * 1024 && this.#previewEntries.size; ) {
+				const oldest = this.#previewEntries.entries().next().value;
+				if (!oldest) break;
+				this.#previewEntries.delete(oldest[0]);
+				this.#previewEntriesBytes -= oldest[1].bytes;
+			}
+			const previous = this.#previewEntries.get(key);
+			if (previous) this.#previewEntriesBytes -= previous.bytes;
+			this.#previewEntries.set(key, { value, bytes });
+			this.#previewEntriesBytes += bytes;
+		}
+		authorize();
+		return value;
+	}
+	async #previewConversation(
+		rawRef: ConversationRef,
+		check: () => void,
+		rawOptions: ConversationPreviewOptions = {},
+	): Promise<ConversationSnapshot> {
+		const ref = copy(rawRef),
+			options = copy(rawOptions);
+		if (
+			!options ||
+			typeof options !== "object" ||
+			Array.isArray(options) ||
+			Object.keys(options).some((key) => !["limit", "beforeEntryId", "maxBytes"].includes(key)) ||
+			(options.limit !== undefined &&
+				(!Number.isSafeInteger(options.limit) || options.limit < 1 || options.limit > 256)) ||
+			(options.maxBytes !== undefined &&
+				(!Number.isSafeInteger(options.maxBytes) ||
+					options.maxBytes < 16384 ||
+					options.maxBytes > 256 * 1024)) ||
+			(options.beforeEntryId !== undefined &&
+				(!/^[1-9]\d*$/.test(options.beforeEntryId) || !Number.isSafeInteger(Number(options.beforeEntryId))))
+		)
+			throw new MutationDenied("Invalid bounded Conversation preview options");
+		const authorize = () =>
+			checkAuthority(() => {
+				this.#validateReference(ref);
+				check();
+			});
+		authorize();
+		const route = this.#routes.get(conversationId(ref.conversationId));
+		if (!route || route.#disposed) throw new MutationDenied("Conversation observation is not bound");
+		const version = this.#previewVersion;
+		const key = JSON.stringify([ref, options, version]);
+		const cached = this.#previewPages.get(key);
+		if (cached) {
+			this.#previewPages.delete(key);
+			this.#previewPages.set(key, cached);
+			authorize();
+			return copy(cached.value);
+		}
+		const archive = this.#storage?.entryArchive;
+		if (!archive) throw new MutationDenied("Bounded archive observation is unavailable");
+		const id = conversationId(ref.conversationId);
+		if (options.beforeEntryId !== undefined) {
+			const boundary = await archive.header(id, Number(options.beforeEntryId) as EntryId, BACKGROUND_CONTEXT);
+			authorize();
+			if (!boundary) throw new MutationDenied("Unknown Conversation preview boundary");
+		}
+		const headers = await archive.scan(
+			{
+				conversationId: id,
+				order: "descending",
+				...(options.beforeEntryId ? { maxEntryId: (Number(options.beforeEntryId) - 1) as EntryId } : {}),
+			},
+			options.limit ?? 64,
+			undefined,
+			BACKGROUND_CONTEXT,
+		);
+		authorize();
+		const [live, usage] = await Promise.all([
+			this.#harness.snapshot(LiveDoc, id, BACKGROUND_CONTEXT),
+			this.#harness.snapshot(UsageDoc, id, BACKGROUND_CONTEXT),
+		]);
+		authorize();
+		const total = { ...usageDTO() };
+		for (const item of [...Object.values(usage?.models ?? {}), ...Object.values(usage?.tools ?? {})]) {
+			const value = usageDTO(item);
+			total.input += value.input;
+			total.output += value.output;
+			total.cacheRead += value.cacheRead;
+			total.cacheWrite += value.cacheWrite;
+			total.totalTokens += value.totalTokens;
+			if (value.cost !== null) total.cost = (total.cost ?? 0) + value.cost;
+		}
+		const snippet = (value: string) =>
+			value.length <= 4096
+				? value
+				: value.slice(0, 1024) + "\n… [live display preview] …\n" + value.slice(-1024);
+		const original = live?.generation?.message;
+		let message: TranscriptMessage | undefined;
+		if (original) {
+			const content = original.content.map((part) => {
+				if (part.type === "text") return { ...part, text: snippet(part.text) };
+				if (part.type === "thinking") return { ...part, thinking: snippet(part.thinking) };
+				if (part.type === "toolCall") return { ...part, arguments: previewLiveArguments(part.arguments) };
+				return part;
+			});
+			message = transcriptMessage({
+				...original,
+				content,
+				...(original.errorMessage === undefined ? {} : { errorMessage: snippet(original.errorMessage) }),
+			});
+			if (message?.stopReason === "pending") {
+				const { stopReason: _pending, ...partial } = message;
+				message = partial;
+			}
+		}
+		const result: ConversationSnapshot = {
+			ref,
+			entries: [],
+			entriesTruncated: false,
+			live: {
+				busy: live?.run !== undefined,
+				...(message ? { message } : {}),
+				tools: (live?.tools ?? []).map((tool) => ({
+					callId: tool.callId,
+					name: tool.name,
+					status: tool.status,
+					...(tool.taskId === undefined ? {} : { taskId: String(tool.taskId) }),
+					...(tool.output === undefined ? {} : { output: snippet(tool.output) }),
+					...(tool.droppedBytes === undefined ? {} : { droppedBytes: tool.droppedBytes }),
+					...(tool.droppedLines === undefined ? {} : { droppedLines: tool.droppedLines }),
+				})),
+			},
+			usage: total,
+		};
+		const entries: ConversationSnapshot["entries"][number][] = [];
+		const maxBytes = options.maxBytes ?? 256 * 1024;
+		let bytes = Buffer.byteLength(JSON.stringify(result), "utf8") + 256;
+		for (const header of headers.items) {
+			const item = await this.#indexedEntry(ref, header, authorize);
+			const size = Buffer.byteLength(JSON.stringify(item.entry), "utf8") + 1;
+			if (bytes + size > maxBytes) {
+				if (!entries.length) throw new MutationDenied("One preview exceeds the selected byte page capacity");
+				break;
+			}
+			entries.push(item.entry);
+			bytes += size;
+		}
+		const older = headers.next !== undefined || entries.length < headers.items.length;
+		const first = entries.at(-1);
+		const page: ConversationSnapshot = {
+			...result,
+			entries: entries.reverse(),
+			entriesTruncated: older,
+			...(older && first ? { olderBeforeId: first.id } : {}),
+		};
+		const measured = Buffer.byteLength(JSON.stringify(page), "utf8");
+		if (measured > maxBytes) throw new MutationDenied("Conversation preview byte capacity exceeded");
+		if (version === this.#previewVersion && measured <= 2 * 1024 * 1024) {
+			for (; this.#previewPagesBytes + measured > 2 * 1024 * 1024 && this.#previewPages.size; ) {
+				const oldest = this.#previewPages.entries().next().value;
+				if (!oldest) break;
+				this.#previewPages.delete(oldest[0]);
+				this.#previewPagesBytes -= oldest[1].bytes;
+			}
+			const previous = this.#previewPages.get(key);
+			if (previous) this.#previewPagesBytes -= previous.bytes;
+			this.#previewPages.set(key, { value: page, bytes: measured });
+			this.#previewPagesBytes += measured;
+		}
+		authorize();
+		return copy(page);
+	}
+	async #readContent(
+		rawRef: ConversationRef,
+		rawReference: ConversationContentReference,
+		rawRange: ConversationContentRange,
+		check: () => void,
+	): Promise<ConversationContentChunk> {
+		const ref = copy(rawRef),
+			reference = copy(rawReference),
+			range = copy(rawRange);
+		const authorize = () =>
+			checkAuthority(() => {
+				this.#validateReference(ref);
+				check();
+			});
+		authorize();
+		if (
+			!reference ||
+			reference.source !== "entry" ||
+			typeof reference.entryId !== "string" ||
+			!/^[1-9]\d*$/.test(reference.entryId) ||
+			!Number.isSafeInteger(Number(reference.entryId)) ||
+			!range ||
+			Object.keys(range).some((key) => !["offset", "length"].includes(key)) ||
+			!Number.isSafeInteger(range.offset) ||
+			range.offset < 0 ||
+			!Number.isSafeInteger(range.length) ||
+			range.length < 8 ||
+			range.length > 65536
+		)
+			throw new MutationDenied("Invalid original content reference/range");
+		const archive = this.#storage?.entryArchive;
+		if (!archive) throw new MutationDenied("Bounded archive observation is unavailable");
+		const id = conversationId(ref.conversationId),
+			entry = Number(reference.entryId) as EntryId;
+		const header = await archive.header(id, entry, BACKGROUND_CONTEXT);
+		authorize();
+		if (
+			!header ||
+			String(header.commitSeq) !== reference.revision ||
+			(reference.sourceConversationId !== undefined &&
+				String(header.conversationId) !== reference.sourceConversationId)
+		)
+			throw new MutationDenied("Original content source revision/visibility changed");
+		const indexed = await this.#indexedEntry(ref, header, authorize);
+		const original = indexed.contents.get(reference.id);
+		// Missing owner attribution does not bypass visibility: the header above was acquired through this exact ref.
+		const normalized =
+			original && reference.sourceConversationId === undefined
+				? { ...reference, sourceConversationId: original.reference.sourceConversationId }
+				: reference;
+		if (
+			!original ||
+			!isDeepStrictEqual(original.reference, normalized) ||
+			range.offset > reference.byteLength
+		)
+			throw new MutationDenied("Unknown/altered original content reference");
+		const read = async (offset: number, length: number) => {
+			authorize();
+			const chunk = await archive.read(
+				id,
+				entry,
+				{ offset, length, commitSeq: header.commitSeq },
+				BACKGROUND_CONTEXT,
+			);
+			authorize();
+			if (!chunk || chunk.commitSeq !== header.commitSeq || chunk.byteLength !== header.byteLength)
+				throw new MutationDenied("Original content source changed");
+			return chunk.bytes;
+		};
+		let text: string, nextOffset: number;
+		if (original.span.encoding === "json-string") {
+			const value = await decodeEntryStringRange(read, original.span, range.offset, range.length);
+			text = value.text;
+			nextOffset = value.nextOffset;
+		} else {
+			const size = Math.min(range.length, original.span.byteLength - range.offset);
+			if (size === 0) {
+				text = "";
+				nextOffset = range.offset;
+			} else {
+				const bytes = await read(original.span.offset + range.offset, size);
+				let end = bytes.length;
+				for (; end > 0 && end < original.span.byteLength - range.offset && (bytes[end - 1]! & 192) === 128; )
+					end--;
+				if (end < bytes.length) {
+					const lead = bytes[end - 1];
+					const width = lead !== undefined && lead >= 240 ? 4 : lead !== undefined && lead >= 224 ? 3 : 2;
+					if (bytes.length - end + 1 >= width) end = bytes.length;
+					else end--;
+				}
+				if (end === bytes.length && end > 0 && bytes[end - 1]! >= 194) end--;
+				if (end < 1) throw new MutationDenied("Original content range cannot make progress");
+				text = Buffer.from(bytes.subarray(0, end)).toString("utf8");
+				nextOffset = range.offset + end;
+			}
+		}
+		authorize();
+		return copy({
+			reference,
+			text,
+			offset: range.offset,
+			nextOffset,
+			complete: nextOffset === reference.byteLength,
+		});
 	}
 	async #writeDisplay(
 		rawRef: ConversationRef,
@@ -3850,20 +4502,86 @@ export class DurableAdapter {
 		this.#managedReady();
 		if (
 			!validKey(rawOptions.namespace) ||
-			[rawOptions.maxDeliveries, rawOptions.maxPending].some((n) => !Number.isSafeInteger(n) || n <= 0) ||
-			rawOptions.maxPending > rawOptions.maxDeliveries
+			!Number.isSafeInteger(rawOptions.maxPending) ||
+			rawOptions.maxPending <= 0
 		)
 			throw new Error("Invalid finite catalog options");
-		const options = copy({
-			namespace: rawOptions.namespace,
-			maxDeliveries: rawOptions.maxDeliveries,
-			maxPending: rawOptions.maxPending,
-		});
+		const options = copy({ namespace: rawOptions.namespace, maxPending: rawOptions.maxPending });
 		const seed = { ...options };
+		const optionsMatch = (state: Readonly<CatalogRecord>) => {
+			if (state.options.namespace !== options.namespace || state.options.maxPending !== options.maxPending)
+				throw new MutationDenied("Catalog options conflict");
+			if ((!state.index && !state.deliveries) || (state.index && state.deliveries))
+				throw new Error("Invalid catalog layout");
+		};
+		const deliveryId = (spec: CatalogDeliverySpec) =>
+			"catalog-" +
+			hash([options.namespace, spec.principal, spec.source?.incarnation ?? null, spec.requestId]);
+		const validateDelivery = (id: string, record: StoredDelivery) => {
+			if (record.id !== id || deliveryId(record.spec) !== id || record.fingerprint !== hash(record.spec))
+				throw new Error("Invalid retained delivery fingerprint/identity");
+			return record;
+		};
 		const read = async () => {
 			this.#managedReady();
 			const state = await this.#harness.snapshot(CatalogDoc, options.namespace, BACKGROUND_CONTEXT);
-			if (state && hash(state.options) !== hash(options)) throw new Error("Catalog options conflict");
+			if (state) optionsMatch(state);
+			return state;
+		};
+		const readDelivery = async (id: string, state: Readonly<CatalogRecord> | undefined) => {
+			const legacy = state?.deliveries?.[id];
+			if (legacy)
+				return {
+					namespace: options.namespace,
+					record: validateDelivery(id, legacy),
+					order: 0,
+					previous: null,
+					previousTarget: null,
+				};
+			if (!state?.index) return undefined;
+			const doc = await this.#harness.snapshot(CatalogDeliveryDoc, id, BACKGROUND_CONTEXT);
+			if (!doc?.record || doc.namespace !== options.namespace) return undefined;
+			validateDelivery(id, doc.record);
+			if (!Number.isSafeInteger(doc.order) || doc.order < 1 || doc.order > state.index.order)
+				throw new Error("Invalid delivery order");
+			return doc;
+		};
+		const appendDelivery = async (tx: Tx, index: CatalogIndex, record: StoredDelivery) => {
+			const doc = await tx.doc(CatalogDeliveryDoc, record.id, null);
+			if (doc.record) throw new Error("Delivery storage identity already exists");
+			const to = record.spec.target.conversationId;
+			doc.namespace = options.namespace;
+			doc.record = storedJson<StoredDelivery>(record);
+			doc.order = ++index.order;
+			doc.previous = index.latest;
+			doc.previousTarget = index.recipients[to] ?? null;
+			index.latest = record.id;
+			index.recipients[to] = record.id;
+		};
+		const mutableState = async (tx: Tx, check: () => void) => {
+			checkAuthority(check);
+			const state = await tx.doc(CatalogDoc, options.namespace, seed);
+			optionsMatch(state);
+			if (!state.index) {
+				const index: CatalogIndex = { order: 0, latest: null, recipients: {}, pending: {} };
+				for (const [id, record] of Object.entries(state.deliveries!)) {
+					checkAuthority(check);
+					validateDelivery(id, record);
+					const native = await tx.submissionByRequest(
+						conversationId(record.spec.target.conversationId),
+						"pakka.catalog." + id,
+					);
+					if (!native || native.id !== record.submissionId)
+						throw new Error("Legacy catalog admission provenance missing");
+					await appendDelivery(tx, index, record);
+					if (native.status === "queued" || native.status === "placed")
+						(index.pending[record.spec.target.conversationId] ??= []).push(id);
+				}
+				state.index = index;
+				delete state.deliveries;
+				delete state.options.maxDeliveries;
+			}
+			checkAuthority(check);
 			return state;
 		};
 		const view = async () => {
@@ -3886,9 +4604,6 @@ export class DurableAdapter {
 			if (!member) throw new MutationDenied("Foreign catalog member reference");
 			return member;
 		};
-		const optionsMatch = (state: CatalogRecord) => {
-			if (hash(state.options) !== hash(options)) throw new MutationDenied("Catalog options conflict");
-		};
 		const status = async (stored: StoredDelivery): Promise<DeliveryReceipt> => {
 			const native = await this.#harness.submission(stored.submissionId as SubmissionId, BACKGROUND_CONTEXT);
 			if (!native) {
@@ -3909,7 +4624,8 @@ export class DurableAdapter {
 		};
 		const find = async (id: string, check: () => void) => {
 			checkAuthority(check);
-			const stored = (await read())?.deliveries[id];
+			if (!validKey(id)) throw new MutationDenied("Invalid delivery receipt identity");
+			const stored = (await readDelivery(id, await read()))?.record;
 			if (!stored) throw new Error("Unknown delivery receipt");
 			checkAuthority(check);
 			return stored;
@@ -3923,7 +4639,7 @@ export class DurableAdapter {
 				return { key, data: storedJson<StoredMember["data"]>(data) };
 			});
 			await this.#persist(async (tx) => {
-				const state = await tx.doc(CatalogDoc, options.namespace, seed);
+				const state = await mutableState(tx, check);
 				optionsMatch(state);
 				if (state.version !== expectedVersion) throw new MutationDenied("Catalog revision conflict");
 				for (const change of batch) {
@@ -3931,6 +4647,7 @@ export class DurableAdapter {
 					if (!member) throw new MutationDenied("Member missing");
 					if (change.data.phase === "active") {
 						validateRef(member.ref);
+
 						const route = this.#routes.get(conversationId(member.ref.conversationId));
 						if (!route || route.#disposed || route.#failedReason)
 							throw new MutationDenied("Member not ready");
@@ -3953,7 +4670,7 @@ export class DurableAdapter {
 			lookupReceipt: async (id: string, check: () => void) => {
 				checkAuthority(check);
 				if (!validKey(id)) throw new MutationDenied("Invalid delivery receipt identity");
-				const stored = (await read())?.deliveries[id];
+				const stored = (await readDelivery(id, await read()))?.record;
 				checkAuthority(check);
 				if (!stored) return null;
 				const value = await status(stored);
@@ -3977,20 +4694,43 @@ export class DurableAdapter {
 					throw new MutationDenied("Invalid bounded history query/limit");
 				const state = await read();
 				checkAuthority(check);
-				const rows = Object.values(state?.deliveries ?? {})
-					.reverse()
-					.filter((row) => {
+				const allowed = (row: StoredDelivery) => {
+					checkAuthority(check);
+					const result = accepts ? accepts(copy(row.spec)) : true;
+					if (typeof result !== "boolean") throw new MutationDenied("History scope must be synchronous");
+					return result;
+				};
+				const limit = query.limit ?? 32;
+				let rows: StoredDelivery[] = [];
+				if (!state?.index) {
+					rows = Object.values(state?.deliveries ?? {})
+						.reverse()
+						.filter(allowed);
+					const boundary = query.cursor === undefined ? -1 : rows.findIndex((row) => row.id === query.cursor);
+					if (query.cursor !== undefined && boundary < 0)
+						throw new MutationDenied("Invalid history cursor for current scope");
+					rows = rows.slice(boundary + 1, boundary + limit + 2);
+				} else {
+					let next = state.index.latest,
+						order = state.index.order + 1;
+					if (query.cursor !== undefined) {
+						const cursor = await readDelivery(query.cursor, state);
+						if (!cursor?.record || !allowed(cursor.record))
+							throw new MutationDenied("Invalid history cursor for current scope");
+						next = cursor.previous;
+						order = cursor.order;
+					}
+					while (next && rows.length <= limit) {
 						checkAuthority(check);
-						if (!accepts) return true;
-						const allowed = accepts(copy(row.spec));
-						if (typeof allowed !== "boolean") throw new MutationDenied("History scope must be synchronous");
-						return allowed;
-					});
-				const boundary = query.cursor === undefined ? -1 : rows.findIndex((row) => row.id === query.cursor);
-				if (query.cursor !== undefined && boundary < 0)
-					throw new MutationDenied("Invalid history cursor for current scope");
-				const limit = query.limit ?? 32,
-					selected = rows.slice(boundary + 1, boundary + 1 + limit);
+						const doc = await readDelivery(next, state);
+						if (!doc?.record || doc.order >= order)
+							throw new Error("Catalog history index missing or invalid");
+						if (allowed(doc.record)) rows.push(doc.record);
+						next = doc.previous;
+						order = doc.order;
+					}
+				}
+				const selected = rows.slice(0, limit);
 				const items: import("./types.ts").CatalogDeliveryObservation[] = [];
 				for (const row of selected) {
 					checkAuthority(check);
@@ -4010,9 +4750,7 @@ export class DurableAdapter {
 				checkAuthority(check);
 				return copy({
 					items,
-					...(rows.length > boundary + 1 + limit && selected.length
-						? { nextCursor: selected.at(-1)!.id }
-						: {}),
+					...(rows.length > limit && selected.length ? { nextCursor: selected.at(-1)!.id } : {}),
 				});
 			},
 			received: async (ref: ConversationRef, check: () => void) => {
@@ -4021,10 +4759,29 @@ export class DurableAdapter {
 				if (!state) throw new MutationDenied("Catalog member missing");
 				requireMember(state, ref);
 				const incoming: DeliveryReceipt[] = [];
-				for (const stored of Object.values(state.deliveries)) {
-					if (hash(stored.spec.target) !== hash(ref)) continue;
-					checkAuthority(check);
-					incoming.push(await status(stored));
+				if (!state.index) {
+					for (const stored of Object.values(state.deliveries!)) {
+						if (hash(stored.spec.target) !== hash(ref)) continue;
+						checkAuthority(check);
+						incoming.push(await status(stored));
+					}
+				} else {
+					let next: string | null = state.index.recipients[ref.conversationId] ?? null,
+						order = state.index.order + 1;
+					while (next) {
+						checkAuthority(check);
+						const doc = await readDelivery(next, state);
+						if (
+							!doc?.record ||
+							doc.order >= order ||
+							doc.record.spec.target.conversationId !== ref.conversationId
+						)
+							throw new Error("Catalog recipient index missing or invalid");
+						if (hash(doc.record.spec.target) === hash(ref)) incoming.push(await status(doc.record));
+						next = doc.previousTarget;
+						order = doc.order;
+					}
+					incoming.reverse();
 				}
 				checkAuthority(check);
 				return copy(incoming);
@@ -4095,7 +4852,7 @@ export class DurableAdapter {
 					};
 				});
 				const committed = await this.#persist(async (tx) => {
-					const state = await tx.doc(CatalogDoc, options.namespace, seed),
+					const state = await mutableState(tx, check),
 						runtime = await tx.doc(RuntimeDoc);
 					optionsMatch(state);
 					if (specs.some((s) => Object.hasOwn(state.members, s.key)))
@@ -4103,6 +4860,7 @@ export class DurableAdapter {
 					if (runtime.conversationCount + specs.length > runtime.limits.maxConversations)
 						throw new MutationDenied("Session Conversation limit exhausted");
 					for (const spec of specs) if (spec.source) validateRef(spec.source);
+
 					for (const spec of specs)
 						if (spec.taskId !== undefined) {
 							const native = await tx.task(spec.taskId);
@@ -4276,9 +5034,10 @@ export class DurableAdapter {
 					? approvedDirectory(change.cwd, managed.cwdRoots)
 					: undefined;
 				const configured = await this.#persist(async (tx) => {
-					const state = await tx.doc(CatalogDoc, options.namespace, seed),
+					const state = await mutableState(tx, check),
 						runtime = await tx.doc(RuntimeDoc);
 					optionsMatch(state);
+
 					const found = requireMember(state, ref),
 						to = conversationId(ref.conversationId);
 					if (
@@ -4324,9 +5083,10 @@ export class DurableAdapter {
 				const route = this.#routes.get(conversationId(ref.conversationId));
 				if (!route || route.#disposed || route.#failedReason) throw new MutationDenied("Member not ready");
 				const configured = await this.#persist(async (tx) => {
-					const state = await tx.doc(CatalogDoc, options.namespace, seed),
+					const state = await mutableState(tx, check),
 						runtime = await tx.doc(RuntimeDoc);
 					optionsMatch(state);
+
 					const found = requireMember(state, ref),
 						to = conversationId(ref.conversationId);
 					if (
@@ -4384,7 +5144,7 @@ export class DurableAdapter {
 				let committed: StoredDelivery;
 				try {
 					committed = await this.#persist(async (tx) => {
-						const state = await tx.doc(CatalogDoc, options.namespace, seed);
+						const state = await mutableState(tx, check);
 						optionsMatch(state);
 						const target = requireMember(state, spec.target);
 						if (spec.source) {
@@ -4392,6 +5152,7 @@ export class DurableAdapter {
 							if (source.data.phase !== "active") throw new MutationDenied("Source admission inactive");
 							if (source.ownerTaskId !== undefined) {
 								const owner = await tx.task(Number(source.ownerTaskId) as TaskId);
+
 								if (!owner || owner.abortRequested || owner.state.status === "terminal")
 									throw new MutationDenied("Source owner task ended");
 							}
@@ -4399,10 +5160,10 @@ export class DurableAdapter {
 							if (!from || from.#disposed || from.#failedReason)
 								throw new MutationDenied("Source Conversation not ready");
 						}
-						const old = state.deliveries[id];
+						const saved = await tx.doc(CatalogDeliveryDoc, id, null);
+						const old = saved.namespace === options.namespace ? saved.record : null;
 						if (old) {
-							if (old.fingerprint !== hash(old.spec))
-								throw new Error("Invalid retained delivery fingerprint");
+							validateDelivery(id, old);
 							const admission = (value: CatalogDeliverySpec) => {
 								const payload = { ...value };
 								delete payload.initiator;
@@ -4415,7 +5176,11 @@ export class DurableAdapter {
 							return storedJson<StoredDelivery>(old);
 						}
 						if (spec.replyTo) {
-							const original = state.deliveries[spec.replyTo]?.spec;
+							const reply = await tx.doc(CatalogDeliveryDoc, spec.replyTo, null);
+							const original =
+								reply.namespace === options.namespace && reply.record
+									? validateDelivery(spec.replyTo, reply.record).spec
+									: undefined;
 							const logical = (a: ConversationRef, b: ConversationRef) =>
 								a.sessionId === b.sessionId && a.conversationId === b.conversationId;
 							if (
@@ -4437,8 +5202,6 @@ export class DurableAdapter {
 							)
 								throw new MutationDenied("Recipient owner task ended");
 						}
-						if (Object.keys(state.deliveries).length >= options.maxDeliveries)
-							throw new MutationDenied("Catalog delivery retention capacity exhausted");
 						const to = conversationId(target.ref.conversationId),
 							live = await tx.doc(LiveDoc, to),
 							inbox = await tx.doc(InboxDoc, to);
@@ -4446,16 +5209,14 @@ export class DurableAdapter {
 							throw new MutationDenied("Recipient busy; explicit steer/followUp required");
 						if (!live.run && inbox.items.length)
 							throw new MutationDenied("Recipient has unresolved inbox boundary");
-						const pending = Object.values(state.deliveries).filter(
-							(d) => d.spec.target.conversationId === String(to),
-						);
-						let unsettled = 0;
-						for (const record of pending) {
-							const existing = await tx.submissionByRequest(to, "pakka.catalog." + record.id);
+						const pending: string[] = [];
+						for (const retainedId of state.index!.pending[String(to)] ?? []) {
+							checkAuthority(check);
+							const existing = await tx.submissionByRequest(to, "pakka.catalog." + retainedId);
 							if (!existing) throw new Error("Catalog admission provenance missing");
-							if (existing.status === "placed" || existing.status === "queued") unsettled++;
+							if (existing.status === "placed" || existing.status === "queued") pending.push(retainedId);
 						}
-						if (unsettled >= options.maxPending)
+						if (pending.length >= options.maxPending)
 							throw new MutationDenied("Recipient pending delivery limit exhausted");
 						const existing = await tx.submissionByRequest(to, requestId);
 						if (existing) throw new Error("Native admission exists without catalog fingerprint");
@@ -4498,7 +5259,8 @@ export class DurableAdapter {
 						}
 						checkAuthority(check);
 						const record: StoredDelivery = { id, spec, fingerprint, submissionId, at: Date.now() };
-						state.deliveries[id] = record;
+						await appendDelivery(tx, state.index!, record);
+						state.index!.pending[String(to)] = [...pending, id];
 						state.version++;
 						return copy(record);
 					});
@@ -4651,15 +5413,54 @@ export class DurableAdapter {
 	}
 
 	async #initStream(): Promise<void> {
+		this.#statusUnsubscribe?.();
+		this.#statusUnsubscribe = undefined;
+		const epoch = ++this.#statusEpoch;
 		if (this.#stream) {
 			await this.#stream.stop().catch(() => {});
 			this.#stream = undefined;
 		}
+		if (this.#lazyObservation) {
+			// Subscribe first, then acquire only pi.live. A later committed live revision wins the seed race.
+			// No watchEvents/viewState mount: those intentionally hydrate the full active transcript.
+			const id = this.#conversation.id;
+			let liveRevision = 0;
+			this.#statusUnsubscribe = this.#harness.subscribeCommits((publication) => {
+				if (this.#disposed || epoch !== this.#statusEpoch) return;
+				let changed = false;
+				for (const change of publication.changes) {
+					if (
+						change.type === "document" &&
+						change.conversationId === id &&
+						change.record.kind === "pi.live"
+					) {
+						liveRevision++;
+						const live = change.value as LiveState | null;
+						this.#activeRuns = live?.run === undefined ? 0 : 1;
+					} else if (change.type === "entry" && change.value.conversationId === id) changed = true;
+					else if (change.type === "submission" && change.value.conversationId === id)
+						this.#observeSubmission(change.value);
+					else if (
+						change.type === "task" &&
+						change.value.conversationId === id &&
+						change.value.state.status === "terminal"
+					) {
+						const outcome = change.value.state.outcome;
+						if (outcome.status === "faulted") this.markFailed(new Error(outcome.error.message));
+						else if (outcome.status === "orphaned") this.markFailed(new Error(outcome.reason));
+					}
+				}
+				if (changed) this.#notify({ type: "changed" });
+			});
+			const revision = liveRevision;
+			const live = await this.#harness.snapshot(LiveDoc, id, BACKGROUND_CONTEXT);
+			if (epoch === this.#statusEpoch && liveRevision === revision)
+				this.#activeRuns = live?.run === undefined ? 0 : 1;
+			return;
+		}
 		this.#stream = await watchEvents(this.#harness, this.#conversation.id, BACKGROUND_CONTEXT);
 		this.#stream.start(async (batch) => {
-			for (const event of batch) {
-				this.#handleEvent(event);
-			}
+			for (const event of batch) this.#handleEvent(event);
 		});
 	}
 
@@ -5050,19 +5851,26 @@ export class DurableAdapter {
 		}
 	}
 
-	refreshCache(): Promise<void> {
-		const operation = this.#cacheRefresh.then(() => this.#refreshCacheOnce());
+	refreshCache(execution = false): Promise<void> {
+		const operation = this.#cacheRefresh.then(() =>
+			this.#refreshCacheOnce(execution || !this.#lazyObservation),
+		);
 		this.#cacheRefresh = operation.then(
 			() => {},
 			() => {},
 		);
 		return operation;
 	}
-	async #refreshCacheOnce(): Promise<void> {
+	async #refreshCacheOnce(execution: boolean): Promise<void> {
 		if (this.#failedReason) return;
 		try {
 			const conversation = this.#conversation;
 			await this.#refreshJournals();
+			if (!execution) {
+				const provider = await this.#harness.snapshot(ProviderDoc, conversation.id, BACKGROUND_CONTEXT);
+				if (conversation === this.#conversation) this.#providerSessionId = provider?.sessionId;
+				return;
+			}
 			const ctx = await conversation.context(BACKGROUND_CONTEXT);
 			const provider = await this.#harness.snapshot(ProviderDoc, conversation.id, BACKGROUND_CONTEXT);
 			const conversationId = String(conversation.id),
@@ -5095,6 +5903,7 @@ export class DurableAdapter {
 			if (plan.reset) this.#allEntries = additions;
 			else this.#allEntries.push(...additions);
 			this.#historyConversationId = conversationId;
+			this.#executionCacheLoaded = true;
 		} catch (e) {
 			const reason = e instanceof Error ? e.message : String(e);
 			this.markFailed(new Error(reason));
@@ -5118,7 +5927,11 @@ export class DurableAdapter {
 			conversationId: String(this.#conversation.id),
 			providerSessionId: this.#providerSessionId,
 			sessionFile: this.#sessionFile,
-			leafId: this.#activeEntries.length > 0 ? String(this.#activeEntries.at(-1)!.id) : null,
+			historyLoaded: this.#executionCacheLoaded,
+			leafId:
+				this.#executionCacheLoaded && this.#activeEntries.length > 0
+					? String(this.#activeEntries.at(-1)!.id)
+					: null,
 			entries: this.#allEntries.map((e) => ({
 				id: String(e.id),
 				type: e.kind,
@@ -5178,6 +5991,8 @@ export class DurableAdapter {
 	}
 
 	frame(): AdapterFrame {
+		if (this.#lazyObservation && !this.#executionCacheLoaded)
+			throw new MutationDenied("Cold execution frame is not loaded; prepareExecution is required");
 		const total: { -readonly [K in keyof UsageDTO]: UsageDTO[K] } = {
 			input: 0,
 			output: 0,
@@ -5726,12 +6541,26 @@ export class DurableAdapter {
 	async dispose(): Promise<void> {
 		await Promise.all([...this.#pendingQueue]);
 		this.#disposed = true;
+		this.#statusEpoch++;
+		this.#statusUnsubscribe?.();
+		this.#statusUnsubscribe = undefined;
 		if (this.#stream) {
 			await this.#stream.stop().catch(() => {});
 			this.#stream = undefined;
 		}
 		await this.#conversation.abort(BACKGROUND_CONTEXT).catch(() => {});
 		await this.#closeExecution();
+		this.#previewEntries.clear();
+		this.#previewEntriesBytes = 0;
+		this.#previewPages.clear();
+		this.#previewPagesBytes = 0;
+		if (this.#lazyObservation) {
+			this.#activeEntries = [];
+			this.#allEntries = [];
+			this.#contextMessages = [];
+			this.#contributions = [];
+			this.#executionCacheLoaded = false;
+		}
 		this.#routes.delete(this.#conversation.id);
 		if (!this.#managed) {
 			await this.#harness.close(BACKGROUND_CONTEXT);

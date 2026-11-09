@@ -86,6 +86,18 @@ pakka --config /absolute/private/pakka.json --owner-file /absolute/private/owner
 
 侧栏底部 **Settings** 单击进入独立配置页，默认显示 **Appearance**。页内分类导航提供外观、Conversation settings（用量与凭据）、Notifications，以及按权限显示的 Models & Providers、预算、Session 管理、People & invitations 和 Extensions。Conversation 专属分类在选中会话后可用；手机上可横向滚动分类栏。**Back to app** 返回原页面并保留当前会话与未发送草稿。可选择 Dark / Light、默认 Inter、JetBrains Mono、系统无衬线或衬线字体，以及 14–24px 字号；合法的已保存字体／字号偏好继续生效。选择即时应用并保存到当前浏览器，代码块维持等宽显示。模型按钮在输入卡片内，Input mode 与 Send 同行；窄屏模型入口为带可访问名称的图标。
 
+### 历史、工具摘要与完整原文
+
+普通启动先冷打开原 Session；目录、状态和历史预览不装载模型执行历史。工作中的状态与工具预览按 333 ms 合并更新。支持 SharedWorker 的同源同身份页面共用读取连接；回退直连时仍受浏览器自身连接池约束，不因服务端额度增加而消除该边界。
+
+**Show earlier history** 显式读取更早的有界页。页面保留有限的预览字节窗口并只创建当前视口附近的行；工具卡在收起时不创建完整参数、结果或图片 DOM。缓存淘汰会提示原档案仍保留，**Back to latest history** 返回最新窗口；离屏回收不删除原文、重放工作或撤回输入。会话页头 Find 筛选已加载预览，不是全档案检索。
+
+没有原文引用的实时内容会标明 **Preview only**：**Copy preview** 只复制当前预览，搜索也只检查预览。预览未匹配不会报告完整原文不存在；参数/结果正式发布且原文引用可用后，再进行原文操作。
+
+展开带有原文引用的工具或原文项后，**Load more** 按范围继续读，**Read full original** 明确顺序取到结尾；取完不等于全文长期驻留或渲染，正文只保留有限文本行与字节缓存。**Find next** 在所选原文中逐块执行区分大小写的字面搜索，Enter 也可搜索，不发送模型输入。**Copy this block** 仅复制当前块；**Save original** 提供完整流式交付。图片须单独展开，超出媒体预算时使用原文交付，不隐式解码所有历史图片。
+
+空闲补取只补可见／展开材料，稳定两秒后按一次一块与约 128 KiB/s 节流；新操作、离页、压力或撤权优先取消浏览读取。停止读取或收起卡片不 abort 工具。源采集已经丢弃的 bytes/lines 保留截断提示，成功读取不能恢复未保存的内容。细节与边界见[观察与完整内容声明](../state/conversation-observation.md)。
+
 ## 4. 人员、服务和插件
 
 管理员在 **Settings → People & Invitations** 按批准资源创建邀请，第二身份可在独立浏览器窗口兑换。角色、资源范围、审批和撤权以服务端当前判断为准；显示一个卡片或菜单不会授予执行权限。
@@ -118,6 +130,12 @@ Session 管理设置显示不可用的已登记子 Session。健康 Session 可�
 归档／恢复整理当前人的 Conversation 列表，保留原会话数据。MAS retire 另行停止成员准入并保存 tombstone；这两类操作均保留持久历史。
 
 未知结果先通过原请求与当前状态只读核对；刷新、关闭面板或退出浏览器都不自动重放输入，也不退还已消费额度。强制终止后的 claim 或未知存储需要另行恢复判断，受信宿主的 writer 维护命令见 [Strategy API](../reference/STRATEGY-API.md#trusted-writer-maintenance)。
+
+### 本机维护入口
+
+Cookie 丢失、注销或过期可用 `pakka recover login` 预览原身份，再以 `--confirm <原 Session ID>` 私密发行一次性凭据；`pakka --login-file <凭据文件>` 为实际地址准备链接。崩溃占用使用 `pakka recover writer`，不与 `--recover` 混用。
+
+停服后的 `pakka backup`、`pakka restore` 和 `pakka upgrade` 统一核对原身份。恢复后旧登录失效，任务保持停机，先核对外部效果再显式恢复。参数、范围、故障续完和保全规则见[本机维护指南](LOCAL-MAINTENANCE.md)。
 
 ## 6. 远程连接
 

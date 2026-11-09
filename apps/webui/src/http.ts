@@ -9,12 +9,7 @@ import type {
 	PocketSession,
 	PocketWorkspace,
 } from "@pakka/server/pocket";
-import {
-	decodePocketRequest,
-	decodePocketResponse,
-	decodePocketEvent,
-	POCKET_MAX_BYTES,
-} from "@pakka/protocol/pocket";
+import { decodePocketRequest, decodePocketResponse, POCKET_MAX_BYTES } from "@pakka/protocol/pocket";
 import { identity } from "@pakka/protocol";
 import { listenHttp } from "@pakka/server/http-listener";
 import QRCode from "qrcode";
@@ -39,6 +34,8 @@ import { NavigationRefusal, type PersonalNavigation } from "./navigation.ts";
 import { decodeExtensionRequest, decodeExtensionResponse } from "./extension-rpc.ts";
 import { decodeValue, publicPath } from "./extension.ts";
 import type { ProductModelSource } from "./product-models.ts";
+import { streamPocketObservation } from "./observation-stream.ts";
+import { streamOriginalContent } from "./content-download.ts";
 import {
 	decodeProductModelRequest,
 	executeProductModelRequest,
@@ -61,7 +58,9 @@ export interface PocketHttpOptions {
 	readonly allowInsecureRemote?: boolean;
 	readonly trustedProxyPeers?: readonly string[];
 	readonly pollMs?: number;
+	/** Short RPC/configuration/asset requests; observers use a separate pool. */
 	readonly maxConnections?: number;
+	readonly maxObservers?: number;
 	/** Host-approved sources only; browser requests cannot supply modules or paths. */
 	readonly extensions?: ExtensionHost;
 	/** Host-accepted fixed public bytes only, no provider/configuration files. */
@@ -183,15 +182,19 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 			!options.allowInsecureRemote)
 	)
 		throw new Error("Explicit WebUI remote/TLS boundary required");
-	const pollMs = options.pollMs ?? 100,
-		capacity = options.maxConnections ?? 32;
+	const pollMs = options.pollMs ?? 333,
+		capacity = options.maxConnections ?? 16,
+		observerCapacity = options.maxObservers ?? 32;
 	if (
 		!Number.isSafeInteger(pollMs) ||
 		pollMs < 20 ||
 		pollMs > 5000 ||
 		!Number.isSafeInteger(capacity) ||
 		capacity < 1 ||
-		capacity > 128
+		capacity > 128 ||
+		!Number.isSafeInteger(observerCapacity) ||
+		observerCapacity < 1 ||
+		observerCapacity > 128
 	)
 		throw new Error("Invalid finite WebUI transport options");
 	const assets = new Map(
@@ -228,6 +231,7 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 		listeningHost = "",
 		publicHost = "",
 		busy = 0,
+		observers = 0,
 		closed = false;
 	function boundary(req: IncomingMessage, requireOrigin: boolean) {
 		const forwarding = ["forwarded", "x-forwarded-host", "x-forwarded-proto", "x-forwarded-for"].some(
@@ -292,6 +296,8 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 			case "notification.preferences":
 			case "configuration":
 			case "read":
+			case "preview":
+			case "content.read":
 				permission = "read";
 				resource = people.resourceId(command.target);
 				break;
@@ -650,6 +656,23 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 				};
 			case "read":
 				return { kind: "conversation", snapshot: await client.read(command.target, command.page) };
+			case "preview":
+				return {
+					kind: "conversation",
+					snapshot: await client.preview(command.target, command.page, () => {
+						if (signal.aborted) throw new Refusal(403, "FORBIDDEN", true);
+						preflight(a, command);
+					}),
+				};
+			case "content.read":
+				return {
+					kind: "content",
+					target: command.target,
+					chunk: await client.readContent(command.target, command.reference, command.range, () => {
+						if (signal.aborted) throw new Refusal(403, "FORBIDDEN", true);
+						preflight(a, command);
+					}),
+				};
 			case "display":
 				return {
 					kind: "display",
@@ -730,16 +753,23 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 		let requestId = "invalid",
 			dispatched = false;
 		void (async () => {
-			if (closed || busy >= capacity) throw new Refusal(503, "CAPACITY");
-			busy++;
+			if (closed) throw new Refusal(503, "CAPACITY");
+			boundary(req, false);
+			let url: URL;
 			try {
-				boundary(req, false);
-				let url: URL;
-				try {
-					url = new URL(req.url ?? "", origin);
-				} catch {
-					throw new Refusal(400, "INVALID_REQUEST");
-				}
+				url = new URL(req.url ?? "", origin);
+			} catch {
+				throw new Refusal(400, "INVALID_REQUEST");
+			}
+			const observing = req.method === "GET" && url.pathname === "/pocket/events";
+			if (observing) {
+				if (observers >= observerCapacity) throw new Refusal(503, "CAPACITY");
+				observers++;
+			} else {
+				if (busy >= capacity) throw new Refusal(503, "CAPACITY");
+				busy++;
+			}
+			try {
 				if (req.method === "POST" && url.pathname.startsWith("/pocket/ingress/")) {
 					if (url.search || url.hash || (req.url ?? "") !== url.pathname || !options.extensions)
 						throw new Refusal(404, "UNSUPPORTED");
@@ -937,6 +967,44 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 					}
 					return;
 				}
+				if (req.method === "GET" && url.pathname === "/pocket/content/download") {
+					if (
+						url.searchParams.size !== 2 ||
+						url.searchParams.getAll("target").length !== 1 ||
+						url.searchParams.getAll("reference").length !== 1 ||
+						(url.searchParams.get("target")?.length ?? 0) > 2048 ||
+						(url.searchParams.get("reference")?.length ?? 0) > 4096
+					)
+						throw new Refusal(400, "INVALID_REQUEST");
+					let parsed;
+					try {
+						parsed = decodePocketRequest({
+							version: 2,
+							requestId: "original-download",
+							command: {
+								op: "content.read",
+								target: JSON.parse(url.searchParams.get("target")!),
+								reference: JSON.parse(url.searchParams.get("reference")!),
+								range: { offset: 0, length: 65536 },
+							},
+						});
+					} catch {
+						throw new Refusal(400, "INVALID_REQUEST");
+					}
+					const command = parsed.command;
+					if (command.op !== "content.read") throw new Refusal(400, "INVALID_REQUEST");
+					const a = await actor(req);
+					preflight(a, command);
+					await streamOriginalContent({
+						response: res,
+						signal: controller.signal,
+						client: workspace.bind(a),
+						target: command.target,
+						reference: command.reference,
+						check: () => preflight(a, command),
+					});
+					return;
+				}
 				if (req.method === "POST" && url.pathname === "/pocket/rpc" && !url.search) {
 					const raw = await json(req);
 					if (raw && typeof raw === "object" && "requestId" in raw && identity(raw.requestId))
@@ -985,117 +1053,116 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 					return;
 				}
 				if (req.method === "GET" && url.pathname === "/pocket/events") {
-					const a = await actor(req),
-						conversationId = url.searchParams.get("conversationId"),
-						sessionId = url.searchParams.get("sessionId") ?? runtime.view().sessionId;
+					const a = await actor(req);
+					const mode = url.searchParams.get("mode");
 					if (
-						!conversationId ||
-						!identity(conversationId) ||
-						!identity(sessionId) ||
-						url.searchParams.getAll("conversationId").length !== 1 ||
-						url.searchParams.getAll("sessionId").length > 1 ||
-						[...url.searchParams.keys()].some((key) => !["conversationId", "sessionId"].includes(key))
+						(mode !== null && mode !== "preview") ||
+						url.searchParams.getAll("mode").length > 1 ||
+						[...url.searchParams.keys()].some(
+							(key) =>
+								![
+									"conversationId",
+									"sessionId",
+									"mode",
+									"targets",
+									"expectedPersonId",
+									"expectedServerId",
+								].includes(key),
+						)
 					)
 						throw new Refusal(400, "INVALID_REQUEST");
-					const ref = (options.sessions?.runtimes() ?? [runtime])
-						.flatMap((value) => value.view().conversations)
-						.find((ref) => ref.sessionId === sessionId && ref.conversationId === conversationId);
-					if (!ref) throw new Refusal(403, "FORBIDDEN");
-					const id = people.resourceId(ref);
-					guard(() => people.check(a, "read", id));
+					for (const key of ["expectedPersonId", "expectedServerId"]) {
+						const value = url.searchParams.get(key);
+						if (url.searchParams.getAll(key).length > 1 || (value !== null && !identity(value)))
+							throw new Refusal(400, "INVALID_REQUEST");
+					}
+					if (
+						(url.searchParams.has("expectedPersonId") &&
+							url.searchParams.get("expectedPersonId") !== people.current(a).id) ||
+						(url.searchParams.has("expectedServerId") &&
+							url.searchParams.get("expectedServerId") !== serverId)
+					)
+						throw new Refusal(403, "FORBIDDEN");
+					const selected: { sessionId: string; conversationId: string }[] = [];
+					const rawTargets = url.searchParams.get("targets");
+					if (rawTargets !== null) {
+						if (
+							mode !== "preview" ||
+							rawTargets.length > 8192 ||
+							url.searchParams.getAll("targets").length !== 1 ||
+							url.searchParams.has("sessionId") ||
+							url.searchParams.has("conversationId")
+						)
+							throw new Refusal(400, "INVALID_REQUEST");
+						let rows: unknown;
+						try {
+							rows = JSON.parse(rawTargets);
+						} catch {
+							throw new Refusal(400, "INVALID_REQUEST");
+						}
+						if (!Array.isArray(rows) || rows.length < 1 || rows.length > 16)
+							throw new Refusal(400, "INVALID_REQUEST");
+						for (const row of rows) {
+							if (
+								!row ||
+								typeof row !== "object" ||
+								Array.isArray(row) ||
+								Object.keys(row).length !== 2 ||
+								Object.keys(row).some((key) => !["sessionId", "conversationId"].includes(key)) ||
+								!("sessionId" in row) ||
+								!("conversationId" in row) ||
+								!identity(row.sessionId) ||
+								!identity(row.conversationId)
+							)
+								throw new Refusal(400, "INVALID_REQUEST");
+							selected.push({ sessionId: row.sessionId, conversationId: row.conversationId });
+						}
+					} else {
+						const conversationId = url.searchParams.get("conversationId"),
+							sessionId = url.searchParams.get("sessionId") ?? runtime.view().sessionId;
+						if (
+							!identity(conversationId) ||
+							!identity(sessionId) ||
+							url.searchParams.getAll("conversationId").length !== 1 ||
+							url.searchParams.getAll("sessionId").length > 1
+						)
+							throw new Refusal(400, "INVALID_REQUEST");
+						selected.push({ sessionId, conversationId });
+					}
+					if (
+						new Set(selected.map((row) => JSON.stringify([row.sessionId, row.conversationId]))).size !==
+						selected.length
+					)
+						throw new Refusal(400, "INVALID_REQUEST");
+					const available = (options.sessions?.runtimes() ?? [runtime]).flatMap(
+						(value) => value.view().conversations,
+					);
+					const refs = selected.map((row) => {
+						const ref = available.find(
+							(ref) => ref.sessionId === row.sessionId && ref.conversationId === row.conversationId,
+						);
+						if (!ref) throw new Refusal(403, "FORBIDDEN");
+						guard(() => people.check(a, "read", people.resourceId(ref)));
+						return ref;
+					});
 					streams.add(res);
 					res.once("close", () => streams.delete(res));
-					res.writeHead(200, {
-						"Content-Type": "text/event-stream; charset=utf-8",
-						Connection: "keep-alive",
-						"X-Accel-Buffering": "no",
-					});
-					res.flushHeaders();
-					const streamId = randomUUID();
-					let sequence = 0,
-						prior = "",
-						priorHuman = "",
-						lastSent = 0;
-					const emit = async (data: Record<string, unknown>) => {
-						people.check(a, "read", id);
-						const value = decodePocketEvent({
-							version: 2,
-							serverId,
-							streamId,
-							sequence: ++sequence,
-							...data,
-						});
-						if (
-							!res.write(
-								"id: " +
-									serverId +
-									":" +
-									streamId +
-									":" +
-									sequence +
-									"\nevent: pocket\ndata: " +
-									JSON.stringify(value) +
-									"\n\n",
-							)
-						) {
-							await new Promise<void>((resolve, reject) => {
-								const finish = (failure?: Error) => {
-									clearTimeout(timer);
-									res.removeListener("drain", drained);
-									controller.signal.removeEventListener("abort", aborted);
-									if (failure) reject(failure);
-									else resolve();
-								};
-								const drained = () => finish(),
-									aborted = () => finish(new Error("WebUI stream closed"));
-								const timer = setTimeout(
-									() => finish(new Error("Slow WebUI reader requires resnapshot")),
-									1000,
-								);
-								res.once("drain", drained);
-								controller.signal.addEventListener("abort", aborted, { once: true });
-								if (controller.signal.aborted || res.destroyed || res.writableEnded) aborted();
-							});
-							people.check(a, "read", id);
-						}
-						lastSent = Date.now();
-					};
 					try {
-						// Every reconnect establishes a fresh scoped snapshot; never replay a mutation.
-						if (header(req, "last-event-id")) await emit({ kind: "resnapshot" });
-						while (!controller.signal.aborted) {
-							const snapshot = await workspace.bind(a).read(ref),
-								bytes = JSON.stringify(snapshot);
-							people.check(a, "read", id);
-							if (bytes !== prior || Date.now() - lastSent >= 5000) {
-								await emit({ kind: "conversation", snapshot });
-								prior = bytes;
-							}
-							if (options.collaboration) {
-								const shared = await options.collaboration.bind(a).snapshot(ref),
-									bytesHuman = JSON.stringify(shared);
-								if (bytesHuman !== priorHuman) {
-									await emit({ kind: "collaboration", snapshot: shared });
-									priorHuman = bytesHuman;
-								}
-							}
-							await new Promise<void>((resolve) => {
-								const finish = () => {
-									clearTimeout(timer);
-									controller.signal.removeEventListener("abort", finish);
-									resolve();
-								};
-								const timer = setTimeout(finish, pollMs);
-								controller.signal.addEventListener("abort", finish, { once: true });
-								if (controller.signal.aborted) finish();
-							});
-						}
-					} catch {
-						if (res.writableNeedDrain)
-							res.destroy(); /* Stale authority or a bounded slow/disconnected reader ends this generation. */
+						await streamPocketObservation({
+							response: res,
+							signal: controller.signal,
+							serverId,
+							people,
+							actor: a,
+							workspace,
+							collaboration: options.collaboration,
+							refs,
+							pollMs,
+							preview: mode === "preview",
+							reconnected: !!header(req, "last-event-id"),
+						});
 					} finally {
 						streams.delete(res);
-						if (!res.destroyed) res.end();
 					}
 					return;
 				}
@@ -1109,7 +1176,8 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 				}
 				throw new Refusal(404, "UNSUPPORTED");
 			} finally {
-				busy--;
+				if (observing) observers--;
+				else busy--;
 			}
 		})().catch((error) => {
 			if (res.headersSent) {

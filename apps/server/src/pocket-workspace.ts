@@ -5,6 +5,10 @@ import type {
 	CatalogOptions,
 	ConversationRef,
 	ConversationReadOptions,
+	ConversationPreviewOptions,
+	ConversationContentReference,
+	ConversationContentRange,
+	ConversationContentChunk,
 	ConversationSnapshot,
 	InputMode,
 	DisplayReceipt,
@@ -97,6 +101,19 @@ export interface PocketWorkspaceClient {
 	): Promise<PocketDirectories>;
 	fork(ref: ConversationRef, input: PocketFork): Promise<ConversationRef>;
 	read(ref: ConversationRef, page?: ConversationReadOptions): Promise<ConversationSnapshot>;
+	/** Passive browser projection: complete bodies remain on the authorized content port. */
+	preview(
+		ref: ConversationRef,
+		page?: ConversationPreviewOptions,
+		check?: () => void,
+	): Promise<ConversationSnapshot>;
+	observationRevision(ref: ConversationRef): number;
+	readContent(
+		ref: ConversationRef,
+		reference: ConversationContentReference,
+		range: ConversationContentRange,
+		check?: () => void,
+	): Promise<ConversationContentChunk>;
 	display(
 		ref: ConversationRef,
 		input: { readonly requestId: string; readonly kind: "chat" | "card"; readonly text: string },
@@ -327,6 +344,73 @@ export function createPocketWorkspace(options: PocketWorkspaceOptions): PocketWo
 				return value;
 			};
 			const roots = () => runtime.directoryRoots(ceiling());
+			const publicReference = (
+				reference: ConversationContentReference,
+				ref: ConversationRef,
+			): ConversationContentReference => {
+				const person = current();
+				if (
+					!reference.sourceConversationId ||
+					person.resources === "*" ||
+					person.resources.includes(
+						people.resourceId({ sessionId: ref.sessionId, conversationId: reference.sourceConversationId }),
+					)
+				)
+					return reference;
+				const { sourceConversationId: _owner, ...scoped } = reference;
+				return scoped;
+			};
+			const publicSnapshot = (
+				snapshot: ConversationSnapshot,
+				authorize: () => void,
+			): ConversationSnapshot => {
+				authorize();
+				const person = current(),
+					ref = snapshot.ref;
+				const entries = snapshot.entries.map((entry) => {
+					const { sourceConversationId, ...rest } = entry;
+					const ownerVisible =
+						sourceConversationId &&
+						(person.resources === "*" ||
+							person.resources.includes(
+								people.resourceId({ sessionId: ref.sessionId, conversationId: sourceConversationId }),
+							));
+					return {
+						...rest,
+						...(ownerVisible ? { sourceConversationId } : {}),
+						messages: entry.messages.map((message) => ({
+							...message,
+							...(message.contentReference
+								? { contentReference: publicReference(message.contentReference, ref) }
+								: {}),
+							...(message.errorReference
+								? { errorReference: publicReference(message.errorReference, ref) }
+								: {}),
+							content:
+								typeof message.content === "string"
+									? message.content
+									: message.content.map((part) => ({
+											...part,
+											...(part.contentReference
+												? { contentReference: publicReference(part.contentReference, ref) }
+												: {}),
+										})),
+						})),
+						...(entry.display
+							? {
+									display: {
+										...entry.display,
+										...(entry.display.contentReference
+											? { contentReference: publicReference(entry.display.contentReference, ref) }
+											: {}),
+									},
+								}
+							: {}),
+					};
+				});
+				authorize();
+				return frozen({ ...snapshot, entries });
+			};
 			const create = (
 				input: PocketCreate,
 				source?: ConversationRef,
@@ -588,7 +672,7 @@ export function createPocketWorkspace(options: PocketWorkspaceOptions): PocketWo
 						authorize = () => check("read", ref);
 					authorize();
 					const provider = await resource(ref, authorize);
-					const snapshot = await runtime.readConversation(ref, authorize, { limit: 1 });
+					const snapshot = await runtime.previewConversation(ref, authorize, { limit: 1 });
 					const models = new Map<string, { id: string; model: string }>();
 					for (const { id, model } of runtime.profileChoices())
 						if (model && !models.has(model)) models.set(model, { id, model });
@@ -675,24 +759,37 @@ export function createPocketWorkspace(options: PocketWorkspaceOptions): PocketWo
 					const saved = structuredClone(ref),
 						authorize = () => check("read", saved);
 					authorize();
-					const snapshot = await runtime.readConversation(saved, authorize, page);
+					return publicSnapshot(await runtime.readConversation(saved, authorize, page), authorize);
+				},
+				preview: async (ref: ConversationRef, page?: ConversationPreviewOptions, extra?: () => void) => {
+					const saved = structuredClone(ref),
+						authorize = () => {
+							check("read", saved);
+							extra?.();
+						};
 					authorize();
-					const person = current();
-					const entries = snapshot.entries.map((entry) => {
-						if (
-							!entry.sourceConversationId ||
-							person.resources === "*" ||
-							person.resources.includes(
-								people.resourceId({ sessionId: saved.sessionId, conversationId: entry.sourceConversationId }),
-							)
-						)
-							return entry;
-						// An explicit native fork copies history, not a read grant to its source resource.
-						const { sourceConversationId: _source, ...scoped } = entry;
-						return scoped;
-					});
+					return publicSnapshot(await runtime.previewConversation(saved, authorize, page), authorize);
+				},
+				observationRevision: (ref: ConversationRef) => {
+					const saved = structuredClone(ref);
+					return runtime.observationRevision(saved, () => check("read", saved));
+				},
+				readContent: async (
+					ref: ConversationRef,
+					reference: ConversationContentReference,
+					range: ConversationContentRange,
+					extra?: () => void,
+				) => {
+					const saved = structuredClone(ref),
+						original = structuredClone(reference);
+					const authorize = () => {
+						check("read", saved);
+						extra?.();
+					};
 					authorize();
-					return frozen({ ...snapshot, entries });
+					const chunk = await runtime.readContent(saved, original, range, authorize);
+					authorize();
+					return frozen({ ...chunk, reference: publicReference(chunk.reference, saved) });
 				},
 				display: async (
 					ref: ConversationRef,

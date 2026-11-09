@@ -46,7 +46,16 @@ test(
 			);
 			await findInConversation(page, "HISTORY-CANARY-000");
 			await page.wait('document.querySelectorAll("[data-entry]").length===0');
-			await page.click("[data-action=show-earlier]");
+			while (await page.evaluate('Boolean(document.querySelector("[data-action=show-earlier]"))')) {
+				const cursor = await page.evaluate(
+					'document.querySelector("[data-action=show-earlier]").dataset.historyBefore',
+				);
+				await page.click("[data-action=show-earlier]");
+				await page.wait(
+					'!document.querySelector("[data-action=show-earlier]") || document.querySelector("[data-action=show-earlier]").dataset.historyBefore !== ' +
+						JSON.stringify(cursor),
+				);
+			}
 			await page.wait(
 				'document.querySelector(".conversation-scroll").textContent.includes("HISTORY-CANARY-000")',
 			);

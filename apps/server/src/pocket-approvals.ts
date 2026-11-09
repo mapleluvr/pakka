@@ -161,7 +161,6 @@ export async function createPocketApprovals(options: PocketApprovalsOptions): Pr
 	const store = runtime.store({ namespace: options.namespace, maxBytes: 1024 * 1024 }),
 		catalog = runtime.catalog({
 			namespace: options.namespace + ".invocations",
-			maxDeliveries: 1,
 			maxPending: 1,
 		});
 	let broken = false,

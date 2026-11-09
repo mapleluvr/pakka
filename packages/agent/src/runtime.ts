@@ -8,6 +8,9 @@ import type {
 	ConversationRef,
 	ConversationSpec,
 	ConversationReadOptions,
+	ConversationPreviewOptions,
+	ConversationContentReference,
+	ConversationContentRange,
 	Host,
 	Runtime,
 	RuntimeOptions,
@@ -21,6 +24,8 @@ import type {
 /** Composition only: all Pi/storage mutable objects remain in DurableAdapter. */
 export async function createRuntime(options: RuntimeOptions): Promise<Runtime> {
 	if (Object.hasOwn(options, "migrateLegacy")) throw new Error("Unsupported runtime option: migrateLegacy");
+	if (options.observation !== undefined && options.observation !== "lazy" && options.observation !== "eager")
+		throw new Error("Unsupported runtime observation mode");
 	if (options.backend !== undefined && options.backend !== "durable")
 		throw new Error("Unsupported production backend");
 	let port!: ManagedAdapterPort;
@@ -88,6 +93,16 @@ export async function createRuntime(options: RuntimeOptions): Promise<Runtime> {
 		jobs: (options: RuntimeJobOptions) => port.jobs(options),
 		readConversation: (ref: ConversationRef, check: () => void, options?: ConversationReadOptions) =>
 			port.readConversation(ref, check, options),
+		observationRevision: (ref: ConversationRef, check: () => void) => port.observationRevision(ref, check),
+		prepareExecution: (ref: ConversationRef, check: () => void) => port.prepareExecution(ref, check),
+		previewConversation: (ref: ConversationRef, check: () => void, options?: ConversationPreviewOptions) =>
+			port.previewConversation(ref, check, options),
+		readContent: (
+			ref: ConversationRef,
+			reference: ConversationContentReference,
+			range: ConversationContentRange,
+			check: () => void,
+		) => port.readContent(ref, reference, range, check),
 		writeDisplay: (ref: ConversationRef, input: DisplayWrite, check: () => void) =>
 			port.writeDisplay(ref, input, check),
 		createConversation: async (spec: ConversationSpec) => {

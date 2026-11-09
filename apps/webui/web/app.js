@@ -1,13 +1,12 @@
 // pakka-webui workbench. Adapted from pi-pocket's app/composer/transcript patterns; authority is the public WebUI client.
 import { render } from "preact";
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "preact/hooks";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, useContext } from "preact/hooks";
 import htm from "htm";
-import { h } from "preact";
+import { h, createContext } from "preact";
 import { Icon } from "@pakka/webui/components";
 import { marked } from "marked";
 import DOMPurify from "dompurify";
-import { createPocketClient } from "@pakka/client/pocket";
-import { decodePocketEvent } from "@pakka/protocol/pocket";
+import { createPocketClient, applyPocketObservation } from "@pakka/client/pocket";
 import { useExtensions } from "./extensions.js";
 import { Collaboration } from "./collaboration.js";
 import { Configuration } from "./configuration.js";
@@ -32,10 +31,44 @@ import { createModelsClient } from "./models-client.js";
 import { ProductModelSettings, useProductModelSettings } from "./product-model-settings.js";
 import { BudgetSettings, useBudgetSettings } from "./budget-settings.js";
 import { SessionSettings, useSessionRecovery } from "./session-settings.js";
+import { ContentCache } from "./content-cache.js";
+import {
+	TextBody,
+	ContentDisclosure,
+	ImageDisclosure,
+	originalDownload,
+	useDisclosure,
+} from "./content-reader.js";
+import { DisclosureState } from "./disclosure-state.js";
+import { subscribeObservation } from "./observation-client.js";
+import { fitHistoryWindow } from "./virtual-window.js";
+import { VirtualTranscript } from "./virtual-transcript.js";
+
+const ReaderContext = createContext({ cache: null, target: null, disclosures: null });
 
 const html = htm.bind(h);
+const HISTORY_WINDOW_BYTES = 4 * 1024 * 1024;
+const historyBytesLabel = new Intl.NumberFormat(undefined, { maximumFractionDigits: 1 });
+const emptyHistoryWindow = () => ({
+	entries: [],
+	retainedBytes: 0,
+	unloadedOlder: false,
+	unloadedNewer: false,
+});
 const csrf = () => /(?:^|; )pakka_csrf=([A-Za-z0-9_-]{43})(?:;|$)/.exec(document.cookie)?.[1] ?? null;
 const client = createPocketClient({ endpoint: new URL("/pocket/rpc", location.href).href, csrf });
+let contentScope = null;
+const bodyCache = new ContentCache({
+	scope: () => contentScope,
+	visible: () => document.visibilityState === "visible",
+	pressure: () => navigator.connection?.saveData === true,
+	request: async (target, reference, range, options) => {
+		const result = await client.request({ op: "content.read", target, reference, range }, options);
+		if (result.kind !== "content") throw new Error("Original content is unconfirmed");
+		return result.chunk;
+	},
+});
+const disclosures = new DisclosureState({ scope: () => contentScope });
 const incoming = new URLSearchParams(location.hash.slice(1));
 let signInToken = incoming.get("signin") ?? incoming.get("invite") ?? "";
 const signInKind = incoming.has("invite") ? "invite" : "session";
@@ -56,79 +89,110 @@ applyAppearance(readAppearance());
 // `toolResult` message (toolCallId) and `live.tools` (callId). A single card resolves all three
 // so a call can never appear twice, and a result whose declaration was truncated still shows.
 function ToolCard({ call, results, live, orphan, source }) {
-	const id = call.callId;
-	const key = id ? callKey(source, id) : undefined;
-	const result = key ? results?.get(key) : undefined;
-	const running = key ? live?.get(key) : undefined;
-	const status = running?.status;
-	const name = call.name ?? result?.toolName ?? "Tool";
-	// A tool result is a message like any other: its content may carry images next to text. Each
-	// part goes through the same describer, so a result never loses a part just because it is not
-	// plain text, and a supported image is shown rather than flattened into a string.
+	const { cache, target, disclosures } = useContext(ReaderContext);
+	const [open, setOpen] = useDisclosure(disclosures, target, "tool:" + callKey(source, call.callId));
+	const id = call.callId,
+		key = id ? callKey(source, id) : undefined;
+	const result = key ? results?.get(key) : undefined,
+		running = key ? live?.get(key) : undefined;
+	const status = running?.status,
+		name = call.name ?? result?.toolName ?? "Tool";
 	const resultParts = (
-		typeof result?.content === "string" ? [{ type: "text", text: result.content }] : (result?.content ?? [])
-	).map((part) => describePart(part));
-	// An empty live output is no output: treating it as present would hide the result parts that
-	// arrived with the committed message.
-	const liveOutput =
-		typeof running?.output === "string" && running.output !== "" ? running.output : undefined;
-	const firstText = resultParts.find((part) => part.kind === "text")?.text;
-	const firstImage = resultParts.find((part) => part.kind === "image");
-	const firstUnrenderable = resultParts.find((part) => part.kind === "unrenderable");
+		typeof result?.content === "string"
+			? [{ type: "text", text: result.content, contentReference: result.contentReference }]
+			: (result?.content ?? [])
+	).map(describePart);
+	const output = typeof running?.output === "string" && running.output !== "" ? running.output : undefined;
+	const first = resultParts.find((part) => part.kind === "text")?.text;
 	const preview =
-		liveOutput ??
-		(firstText ||
-			(firstImage ? "Image result" : undefined) ||
-			(firstUnrenderable?.mime ? `Attachment (${firstUnrenderable.mime})` : undefined));
+		output ?? first ?? (resultParts.some((part) => part.kind === "image") ? "Image result" : "");
 	return html`<details
 		class="tool-card"
+		open=${open}
 		data-call-id=${id || undefined}
 		data-source-conversation=${source || undefined}
 		data-tool-status=${status || undefined}
 		data-tool-error=${result?.isError ? "true" : undefined}
+		onToggle=${(event) => setOpen(event.currentTarget.open)}
 	>
 		<summary class="tool-card-head pocket-disclosure">
-			<${Icon} name="chevron" />
-			<span class="tool-name">${name}</span>
+			<${Icon} name="chevron" /><span class="tool-name">${name}</span>
 			${status && html`<span class="status-pill" data-tool-pill>${status}</span>`}
 			${result?.isError && html`<span class="status-pill" data-tool-result-error>error</span>`}
 			${orphan && html`<span class="tool-orphan" data-tool-orphan>call not in this view</span>`}
-			${preview ? html`<span class="tool-preview" data-tool-preview>${preview.split("\n")[0]}</span>` : null}
+			${preview && html`<span class="tool-preview" data-tool-preview>${preview.split("\n")[0]}</span>`}
 		</summary>
-		${call.arguments != null &&
-		html`<pre key="arguments" data-tool-arguments>${JSON.stringify(call.arguments, null, 2)}</pre>`}
-		${liveOutput !== undefined && html`<pre key="live-output" data-tool-output>${liveOutput}</pre>`}
-		${liveOutput === undefined &&
-		resultParts.map((part, index) => {
-			switch (part.kind) {
-				case "text":
-					return html`<pre key=${"result-" + index} data-tool-output>${part.text}</pre>`;
-				case "image":
-					return html`<img
-						key=${"result-" + index}
-						class="pocket-image"
-						alt="Tool result attachment"
-						src=${`data:${part.mime};base64,${part.data}`}
-					/>`;
-				default:
-					return html`<p
-						key=${"result-" + index}
-						class="part-unrenderable"
-						data-part-type=${part.type ?? "unknown"}
-						data-part-mime=${part.mime || undefined}
-					>
-						${part.mime
-							? `Attachment (${part.mime}) cannot be previewed here.`
-							: "This part cannot be shown here."}
-					</p>`;
-			}
-		})}
+		${open &&
+		html`<div class="tool-body" data-tool-body>
+			${call.arguments != null &&
+			html`<${TextBody}
+				cache=${cache}
+				target=${target}
+				reference=${call.reference}
+				inline=${JSON.stringify(call.arguments, null, 2)}
+				label="Arguments"
+				marker="arguments"
+			/>`}
+			${output !== undefined &&
+			html`<${TextBody}
+				key="live-output"
+				cache=${cache}
+				target=${target}
+				reference=${running.contentReference}
+				inline=${output}
+				label="Published tool output"
+				marker="output"
+			/>`}
+			${(running?.droppedBytes || running?.droppedLines) &&
+			html`<p class="content-hint" data-source-truncated>
+				Source capture omitted ${running.droppedBytes ?? 0} bytes / ${running.droppedLines ?? 0} lines;
+				original reading cannot recover them.
+			</p>`}
+			${output === undefined &&
+			resultParts.map((part, at) =>
+				part.kind === "text"
+					? html`<${TextBody}
+							key=${at}
+							cache=${cache}
+							target=${target}
+							reference=${part.reference}
+							inline=${part.text}
+							label="Tool result"
+							marker="output"
+						/>`
+					: part.kind === "image"
+						? html`<${ImageDisclosure}
+								key=${at}
+								cache=${cache}
+								disclosures=${disclosures}
+								target=${target}
+								reference=${part.reference}
+								mime=${part.mime}
+								data=${part.data}
+								label="Tool result attachment"
+							/>`
+						: html`<p
+								key=${at}
+								class="part-unrenderable"
+								data-part-type=${part.type ?? "unknown"}
+								data-part-mime=${part.mime || undefined}
+							>
+								${part.mime
+									? `Attachment (${part.mime}) cannot be previewed here.`
+									: "This part cannot be shown here."}${part.reference &&
+								html`<a href=${originalDownload(target, part.reference)} download>Save original</a>`}
+							</p>`,
+			)}
+		</div>`}
 	</details>`;
 }
 
 function Message({ message, onDraft, results, live, isLive, source }) {
+	const { cache, target, disclosures } = useContext(ReaderContext);
 	const content =
-		typeof message.content === "string" ? [{ type: "text", text: message.content }] : message.content;
+		typeof message.content === "string"
+			? [{ type: "text", text: message.content, contentReference: message.contentReference }]
+			: message.content;
 	const parts = (content ?? []).map((part) => describePart(part));
 	return html`<article
 		class=${(message.role === "user" ? "message message-user" : "message message-agent") +
@@ -156,15 +220,31 @@ function Message({ message, onDraft, results, live, isLive, source }) {
 				switch (part.kind) {
 					case "text":
 						return html`<div
-							key=${i}
-							class="markdown"
-							dangerouslySetInnerHTML=${{ __html: markdown(part.text) }}
-						/>`;
+								key=${i}
+								class="markdown"
+								dangerouslySetInnerHTML=${{ __html: markdown(part.text) }}
+							/>
+							${part.reference &&
+							!part.reference.previewComplete &&
+							html`<${ContentDisclosure}
+								key=${"full-" + i}
+								cache=${cache}
+								disclosures=${disclosures}
+								target=${target}
+								reference=${part.reference}
+								text=${part.text}
+								label="Complete original text"
+							/>`}`;
 					case "thinking":
-						return html`<details key=${i}>
-							<summary class="pocket-disclosure"><${Icon} name="chevron" />Reasoning</summary>
-							<pre>${part.text}</pre>
-						</details>`;
+						return html`<${ContentDisclosure}
+							key=${i}
+							cache=${cache}
+							disclosures=${disclosures}
+							target=${target}
+							reference=${part.reference}
+							text=${part.text}
+							label="Reasoning"
+						/>`;
 					case "toolCall":
 						return html`<${ToolCard}
 							key=${callKey(source, part.callId)}
@@ -174,11 +254,15 @@ function Message({ message, onDraft, results, live, isLive, source }) {
 							source=${source}
 						/>`;
 					case "image":
-						return html`<img
+						return html`<${ImageDisclosure}
 							key=${i}
-							class="pocket-image"
-							alt="Conversation attachment"
-							src=${"data:" + part.mime + ";base64," + part.data}
+							cache=${cache}
+							disclosures=${disclosures}
+							target=${target}
+							reference=${part.reference}
+							mime=${part.mime}
+							data=${part.data}
+							label="Conversation attachment"
 						/>`;
 					default:
 						// A part that passed protocol validation but cannot be shown must still say
@@ -191,15 +275,26 @@ function Message({ message, onDraft, results, live, isLive, source }) {
 						>
 							${part.mime
 								? "Attachment (" + part.mime + ") cannot be previewed here."
-								: "This part cannot be shown here."}
+								: "This part cannot be shown here."}${part.reference &&
+							html`<a href=${originalDownload(target, part.reference)} download>Save original</a>`}
 						</p>`;
 				}
 			})}
 			${message.role === "assistant" &&
 			message.errorMessage &&
-			html`<p class="pocket-error" data-message-error>${message.errorMessage}</p>`}
+			html`<p class="pocket-error" data-message-error>${message.errorMessage}</p>
+				${message.errorReference &&
+				html`<${ContentDisclosure}
+					cache=${cache}
+					disclosures=${disclosures}
+					target=${target}
+					reference=${message.errorReference}
+					text=${message.errorMessage}
+					label="Complete error"
+				/>`}`}
 			${message.role === "user" &&
 			onDraft &&
+			!parts.some((part) => part.reference && !part.reference.previewComplete) &&
 			html`<button
 				data-action="use-draft"
 				onClick=${() =>
@@ -329,11 +424,12 @@ function App() {
 		[pendingNavigation, setPendingNavigation] = useState({}),
 		[showArchived, setShowArchived] = useState(false),
 		[find, setFind] = useState(""),
-		[historyEntries, setHistoryEntries] = useState([]),
+		[historyWindow, setHistoryWindow] = useState(emptyHistoryWindow),
 		[historyCursor, setHistoryCursor] = useState(undefined),
 		[selected, select] = useState(null),
 		[view, setView] = useState(null),
 		[shared, setShared] = useState(null);
+	const historyEntries = historyWindow.entries;
 	const title = (ref) => titles[resourceKey(ref)] ?? label(ref);
 	const [name, setName] = useState(""),
 		[token, setToken] = useState(signInToken),
@@ -410,6 +506,9 @@ function App() {
 		},
 	});
 	const invalidate = () => {
+		contentScope = null;
+		bodyCache.clear();
+		disclosures.clear();
 		clearDirectoryPreferences(person);
 		void clearNotifications().catch(() => {});
 		resourceContext.current = null;
@@ -421,7 +520,7 @@ function App() {
 		setStates({});
 		setResourceIds({});
 		setPendingNavigation({});
-		setHistoryEntries([]);
+		setHistoryWindow(emptyHistoryWindow());
 		setHistoryCursor(undefined);
 		setFind("");
 		select(null);
@@ -492,6 +591,9 @@ function App() {
 		const list = await client.request({ op: "list" }, { signal });
 		const directory = await client.request({ op: "session.list" }, { signal });
 		if (!mounted.current || options?.canPublish?.() === false) return;
+		const nextScope = { serverId: hello.serverId, personId: hello.person.id };
+		if (JSON.stringify(nextScope) !== JSON.stringify(contentScope)) bodyCache.clear();
+		contentScope = nextScope;
 		setPerson(hello.person);
 		setModelConnection({
 			serverId: hello.serverId,
@@ -565,75 +667,100 @@ function App() {
 		openSheet(null);
 		setReceipt(null);
 		setRetry(null);
-		setHistoryEntries([]);
+		setHistoryWindow(emptyHistoryWindow());
 		setHistoryCursor(undefined);
 		setFind("");
 		follow.current = true;
 	}, [selected?.sessionId, selected?.conversationId, selected?.incarnation, person?.id]);
 	useEffect(() => {
-		if (!selected || !person) return;
+		if (!selected || !person || !modelConnection?.serverId) return;
 		const binding = resourceContext.current;
 		let active = true,
-			sequence = 0,
-			generation;
-		const events = new EventSource(
-			"/pocket/events?conversationId=" +
-				encodeURIComponent(selected.conversationId) +
-				"&sessionId=" +
-				encodeURIComponent(selected.sessionId),
-		);
-		events.addEventListener("pocket", (event) => {
-			try {
-				const value = decodePocketEvent(JSON.parse(event.data));
-				if (!active || resourceContext.current !== binding) return;
-				if (value.kind === "invalidated" || value.kind === "resnapshot") {
+			observed;
+		const events = subscribeObservation({
+			target: selected,
+			scope: { serverId: modelConnection.serverId, personId: person.id },
+			reset: () => {
+				if (active && resourceContext.current === binding) {
+					observed = undefined;
 					setView(null);
 					setShared(null);
-					sequence = 0;
-					generation = value.streamId;
-					return;
 				}
-				if (generation === value.streamId && value.sequence <= sequence) throw new Error("Stale stream");
-				generation = value.streamId;
-				sequence = value.sequence;
-				if (value.kind === "collaboration") {
-					if (
-						value.snapshot.conversationId !== selected.conversationId ||
-						(value.snapshot.sessionId !== undefined && value.snapshot.sessionId !== selected.sessionId)
-					)
-						throw new Error("Foreign collaboration");
-					setShared(value.snapshot);
-				} else {
-					if (
-						value.snapshot.ref.key !== selected.key ||
-						value.snapshot.ref.incarnation !== selected.incarnation ||
-						value.snapshot.ref.sessionId !== selected.sessionId
-					)
-						throw new Error("Stale resource");
-					setView(value.snapshot);
+			},
+			event: (value) => {
+				if (!active || resourceContext.current !== binding) return;
+				try {
+					if (value.kind === "invalidated" || value.kind === "resnapshot") {
+						observed = undefined;
+						setView(null);
+						setShared(null);
+						return;
+					}
+					if (value.kind === "collaboration") {
+						if (
+							value.snapshot.conversationId !== selected.conversationId ||
+							(value.snapshot.sessionId !== undefined && value.snapshot.sessionId !== selected.sessionId)
+						)
+							throw new Error("Foreign collaboration");
+						setShared(value.snapshot);
+					} else {
+						observed = applyPocketObservation(observed, value, {
+							serverId: modelConnection.serverId,
+							target: selected,
+						});
+						bodyCache.activity();
+						setView(observed.snapshot);
+					}
+				} catch {
+					events.close();
+					observed = undefined;
+					setView(null);
+					setShared(null);
+					bodyCache.clear();
+					notify("Observation changed. Select the conversation again for a fresh read.");
 				}
-			} catch {
-				events.close();
+			},
+			error: (kind) => {
+				if (!active || resourceContext.current !== binding) return;
+				observed = undefined;
 				setView(null);
 				setShared(null);
-				notify("Connection changed. Select the conversation again to reconnect.");
-			}
-		});
-		events.onerror = () => {
-			if (active && resourceContext.current === binding) {
-				setView(null);
-				setShared(null);
+				bodyCache.clear();
+				if (kind === "scope-changed") invalidate();
 				void refresh().catch(error);
-			}
-		};
+			},
+		});
 		return () => {
 			active = false;
 			events.close();
 		};
-	}, [selected?.sessionId, selected?.conversationId, selected?.incarnation, person?.id]);
+	}, [
+		selected?.sessionId,
+		selected?.conversationId,
+		selected?.incarnation,
+		person?.id,
+		modelConnection?.serverId,
+	]);
 	useEffect(() => {
 		if (scroll.current && follow.current) scroll.current.scrollTop = scroll.current.scrollHeight;
 	}, [view]);
+	useEffect(() => {
+		const activity = () => bodyCache.activity();
+		const visibility = () => {
+			if (document.visibilityState !== "visible") bodyCache.activity();
+		};
+		window.addEventListener("pointerdown", activity, { passive: true });
+		window.addEventListener("keydown", activity);
+		document.addEventListener("visibilitychange", visibility);
+		const idle = setInterval(() => void bodyCache.pumpIdle(), 250);
+		return () => {
+			clearInterval(idle);
+			window.removeEventListener("pointerdown", activity);
+			window.removeEventListener("keydown", activity);
+			document.removeEventListener("visibilitychange", visibility);
+			bodyCache.clear();
+		};
+	}, []);
 	async function run(action) {
 		setWorking(true);
 		notify("");
@@ -770,15 +897,32 @@ function App() {
 		if (!cursor) return;
 		await run(async () => {
 			const result = await client.request({
-				op: "read",
+				op: "preview",
 				target: selected,
-				page: { limit: 64, beforeEntryId: cursor },
+				page: { limit: 64, beforeEntryId: cursor, maxBytes: 256 * 1024 },
 			});
 			if (!mounted.current || resourceContext.current !== binding) return;
 			follow.current = false;
-			setHistoryEntries((previous) => [...result.snapshot.entries, ...previous]);
+			setHistoryWindow((previous) => {
+				const next = fitHistoryWindow([...result.snapshot.entries, ...previous.entries], {
+					maxBytes: HISTORY_WINDOW_BYTES,
+					anchorId: result.snapshot.entries.at(-1)?.id,
+				});
+				return {
+					...next,
+					unloadedOlder: next.unloadedOlder || previous.unloadedOlder,
+					unloadedNewer: next.unloadedNewer || previous.unloadedNewer,
+				};
+			});
 			setHistoryCursor(result.snapshot.entriesTruncated ? result.snapshot.olderBeforeId : null);
 		});
+	}
+	function latestHistory() {
+		follow.current = true;
+		setHistoryWindow(emptyHistoryWindow());
+		setHistoryCursor(undefined);
+		setFind("");
+		composer.current?.focus();
 	}
 	function useDraft(text) {
 		if (text.length > 8192) {
@@ -796,15 +940,27 @@ function App() {
 	// live tool entry (callId). Index all three before rendering so each call resolves to exactly
 	// one card, and so a result whose declaration was truncated is still shown rather than lost.
 	const toolResults = new Map(),
-		declaredCalls = new Set();
+		declaredCalls = new Set(),
+		matchingCalls = new Set();
+	const literal = find.toLocaleLowerCase();
+	const matchesEntry = (entry) =>
+		!find || JSON.stringify([entry.messages, entry.display?.text]).toLocaleLowerCase().includes(literal);
 	for (const entry of allEntries) {
-		const source = entrySource(entry);
+		const source = entrySource(entry),
+			matched = find && matchesEntry(entry);
 		for (const message of entry.messages) {
-			if (message.role === "toolResult" && message.toolCallId)
-				toolResults.set(callKey(source, message.toolCallId), message);
+			if (message.role === "toolResult" && message.toolCallId) {
+				const key = callKey(source, message.toolCallId);
+				toolResults.set(key, message);
+				if (matched) matchingCalls.add(key);
+			}
 			if (Array.isArray(message.content))
 				for (const part of message.content)
-					if (part && part.type === "toolCall" && part.id) declaredCalls.add(callKey(source, part.id));
+					if (part && part.type === "toolCall" && part.id) {
+						const key = callKey(source, part.id);
+						declaredCalls.add(key);
+						if (matched) matchingCalls.add(key);
+					}
 		}
 	}
 	const liveTools = new Map(
@@ -812,16 +968,27 @@ function App() {
 	);
 	const visibleEntries = allEntries.filter(
 		(entry) =>
-			!find ||
-			JSON.stringify([entry.messages, entry.display?.text])
-				.toLocaleLowerCase()
-				.includes(find.toLocaleLowerCase()),
+			matchesEntry(entry) ||
+			entry.messages.some(
+				(message) =>
+					Array.isArray(message.content) &&
+					message.content.some(
+						(part) =>
+							part && part.type === "toolCall" && matchingCalls.has(callKey(entrySource(entry), part.id)),
+					),
+			),
 	);
-	const transcriptRows = visibleEntries.map((entry) => ({
-		entry,
-		messages: entry.messages,
-		source: entrySource(entry),
-	}));
+	const transcriptRows = visibleEntries
+		.map((entry) => ({
+			entry,
+			messages: entry.messages.filter(
+				(message) =>
+					message.role !== "toolResult" ||
+					!declaredCalls.has(callKey(entrySource(entry), message.toolCallId)),
+			),
+			source: entrySource(entry),
+		}))
+		.filter((row) => row.entry.display || row.messages.length);
 	if (view?.live.message)
 		transcriptRows.push({
 			messages: [view.live.message],
@@ -976,7 +1143,7 @@ function App() {
 			},
 		},
 	];
-	return html`<${SettingsNavigation.Provider} value=${settingsPages}><${Frontend}
+	return html`<${SettingsNavigation.Provider} value=${settingsPages}><${ReaderContext.Provider} value=${{ cache: bodyCache, target: selected, disclosures }}><${Frontend}
 		person=${person} refs=${refs} titles=${titles} states=${states} selected=${selected} view=${view} extensions=${extensions}
 		drawer=${drawer} collapsed=${collapsed} drawerToggle=${drawerToggle} dismissDrawer=${dismissDrawer}
 		sessions=${sessionDirectory?.sessions ?? []} canCreate=${sessionDirectory?.canCreate ?? false}
@@ -1012,10 +1179,25 @@ function App() {
 			}}
 		>
 			<div class="message-list">
+				${historyWindow.entries.length > 0 &&
+				html`<div class="history-window-status" data-history-cache-bytes=${historyWindow.retainedBytes}>
+					<span
+						>${historyBytesLabel.format(historyWindow.retainedBytes / 1024 / 1024)} MiB of history previews
+						retained</span
+					>
+					${(historyWindow.unloadedOlder || historyWindow.unloadedNewer) &&
+					html`<p data-history-unloaded role="status">
+						Previously visited previews were unloaded from this window. The original archive is retained.
+					</p>`}
+					<button class="pill-btn" data-action="history-latest" disabled=${working} onClick=${latestHistory}>
+						Back to latest history
+					</button>
+				</div>`}
 				${olderCursor &&
 				html`<button
 					class="pill-btn"
 					data-action="show-earlier"
+					data-history-before=${olderCursor}
 					disabled=${working}
 					onClick=${() => void earlier()}
 				>
@@ -1023,43 +1205,62 @@ function App() {
 				</button>`}
 				${!view
 					? html`<p role="status">Connecting…</p>`
-					: transcriptRows.map(({ entry, messages, source, isLive }) => {
-							return html`<section key=${transcriptKey(messages, source, entry?.id)} data-entry=${entry?.id}>
-								${entry?.display
-									? html`<aside class="tool-card">
-											<div class="tool-card-head">
-												${entry.display.kind === "chat" ? "People Chat" : "Card"}
-											</div>
-											<p>${entry.display.text}</p>
-										</aside>`
-									: messages.map((message, index) =>
-											message.role === "toolResult"
-												? declaredCalls.has(callKey(source, message.toolCallId))
-													? null
-													: html`<${ToolCard}
+					: html`<${VirtualTranscript}
+							rows=${transcriptRows}
+							scroll=${scroll}
+							follow=${follow}
+							rowKey=${(row) => transcriptKey(row.messages, row.source, row.entry?.id)}
+							renderRow=${({ entry, messages, source, isLive }) => {
+								return html`<section
+									key=${transcriptKey(messages, source, entry?.id)}
+									data-entry=${entry?.id}
+								>
+									${entry?.display
+										? html`<aside class="tool-card">
+												<div class="tool-card-head">
+													${entry.display.kind === "chat" ? "People Chat" : "Card"}
+												</div>
+												<p>${entry.display.text}</p>
+												${entry.display.contentReference &&
+												!entry.display.contentReference.previewComplete &&
+												html`<${ContentDisclosure}
+													cache=${bodyCache}
+													disclosures=${disclosures}
+													target=${selected}
+													reference=${entry.display.contentReference}
+													text=${entry.display.text}
+													label="Complete original card"
+												/>`}
+											</aside>`
+										: messages.map((message, index) =>
+												message.role === "toolResult"
+													? declaredCalls.has(callKey(source, message.toolCallId))
+														? null
+														: html`<${ToolCard}
+																key=${index}
+																call=${{
+																	callId: message.toolCallId,
+																	name: message.toolName,
+																	arguments: null,
+																}}
+																results=${toolResults}
+																live=${liveTools}
+																source=${source}
+																orphan
+															/>`
+													: html`<${Message}
 															key=${index}
-															call=${{
-																callId: message.toolCallId,
-																name: message.toolName,
-																arguments: null,
-															}}
+															message=${message}
+															onDraft=${canSend ? useDraft : undefined}
 															results=${toolResults}
 															live=${liveTools}
 															source=${source}
-															orphan
-														/>`
-												: html`<${Message}
-														key=${index}
-														message=${message}
-														onDraft=${canSend ? useDraft : undefined}
-														results=${toolResults}
-														live=${liveTools}
-														source=${source}
-														isLive=${isLive}
-													/>`,
-										)}
-							</section>`;
-						})}
+															isLive=${isLive}
+														/>`,
+											)}
+								</section>`;
+							}}
+						/>`}
 				${(view?.live.tools ?? [])
 					.filter((tool) => !declaredCalls.has(callKey(view.ref.conversationId, tool.callId)))
 					.map(
@@ -1314,7 +1515,7 @@ function App() {
 		</${SettingsPage}>`
 		}
 		${creation.dialog}
-	</${Frontend}></${SettingsNavigation.Provider}>`;
+	</${Frontend}></${ReaderContext.Provider}></${SettingsNavigation.Provider}>`;
 }
 const root = document.getElementById("app");
 root.replaceChildren();

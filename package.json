@@ -22,6 +22,7 @@
 		"check": "node scripts/verify-durable-patch.mjs && tsc --noEmit -p tsconfig.test.json",
 		"test": "node scripts/test.mjs",
 		"pack:agent": "npm run build && node scripts/pack-agent.mjs",
+		"pack:release": "npm run build && node scripts/pack-release.mjs",
 		"smoke:package": "npm run build && node scripts/pack-smoke.mjs",
 		"test:dynamite": "node integrations/dynamite/run.mjs",
 		"test:dynamite:product": "npm run build && node integrations/dynamite/product-run.mjs",
@@ -38,7 +39,7 @@
 		"@earendil-works/pi-telemetry": "1.4.0"
 	},
 	"dependencies": {
-		"@earendil-works/pi-durable": "file:packages/agent/vendor/earendil-works-pi-durable-1.4.0-pakka.2.tgz"
+		"@earendil-works/pi-durable": "file:packages/agent/vendor/earendil-works-pi-durable-1.4.0-pakka.3.tgz"
 	},
 	"devDependencies": {
 		"@types/node": "26.6.4",

@@ -81,6 +81,7 @@ test(
 			);
 			assert.equal(f.requests.length, 0, "selection and registry reads do not generate model work");
 			await page.type("textarea[name=message]", "NATIVE-MODEL-BROWSER");
+			await page.wait('document.querySelector("[data-action=send]")?.disabled===false');
 			await page.click("[data-action=send]");
 			await page.wait('document.querySelector(".pocket-receipt")?.dataset.receiptStatus === "done"');
 			assert.equal(f.requests.length, 1);

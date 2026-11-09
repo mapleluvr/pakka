@@ -37,8 +37,8 @@ test(
 			await page.click("[data-interface=workspace-schedules-schedules]");
 			await page.wait('document.querySelector("[data-schedule-add]")');
 			await page.type("[data-schedule-text]", "ONCE-AFTER-LOST-SCHEDULE-RESPONSE");
-			await page.evaluate('document.querySelector("[data-schedule-delay]").value=""');
-			await page.type("[data-schedule-delay]", "2");
+			await page.type("[data-schedule-delay]", "2", { replace: true });
+			assert.equal(await page.evaluate('document.querySelector("[data-schedule-delay]").value'), "2");
 			await page.evaluate(
 				`(()=>{const original=globalThis.fetch;globalThis.__scheduleAdds=0;globalThis.__restoreScheduleFetch=()=>{globalThis.fetch=original;};globalThis.fetch=async(...args)=>{if(typeof args[1]?.body==='string'&&args[1].body.includes('"action":"add"')){globalThis.__scheduleAdds++;const response=await original(...args);await response.arrayBuffer();throw Error('TEST LOST COMMITTED SCHEDULE RESPONSE');}return original(...args);};})()`,
 			);

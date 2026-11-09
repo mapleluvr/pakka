@@ -1,0 +1,1145 @@
+diff --git a/packages/durable/README.md b/packages/durable/README.md
+index 71aa683..ec101d0 100644
+--- a/packages/durable/README.md
++++ b/packages/durable/README.md
+@@ -619,7 +619,7 @@ const Guard = defineExtension({
+ });
+ ```
+ 
+-- **Generation:** `beforeRequest` (replace the messages of one request), `afterResponse`, `onYield` (continue the run with another user message), and `afterTools` (runs once a round's tools are done).
++- **Generation:** `beforeRequest` (replace the messages of one request, or return `{ block: string }` to settle the run unanswered without a provider call; a replacement may include a synchronous `check` revalidated after hooks and at the final provider payload boundary), `afterResponse`, `onYield` (continue the run with another user message), and `afterTools` (runs once a round's tools are done).
+ - **Tools:** `beforeTool` (block or rewrite arguments) and `afterTool` (replace the result).
+ 
+ To limit a hook to some conversations, select its extension only there, for example with `configure({ extensions: { add: [Guard] } })`.
+diff --git a/packages/durable/docs/spec.md b/packages/durable/docs/spec.md
+index 3e206cf..4dcc5f5 100644
+--- a/packages/durable/docs/spec.md
++++ b/packages/durable/docs/spec.md
+@@ -2937,12 +2937,18 @@ interface HookApi extends DocumentReader {
+ }
+ 
+ interface GenerationHooks {
+-  /** Before every request attempt, including recovery; the result is used for that request only. */
++  /**
++   * Before every request attempt, including recovery; the result is used for that request only.
++   * `block` is an explicit fail-closed policy decision: the refusal adds no provider call or assistant entry;
++   * the run's placed inputs settle unanswered with reason "blocked", and the task completes.
++   * A synchronous `check` is revalidated after hooks and at pi-ai's final onPayload boundary.
++   * Ordinary thrown hook errors retain report-and-continue semantics.
++   */
+   beforeRequest(
+     request: { readonly messages: readonly Message[] },
+     api: HookApi,
+     context: Context,
+-  ): HookResult<{ readonly messages: readonly Message[] }>;
++  ): HookResult<{ readonly messages: readonly Message[]; readonly check?: () => void } | { readonly block: string }>;
+   /** Every terminal provider message, before classification. */
+   afterResponse(message: AssistantMessage, api: HookApi, context: Context): void | Promise<void>;
+   /** A final answer; `continue` appends a user message and continues the run. */
+@@ -4175,7 +4181,7 @@ type GenerationCheckpoint =
+       /** Calls of a sequential round not started yet, in call order. */
+       pending: string[];
+     };
+-type GenerationResult = { entryId: EntryId };
++type GenerationResult = { entryId: EntryId } | { blocked: string };
+ ```
+ 
+ `pi.generation` is version 1 and starts at `{ phase: "prepare", attempt: 1 }`.
+@@ -4229,10 +4235,19 @@ The run's inputs live in `pi.live.run`, not in the task input.
+   as `reasoning` (omitted for `off`), the conversation's persisted provider
+   `sessionId`, and the pinned `streamOptions`, committing throttled partials at
+   most every `settings.progress.partialIntervalMs` (default 100 ms).
+-  Before streaming, the `beforeRequest` chain may
+-  replace the messages for this request only. Recovery resends the same
+-  committed messages with the same pinned model, thinking level, and stream
+-  options, and reruns `beforeRequest`.
++  Before streaming, the `beforeRequest` chain may replace the messages for
++  this request only, or return `{ block }`. The first explicit block stops the
++  chain. Replacements may supply synchronous `check` callbacks, run in hook
++  order after the chain and after the existing `onPayload` callback at the
++  final provider payload boundary. A throwing check is a policy block; ordinary
++  hook exceptions keep report-and-continue semantics. A block atomically
++  settles the run's placed inputs `unanswered` with reason `blocked` and the
++  policy text as detail, clears its live state, leaves its inbox queued, and
++  completes the generation with `{ blocked }` and no assistant entry or retry.
++  Previously committed partials follow the recovery conversion above even
++  when the new attempt is blocked. Recovery resends the same committed messages
++  with the same pinned model, thinking level, and stream options, and reruns
++  `beforeRequest` and its checks.
+ - `afterResponse` observes every terminal message, from `request` or `poll`,
+   before classification; a still deferred result is not terminal.
+ - Before classifying, the handler stops the partial throttle and awaits any
+@@ -4300,8 +4315,8 @@ A tool round starts in the commit that appends the tool-calling answer:
+ 4. `pi.live.tools` receives the round's slots (section 8.2), and `generation` is
+    removed.
+ 
+-Input submissions settle `unanswered` with one of these reasons: `no_model`,
+-`model_error` (detail: provider error text), `aborted`, `faulted` (detail: error
++Input submissions settle `unanswered` with one of these reasons: `blocked`
++(detail: policy text), `no_model`, `model_error` (detail: provider error text), `aborted`, `faulted` (detail: error
+ message), or an orphaning blocked reason (section 5.4). Fault and orphan
+ settlement convert a committed partial into an aborted `pi.assistant` entry,
+ like the abort handler.
+diff --git a/packages/durable/src/harness/generation.ts b/packages/durable/src/harness/generation.ts
+index c8d2679..1fdbd88 100644
+--- a/packages/durable/src/harness/generation.ts
++++ b/packages/durable/src/harness/generation.ts
+@@ -96,7 +96,7 @@ export type GenerationCheckpoint =
+ 			pending: string[];
+ 	  };
+ 
+-export type GenerationResult = { entryId: EntryId };
++export type GenerationResult = { entryId: EntryId } | { blocked: string };
+ 
+ type Runtime = TaskRuntime<GenerationInput, GenerationCheckpoint, GenerationResult, GenerationHooks>;
+ type Next = NextTaskState<GenerationCheckpoint, GenerationResult>;
+@@ -219,10 +219,37 @@ export const GenerationTask = defineTask<GenerationInput, GenerationCheckpoint,
+ 			if (model === undefined) return failNoModel(runtime, ref, context);
+ 			const view = await runtime.context(conversationId, context, { at: cutoff });
+ 			let messages = view.messages;
++			let blocked: string | undefined;
++			const checks: (() => void)[] = [];
+ 			await runtime.hooks.each("beforeRequest", async (hook) => {
++				if (blocked !== undefined) return;
+ 				const replaced = await hook({ messages }, runtime, context);
+-				if (replaced !== undefined) messages = replaced.messages;
++				if (replaced !== undefined) {
++					if ("block" in replaced) blocked = replaced.block;
++					else {
++						messages = replaced.messages;
++						if (replaced.check !== undefined) checks.push(replaced.check);
++					}
++				}
+ 			});
++			const check = () => {
++				for (const guard of checks) {
++					try {
++						guard();
++					} catch (error) {
++						blocked = error instanceof Error ? error.message : String(error);
++						throw error;
++					}
++				}
++			};
++			if (blocked === undefined) {
++				try {
++					check();
++				} catch {
++					// The check records the explicit policy denial; ordinary hook errors still report/continue.
++				}
++			}
++			if (blocked !== undefined) return blockRequest(runtime, blocked, context);
+ 			const options: SimpleStreamOptions = {
+ 				...streamOptions,
+ 				signal: runtime.signal,
+@@ -230,7 +257,22 @@ export const GenerationTask = defineTask<GenerationInput, GenerationCheckpoint,
+ 				sessionId: await ensureProviderSessionId(runtime, context),
+ 				...(thinkingLevel === "off" ? {} : { reasoning: thinkingLevel }),
+ 			};
+-			const message = await streamResponse(runtime, model, messages, options, attempt, context);
++			if (checks.length !== 0) {
++				const previous = options.onPayload;
++				options.onPayload = async (payload, requestModel) => {
++					const replacement = await previous?.(payload, requestModel);
++					check();
++					return replacement;
++				};
++			}
++			let message: AssistantMessage;
++			try {
++				message = await streamResponse(runtime, model, messages, options, attempt, context);
++			} catch (error) {
++				if (blocked !== undefined) return blockRequest(runtime, blocked, context);
++				throw error;
++			}
++			if (blocked !== undefined) return blockRequest(runtime, blocked, context);
+ 			const request = { attempt, compacted, model: ref, cutoff, messages: view.messages };
+ 			await classify(runtime, request, message, context);
+ 		},
+@@ -315,6 +357,14 @@ export const GenerationTask = defineTask<GenerationInput, GenerationCheckpoint,
+ 	},
+ });
+ 
++async function blockRequest(runtime: Runtime, reason: string, context: Context): Promise<void> {
++	await runtime.commit(async (tx): Promise<Next> => {
++		const live = await tx.doc(LiveDoc, runtime.conversationId);
++		endRun(tx, live, runtime.taskId, { status: "unanswered", reason: "blocked", detail: reason });
++		return { status: "terminal", outcome: { status: "completed", result: { blocked: reason } } };
++	}, context);
++}
++
+ /** The calls `callIds` of the assistant entry, in the given order. */
+ async function readCalls(
+ 	runtime: Runtime,
+diff --git a/packages/durable/src/harness/types.ts b/packages/durable/src/harness/types.ts
+index 289b5c4..d5cc07c 100644
+--- a/packages/durable/src/harness/types.ts
++++ b/packages/durable/src/harness/types.ts
+@@ -850,12 +850,18 @@ export type HookResult<T> = T | undefined | Promise<T | undefined>;
+ 
+ /** Hooks of the built-in generation task. */
+ export interface GenerationHooks {
+-	/** Before every request attempt, including recovery; the result is used for that request only. */
++	/**
++	 * Before every request attempt, including recovery; the result is used for that request only.
++	 * `block` is an explicit fail-closed policy decision: the refusal adds no provider call or assistant entry;
++	 * the run's placed inputs settle unanswered with reason "blocked", and the task completes.
++	 * A synchronous `check` is revalidated after hooks and at pi-ai's final onPayload boundary.
++	 * Ordinary thrown hook errors retain report-and-continue semantics.
++	 */
+ 	beforeRequest(
+ 		request: { readonly messages: readonly Message[] },
+ 		api: HookApi,
+ 		context: Context,
+-	): HookResult<{ readonly messages: readonly Message[] }>;
++	): HookResult<{ readonly messages: readonly Message[]; readonly check?: () => void } | { readonly block: string }>;
+ 	/** Every terminal provider message, before classification. */
+ 	afterResponse(message: AssistantMessage, api: HookApi, context: Context): void | Promise<void>;
+ 	/** A final answer; the first `continue` appends a user message and continues the run. */
+diff --git a/packages/durable/src/index.ts b/packages/durable/src/index.ts
+index 95d9606..8928f4e 100644
+--- a/packages/durable/src/index.ts
++++ b/packages/durable/src/index.ts
+@@ -158,6 +158,10 @@ export type {
+ 	DocumentState,
+ 	DocumentWatch,
+ 	Entry,
++	EntryArchive,
++	EntryArchiveRange,
++	EntryArchiveChunk,
++	EntryHeader,
+ 	EntryDraft,
+ 	EntryId,
+ 	EntryQuery,
+diff --git a/packages/durable/src/storage/sqlite/storage.ts b/packages/durable/src/storage/sqlite/storage.ts
+index 7dc5903..b838725 100644
+--- a/packages/durable/src/storage/sqlite/storage.ts
++++ b/packages/durable/src/storage/sqlite/storage.ts
+@@ -16,6 +16,9 @@ import type {
+ 	DocumentQuery,
+ 	DocumentRecord,
+ 	EntryId,
++	EntryArchive,
++	EntryArchiveRange,
++	EntryHeader,
+ 	EntryQuery,
+ 	EntryRecord,
+ 	Id,
+@@ -74,6 +77,9 @@ const encodeJson = (value: unknown): string => JSON.stringify(value) as string;
+ // Some SQLite bindings replace lone UTF-16 surrogates. JSON encoding keeps indexed identities lossless.
+ const encodeIndexedString = (value: string): string => JSON.stringify(value);
+ 
++const ARCHIVE_HEADER_CACHE_LIMIT = 2048;
++const ARCHIVE_BYTE_CACHE_LIMIT = 32 * 1024 * 1024;
++
+ const cursorId = <I extends Id<string>>(cursor: Cursor | undefined): I | undefined => {
+ 	const after = cursor?.after;
+ 	if (after === undefined) return undefined;
+@@ -152,6 +158,124 @@ const writeId = (write: StorageWrite): Id<string> | undefined => {
+ export class SqliteStorage implements Storage {
+ 	private readonly db: SqliteDatabase;
+ 	private readonly schema: SqliteSchema;
++	private readonly archiveHeaders = new Map<EntryId, EntryHeader>();
++	private readonly archiveScopes = new Map<string, EntryHeader>();
++	private readonly archiveBytes = new Map<EntryId, { readonly commitSeq: Seq; readonly bytes: Uint8Array }>();
++	private readonly pendingArchiveBytes = new Map<EntryId, Promise<Uint8Array>>();
++	private archiveByteCount = 0;
++	private archiveByteLine: Promise<void> = Promise.resolve();
++
++	readonly entryArchive: EntryArchive = Object.freeze({
++		header: (conversationId: ConversationId, id: EntryId, context: Context) =>
++			this.admitRead(async () => {
++				context.abortSignal?.throwIfAborted();
++				const value = await this.readArchiveHeader(conversationId, id);
++				context.abortSignal?.throwIfAborted();
++				return value;
++			}),
++		scan: (query: EntryQuery, limit: number, cursor: Cursor | undefined, context: Context) =>
++			this.admitRead(async () => {
++				context.abortSignal?.throwIfAborted();
++				const value = await this.readEntryHeaders(query, limit, cursor);
++				context.abortSignal?.throwIfAborted();
++				return value;
++			}),
++		read: (conversationId: ConversationId, id: EntryId, range: EntryArchiveRange, context: Context) =>
++			this.admitRead(async () => {
++				context.abortSignal?.throwIfAborted();
++				if (!range || Object.keys(range).sort().join(",") !== "commitSeq,length,offset" ||
++					!Number.isSafeInteger(range.offset) || range.offset < 0 ||
++					!Number.isSafeInteger(range.length) || range.length < 1 || range.length > 65536 ||
++					!Number.isSafeInteger(range.commitSeq) || range.commitSeq < 1)
++					throw new StorageRequestError("Invalid bounded entry archive range");
++				const header = await this.readArchiveHeader(conversationId, id);
++				if (!header) return undefined;
++				if (header.commitSeq !== range.commitSeq || range.offset > header.byteLength)
++					throw new StorageRequestError("Stale entry archive revision or range");
++				const bytes = await this.readArchiveBytes(header, range);
++				if (bytes.length > range.length) throw new StorageRequestError("Entry archive range exceeded its budget");
++				context.abortSignal?.throwIfAborted();
++				return { bytes, offset: range.offset, nextOffset: range.offset + bytes.length, byteLength: header.byteLength, commitSeq: header.commitSeq };
++			}),
++	});
++
++	private rememberArchiveHeader(scope: ConversationId, header: EntryHeader): EntryHeader {
++		const value = Object.freeze(header);
++		this.archiveHeaders.delete(header.id);
++		this.archiveHeaders.set(header.id, value);
++		const key = `${scope}/${header.id}`;
++		this.archiveScopes.delete(key);
++		this.archiveScopes.set(key, value);
++		while (this.archiveHeaders.size > ARCHIVE_HEADER_CACHE_LIMIT) {
++			const oldest = this.archiveHeaders.keys().next().value;
++			if (oldest === undefined) break;
++			this.archiveHeaders.delete(oldest);
++		}
++		while (this.archiveScopes.size > ARCHIVE_HEADER_CACHE_LIMIT) {
++			const oldest = this.archiveScopes.keys().next().value;
++			if (oldest === undefined) break;
++			this.archiveScopes.delete(oldest);
++		}
++		return value;
++	}
++
++	private async readArchiveHeader(scope: ConversationId, id: EntryId): Promise<EntryHeader | undefined> {
++		idFromNumber<ConversationId>(scope);
++		idFromNumber<EntryId>(id);
++		const key = `${scope}/${id}`;
++		const cached = this.archiveScopes.get(key);
++		if (cached) {
++			this.archiveScopes.delete(key); this.archiveScopes.set(key, cached);
++			return cached;
++		}
++		return (await this.readEntryHeaders({ conversationId: scope, minEntryId: id, maxEntryId: id }, 1)).items[0];
++	}
++
++	/** A byte-budgeted, encoding-only window; no EntryRecord or JSON body is decoded or retained. */
++	private async readArchiveBytes(header: EntryHeader, range: EntryArchiveRange): Promise<Uint8Array> {
++		const size = Math.min(range.length, header.byteLength - range.offset);
++		if (size === 0) return new Uint8Array();
++		if (header.byteLength > ARCHIVE_BYTE_CACHE_LIMIT) {
++			const row = await this.db.get<{ readonly bytes: Uint8Array }>(
++				`SELECT substr(CAST(record AS BLOB), ?, ?) AS bytes FROM ${this.schema.tables.entries} WHERE id = ? AND commit_seq = ?`,
++				range.offset + 1, size, header.id, header.commitSeq);
++			if (!row) throw new StorageRequestError("Entry archive revision disappeared");
++			return new Uint8Array(row.bytes);
++		}
++		const cached = this.archiveBytes.get(header.id);
++		let bytes: Uint8Array;
++		if (cached && cached.commitSeq === header.commitSeq) {
++			this.archiveBytes.delete(header.id); this.archiveBytes.set(header.id, cached);
++			bytes = cached.bytes;
++		} else {
++			let pending = this.pendingArchiveBytes.get(header.id);
++			if (!pending) {
++				// Coalesce concurrent reads of one immutable row; serialize complete-window acquisition.
++				pending = this.archiveByteLine.then(async () => {
++					const row = await this.db.get<{ readonly bytes: Uint8Array }>(
++						`SELECT CAST(record AS BLOB) AS bytes FROM ${this.schema.tables.entries} WHERE id = ? AND commit_seq = ?`,
++						header.id, header.commitSeq);
++					if (!row || !(row.bytes instanceof Uint8Array) || row.bytes.length !== header.byteLength)
++						throw new StorageRequestError("Entry archive revision/encoded size changed");
++					while (this.archiveByteCount + row.bytes.length > ARCHIVE_BYTE_CACHE_LIMIT && this.archiveBytes.size) {
++						const oldest = this.archiveBytes.entries().next().value;
++						if (!oldest) break;
++						this.archiveBytes.delete(oldest[0]); this.archiveByteCount -= oldest[1].bytes.length;
++					}
++					this.archiveBytes.set(header.id, { commitSeq: header.commitSeq, bytes: row.bytes });
++					this.archiveByteCount += row.bytes.length;
++					return row.bytes;
++				});
++				this.pendingArchiveBytes.set(header.id, pending);
++				this.archiveByteLine = pending.then(() => {}, () => {});
++			}
++			try { bytes = await pending; }
++			finally { if (this.pendingArchiveBytes.get(header.id) === pending) this.pendingArchiveBytes.delete(header.id); }
++		}
++		// Detach the published range. A caller can mutate it without changing the immutable cached source.
++		return new Uint8Array(bytes.subarray(range.offset, range.offset + size));
++	}
++
+ 	private nextId: number;
+ 	private closed = false;
+ 	private closing: Promise<void> | undefined;
+@@ -424,6 +548,69 @@ export class SqliteStorage implements Storage {
+ 		return page(values, limit, "ascending");
+ 	}
+ 
++
++	/** Fork-aware metadata only: the SQL result never includes record/model/data JSON. */
++	private async readEntryHeaders(query: EntryQuery, limit: number, cursor?: Cursor): Promise<Page<EntryHeader, Cursor>> {
++		if (!Number.isSafeInteger(limit) || limit < 1 || limit > 256)
++			throw new StorageRequestError("Invalid entry header page limit");
++		idFromNumber<ConversationId>(query.conversationId);
++		if (query.minEntryId !== undefined) idFromNumber<EntryId>(query.minEntryId);
++		if (query.maxEntryId !== undefined) idFromNumber<EntryId>(query.maxEntryId);
++		const { order, after } = scanStart(query.order, cursor, "descending");
++		let conversation = await this.readConversation(query.conversationId);
++		if (!conversation) throw new StorageRequestError(`Unknown conversation: ${query.conversationId}`);
++		let upper: number | undefined = query.maxEntryId;
++		if (order === "descending" && after !== undefined) upper = Math.min(upper ?? Number.MAX_SAFE_INTEGER, after - 1);
++		const segments: { readonly conversationId: ConversationId; readonly upper: number | undefined }[] = [];
++		const seen = new Set<ConversationId>();
++		while (true) {
++			if (seen.has(conversation.id)) throw new StorageRequestError("Cyclic conversation ancestry");
++			seen.add(conversation.id);
++			segments.push({ conversationId: conversation.id, upper });
++			if (!conversation.parent) break;
++			upper = Math.min(upper ?? Number.MAX_SAFE_INTEGER, conversation.parent.at);
++			if (query.minEntryId !== undefined && upper < query.minEntryId) break;
++			conversation = await this.readConversation(conversation.parent.conversationId);
++			if (!conversation) throw new StorageRequestError("Missing conversation ancestry");
++		}
++		let lower: number | undefined = query.minEntryId;
++		if (order === "ascending" && after !== undefined) lower = Math.max(lower ?? 0, after + 1);
++		const values: EntryHeader[] = [];
++		for (const segment of order === "ascending" ? segments.reverse() : segments) {
++			const clauses = ["conversation_id = ?"];
++			const params: SqliteValue[] = [segment.conversationId];
++			if (lower !== undefined) { clauses.push("id >= ?"); params.push(lower); }
++			if (segment.upper !== undefined) { clauses.push("id <= ?"); params.push(segment.upper); }
++			params.push(limit + 1 - values.length);
++			const rows = await this.db.all<{
++				readonly id: number; readonly conversation_id: number; readonly head: number | null;
++				readonly commit_seq: number;
++			}>(
++				`SELECT id, conversation_id, head, commit_seq FROM ${this.schema.tables.entries} WHERE ${clauses.join(" AND ")} ORDER BY id ${order === "ascending" ? "ASC" : "DESC"} LIMIT ?`,
++				...params);
++			for (const row of rows) {
++				const id = idFromNumber<EntryId>(row.id), commitSeq = seqFromNumber(row.commit_seq);
++				const cached = this.archiveHeaders.get(id);
++				let byteLength: number;
++				if (cached && cached.commitSeq === commitSeq) byteLength = cached.byteLength;
++				else {
++					const length = await this.db.get<{ readonly byte_length: number }>(
++						`SELECT length(CAST(record AS BLOB)) AS byte_length FROM ${this.schema.tables.entries} WHERE id = ? AND commit_seq = ?`, id, commitSeq);
++					if (!length || !Number.isSafeInteger(length.byte_length) || length.byte_length < 0)
++						throw new StorageRequestError("Invalid entry archive byte length");
++					byteLength = length.byte_length;
++				}
++				values.push(this.rememberArchiveHeader(query.conversationId, {
++					id, conversationId: idFromNumber<ConversationId>(row.conversation_id),
++					...(row.head === null ? {} : { head: idFromNumber<EntryId>(row.head) }),
++					commitSeq, byteLength,
++				}));
++			}
++			if (values.length > limit) break;
++		}
++		return page(values, limit, order);
++	}
++
+ 	async task(id: TaskId, _context: Context): Promise<StoredTask | undefined> {
+ 		this.assertOpen();
+ 		const row = await this.db.get<JsonRow>(`SELECT record FROM ${this.schema.tables.tasks} WHERE id = ?`, id);
+@@ -597,6 +784,8 @@ export class SqliteStorage implements Storage {
+ 				this.readsDrained = resolve;
+ 			});
+ 		}
++		this.archiveBytes.clear(); this.archiveByteCount = 0;
++		this.archiveHeaders.clear(); this.archiveScopes.clear(); this.pendingArchiveBytes.clear();
+ 		await this.db.close();
+ 	}
+ 
+diff --git a/packages/durable/src/types.ts b/packages/durable/src/types.ts
+index fe69f8e..2434267 100644
+--- a/packages/durable/src/types.ts
++++ b/packages/durable/src/types.ts
+@@ -1176,7 +1176,50 @@ export interface Session extends DocumentObserver {
+  * conversation, a foreign or malformed cursor, history a document does not keep), which must have no durable effect, and a
+  * rejection because its caller's context was aborted. Any error from `commit()` or `mintId()` is fatal.
+  */
++
++/** Small immutable entry identity and encoded-record size; never model or data bodies. */
++export type EntryHeader = {
++	readonly id: EntryId;
++	readonly conversationId: ConversationId;
++	readonly head?: EntryId;
++	readonly commitSeq: Seq;
++	/** UTF-8 byte length of the complete persisted JSON record. */
++	readonly byteLength: number;
++};
++
++export type EntryArchiveRange = {
++	readonly offset: number;
++	/** A single range is at most 64 KiB. */
++	readonly length: number;
++	/** Required immutable commit identity obtained from the header. */
++	readonly commitSeq: Seq;
++};
++
++export type EntryArchiveChunk = {
++	readonly bytes: Uint8Array;
++	readonly offset: number;
++	readonly nextOffset: number;
++	readonly byteLength: number;
++	readonly commitSeq: Seq;
++};
++
++/**
++ * Optional byte-level archival reads. They obey the same fork visibility as entry()/scanEntries(), but
++ * expose encoded JSON ranges without decoding its model or data. These are trusted storage APIs, not ACLs.
++ * Returned JS ranges are at most 64 KiB. SQLite may retain an encoding-only LRU window of at most 32 MiB,
++ * with serialized acquisition of one additional row at a time, plus bounded immutable header caches.
++ * It never decodes a complete JSON record for these APIs. A record larger than the window stays a range read;
++ * backend-native transient work can still depend on that one record's size. This is not a cumulative history limit.
++ */
++export interface EntryArchive {
++	header(conversationId: ConversationId, id: EntryId, context: Context): Promise<EntryHeader | undefined>;
++	scan(query: EntryQuery, limit: number, cursor: Cursor | undefined, context: Context): Promise<Page<EntryHeader, Cursor>>;
++	read(conversationId: ConversationId, id: EntryId, range: EntryArchiveRange, context: Context): Promise<EntryArchiveChunk | undefined>;
++}
++
+ export interface Storage {
++	/** Available only on backends that support bounded encoded entry reads. */
++	readonly entryArchive?: EntryArchive;
+ 	/**
+ 	 * Atomically persist one batch and return its sequence. Once resolved, later reads through this storage observe it.
+ 	 */
+diff --git a/packages/durable/test/harness-generation-recovery.test.ts b/packages/durable/test/harness-generation-recovery.test.ts
+index ef104ac..a998cbe 100644
+--- a/packages/durable/test/harness-generation-recovery.test.ts
++++ b/packages/durable/test/harness-generation-recovery.test.ts
+@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
+ import { join } from "node:path";
+ import { DatabaseSync } from "node:sqlite";
+ import { type AssistantMessage, createModels, fauxAssistantMessage, type Message } from "@earendil-works/pi-ai";
+-import { AssistantEntry, type Harness, LiveDoc, type TaskId } from "@earendil-works/pi-durable";
++import { AssistantEntry, defineExtension, GenerationTask, type Harness, hook, LiveDoc, type TaskId } from "@earendil-works/pi-durable";
+ import { afterEach, describe, expect, it } from "vitest";
+ import { openNodeSqliteStorage } from "../src/storage/sqlite/node.ts";
+ import { allEntries, type ChatSetup, chatSetup, openChat, textOf, unanswered, waitFor } from "./chat-support.ts";
+@@ -39,6 +39,81 @@ async function checkpoint(harness: Harness, id: TaskId) {
+ }
+ 
+ describe("generation recovery", () => {
++	it("keeps a blocked settlement and terminal generation across SQLite reopen", async () => {
++		const path = await sqlitePath();
++		const setup = chatSetup();
++		setup.registry.install(
++			defineExtension({
++				name: "policy",
++				hooks: [
++					hook(GenerationTask, {
++						beforeRequest: () => ({ block: "persistent refusal" }),
++					}),
++				],
++			}),
++		);
++		let opened = await open(path, setup);
++		try {
++			const submission = await opened.root.submit({ type: "input", content: "hi" }, context);
++			expect(await submission.wait(context)).toMatchObject({
++				status: "unanswered",
++				reason: "blocked",
++				detail: "persistent refusal",
++			});
++			await opened.harness.close(context);
++			opened = await open(path, setup);
++			opened.harness.resume();
++			expect(await (await opened.harness.submission(submission.id, context))!.wait(context)).toMatchObject({
++				reason: "blocked",
++				detail: "persistent refusal",
++			});
++			expect(setup.faux.state.callCount).toBe(0);
++			expect(await opened.harness.snapshot(LiveDoc, opened.root.id, context)).toEqual({});
++		} finally {
++			await opened.harness.close(context);
++		}
++	});
++
++	it("re-runs authorization for an interrupted request rather than restoring its old guard", async () => {
++		const path = await sqlitePath();
++		const setup = chatSetup();
++		const reached = deferred();
++		let hooks = 0;
++		setup.registry.install(
++			defineExtension({
++				name: "policy",
++				hooks: [
++					hook(GenerationTask, {
++						beforeRequest: async (_request, _api, ctx) => {
++							hooks++;
++							if (hooks === 1) {
++								reached.resolve();
++								await aborted(ctx.abortSignal!);
++							}
++							return { block: "revoked after restart" };
++						},
++					}),
++				],
++			}),
++		);
++		let opened = await open(path, setup);
++		try {
++			const submission = await opened.root.submit({ type: "input", content: "hi" }, context);
++			await reached.promise;
++			await opened.harness.close(context);
++			opened = await open(path, setup);
++			opened.harness.resume();
++			expect(await (await opened.harness.submission(submission.id, context))!.wait(context)).toMatchObject({
++				reason: "blocked",
++				detail: "revoked after restart",
++			});
++			expect(hooks).toBe(2);
++			expect(setup.faux.state.callCount).toBe(0);
++		} finally {
++			await opened.harness.close(context);
++		}
++	});
++
+ 	it("reruns preparation interrupted before its commit", async () => {
+ 		const path = await sqlitePath();
+ 		const setup = chatSetup();
+diff --git a/packages/durable/test/harness-generation.test.ts b/packages/durable/test/harness-generation.test.ts
+index 50bae0a..a17c876 100644
+--- a/packages/durable/test/harness-generation.test.ts
++++ b/packages/durable/test/harness-generation.test.ts
+@@ -17,6 +17,7 @@ import {
+ 	GenerationTask,
+ 	Harness,
+ 	type HarnessSettings,
++	hook,
+ 	LiveDoc,
+ 	type LiveState,
+ 	MemoryStorage,
+@@ -117,6 +118,151 @@ describe("generation", () => {
+ 		await harness.close(context);
+ 	});
+ 
++	it("blocks beforeRequest without dispatching a provider request or faulting the host task", async () => {
++		const setup = chatSetup();
++		setup.faux.setResponses([fauxAssistantMessage("unused")]);
++		setup.registry.install(
++			defineExtension({
++				name: "block-generation",
++				hooks: [hook(GenerationTask, { beforeRequest: () => ({ block: "policy denied" }) })],
++			}),
++		);
++		const { harness, root } = await openChat(new MemoryStorage(), setup);
++		harness.resume();
++		const submission = await root.submit({ type: "input", content: "hi" }, context);
++		await expect(submission.wait(context)).resolves.toMatchObject({
++			status: "unanswered",
++			reason: "blocked",
++			detail: "policy denied",
++		});
++		expect(setup.faux.state.callCount).toBe(0);
++		expect(await live(harness, root)).toEqual({});
++		const task = (await harness.commit((tx) => tx.scanTasks({ conversationId: root.id }, 10), context)).items[0];
++		expect(task?.state).toEqual({
++			status: "terminal",
++			outcome: { status: "completed", result: { blocked: "policy denied" } },
++		});
++		await harness.close(context);
++	});
++
++	it("a first block including an empty reason wins over later hooks and leaves the conversation reusable", async () => {
++		const setup = chatSetup();
++		const storage = new MemoryStorage();
++		let lateHooks = 0;
++		setup.registry.install(
++			defineExtension({
++				name: "first-block",
++				hooks: [hook(GenerationTask, { beforeRequest: () => ({ block: "" }) })],
++			}),
++		);
++		setup.registry.install(
++			defineExtension({
++				name: "later-hook",
++				hooks: [
++					hook(GenerationTask, {
++						beforeRequest: (request) => {
++							lateHooks++;
++							return { messages: request.messages };
++						},
++					}),
++				],
++			}),
++		);
++		const { harness, root } = await openChat(storage, setup);
++		const submission = await root.submit({ type: "input", content: "first" }, context);
++		expect(await submission.wait(context)).toMatchObject({ status: "unanswered", reason: "blocked", detail: "" });
++		expect(lateHooks).toBe(0);
++		expect(setup.faux.state.callCount).toBe(0);
++		expect(await submission.status(context)).toMatchObject({ reason: "blocked", detail: "" });
++		setup.registry.install(defineExtension({ name: "first-block" }));
++		setup.faux.setResponses([fauxAssistantMessage("allowed")]);
++		expect(await (await root.submit({ type: "input", content: "next" }, context)).wait(context)).toMatchObject({
++			status: "done",
++		});
++		expect(setup.faux.state.callCount).toBe(1);
++		await harness.close(context);
++	});
++
++	it("rechecks guards after all hooks so a later revocation cannot dispatch", async () => {
++		const setup = chatSetup();
++		let allowed = true;
++		setup.registry.install(
++			defineExtension({
++				name: "guard",
++				hooks: [
++					hook(GenerationTask, {
++						beforeRequest: (request) => ({
++							messages: request.messages,
++							check: () => {
++								if (!allowed) throw new Error("revoked");
++							},
++						}),
++					}),
++				],
++			}),
++		);
++		setup.registry.install(
++			defineExtension({
++				name: "revocation",
++				hooks: [
++					hook(GenerationTask, {
++						beforeRequest: async () => {
++							allowed = false;
++						},
++					}),
++				],
++			}),
++		);
++		const { harness, root } = await openChat(new MemoryStorage(), setup);
++		expect(await (await root.submit({ type: "input", content: "hi" }, context)).wait(context)).toMatchObject({
++			reason: "blocked",
++			detail: "revoked",
++		});
++		expect(setup.faux.state.callCount).toBe(0);
++		await harness.close(context);
++	});
++
++	it("a payload-time guard rejection settles as blocked instead of provider error", async () => {
++		const setup = chatSetup();
++		let allowed = true;
++		setup.registry.install(
++			defineExtension({
++				name: "payload-guard",
++				hooks: [
++					hook(GenerationTask, {
++						beforeRequest: (request) => ({
++							messages: request.messages,
++							check: () => {
++								if (!allowed) throw new Error("payload revoked");
++							},
++						}),
++					}),
++				],
++			}),
++		);
++		const guarded = {
++			...setup,
++			models: withStream(setup.models, (model, _request, options) => {
++				allowed = false;
++				return {
++					[Symbol.asyncIterator]: async function* () {},
++					result: async () => {
++						await options?.onPayload?.({}, model);
++						return fauxAssistantMessage("must not be reached");
++					},
++				} as ReturnType<Models["streamSimple"]>;
++			}),
++		};
++		const { harness, root } = await openChat(new MemoryStorage(), guarded);
++		expect(await (await root.submit({ type: "input", content: "hi" }, context)).wait(context)).toMatchObject({
++			reason: "blocked",
++			detail: "payload revoked",
++		});
++		expect(setup.faux.state.callCount).toBe(0);
++		expect(setup.reports).toEqual([]);
++		await harness.close(context);
++	});
++
+ 	it("stores partials as deltas and a complete base once nothing is in flight", async () => {
+ 		const setup = chatSetup({ tokensPerSecond: 200, tokenSize: { min: 1, max: 1 } });
+ 		setup.faux.setResponses([fauxAssistantMessage("w".repeat(200))]);
+diff --git a/packages/durable/test/pakka-entry-archive.test.ts b/packages/durable/test/pakka-entry-archive.test.ts
+new file mode 100644
+index 0000000..2c5615d
+--- /dev/null
++++ b/packages/durable/test/pakka-entry-archive.test.ts
+@@ -0,0 +1,147 @@
++import { test, vi } from "vitest";
++import { strict as assert } from "node:assert";
++import { mkdtemp, realpath } from "node:fs/promises";
++import { join } from "node:path";
++import { tmpdir } from "node:os";
++import { createSession, type EntryId } from "@earendil-works/pi-durable";
++import { SqliteStorage } from "@earendil-works/pi-durable/storage/sqlite";
++import { openNodeSqliteDatabase, openNodeSqliteStorage } from "@earendil-works/pi-durable/storage/sqlite/node";
++import { BACKGROUND_CONTEXT } from "@earendil-works/chord/context";
++
++const context = BACKGROUND_CONTEXT;
++
++test("Durable archive: metadata and exact bounded bytes preserve original records without full decode", async () => {
++	const directory = await realpath(await mkdtemp(join(tmpdir(), "pakka-entry-archive-")));
++	const storage = await openNodeSqliteStorage(join(directory, "main.sqlite"));
++	const session = createSession(storage);
++	try {
++		const large = "中🙂\\\"\n".repeat(240000) + "\ud800";
++		const entry = await session.commit(async (tx) => {
++			const root = await tx.createConversation({ ownership: { kind: "ownerless" } });
++			return tx.appendEntry(root.id, { kind: "test.large", data: { value: large } });
++		}, context);
++		const archive = storage.entryArchive;
++		assert.ok(archive, "Installed Durable must expose its public bounded entry archive");
++		const header = await archive.header(entry.conversationId, entry.id, context);
++		assert.ok(header);
++		assert.equal(header.id, entry.id);
++		assert.equal(header.conversationId, entry.conversationId);
++		assert.ok(header.byteLength > 2 * 1024 * 1024);
++		assert.equal(Object.hasOwn(header, "record"), false);
++		assert.equal(Object.hasOwn(header, "model"), false);
++		const chunks: Buffer[] = [];
++		let offset = 0;
++		while (offset < header.byteLength) {
++			const chunk = await archive.read(entry.conversationId, entry.id, { offset, length: 65536, commitSeq: header.commitSeq }, context);
++			assert.ok(chunk);
++			assert.ok(chunk.bytes.length > 0 && chunk.bytes.length <= 65536);
++			assert.equal(chunk.offset, offset);
++			assert.equal(chunk.nextOffset, offset + chunk.bytes.length);
++			chunks.push(Buffer.from(chunk.bytes));
++			offset = chunk.nextOffset;
++		}
++		const original = await storage.entry(entry.conversationId, entry.id, context);
++		assert.ok(original);
++		assert.equal(Buffer.concat(chunks).toString("utf8"), JSON.stringify(original.entry));
++		assert.equal(JSON.parse(Buffer.concat(chunks).toString("utf8")).data.value, large);
++		await assert.rejects(archive.read(entry.conversationId, entry.id, { offset: -1, length: 10, commitSeq: header.commitSeq }, context));
++		await assert.rejects(archive.read(entry.conversationId, entry.id, { offset: 0, length: 65537, commitSeq: header.commitSeq }, context));
++		await assert.rejects(archive.read(entry.conversationId, entry.id, { offset: header.byteLength + 1, length: 10, commitSeq: header.commitSeq }, context));
++		await assert.rejects(archive.read(entry.conversationId, entry.id, { offset: 0, length: 10, commitSeq: (Number(header.commitSeq) + 1) as typeof header.commitSeq }, context));
++	} finally {
++		await session.close(context);
++	}
++});
++
++test("Durable archive: fork cutoffs, unrelated IDs and both scan orders match the original ancestry", async () => {
++	const directory = await realpath(await mkdtemp(join(tmpdir(), "pakka-entry-fork-")));
++	const storage = await openNodeSqliteStorage(join(directory, "main.sqlite"));
++	const session = createSession(storage);
++	try {
++		const setup = await session.commit(async (tx) => {
++			const parent = await tx.createConversation({ ownership: { kind: "ownerless" } });
++			const at = await tx.appendEntry(parent.id, { kind: "test.visible", data: { text: "VISIBLE" } });
++			const late = await tx.appendEntry(parent.id, { kind: "test.hidden", data: { text: "LATE-PRIVATE" } });
++			const peer = await tx.createConversation({ ownership: { kind: "ownerless" } });
++			const hidden = await tx.appendEntry(peer.id, { kind: "test.peer", data: { text: "PEER-PRIVATE" } });
++			return { parent, at, late, hidden };
++		}, context);
++		const child = await session.commit((tx) => tx.forkConversation(setup.parent.id, setup.at.id, { ownership: { kind: "ownerless" } }), context);
++		await session.commit((tx) => tx.appendEntry(child.id, { kind: "test.child" }), context);
++		const archive = storage.entryArchive;
++		assert.ok(archive, "Installed Durable must expose its public bounded entry archive");
++		assert.ok(await archive.header(child.id, setup.at.id, context));
++		assert.equal(await archive.header(child.id, setup.late.id, context), undefined);
++		assert.equal(await archive.header(child.id, setup.hidden.id, context), undefined);
++		assert.equal(await archive.header(child.id, Number.MAX_SAFE_INTEGER as EntryId, context), undefined);
++		for (const order of ["ascending", "descending"] as const) {
++			const full = await storage.scanEntries({ conversationId: child.id, order }, 1, undefined, context);
++			const small = await archive.scan({ conversationId: child.id, order }, 1, undefined, context);
++			assert.deepEqual(small.items.map((row) => row.id), full.items.map((row) => row.id));
++			assert.deepEqual(small.next, full.next);
++			const fullNext = await storage.scanEntries({ conversationId: child.id, order }, 1, full.next, context);
++			const smallNext = await archive.scan({ conversationId: child.id, order }, 1, small.next, context);
++			assert.deepEqual(smallNext.items.map((row) => row.id), fullNext.items.map((row) => row.id));
++		}
++		const header = await archive.header(setup.parent.id, setup.late.id, context);
++		assert.ok(header);
++		assert.equal(await archive.read(child.id, setup.late.id, { offset: 0, length: 16, commitSeq: header.commitSeq }, context), undefined);
++	} finally {
++		await session.close(context);
++	}
++	await assert.rejects(storage.entryArchive!.scan({ conversationId: 1 as never }, 1, undefined, context), /closed/);
++});
++
++test("Durable archive: repeated ranges reuse bounded raw bytes without letting a reader poison source or fork visibility", async () => {
++	const directory = await realpath(await mkdtemp(join(tmpdir(), "pakka-entry-byte-cache-")));
++	const db = await openNodeSqliteDatabase(join(directory, "main.sqlite"));
++	const gets = vi.spyOn(db, "get"), alls = vi.spyOn(db, "all");
++	const storage = await SqliteStorage.open(db);
++	const session = createSession(storage);
++	try {
++		const { parent, visible } = await session.commit(async (tx) => {
++			const parent = await tx.createConversation({ ownership: { kind: "ownerless" } });
++			const visible = await tx.appendEntry(parent.id, { kind: "test.cache", data: { value: "A".repeat(12 * 1024 * 1024) } });
++			return { parent, visible };
++		}, context);
++		// A native fork requires its parent/point to be committed, not merely staged in the same transaction.
++		const child = await session.commit((tx) => tx.forkConversation(parent.id, visible.id, { ownership: { kind: "ownerless" } }), context);
++		const { second, third } = await session.commit(async (tx) => {
++			const second = await tx.appendEntry(parent.id, { kind: "test.cache", data: { value: "B".repeat(12 * 1024 * 1024) } });
++			const third = await tx.appendEntry(parent.id, { kind: "test.cache", data: { value: "C".repeat(12 * 1024 * 1024) } });
++			return { second, third };
++		}, context);
++		const setup = { parent, visible, child, second, third };
++		const archive = storage.entryArchive;
++		const header = await archive.header(setup.parent.id, setup.visible.id, context);
++		assert.ok(header);
++		gets.mockClear(); alls.mockClear();
++		const first = await archive.read(setup.parent.id, setup.visible.id, { offset: 0, length: 65536, commitSeq: header.commitSeq }, context);
++		assert.ok(first);
++		const expected = Buffer.from(first.bytes);
++		first.bytes.fill(0);
++		for (let index = 0; index < 64; index++) {
++			const chunk = await archive.read(setup.parent.id, setup.visible.id, { offset: index * 65536, length: 65536, commitSeq: header.commitSeq }, context);
++			assert.ok(chunk && chunk.bytes.length <= 65536);
++			if (index === 0) assert.deepEqual(Buffer.from(chunk.bytes), expected);
++		}
++		const bodyQueries = [...gets.mock.calls, ...alls.mock.calls].filter(([sql]) => sql.includes("record AS BLOB"));
++		assert.ok(bodyQueries.length <= 2, `one immutable byte window must not recast the same record on every range: observed ${bodyQueries.length}`);
++		// The memory budget, not a cumulative record count: three 12 MiB rows exceed the 32 MiB window.
++		for (const entry of [setup.second, setup.third]) {
++			const item = await archive.header(setup.parent.id, entry.id, context);
++			assert.ok(item);
++			await archive.read(setup.parent.id, entry.id, { offset: 0, length: 64, commitSeq: item.commitSeq }, context);
++		}
++		assert.equal(await archive.header(setup.child.id, setup.third.id, context), undefined);
++		const late = await archive.header(setup.parent.id, setup.third.id, context);
++		assert.ok(late);
++		assert.equal(await archive.read(setup.child.id, setup.third.id, { offset: 0, length: 64, commitSeq: late.commitSeq }, context), undefined);
++		gets.mockClear(); alls.mockClear();
++		await archive.read(setup.parent.id, setup.visible.id, { offset: 0, length: 64, commitSeq: header.commitSeq }, context);
++		assert.ok([...gets.mock.calls, ...alls.mock.calls].some(([sql]) => sql.includes("record AS BLOB")), "LRU evicts raw bodies above its byte budget");
++	} finally {
++		gets.mockRestore(); alls.mockRestore();
++		await session.close(context);
++	}
++});
+diff --git a/packages/durable/test/pakka-generation-http.test.ts b/packages/durable/test/pakka-generation-http.test.ts
+new file mode 100644
+index 0000000..ee2b66a
+--- /dev/null
++++ b/packages/durable/test/pakka-generation-http.test.ts
+@@ -0,0 +1,231 @@
++import { createServer } from "node:http";
++import { createModels, createProvider, type Model } from "@earendil-works/pi-ai";
++import { openAICompletionsApi } from "@earendil-works/pi-ai/api/openai-completions.lazy";
++import { BACKGROUND_CONTEXT } from "@earendil-works/chord/context";
++import {
++	createRegistry,
++	defineExtension,
++	GenerationTask,
++	Harness,
++	hook,
++	type GenerationHooks,
++} from "@earendil-works/pi-durable";
++import { MemoryStorage } from "@earendil-works/pi-durable/storage/memory";
++import { describe, expect, test } from "vitest";
++
++const context = BACKGROUND_CONTEXT;
++
++/** Only an explicitly registered loopback provider; no environment credentials or model catalogs. */
++async function fixture(handlers: Partial<GenerationHooks>, beforePayload?: () => Promise<void>) {
++	const requests: { url: string | undefined; body: unknown }[] = [];
++	const failures: unknown[] = [];
++	const server = createServer(async (request, response) => {
++		try {
++			const chunks: Buffer[] = [];
++			for await (const chunk of request) chunks.push(Buffer.from(chunk));
++			requests.push({ url: request.url, body: JSON.parse(Buffer.concat(chunks).toString("utf8")) });
++			response.writeHead(200, { "content-type": "text/event-stream" });
++			for (const choice of [
++				{ index: 0, delta: { role: "assistant", content: "local answer" }, finish_reason: null },
++				{ index: 0, delta: {}, finish_reason: "stop" },
++			]) {
++				response.write(
++					`data: ${JSON.stringify({
++						id: "pakka-local",
++						object: "chat.completion.chunk",
++						created: 1,
++						model: "pakka-policy",
++						choices: [choice],
++					})}\n\n`,
++				);
++			}
++			response.end("data: [DONE]\n\n");
++		} catch (error) {
++			failures.push(error);
++			response.writeHead(500);
++			response.end("local fixture failed");
++		}
++	});
++	await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
++	const address = server.address();
++	if (address === null || typeof address === "string") throw new Error("Missing local server address");
++	const model: Model = {
++		id: "pakka-policy",
++		name: "Pakka local policy",
++		api: "openai-completions",
++		provider: "pakka-local",
++		baseUrl: `http://127.0.0.1:${address.port}/v1`,
++		reasoning: false,
++		input: ["text"],
++		cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
++		contextWindow: 100_000,
++		maxTokens: 1024,
++	};
++	const api = openAICompletionsApi();
++	const models = createModels();
++	models.setProvider(
++		createProvider({
++			id: model.provider,
++			models: [model],
++			auth: { apiKey: { name: "local", resolve: async () => ({ auth: { apiKey: "local-only" } }) } },
++			api: {
++				stream: api.stream,
++				streamSimple: (requestModel, input, options) =>
++					api.streamSimple(requestModel, input, {
++						...options,
++						onPayload: async (payload, payloadModel) => {
++							await beforePayload?.();
++							return options?.onPayload?.(payload, payloadModel);
++						},
++					}),
++			},
++		}),
++	);
++	const registry = createRegistry();
++	registry.install(defineExtension({ name: "pakka-policy", hooks: [hook(GenerationTask, handlers)] }));
++	const reports: unknown[] = [];
++	let harness: Harness | undefined;
++	try {
++		harness = await Harness.open(
++			new MemoryStorage(),
++			{
++				models,
++				registry,
++				settings: { retry: { enabled: false }, compaction: { enabled: false } },
++				onReport: (error) => {
++					reports.push(error);
++				},
++			},
++			context,
++		);
++		const conversation = await harness.root(context, {
++			agent: { model: { provider: model.provider, modelId: model.id } },
++		});
++		return {
++			harness,
++			conversation,
++			requests,
++			reports,
++			failures,
++			close: async () => {
++				try {
++					await harness!.close(context);
++				} finally {
++					await new Promise<void>((resolve, reject) =>
++						server.close((error) => (error ? reject(error) : resolve())),
++					);
++				}
++			},
++		};
++	} catch (error) {
++		try {
++			await harness?.close(context);
++		} finally {
++			await new Promise<void>((resolve) => server.close(() => resolve()));
++		}
++		throw error;
++	}
++}
++
++describe("Pakka generation policy with real loopback HTTP", () => {
++	test("explicit block retains native receipts and idle; allowing a later input really reaches HTTP", async () => {
++		let allowed = false;
++		let decisions = 0;
++		const f = await fixture({
++			beforeRequest: () => {
++				decisions++;
++				return allowed ? undefined : { block: "policy denied" };
++			},
++		});
++		try {
++			const submission = { type: "input", content: "blocked input", requestId: "blocked-once" } as const;
++			const rejected = await f.conversation.submit(submission, context);
++			expect(await rejected.wait(context)).toMatchObject({
++				status: "unanswered",
++				reason: "blocked",
++				detail: "policy denied",
++			});
++			await f.conversation.waitForIdle(context);
++			expect(decisions).toBe(1);
++			expect(f.requests).toHaveLength(0);
++			expect(
++				(await f.conversation.context(context)).entries.filter((entry) => entry.kind === "pi.assistant"),
++			).toHaveLength(0);
++			const duplicate = await f.conversation.submit(submission, context);
++			expect(duplicate.id).toBe(rejected.id);
++			expect(await duplicate.wait(context)).toMatchObject({ status: "unanswered", reason: "blocked" });
++			expect(decisions).toBe(1);
++			allowed = true;
++			const accepted = await f.conversation.submit({ type: "input", content: "allowed input" }, context);
++			expect(await accepted.wait(context)).toMatchObject({ status: "done" });
++			await f.conversation.waitForIdle(context);
++			expect(decisions).toBe(2);
++			expect(f.requests).toHaveLength(1);
++			expect(f.requests[0].url).toBe("/v1/chat/completions");
++			expect(JSON.stringify(f.requests[0].body)).toContain("allowed input");
++			expect(f.reports).toEqual([]);
++			expect(f.failures).toEqual([]);
++		} finally {
++			await f.close();
++		}
++	});
++
++	test("revocation after an awaited provider payload transform blocks before HTTP", async () => {
++		let allowed = true;
++		let payloads = 0;
++		let checks = 0;
++		const f = await fixture(
++			{
++				beforeRequest: ({ messages }) => ({
++					messages,
++					check: () => {
++						checks++;
++						if (!allowed) throw new Error("revoked at payload");
++					},
++				}),
++			},
++			async () => {
++				await Promise.resolve();
++				payloads++;
++				allowed = false;
++			},
++		);
++		try {
++			const accepted = await f.conversation.submit({ type: "input", content: "revoked input" }, context);
++			expect(await accepted.wait(context)).toMatchObject({
++				status: "unanswered",
++				reason: "blocked",
++				detail: "revoked at payload",
++			});
++			await f.conversation.waitForIdle(context);
++			expect(checks).toBe(2);
++			expect(payloads).toBe(1);
++			expect(f.requests).toHaveLength(0);
++			expect(
++				(await f.conversation.context(context)).entries.filter((entry) => entry.kind === "pi.assistant"),
++			).toHaveLength(0);
++			expect(f.failures).toEqual([]);
++		} finally {
++			await f.close();
++		}
++	});
++
++	test("ordinary hook exceptions still report and continue to actual HTTP", async () => {
++		const failure = new Error("observer failed");
++		const f = await fixture({
++			beforeRequest: () => {
++				throw failure;
++			},
++		});
++		try {
++			const accepted = await f.conversation.submit({ type: "input", content: "ordinary hook throw" }, context);
++			expect(await accepted.wait(context)).toMatchObject({ status: "done" });
++			await f.conversation.waitForIdle(context);
++			expect(f.requests).toHaveLength(1);
++			expect(f.reports).toContain(failure);
++			expect(f.failures).toEqual([]);
++		} finally {
++			await f.close();
++		}
++	});
++});

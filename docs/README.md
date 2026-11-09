@@ -7,6 +7,7 @@
 | 当前预期与有效约定           | [state](state/README.md)                                                             |
 | 当前工作和下一步             | [OVERVIEW](OVERVIEW.md)和所属 OpenSpec tasks，本地 `docs/.temp/active-plan.md`       |
 | 形成/调整与完整 change＋spec | [changes 摘要](changes/README.md) → [OpenSpec](../openspec/changes/)                 |
+| 本机登录、备份、恢复与升级   | [本机维护指南](guides/LOCAL-MAINTENANCE.md)                                          |
 | 使用工作台和 Team            | [WebUI](guides/WEBUI-GUIDE.md)、[Team](guides/MAS-BOARD.md)                          |
 | 装配 headless 应用           | [应用配置](guides/MAS-APPLICATION-API.md)、[支持边界](guides/MAS-PRODUCT-SUPPORT.md) |
 | 提交与贡献                   | [贡献指南](../CONTRIBUTING.md)、[Git 协作规范](development/GIT-WORKFLOW.md)          |

@@ -24,6 +24,8 @@ Pakka 提供受控 Pi 运行时、MAS 服务与可选 pakka-webui Web 工作台�
 - local、LAN、tailnet 与公网 tunnel 按各自的传输和认证条件使用。headless v1 使用 loopback 专用令牌接口，WebUI 使用独立的人类认证与受控服务。
 - 普通 Conversation 的生命周期区分归档、恢复与删除；MAS 成员退休按成员寿命契约停止接纳并处理已接纳工作。
 
+本机原身份恢复、异常占用、纳管域冷备份、原位置恢复和固定版本升级使用独立的[停服维护面](local-maintenance.md)。维护不创建执行引擎，恢复后不自动推进备份中的未确认工作。
+
 服务行为细则见 [WebUI](webui.md)，界面结构与交互见[前端](frontend.md)，多 Agent 关系见 [MAS](mas.md)。
 
 ## 数据、信任与可选策略

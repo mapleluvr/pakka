@@ -49,7 +49,7 @@ test(
 			await closedObserved;
 			const settled = scans;
 			// Two further nominal periods must cause no observation after closure.
-			await delay(250);
+			await delay(750);
 			assert.equal(scans, settled, "closed native ownership must retire its passive timer");
 			assert.equal(m.f.requests.length, 0);
 		} finally {

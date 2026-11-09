@@ -1,0 +1,157 @@
+.content-reader {
+	min-width: 0;
+	padding: 10px;
+	border-top: 1px solid var(--border);
+}
+.content-reader-head {
+	display: flex;
+	justify-content: space-between;
+	align-items: baseline;
+	gap: 8px;
+	color: var(--muted);
+	font-size: 12px;
+	margin-bottom: 8px;
+}
+.content-reader-head strong {
+	font-weight: 500;
+	color: var(--text);
+}
+.content-text-viewport {
+	height: 280px;
+	max-height: 40vh;
+	min-height: 40px;
+	overflow: auto;
+	position: relative;
+	background: var(--card-outer);
+	border: 1px solid var(--border);
+	border-radius: 5px;
+}
+.content-text-canvas {
+	position: relative;
+	min-width: 100%;
+}
+.content-text-line {
+	position: absolute;
+	height: 20px;
+	line-height: 20px;
+	font-family: var(--mono);
+	font-size: 12px;
+	white-space: pre;
+	color: var(--text);
+	padding-left: 6px;
+}
+.content-actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 6px;
+	margin-top: 8px;
+}
+.content-actions .pill-btn,
+.content-media .pill-btn {
+	font-size: 11px;
+	text-decoration: none;
+}
+.content-progress,
+.content-hint {
+	color: var(--muted);
+	font-size: 11px;
+	margin: 6px 0;
+	overflow-wrap: anywhere;
+}
+.content-original-search {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	margin-bottom: 8px;
+}
+.content-original-search input {
+	min-width: 0;
+	flex: 1;
+	font-size: 12px;
+}
+.content-error {
+	color: var(--danger, #e87373);
+	font-size: 12px;
+	margin: 8px 0 0;
+}
+.content-disclosure {
+	min-width: 0;
+	margin: 6px 0;
+}
+.content-disclosure > summary {
+	font-size: 12px;
+	color: var(--muted);
+	padding: 7px 9px;
+	cursor: pointer;
+	gap: 6px;
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+}
+.content-size {
+	margin-left: auto;
+	font-size: 10px;
+	color: var(--faint);
+	white-space: nowrap;
+}
+.content-media {
+	padding: 8px 10px;
+	min-width: 0;
+}
+.content-media .pocket-image {
+	display: block;
+	max-width: 100%;
+	max-height: 480px;
+	object-fit: contain;
+}
+.content-media p {
+	font-size: 12px;
+	color: var(--muted);
+	overflow-wrap: anywhere;
+}
+.tool-body {
+	min-width: 0;
+}
+.history-window-status {
+	color: var(--muted);
+	font-size: 12px;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
+.history-window-status p {
+	margin: 0;
+	flex-basis: 100%;
+}
+/* The virtualizer owns row anchoring; native anchoring must not feed mounted heights back into its range. */
+.conversation-scroll {
+	overflow-anchor: none;
+}
+.virtual-transcript {
+	position: relative;
+}
+.virtual-history-row {
+	display: flow-root;
+	margin: 0;
+	min-width: 0;
+}
+@media (max-width: 767px) {
+	.content-reader {
+		padding: 8px;
+	}
+	.content-reader .pill-btn,
+	.content-media .pill-btn,
+	.content-disclosure > summary,
+	.history-window-status .pill-btn {
+		min-height: 44px;
+	}
+	.content-original-search input {
+		font-size: max(1rem, 16px);
+		min-height: 44px;
+	}
+	.content-text-viewport {
+		height: 220px;
+	}
+}

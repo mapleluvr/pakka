@@ -2,6 +2,44 @@ import type { Models, ModelThinkingLevel, Model, Api } from "@earendil-works/pi-
 
 export type Hook = "real_context.write" | "context_artifacts.write";
 export type Grant = Hook | "input.submit" | "branch.control" | "model.infer";
+export interface StorageMaintenanceWork {
+	readonly pendingTasks: number;
+	readonly queuedInputs: number;
+	readonly fingerprint: string;
+	readonly sample: readonly {
+		readonly kind: "task" | "input";
+		readonly id: string;
+		readonly conversationId: string;
+		readonly state: string;
+		readonly definition?: string;
+	}[];
+	readonly sampleTruncated: boolean;
+}
+/** Trusted offline access. Does not construct a Harness, scheduler, model or tool. */
+export interface StorageMaintenanceOptions {
+	readonly storageDir: string;
+	readonly expectedSessionId?: string;
+	readonly stores: readonly RuntimeStoreOptions[];
+}
+export interface StorageMaintenance {
+	readonly identity: {
+		readonly sessionId: string;
+		readonly storageDir: string;
+		readonly cwd?: string;
+		readonly kind: "runtime" | "compresser";
+	};
+	snapshot(namespace: string): Promise<RuntimeStoreSnapshot>;
+	work(): Promise<StorageMaintenanceWork>;
+	commit(
+		changes: readonly {
+			readonly namespace: string;
+			readonly expectedVersion: number;
+			readonly data: JsonObject;
+		}[],
+	): Promise<void>;
+	backup(destination: string): Promise<{ readonly sessionId: string; readonly file: string }>;
+	close(): Promise<void>;
+}
 export interface WriterRecoveryOptions {
 	readonly storageDir: string;
 	readonly expectedClaim: { readonly pid: number; readonly nonce: string };
@@ -49,6 +87,8 @@ export interface View {
 	readonly epoch: number;
 	readonly generation: number;
 	readonly leafId: string | null;
+	/** False for a cold metadata view: entries/context are not a complete execution frame and leafId is unknown. */
+	readonly historyLoaded?: boolean;
 	readonly entries: readonly { id: string; type: string; role?: string; text?: string }[];
 	readonly context: readonly { role: string; text: string }[];
 	readonly autoCompaction: boolean;
@@ -479,6 +519,8 @@ export type ConversationConfigurationChange = {
 	readonly thinkingLevel?: ModelThinkingLevel;
 };
 export interface RuntimeOptions extends HostOptions {
+	/** Product cold browsing is opt-in; independent SDK hosts keep the existing eager frame behavior. */
+	readonly observation?: "lazy" | "eager";
 	/** Explicit server directory roots; defaults to the approved profiles' cwd trees. Not an OS sandbox. */
 	readonly cwdRoots?: readonly string[];
 	/** Initial policy. A changed bootstrap value is audited; unchanged values preserve later management adjustments. */
@@ -556,15 +598,47 @@ export interface DisplayReceipt {
 	readonly requestId: string;
 	readonly entryId: string;
 }
+/** A source-bound display content reference; it grants no read authority. Offsets use source-encoded bytes. */
+export type ConversationContentReference = JsonObject & {
+	readonly id: string;
+	readonly source: "entry" | "live";
+	/** Required for committed entry content; absent for a current live value. */
+	readonly entryId?: string;
+	/** Attribution only. The product may omit an inherited owner that is outside the reader's resource scope. */
+	readonly sourceConversationId?: string;
+	readonly taskId?: string;
+	readonly callId?: string;
+	readonly revision: string;
+	readonly path: string;
+	readonly encoding: "text" | "json" | "base64";
+	readonly byteLength: number;
+	/** True only when the inline projection retains the complete semantic value. */
+	readonly previewComplete: boolean;
+};
+export interface ConversationContentRange {
+	readonly offset: number;
+	readonly length: number;
+}
+export interface ConversationContentChunk {
+	readonly reference: ConversationContentReference;
+	readonly text: string;
+	readonly offset: number;
+	readonly nextOffset: number;
+	readonly complete: boolean;
+}
 export interface TranscriptMessage {
 	readonly role: "user" | "assistant" | "toolResult";
-	readonly content: string | readonly JsonObject[];
+	readonly content:
+		| string
+		| readonly (JsonObject & { readonly contentReference?: ConversationContentReference })[];
+	readonly contentReference?: ConversationContentReference;
 	readonly toolCallId?: string;
 	readonly toolName?: string;
 	readonly isError?: boolean;
 	readonly stopReason?: string;
 	/** Provider-reported error, retained verbatim rather than inferred from reply text. */
 	readonly errorMessage?: string;
+	readonly errorReference?: ConversationContentReference;
 }
 export interface ConversationReadOptions {
 	readonly limit?: number;
@@ -583,7 +657,7 @@ export interface ConversationSnapshot {
 		readonly kind: string;
 		readonly taskId?: string;
 		readonly messages: readonly TranscriptMessage[];
-		readonly display?: DisplayWrite;
+		readonly display?: DisplayWrite & { readonly contentReference?: ConversationContentReference };
 	}[];
 	readonly entriesTruncated: boolean;
 	/** Present only when earlier entries remain; use as the next page's exclusive boundary. */
@@ -597,9 +671,17 @@ export interface ConversationSnapshot {
 			readonly status: "pending" | "running" | "done";
 			readonly taskId?: string;
 			readonly output?: string;
+			readonly contentReference?: ConversationContentReference;
+			/** Native capture omissions, independent of display-preview clipping. */
+			readonly droppedBytes?: number;
+			readonly droppedLines?: number;
 		}[];
 	};
 	readonly usage: UsageDTO;
+}
+export interface ConversationPreviewOptions extends ConversationReadOptions {
+	/** At most 256 KiB; the reader stops at an entry boundary and supplies the next cursor. */
+	readonly maxBytes?: number;
 }
 export interface ConversationSpec {
 	readonly key: string;
@@ -617,7 +699,9 @@ export interface RuntimeView {
 /** Bootstrap-owned catalog. Data never grants authority and commands never expose native handles. */
 export interface CatalogOptions {
 	readonly namespace: string;
-	readonly maxDeliveries: number;
+	/** @deprecated Ignored compatibility input. Retained deliveries have no cumulative count limit. */
+	readonly maxDeliveries?: number;
+	/** Maximum queued/placed deliveries per recipient, independent of retained history. */
 	readonly maxPending: number;
 }
 export type MemberLifetime = "persistent" | "temporary" | "task-bound" | "background";
@@ -771,6 +855,23 @@ export interface Runtime {
 		check: () => void,
 		options?: ConversationReadOptions,
 	): Promise<ConversationSnapshot>;
+	/** Cheap process-local change marker; never a durable entry version or an authorization. */
+	observationRevision(ref: ConversationRef, check: () => void): number;
+	/** Materialize a read-only complete execution frame when explicitly needed; never resumes tasks by itself. */
+	prepareExecution(ref: ConversationRef, check: () => void): Promise<void>;
+	/** Bounded passive display projection, independent of the execution frame and complete archive. */
+	previewConversation(
+		ref: ConversationRef,
+		check: () => void,
+		options?: ConversationPreviewOptions,
+	): Promise<ConversationSnapshot>;
+	/** Read the original published content range, under current authority and exact source revision. */
+	readContent(
+		ref: ConversationRef,
+		reference: ConversationContentReference,
+		range: ConversationContentRange,
+		check: () => void,
+	): Promise<ConversationContentChunk>;
 	/** Durable display-only record, never a model input; retries require an identical actor/request/payload. */
 	writeDisplay(ref: ConversationRef, input: DisplayWrite, check: () => void): Promise<DisplayReceipt>;
 	conversation(ref: ConversationRef): Promise<Host>;

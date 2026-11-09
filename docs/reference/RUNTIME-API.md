@@ -115,9 +115,48 @@ pakka-webui 保留宿主已有 resolver 作为初始来源，仅全局管理员�
 
 `reservedSessionId` 是受信任 bootstrap 选择的 lowercase UUID storage/provenance 地址，不是 provider identity。它具有 create-once 语义；已存在目录不会被覆盖。重开必须明确指定同一 owned storage 的 `reopenSessionFile`，且 provenance、runtime 配置与 reservation 均匹配。worker manager 使用这条接口恢复固定 placement；未知初始化和遗留 writer claim 不允许分配替代目录或自动抢占。
 
+## 离线存储维护
+
+`openStorageMaintenance({ storageDir, expectedSessionId?, stores })` 是受信任的本机停服入口，打开原存储的公开 Pi Session 内核，不创建 Harness、scheduler、provider 或 Job 定义。它仍需要物理来源、原 Session 和独占 writer 核对，不能用来接管存活进程。产品维护/恢复门禁由启动器与 adapter 共用。
+
+返回冻结 `StorageMaintenance`：
+
+- `identity` 含原 `sessionId/storageDir/kind` 及可选 `cwd`。
+- `snapshot(namespace)` 与 `commit(changes)` 只允许 `stores` 明确批准的命名空间及字节预算；多项 CAS 在同一事务中检查 `expectedVersion` 并提交。未知提交保持封闭。
+- `work()` 返回未完成 task/input 的数量、完整身份指纹及有限样本，`sampleTruncated` 不等于已完成检查。检查不装配任务处理器、不修改原生状态。
+- `backup(destination)` 对原 SQLite 存储生成一致快照并核对完整性/身份，不是跨域备份协调器。
+- `close()` 关闭维护内核并按已确认结果释放 writer；调用方必须在 `finally` 中关闭。
+
+```ts
+import { openStorageMaintenance } from "@pakka/agent";
+const storage = await openStorageMaintenance({
+	storageDir: "/absolute/product/sessions/original-uuid",
+	expectedSessionId: "original-uuid",
+	stores: [],
+});
+try {
+	console.log(await storage.work());
+	await storage.backup("/absolute/new-private-snapshot.sqlite");
+} finally {
+	await storage.close();
+}
+```
+
+目标必须是实际原 UUID，示例不是可直接运行的存储地址。该端口只交给可信维护程序，不能作为浏览器或模型的通用权限。跨 Session 一致性、认证失效、目录发布及恢复停机由[产品维护层](../state/local-maintenance.md)负责。
+
 ## Conversation 读取与显示端口
 
 受信任 bootstrap 使用 `runtime.readConversation(ref, check, { limit, beforeEntryId })` 取得冻结的 `ConversationSnapshot`：已提交消息、display records、live tools 和 usage。只投影所选 Conversation，不返回原生 handles、system/config/provider identity。异步读取完成后重验 `check`。每页最多 256 entries，JSON envelope 上限 2 MiB；`truncated` 表示当前页受限。使用响应的 `olderBeforeId` 作为下一页的 `beforeEntryId` 读取更早记录。读取只作授权观察，不启动模型或提交存储。
+
+### 冷观察、预览与完整内容
+
+独立 SDK 的 `RuntimeOptions.observation` 默认 `"eager"`，保留既有完整执行视图。受信任宿主可显式选 `"lazy"`；普通 WebUI 的根／子 Session 默认使用该模式。`Host.view().historyLoaded === false` 表示执行历史尚未装载，不表示档案为空；查看目录、预览、详情和通知不会自动准备执行上下文。
+
+`runtime.previewConversation(ref, check, { limit, beforeEntryId, maxBytes })` 返回有界展示投影：页同时受条数和至多 256 KiB 字节限制，使用 `olderBeforeId` 前翻；完整存档并未裁剪。文本、参数和图片携带 `ConversationContentReference`，其中 `source/entryId/sourceConversationId/taskId/callId/path/revision` 定位原已发布字段。引用不授予权限，也不是客户端可以修改后获得另一资源的路径。
+
+`runtime.readContent(ref, reference, { offset, length }, check)` 每次读取至多 64 KiB 的原来源范围，返回 `{ reference, text, offset, nextOffset, complete }`。等待前后检查原目标、当前 read 权限、分叉可见性和确切内容版本。范围坐标沿用来源编码字节；`text` 已解码，不能以其字符长度计算下一原文位置，必须使用 `nextOffset`。JSON 转义和 Unicode 字节边界仍能逐块重建原字段值。范围失效、版本变化、撤权或读取未确认都拒绝／要求重新核对，不串联别处同号调用，也不把未知状态伪造为完成。
+
+`runtime.observationRevision(ref, check)` 是廉价进程内变化标记，不是持久游标、正文版本或授权。`runtime.prepareExecution(ref, check)` 在显式需要时装载保留完整语义的执行 frame；该调用自身不启动任务。真正执行仍按原权限、预算、受控策略及 native scheduler 契约准备上下文。本读取／展示模式不代替执行 frame 的容量、全局 Runtime 字节预算或 worker 故障隔离。
 
 `runtime.writeDisplay(ref, { namespace, actorId, requestId, kind: "card" | "chat", text }, check)` 在原生 commit line 绑定引用与授权。相同 scope/request/payload 稳定去重，正常 reopen 后保留 receipt；不同 actor/namespace 不共用请求。显示内容没有模型贡献，不推进 model head、不替换原 requester。每 Conversation/display namespace 最多 4096 个去重记录，text 最多 16384 个 UTF-16 code units；容量超限明确拒绝，不删除旧 receipt 来伪造新准入。
 
