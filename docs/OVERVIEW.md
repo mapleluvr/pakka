@@ -4,7 +4,7 @@ Pakka 将 Pi Durable 的 Conversation、权限、持久化与 MAS 协作能力�
 
 ## 当前工作
 
-[RSI 长期工单持久化](changes/rsi-persistence.md) 已完成实现与独立复审：承接 #5 的 UI/Bot/MAS 薄层，采用按记录原子存储、详情分页、原请求核对及显式恢复。当前预期见 [RSI](state/rsi.md)，固定结果见[验证摘要](verification/RSI-PERSISTENCE.md)，分支交付由 [tasks](../openspec/changes/persist-rsi-ticket-records/tasks.md) 接续。
+[RSI 长期工单持久化](changes/rsi-persistence.md) 已完成实现与独立复审：承接 #5 的 UI/Bot/MAS 薄层，采用按记录原子存储、详情分页、原请求核对及显式恢复。当前预期见 [RSI](state/rsi.md)，固定结果见[验证摘要](verification/RSI-PERSISTENCE.md)，已通过 [PR #10](https://github.com/mapleluvr/pakka/pull/10) 提交至 dev、尚未合并，交付记录见 [tasks](../openspec/changes/persist-rsi-ticket-records/tasks.md)。
 
 [PR #8](https://github.com/mapleluvr/pakka/pull/8) 已合入 dev；长期投递、本机维护和懒观察的关键结果保留在各自 [verification](verification/README.md)。原始验证证据只在本地归档，Git 仅记录关键结果和整体 hash。
 
