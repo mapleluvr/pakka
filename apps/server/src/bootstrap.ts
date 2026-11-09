@@ -1,5 +1,5 @@
 import { createRuntime } from "@pakka/agent";
-import type { RuntimeOptions } from "@pakka/agent";
+import type { CatalogOptions, RuntimeOptions } from "@pakka/agent";
 import { createMas } from "@pakka/mas";
 import type { Mas, MasGrant } from "@pakka/mas";
 import { profileDevPacks, retainedProductRoots } from "./profile-devpack.ts";
@@ -21,7 +21,7 @@ interface RoleConfig {
 export interface BootstrapConfig {
 	readonly schema: "pakka.server.v1";
 	readonly runtime: RuntimeOptions;
-	readonly mas: { readonly namespace: string; readonly maxDeliveries: number; readonly maxPending: number };
+	readonly mas: CatalogOptions;
 	readonly members: readonly { readonly key: string; readonly owner: string; readonly profile?: string }[];
 	readonly roles: readonly RoleConfig[];
 	readonly devpack?: ProfileDevPackConfig;
@@ -158,9 +158,9 @@ export function decodeBootstrap(value: unknown): BootstrapConfig {
 		!shape(value, ["schema", "runtime", "mas", "members", "roles"], ["http", "devpack", "dynamite"]) ||
 		value.schema !== "pakka.server.v1" ||
 		!runtimeConfig(value.runtime) ||
-		!shape(value.mas, ["namespace", "maxDeliveries", "maxPending"]) ||
+		!shape(value.mas, ["namespace", "maxPending"], ["maxDeliveries"]) ||
 		!identity(value.mas.namespace) ||
-		!positive(value.mas.maxDeliveries) ||
+		(value.mas.maxDeliveries !== undefined && !positive(value.mas.maxDeliveries)) ||
 		!positive(value.mas.maxPending) ||
 		!Array.isArray(value.members) ||
 		value.members.length === 0 ||

@@ -6,6 +6,8 @@ import { basename, dirname, isAbsolute, join, resolve } from "node:path";
 import { startPocket, type PocketProductOptions } from "./bootstrap.ts";
 import { decodePocketProduct, loadPocketModule } from "./main.ts";
 import { createLocalProduct } from "./product-runtime.ts";
+import { maintenanceGateFile, saveMaintenanceTarget } from "./maintenance.ts";
+import { readRecoveryCredential, prepareRecoveryLink } from "./recovery-link.ts";
 
 type Configuration = { kind: "json" | "module"; path: string } | { kind: "local"; cwd: string };
 type StartupState = {
@@ -29,7 +31,17 @@ const usage = `Pakka — WebUI launcher
   pakka --config <host.json>                  Use and remember a host configuration
   pakka --config-module <trusted-host.mjs>    Use and remember trusted local host code
   pakka --no-open                            Do not open a browser
+  pakka --login-file <private-credential.json> Reopen and use the original owner's recovery login
   pakka --recover                            Explicitly reopen the recorded original Session
+  pakka recover login|writer                  Preview trusted offline recovery
+  pakka recover login --confirm <Session ID>  Issue original-owner login into a private local file
+  pakka recover writer --confirm <Session ID> Release only the original exited process claim
+  pakka backup --out <new-directory>          Preview a complete cold backup
+  pakka backup --from <backup-directory>      Verify a published backup
+  pakka restore --from <backup-directory>     Preview original-location restore
+  pakka restore --resume <restore ID>         Preview safe execution resume
+  pakka upgrade --to <release.json>           Preview a fixed-version upgrade
+  pakka upgrade --rollback <release ID>       Restore the upgrade backup, held for review
   pakka --owner-file <private-file>          Choose the initial owner-link file
   pakka --connection <client.json> hello|snapshot|call --command <command.json>
 
@@ -83,6 +95,7 @@ async function replaceJson(path: string, value: unknown): Promise<void> {
 function parse(args: readonly string[]) {
 	let config: Configuration | undefined;
 	let ownerFile: string | undefined;
+	let loginFile: string | undefined;
 	let noOpen = false;
 	let controlStdin = false;
 	let recover = false;
@@ -94,11 +107,12 @@ function parse(args: readonly string[]) {
 		if (flag === "--no-open") noOpen = true;
 		else if (flag === "--recover") recover = true;
 		else if (flag === "--control-stdin") controlStdin = true;
-		else if (["--config", "--config-module", "--owner-file"].includes(flag)) {
+		else if (["--config", "--config-module", "--owner-file", "--login-file"].includes(flag)) {
 			const value = args[++index];
 			if (!value || value.startsWith("--") || /[\x00-\x1f\x7f]/.test(value))
 				throw new LaunchError("PAKKA_ARGUMENTS", "缺少有效文件路径；运行 pakka --help 查看用法。");
 			if (flag === "--owner-file") ownerFile = resolve(value);
+			else if (flag === "--login-file") loginFile = resolve(value);
 			else {
 				if (config) throw new LaunchError("PAKKA_ARGUMENTS", "--config 与 --config-module 只能选择一个。");
 				config = { kind: flag === "--config" ? "json" : "module", path: resolve(value) };
@@ -106,7 +120,7 @@ function parse(args: readonly string[]) {
 		} else
 			throw new LaunchError("PAKKA_ARGUMENTS", "未知参数；运行 pakka --help 查看 WebUI 和协议客户端用法。");
 	}
-	return { config, ownerFile, noOpen, controlStdin, recover };
+	return { config, ownerFile, loginFile, noOpen, controlStdin, recover };
 }
 async function configuration(explicit: Configuration | undefined, home: string): Promise<Configuration> {
 	if (explicit) return explicit;
@@ -266,8 +280,58 @@ async function openBrowser(url: string): Promise<boolean> {
 	});
 }
 
+async function assertProductMayOpen(home: string) {
+	const roots = new Set([join(home, "data")]),
+		pointer = join(home, "maintenance-target.json");
+	if (await exists(pointer)) {
+		const target = record(await json(pointer), ["version", "dataDir", "sessionId", "sessionFile"]);
+		if (
+			target.version !== 1 ||
+			typeof target.dataDir !== "string" ||
+			!isAbsolute(target.dataDir) ||
+			typeof target.sessionId !== "string" ||
+			target.sessionFile !== join(target.dataDir, "sessions", target.sessionId, "main.sqlite")
+		)
+			throw new LaunchError(
+				"PAKKA_MAINTENANCE_TARGET_INVALID",
+				"无法核对已保存的工作区维护定位；保留原记录，不执行宿主代码。",
+			);
+		roots.add(target.dataDir);
+	}
+	for (const root of roots)
+		if (
+			(await exists(maintenanceGateFile(root))) ||
+			(await exists(join(root, "pakka-product-maintenance.json"))) ||
+			(await exists(join(root, "pakka-restored-hold.json")))
+		)
+			throw new LaunchError(
+				"PAKKA_MAINTENANCE_REQUIRED",
+				"工作区处于维护或恢复待核对状态；不会载入宿主配置代码或启动任务。",
+			);
+}
 /** Foreground product entry. Model/provider configuration stays with the host, not an onboarding wizard. */
 export async function runLauncher(args: readonly string[]): Promise<number> {
+	const selectionHome = resolve(process.env.PAKKA_HOME || join(homedir(), ".pakka"));
+	if (
+		!process.env.PAKKA_RELEASE_ID &&
+		args[0] !== "upgrade" &&
+		(await exists(join(selectionHome, "active-release.json")))
+	) {
+		try {
+			const { delegateActiveRelease } = await import("./maintenance-release.ts");
+			const code = await delegateActiveRelease(selectionHome, args);
+			if (code !== undefined) return code;
+		} catch {
+			process.stderr.write(
+				"PAKKA_RELEASE_SELECTION: Selected release cannot be verified; use the original upgrade/rollback operation\n",
+			);
+			return 1;
+		}
+	}
+	if (["recover", "backup", "restore", "upgrade"].includes(args[0] ?? "")) {
+		const { runMaintenance } = await import("./maintenance.ts");
+		return runMaintenance(args);
+	}
 	if (args.length === 1 && ["--help", "-h"].includes(args[0])) {
 		process.stdout.write(usage);
 		return 0;
@@ -278,10 +342,20 @@ export async function runLauncher(args: readonly string[]): Promise<number> {
 	try {
 		const flags = parse(args);
 		const home = resolve(process.env.PAKKA_HOME || join(homedir(), ".pakka"));
+		await assertProductMayOpen(home);
 		const config = await configuration(flags.config, home);
 		const options = await load(config, home);
 		if (config.kind === "local") ownedModels = options.modelConfiguration;
 		const dataDir = options.runtime.dataDir;
+		if (
+			(await exists(maintenanceGateFile(dataDir))) ||
+			(await exists(join(dataDir, "pakka-product-maintenance.json"))) ||
+			(await exists(join(dataDir, "pakka-restored-hold.json")))
+		)
+			throw new LaunchError(
+				"PAKKA_MAINTENANCE_REQUIRED",
+				"工作区处于维护或恢复待核对状态；使用对应维护操作核对，不会启动任务。",
+			);
 		const stateFile = join(dataDir, "launcher-state.json");
 		let state = await readState(stateFile, dataDir);
 		if (flags.recover && !state && !options.runtime.reopenSessionFile)
@@ -338,6 +412,18 @@ export async function runLauncher(args: readonly string[]): Promise<number> {
 				"PAKKA_CONFIG_INVALID",
 				"reopenSessionFile 必须明确指向该 dataDir 内的原 main.sqlite；不会替换或猜测路径。",
 			);
+		if (flags.loginFile) {
+			if (!reopening)
+				throw new LaunchError("PAKKA_RECOVERY_FILE_INVALID", "恢复凭据只能用于重新打开原 Session。");
+			try {
+				await readRecoveryCredential(flags.loginFile, sessionId);
+			} catch {
+				throw new LaunchError(
+					"PAKKA_RECOVERY_FILE_INVALID",
+					"无法核对原 Session 的私密恢复凭据；不会使用其他身份。",
+				);
+			}
+		}
 		stop = stopSignal(flags.controlStdin);
 		await mkdir(dataDir, { recursive: true, mode: 0o700 });
 		if (!state) {
@@ -356,6 +442,9 @@ export async function runLauncher(args: readonly string[]): Promise<number> {
 				? { transport: { ...options.transport, port: state.port } }
 				: {}),
 		});
+		const loginLink = flags.loginFile
+			? await prepareRecoveryLink(app.runtime, app.http.origin, flags.loginFile)
+			: undefined;
 		if (app.initialOwner)
 			await writeFile(ownerFile, `${app.http.origin}/#signin=${app.initialOwner.token}\n`, {
 				flag: "wx",
@@ -366,6 +455,8 @@ export async function runLauncher(args: readonly string[]): Promise<number> {
 			origin: app.http.origin,
 			serverId: app.http.serverId,
 			sessionFile: app.runtime.view().sessionFile,
+			...(loginLink ? { loginFile: loginLink.file } : {}),
+			...(process.env.PAKKA_RELEASE_ID ? { releaseId: process.env.PAKKA_RELEASE_ID } : {}),
 		};
 		const origin = new URL(app.http.origin);
 		await replaceJson(stateFile, {
@@ -378,13 +469,21 @@ export async function runLauncher(args: readonly string[]): Promise<number> {
 		});
 		await mkdir(home, { recursive: true, mode: 0o700 });
 		await replaceJson(join(home, "launch.json"), { version: 1, config });
+		await saveMaintenanceTarget(home, {
+			version: 1,
+			dataDir,
+			sessionId: state.sessionId,
+			sessionFile: ready.sessionFile,
+		});
 		if (flags.controlStdin) process.stdout.write(JSON.stringify(ready) + "\n");
 		else process.stdout.write(`Pakka WebUI\n  ${ready.origin}\n  Session: ${ready.sessionFile}\n`);
 		process.stderr.write(
-			`WebUI 已启动。关闭网页不会停止任务；Ctrl+C 正常停止宿主。${app.initialOwner ? `\n首次 owner 登录链接已写入私密文件：${ownerFile}` : "\n使用已登录的浏览器；本次不会重新签发 owner 凭据。"}\n`,
+			`WebUI 已启动。关闭网页不会停止任务；Ctrl+C 正常停止宿主。${loginLink ? `\n恢复登录链接已写入私密文件：${loginLink.file}` : app.initialOwner ? `\n首次 owner 登录链接已写入私密文件：${ownerFile}` : "\n使用已登录的浏览器；本次不会重新签发 owner 凭据。"}\n`,
 		);
 		if (!flags.noOpen && !stop.requested) {
-			const url = app.initialOwner ? `${ready.origin}/#signin=${app.initialOwner.token}` : ready.origin;
+			const url =
+				loginLink?.url ??
+				(app.initialOwner ? `${ready.origin}/#signin=${app.initialOwner.token}` : ready.origin);
 			if (!(await openBrowser(url)))
 				process.stderr.write(
 					"无法自动打开浏览器；请手动打开上述地址（首次登录使用私密 owner 文件），或使用 --no-open。\n",

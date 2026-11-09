@@ -119,6 +119,12 @@ Session 管理设置显示不可用的已登记子 Session。健康 Session 可�
 
 未知结果先通过原请求与当前状态只读核对；刷新、关闭面板或退出浏览器都不自动重放输入，也不退还已消费额度。强制终止后的 claim 或未知存储需要另行恢复判断，受信宿主的 writer 维护命令见 [Strategy API](../reference/STRATEGY-API.md#trusted-writer-maintenance)。
 
+### 本机维护入口
+
+Cookie 丢失、注销或过期可用 `pakka recover login` 预览原身份，再以 `--confirm <原 Session ID>` 私密发行一次性凭据；`pakka --login-file <凭据文件>` 为实际地址准备链接。崩溃占用使用 `pakka recover writer`，不与 `--recover` 混用。
+
+停服后的 `pakka backup`、`pakka restore` 和 `pakka upgrade` 统一核对原身份。恢复后旧登录失效，任务保持停机，先核对外部效果再显式恢复。参数、范围、故障续完和保全规则见[本机维护指南](LOCAL-MAINTENANCE.md)。
+
 ## 6. 远程连接
 
 默认 loopback HTTP。远程部署需明确 `transport.publicOrigin`、受信反向代理 peer、TLS 终止及 SSE 传输；未经配置的新域名会被拒绝。Cloudflare Quick Tunnel 声明不支持 SSE，不能用作这套实时界面的正向验收环境。
