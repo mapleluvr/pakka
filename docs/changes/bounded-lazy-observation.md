@@ -21,4 +21,4 @@
 
 [观察与完整内容 state](../state/conversation-observation.md)维护读取/展示/缓存预期；与[Runtime](../state/runtime.md)、[前端](../state/frontend.md)、[Conversation Runtime 主 spec](../../openspec/specs/conversation-runtime/spec.md)、[Authenticated Apps 主 spec](../../openspec/specs/authenticated-mas-apps/spec.md)共同保持身份、权限与持久化语义。前端详细主张也与[Devin 采用 delta](../../openspec/changes/adopt-devin-frontend/specs/devin-frontend/spec.md)关联。
 
-本轮分支从成功 fetch 的 dev 创建，承接未合 PR #4 的固定基线；PR #4 的长期投递和本机维护未被重新定义或更改固定证据。固定候选的源码、SDK、真实浏览器及仓库外安装结果见[交付检查](../verification/BOUNDED-LAZY-OBSERVATION.md)。实施与分支交付由 tasks 接续；worker/OOM 隔离和全局活跃实例预算仍保留为单独工作。
+本轮分支从成功 fetch 的 dev 创建，承接未合 PR #4 的固定基线；PR #4 的长期投递和本机维护未被重新定义或更改固定证据。固定候选的源码、SDK、真实浏览器及仓库外安装结果见[交付检查](../verification/BOUNDED-LAZY-OBSERVATION.md)。实现提交 `95e7bde` 已推送，远端 SHA 核对一致，面向 dev 的 [PR #6](https://github.com/mapleluvr/pakka/pull/6) 保持开放；没有自动合并 dev/main。所属 tasks 记录交付，worker/OOM 隔离和全局活跃实例预算仍保留为单独工作。

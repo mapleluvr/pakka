@@ -11,7 +11,7 @@
 - [x] Complete frozen C8 full suite and independent installed consumption after live-argument/error/capture-omission, preview-only operations, schedule-test keyboard input and host-independent reported-port regressions.
 - [x] ego lite same-history before/after metrics with preserved versions and no real model requests.
 - [x] Synchronize final C8 source/archive identity, late live-path/preview-scope red-green evidence and measured ego baseline.
-- [ ] Independent branch pushed and identity-checked; related PR to dev, without merging dev/main.
+- [x] Independent branch pushed and identity-checked; related PR to dev, without merging dev/main.
 
 ## Execution boundary
 
@@ -30,6 +30,10 @@ The post-freeze review reproduced four failures against committed native LiveDoc
 C7 changes only `apps/webui/test/schedules-recovery.test.ts`; product and browser assets remain identical to C6. Its complete 893-test run was 889 pass / 2 fail / 2 skip with unchanged source identity `25b9c236b8689bbff31f425342af9e36fdb87602c00b3bd4f12016cdaefa23fb`; installed consumption was not started. Both failures were host EACCES when tests forced a bind to `4045`, reproduced in isolation before reaching retry logic.
 
 C8 only changes server/WebUI `http-listener.test.ts` to control the first reported address. Ephemeral binds, close/rebind, final Fetch, WebUI and provider requests remain real; all three blocked-port cases and explicit refusal checks remain. The seven tests pass. C8 is built, type-checked and frozen across 600 files at SHA-256 `9d4a86314df2238a7d63421293b89d98654179f249549847dceb246720481bbc`. Its full 893-test run is 891 pass / 0 fail / 2 existing platform skips; all 34 independent installed steps across eight fixed archives pass. Source identity remains identical after both runs. The final source/archive identity and 67 evidence-file digests are retained in the delivery record; C6/C7 failures remain separate. Ego space 15 verified the exact served reader against that product: a 768 KiB live argument remains a 1043-byte preview snapshot, negative search explicitly excludes the complete original, copy is preview-labelled, original download is absent, and collapse releases all body nodes. A read-only source check retains the 300-character needle; model requests stay zero. The space finished and the server exited normally with no writer claim.
+
+## Branch delivery
+
+Feature commit `95e7bdea4c64362be7cc94affd6fb53321ad2d1c` is pushed on `pakka/lazy-webui-observation`; the live remote ref was read back and matched. [PR #6](https://github.com/mapleluvr/pakka/pull/6) is open against `dev`, carrying the explicit PR #4 baseline dependency. Neither `dev` nor `main` is merged by this delivery. The source/archive identities above remain the build and verification identities, not rewritten to later documentation commits.
 
 ## Remaining resource domain
 
