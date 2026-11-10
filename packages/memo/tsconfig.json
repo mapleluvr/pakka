@@ -4,6 +4,8 @@
 		"module": "NodeNext",
 		"moduleResolution": "NodeNext",
 		"strict": true,
+		"types": ["node"],
+		"rewriteRelativeImportExtensions": true,
 		"skipLibCheck": true,
 		"declaration": true,
 		"rootDir": "src",

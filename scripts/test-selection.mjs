@@ -76,6 +76,7 @@ const scopes = {
 	// Shared DTO/runtime seams have dynamic consumers throughout the product.
 	protocol: () => true,
 	runtime: () => true,
+	memo: (f) => f.startsWith("packages/memo/"),
 	rsi: (f) =>
 		f.startsWith("packages/rsi/") ||
 		f.startsWith("packages/protocol/") ||

@@ -7,13 +7,38 @@
 		".": {
 			"types": "./dist/index.d.ts",
 			"import": "./dist/index.js"
+		},
+		"./agent": {
+			"types": "./dist/agent.d.ts",
+			"import": "./dist/agent.js"
+		},
+		"./patchouli": {
+			"types": "./dist/patchouli.d.ts",
+			"import": "./dist/patchouli.js"
+		},
+		"./patchouli/mas": {
+			"types": "./dist/patchouli-mas.d.ts",
+			"import": "./dist/patchouli-mas.js"
 		}
 	},
 	"files": [
 		"dist",
-		"README.md"
+		"README.md",
+		"examples"
 	],
 	"scripts": {
 		"build": "tsc -p tsconfig.json"
+	},
+	"peerDependencies": {
+		"@pakka/agent": "0.7.0",
+		"@pakka/mas": "0.4.0"
+	},
+	"peerDependenciesMeta": {
+		"@pakka/agent": {
+			"optional": true
+		},
+		"@pakka/mas": {
+			"optional": true
+		}
 	}
 }
