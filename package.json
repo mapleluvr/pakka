@@ -23,6 +23,8 @@
 		"build:durable-patch": "node scripts/build-durable-patch.mjs",
 		"check": "node scripts/verify-durable-patch.mjs && tsc --noEmit -p tsconfig.test.json",
 		"test": "node scripts/test.mjs",
+		"test:affected": "node scripts/test.mjs --suite affected",
+		"test:release": "node scripts/test.mjs --suite release",
 		"pack:agent": "npm run build && node scripts/pack-agent.mjs",
 		"pack:release": "npm run build && node scripts/pack-release.mjs",
 		"smoke:package": "npm run build && node scripts/pack-smoke.mjs",
