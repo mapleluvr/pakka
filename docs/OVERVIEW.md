@@ -4,9 +4,11 @@ Pakka 将 Pi Durable 的 Conversation、权限、持久化与 MAS 协作能力�
 
 ## 当前工作
 
-[测试反馈成本](changes/test-feedback.md)已完成第一批：默认核心/影响域/发布集合、维护测试合并与下沉、隔离运行和有限并行。固定结果见[验证摘要](verification/TEST-FEEDBACK-COST.md)，已通过 [PR #11](https://github.com/mapleluvr/pakka/pull/11) 提交至dev、依赖#10且尚未合并；交付记录见 [tasks](../openspec/changes/reduce-test-feedback-cost/tasks.md)。
+[Memo 知识服务与持久 Patchouli](changes/memo-knowledge.md)已完成实现、安装消费与独立复审：Wiki、版本、来源、书库权限、综合检索及按需读取可独立使用，馆员按显式请求与原 MAS 身份推进。当前预期见 [Memo](state/memo.md)，固定结果见[验证摘要](verification/MEMO-KNOWLEDGE.md)。Issue #9 的 History Book 生产接入、小恶魔和 GUI 尚未完成，后续见 [tasks](../openspec/changes/add-memo-knowledge/tasks.md)。
 
-[RSI 长期工单持久化](changes/rsi-persistence.md) 已完成实现与独立复审：承接 #5 的 UI/Bot/MAS 薄层，采用按记录原子存储、详情分页、原请求核对及显式恢复。当前预期见 [RSI](state/rsi.md)，固定结果见[验证摘要](verification/RSI-PERSISTENCE.md)，已通过 [PR #10](https://github.com/mapleluvr/pakka/pull/10) 提交至 dev、尚未合并，交付记录见 [tasks](../openspec/changes/persist-rsi-ticket-records/tasks.md)。
+[测试反馈成本](changes/test-feedback.md)已完成第一批：默认核心/影响域/发布集合、维护测试合并与下沉、隔离运行和有限并行。固定结果见[验证摘要](verification/TEST-FEEDBACK-COST.md)，已通过 [PR #11](https://github.com/mapleluvr/pakka/pull/11) 合入 dev；交付记录见 [tasks](../openspec/changes/reduce-test-feedback-cost/tasks.md)。
+
+[RSI 长期工单持久化](changes/rsi-persistence.md) 已完成实现与独立复审：承接 #5 的 UI/Bot/MAS 薄层，采用按记录原子存储、详情分页、原请求核对及显式恢复。当前预期见 [RSI](state/rsi.md)，固定结果见[验证摘要](verification/RSI-PERSISTENCE.md)，已通过 [PR #10](https://github.com/mapleluvr/pakka/pull/10) 合入 dev，交付记录见 [tasks](../openspec/changes/persist-rsi-ticket-records/tasks.md)。
 
 [PR #8](https://github.com/mapleluvr/pakka/pull/8) 已合入 dev；长期投递、本机维护和懒观察的关键结果保留在各自 [verification](verification/README.md)。原始验证证据只在本地归档，Git 仅记录关键结果和整体 hash。
 

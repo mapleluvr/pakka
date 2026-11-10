@@ -21,6 +21,8 @@
 
 工单领域见 [RSI](rsi.md)及 [RSI API](../reference/RSI-API.md)，场景在 [长期工单变更](../../openspec/changes/persist-rsi-ticket-records/)。
 
+知识服务见 [Memo](memo.md)，场景在 [Memo 知识服务变更](../../openspec/changes/add-memo-knowledge/specs/memo-knowledge/spec.md)。
+
 ## 与已有规范的分工
 
 - `docs/state/` 是整体预期入口，并承载产品范围和前端交互声明。API 字段、权限和细粒度场景沿用上表指向的位置，不建立另一套同名定义。

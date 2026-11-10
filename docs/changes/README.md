@@ -2,6 +2,7 @@
 
 完整的形成条件、选择、设计、任务与场景由 [OpenSpec](../../openspec/changes/)维护；本目录只提供摘要和完整引用，不复制第二套变更正文。当前预期见 [state](../state/README.md)，实际差距见[工作入口与领域任务](../OVERVIEW.md)。
 
+- [Memo 知识服务](memo-knowledge.md)：独立 Wiki、来源、权限和有界检索读取；Issue #9 的第一消费切片。
 - [测试反馈成本](test-feedback.md)：显式集合、维护断言去重、隔离运行与有限轻型并发。
 - [RSI 长期工单持久化](rsi-persistence.md)：多记录事务、分页、原请求恢复及 UI 消费；承接[薄层形成](rsi-ticket-layer.md)。
 - [本地验证证据与提交检查](local-verification-evidence.md)：验证目录仅含关键信息和本地证据包整体 hash，原始证据不上 GitHub，提交及 PR 前检查完整产物。
