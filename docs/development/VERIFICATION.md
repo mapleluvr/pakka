@@ -35,6 +35,36 @@ npm run format:check
 git diff --check
 ```
 
+`npm test` 是默认核心集合，其结果只覆盖列出的文件。构建完成后可使用：
+
+```sh
+npm test -- --list
+npm test -- --files packages/agent/test/runtime-records.test.ts
+npm run test:affected -- --scope maintenance
+npm run test:affected -- --scope rsi --list
+npm run test:release
+```
+
+`--files` 接受逗号分隔的精确相对路径，可重复使用；路径不存在即拒绝。`--test-name-pattern=<正则>` 可进一步筛选文件内场景；没有匹配测试时返回失败。`--list` 输出完整选择与排除，执行时同一清单写入独立运行目录。未知选项及 release/scope 等冲突组合会被拒绝。
+
+| 变化                                         | 选用入口                                                      |
+| -------------------------------------------- | ------------------------------------------------------------- |
+| 日常反馈                                     | core默认集合：权限、身份、records、MAS查询、恢复、并发边界    |
+| 工单服务或扩展消费                           | affected rsi，含协议/client和扩展接缝                         |
+| 维护、备份、恢复、CLI入口                    | affected maintenance                                          |
+| WebUI/server/CLI消费与浏览器                 | affected webui                                                |
+| 共享协议/Runtime或无法确定影响面的跨切面变化 | affected protocol/runtime或test:release，覆盖全部剩余源码测试 |
+| exports、依赖、vendor、构建、资产或发布      | test:release加smoke:package，按需要增加平台专项               |
+| 文档                                         | 链接、格式、差异与对象字节核对                                |
+
+领域映射由 `scripts/test-selection.mjs` 维护，新增动态接缝时一并核对；它不是自动证明“不受影响”的依赖分析器。精确文件用于已明确的定位/回归，不替代未知影响面的扩大验证。
+
+运行结果在 `artifacts/test-runs/run-*/`：`selection.json`、`progress.jsonl`、`summary.json` 及每文件 `output.tap`。CLI维护的 `maintenance-phases.jsonl` 记录启动/备份/恢复等阶段耗时与退出，不写凭据。每个worker使用独立HOME、USERPROFILE、Pi目录、TEMP/TMP和产物目录；旧证据保留。摘要记录Node进程高水位RSS（不是整个进程树总峰值）与定时采样的系统可用内存。
+
+默认一个重型加一个轻型worker；`--workers 2|4` 只增加已审计的protocol/client轻型池；创建真实Runtime的 `packages/client/test/client.test.ts` 仍归重型。未知文件和浏览器保持单重型池。重型启动时可用内存低于1 GiB会暂停，30秒仍低则记录BLOCKED，不能解释为通过。额外并发依据同机测量选用。
+
+同工作树的runner通过 `artifacts/test-runs/active.json` 拒绝重叠运行；不自动删除残留锁。取消后保留锁并记录后代进程清理未确认；取消/异常后先根据记录核对原PID、子进程及产物，再处理占用。该锁不替外部build、安装脚本或旧专项脚本调度；同一工作树内不要将其与测试并发运行，采用串行或独立工作树。
+
 浏览器检查需要实际 Chrome/Chromium。非标准安装设置绝对路径 `PAKKA_TEST_CHROME`；使用新 profile，不读用户 Cookie、模型凭据或付费服务。已选用浏览器检查而缺少必要浏览器时，将该次检查记录为 BLOCKED；未选用的活动由本任务的选用记录承接。
 
 Windows 独立命令需重新设置隔离 HOME/USERPROFILE/PI_CODING_AGENT_DIR、PI_OFFLINE，并将 TEMP/TMP 规范为 `fs.realpathSync.native(os.tmpdir())`；工具调用间不继承上一条命令的设置。局部浏览器回归可使用隔离 runner：
@@ -49,9 +79,11 @@ Windows 独立命令需重新设置隔离 HOME/USERPROFILE/PI_CODING_AGENT_DIR�
 
 ## 仓库外安装与产物身份
 
-`npm run smoke:package` 生成并安装八个实际归档，运行公开声明、实际 executable、浏览器与消费者。选用仓库外安装检查时，执行身份 preflight，核对源码/门禁 helper/资产、归档/lock/安装逐文件内容及消费者结果。漏源码、损坏归档和身份篡改反例必须在 build/install 前被拒绝。
+`npm run smoke:package` 生成并安装当前 workspace 的实际归档，运行公开声明、实际 executable、浏览器与消费者。选用仓库外安装检查时，执行身份 preflight，核对源码/门禁 helper/资产、归档/lock/安装逐文件内容及消费者结果。漏源码、损坏归档和身份篡改反例必须在 build/install 前被拒绝。
 
 需要完整前端候选检查时使用 `scripts/verify-devin-r2.ps1`，在固定快照上串行保存 check、syntax、build、扩大、全量和 package 原始结果。失败退出、取消或 NOT_RUN 不覆盖为后续局部通过。
+
+安装消费保留实际归档、公开入口/类型、代表性维护升级与平台行为；通用业务条件主要在源码服务层验证。文档或无关局部改动不机械执行全部安装阶段。
 
 若检查失败，`artifacts/package-smoke/consumer-path.txt` 可能仍指向上次成功目录；从该次执行日志的实际 cwd、进程退出/signal 和原始状态定位，不单凭旧指针或 `exit=null` 推断业务原因。子进程控制台退出也不自动证明 native 效果终态。
 

@@ -25,7 +25,13 @@ interface RestoreJournal {
 	preserved: string;
 	roots: { source: string; stage: string; parked: string; published: boolean; missing: boolean }[];
 	phase: RestorePhase;
-	workReview?: { fingerprint: string; pendingTasks: number; queuedInputs: number; reviewedAt: number };
+	workReview?: {
+		fingerprint: string;
+		pendingTasks: number;
+		queuedInputs: number;
+		pendingRecords: number;
+		reviewedAt: number;
+	};
 }
 function object(value: unknown): Record<string, unknown> {
 	if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("Invalid restore record");
@@ -79,10 +85,11 @@ function journal(value: unknown): RestoreJournal {
 	let workReview: RestoreJournal["workReview"];
 	if (row.workReview !== undefined) {
 		const review = object(row.workReview);
+		const pendingRecords = review.pendingRecords === undefined ? 0 : review.pendingRecords;
 		if (
 			typeof review.fingerprint !== "string" ||
 			!/^[0-9a-f]{64}$/.test(review.fingerprint) ||
-			![review.pendingTasks, review.queuedInputs, review.reviewedAt].every(
+			![review.pendingTasks, review.queuedInputs, pendingRecords, review.reviewedAt].every(
 				(value) => Number.isSafeInteger(value) && Number(value) >= 0,
 			)
 		)
@@ -91,6 +98,7 @@ function journal(value: unknown): RestoreJournal {
 			fingerprint: review.fingerprint,
 			pendingTasks: Number(review.pendingTasks),
 			queuedInputs: Number(review.queuedInputs),
+			pendingRecords: Number(pendingRecords),
 			reviewedAt: Number(review.reviewedAt),
 		};
 	}
@@ -348,7 +356,9 @@ export async function resumeRestoredProduct(
 		// Known preview/refusal can release the transient fences only while every durable execution hold remains.
 		safeRelease = holdsComplete;
 		const pendingTasks = domains.reduce((sum, value) => sum + value.work.pendingTasks, 0),
-			queuedInputs = domains.reduce((sum, value) => sum + value.work.queuedInputs, 0);
+			queuedInputs = domains.reduce((sum, value) => sum + value.work.queuedInputs, 0),
+			pendingRecords = domains.reduce((sum, value) => sum + value.work.pendingRecords, 0),
+			hasWork = pendingTasks > 0 || queuedInputs > 0 || pendingRecords > 0;
 		const fingerprint = createHash("sha256")
 			.update(
 				JSON.stringify({
@@ -369,13 +379,14 @@ export async function resumeRestoredProduct(
 				requiresConfirmation: target.sessionId,
 				pendingTasks,
 				queuedInputs,
+				pendingRecords,
 				domains,
-				...(pendingTasks || queuedInputs ? { reviewWork: fingerprint } : {}),
+				...(hasWork ? { reviewWork: fingerprint } : {}),
 				externalEffects:
 					"Independently review post-backup effects before acknowledging this exact work set. No native task or receipt is reset.",
 			};
 		const acknowledged = reviewWork ?? state.workReview?.fingerprint;
-		if ((pendingTasks || queuedInputs) && acknowledged !== fingerprint)
+		if (hasWork && acknowledged !== fingerprint)
 			throw new Error(
 				"Persisted work requires independent external-effect review: preview restore --resume " +
 					id +
@@ -383,11 +394,12 @@ export async function resumeRestoredProduct(
 			);
 		if (reviewWork !== undefined && reviewWork !== fingerprint)
 			throw new Error("Persisted-work review changed; original restore remains held");
-		if (pendingTasks || queuedInputs)
+		if (hasWork)
 			state.workReview = {
 				fingerprint,
 				pendingTasks,
 				queuedInputs,
+				pendingRecords,
 				reviewedAt: state.workReview?.fingerprint === fingerprint ? state.workReview.reviewedAt : Date.now(),
 			};
 		safeRelease = false;

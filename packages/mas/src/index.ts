@@ -269,6 +269,26 @@ export async function createMas(options: MasOptions): Promise<Mas> {
 						: { ...found, phase: observed.phase, reason: observed.reason },
 				);
 			},
+			lookup: async (ref: ConversationRef, input: SendSpec) => {
+				const query = dto(input),
+					address = dto(ref);
+				await refresh();
+				grant("send");
+				const to = target(address);
+				const value = await catalog.lookupRequest(
+					{
+						principal,
+						source,
+						target: to.ref,
+						requestId: query.requestId,
+						text: query.text,
+						mode: query.mode ?? "prompt",
+					},
+					() => grant("send"),
+				);
+				grant("send");
+				return value;
+			},
 			send: (ref: ConversationRef, input: SendSpec) => sendAs(ref, input, "send"),
 			reply: async (id: string, input: SendSpec) => {
 				grant("reply");

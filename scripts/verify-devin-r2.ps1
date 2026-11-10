@@ -54,7 +54,7 @@ try {
  $meta.results.wide.rawLog = 'wide/test.log'
  Save-Metadata
  Start-Phase full
- & npm test *> (Join-Path $evidence 'full.log')
+ & npm run test:release *> (Join-Path $evidence 'full.log')
  Finish-Phase full $LASTEXITCODE
  Start-Phase package
  & npm run smoke:package *> (Join-Path $evidence 'package.log')

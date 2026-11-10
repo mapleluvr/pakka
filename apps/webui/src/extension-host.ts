@@ -77,7 +77,7 @@ type Saved = {
 type SettingsRow = { key: string; version: number; value: ExtensionJson };
 type Initialization = { extension: string; hash: string; state: "loading" | "ready" | "unknown" };
 type State = {
-	schema: 1;
+	schema: 1 | 2;
 	operations: Saved[];
 	settings: SettingsRow[];
 	disabled: string[];
@@ -128,13 +128,47 @@ function reference(value: unknown): value is ConversationRef {
 		Object.values(value).every(requestKey)
 	);
 }
+function decodeOperation(item: unknown): Saved {
+	if (
+		!isRecord(item) ||
+		Object.keys(item).some(
+			(key) =>
+				![
+					"id",
+					"extension",
+					"action",
+					"actorId",
+					"requestId",
+					"fingerprint",
+					"permission",
+					"target",
+					"state",
+					"value",
+				].includes(key),
+		) ||
+		![item.id, item.actorId, item.requestId].every(requestKey) ||
+		!extensionId(item.extension) ||
+		!extensionId(item.action) ||
+		typeof item.fingerprint !== "string" ||
+		!/^[0-9a-f]{64}$/.test(item.fingerprint) ||
+		!["read", "send", "steer", "manage", "extensions.install"].some((v) => v === item.permission) ||
+		!["pending", "done", "unknown"].some((v) => v === item.state) ||
+		(item.target !== null && !reference(item.target)) ||
+		(item.state === "done" ? !jsonValue(item.value) : item.value !== undefined)
+	)
+		throw new Error("Malformed extension operation");
+	// SAFETY: every operation field and its optional value are validated above.
+	return structuredClone(item) as Saved;
+}
+
 function decodeState(data: JsonObject, version: number): State {
 	if (!version) {
 		if (Object.keys(data).length) throw new Error("Unconfirmed extension store");
 		return { schema: 1, operations: [], settings: [], disabled: [], initializations: [] };
 	}
 	if (
-		data.schema !== 1 ||
+		(data.schema !== 1 && data.schema !== 2) ||
+		(data.schema === 2 && (!Array.isArray(data.operations) || data.operations.length > 0)) ||
 		Object.keys(data).sort().join(",") !== "disabled,initializations,operations,schema,settings" ||
 		!Array.isArray(data.initializations) ||
 		data.initializations.length > 64 ||
@@ -158,36 +192,7 @@ function decodeState(data: JsonObject, version: number): State {
 		)
 			throw new Error("Malformed extension initialization");
 	}
-	for (const item of data.operations) {
-		if (
-			!isRecord(item) ||
-			Object.keys(item).some(
-				(key) =>
-					![
-						"id",
-						"extension",
-						"action",
-						"actorId",
-						"requestId",
-						"fingerprint",
-						"permission",
-						"target",
-						"state",
-						"value",
-					].includes(key),
-			) ||
-			![item.id, item.actorId, item.requestId].every(requestKey) ||
-			!extensionId(item.extension) ||
-			!extensionId(item.action) ||
-			typeof item.fingerprint !== "string" ||
-			!/^[0-9a-f]{64}$/.test(item.fingerprint) ||
-			!["read", "send", "steer", "manage", "extensions.install"].some((v) => v === item.permission) ||
-			!["pending", "done", "unknown"].some((v) => v === item.state) ||
-			(item.target !== null && !reference(item.target)) ||
-			(item.state === "done" ? !jsonValue(item.value) : item.value !== undefined)
-		)
-			throw new Error("Malformed extension operation");
-	}
+	for (const item of data.operations) decodeOperation(item);
 	for (const item of data.settings)
 		if (
 			!isRecord(item) ||
@@ -413,7 +418,83 @@ export async function createExtensionHost(options: ExtensionHostOptions): Promis
 			check();
 			return value;
 		});
+	const operations = runtime.records({ namespace: "pocket.extension-operations" });
 	const initial = await snapshot();
+	if (initial.state.schema === 1) {
+		for (const operation of initial.state.operations) {
+			await operations.commit(
+				{
+					requestId: "legacy:" + operation.id,
+					reads: [{ key: operation.id, version: 0 }],
+					writes: [{ key: operation.id, data: nativeData(operation) }],
+					append: [],
+					work: [{ key: operation.id, state: operation.state === "done" ? null : operation.state }],
+				},
+				() => {},
+			);
+		}
+		await update(
+			(state) => {
+				state.schema = 2;
+				state.operations = [];
+			},
+			() => {},
+		);
+	}
+	const findOperation = async (id: string, check: () => void) => {
+		const record = await operations.get(id, check);
+		const value = record.data ? decodeOperation(record.data) : null;
+		if (value && value.id !== id) throw Error("Extension operation identity mismatch");
+		return { version: record.version, value };
+	};
+	const updateOperation = <T>(
+		id: string,
+		effect: (row: { value: Saved | null }) => T,
+		check: () => void,
+	): Promise<T> =>
+		serial(async () => {
+			for (let attempt = 0; attempt < 4; attempt++) {
+				const before = await findOperation(id, check),
+					draft = { value: structuredClone(before.value) };
+				check();
+				const result = effect(draft);
+				if (draft.value && JSON.stringify(draft.value) !== JSON.stringify(before.value)) {
+					try {
+						await operations.commit(
+							{
+								// A replayed receipt is not a fresh right to invoke the handler.
+								requestId: id + ":" + randomUUID(),
+								reads: [{ key: id, version: before.version }],
+								writes: [{ key: id, data: nativeData(draft.value) }],
+								append: [],
+								work: [{ key: id, state: draft.value.state === "done" ? null : draft.value.state }],
+							},
+							check,
+						);
+					} catch (error) {
+						if (
+							error instanceof Error &&
+							error.name === "RecordsRequestRefusedError" &&
+							"code" in error &&
+							error.code === "conflict"
+						)
+							continue;
+						throw error;
+					}
+				}
+				check();
+				return result;
+			}
+			return refuse("CONFLICT");
+		});
+	const operationId = (
+		extension: string,
+		actorId: string,
+		target: ConversationRef | null | undefined,
+		requestId: string,
+	) =>
+		"operation-" +
+		hash(JSON.stringify([extension, actorId, target?.conversationId ?? null, requestId])).slice(0, 48);
 	const collision = (candidate: Accepted, except?: string) => {
 		for (const [id, active] of accepted)
 			if (
@@ -547,8 +628,7 @@ export async function createExtensionHost(options: ExtensionHostOptions): Promis
 		});
 	const operation = async (actor: PocketAuthority, id: string): Promise<ExtensionOperation> => {
 		const person = current(actor),
-			before = await snapshot(),
-			saved = before.state.operations.find((row) => row.id === id);
+			saved = (await findOperation(id, () => current(actor))).value;
 		if (!saved || saved.actorId !== person.id) return refuse();
 		authorize(actor, saved.permission, saved.target ?? undefined);
 		return present(saved);
@@ -691,14 +771,20 @@ export async function createExtensionHost(options: ExtensionHostOptions): Promis
 			)
 				return refuse("INVALID_REQUEST");
 			authorize(actor, "read", request.target);
-			const saved = (await snapshot()).state.operations.find(
-				(row) =>
-					row.extension === request.extension &&
-					row.actorId === person.id &&
-					row.requestId === request.requestId &&
-					(row.target ? !!request.target && sameRef(row.target, request.target) : !request.target),
-			);
-			if (!saved) return refuse();
+			const saved = (
+				await findOperation(
+					operationId(request.extension, person.id, request.target, request.requestId),
+					() => current(actor),
+				)
+			).value;
+			if (
+				!saved ||
+				saved.extension !== request.extension ||
+				saved.actorId !== person.id ||
+				saved.requestId !== request.requestId ||
+				(saved.target ? !request.target || !sameRef(saved.target, request.target) : !!request.target)
+			)
+				return refuse();
 			authorize(actor, saved.permission, saved.target ?? undefined);
 			return present(saved);
 		},
@@ -809,25 +895,29 @@ export async function createExtensionHost(options: ExtensionHostOptions): Promis
 					).slice(0, 48),
 				fingerprint = hash(JSON.stringify([entry.view.manifest.version, action, payload, target ?? null]));
 			if (action.effect !== "read") {
-				const prior = await update((state) => {
-					const saved = state.operations.find((row) => row.id === id);
-					if (saved) {
-						if (saved.fingerprint !== fingerprint) return refuse("CONFLICT");
-						return saved;
-					}
-					state.operations.push({
-						id,
-						extension: input.extension,
-						action: input.action,
-						actorId: person.id,
-						requestId: input.requestId,
-						fingerprint,
-						permission: action.permission,
-						target: target ?? null,
-						state: "pending",
-					});
-					return null;
-				}, check);
+				const prior = await updateOperation(
+					id,
+					(row) => {
+						const saved = row.value;
+						if (saved) {
+							if (saved.fingerprint !== fingerprint) return refuse("CONFLICT");
+							return saved;
+						}
+						row.value = {
+							id,
+							extension: input.extension,
+							action: input.action,
+							actorId: person.id,
+							requestId: input.requestId,
+							fingerprint,
+							permission: action.permission,
+							target: target ?? null,
+							state: "pending",
+						};
+						return null;
+					},
+					check,
+				);
 				if (prior) return present(prior);
 			}
 			const controller = new AbortController(),
@@ -968,19 +1058,24 @@ export async function createExtensionHost(options: ExtensionHostOptions): Promis
 						state: "done",
 						value,
 					});
-				return await update((state) => {
-					const saved = state.operations.find((row) => row.id === id);
-					if (!saved || saved.state !== "pending") throw new Error("Unconfirmed extension transition");
-					saved.state = "done";
-					saved.value = value;
-					return present(saved);
-				}, liveCheck);
+				return await updateOperation(
+					id,
+					(row) => {
+						const saved = row.value;
+						if (!saved || saved.state !== "pending") throw new Error("Unconfirmed extension transition");
+						saved.state = "done";
+						saved.value = value;
+						return present(saved);
+					},
+					liveCheck,
+				);
 			} catch {
 				if (action.effect !== "read")
 					try {
-						await update(
-							(state) => {
-								const saved = state.operations.find((row) => row.id === id);
+						await updateOperation(
+							id,
+							(row) => {
+								const saved = row.value;
 								if (saved && saved.state === "pending") saved.state = "unknown";
 							},
 							() => {

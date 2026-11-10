@@ -17,6 +17,7 @@ import type {
 	RuntimeBudgetChange,
 	RuntimeBudgetQuery,
 	RuntimeStoreOptions,
+	RuntimeRecordsOptions,
 	RuntimeJobOptions,
 	DisplayWrite,
 } from "./types.ts";
@@ -90,6 +91,7 @@ export async function createRuntime(options: RuntimeOptions): Promise<Runtime> {
 		directoryRoots: (profiles?: readonly string[]) => port.directoryRoots(profiles),
 		conversation: attach,
 		store: (options: RuntimeStoreOptions) => port.store(options),
+		records: (options: RuntimeRecordsOptions) => port.records(options),
 		jobs: (options: RuntimeJobOptions) => port.jobs(options),
 		readConversation: (ref: ConversationRef, check: () => void, options?: ConversationReadOptions) =>
 			port.readConversation(ref, check, options),

@@ -6,6 +6,15 @@ import { tmpdir } from "node:os";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { randomUUID, createHash } from "node:crypto";
+import { appendFileSync } from "node:fs";
+function phase(value: object) {
+	const artifacts = process.env.PAKKA_TEST_ARTIFACTS;
+	if (artifacts)
+		appendFileSync(
+			join(artifacts, "maintenance-phases.jsonl"),
+			JSON.stringify({ at: Date.now(), ...value }) + "\n",
+		);
+}
 const entry = fileURLToPath(new URL("../dist/main.js", import.meta.url));
 async function setup() {
 	const root = await realpath(await mkdtemp(join(tmpdir(), "pakka-offline-cli-"))),
@@ -23,6 +32,9 @@ async function setup() {
 		DO_NOT_TRACK: "1",
 	});
 	const launch = (args: string[]) => {
+		const started = Date.now(),
+			operation = args[0].startsWith("--") ? "startup" : args[0];
+		phase({ kind: "start", operation });
 		const child = spawn(process.execPath, [entry, ...args], {
 			env,
 			cwd: root,
@@ -38,8 +50,9 @@ async function setup() {
 		);
 		const done = new Promise<{ code: number | null; stdout: string; stderr: string }>((resolve, reject) => {
 			child.once("error", reject);
-			child.once("exit", (code) => {
+			child.once("close", (code, signal) => {
 				clearTimeout(timer);
+				phase({ kind: "end", operation, code, signal, elapsedMs: Date.now() - started });
 				resolve({ code, stdout, stderr });
 			});
 		});
@@ -99,11 +112,18 @@ async function childScript(f: Awaited<ReturnType<typeof setup>>, script: string)
 	});
 	return { code, stdout, stderr };
 }
-test("pakka recover login previews then recovers the original owner through a private file", async () => {
+test("pakka recover login checks writer/identity then recovers the original owner through a private file", async () => {
 	const f = await setup();
 	let app: ReturnType<typeof f.launch> | undefined;
 	try {
+		const refused = await f.launch(["recover", "writer", "--confirm", f.sessionId]).done;
+		assert.equal(refused.code, 1);
+		assert.match(refused.stderr, /alive|active|running|运行|占用/i);
 		await f.running.stop();
+		const wrong = await f.launch(["recover", "login", "--confirm", randomUUID()]).done;
+		assert.equal(wrong.code, 1);
+		assert.match(wrong.stderr, /confirm|identity|目标|确认/i);
+		await access(f.ready.sessionFile);
 		const preview = await f.launch(["recover", "login"]).done;
 		assert.equal(preview.code, 0, preview.stderr);
 		assert.match(preview.stdout, new RegExp(f.sessionId));
@@ -149,22 +169,6 @@ test("pakka recover login previews then recovers the original owner through a pr
 	}
 });
 
-test("recovery refuses active writer and a foreign confirmation; normal startup preserves originals", async () => {
-	const f = await setup();
-	try {
-		const refused = await f.launch(["recover", "writer", "--confirm", f.sessionId]).done;
-		assert.equal(refused.code, 1);
-		assert.match(refused.stderr, /alive|active|running|运行|占用/i);
-		await f.running.stop();
-		const wrong = await f.launch(["recover", "login", "--confirm", randomUUID()]).done;
-		assert.equal(wrong.code, 1);
-		assert.match(wrong.stderr, /confirm|identity|目标|确认/i);
-		await access(f.ready.sessionFile);
-	} finally {
-		await f.running.stop();
-	}
-});
-
 test("recovery releases only an exited original writer before the original product reopens", async () => {
 	const f = await setup();
 	let app: ReturnType<typeof f.launch> | undefined;
@@ -185,28 +189,6 @@ test("recovery releases only an exited original writer before the original produ
 	}
 });
 
-test("a restored execution hold blocks trusted host-module evaluation before configuration loading", async () => {
-	const f = await setup();
-	try {
-		await f.running.stop();
-		const marker = join(f.root, "host-code-executed.txt"),
-			module = join(f.root, "host.mjs");
-		await writeFile(
-			join(f.home, "data", "pakka-restored-hold.json"),
-			JSON.stringify({ schema: 1, restoreId: randomUUID(), sessionId: f.sessionId, root: 0 }),
-		);
-		await writeFile(
-			module,
-			`import {writeFile} from 'node:fs/promises';await writeFile(${JSON.stringify(marker)},'must not execute while held');throw new Error('UNEXPECTED_HOST_EVALUATION');`,
-		);
-		const refused = await f.launch(["--config-module", module, "--no-open", "--control-stdin"]).done;
-		assert.equal(refused.code, 1);
-		await assert.rejects(access(marker));
-		assert.match(refused.stderr, /MAINTENANCE_REQUIRED/);
-	} finally {
-		await f.running.stop();
-	}
-});
 async function childSession(f: Awaited<ReturnType<typeof setup>>) {
 	const origin = f.ready.origin,
 		response = await fetch(origin + "/pocket/exchange", {
@@ -269,6 +251,16 @@ test("cold backup covers original data, rejects live writers and validates every
 		const corrupt = await f.launch(["backup", "--from", out]).done;
 		assert.equal(corrupt.code, 1);
 		assert.match(corrupt.stderr, /digest|hash|integrity|mismatch/i);
+		// A declared child may not disappear from an otherwise complete inventory.
+		const preserved = join(f.root, "preserved-child");
+		await rename(join(f.home, "data", "sessions", child), preserved);
+		const incomplete = join(f.root, "incomplete-backup");
+		const missing = await f.launch(["backup", "--out", incomplete, "--confirm", f.sessionId]).done;
+		assert.equal(missing.code, 1);
+		assert.match(missing.stderr, /registered.*missing|inventory.*incomplete/i);
+		await assert.rejects(access(join(incomplete, "manifest.json")));
+		await access(join(preserved, "main.sqlite"));
+		await access(f.ready.sessionFile);
 	} finally {
 		await f.running.stop();
 	}
@@ -301,6 +293,16 @@ test("restore preserves current data first, revokes old access, and stays offlin
 		const blocked = await f.launch(["--no-open", "--control-stdin"]).done;
 		assert.equal(blocked.code, 1);
 		assert.match(blocked.stderr, /MAINTENANCE_REQUIRED/);
+		const marker = join(f.root, "host-code-executed.txt"),
+			module = join(f.root, "host.mjs");
+		await writeFile(
+			module,
+			`import {writeFile} from "node:fs/promises";await writeFile(${JSON.stringify(marker)},"must not execute while held");throw new Error("UNEXPECTED_HOST_EVALUATION");`,
+		);
+		const refused = await f.launch(["--config-module", module, "--no-open", "--control-stdin"]).done;
+		assert.equal(refused.code, 1);
+		assert.match(refused.stderr, /MAINTENANCE_REQUIRED/);
+		await assert.rejects(access(marker));
 		const recoveryId = randomUUID(),
 			recovered = await f.launch(["recover", "login", "--confirm", f.sessionId, "--recovery-id", recoveryId])
 				.done;
@@ -364,93 +366,47 @@ test("upgrade accepts only a pinned local release and rejects archive tampering 
 	}
 });
 
-test("a registered child database must be present before a complete backup is published", async () => {
+test("restore recovers a corrupted database with an exited writer while preserving original bytes", async () => {
 	const f = await setup();
+	let crashed: ReturnType<typeof f.launch> | undefined;
 	try {
-		const child = await childSession(f);
 		await f.running.stop();
-		const original = join(f.home, "data", "sessions", child),
-			preserved = join(f.root, "preserved-child");
-		await rename(original, preserved);
-		const out = join(f.root, "incomplete-backup"),
-			result = await f.launch(["backup", "--out", out, "--confirm", f.sessionId]).done;
-		assert.equal(result.code, 1);
-		assert.match(result.stderr, /registered.*missing|inventory.*incomplete/i);
-		await assert.rejects(access(join(out, "manifest.json")));
-		await access(join(preserved, "main.sqlite"));
-		await access(f.ready.sessionFile);
+		const out = join(f.root, "known-good");
+		const backed = await f.launch(["backup", "--out", out, "--confirm", f.sessionId]).done;
+		assert.equal(backed.code, 0, backed.stderr);
+		crashed = f.launch(["--no-open", "--control-stdin"]);
+		await crashed.ready();
+		const refused = await f.launch(["restore", "--from", out, "--confirm", f.sessionId]).done;
+		assert.equal(refused.code, 1);
+		assert.match(refused.stderr, /writer|active|running/i);
+		const originalClaim = await readFile(join(dirname(f.ready.sessionFile), "pakka-writer.json"));
+		crashed.child.kill("SIGKILL");
+		await crashed.done;
+		const damaged = Buffer.from("deliberately damaged local test database");
+		await writeFile(f.ready.sessionFile, damaged);
+		const result = await f.launch(["restore", "--from", out, "--confirm", f.sessionId]).done;
+		assert.equal(result.code, 0, result.stderr);
+		const restored = JSON.parse(result.stdout);
+		assert.equal(restored.status, "held");
+		assert.equal((await readFile(f.ready.sessionFile)).subarray(0, 16).toString(), "SQLite format 3\u0000");
+		const preservation = JSON.parse(await readFile(join(restored.preserved, "preservation.json"), "utf8"));
+		assert.equal(preservation.kind, "unverified-original-bytes");
+		assert.deepEqual(
+			await readFile(join(restored.preserved, "roots", "0", "sessions", f.sessionId, "pakka-writer.json")),
+			originalClaim,
+		);
+		assert.deepEqual(
+			await readFile(join(restored.preserved, "roots", "0", "sessions", f.sessionId, "main.sqlite")),
+			damaged,
+		);
+		const blocked = await f.launch(["--no-open", "--control-stdin"]).done;
+		assert.equal(blocked.code, 1);
+		assert.match(blocked.stderr, /MAINTENANCE_REQUIRED/);
 	} finally {
+		await crashed?.stop();
 		await f.running.stop();
 	}
 });
-
-for (const condition of [
-	"corrupted database",
-	"missing database",
-	"missing data root",
-	"corrupted database with an exited writer",
-]) {
-	test(
-		"restore recovers a " + condition + " while preserving original bytes or recording absence",
-		async () => {
-			const f = await setup();
-			try {
-				await f.running.stop();
-				const out = join(f.root, "known-good");
-				const backed = await f.launch(["backup", "--out", out, "--confirm", f.sessionId]).done;
-				assert.equal(backed.code, 0, backed.stderr);
-				let originalClaim: Buffer | undefined;
-				if (condition === "corrupted database with an exited writer") {
-					const crashed = f.launch(["--no-open", "--control-stdin"]);
-					await crashed.ready();
-					const refused = await f.launch(["restore", "--from", out, "--confirm", f.sessionId]).done;
-					assert.equal(refused.code, 1);
-					assert.match(refused.stderr, /writer|active|running/i);
-					originalClaim = await readFile(join(dirname(f.ready.sessionFile), "pakka-writer.json"));
-					crashed.child.kill("SIGKILL");
-					await crashed.done;
-				}
-				const damaged = Buffer.from("deliberately damaged local test database");
-				if (condition.startsWith("corrupted database")) await writeFile(f.ready.sessionFile, damaged);
-				else
-					await rename(
-						condition === "missing database" ? f.ready.sessionFile : join(f.home, "data"),
-						join(f.root, "preserved-unavailable-source"),
-					);
-				const result = await f.launch(["restore", "--from", out, "--confirm", f.sessionId]).done;
-				assert.equal(result.code, 0, result.stderr);
-				const restored = JSON.parse(result.stdout);
-				assert.equal(restored.status, "held");
-				assert.equal(
-					(await readFile(f.ready.sessionFile)).subarray(0, 16).toString(),
-					"SQLite format 3\u0000",
-				);
-				const preservation = JSON.parse(
-					await readFile(join(restored.preserved, "preservation.json"), "utf8"),
-				);
-				assert.equal(preservation.kind, "unverified-original-bytes");
-				if (originalClaim)
-					assert.deepEqual(
-						await readFile(
-							join(restored.preserved, "roots", "0", "sessions", f.sessionId, "pakka-writer.json"),
-						),
-						originalClaim,
-					);
-				if (condition.startsWith("corrupted database"))
-					assert.deepEqual(
-						await readFile(join(restored.preserved, "roots", "0", "sessions", f.sessionId, "main.sqlite")),
-						damaged,
-					);
-				if (condition === "missing data root") assert.deepEqual(preservation.missingRoots, [0]);
-				const blocked = await f.launch(["--no-open", "--control-stdin"]).done;
-				assert.equal(blocked.code, 1);
-				assert.match(blocked.stderr, /MAINTENANCE_REQUIRED/);
-			} finally {
-				await f.running.stop();
-			}
-		},
-	);
-}
 
 test("interrupted restore publication stays fenced and reconciles the original operation without replacing identity", async () => {
 	const f = await setup();

@@ -58,6 +58,8 @@ Catalog v2 使用轻量接纳索引及独立投递文档。v1 存储可被只读
 
 关闭、重开和相同 requestId 重试会沿用持久 catalog/native admission，inspection 本身不发送 HTTP。Host 的进程内直接输入回执 ledger 仍独立；MAS 去重依赖目标 Session 的 durable catalog。
 
+`MasClient.lookup(target, { requestId, text, mode? })` 在当前 send grant 下纯查询原发送者的请求；匹配 namespace/principal/source incarnation/requestId 并核对完整 route、text 和 mode。返回原 delivery 或 null，不执行 admission hook、不接纳输入。null 只表示没有接纳记录，不能证明此前 admission hook 没有效果。需要回执 ID 才能查询的 `receipt(id)` 继续保留。
+
 ## 宿主持久观测
 
 `Mas.history(query?, check?, accepts?)` 向受信任宿主返回最近优先的有界 delivery 页；每页最多 64 条，游标是原持久回执 ID。正文、实际发起者、时间与显式 `replyTo` 属于独立 observation；`DeliveryReceipt.status` 保持原生含义。原请求核对继续匹配原生输入身份及有效载荷，复用同一 admission 并保留首次提交的实际发起记录；新记录的显式回复关联也须一致。成员的 `creation` 保存真实创建来源和可选 fork 历史来源。旧记录缺少的信息保持缺失。

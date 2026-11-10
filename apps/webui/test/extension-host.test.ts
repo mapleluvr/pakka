@@ -119,6 +119,112 @@ async function fixture() {
 	};
 }
 
+test("A-1: two hosts cannot execute one request twice", { timeout: 15000 }, async () => {
+	const m = await fixture();
+	const arrived = deferred(),
+		release = deferred();
+	let n = 0,
+		calls = 0;
+	try {
+		const runtime = {
+			...m.runtime,
+			records: (options: Parameters<typeof m.runtime.records>[0]) => {
+				const native = m.runtime.records(options);
+				return {
+					...native,
+					commit: async (...args: Parameters<typeof native.commit>) => {
+						if (
+							options.namespace === "pocket.extension-operations" &&
+							args[0].writes.some((w) => w.data.state === "pending")
+						) {
+							if (++n === 2) arrived.resolve();
+							await release.promise;
+						}
+						return native.commit(...args);
+					},
+				};
+			},
+		};
+		const services = {
+			gate: {
+				permission: "read" as const,
+				bind: () => ({
+					wait: async () => {
+						calls++;
+					},
+				}),
+			},
+		};
+		const options = {
+			runtime,
+			people: m.people,
+			workspace: m.workspace,
+			sources: [{ root: m.root }],
+			services,
+		};
+		const a = await createExtensionHost(options),
+			b = await createExtensionHost(options);
+		const reg = a.list(m.actor, m.target)[0]!;
+		const input = {
+			extension: reg.manifest.id,
+			generation: reg.generation,
+			action: "delayed",
+			requestId: "same",
+			input: {},
+			target: m.target,
+		};
+		const bInput = { ...input, generation: b.list(m.actor, m.target)[0]!.generation };
+		const running = Promise.allSettled([a.call(m.actor, input), b.call(m.actor, bInput)]);
+		let deadline: ReturnType<typeof setTimeout> | undefined;
+		try {
+			await Promise.race([
+				arrived.promise,
+				new Promise<never>((_, reject) => {
+					deadline = setTimeout(() => reject(Error("Both claims did not reach the race barrier")), 5000);
+				}),
+			]);
+		} finally {
+			if (deadline) clearTimeout(deadline);
+		}
+		release.resolve();
+		const results = await running;
+		assert.ok(results.every((result) => result.status === "fulfilled"));
+		assert.equal(calls, 1);
+		assert.equal((await a.call(m.actor, input)).state, "done");
+		assert.equal(calls, 1);
+	} finally {
+		release.resolve();
+		m.release.resolve();
+		await m.close();
+	}
+});
+
+test(
+	"Extension receipts grow past 512 without replaying the first mutation",
+	{ timeout: 60000 },
+	async () => {
+		const m = await fixture();
+		try {
+			const first = await m.call("set", "first", { text: "original" });
+			for (let i = 0; i < 520; i++)
+				assert.equal((await m.call("set", "later-" + i, { text: String(i) })).state, "done");
+			assert.deepEqual(await m.call("set", "first", { text: "original" }), first);
+			assert.deepEqual((await m.call("read", "now")).value, { text: "519" });
+			assert.deepEqual(
+				await m.host.operationByRequest(m.actor, {
+					extension: m.registration.manifest.id,
+					requestId: "first",
+					target: m.target,
+				}),
+				first,
+			);
+			assert.equal(m.f.requests.length, 0);
+		} finally {
+			await m.close();
+		}
+	},
+);
+
 test(
 	"Extension backend: actual scoped CAS setting and display-only card are reconciled; private user setting never becomes model input",
 	{ timeout: 15000 },
