@@ -47,15 +47,15 @@ npm run test:release
 
 `--files` 接受逗号分隔的精确相对路径，可重复使用；路径不存在即拒绝。`--test-name-pattern=<正则>` 可进一步筛选文件内场景；没有匹配测试时返回失败。`--list` 输出完整选择与排除，执行时同一清单写入独立运行目录。未知选项及 release/scope 等冲突组合会被拒绝。
 
-| 变化 | 选用入口 |
-| --- | --- |
-| 日常反馈 | core默认集合：权限、身份、records、MAS查询、恢复、并发边界 |
-| 工单服务或扩展消费 | affected rsi，含协议/client和扩展接缝 |
-| 维护、备份、恢复、CLI入口 | affected maintenance |
-| WebUI/server/CLI消费与浏览器 | affected webui |
+| 变化                                         | 选用入口                                                      |
+| -------------------------------------------- | ------------------------------------------------------------- |
+| 日常反馈                                     | core默认集合：权限、身份、records、MAS查询、恢复、并发边界    |
+| 工单服务或扩展消费                           | affected rsi，含协议/client和扩展接缝                         |
+| 维护、备份、恢复、CLI入口                    | affected maintenance                                          |
+| WebUI/server/CLI消费与浏览器                 | affected webui                                                |
 | 共享协议/Runtime或无法确定影响面的跨切面变化 | affected protocol/runtime或test:release，覆盖全部剩余源码测试 |
-| exports、依赖、vendor、构建、资产或发布 | test:release加smoke:package，按需要增加平台专项 |
-| 文档 | 链接、格式、差异与对象字节核对 |
+| exports、依赖、vendor、构建、资产或发布      | test:release加smoke:package，按需要增加平台专项               |
+| 文档                                         | 链接、格式、差异与对象字节核对                                |
 
 领域映射由 `scripts/test-selection.mjs` 维护，新增动态接缝时一并核对；它不是自动证明“不受影响”的依赖分析器。精确文件用于已明确的定位/回归，不替代未知影响面的扩大验证。
 
