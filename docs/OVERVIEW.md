@@ -16,6 +16,7 @@ Pakka 将 Pi Durable 的 Conversation、权限、持久化与 MAS 协作能力�
 
 ## 产品后续入口
 
+- WebUI 重构先读[开发原则](development/FRONTEND-GUIDELINES.md)、[文件／接口与推荐目录](development/WEBUI-ARCHITECTURE.md)和[设计系统调研](development/WEBUI-DESIGN-SYSTEMS.md)。React 19 / Astryx 是推荐评估方向；运行时／扩展迁移另行切片，文档交付边界见[变更记录](changes/webui-design-principles.md)。
 - [Runtime 与默认入口](../openspec/changes/enable-product-runtime-and-launcher/tasks.md)：受控长上下文/重试、附件、长期容量治理；固定结果见[验证记录](verification/PRODUCT-RUNTIME-LAUNCHER.md)。
 - [资源压力](../openspec/changes/add-local-maintenance-and-delivery/tasks.md#near-term-resource-pressure)：冷浏览/有界观察已交付；完整执行上下文、活跃 Runtime 预算、闲置卸载及独立 worker/OOM 恢复仍需接续。
 - [工作台导航与本机恢复](../openspec/changes/improve-webui-navigation-and-local-recovery/tasks.md)：维护与登录由本轮接续，可寻址设置及逐页交互仍待办。

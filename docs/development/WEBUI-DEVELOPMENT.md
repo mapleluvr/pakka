@@ -1,6 +1,6 @@
 # pakka-webui WebUI 与扩展开发规范
 
-本文件维护 `@pakka/webui` 的服务、扩展、组件、配置与验证方法细则。整体预期见 [WebUI state](../state/webui.md)，页面结构与交互由[前端声明](../state/frontend.md)维护；当前工作见[工作入口](../OVERVIEW.md)和所指 OpenSpec tasks。公共 API 通过明确 exports 和独立消费者核对，实际实现较窄不自动缩减目标。
+本文件维护 `@pakka/webui` 的服务、扩展、组件、配置与验证方法细则。查文件、职责、现有 public exports 和推荐迁移结构先读[架构说明](WEBUI-ARCHITECTURE.md)；可维护性、开放组合与重构初期少测试政策见[前端规范](FRONTEND-GUIDELINES.md)。整体预期见 [WebUI state](../state/webui.md)，页面结构与交互由[前端声明](../state/frontend.md)维护；当前工作见[工作入口](../OVERVIEW.md)和所指 OpenSpec tasks。公共 API 通过明确 exports 和独立消费者核对，实际实现较窄不自动缩减目标。
 
 ## 1. 产品核心与扩展的分工
 
@@ -46,7 +46,7 @@ MAS Board 必须通过右侧的通用贡献方式实现。不为 MAS 增加特�
 界面实施采用[前端开发规范](FRONTEND-GUIDELINES.md)及其中保存的 Atlassian 排版、Vercel 界面指南；对应原生行为以 Devin 离线生产前端为准。具体来源、直接定位和证据类型在该规范中维护。
 
 - 前端基座、CSS 身份、页面布局、响应式和 Team 交互统一由[前端声明](../state/frontend.md)维护。扩展采用宿主 Preact/htm、公开组件和同套界面语言，保留代码与字体许可证，不另建应用壳层。
-- 组件默认消费 DTO 和 host-owned context，不把整个应用状态注入扩展。
+- 页面／功能入口消费授权 DTO 和 host-bound context；通用 UI 原语只接收必要的值、内容与意图回调，不代办业务请求。不把整个应用状态注入扩展。
 - 状态分别处理 loading、empty、denied、conflict、unknown、stale/disconnected 和 terminal；不要把它们合成同一个红/绿点。
 - 显示已持久 membership 与 native live readiness 的区别；generation done 不等于业务目标或工具副作用已完成。
 - 表单写入前展示 scope；危险操作需要明确目标和动作反馈，重复点击复用同一 pending operation，不能静默分配新请求。
@@ -81,7 +81,7 @@ Card 是显示记录，不是偷偷添加 system/user message。必须用下一�
 - 业务 settings/notes 等使用明确 namespace 与版本冲突规则；user、Conversation 和 extension 的 scope 不能仅靠 UI 选项约束。
 - 长工作通过受控 job/receipt 服务；HTTP 与 wait 均有有限期限，关闭/取消 wait 不等于取消已接受的 job。
 - 同 actor/resource/request 的相同参数只 reconciliation；不同参数拒绝冲突。未知 handler 不自动重进，不能宣称任意外部效果 exactly-once。
-- 实际 public SDK 的 `ExtensionClient.operationByRequest({ extension, requestId, target })` 可在丢失 host operation ID 时只读查询原请求；服务端绑定当前 person 和精确 AgentRef，并在发布前重查原权限。`UIContext.operationByRequest(requestId)` 另绑定当前 open instance。
+- 实际 public SDK 的 `ExtensionClient.operationByRequest({ extension, requestId, target })` 可在丢失 host operation ID 时只读查询原请求；服务端绑定当前 person 和精确 AgentRef，并在发布前重查原权限。`WebInterfaceContext.operationByRequest(requestId)` 另绑定当前 open instance。
 - 外层 operation 已记录 `done` 不证明内层 job/browser/native effect 已完成；内层仍为 `unknown` 时必须保留待确认身份，不解锁重复效果。
 - 明确 pre-effect guard 的拒绝可报 denied；opaque callback 可能已有效果，其异常/断连/超时保持 unknown。不要解析报错文本推断 rollback。
 - Memory 是相同插槽的另一实际消费者：`workspaceMemoryService`/`workspaceMemoryExtensionRoot` 绑定当前人类与精确资源；宿主分别选择 `createPocketMemory().tools` 与 `.source`。人类界面不自动激活 Agent 能力；提议须经授权审批才进入来源；编辑、审批和遗忘按精确 expectedVersion 提交，冲突保留当前草稿。暂停只停止内容贡献，移除人类界面保留已批准记录及宿主显式工具；响应不明按原 operation 核对。每条文本最多 300 个 UTF-16 code units，项目/global 各最多 40/30 条，未批准提议最多 20 条，保留记录／mutation ledger 上限为 256/512。
@@ -117,7 +117,7 @@ legacy owned 私密服务会持久保存显式提交的值，供未来原生主�
 
 ## 9. 实际开发与验证路径
 
-Verification 的选用与记录按[通用方法](VERIFICATION.md#选用与记录)。选用扩展端到端检查时，按扩展能力从以下项目确定覆盖范围：
+Verification 的选用与记录按[通用方法](VERIFICATION.md#选用与记录)。重构初期优先遵循[少测试政策](FRONTEND-GUIDELINES.md#重构初期的测试政策)：下面是按风险选用的检查项目，不是每项 UI 改动必须新增的测试清单。选用扩展端到端检查时，按扩展能力从以下项目确定覆盖范围：
 
 1. 能从 public exports 编译的独立消费者，无内部路径/根 overrides。
 2. 一份可原样安装的例子：GUI-only 或真实配置影响后续行为的工具/服务。
