@@ -2,6 +2,10 @@
 
 本文件维护 `@pakka/webui` 的服务、扩展、组件、配置与验证方法细则。整体预期见 [WebUI state](../state/webui.md)，页面结构与交互由[前端声明](../state/frontend.md)维护；当前工作见[工作入口](../OVERVIEW.md)和所指 OpenSpec tasks。公共 API 通过明确 exports 和独立消费者核对，实际实现较窄不自动缩减目标。
 
+pakka-webui 的目标发布单元独立于 Pakka monorepo；核心、服务和插件按公开版本/exports 消费，不把同仓安装当作兼容契约。当前 `apps/webui` 与下文现有 SDK 是实现参考，独立产品的 renderer/SDK 可按实际消费者成套演进，不因保留旧名字就承诺二进制或 UI ABI 兼容。通用需求见[插件能力](../requirements/WEBUI-PLUGIN-CAPABILITIES.md)。
+
+RSI、MAS、Memo 负责自己的可视化、控制和业务管线，使用与普通第三方相同的公共插槽/服务。前端迁移另参考已形成的[开放架构原则](https://github.com/mapleluvr/pakka/blob/c241c5e/docs/development/WEBUI-ARCHITECTURE.md)；本分支不合并那条重构分支，也不把它的推荐目标写成已实现。
+
 ## 1. 产品核心与扩展的分工
 
 | 产品宿主拥有                                  | 扩展贡献                                   |

@@ -21,6 +21,8 @@
 
 工单领域见 [RSI](rsi.md)及 [RSI API](../reference/RSI-API.md)，场景在 [长期工单变更](../../openspec/changes/persist-rsi-ticket-records/)。
 
+史料服务见 [History Book](history-book.md)，公开消费见 [Book 与图书馆协作](../guides/HISTORY-LIBRARY.md)。
+
 知识服务见 [Memo](memo.md)，场景在 [Memo 知识服务变更](../../openspec/changes/add-memo-knowledge/specs/memo-knowledge/spec.md)。
 
 ## 与已有规范的分工

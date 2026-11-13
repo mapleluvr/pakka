@@ -53,6 +53,54 @@ export type Draft = {
 	prior: Head | null;
 	data: { tickets: Row[]; requests: StoredRequest[] };
 };
+type AssignmentFlight = { writers: number; readers: Set<{ valid: boolean }> };
+type AssignmentOwner = ReturnType<Runtime["root"]>;
+// RSI owns assignment changes. Only in-flight publications are retained, not ticket history.
+const assignmentFlights = new WeakMap<AssignmentOwner, Map<string, Map<string, AssignmentFlight>>>();
+function assignmentFlight(owner: AssignmentOwner, namespace: string, id: string) {
+	let spaces = assignmentFlights.get(owner);
+	if (!spaces) assignmentFlights.set(owner, (spaces = new Map()));
+	let tickets = spaces.get(namespace);
+	if (!tickets) spaces.set(namespace, (tickets = new Map()));
+	let flight = tickets.get(id);
+	if (!flight) tickets.set(id, (flight = { writers: 0, readers: new Set() }));
+	const active = flight,
+		activeTickets = tickets,
+		activeSpaces = spaces;
+	const prune = () => {
+		if (active.writers || active.readers.size) return;
+		activeTickets.delete(id);
+		if (!activeTickets.size) activeSpaces.delete(namespace);
+		if (!activeSpaces.size) assignmentFlights.delete(owner);
+	};
+	return { active, prune };
+}
+function assignmentPublication(owner: AssignmentOwner, namespace: string, id: string) {
+	const { active, prune } = assignmentFlight(owner, namespace, id);
+	const reader = { valid: active.writers === 0 };
+	active.readers.add(reader);
+	return {
+		check() {
+			if (!reader.valid) throw new TicketError("unknown", "Ticket assignment changed during publication");
+		},
+		release() {
+			if (active.readers.delete(reader)) prune();
+		},
+	};
+}
+function assignmentWrite(owner: AssignmentOwner, namespace: string, id: string) {
+	const { active, prune } = assignmentFlight(owner, namespace, id);
+	active.writers++;
+	for (const reader of active.readers) reader.valid = false;
+	let released = false;
+	return () => {
+		if (released) return;
+		released = true;
+		active.writers--;
+		prune();
+	};
+}
+
 const keyHash = (value: unknown) => createHash("sha256").update(JSON.stringify(value)).digest("hex");
 export const requestKey = (actor: string, request: string) => "request:" + keyHash([actor, request]);
 const headKey = (id: string) => "ticket:" + id;
@@ -371,6 +419,10 @@ export async function ticketRepository(
 			authorize();
 		};
 		verify();
+		const finishAssignment =
+			row.handler?.actorId !== saved.prior?.handler?.actorId
+				? assignmentWrite(runtime.root(), namespace, row.id)
+				: () => {};
 		try {
 			await records.commit(
 				{
@@ -412,6 +464,8 @@ export async function ticketRepository(
 				"unknown",
 				"Ticket write could not be confirmed; query the original request after recovery",
 			);
+		} finally {
+			finishAssignment();
 		}
 		try {
 			authorize();
@@ -701,5 +755,17 @@ export async function ticketRepository(
 			return { requestId: run.dispatchRequestId, text };
 		});
 	}
-	return { records, head, run, input, draft, lookup, save, history, view, check };
+	return {
+		records,
+		head,
+		run,
+		input,
+		draft,
+		lookup,
+		save,
+		history,
+		view,
+		check,
+		publication: (id: string) => assignmentPublication(runtime.root(), namespace, id),
+	};
 }

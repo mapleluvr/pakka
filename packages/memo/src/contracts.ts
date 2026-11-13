@@ -128,6 +128,10 @@ export interface SourceCheck {
 export interface SourceProvider {
 	/** Synchronous current authorization, including authority to share into this library. */
 	check(input: SourceCheck): void;
+	/** Capture current authorization for this exact original read/search reply before any DTO conversion.
+	 * The returned verifier is synchronous and retains identities/permissions, not reply bodies.
+	 * Provider wrappers must preserve this capability and the original reply identity when supplied. */
+	publicationCheck?(result: unknown): () => void;
 	/** One bounded source-local page. References must retain this source identity/version. */
 	search?(
 		input: SourceCheck & { readonly query: string; readonly limit: number; readonly cursor?: string },
@@ -154,6 +158,9 @@ export interface MemoClient {
 	list(query: ListQuery): Promise<Page<Entry>>;
 	search(query: SearchQuery): Promise<Page<Entry>>;
 	read(ref: MemoRef, options?: ReadOptions): Promise<Content>;
+	/** Capture a synchronous verifier for an original read/search result from this client.
+	 * A consumer calls it after its final await, before publishing transformed bytes. */
+	publicationCheck(result: unknown): () => void;
 	history(query: HistoryQuery): Promise<Page<Revision>>;
 	changes(query: { readonly libraryId: string } & PageQuery): Promise<Page<Change>>;
 	write(input: WritePage): Promise<Receipt>;

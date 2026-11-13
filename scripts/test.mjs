@@ -82,7 +82,7 @@ async function main() {
 	async function execute(file) {
 		const index = plan.selected.indexOf(file) + 1;
 		const worker = join(run, "workers", String(index).padStart(4, "0")),
-			home = join(worker, "home"),
+			home = join(worker, "pakka-test-profile-" + index),
 			temp = join(home, "tmp"),
 			artifacts = join(worker, "artifacts"),
 			metrics = join(worker, "metrics");
@@ -93,7 +93,7 @@ async function main() {
 		Object.assign(env, {
 			HOME: home,
 			USERPROFILE: home,
-			PI_CODING_AGENT_DIR: join(home, "pi"),
+			PI_CODING_AGENT_DIR: home,
 			TEMP: temp,
 			TMP: temp,
 			TMPDIR: temp,

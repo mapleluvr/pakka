@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import type { ToolInvocationScope } from "@pakka/agent";
 import { Store } from "./store.ts";
 import { openMemo } from "./index.ts";
+import { readPublications } from "./publication.ts";
 import { MemoError, type MemoActor, type MemoClient, type MemoRef, type Receipt } from "./contracts.ts";
 import {
 	shape,
@@ -474,7 +475,11 @@ export function openPatchouli(options: PatchouliOptions): PatchouliService {
 				throw new MemoError("conflict", "Research publication budget exhausted");
 		};
 		function scoped(base: MemoClient): MemoClient {
+			const publications = readPublications();
 			return Object.freeze({
+				publicationCheck(result) {
+					return publications.capture(result);
+				},
 				async libraries(q) {
 					const value = await base.libraries(q);
 					check();
@@ -488,22 +493,35 @@ export function openPatchouli(options: PatchouliOptions): PatchouliService {
 					allowed(q.libraryId);
 					return base.list(q);
 				},
-				search(q) {
+				async search(q) {
 					q = data(q);
 					if (q.libraryId === undefined) invalid("Select a research library explicitly");
-					allowed(q.libraryId);
-					return base.search(q);
+					const libraryId = q.libraryId;
+					allowed(libraryId);
+					const value = await base.search(q),
+						verify = base.publicationCheck(value);
+					return publications.bind(value, () => {
+						verify();
+						allowed(libraryId);
+					});
 				},
 				async read(ref, q) {
 					ref = data(ref);
 					q = data(q);
 					allowed(ref.libraryId);
-					const value = await base.read(ref, q);
+					const value = await base.read(ref, q),
+						verify = base.publicationCheck(value);
 					check();
-					return frozen({
-						...value,
-						sources: value.sources.filter((r) => scope.some((s) => s.libraryId === r.libraryId)),
-					});
+					return publications.bind(
+						frozen({
+							...value,
+							sources: value.sources.filter((r) => scope.some((s) => s.libraryId === r.libraryId)),
+						}),
+						() => {
+							verify();
+							allowed(ref.libraryId);
+						},
+					);
 				},
 				async history(q) {
 					q = data(q);
@@ -560,9 +578,11 @@ export function openPatchouli(options: PatchouliOptions): PatchouliService {
 		}
 		return scoped(original);
 	}
+	const completions = readPublications();
 	return Object.freeze({
 		connect,
 		knowledgeForInvocation,
+		publicationCheck: (result: ResearchRun) => completions.capture(result),
 		async finish(scopeToken: ToolInvocationScope, input: { runId: string }) {
 			input = data(input);
 			shape(input, ["runId"]);
@@ -576,12 +596,18 @@ export function openPatchouli(options: PatchouliOptions): PatchouliService {
 				);
 				driver.checkInvocation(scopeToken);
 			});
+			const runId = input.runId;
 			try {
-				driver.checkInvocation(scopeToken);
+				return completions.bind(view(row(runId)), () => {
+					enabled();
+					driver.checkInvocation(scopeToken);
+					const retained = row(runId);
+					if (slot().run_id !== runId || retained.state !== "completed" || retained.cancel_requested === 1)
+						forbidden();
+				});
 			} catch {
 				throw new MemoError("unknown", "Research completion committed but cannot be published");
 			}
-			return view(row(input.runId));
 		},
 		close() {
 			for (const timer of timers) clearInterval(timer);

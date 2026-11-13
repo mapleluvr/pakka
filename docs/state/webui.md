@@ -1,5 +1,13 @@
 # WebUI 服务与扩展
 
+## 独立发布与插件职责
+
+pakka-webui 将独立于 Pakka monorepo 发布，使用公开、版本化的插件 SDK 和服务契约组合下游。当前同仓 `apps/webui` 是已有实现与兼容输入；本次文档采用不表示已经搬迁、独立发布或切换 renderer。默认 `pakka` 入口可显式装配独立产品，不能以同仓路径作为消费协议。
+
+RSI、MAS、Memo 的可视化、业务控制及管线由各自插件按[开发契约](../development/WEBUI-DEVELOPMENT.md)实现，不进入 WebUI 核心领域模型。宿主负责通用页面/容器、资源导航、连接、受控命令/操作观察和插件生命周期；所属服务保留对象、授权及持久效果。插件系统按公开能力满足这些需求，真正的通用缺口须先由消费路径证明，不为某个领域新增私有核心接缝。
+
+采用与任务见[独立插件规划](../../openspec/changes/plan-independent-webui-plugins/proposal.md)；远端需求见[通用插件能力](../requirements/WEBUI-PLUGIN-CAPABILITIES.md)。
+
 ## 默认启动与停止
 
 `pakka` 无参数启动前台 WebUI；`--connection` 保留协议客户端。默认本地产品无需宿主 JSON 或已选模型，模型配置来自 Pi agent directory。PAKKA_HOME 保存已选启动来源、工作区、原控制 Session 和数据；首次启动绑定当前目录，之后重开该已记录工作区，不因 shell 当前目录改变而替换存储。高级 JSON 或可信模块仍可显式选用。

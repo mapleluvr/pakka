@@ -77,6 +77,10 @@ const scopes = {
 	protocol: () => true,
 	runtime: () => true,
 	memo: (f) => f.startsWith("packages/memo/"),
+	history: (f) =>
+		/artifact-history|historical-entry|historical-publication|historian|compresser|source-work|sqlite-journal|strategy-adoption|native-storage/.test(
+			f,
+		),
 	rsi: (f) =>
 		f.startsWith("packages/rsi/") ||
 		f.startsWith("packages/protocol/") ||

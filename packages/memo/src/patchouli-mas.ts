@@ -136,16 +136,22 @@ export function createPatchouliTools(resolve: (scope: ToolInvocationScope) => Pa
 			additionalProperties: false,
 		},
 		async execute(input, signal, scope) {
+			let committed = false;
 			try {
 				if (revoked || signal?.aborted || !scope)
 					throw new MemoError("denied", "Current research invocation required");
 				shape(input, ["runId"]);
 				id(input.runId);
-				const result = await resolve(scope).finish(scope, { runId: input.runId });
+				const service = resolve(scope);
+				const result = await service.finish(scope, { runId: input.runId });
+				committed = true;
+				if (revoked || signal?.aborted)
+					throw new MemoError("unknown", "Research tools revoked after completion");
+				service.publicationCheck(result)();
 				return JSON.stringify({ status: "ok", value: result });
 			} catch (error) {
 				return JSON.stringify(
-					error instanceof MemoError
+					!committed && error instanceof MemoError
 						? { status: error.code, message: error.message }
 						: { status: "unknown", message: "Research completion requires reconciliation." },
 				);

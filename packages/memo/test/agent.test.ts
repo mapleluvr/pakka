@@ -3,7 +3,8 @@ import { strict as assert } from "node:assert";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { openMemo, type MemoClient } from "../src/index.ts";
+import { openMemo, MemoError, type MemoClient, type SourceRef } from "../src/index.ts";
+import { createMemoTools, bindMemoInvocation } from "../src/agent.ts";
 import type { HostOptions, ToolInvocationScope } from "../../agent/src/index.ts";
 import { runtimeFixture } from "../../agent/test/runtime-fixture.ts";
 
@@ -92,6 +93,80 @@ test("native Memo tools save, search and read the same page while stale or forge
 		);
 		tools.revoke();
 		assert.equal((await client.list({ libraryId: "work" })).items.length, 1);
+	} finally {
+		tools.revoke();
+		await m.close();
+		service.close();
+		await rm(dir, { recursive: true, force: true });
+	}
+});
+
+test("native Memo publication rechecks the actual source after headless read returns", async () => {
+	const dir = await mkdtemp(join(tmpdir(), "memo-native-publication-"));
+	let allowed = true,
+		armed = false,
+		checks = 0;
+	const service = openMemo({
+		file: join(dir, "memo.sqlite"),
+		providers: {
+			book: {
+				check() {},
+				async read(i) {
+					return { ref: i.ref, text: "RESOLVED-OBJECT-BODY", nextOffset: null };
+				},
+				publicationCheck() {
+					return () => {
+						if (!allowed) throw new MemoError("denied", "Actual source read revoked");
+						if (armed && ++checks === 2)
+							queueMicrotask(() => {
+								allowed = false;
+							});
+					};
+				},
+			},
+		},
+	});
+	service.createLibrary({ id: "work", title: "Work", ownerId: "bot" });
+	const ref: SourceRef = { kind: "source", libraryId: "work", sourceId: "book", version: "1" };
+	await service.connect({ id: "bot", check() {} }).registerSource({
+		libraryId: "work",
+		sourceId: "book",
+		requestId: "register",
+		baseVersion: 0,
+		provider: "book",
+		address: "book:fixed",
+		version: "1",
+		title: "Book",
+		summary: "Source",
+	});
+	let resolve!: (scope: ToolInvocationScope) => MemoClient;
+	const tools = createMemoTools({ resolve: (scope) => resolve(scope) });
+	const m = await runtimeFixture({ tools: tools.tools }, undefined, (payload) => {
+		const results = payload.messages.filter((r) => r.role === "tool");
+		if (results.length < 2) {
+			if (results.length === 1) armed = true;
+			return { tool: "memo_read", args: { ref } };
+		}
+		return { text: "Read boundary checked" };
+	});
+	try {
+		const source = m.runtime.view().conversations[0]!;
+		resolve = (scope) =>
+			bindMemoInvocation({ runtime: m.runtime, source, service, actor: { id: "bot", check() {} } }, scope);
+		await m.runtime
+			.root()
+			.connect("operator", ["input.submit"])
+			.submit({ key: "source-read", text: "Read a source twice" });
+		await m.runtime.waitForIdle();
+		assert.equal(m.f.requests.length, 3);
+		const results = m.f.requests[2]!.messages.filter((r) => r.role === "tool").map((r) =>
+			JSON.parse(String(r.content)),
+		);
+		assert.equal(results[0].status, "ok");
+		assert.equal(results[0].value.text, "RESOLVED-OBJECT-BODY");
+		assert.equal(allowed, false);
+		assert.equal(results[1].status, "denied");
+		assert.ok(!JSON.stringify(results[1]).includes("RESOLVED-OBJECT-BODY"));
 	} finally {
 		tools.revoke();
 		await m.close();
