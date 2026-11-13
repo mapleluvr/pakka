@@ -20,7 +20,7 @@ WebUI 拥有通用容器、导航、组件、连接、受控调用及插件生�
 | [Dynamite](https://github.com/mapleluvr/pakka-dynamite/tree/pakka/history-book) | pakka/history-book          | 独立 Book/Historian 产物、服务与固定版本能力。                                      |
 | [EI](https://github.com/mapleluvr/pakka-ei/tree/pakka/verification-evidence)    | pakka/verification-evidence | 验证文档治理；不是本次 WebUI 功能依赖。                                             |
 
-这些分支保存已有实现和验证边界，不能当作整包最终验收、SDK 定型或远端重构必须照搬的结构。尤其不要求把旧 apps/webui 或其中专有业务搬入新的独立 WebUI。接入时固定实际 commit、公开 exports 与产品安装归档；版本号或分支名不能代替字节身份。详细范围见[参考候选](../changes/history-reference-branches.md)。
+这些分支已推送并核对实际远端 ref，保存已有实现和验证边界，不能当作整包最终验收、SDK 定型或远端重构必须照搬的结构。尤其不要求把旧 apps/webui 或其中专有业务搬入新的独立 WebUI。接入时固定实际 commit、公开 exports 与产品安装归档；版本号或分支名不能代替字节身份。实际实现保存点与详细范围见[参考候选](../changes/history-reference-branches.md)。
 
 ## 3. 通用宿主能力
 
@@ -36,7 +36,7 @@ WebUI 拥有通用容器、导航、组件、连接、受控调用及插件生�
 
 Session/Conversation 是可供通用导航的持久对象：已知、宿主可解析且获准访问的原 Session 可进入原 Conversation，查看实际过程。已加载/未加载、不可得、无权、身份不符分别表达；不根据任意文件路径打开 SQLite，不用同名对象或替代 Session 冒充原身份。
 
-浏览与执行分开：打开引用、页面或历史不能启动模型、重派任务、清锁或解除恢复停机。宿主保留原 writer 和 Runtime 生命周期；是否跨进程/跨机器访问由部署与公开服务能力决定，不要求共享数据库文件。
+浏览与执行分开：打开引用、页面或历史不能启动模型、重派任务、清锁或解除恢复停机。导航不改变既有 writer/Runtime 的所有权及生命周期；是否跨进程/跨机器访问由部署与公开服务能力决定，不要求共享数据库文件，也不要求 WebUI 核心直接持有数据库 writer。
 
 ### G3：有限数据、类型化服务与订阅
 
@@ -48,7 +48,7 @@ Session/Conversation 是可供通用导航的持久对象：已知、宿主可�
 
 插件能注册 namespaced commands/actions，并在自身页面展示管线、工作进度及操作结果。按钮、快捷入口和 client 使用同一命令身份及服务契约。
 
-宿主提供通用 operation/job/receipt 的调用、观察、期限与原请求核对；插件负责自己的业务管线和状态含义，不要求 WebUI 内置工单状态机、研究流程或转派算法。外层调用完成、内层工作完成与业务目标完成分别表达。
+宿主提供公开的调用、事件与观察接缝，使插件能呈现及核对所属服务的 operation/job/receipt。期限、原请求核对、执行状态与持久账本归所属服务；插件负责自己的管线和状态含义。WebUI 不建立统一业务执行账本，不内置工单状态机、研究流程或转派算法。外层调用完成、内层工作完成与业务目标完成分别表达。
 
 读、写、等待、取消和恢复执行显式区分。断线/未知结果不自动换 request ID 重放效果；关闭面板或取消等待不冒充取消已接纳工作。权限与在途结果处理遵循已采用的对象契约，不因每个 Promise 包装而自动追加一层业务 ACL。
 

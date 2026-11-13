@@ -12,6 +12,14 @@
 
 基线是实施来源，不是包含新实现的提交号。分支用于查看源码和公开能力；消费者固定自己实际读取的 commit/安装归档，不把同一包版本号当作字节身份，不把本次 push 当作 release 或全体验收。
 
+2026-11-13 已完成三仓的提交、推送及实际远端 ref 核对。初次实现保存点如下；Pakka 后续仅补分支交接文档，不改变已验证的产品/测试字节，也不倒写固定验证归档身份：
+
+- Pakka：[0a4e2865c2717bc32d62e47d5e7321146f5bfa22](https://github.com/mapleluvr/pakka/commit/0a4e2865c2717bc32d62e47d5e7321146f5bfa22)。
+- Dynamite：[445f7063dd6585b692c9f3877a58618a6117bbc8](https://github.com/mapleluvr/pakka-dynamite/commit/445f7063dd6585b692c9f3877a58618a6117bbc8)。
+- EI：[58cb5c8d59e444e8c0307ad1fe8d83e3dfe67dcd](https://github.com/mapleluvr/pakka-ei/commit/58cb5c8d59e444e8c0307ad1fe8d83e3dfe67dcd)。
+
+完整初次暂存范围分别为 86/33/30 文件；非文档原始字节逐项对照审查候选，无漂移。文档格式、15 份文档的 127 个本地链接/10 个锚点及三个相关 OpenSpec strict 通过；两份既有本地证据包整体 hash 再核对一致。没有新建 PR、更新 main/dev、发布 npm 或上传原始证据。
+
 ## 实现与验证的位置
 
 Book/Historian、宿主页式产物/历史工作及真实 Memo/Patchouli headless 消费已实现并经多轮实际验证。Dynamite 是 Book 服务所有者，Memo 适配已移到下游。非 Board 授权整改及最后 RSI mutation 窗口修正完成；Board 继续暂缓。
