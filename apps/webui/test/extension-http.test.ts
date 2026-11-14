@@ -5,8 +5,8 @@ import { join } from "node:path";
 import { fixture } from "./fixture.ts";
 import { createPocketHttp } from "../src/http.ts";
 import { createExtensionHost } from "../src/extension-host.ts";
-import { createExtensionClient } from "../src/extension-client.ts";
-import { decodeExtensionResponse } from "../src/extension-rpc.ts";
+import { createExtensionClient } from "@pakka/client/extensions";
+import { decodeExtensionResponse } from "@pakka/protocol/extension-rpc";
 
 const empty = { type: "object", properties: {}, required: [] };
 const manifest = {

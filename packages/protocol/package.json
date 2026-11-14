@@ -11,6 +11,22 @@
 		"./pocket": {
 			"types": "./dist/pocket.d.ts",
 			"import": "./dist/pocket.js"
+		},
+		"./webui": {
+			"types": "./dist/webui.d.ts",
+			"import": "./dist/webui.js"
+		},
+		"./webui-assets": {
+			"types": "./dist/webui-assets.d.ts",
+			"import": "./dist/webui-assets.js"
+		},
+		"./extensions": {
+			"types": "./dist/extensions.d.ts",
+			"import": "./dist/extensions.js"
+		},
+		"./extension-rpc": {
+			"types": "./dist/extension-rpc.d.ts",
+			"import": "./dist/extension-rpc.js"
 		}
 	},
 	"files": [

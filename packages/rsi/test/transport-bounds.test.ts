@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import { strict as assert } from "node:assert";
-import { decodeValue } from "@pakka/webui/extension";
+import { decodeValue } from "@pakka/protocol/extensions";
 import { runtimeFixture } from "../../agent/test/runtime-fixture.ts";
 import { createTicketService } from "../src/index.ts";
 import { resultSchema } from "../src/browser/contract.ts";

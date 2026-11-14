@@ -15,21 +15,17 @@
 			"types": "./dist/launcher.d.ts",
 			"import": "./dist/launcher.js"
 		},
+		"./assets": {
+			"types": "./dist/assets.d.ts",
+			"import": "./dist/assets.js"
+		},
 		"./http": {
 			"types": "./dist/http.d.ts",
 			"import": "./dist/http.js"
 		},
-		"./extension": {
-			"types": "./dist/extension.d.ts",
-			"import": "./dist/extension.js"
-		},
 		"./backend": {
 			"types": "./dist/backend.d.ts",
 			"import": "./dist/backend.js"
-		},
-		"./client": {
-			"types": "./dist/extension-client.d.ts",
-			"import": "./dist/extension-client.js"
 		},
 		"./ui": {
 			"types": "./dist/ui.d.ts",
@@ -66,6 +62,7 @@
 		"@tanstack/virtual-core": "3.19.11",
 		"dompurify": "3.4.16",
 		"htm": "3.1.1",
+		"jsonc-parser": "3.3.1",
 		"marked": "18.1.0",
 		"preact": "11.0.1",
 		"qrcode": "1.5.4"

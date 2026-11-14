@@ -49,6 +49,8 @@ export interface ProductModelControl {
 	refresh(): Promise<ProductModelStatus>;
 }
 export interface ProductModelSource {
+	/** Trusted configuration adapter only; never publish this local path to browsers. */
+	readonly configurationPath: string;
 	/** Trusted bootstrap getter, never included in an operational DTO. */
 	models(): Models;
 	defaults(): ProductModelDefaults;
@@ -203,6 +205,7 @@ export async function openProductModels(options: {
 	});
 	await load();
 	return Object.freeze({
+		configurationPath: sources.models,
 		models: () => {
 			ready();
 			return runtime ?? empty;

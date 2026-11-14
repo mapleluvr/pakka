@@ -27,11 +27,16 @@ import type { ExtensionService, PocketServiceContext } from "./backend.ts";
 import { createManagedSessions, type ManagedSessions } from "./sessions.ts";
 import { observeNotifications } from "./notification-monitor.ts";
 import type { ProductModelSource } from "./product-models.ts";
+import { createWebUiServices, type WebUiServices } from "./webui-services.ts";
+import { createPersonModelDefaults } from "./model-defaults.ts";
+import { loadWebUiAssets, type WebUiArtifactSource } from "./assets.ts";
 export type { PocketServiceContext } from "./backend.ts";
 export interface PocketProductOptions {
 	readonly runtime: RuntimeOptions;
 	/** Trusted native configuration service, never supplied through browser RPC. */
 	readonly modelConfiguration?: ProductModelSource;
+	/** Explicit fixed frontend candidate; absent keeps the existing product until the later default switch. */
+	readonly frontend?: WebUiArtifactSource;
 	readonly owner: string;
 	readonly initial?: readonly { readonly name: string; readonly profile: string }[];
 	readonly profiles?: readonly string[];
@@ -52,6 +57,7 @@ export interface PocketProductOptions {
 		| "collaboration"
 		| "credentials"
 		| "modelConfiguration"
+		| "webuiServices"
 		| "notifications"
 		| "assets"
 		| "extensions"
@@ -100,8 +106,9 @@ async function publicAssets() {
 		["@pakka/client/pocket", "/client/pocket.js"],
 		["@pakka/protocol/pocket", "/protocol/pocket.js"],
 		["@pakka/protocol", "/protocol/index.js"],
-		["@pakka/webui/extension", "/sdk/extension.js"],
-		["@pakka/webui/client", "/sdk/extension-client.js"],
+		["@pakka/protocol/extensions", "/protocol/extensions.js"],
+		["@pakka/protocol/extension-rpc", "/protocol/extension-rpc.js"],
+		["@pakka/client/extensions", "/client/extensions.js"],
 		["@pakka/webui/components", "/sdk/components.js"],
 		["@pakka/webui/ui", "/sdk/ui.js"],
 		["preact", "/vendor/preact.mjs"],
@@ -119,12 +126,6 @@ async function publicAssets() {
 		type: types.js!,
 		body: await readFile(
 			fileURLToPath(new URL("./browser-virtual-core.js", import.meta.resolve("@pakka/webui"))),
-		),
-	});
-	assets.set("/sdk/extension-rpc.js", {
-		type: types.js!,
-		body: await readFile(
-			fileURLToPath(new URL("./extension-rpc.js", import.meta.resolve("@pakka/webui/client"))),
 		),
 	});
 	return assets;
@@ -146,7 +147,10 @@ export async function startPocket(options: PocketProductOptions) {
 		initial.some((row) => !profiles.includes(row.profile))
 	)
 		throw new Error("Invalid approved WebUI product configuration");
-	const assets = await publicAssets();
+	const frontend = options.frontend ? await loadWebUiAssets(options.frontend) : undefined;
+	if (frontend && frontend.manifest.entry !== "/")
+		throw new Error("The product requires a declared frontend HTML entry at /");
+	const assets = frontend?.assets ?? (await publicAssets());
 	const bootstrapCredential =
 		options.runtime.resolveApiKey ??
 		(() => {
@@ -170,6 +174,7 @@ export async function startPocket(options: PocketProductOptions) {
 	};
 	let http: Awaited<ReturnType<typeof createPocketHttp>> | undefined,
 		notifications: PocketNotifications | undefined,
+		webuiServices: WebUiServices | undefined,
 		services: Readonly<Record<string, ExtensionService>> | undefined,
 		servicesDisposed = false;
 	const monitors = new Map<string, { close(): Promise<void> }>();
@@ -177,6 +182,11 @@ export async function startPocket(options: PocketProductOptions) {
 		if (servicesDisposed) return;
 		servicesDisposed = true;
 		let failed = false;
+		try {
+			await webuiServices?.close();
+		} catch {
+			failed = true;
+		}
 		for (const monitor of monitors.values()) {
 			try {
 				await monitor.close();
@@ -215,12 +225,24 @@ export async function startPocket(options: PocketProductOptions) {
 				people,
 				namespace: "pocket.collaboration",
 			});
+		const personDefaults = createPersonModelDefaults({ runtime, people });
 		const workspaceFor = (runtime: Runtime) =>
 			createPocketWorkspace({
 				runtime,
 				people,
 				catalog: { namespace: "pocket.workspace", maxPending: 32 },
 				profileCeiling: () => profiles,
+				creationDefaults: async (actor, input) => {
+					if (input.profile !== "default" || input.configuration?.model !== undefined) return undefined;
+					const value = await personDefaults.read(actor);
+					if (value.model === null && value.thinkingLevel === null) return undefined;
+					return {
+						...(value.model
+							? { model: `${encodeURIComponent(value.model.provider)}/${value.model.id}` }
+							: {}),
+						...(value.thinkingLevel !== null ? { thinkingLevel: value.thinkingLevel } : {}),
+					};
+				},
 				beforeInput: (actor, ref) => collaboration.checkInput(actor, ref),
 				// Native jobs retain the creator, not a browser session; enforce the same current driver lease.
 				beforeScheduledInput: (actorId, ref) => collaboration.checkScheduledInput(actorId, ref),
@@ -350,6 +372,13 @@ export async function startPocket(options: PocketProductOptions) {
 			sources: options.extensions ?? [],
 			services,
 		});
+		webuiServices = await createWebUiServices({
+			runtime,
+			people,
+			sessions,
+			models: options.modelConfiguration,
+			defaults: personDefaults,
+		});
 		http = await createPocketHttp({
 			...options.transport,
 			runtime,
@@ -360,6 +389,7 @@ export async function startPocket(options: PocketProductOptions) {
 			collaboration,
 			credentials,
 			modelConfiguration: options.modelConfiguration,
+			webuiServices,
 			notifications,
 			extensions,
 			assets,

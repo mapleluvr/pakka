@@ -4,6 +4,7 @@
 
 | 接口                                                  | 文档                                                      |
 | ----------------------------------------------------- | --------------------------------------------------------- |
+| 独立 WebUI 协议/client、模型配置与固定前端资产        | [WebUI 公共消费接缝](WEBUI-SERVICES.md)                   |
 | 多 Conversation runtime、受控 catalog、模型与目录配置 | [Runtime API](RUNTIME-API.md)                             |
 | 执行环境、原生文件/Shell 工具与 invocation 能力       | [执行环境 API 与用法](../guides/EXECUTION-ENVIRONMENT.md) |
 | 策略 binding、projection、artifacts 和辅助 inference  | [Strategy API](STRATEGY-API.md)                           |

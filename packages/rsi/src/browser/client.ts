@@ -1,4 +1,4 @@
-import { decodeValue, isRecord, type ExtensionJson } from "@pakka/webui/extension";
+import { decodeValue, isRecord, type ExtensionJson } from "@pakka/protocol/extensions";
 import type { WebInterfaceContext } from "@pakka/webui/ui";
 import type { TicketClient, TicketPage, TicketReceipt, TicketView, TicketHistoryPage } from "../types.ts";
 import type { TicketAction } from "../commands.ts";

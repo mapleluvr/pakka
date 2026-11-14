@@ -54,7 +54,14 @@ export interface ExtensionManifest {
 		readonly agent?: string;
 		readonly backend?: string;
 		readonly client?: string;
-		readonly webui?: { readonly entry: string; readonly publicDir: string };
+		readonly webui?: {
+			readonly entry: string;
+			readonly publicDir: string;
+			/** Omitted only by legacy facets. Independent hosts refuse a missing or incompatible UI requirement before import. */
+			readonly api?: number;
+			readonly runtime?: string;
+			readonly styles?: readonly string[];
+		};
 	};
 	readonly services?: readonly string[];
 	readonly jobs?: readonly string[];
@@ -293,7 +300,26 @@ export function decodeManifest(value: unknown): ExtensionManifest {
 		if (value.facets[facet] !== undefined && !publicPath(value.facets[facet]))
 			throw new Error("Unsafe extension entry");
 	if (value.facets.webui !== undefined) {
-		shape(value.facets.webui, ["entry", "publicDir"]);
+		shape(value.facets.webui, ["entry", "publicDir"], ["api", "runtime", "styles"]);
+		if (value.facets.webui.api !== undefined || value.facets.webui.runtime !== undefined) {
+			if (
+				typeof value.facets.webui.api !== "number" ||
+				!Number.isSafeInteger(value.facets.webui.api) ||
+				value.facets.webui.api < 1 ||
+				value.facets.webui.api > 1000 ||
+				typeof value.facets.webui.runtime !== "string" ||
+				!/^[A-Za-z0-9_.:+-]{1,160}$/.test(value.facets.webui.runtime)
+			)
+				throw new Error("Invalid UI runtime requirement");
+		}
+		if (
+			value.facets.webui.styles !== undefined &&
+			(!Array.isArray(value.facets.webui.styles) ||
+				value.facets.webui.styles.length > 64 ||
+				value.facets.webui.styles.some((path) => !publicPath(path)) ||
+				new Set(value.facets.webui.styles).size !== value.facets.webui.styles.length)
+		)
+			throw new Error("Invalid UI styles");
 		if (!publicPath(value.facets.webui.entry) || !publicPath(value.facets.webui.publicDir))
 			throw new Error("Unsafe WebUI entry");
 	}

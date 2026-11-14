@@ -1,5 +1,5 @@
 import type { AgentRef } from "@pakka/protocol/pocket";
-import type { ExtensionJson, ExtensionOperation } from "./extension.ts";
+import type { ExtensionJson, ExtensionOperation } from "@pakka/protocol/extensions";
 
 /** Bound to one open interface/generation. Host invalidates callbacks and reads on close/replacement. */
 export interface WebInterfaceContext {

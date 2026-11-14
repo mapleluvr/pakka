@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { fixture } from "./fixture.ts";
 import { createExtensionHost } from "../src/extension-host.ts";
-import { decodeExtensionResponse } from "../src/extension-rpc.ts";
+import { decodeExtensionResponse } from "@pakka/protocol/extension-rpc";
 
 const manifest = {
 	api: 1,

@@ -7,7 +7,7 @@ import { deferred } from "../../../packages/agent/test/fixture.ts";
 import { createRuntime } from "@pakka/agent";
 import { createPocketPeople, createPocketWorkspace } from "@pakka/server/pocket";
 import { createExtensionHost } from "../src/extension-host.ts";
-import { decodeManifest } from "../src/extension.ts";
+import { decodeManifest } from "@pakka/protocol/extensions";
 
 const empty = { type: "object", properties: {}, required: [] };
 const text = { type: "object", properties: { text: { type: "string", maxLength: 128 } }, required: ["text"] };

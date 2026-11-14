@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { readFile, writeFile, lstat, realpath } from "node:fs/promises";
 import { isAbsolute } from "node:path";
-import type { ExtensionFacet } from "./extension.ts";
+import type { ExtensionFacet } from "@pakka/protocol/extensions";
 import { pathToFileURL } from "node:url";
 import { startPocket, type PocketProductOptions } from "./bootstrap.ts";
 

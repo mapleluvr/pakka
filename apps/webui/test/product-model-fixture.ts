@@ -1,14 +1,18 @@
 import assert from "node:assert/strict";
 import { mkdir, writeFile } from "node:fs/promises";
-import { basename, join } from "node:path";
+import { dirname, isAbsolute, join } from "node:path";
 import { fixture } from "../../../packages/agent/test/fixture.ts";
 
 export async function isolated(reply?: Parameters<typeof fixture>[1]) {
 	// ModelRuntime checks ambient native auth sources. Always use the repository's
 	// credential-free runner, including for a name-filtered local test run.
 	assert.equal(process.env.PI_OFFLINE, "1", "Run through scripts/test.mjs");
-	assert.match(basename(process.env.HOME ?? ""), /^pakka-test-profile-/);
-	assert.equal(process.env.PI_CODING_AGENT_DIR, process.env.HOME);
+	const artifacts = process.env.PAKKA_TEST_ARTIFACTS;
+	assert.ok(artifacts && isAbsolute(artifacts), "Run through scripts/test.mjs");
+	const home = join(dirname(artifacts), "home");
+	assert.equal(process.env.HOME, home);
+	assert.equal(process.env.USERPROFILE, home);
+	assert.equal(process.env.PI_CODING_AGENT_DIR, join(home, "pi"));
 	const f = await fixture({}, reply);
 	const agentDir = join(f.root, "pi-agent");
 	await mkdir(agentDir);

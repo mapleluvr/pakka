@@ -14,7 +14,7 @@ import type {
 	ExtensionRegistration,
 	ExtensionPermission,
 	Schema,
-} from "./extension.ts";
+} from "@pakka/protocol/extensions";
 
 /** Trusted product-service binding, isolated from executable/router and browser imports. */
 export interface PocketServiceContext {

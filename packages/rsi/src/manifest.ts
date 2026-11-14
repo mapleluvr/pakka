@@ -1,4 +1,4 @@
-import type { ExtensionManifest } from "@pakka/webui/extension";
+import type { ExtensionManifest } from "@pakka/protocol/extensions";
 import type { TicketAction } from "./commands.ts";
 import { inputs, resultSchema, writeActions } from "./browser/contract.ts";
 export const manifest: ExtensionManifest = {

@@ -2,24 +2,26 @@
 
 先读[开发原则](FRONTEND-GUIDELINES.md)。本文回答：**改一个东西去哪里，谁拥有状态，模块之间传什么，插件能依赖什么。** 采用的产品边界在 [WebUI state](../state/webui.md)，阶段与能力映射在[分仓设计](../../openspec/changes/plan-independent-webui/design.md)。
 
-独立 pakka-webui、React 19 / TypeScript/TSX / Astryx 已作为实施路线采用；下面的目标结构不是已实现或已发布 SDK。第 1、4 节定位已有代码，其他节说明采用的职责和候选文件组织。文件名不是兼容协议，不要求预建空目录。
+独立 pakka-webui、React 19 / TypeScript/TSX / Astryx 已作为实施路线采用。阶段 1 已形成纯浏览器 UI SDK、协议/client、模型与固定资产接缝；完整应用仍未形成，下面的目标目录不是已实现清单。第 1、4 节定位当前出口，具体接缝见[公共消费接口](../reference/WEBUI-SERVICES.md)与[阶段 1](../../openspec/changes/plan-independent-webui/phase-1.md)。文件名不是兼容协议，不要求预建空目录。
 
 ## 1. 当前代码在哪里
 
 下表相对 Pakka 仓库根；`apps/webui/` 仍是混合 Node/浏览器实现，不能原样搬作独立前端。
 
-| 要找的东西           | 现有入口                                                                | 作用与限定                                                                     |
-| -------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| 产品包与 exports     | `apps/webui/package.json`                                               | Node 启动和 extension/backend/client/ui/components 同包，安装依赖包含后端      |
-| 浏览器入口           | `apps/webui/web/index.html`、`web/app.js`                               | 当前 Preact/htm、import map、页面与导航；后一个简写相对 apps/webui             |
-| 容器和插件宿主       | `apps/webui/web/extensions.js`、`sheet.js`、`settings-page.js`          | 注册、实例、加载、错误、focus 与清理；后两个同属 web 目录，不是可深导的 SDK    |
-| 公开 UI              | `apps/webui/src/ui.ts`、`components.ts`                                 | WebInterfaceContext/Props 与 Preact Icon/Button/Field/Notice/Stack             |
-| 声明、调用与 Backend | `apps/webui/src/extension.ts`、`extension-client.ts`、`backend.ts`      | manifest/schema、checked client、受信任服务与 job 接缝                         |
-| HTTP/资产/扩展操作   | `apps/webui/src/http.ts`、`extension-host.ts`、`extension-rpc.ts`       | 身份、权限、generation、原请求和资源字节                                       |
-| 服务协议与客户端     | `packages/protocol/src/pocket.ts`、`packages/client/src/pocket.ts`      | 现有 v2 wire、DTO、解码与有限请求；headless 有自己的入口                       |
-| Session 来源与导航   | `packages/protocol/src/index.ts`、`apps/server/src/pocket-workspace.ts` | AgentRef、受权 PocketConversationSource；通过公开 protocol/server exports 消费 |
-| 业务插件参考         | `packages/rsi/src/browser/`、`packages/mas-devpack/src/browser/`        | 用于识别真实业务需要，不是旧 Preact 插件迁移任务                               |
-| 小示例/贡献          | `apps/webui/examples/`、`apps/webui/contributions/`                     | 已有 slots 和 GUI-only 参考，不证明新 SDK 已独立安装通过                       |
+| 要找的东西                 | 现有入口                                                                                       | 作用与限定                                                            |
+| -------------------------- | ---------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| Node 产品与 exports        | `apps/webui/package.json`                                                                      | 启动、HTTP、Backend、资产及尚未退出的旧 UI；前端不安装此包            |
+| 旧浏览器入口               | `apps/webui/web/index.html`、`web/app.js`                                                      | Preact/htm 的旧默认页面；后一个路径相对 apps/webui                    |
+| 旧容器和插件宿主           | `apps/webui/web/extensions.js`、`sheet.js`、`settings-page.js`                                 | 尚未切换的实例/容器实现，不是新 UI SDK                                |
+| 旧公开 UI                  | `apps/webui/src/ui.ts`、`components.ts`                                                        | Preact WebInterfaceContext 与基础原语，不是 React facade              |
+| Extension 声明/wire/client | `packages/protocol/src/extensions.ts`、`extension-rpc.ts`、`packages/client/src/extensions.ts` | 不依赖 Node 产品，默认与普通插件使用相同出口                          |
+| Backend、HTTP 与固定资产   | `apps/webui/src/backend.ts`、`http.ts`、`extension-host.ts`、`assets.ts`                       | 身份、授权、operation、完整资源寻址与固定字节注入                     |
+| 工作台/新服务协议与客户端  | `packages/protocol/src/pocket.ts`、`webui.ts`、`webui-assets.ts`；`packages/client/src/`       | v2 工作台、新服务闭合类型/decoder 与有界客户端                        |
+| Session 来源与导航         | `packages/protocol/src/index.ts`、`apps/server/src/pocket-workspace.ts`                        | AgentRef、受权来源及 Person 默认创建接线                              |
+| 新 UI SDK/实例             | pakka-webui 的 `src/sdk/`、`src/host/lifetime.ts`                                              | React 贡献、资源引用、显式 bindings 与实例清理，不含完整应用 registry |
+| 共享浏览器 runtime         | pakka-webui 的 `scripts/build-runtime.mjs`                                                     | 同一模块图、公开上游入口、静态主题/CSS 与 asset manifest              |
+| 旧业务插件参考             | `packages/rsi/src/browser/`、`packages/mas-devpack/src/browser/`                               | 用于功能/服务核对，没有迁移旧 Preact browser facet                    |
+| 小示例/贡献                | `apps/webui/examples/`、`apps/webui/contributions/`                                            | 旧 slots 参考；新标准消费者与真实页面另行验收                         |
 
 现有静态源码在 `apps/webui/web/`，`dist/` 是产物；`scripts/build-browser-vendors.mjs` 不是整个独立前端构建器。上述文件在重构中按责任提取或退出，源码位置不等于未来包归属。全部网络/资产、exports/消费者、功能归属和实际缺口见[阶段 0 清单](../../openspec/changes/plan-independent-webui/inventory.md)。
 
@@ -112,15 +114,17 @@ UI 不反向 import app、业务或服务。host 不 import Pakka 接入实现�
 
 ## 4. 现有公开接口与需要形成的接缝
 
-以下是当前字段定位，不是把旧名字冻结为新 SDK：
+下表区分已提取的协议/client、新 SDK 与尚未退出的旧产品入口。其后的 Context 表只描述旧 WebInterface，不是新 SDK 的字段清单：
 
-| 当前入口                  | 内容                                                                                     |
-| ------------------------- | ---------------------------------------------------------------------------------------- |
-| `@pakka/webui/extension`  | ExtensionManifest、actions/interfaces/schema、operation 与解码；无 Pi/server/UI 执行依赖 |
-| `@pakka/webui/ui`         | WebInterfaceProps/Context，绑定一个界面实例                                              |
-| `@pakka/webui/components` | 当前 Preact 五个原语及 IconName；不是已发布 React/Astryx SDK                             |
-| `@pakka/webui/client`     | 受控 extension call、operation、operationByRequest、整体 control                         |
-| `@pakka/webui/backend`    | BackendContext/Module、服务与可信资源来源；留在后端消费面                                |
+| 当前入口                                              | 内容                                                            |
+| ----------------------------------------------------- | --------------------------------------------------------------- |
+| `@pakka/protocol/extensions`、`extension-rpc`         | 通用 manifest/schema、资源与 extension wire/decoder             |
+| `@pakka/client/extensions`                            | 受控 call、operation、operationByRequest 与整体 control         |
+| `@pakka/protocol/webui`、`@pakka/client/webui`        | 新服务、当前身份、配置版本/原请求和关联结果                     |
+| `@pakka/protocol/webui-assets`、`@pakka/webui/assets` | manifest 与 Node 固定字节消费，安装边界分别处理                 |
+| `@pakka/webui-sdk`、`@pakka/webui-sdk/react`          | 新仓的 React 贡献/实例类型和同一 UiContext，不是 Pakka 服务能力 |
+| `@pakka/webui/ui`、`components`                       | 旧 Preact 默认产品接口，不承诺兼容新 SDK                        |
+| `@pakka/webui/backend`                                | BackendContext/Module、可信服务与资源来源，留在后端             |
 
 当前 `ExtensionInterface` 的 slot 为 page/sheet/panel/settings，scope 为 app/conversation；宿主加载指定 component export 并传 context，已能表达自定义内容，不是 schema-only UI。
 

@@ -3,7 +3,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "preact/hooks";
 import { Button, Icon, Notice, Stack } from "@pakka/webui/components";
 import type { WebInterfaceProps } from "@pakka/webui/ui";
 import { readMember, readReceipt, readInbox, type WorkbenchMember, type WorkbenchReceipt } from "./client.ts";
-import type { ExtensionOperation } from "@pakka/webui/extension";
+import type { ExtensionOperation } from "@pakka/protocol/extensions";
 import { GraphBoard } from "./graph-board.ts";
 
 const stylesheet = () => h("link", { rel: "stylesheet", href: new URL("board.css", import.meta.url).href });

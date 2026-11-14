@@ -1,7 +1,7 @@
-import { identity } from "@pakka/protocol";
-import { decodePocketRequest } from "@pakka/protocol/pocket";
-import type { AgentRef, PocketFailure } from "@pakka/protocol/pocket";
-import { decodeManifest, frozen, isRecord, extensionId } from "./extension.ts";
+import { identity } from "./index.ts";
+import { decodePocketRequest } from "./pocket.ts";
+import type { AgentRef, PocketFailure } from "./pocket.ts";
+import { decodeManifest, frozen, isRecord, extensionId } from "./extensions.ts";
 import type {
 	ExtensionCall,
 	ExtensionFacet,
@@ -9,7 +9,7 @@ import type {
 	ExtensionOperation,
 	ExtensionOperationRequest,
 	ExtensionRegistration,
-} from "./extension.ts";
+} from "./extensions.ts";
 
 export type ExtensionCommandEnvelope =
 	| { readonly op: "list"; readonly target?: AgentRef }

@@ -11,6 +11,14 @@
 		"./pocket": {
 			"types": "./dist/pocket.d.ts",
 			"import": "./dist/pocket.js"
+		},
+		"./webui": {
+			"types": "./dist/webui.d.ts",
+			"import": "./dist/webui.js"
+		},
+		"./extensions": {
+			"types": "./dist/extensions.d.ts",
+			"import": "./dist/extensions.js"
 		}
 	},
 	"files": [

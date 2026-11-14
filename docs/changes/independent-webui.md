@@ -23,7 +23,8 @@
 - [Change](../../openspec/changes/plan-independent-webui/)
 - [Proposal](../../openspec/changes/plan-independent-webui/proposal.md)
 - [Design：能力映射、最小接口分工、风险与阶段 0–5](../../openspec/changes/plan-independent-webui/design.md)
-- [Tasks：规划、阶段 0 及尚未实施的产品工作](../../openspec/changes/plan-independent-webui/tasks.md)
+- [Tasks：规划、已实施接缝与未完成产品工作](../../openspec/changes/plan-independent-webui/tasks.md)
+- [Phase 1：新 SDK/服务/模型/资产消费边界](../../openspec/changes/plan-independent-webui/phase-1.md)
 - [Inventory：阶段 0 功能/入口/消费者归属、缺口及真实切片](../../openspec/changes/plan-independent-webui/inventory.md)
 - 全部 delta：[independent-webui](../../openspec/changes/plan-independent-webui/specs/independent-webui/spec.md)。这是新增目标能力，尚无对应主 spec，未归档为已实现。
 - 相关原活动声明：[pakka-webui](../../openspec/changes/pakka-webui/specs/pakka-webui/spec.md)、[webui-extensions](../../openspec/changes/pakka-webui/specs/webui-extensions/spec.md)，完整来路见[WebUI 与 MAS](webui-and-mas.md)。其中后端服务、权限与效果要求继续有效；本次明确替代的是独立前端的包/renderer/插件边界。
@@ -45,3 +46,9 @@
 固定后续 UI Playground、RSI 读取/编辑、同号 Conversation 的双 Session 原历史及模型/Thinking/参数编辑切片；固定的是对象和数据生成/验收路径，不是假定新 UI 或数据库已建好。配置作用域、旧 Preact 不迁移、Provider `/login` 延期和少测试政策没有改变。
 
 [阶段 0 核对](../verification/INDEPENDENT-WEBUI-PHASE-0.md)保存实际方法、结果/限制和完整本地证据包身份。阶段 0 tasks 完成，阶段 1–5 保持未完成；产品、依赖和测试不变，未创建新仓或发布包。文档按工作分支流程提交/推送并更新已有 PR #13，不合并。
+
+## 阶段 1 接缝执行
+
+按用户授权在新前端仓库形成全新 UI SDK 与共享 runtime，后端提取 protocol/client 并接通新命名空间、受权原生配置、Person 默认与固定资产装配。原始和新实例能力分别验证；未加载原历史及独立 facet 控制仍缺实现，阶段 1 不标全完成。
+
+边界与实际出口见 [phase-1](../../openspec/changes/plan-independent-webui/phase-1.md)、[服务手册](../reference/WEBUI-SERVICES.md)；源/安装/真实 HTTP/浏览器和丢响应结果见[阶段 1 验证](../verification/INDEPENDENT-WEBUI-PHASE-1.md)。选择 68 回归文件且只新增一个必要实服务测试文件，保留 UI 低固化政策；模型私有子树先脱敏后公开校验，不复制配置 registry 或削弱 wire 校验。完整产品任务、Provider 登录、默认切换、发行与合并各自未完成。

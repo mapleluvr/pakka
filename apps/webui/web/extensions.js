@@ -2,8 +2,8 @@ import { h, Component } from "preact";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import htm from "htm";
 import { Icon } from "@pakka/webui/components";
-import { createExtensionClient } from "@pakka/webui/client";
-import { decodeValue } from "@pakka/webui/extension";
+import { createExtensionClient } from "@pakka/client/extensions";
+import { decodeValue } from "@pakka/protocol/extensions";
 import { Sheet } from "./sheet.js";
 import { SettingsPage } from "./settings-page.js";
 import { Glyph } from "./frontend.js";
@@ -657,6 +657,11 @@ function HostInterface({ instance, client, execute, open, close, notice, navigat
 	}, [instance.id]);
 	useEffect(() => {
 		const registration = instance.registration;
+		if (registration.manifest.facets.webui.api !== undefined) {
+			// The legacy Preact surface must not evaluate a new renderer facet.
+			setFailed(true);
+			return () => controller.abort();
+		}
 		const url =
 			"/pocket/extensions/assets/" +
 			registration.manifest.id +
@@ -664,7 +669,13 @@ function HostInterface({ instance, client, execute, open, close, notice, navigat
 			registration.generation +
 			"/" +
 			registration.manifest.facets.webui.entry +
-			(instance.target ? "?conversationId=" + encodeURIComponent(instance.target.conversationId) : "");
+			(instance.target
+				? "?" +
+					new URLSearchParams({
+						sessionId: instance.target.sessionId,
+						conversationId: instance.target.conversationId,
+					})
+				: "");
 		void import(url)
 			.then((module) => {
 				if (controller.signal.aborted) return;

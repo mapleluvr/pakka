@@ -2,7 +2,7 @@
 
 完整的形成条件、选择、设计、任务与场景由 [OpenSpec](../../openspec/changes/)维护；本目录只提供摘要和完整引用，不复制第二套变更正文。当前预期见 [state](../state/README.md)，实际差距见[工作入口与领域任务](../OVERVIEW.md)。
 
-- [独立 WebUI 与通用插件规划](independent-webui.md)：采用分仓、模型作用域、清理旧实现与通用插件/跨 Session 浏览边界；阶段 0 消费盘点完成，阶段 1–5 产品实施尚未开始。
+- [独立 WebUI 与通用插件规划](independent-webui.md)：采用分仓、模型作用域、清理旧实现与通用插件/跨 Session 浏览边界；阶段 0 完成，阶段 1 已形成独立消费、模型与资产接缝；未加载原历史及分 facet 控制仍缺，完整应用与后续产品阶段未完成。
 - [WebUI 设计系统与开发原则](webui-design-principles.md)：同类开源系统调研、重构初期少测试政策、职责／目录／公共接口说明；不实施换栈。
 - [Memo 知识服务](memo-knowledge.md)：独立 Wiki、来源、权限和有界检索读取；Issue #9 的第一消费切片。
 - [测试反馈成本](test-feedback.md)：显式集合、维护断言去重、隔离运行与有限轻型并发。

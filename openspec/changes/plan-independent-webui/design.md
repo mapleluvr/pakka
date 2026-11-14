@@ -1,6 +1,6 @@
 ## Context
 
-本设计接续 [proposal](proposal.md)，把已经采用的边界与候选实现办法分开。规划修订之后已执行[阶段 0 消费盘点](inventory.md)；生产接口、React/Astryx 接入和独立安装尚未完成。
+本设计接续 [proposal](proposal.md)，把已经采用的边界与候选实现办法分开。规划修订之后已完成[阶段 0 消费盘点](inventory.md)，用户已授权创建独立前端仓库并进入阶段 1；当轮接缝与验证边界见 [phase-1](phase-1.md)。未运行的产品与 UI 验收保持未完成。
 
 固定依据：
 
@@ -13,7 +13,7 @@
 
 **Goals:** 独立前端可通过公开制品开发和交付；任意业务插件能完成自己的可视化、控制和管线；配置作用域、跨 Session 资源浏览与持久效果边界清晰；未知接口随真实消费者形成。
 
-**Non-Goals:** 本轮不实现产品、创建远端仓库或发布包；不迁移旧 Preact 插件，不为旧 WebUI/SDK 建兼容工程；不重写后端执行/权限/持久化；不把 RSI/MAS/Memo 业务或统一业务账本放进核心；不实施 Provider `/login`、插件市场、任意后端平台、多 Session 全局搜索或提前整改 Board。
+**Non-Goals:** 当前阶段 1 不切换默认发行、实现完整页面、发布 npm 包或合并分支；不迁移旧 Preact 插件，不为旧 WebUI/SDK 建兼容工程；不重写后端执行/权限/持久化；不把 RSI/MAS/Memo 业务或统一业务账本放进核心；不实施 Provider `/login`、插件市场、任意后端平台、多 Session 全局搜索或提前整改 Board。
 
 ## Decisions
 
@@ -23,7 +23,7 @@
 
 服务命名空间采用 `/pakka-webui`；子路径、包名和 wire schema 在阶段 1 按真实消费定下。不为了路径整齐同时改名所有 Pocket 包/类型。前端普通构建不安装或编译 agent/server/Coding Agent；默认 `pakka` 仍提供一份选定的固定版本/hash 前端产物。
 
-先在同仓形成真正独立的消费切片，再搬仓；不把整个 `apps/webui` 连同 Node 依赖原样搬走。初版通过同源代理开发，保持 Host/Origin/Cookie/CSRF 约束。分仓、部署和数据库 writer 的边界分别处理。
+原规划以同仓独立切片作为建仓前过渡；用户随后已授权创建 public pakka-webui，因此新 SDK 和前端构建基础直接在新仓形成。独立消费及真实切片门禁不变，不把整个 `apps/webui` 连同 Node 依赖原样搬走。初版通过同源代理开发，保持 Host/Origin/Cookie/CSRF 约束。分仓、部署和数据库 writer 的边界分别处理。
 
 ### 2. 配置归属与模型访问已定，不再列为待决项
 

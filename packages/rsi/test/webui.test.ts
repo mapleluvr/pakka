@@ -11,7 +11,7 @@ import { createTicketService, type NativeTicketService } from "@pakka/rsi";
 import { createMasTicketDispatcher } from "@pakka/rsi/mas";
 import { createMas } from "@pakka/mas";
 import { readTicketResult, TicketCallError } from "@pakka/rsi/client";
-import type { ExtensionJson } from "@pakka/webui/extension";
+import type { ExtensionJson } from "@pakka/protocol/extensions";
 
 async function backend(): Promise<typeof import("../src/backend.ts")> {
 	const module = await import(new URL("../src/backend.ts", import.meta.url).href).catch(
