@@ -21,7 +21,7 @@
 | 业务插件参考         | `packages/rsi/src/browser/`、`packages/mas-devpack/src/browser/`        | 用于识别真实业务需要，不是旧 Preact 插件迁移任务                               |
 | 小示例/贡献          | `apps/webui/examples/`、`apps/webui/contributions/`                     | 已有 slots 和 GUI-only 参考，不证明新 SDK 已独立安装通过                       |
 
-现有静态源码在 `apps/webui/web/`，`dist/` 是产物；`scripts/build-browser-vendors.mjs` 不是整个独立前端构建器。上述文件在重构中按责任提取或退出，源码位置不等于未来包归属。
+现有静态源码在 `apps/webui/web/`，`dist/` 是产物；`scripts/build-browser-vendors.mjs` 不是整个独立前端构建器。上述文件在重构中按责任提取或退出，源码位置不等于未来包归属。全部网络/资产、exports/消费者、功能归属和实际缺口见[阶段 0 清单](../../openspec/changes/plan-independent-webui/inventory.md)。
 
 ## 2. 独立前端的目标组织
 

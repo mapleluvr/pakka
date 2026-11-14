@@ -4,7 +4,7 @@ Pakka 将 Pi Durable 的 Conversation、权限、持久化与 MAS 协作能力�
 
 ## 当前工作
 
-[独立 WebUI 与通用插件规划](changes/independent-webui.md)已采用分仓、React/Astryx、配置作用域与旧实现清理边界，并吸纳跨 Session 原 Conversation 浏览要求。当前完成的是规划和关键公开路径核对，不是产品实现；下一步按 [tasks](../openspec/changes/plan-independent-webui/tasks.md) 补完整盘点与独立消费接缝，Provider `/login` 交互继续延期。
+[独立 WebUI 与通用插件规划](changes/independent-webui.md)已采用分仓、React/Astryx、配置作用域与旧实现清理边界，并吸纳跨 Session 原 Conversation 浏览要求。阶段 0 [完整消费盘点](../openspec/changes/plan-independent-webui/inventory.md)已完成，产品实现尚未开始；下一步按 [tasks](../openspec/changes/plan-independent-webui/tasks.md) 形成独立消费、资源/生命周期、模型配置与固定资产接缝。发现和验证限制见[阶段 0 核对](verification/INDEPENDENT-WEBUI-PHASE-0.md)，Provider `/login` 交互继续延期。
 
 [Memo 知识服务与持久 Patchouli](changes/memo-knowledge.md)已完成实现、安装消费与独立复审：Wiki、版本、来源、书库权限、综合检索及按需读取可独立使用，馆员按显式请求与原 MAS 身份推进。当前预期见 [Memo](state/memo.md)，固定结果见[验证摘要](verification/MEMO-KNOWLEDGE.md)。Issue #9 的 History Book 生产接入、小恶魔和 GUI 尚未完成，后续见 [tasks](../openspec/changes/add-memo-knowledge/tasks.md)。
 
