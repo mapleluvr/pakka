@@ -55,19 +55,21 @@ Astryx 的 API Conventions 对正交 props、任意内容的组合、slots、文
 
 ## 4. 推荐技术方向
 
+后续补注（2026-11-14）：用户已采用独立前端及以下 React/Astryx 路线，旧 Preact 插件不迁移；见[分仓规划](../changes/independent-webui.md)。本页固定来源与原调查结果保持其原时点，采用不等于实际接入通过。
+
 ```text
 React 19 + TypeScript/TSX
   └─ Astryx 预编译组件 + 一个宿主主题
-       ├─ 公开原语：按实际需要具名导出，不缩成万能配置表单
+       ├─ 上游公开原语：可直接消费，宿主提供共享运行环境
        ├─ Pakka 组合：少量有产品共性的 patterns
        └─ 页面／extension：普通组件 + 局部 CSS + 既有受控 client
 
 现有 Node HTTP / RPC / 权限 / 持久化 / MAS 服务继续各自负责
 ```
 
-- **React 19 是推荐迁移目标，不是当前运行事实。** 当前 `dev@cc1cdd8` 使用 Preact 11.0.1 / htm 3.1.1；import map、组件类型、默认贡献和外部消费者均与之有关。上游 Button 已直接使用 React `use`、`useTransition`，不能仅凭 alias 就宣称兼容。
+- **React 19 已从本次调研的推荐目标成为采用路线，仍不是当前运行事实。** 当前 `dev@cc1cdd8` 使用 Preact 11.0.1 / htm 3.1.1；import map、组件类型、默认贡献和外部消费者均与之有关。上游 Button 已直接使用 React `use`、`useTransition`，不能仅凭 alias 就宣称兼容。
 - **应用保持 SPA。** 为开发反馈可试用 Vite；既有 esbuild 也可承接构建。构建器选择服从单运行时、静态资产和安装消费的实际结果，不绑定组件架构；本轮不增加 Next.js、SSR、RSC 或另一套服务端。
-- **默认复用，不包办。** Astryx 普通组件用明确的共享出口；只在默认主题、兼容现有消费者或实际产品组合需要时增加代码。不要为了“以后换库”重写每一个 prop，也不承诺 React／Preact 或任意设计系统之间无损热切换。
+- **默认复用，不包办。** Astryx 普通组件通过上游公开入口共享消费；只在默认主题或实际产品组合需要时增加代码，不为旧 Preact 消费者构建兼容层。不要为了“以后换库”重写每一个 prop，也不承诺 React／Preact 或任意设计系统之间无损热切换。
 - **一次选择一个主要交互基座。** Base UI / Radix / Aria 是替代与参考，不是要求全部安装。局部能力缺口可以引入新工具，但需说明它怎样接入已有焦点、层级和主题，而不是再立一套全局 provider。
 - **默认 extension 与第三方走同一条路。** MAS Board、RSI 等不因内置身份而拥有私有组件、路由或状态权限；源码、示例和文档应该可供人类开发者直接追到。
 

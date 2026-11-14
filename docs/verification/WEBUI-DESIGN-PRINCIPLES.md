@@ -26,3 +26,21 @@
 - 归档已列出、解压并逐项核对包内 manifest；源码为固定 commit 的文本采集，采集器的换行归一规则随包保存。
 
 原始材料及证据包不上 GitHub。本摘要在计算包 hash 后补写，不纳入包的输入文档，避免自引用；之后复查本摘要的链接与格式。设计建议及后续试用边界见[变更记录](../changes/webui-design-principles.md)。
+
+## 独立前端规划修订
+
+2026-11-14，在 `c241c5e8e053cdfb7c15f9233e706f66d320b531` 后继续修订；重新 fetch 的 dev 仍为 `cc1cdd8aead42cd0afe018c75973f09fd369184d`。本项已采用方向及 G1–G6 / 跨 Session 能力映射见[变更记录](../changes/independent-webui.md)与[完整设计](../../openspec/changes/plan-independent-webui/design.md)。用户指定需求固定于 `pakka/history-book@170aa153e7dad0cda8f6172665d709407dfa703a`。
+
+- 文档的本地链接/锚点、Prettier、diff 空白及主动 LSP（warning/error）检查通过；原始结果和所选路径留在本地检查记录中。
+- `openspec validate plan-independent-webui --strict --json` 通过；这是产品目标规划，未归档为已实现。全量阶段 0、独立安装和真实 UI/服务能力尚未通过，不能从文档校验推导。
+- 检查本次及完整 dev 范围的产物清单、差异与规模；只有文档、规范和 agent 开发说明，无产品源码、依赖、测试、原始研究材料或证据包进入提交。
+- 未运行产品 build、模型请求、GUI、安装消费或 subagent review；没有改造旧 Preact 插件，也没有创建新仓或发布包。本次仅本地分支交付，不推送或修改现有 PR #13。
+
+本轮本地证据：
+
+- 包：`independent-webui-plan.tar.gz`；字节：`240010`。
+- SHA-256：`f8b6b8af7d34d4d89a59212928e9c3483e6ca990638c7f7b2e14837927b1f0ee`。
+- 目录：`D:/Projects/pakka-works/.backups/2026-11-14T03-39-36-784Z-independent-webui-plan`。
+- 已列出归档、解压并按 manifest 核对 48 个文件；包括文档快照、需求来源、检查记录与排除本摘要后的 diff。摘要新增时的格式提示已修正，前后记录均保留。
+
+本核对文件不纳入该包的输入以避免自引用；补写后另查链接/格式和主动 LSP。原始材料及证据包仍只在本地保存。

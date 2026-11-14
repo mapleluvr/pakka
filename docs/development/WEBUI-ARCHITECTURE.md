@@ -1,228 +1,179 @@
 # WebUI 文件结构、职责与接口
 
-先读[开发原则](FRONTEND-GUIDELINES.md)。本文回答：**改一个东西去哪里，谁拥有状态，模块之间传什么，extension 能依赖什么。** 服务权限／效果的完整契约仍在[WebUI 开发契约](WEBUI-DEVELOPMENT.md)，选型理由在[设计系统调研](WEBUI-DESIGN-SYSTEMS.md)。
+先读[开发原则](FRONTEND-GUIDELINES.md)。本文回答：**改一个东西去哪里，谁拥有状态，模块之间传什么，插件能依赖什么。** 采用的产品边界在 [WebUI state](../state/webui.md)，阶段与能力映射在[分仓设计](../../openspec/changes/plan-independent-webui/design.md)。
 
-本文区分三件事：开发原则已经采用；下面“当前”部分描述已有代码；React/Astryx 目录是**推荐迁移目标，尚未实施**。文件名用于给人找路，不是公共兼容协议，也不要求一次创建全部目录。
+独立 pakka-webui、React 19 / TypeScript/TSX / Astryx 已作为实施路线采用；下面的目标结构不是已实现或已发布 SDK。第 1、4 节定位已有代码，其他节说明采用的职责和候选文件组织。文件名不是兼容协议，不要求预建空目录。
 
 ## 1. 当前代码在哪里
 
-本节 `web/`、`src/`、`scripts/`、`examples/`、`contributions/` 和 `dist/` 简写均相对 `apps/webui/`；显式列出 `apps/` 或 `packages/` 的为仓库相对路径。读现有代码不要求先完成重构。
+下表相对 Pakka 仓库根；`apps/webui/` 仍是混合 Node/浏览器实现，不能原样搬作独立前端。
 
-| 要找的东西             | 当前入口                                                                | 职责／现存接缝                                                                             |
-| ---------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| 产品包、公开出口       | `apps/webui/package.json`                                               | `@pakka/webui` 一个产品包；明确 `extension/backend/client/ui/components` 等子路径          |
-| 浏览器入口和共享模块   | `apps/webui/web/index.html`、`web/app.js`                               | import map、Preact/htm、根装配；App 内仍含 transcript、账户与操作状态等职责                |
-| 工作台外观／通用容器   | `web/frontend.js`、`web/sheet.js`、`web/settings-page.js`               | 当前 shell/menu/sheet/settings 组合；不能当成外部插件可深导入的 SDK                        |
-| extension 的浏览器宿主 | `web/extensions.js`                                                     | 注册目录、实例、`HostInterface`、加载／错误、绑定 context、关闭与 abort                    |
-| 公开 UI primitives     | `apps/webui/src/components.ts`                                          | 当前只导出 `Icon`、`Button`、`Field`、`Notice`、`Stack` 及 `IconName`；不是完整 Astryx SDK |
-| 公开 UI context        | `apps/webui/src/ui.ts`                                                  | `WebInterfaceContext`、`WebInterfaceProps`；绑定一个 open instance                         |
-| 声明与受控调用         | `src/extension.ts`、`src/extension-client.ts`、`src/backend.ts`         | manifest/schema、checked client、BackendContext；这些 `src/` 路径相对 `apps/webui/`        |
-| 服务端挂接与资产       | `src/extension-host.ts`、`src/extension-rpc.ts`、`src/http.ts`          | 人类／资源校验、operation、generation 和实际资产服务                                       |
-| 真实插件消费者         | `packages/rsi/src/browser/`、`packages/mas-devpack/src/browser/`        | 通过公共出口获得组件/context，不依赖宿主页面 store                                         |
-| 小示例／内置贡献       | `apps/webui/examples/hello/`、`examples/preferences/`、`contributions/` | GUI-only、设置示例和已有贡献，不另造第二套特权注册                                         |
+| 要找的东西           | 现有入口                                                                | 作用与限定                                                                     |
+| -------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| 产品包与 exports     | `apps/webui/package.json`                                               | Node 启动和 extension/backend/client/ui/components 同包，安装依赖包含后端      |
+| 浏览器入口           | `apps/webui/web/index.html`、`web/app.js`                               | 当前 Preact/htm、import map、页面与导航；后一个简写相对 apps/webui             |
+| 容器和插件宿主       | `apps/webui/web/extensions.js`、`sheet.js`、`settings-page.js`          | 注册、实例、加载、错误、focus 与清理；后两个同属 web 目录，不是可深导的 SDK    |
+| 公开 UI              | `apps/webui/src/ui.ts`、`components.ts`                                 | WebInterfaceContext/Props 与 Preact Icon/Button/Field/Notice/Stack             |
+| 声明、调用与 Backend | `apps/webui/src/extension.ts`、`extension-client.ts`、`backend.ts`      | manifest/schema、checked client、受信任服务与 job 接缝                         |
+| HTTP/资产/扩展操作   | `apps/webui/src/http.ts`、`extension-host.ts`、`extension-rpc.ts`       | 身份、权限、generation、原请求和资源字节                                       |
+| 服务协议与客户端     | `packages/protocol/src/pocket.ts`、`packages/client/src/pocket.ts`      | 现有 v2 wire、DTO、解码与有限请求；headless 有自己的入口                       |
+| Session 来源与导航   | `packages/protocol/src/index.ts`、`apps/server/src/pocket-workspace.ts` | AgentRef、受权 PocketConversationSource；通过公开 protocol/server exports 消费 |
+| 业务插件参考         | `packages/rsi/src/browser/`、`packages/mas-devpack/src/browser/`        | 用于识别真实业务需要，不是旧 Preact 插件迁移任务                               |
+| 小示例/贡献          | `apps/webui/examples/`、`apps/webui/contributions/`                     | 已有 slots 和 GUI-only 参考，不证明新 SDK 已独立安装通过                       |
 
-当前 browser 源码仍是 `web/` 下的手写 JS/CSS；`dist/` 是构建产物。`scripts/build-browser-vendors.mjs` 目前负责固定 virtual-core browser vendor，**不是下面整个目标前端的构建器**。当前 runtime 是 Preact 11 / htm，未因本文改成 React。
+现有静态源码在 `apps/webui/web/`，`dist/` 是产物；`scripts/build-browser-vendors.mjs` 不是整个独立前端构建器。上述文件在重构中按责任提取或退出，源码位置不等于未来包归属。
 
-## 2. 推荐目标目录
-
-推荐把新浏览器源码聚到一个可直接阅读的树中；公开入口先保留薄 facade，避免“内部搬文件”顺带改变导入路径。这里只调整浏览器组织，不为了对称而重排整个 Node 服务层。
+## 2. 独立前端的目标组织
 
 ```text
-apps/webui/
+pakka-webui/                         # 独立前端仓库；先以独立消费切片验证
 ├─ src/
-│  ├─ main.ts / launcher.ts / bootstrap.ts / http.ts  # 现有产品／服务入口
-│  ├─ extension.ts / backend.ts / extension-client.ts # 现有公开契约与绑定
-│  ├─ ui.ts / components.ts                          # 公开 UI 类型／组件 facade
-│  └─ browser/                                      # 推荐的新源码根
-│     ├─ main.tsx                                   # 挂载，不放业务逻辑
-│     ├─ app/
-│     │  ├─ App.tsx                                 # 装配功能入口
-│     │  ├─ AppShell.tsx                            # 导航与整体布局
-│     │  ├─ AppProviders.tsx                        # 注入主题／连接等明确依赖
-│     │  └─ routes.ts                               # 路由声明与导航映射
-│     ├─ platform/
-│     │  ├─ connection/                             # checked client、连接与清理
-│     │  └─ extensions/
-│     │     ├─ ExtensionHost.tsx                     # 注册、generation、实例装配
-│     │     └─ ExtensionSurface.tsx                  # page/sheet/panel/settings 容器
-│     ├─ features/
-│     │  ├─ conversation/
-│     │  │  ├─ ConversationPage.tsx                  # 数据／命令与 view 接线
-│     │  │  ├─ ConversationView.tsx                  # 呈现与用户意图回调
-│     │  │  ├─ useConversation.ts                    # 该功能的观察／草稿／原请求状态
-│     │  │  └─ transcript/                           # 消息、工具卡、原文与虚拟窗口
-│     │  ├─ settings/                               # 按实际设置领域就近组织
-│     │  ├─ sessions/                               # 创建与个人导航
-│     │  └─ authentication/                         # 登录、邀请与退出 UI
-│     └─ ui/
-│        ├─ primitives.ts                           # 实际采用的上游部件具名出口
-│        ├─ theme/
-│        │  ├─ ThemeRoot.tsx                        # 纯主题边界，值由 app 注入
-│        │  └─ tokens.css                           # Pakka 确有需要的语义映射／扩展
-│        └─ patterns/                               # 出现真实复用才添加组合
-├─ public/                                          # 目标中的手工静态资产／许可
-├─ dist/web/                                        # 目标中的构建输出，禁止手改
-├─ web/                                             # 迁移期间的旧源码，逐切片退出
-├─ contributions/                                   # 现有默认扩展
-├─ examples/                                        # 可安装消费者／可读示例
-└─ scripts/                                         # 明确的构建与发布装配
+│  ├─ main.tsx                     # 挂载与根依赖注入
+│  ├─ app/
+│  │  ├─ App.tsx                   # 组合功能与插件入口
+│  │  ├─ AppShell.tsx              # 工作台导航和整体布局
+│  │  ├─ AppProviders.tsx          # 主题、连接等明确依赖
+│  │  └─ routes.ts                 # 页面路由和通用导航接线
+│  ├─ host/
+│  │  ├─ ExtensionHost.tsx         # 贡献、模块、版本及实例装配
+│  │  ├─ ExtensionSurface.tsx      # page/sheet/panel/settings 容器
+│  │  └─ resources.ts              # 通用引用/视图接缝与导航生命周期
+│  ├─ integrations/pakka/
+│  │  ├─ connection.ts             # 认证、checked client 与连接清理
+│  │  ├─ extensions.ts             # 授权发现、服务绑定及资产入口
+│  │  ├─ resources.ts              # Session/Conversation 原身份解析适配
+│  │  └─ models.ts                 # 模型/Thinking/默认/配置的服务接线
+│  ├─ features/
+│  │  ├─ conversation/             # 输入、transcript、观察与原请求核对
+│  │  ├─ sessions/                 # Session 功能与个人导航
+│  │  ├─ settings/                 # 按实际设置对象组织
+│  │  └─ authentication/           # Pakka 人类身份登录/邀请/退出
+│  ├─ ui/
+│  │  ├─ theme/                    # 共享主题及少量实际语义 tokens
+│  │  └─ patterns/                 # 已有复用需要的 UI 组合
+│  └─ sdk/                         # 纯浏览器的公共 UI 声明/出口
+├─ public/                          # 手工静态资源与许可
+├─ examples/                        # 按新 SDK 标准安装的消费者
+└─ scripts/                         # 明确的构建和制品输出
+
+pakka/                              # 后端仓库继续维护
+├─ protocol / client                # 服务契约及独立消费产物的维护源
+├─ product bootstrap / HTTP         # 默认启动、身份、固定前端资产装配
+└─ agent / MAS / backend services   # 权限、执行、持久化及业务服务
 ```
 
-- `browser/`、`public/`、`dist/web/` 是目标位置，不是当前 HTTP 已支持的路径。迁移切片同时维护构建、资产 allowlist、package files 和 import map／模块映射，不能只挪源码。
-- 小功能从一个文件开始；需要时才分 Page/View/hook。普通纯函数不为了命名成 hook 而调用 React。CSS 与所属组件就近放置，采用普通 CSS 或 CSS Modules；不强制每个组件独占目录。
-- 不为所有领域建立平行的 `components/hooks/stores/services/types/utils` 顶层树。先在 feature 内找到完整工作，再按真实共享职责提取。
-- 只在 package 公共边界或有助阅读的功能入口设 index/facade；不要每层一份无意义转发。组件文件与导出同名，普通模块用职责命名。
-- 不为这个目录图预建空文件、通用 plugin engine 或独立 `@pakka/ui` package。只有独立消费／发布需要实际出现，才重新讨论 package 拆分。
+- `host` 不知道 `/pakka-webui` URL 或 Pakka Runtime；`integrations/pakka` 把公开服务接到宿主。业务 feature 可以理解 Pakka 对象，领域知识无需被抽象成任意后端平台。
+- 每个目录是职责，不是独立 package。小功能可以只有一个文件，需要时再分 view/client/hook；不强制 Page/View/controller/store 全套。
+- CSS 与内容就近组织，普通 CSS 或 CSS Modules 均可。公开边界才设 index/出口，不把每层变成转发链。
+- 浏览器 SDK 与 Node Backend SDK 各自有纯消费入口，确切包名由安装闭包决定。repo 名与 npm 包名不是同一决定；不为保留旧 `@pakka/webui` 全套名字增加 facade。
+- 产物目录、module map、CSS、worker、CSP 和 package files 与构建共同明确；图中没有承诺现有 HTTP 已支持某个新资源路径。
 
 ### 常见改动从哪里开始
 
-| 改动                                 | 主要位置                                                                 | 不该修改                               |
-| ------------------------------------ | ------------------------------------------------------------------------ | -------------------------------------- |
-| 全站主题、文字层级、通用间距         | `ui/theme/`，由 AppProviders 提供当前偏好                                | 每个 feature 的大量颜色覆盖            |
-| 单页布局或复杂自定义内容             | 对应 feature／extension browser 目录                                     | 为这一个页面给所有原语加场景 props     |
-| 一个新公共部件                       | `ui/primitives.ts` 或有实际职责的 UI 实现，随后更新 public facade 与示例 | 整批转导出上游所有内部模块             |
-| 新 extension 页面／设置              | extension manifest、browser 入口与所属 typed client                      | 宿主 router 的插件特例                 |
-| sheet 关闭、focus return、旧实例失效 | `platform/extensions/` 与采用的弹层基座                                  | 各插件分别实现一套全局焦点管理         |
-| mutation 后刷新／恢复                | feature/controller、业务 client 与现有服务 operation                     | Button／Dialog 的通用 Promise 成功回调 |
-| 权限或持久化语义                     | 所属服务／协议及其契约                                                   | CSS、可见性开关或客户端自报 actor      |
+| 改动                              | 主要位置                                  | 不该借此修改                     |
+| --------------------------------- | ----------------------------------------- | -------------------------------- |
+| 全站主题、排版、间距              | `ui/theme`，由 app 注入偏好               | 每个 feature 的全局覆盖          |
+| 通用容器、关闭、focus、旧实例失效 | `host` 与成熟弹层原语                     | 每个插件各建一套全局 trap        |
+| 某个业务页面/管线                 | 所属 feature 或业务插件                   | WebUI 核心的 RSI/MAS/Memo 特例   |
+| 用一个 Astryx 公开部件            | 直接消费上游公开入口和宿主共享模块        | 为使用它先扩充受限包装清单       |
+| Session/Conversation 解析         | `integrations/pakka/resources` 与公开服务 | host 直接打开数据库或管理 writer |
+| 原请求/长操作核对                 | feature/业务 client 与所属服务            | Button 的 Promise 成功回调       |
+| 权限、持久化、配置写入            | 所属后端/协议边界                         | CSS 隐藏或浏览器自报 actor       |
 
-## 3. 抽象的分工和依赖方向
+## 3. 抽象与依赖方向
 
 ```mermaid
 flowchart TD
-  App[app 装配与导航] --> Feature[feature 页面与功能状态]
-  App --> Platform[platform 连接与扩展宿主]
-  App --> UI[ui 原语 主题 组合]
+  App[app 根装配] --> Host[通用 UI host]
+  App --> Integration[Pakka integration]
+  App --> Feature[功能界面]
+  Host --> UI[共享 UI 与主题]
   Feature --> UI
-  Feature --> Client[领域 typed client]
-  Client --> Transport[公开 checked transport]
-  Platform --> Transport
-  Platform --> UI
-  Ext[默认或第三方 extension] --> SDK[公开 components 与 ui context]
+  Feature --> Client[业务 typed client]
+  Integration --> Client
+  Client --> Service[公开服务 权限 持久化]
+  Plugin[默认或普通插件] --> SDK[公开 UI 实例能力]
+  Plugin --> Client
   SDK --> UI
-  Platform -. 绑定 context 并挂载 .-> Ext
-  Transport --> Service[服务端权限 原请求 持久化]
+  Host -. 挂载与实例绑定 .-> Plugin
+  Integration -. 贡献描述 解析器 服务绑定 .-> Host
 ```
 
-图中的 context 由宿主运行时实现，UI 类型模块本身不 import 宿主。**底层不反向认识使用者**：`ui` 不 import app/platform/features；platform 不 import 某个业务 feature 或 MAS/RSI 实现；React/browser 模块不进入 backend/Agent 依赖图。
+| 对象                 | 拥有                                                   | 输入/输出                                          |
+| -------------------- | ------------------------------------------------------ | -------------------------------------------------- |
+| UI primitive/pattern | 交互呈现、可访问性和局部短暂状态                       | props/parts/children/ref、用户意图；无业务请求身份 |
+| 前端 host            | 通用贡献、容器、模块/实例、focus/返回、错误和清理      | 显式贡献/资源解析接缝 → UI 实例能力                |
+| Pakka integration    | 连接/认证接线、公开发现、服务绑定、资源与模型 DTO 适配 | 公开 client/受权 DTO → host/feature 消费能力       |
+| Feature/业务插件     | 领域页面、草稿、数据适配、命令、工作流/管线及结果解释  | 自身 typed client → 视图/意图/原请求核对           |
+| App                  | 根依赖、壳层、路由与默认插件组合                       | 前述部件 → 产品入口                                |
+| Backend/service      | 授权、schema、持久状态、原请求和效果                   | 有限输入 → DTO/operation/job/native receipt        |
 
-| 层／对象        | 拥有                                                  | 输入／输出                                              | 不拥有                                        |
-| --------------- | ----------------------------------------------------- | ------------------------------------------------------- | --------------------------------------------- |
-| Theme／tokens   | 颜色、排版、间距、动效与状态外观的语义                | 明确主题值 → CSS/主题上下文                             | 当前人类、权限、RPC、业务成功／失败           |
-| Primitive       | 按钮、输入、菜单等单一交互；自身短暂 UI 状态          | props、children、DOM ref、意图事件                      | request ID、自动业务重试、服务状态机          |
-| Pattern         | 确有共性的 UI 组合，如字段分组／空态                  | 内容与明确回调；需要时组合 parts                        | 特定 Ticket/MAS DTO、路由和服务调用           |
-| Feature         | 一项真实用户工作的接线、草稿、选择与操作核对          | 授权 DTO／业务 client → view props；用户意图 → 受控命令 | 服务端权限真相、所有页面的全局状态            |
-| Platform        | 连接、checked transport、extension 注册／实例生命周期 | 已声明契约与实例绑定能力                                | 业务按钮含义、任意跨插件调度、隐式授权        |
-| App             | 根 providers、壳层、路由和 feature 组合               | 导航目标、根依赖 → 页面                                 | transcript 每个 part 的转换、所有表单内部状态 |
-| Backend/service | actor/resource 绑定、校验、持久操作与效果             | 有限 schema → DTO/operation/native receipt              | UI 排版、主题、组件 open 状态                 |
+UI 不反向 import app、业务或服务。host 不 import Pakka 接入实现或某个领域插件；React/browser 不进入 Agent/headless graph。共享 API 模块只定义公开面，不通过 import 自动启动宿主。局部选择/展开就近持有；读取缓存按当前身份/资源隔离，避免复制一份可独立写入的“前端业务真相”。
 
-局部选中、展开和 hover 尽量就近；跨页面导航由 app 管理；授权读取缓存归明确的读取所有者并按身份／资源隔离。服务端状态不要再复制一份可独立写入的“前端真相”。派生值直接计算，非必要不新增 store、repository 层或 DI 容器。
+## 4. 现有公开接口与需要形成的接缝
 
-## 4. 公开接口：现在能用什么
+以下是当前字段定位，不是把旧名字冻结为新 SDK：
 
-实际 TypeScript 和 exports 是精确字段依据。以下说明不额外发明一个 `HostAPI`，也不把文档示意当作新增 export。
+| 当前入口                  | 内容                                                                                     |
+| ------------------------- | ---------------------------------------------------------------------------------------- |
+| `@pakka/webui/extension`  | ExtensionManifest、actions/interfaces/schema、operation 与解码；无 Pi/server/UI 执行依赖 |
+| `@pakka/webui/ui`         | WebInterfaceProps/Context，绑定一个界面实例                                              |
+| `@pakka/webui/components` | 当前 Preact 五个原语及 IconName；不是已发布 React/Astryx SDK                             |
+| `@pakka/webui/client`     | 受控 extension call、operation、operationByRequest、整体 control                         |
+| `@pakka/webui/backend`    | BackendContext/Module、服务与可信资源来源；留在后端消费面                                |
 
-| 公开入口                  | 当前内容                                                       | 谁依赖它                                                             |
-| ------------------------- | -------------------------------------------------------------- | -------------------------------------------------------------------- |
-| `@pakka/webui/extension`  | `ExtensionManifest`、action/interface/schema、operation 与解码 | manifest 作者、checked client、宿主；无 Pi/server/React 执行依赖     |
-| `@pakka/webui/ui`         | `WebInterfaceProps { context }`、`WebInterfaceContext`         | extension 的 UI 入口                                                 |
-| `@pakka/webui/components` | 当前五个 Preact primitives 与 `IconName`                       | 宿主与插件共享；当前没有公开 React/Astryx 组件或 `tokens.css` export |
-| `@pakka/webui/client`     | checked extension client、原 operation 查询                    | 需要独立客户端绑定的消费者；不能授予服务端没有的权限                 |
-| `@pakka/webui/backend`    | `BackendContext`、`defineBackend`、service/host 声明           | 可信 backend/bootstrap；浏览器不 import 这一面                       |
+当前 `ExtensionInterface` 的 slot 为 page/sheet/panel/settings，scope 为 app/conversation；宿主加载指定 component export 并传 context，已能表达自定义内容，不是 schema-only UI。
 
-### Manifest → content → context
+| 当前 Context 成员                                     | 语义与新边界                                                       |
+| ----------------------------------------------------- | ------------------------------------------------------------------ |
+| extension/generation/instanceId/person/target?/signal | 界面身份与寿命；actor 由服务绑定，不是让浏览器授予权限             |
+| call/operation/operationByRequest                     | 属于显式服务绑定；复用原请求/回执，不进入纯 UI primitive           |
+| subscribe                                             | 现实现为有限 read-action 轮询及 unsubscribe，不冒称通用事件总线    |
+| notice/open/close                                     | UI 实例能力；关闭不取消已接纳工作                                  |
+| navigate(AgentRef)                                    | 已有 Conversation 导航；通用资源类型与视图解析还要形成最小公开接缝 |
 
-`ExtensionInterface` 目前声明 `id/title/slot/scope/export/navigation`；`slot` 是 `page | sheet | panel | settings`，`scope` 是 `app | conversation`。宿主按已授权的 registration/generation 加载 WebUI entry，取 manifest 指定的 component export，并传入 `{ context }`。这是普通组件内容，不是任意网络 callback 或 JSON 页面描述器。
+新 SDK 的 UI 能力和 Pakka 服务能力分别定义/实现，消费时可以方便组合。贡献描述、资源引用/解析、服务绑定、实例生命周期与共享模块是最小职责集合，不要求建立五个新框架或一个万能 HostAPI。分 facet 启停须核对真实装配；当前 client.control 只有整体 enable/disable/reload，不能宣称独立 facet 控制已完成。
 
-`WebInterfaceContext` 的责任如下：
+**原请求身份不能混用。** 当前 `BackendContext.requestId` 是宿主 operation ID，不是浏览器最初的 requestId。丢响应后先 `operationByRequest(browserRequestId)` 找原 operation，再用其已确认结果或 operation ID 核对内层服务。外层 `done` 不证明内层 job 或业务目标完成；unknown 不能用新请求重提消除。
 
-| 成员                                                    | 含义和边界                                                                                                                   |
-| ------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| `extension/generation/instanceId/person/target?/signal` | 一个已绑定界面实例的身份与寿命；不是允许前端重新选择 actor 的参数表                                                          |
-| `call(action, input, options?)`                         | 受 manifest、当前资源与服务端授权约束的调用；`options` 可带原 `requestId` 和目标；返回外层 operation，不自动保证内层效果完成 |
-| `operation(id)`                                         | 读取已知 host operation                                                                                                      |
-| `operationByRequest(requestId)`                         | 按该 context 绑定的 actor/resource 查原浏览器请求，不重新进入 handler                                                        |
-| `subscribe(action, input, receive, options?)`           | 当前实现是有界 read-action 轮询；返回 unsubscribe，不是可随意广播事件的 bus                                                  |
-| `notice(text)`                                          | 当前操作者的私有反馈，不写模型历史                                                                                           |
-| `open(interfaceId, options?)`                           | 打开所属扩展的另一个声明界面；改目标要重新发现与授权                                                                         |
-| `navigate(target)`、`close()`                           | 通过宿主导航；关闭只作用于所属实例，不取消已接纳服务端工作                                                                   |
+## 5. 通用资源导航与多 Session
 
-旧实例的结果不得更新新实例。component effect 清理 unsubscribe/listener/timer；关闭后中止可中止的读取。`AbortSignal` 被触发不等于 mutation 已回滚，不能清掉 unknown 原请求来“恢复按钮”。
+现有 AgentRef 已有 Session/Conversation 身份，WebUI 也已有多 Session 基础。新规划补齐的是通用公开消费与原身份/状态核对，不从零重造 Session 系统。
 
-### 原请求与业务 client
+- 插件持有稳定引用并注册自己的资源视图；所属服务/插件解析业务含义，宿主提供导航容器、返回、focus 和不可用状态。
+- Session/Conversation 由 Pakka 接入层连接可信公开来源；用户可沿引用进入另一已知且获准访问 Session 的原 Conversation，查看真实过程。
+- 持久引用与当前运行绑定分别处理。对已加载、未加载、不可得、无权、身份不符作明确处理，重开后重新解析当前 binding，不拿同名对象替代原身份。
+- 浏览只读取历史，不提交模型、重派任务、清锁或恢复执行。原 owner 的服务保持 storage/writer 所有权；浏览器不提供任意数据库路径。
+- 资源导航不要求预先实现全 Session 自动发现、统一总览或全局搜索；这些尚未采用。跨机器/进程访问按实际公开服务和部署能力设计。
 
-`BackendContext.requestId` 是宿主 operation ID，**不是浏览器最初的 requestId**。丢响应时先以 `context.operationByRequest(browserRequestId)` 找到原 operation，再用确认结果或该 operation 的 ID 核对内层服务。不同层的 ID 不互换。
+RSI 报告、MAS 关系图、Memo 书库是消费者，不需要宿主新增 ticket/report/wiki 专用 API。认为能力不足时，先复现公开消费缺口，再以通用职责描述必要演进。
 
-业务 client 负责输入／结果解码和本领域错误解释；feature 负责用户可见的 pending、冲突与继续核对入口。`ExtensionOperation.state` 当前只有 `done | unknown`，不要向这个 wire 类型塞入组件的 loading/empty/open 状态。
+## 6. Astryx、共享运行时与样式
 
-## 5. 原语开放性与 Astryx 接法
+插件可直接使用 Astryx 的公开入口，例如 `@astryxdesign/core/Button`、`@astryxdesign/core/Dialog` 与公开主题能力。Pakka 的便利重导出和自身组合不成为使用其他公开部件的门槛；保留上游 props/parts/hooks/types，不建立缩水的组件语言。使用上游 API 也承担其版本变化，不伪称任意换库零成本。
 
-### 薄出口不是另一套封闭设计系统
+必须同时成立：
 
-优先具名重导出实际需要的上游部件，或只加入确有用途的默认值／组合。若有意继承上游 props，直接说明这一依赖，不重新设计一套仅剩几个布尔值的接口。下面仅示意**未来 React 迁移后的**方式，不能直接替换当前 Preact Button：
+1. 开发依赖和类型对应支持的 React/Astryx 组合。
+2. 插件构建对共享 React/ReactDOM/JSX runtime、Astryx 及所需 StyleX runtime 的相关入口 external。
+3. 浏览器模块映射确实指向宿主共享资产；不能每个组件独立打包后复制 context。peerDependencies 和 external 各自都不是运行验证。
 
-```tsx
-import { Button as AstryxButton } from "@astryxdesign/core/Button";
-import type { ComponentProps } from "react";
+宿主提供默认主题、所需 layer/locale 及 portal/focus 环境；插件无需另建 root、全局 reset 或第二个壳层。普通 HTML、局部 CSS/SVG、自定义组件及有实际用途的局部主题仍可组合。
 
-export type ButtonProps = ComponentProps<typeof AstryxButton>;
-export { AstryxButton as Button };
-```
+- 优先使用上游公开 tokens，Pakka 只添加真实共享语义，不为每个 token 建同义别名。
+- 明确 reset/组件/theme/产品局部样式顺序，核对未分层 CSS 的实际优先级。
+- portal 离开原 DOM 子树后，主题、字号、方向和层级仍一致；每个浮层只有一套 focus trap/Escape/return 实现。
+- 插件样式只作用于所属内容。这是维护边界，共享同源 UI 不被当作恶意代码安全沙箱。
+- 预编译 Astryx 消费不要求应用采用 StyleX 编译器；确需 swizzle/fork 时记录固定来源、许可、变更和升级责任，并验证混用的共享 context。
 
-这个出口没有隔离上游类型变化；这是显式取舍，不是实现了“任意换库”。要为 Pakka 增加行为时，先说明行为的主人：按钮视觉放 UI，实际命令／回执放 feature，授权与效果放服务。不要借 `clickAction`、`onOpenChange` 或 render 生命周期悄悄提交模型工作。
+## 7. 插件作者与实施顺序
 
-内容复杂时保留 children/parts/slots，选择有限时使用 props；ref、ARIA、事件和样式如何合并要明确。自定义 trigger 仍须保留原生语义及交互接线。不要为了给所有组件相同签名而损失各组件真实能力。
+插件以真正需要的 facets 和服务开始，browser 入口输出普通 React 内容，业务 client 解释自己的 DTO/错误/长操作；UI 能力与可选服务绑定经公开 SDK 获得。Agent-only 与 GUI-only 分别消费，不靠根 overrides、私有路径或第二份 UI runtime 解决依赖。
 
-### Theme、CSS 与 portal
+业务插件可在自己的包中使用 manifest、backend、agent、browser 等职责目录，只有实际需要才创建；分仓不强迫一个全栈插件拆成两个 repo。默认插件通过 composition root 显式装配，与第三方走相同入口。
 
-- 宿主注入一个默认主题与必要的 layer/locale 环境。ThemeRoot 只接收视觉输入；读取／保存用户偏好由 app 或所属功能负责。
-- 上游公开 tokens 能表达的语义直接复用；Pakka 只为跨页面／跨扩展的真实语义补充小量 tokens，不复制整套 palette，也不为每个上游 token 建同义别名。
-- 重构后的公共 token 名、CSS 消费方式与许可，在有真实消费者时与出口一并公布；当前 `components` export 不代表已经有一个可 import 的主题 stylesheet。
-- 应用明确 reset → 上游组件 → theme → 产品局部样式的顺序，并检查已有未分层 CSS 的实际优先级。不是写了 `@layer` 就自动获得正确覆盖顺序。
-- 浮层离开原 DOM 子树后，主题、字号、方向和 layer context 仍要生效。由宿主与采用的弹层基座共同接线，不让 extension 各自 portal 到 body 后再打补丁。
-- 每个弹层只有一套实际的 focus trap/Escape/return 实现；宿主提供实例与关闭政策，成熟 primitive 执行交互。不在 Astryx Dialog 外再套一套旧 trap。
-- extension 的 CSS 只作用于自己的内容，不能接管登录页或其他插件；这是维护边界，不把可信同源代码误称为安全沙箱。
+用户已明确旧 Preact 插件不迁移，旧 WebUI/SDK 按没有用户处理。更干净时移除旧入口和 facade；不把兼容工程或维持旧默认界面作为前置。仍需的产品功能按用途在新 SDK 上接入，权限、原 Session、持久记录和已接纳工作继续保留。
 
-### 源码接管
+推进顺序为完整盘点/独立消费接缝 → 最小真实前端/插件/跨 Session 切片 → 搬仓 → 补齐功能 → 默认交付收口；具体退出条件见[阶段设计](../../openspec/changes/plan-independent-webui/design.md#migration-plan)。新 SDK 的安装、共享 runtime、模型配置和资源浏览均须实测；源码表、目录图和文档检查不构成通过证据。
 
-确需 swizzle/fork 时，在接管目录旁记录上游 repo/tag/path、许可、本地改变及更新方式。检查实际复制的依赖和 StyleX 构建要求；与包内组件混用时核对共享 layer/context。优先修复或扩展正确层次，不把接管当作每日升级后自动覆盖本地修改的步骤。
-
-## 6. extension 作者的最短路线
-
-1. 读本页当前接口；从现有 `examples/hello` 或实际 extension 开始，而非复制宿主 App。
-2. 声明真正需要的 facets、actions 与 interfaces。只显示 UI 时，不引入 Agent、模型或存储服务。
-3. browser 入口输出普通 component；通过 `{ context }` 接入宿主，通过领域 typed client 解释业务数据，使用公开组件和主题。
-4. 默认扩展同样按这一路径安装与运行。需要尚无公开出口的能力，补一个有消费者的最小接口；不深导入 `apps/webui/src`、私有 `dist`、router/store。
-
-有独立包的 extension 可按下面组织；只为已有内容创建文件：
-
-```text
-packages/<extension>/src/
-├─ manifest.ts                 # 无副作用的声明
-├─ backend.ts                  # 可信服务挂接，不 import UI
-├─ agent.ts                    # 仅确有 Agent facet 时
-└─ browser/
-   ├─ index.ts                 # manifest 指定的内容出口
-   ├─ <Feature>Page.tsx        # 迁移后的 React 内容
-   ├─ client.ts                # 本领域的输入／输出解码与调用
-   ├─ use<Feature>.ts          # 确有复杂状态时才提取
-   └─ <Feature>.module.css     # 局部样式，可用普通 scoped CSS
-```
-
-现有 `contributions/*` 和 package browser 目录不因这个示意图强制重新包装。公开边界一致比物理目录完全同形更重要。
-
-## 7. 换栈时保留什么、一起迁什么
-
-允许更换技术栈，不意味着浏览器节点或 hook ABI 可以混用。建议原生迁到 React 19，而不是把 Preact/compat 作为未经验证的长期基座。
-
-**继续保留**：人类／资源权限、Session/Conversation/native receipt、持久化、受控工作与原请求核对；一产品包、明确的 facets 和公共 slots；已采用的用户操作语义。
-
-**需要成套迁移**：renderer、JSX runtime、组件／props 类型、shared SDK browser modules、主题与 portal、默认 extension 的 browser build、独立消费者、资产映射与离线安装路径。不能用 `ExtensionManifest.api: 1` 或包仍叫 `@pakka/webui` 证明 renderer 兼容。
-
-- 宿主和扩展使用同一 React/React DOM、JSX runtime 与共享主题模块。extension 构建将这些声明为 peer/external，宿主提供明确解析；external 只是不打包，**不是已经解决浏览器模块地址和实例去重**。
-- 具体的 SDK／renderer 兼容声明、版本与旧扩展处置在迁移切片中明确。默认不承诺双 renderer、任意旧 UI 自动兼容或热替换整个模块图；不兼容应在挂载前识别并清楚提示。
-- 一个页面不混挂 Preact vnode 与 React element。不依赖保留同名 Button export 来掩盖 `class`/`className`、native attrs／Astryx props、event/ref 等变化。
-- 若切换视觉或页面关系，明确更新该切片的预期。旧 Devin/reference CSS 的身份和行为材料继续按原契约保全，不能通过格式化、重算 hash 或换测试截图静默改写。
-- 实施顺序由最小真实消费者决定：先共享 runtime/UI 接缝及小扩展，再按 feature 迁移；旧／新入口如需暂存应明确分离，最终移除不再使用的兼容代码。不要留两套长期并行实现。
-
-正式作为默认路径前，用实际 Pakka HTTP／产物与独立 extension 证明消费接缝；必要检查按[少测试政策](FRONTEND-GUIDELINES.md#重构初期的测试政策)选择。不把目录图、示意代码或包声明当作运行成功的证据。
+验证优先采用类型/构建、独立安装和真实界面/服务检查，新增持久测试按[少测试政策](FRONTEND-GUIDELINES.md#重构初期的测试政策)说明独特风险。Provider `/login` 的多端交互继续按规划延期，Pakka 人类身份登录与安全边界不受影响。
