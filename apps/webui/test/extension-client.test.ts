@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import { strict as assert } from "node:assert";
 import { createServer } from "node:http";
-import { createExtensionClient } from "../src/extension-client.ts";
+import { createExtensionClient } from "@pakka/client/extensions";
 
 const call = { extension: "sample", generation: "gen-1", action: "save", requestId: "stable", input: {} };
 

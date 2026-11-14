@@ -7,7 +7,7 @@ import type {
 	ExtensionService,
 	PocketServiceContext,
 } from "@pakka/webui/backend";
-import { decodeValue, isRecord } from "@pakka/webui/extension";
+import { decodeValue, isRecord } from "@pakka/protocol/extensions";
 import { createMasWorkbench, type MasWorkbenchClient, type WorkbenchHistoryQuery } from "./workbench.ts";
 import { masConversations } from "./resources.ts";
 import {

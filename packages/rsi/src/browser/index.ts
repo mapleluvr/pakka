@@ -2,7 +2,7 @@ import { h } from "preact";
 import { useEffect, useRef, useState } from "preact/hooks";
 import { Button, Icon } from "@pakka/webui/components";
 import type { WebInterfaceProps } from "@pakka/webui/ui";
-import type { ExtensionJson } from "@pakka/webui/extension";
+import type { ExtensionJson } from "@pakka/protocol/extensions";
 import {
 	ticketCall,
 	readTicketResult,

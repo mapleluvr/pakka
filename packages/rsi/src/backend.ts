@@ -1,6 +1,6 @@
 import { fileURLToPath } from "node:url";
 import type { BackendModule, ExtensionService, PocketServiceContext } from "@pakka/webui/backend";
-import { decodeValue, isRecord } from "@pakka/webui/extension";
+import { decodeValue, isRecord } from "@pakka/protocol/extensions";
 import type { TicketClient, TicketRole, TicketService } from "./types.ts";
 import { executeTicketAction, ticketFailure, type TicketAction } from "./commands.ts";
 import { inputs, resultSchema, writeActions } from "./browser/contract.ts";

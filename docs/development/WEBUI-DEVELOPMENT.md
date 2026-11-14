@@ -1,30 +1,30 @@
 # pakka-webui WebUI 与扩展开发规范
 
-本文件维护 `@pakka/webui` 的服务、扩展、组件、配置与验证方法细则。整体预期见 [WebUI state](../state/webui.md)，页面结构与交互由[前端声明](../state/frontend.md)维护；当前工作见[工作入口](../OVERVIEW.md)和所指 OpenSpec tasks。公共 API 通过明确 exports 和独立消费者核对，实际实现较窄不自动缩减目标。
+本文件维护 WebUI 的服务、扩展、组件、配置与验证方法细则。独立前端/React/Astryx 已采用；本页涉及 `/pocket`、旧 SDK 精确字段和 legacy 装配的内容用于现有实现定位，不是新前端必须兼容的接口。新服务命名空间、模型作用域、插件与清理边界以 [WebUI state](../state/webui.md)和[分仓设计](../../openspec/changes/plan-independent-webui/design.md)为准；权限、持久化和原请求要求继续有效。查文件、职责和 public exports 先读[架构说明](WEBUI-ARCHITECTURE.md)；可维护性、开放组合与重构初期少测试政策见[前端规范](FRONTEND-GUIDELINES.md)。整体预期见 [WebUI state](../state/webui.md)，页面结构与交互由[前端声明](../state/frontend.md)维护；当前工作见[工作入口](../OVERVIEW.md)和所指 OpenSpec tasks。公共 API 通过明确 exports 和独立消费者核对，实际实现较窄不自动缩减目标。
 
 ## 1. 产品核心与扩展的分工
 
 | 产品宿主拥有                                  | 扩展贡献                                   |
 | --------------------------------------------- | ------------------------------------------ |
 | 登录/邀请、当前人类身份、权限检查             | 已声明 scope 下的业务查询与操作            |
-| 路由 namespace、导航、Sheet/panel 容器、focus | 导航项、子页面、自定义 Preact content      |
+| 路由 namespace、导航、Sheet/panel 容器、focus | 导航项、子页面、自定义组件内容             |
 | 组件/主题 tokens、loading/error boundary      | settings、图表、表单、成员板等交互内容     |
 | command registry、触发器、operation identity  | namespaced command、参数/结果 schema       |
 | checked RPC/events、连接/取消/重连            | extension action、client binding、订阅处理 |
 | generation、安装/启用/更新/卸载与 assets      | 可选 Agent/Backend/WebUI/Client facet      |
 
-MAS Board 必须通过右侧的通用贡献方式实现。不为 MAS 增加特权的 core store、专用 router 分支或“内置可绕过”标志。另一份 GUI-only 扩展必须能使用同一机制。
+RSI、MAS、Memo 的可视化、业务控制和管线通过右侧通用贡献方式实现；默认与普通插件使用相同公开能力。宿主不建立专用 core store/router 分支或“内置可绕过”标志。GUI-only 扩展无需工作 Session；资源视图与跨 Session 原历史导航也通过通用引用/解析接缝。
 
 ## 2. 四个 facet 与构建边界
 
 - **Agent**：真实 native invocation 下的 tools/instructions/策略服务；保持现有受控端口，不向插件返回 raw Pi 对象。
 - **Backend**：认证后业务查询/命令、scoped persistence、受控 job。注册 schema 和权限，不直接把任意 callback 暴露为网络 handler。
-- **WebUI**：普通 Preact content、command/action 和界面贡献。采用宿主同一份 Preact/htm/组件，不自带另一份运行时。
+- **WebUI**：普通 React content、command/action 和界面贡献，共享宿主 React/Astryx、主题及 portal，不自带第二份运行时。
 - **Client**：对已存在 backend action/event 的类型化编码、解码和调用，不自行授予权限或定义服务端没有的命令。
 
-一个扩展可以只实现任一面。WebUI-only 不要求工具、模型或 Conversation；Agent-only import 不加载 Preact/Web server。一个 extension package 的 browser、backend、Agent exports 应有明确的 module graph 边界。
+一个扩展可以只实现任一面。WebUI-only 不要求工具、模型或 Conversation；Agent-only import 不加载浏览器/Web server。browser、backend、Agent exports 有各自 runtime/声明图，启停分别表达。
 
-`@pakka/webui` 作为单一产品包，可以暴露纯声明、组件等 public SDK 子路径；扩展只 peer-consume 这些明确 exports。不得跨 workspace import `src/`、私有 `dist/`、页面 store/router 或可执行入口。核心 agent/MAS 库不反向依赖产品。
+纯浏览器 UI SDK 归独立前端，协议/client 和 Node Backend 能力归各自服务维护源。扩展只消费明确 public exports，不跨 workspace import `src/`、私有 `dist/`、store/router 或可执行入口；核心 agent/MAS 不反向依赖产品。旧 Preact 插件不迁移，旧 WebUI/SDK 不为兼容保留 facade。
 
 ## 3. 界面作者可以做什么
 
@@ -32,7 +32,7 @@ MAS Board 必须通过右侧的通用贡献方式实现。不为 MAS 增加特�
 
 - 注册导航项和 extension namespace 下的页面。
 - 注册 app/Conversation 范围的 sheet、panel 和设置入口。
-- 编写完整 Preact 交互内容，不限于配置表单或 schema form。
+- 编写完整 React 交互内容，不限于配置表单或 schema form；通过所属资源视图与稳定引用进入可解析、获准访问的原对象。
 - 使用宿主 UI primitives、主题 tokens、状态/订阅 hooks。
 - 注册 slash/command-palette/button action，共用 command identity。
 - 返回私有 toast、共享 display card、打开 interface 或 operation receipt。
@@ -45,8 +45,8 @@ MAS Board 必须通过右侧的通用贡献方式实现。不为 MAS 增加特�
 
 界面实施采用[前端开发规范](FRONTEND-GUIDELINES.md)及其中保存的 Atlassian 排版、Vercel 界面指南；对应原生行为以 Devin 离线生产前端为准。具体来源、直接定位和证据类型在该规范中维护。
 
-- 前端基座、CSS 身份、页面布局、响应式和 Team 交互统一由[前端声明](../state/frontend.md)维护。扩展采用宿主 Preact/htm、公开组件和同套界面语言，保留代码与字体许可证，不另建应用壳层。
-- 组件默认消费 DTO 和 host-owned context，不把整个应用状态注入扩展。
+- 前端基座、CSS 身份、页面布局、响应式和 Team 交互统一由[前端声明](../state/frontend.md)维护。扩展采用宿主共享 React/Astryx、公开组件和同套界面语言，可直接使用上游公开部件；保留代码与字体许可证，不另建应用壳层。
+- 页面／功能入口消费授权 DTO 和 host-bound context；通用 UI 原语只接收必要的值、内容与意图回调，不代办业务请求。不把整个应用状态注入扩展。
 - 状态分别处理 loading、empty、denied、conflict、unknown、stale/disconnected 和 terminal；不要把它们合成同一个红/绿点。
 - 显示已持久 membership 与 native live readiness 的区别；generation done 不等于业务目标或工具副作用已完成。
 - 表单写入前展示 scope；危险操作需要明确目标和动作反馈，重复点击复用同一 pending operation，不能静默分配新请求。
@@ -81,7 +81,7 @@ Card 是显示记录，不是偷偷添加 system/user message。必须用下一�
 - 业务 settings/notes 等使用明确 namespace 与版本冲突规则；user、Conversation 和 extension 的 scope 不能仅靠 UI 选项约束。
 - 长工作通过受控 job/receipt 服务；HTTP 与 wait 均有有限期限，关闭/取消 wait 不等于取消已接受的 job。
 - 同 actor/resource/request 的相同参数只 reconciliation；不同参数拒绝冲突。未知 handler 不自动重进，不能宣称任意外部效果 exactly-once。
-- 实际 public SDK 的 `ExtensionClient.operationByRequest({ extension, requestId, target })` 可在丢失 host operation ID 时只读查询原请求；服务端绑定当前 person 和精确 AgentRef，并在发布前重查原权限。`UIContext.operationByRequest(requestId)` 另绑定当前 open instance。
+- 实际 public SDK 的 `ExtensionClient.operationByRequest({ extension, requestId, target })` 可在丢失 host operation ID 时只读查询原请求；服务端绑定当前 person 和精确 AgentRef，并在发布前重查原权限。`WebInterfaceContext.operationByRequest(requestId)` 另绑定当前 open instance。
 - 外层 operation 已记录 `done` 不证明内层 job/browser/native effect 已完成；内层仍为 `unknown` 时必须保留待确认身份，不解锁重复效果。
 - 明确 pre-effect guard 的拒绝可报 denied；opaque callback 可能已有效果，其异常/断连/超时保持 unknown。不要解析报错文本推断 rollback。
 - Memory 是相同插槽的另一实际消费者：`workspaceMemoryService`/`workspaceMemoryExtensionRoot` 绑定当前人类与精确资源；宿主分别选择 `createPocketMemory().tools` 与 `.source`。人类界面不自动激活 Agent 能力；提议须经授权审批才进入来源；编辑、审批和遗忘按精确 expectedVersion 提交，冲突保留当前草稿。暂停只停止内容贡献，移除人类界面保留已批准记录及宿主显式工具；响应不明按原 operation 核对。每条文本最多 300 个 UTF-16 code units，项目/global 各最多 40/30 条，未批准提议最多 20 条，保留记录／mutation ledger 上限为 256/512。
@@ -99,7 +99,7 @@ Card 是显示记录，不是偷偷添加 system/user message。必须用下一�
 4. 私有 toast 只回当前操作者；shared card/notes 明确共享 scope；人类 side chat/presence 默认不进入模型。
 5. 已存 provider secret 不回填表单，不进 URL、command history、browser persistent storage、task/entry、广播或 export。配置敏感值区分 keep/replace/clear；provider credentials 不成为通用 plugin client 字段。外部 Webhook 的专用 URL secret 是显式授权 setup 的独立契约，不能套用为 provider key 的返回接口。
 
-原生模型模式通过公开 ModelRuntime 使用 Pi 的 `models.json`、`auth.json` 与 `settings.json`。模型目录和配置来源可以读取、刷新；provider 登录/登出由当前全局管理权限约束，并绑定发起浏览器的登录身份。API key/OAuth 交互仅在私密流程中传递，角色撤销、退出和到期取消原生授权；输入提交即清空，响应丢失后核对原交互，不自动重发密钥。状态只展示公开认证信息；原生密钥不进入页面持久存储、通用 operation 或 Session。
+以下认证段落说明现有后端/legacy 装配的安全边界，不是新 WebUI Provider `/login` 的实施安排；新的 API key/OAuth 交互待用户敲定多端偏好后再设计，旧 UI 代码无需为兼容保留。现有原生模型模式通过公开 pi-coding-agent ModelRuntime 使用其 `models.json`、`auth.json` 与 `settings.json`。模型目录和配置来源可以读取、刷新；provider 登录/登出由当前全局管理权限约束，并绑定发起浏览器的登录身份。API key/OAuth 交互仅在私密流程中传递，角色撤销、退出和到期取消原生授权；输入提交即清空，响应丢失后核对原交互，不自动重发密钥。状态只展示公开认证信息；原生密钥不进入页面持久存储、通用 operation 或 Session。
 
 显式 legacy 装配保留独立 `credential.status / credential.replace / credential.clear` 命令，不进入扩展 command palette 或通用 settings 回填。只有具备全局安装权限的当前人类可调用；scoped admin 也不能改变全 Session 的凭据。写请求带稳定 request ID 和预期 version，只返回 `{ version, configured }`。表单提交即清空输入，未知响应后只能显式读取当前状态，不自动重发密钥；读到当前配置不等于证明原写操作的完整历史。
 
@@ -117,7 +117,7 @@ legacy owned 私密服务会持久保存显式提交的值，供未来原生主�
 
 ## 9. 实际开发与验证路径
 
-Verification 的选用与记录按[通用方法](VERIFICATION.md#选用与记录)。选用扩展端到端检查时，按扩展能力从以下项目确定覆盖范围：
+Verification 的选用与记录按[通用方法](VERIFICATION.md#选用与记录)。重构初期优先遵循[少测试政策](FRONTEND-GUIDELINES.md#重构初期的测试政策)：下面是按风险选用的检查项目，不是每项 UI 改动必须新增的测试清单。选用扩展端到端检查时，按扩展能力从以下项目确定覆盖范围：
 
 1. 能从 public exports 编译的独立消费者，无内部路径/根 overrides。
 2. 一份可原样安装的例子：GUI-only 或真实配置影响后续行为的工具/服务。
@@ -142,14 +142,14 @@ Verification 的选用与记录按[通用方法](VERIFICATION.md#选用与记录
 
 模型入口位于消息输入区，点击紧凑模型按钮查询可信宿主的原生 Pi 目录。具有 Conversation 配置权限的人可选择目录内任一模型；完整引用包含 provider/modelId，模型目录与 Agent profile 分开。候选显示真实输入类型、上下文与输出上限、thinking 等级及目录价格，不携带另一个预设的 cwd、工具或指令。原生产品使用有界分页与服务端搜索，兼容配置响应的 65 项前缀不是完整目录，也不限制其余模型。legacy 单 provider 装配仍可从其显式配置生成兼容目录。
 
-当前模型独立显示；未选模型用 `model: ""` 表示，仍可进入设置和管理 Session。选择器参考 Pi TUI `/model` 的输入焦点、上下键循环、高亮候选、Enter 确认、Escape 关闭及位置/匹配总数反馈。检索和键盘移动不提交配置，空结果下 Enter 无效果，中文等输入法组合期间不把 Enter 当作选择。用户通过原有 Pi 工具编辑原生文件后可刷新；默认模型影响新建 Conversation，刷新不会覆盖既有选择或发送生成请求。
+当前模型独立显示；未选模型用 `model: ""` 表示，仍可进入设置和管理 Session。新入口另提供 `/model` 悬浮选择、完整 provider/model 准确直接选择和 `/thinking` 与点击/触控共用操作；持久配置经 Pakka 提交 pi-durable。选择器参考 pi-coding-agent 在 pi-tui 上实现的 `/model` 的输入焦点、上下键循环、高亮候选、Enter 确认、Escape 关闭及位置/匹配总数反馈。检索和键盘移动不提交配置，空结果下 Enter 无效果，中文等输入法组合期间不把 Enter 当作选择。提供商/模型参数由设置中的可视化控件及校验后的高级编辑接入原生配置；当前选择归 Conversation，显式默认归 Person 并在后端跨设备保存，实例连接定义由配置权限管理。刷新不覆盖既有选择或发送生成请求。
 
 工作目录入口**只在 Conversation 标题下方**，Settings 不提供目录变更入口。点击当前服务器路径打开目录选择器：
 
 - Locations 是宿主批准的位置；目录浏览、面包屑、上一级和粘贴绝对路径均只在这些位置内导航。
 - 最近使用与收藏保存在当前浏览器，按 server/person 隔离，退出时清除；服务端每次重新验证快捷路径，越权、失效及逃出批准范围的符号链接不展示。
 - 浏览或关闭不会修改 Conversation；只有 **Use this directory** 明确应用。手机使用单栏滚动内容与固定确认区，默认最短目标为宽∶高 3∶5。
-- 新会话默认继承当前模型、目录和 thinking；同一基础 profile 的分叉也继承独立选择。它们都不隐式替换指令或工具。
+- 普通新建 Conversation 的模型/Thinking 缺省使用 Person 保存的默认；显式创建参数及同一基础 profile 的分叉保留所指定/来源配置。目录沿用创建入口的明确上下文；这些选择不隐式替换指令或工具。
 
 Pi Durable 公开 configure 支持 model/cwd/thinkingLevel 局部修改。Pakka 分别持久化选定字段；成功应用更换 incarnation、撤销旧绑定，保留历史和已花额度，不搬文件、不重放工作。已有工作或队列未清空时拒绝切换，不自动取消工作。未知结果只能读取当前配置核对，不自动重试。Viewer 可查看当前配置，但不能打开配置菜单、浏览服务器目录或修改它们。
 

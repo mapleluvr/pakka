@@ -4,6 +4,7 @@
 
 | 核对对象                        | 记录                                                                                                         |
 | ------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| 独立 WebUI 阶段 1 接缝          | [独立安装、模型配置/回执与共享浏览器 runtime](INDEPENDENT-WEBUI-PHASE-1.md)                                  |
 | Memo 知识服务与持久 Patchouli   | [权限、版本、持久研究、取消与独立安装消费](MEMO-KNOWLEDGE.md)                                                |
 | 测试反馈成本                    | [核心集合、维护去重与有限并行](TEST-FEEDBACK-COST.md)                                                        |
 | RSI 长期工单持久化              | [分页、原请求恢复、独立复审与安装消费](RSI-PERSISTENCE.md)                                                   |
@@ -36,6 +37,8 @@
 
 ## 静态调查（不构成产品验收）
 
+- [独立 WebUI 阶段 0](INDEPENDENT-WEBUI-PHASE-0.md)：网络/资产、公开出口/消费者、功能归属、G1–G6 缺口及后续真实切片；没有新前端或安装/运行验收。
+- [WebUI 设计系统与开发原则](WEBUI-DESIGN-PRINCIPLES.md)：固定官方源码比较、接口／目录说明与文档检查；未实施或验收 React/Astryx 迁移。
 - [UI 澄清文案调查](WEBUI-COPY-AUDIT.md)：全仓前端及内置扩展的删除建议、待用户决定项和应保留状态；尚未批量采用或删改。
 
 当前补丁的产物与行为见 [Durable state](../state/durable-patch.md)，兼容性变化查[追加式账本](../PI-DURABLE-COMPATIBILITY.md)。视觉运行目录 `docs/visual-primitives/` 是本机工作材料；保留报告对其原版本的引用使用固定 Git 链接。

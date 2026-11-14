@@ -12,7 +12,7 @@ import {
 	frozen,
 	isRecord,
 	publicPath,
-} from "./extension.ts";
+} from "@pakka/protocol/extensions";
 import type {
 	ExtensionRegistration,
 	ExtensionCall,
@@ -21,7 +21,7 @@ import type {
 	ExtensionJson,
 	ExtensionFacet,
 	ExtensionAction,
-} from "./extension.ts";
+} from "@pakka/protocol/extensions";
 import type {
 	BackendContext,
 	BackendModule,

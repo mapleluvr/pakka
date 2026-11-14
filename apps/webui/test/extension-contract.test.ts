@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import { strict as assert } from "node:assert";
-import { decodeManifest, decodeValue } from "../src/extension.ts";
+import { decodeManifest, decodeValue } from "@pakka/protocol/extensions";
 
 const empty = { type: "object", properties: {}, required: [] } as const;
 export const manifest = {

@@ -2,16 +2,18 @@
 
 开始或接续先读 [OVERVIEW](../OVERVIEW.md)、相关 [state](../state/README.md)和本地 active-plan。贡献从 [CONTRIBUTING](../../CONTRIBUTING.md)进入，Git 操作遵循 [Git 协作规范](GIT-WORKFLOW.md)。按产物关系继续查细则：
 
-| 工作                                    | 文档                                         |
-| --------------------------------------- | -------------------------------------------- |
-| 分支、提交、工作 PR、集成与发布         | [Git 协作规范](GIT-WORKFLOW.md)              |
-| Runtime 身份、持久化与原生执行          | [架构契约](ARCHITECTURE.md)                  |
-| package/app、依赖与发布边界             | [Monorepo 规范](MONOREPO-CONVENTIONS.md)     |
-| WebUI/Backend/Client/Agent contribution | [WebUI 开发契约](WEBUI-DEVELOPMENT.md)       |
-| 排版、交互质量与 Devin 原生行为来源     | [前端开发规范](FRONTEND-GUIDELINES.md)       |
-| 页面结构与 Team 交互                    | [前端声明](../state/frontend.md)             |
-| 测试、外部安装和证据身份                | [验证方法](VERIFICATION.md)                  |
-| Pi Durable 下游变更                     | [追加式账本](../PI-DURABLE-COMPATIBILITY.md) |
+| 工作                                     | 文档                                         |
+| ---------------------------------------- | -------------------------------------------- |
+| 分支、提交、工作 PR、集成与发布          | [Git 协作规范](GIT-WORKFLOW.md)              |
+| Runtime 身份、持久化与原生执行           | [架构契约](ARCHITECTURE.md)                  |
+| package/app、依赖与发布边界              | [Monorepo 规范](MONOREPO-CONVENTIONS.md)     |
+| WebUI/Backend/Client/Agent contribution  | [WebUI 开发契约](WEBUI-DEVELOPMENT.md)       |
+| 可维护性、开放组合、少测试政策与交互质量 | [前端开发规范](FRONTEND-GUIDELINES.md)       |
+| WebUI 文件定位、职责与公开接口           | [WebUI 架构说明](WEBUI-ARCHITECTURE.md)      |
+| Astryx 与同类开源设计系统的取舍          | [设计系统调研](WEBUI-DESIGN-SYSTEMS.md)      |
+| 页面结构与 Team 交互                     | [前端声明](../state/frontend.md)             |
+| 测试、外部安装和证据身份                 | [验证方法](VERIFICATION.md)                  |
+| Pi Durable 下游变更                      | [追加式账本](../PI-DURABLE-COMPATIBILITY.md) |
 
 ## 提交与贡献
 

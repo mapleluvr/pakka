@@ -162,6 +162,11 @@ export interface PocketWorkspaceOptions {
 	readonly catalog: CatalogOptions;
 	/** Host-owned selection only; the browser never supplies this ceiling. */
 	readonly profileCeiling: (person: PocketPerson) => readonly string[];
+	/** First admission only; missing human defaults never redefine an original create/lookup or a fork. */
+	readonly creationDefaults?: (
+		actor: PocketAuthority,
+		input: PocketCreate,
+	) => Promise<ConversationConfigurationChange | undefined>;
 	/** Host-owned synchronous collaboration/driver check; repeated at native admission, never a wire grant. */
 	readonly beforeInput?: (actor: PocketAuthority, ref: ConversationRef) => void;
 	/** Same current-driver guard for a persisted originating person; required when beforeInput is configured. */
@@ -454,13 +459,17 @@ export function createPocketWorkspace(options: PocketWorkspaceOptions): PocketWo
 					personId = current().id;
 				const fingerprint = hash({ ...saved, source: from ?? null, entryId: entryId ?? null }),
 					id = "human-" + hash([personId, saved.requestId]).slice(0, 40);
+				let effectiveConfiguration = saved.configuration;
 				let inheritedConfiguration: { model: string; cwd: string } | undefined;
 				let initialDirectory: string | undefined;
 				const authorize = () => {
 					check("create");
 					profileCheck(saved.profile);
 					if (initialDirectory !== undefined && !directoryWithin(initialDirectory, roots())) denied();
-					if (saved.configuration?.model !== undefined && !runtime.modelAllowed(saved.configuration.model))
+					if (
+						effectiveConfiguration?.model !== undefined &&
+						!runtime.modelAllowed(effectiveConfiguration.model)
+					)
 						denied();
 					if (from) check("manage", from);
 					if (saved.inherit) check("manage", saved.inherit);
@@ -492,6 +501,11 @@ export function createPocketWorkspace(options: PocketWorkspaceOptions): PocketWo
 						return prior.ref;
 					}
 					if (lookupOnly) return null;
+					if (!from && !saved.inherit && options.creationDefaults) {
+						const defaults = await options.creationDefaults(actor, saved);
+						if (defaults) effectiveConfiguration = Object.freeze({ ...defaults, ...saved.configuration });
+						authorize();
+					}
 					const inheritedRef = saved.inherit ?? (from?.profile === saved.profile ? from : undefined);
 					if (inheritedRef) {
 						const provider = await resource(inheritedRef, authorize);
@@ -502,8 +516,8 @@ export function createPocketWorkspace(options: PocketWorkspaceOptions): PocketWo
 						await resolveDirectory(inherited.cwd, roots());
 						authorize();
 					}
-					if (saved.configuration?.cwd !== undefined)
-						initialDirectory = await resolveDirectory(saved.configuration.cwd, roots());
+					if (effectiveConfiguration?.cwd !== undefined)
+						initialDirectory = await resolveDirectory(effectiveConfiguration.cwd, roots());
 					authorize();
 					const rows = await catalog.enroll(
 						[
@@ -521,7 +535,7 @@ export function createPocketWorkspace(options: PocketWorkspaceOptions): PocketWo
 								},
 								...(from ? { fork: { source: from, entryId: entryId! } } : {}),
 								...(saved.inherit ? { inherit: saved.inherit } : {}),
-								...(saved.configuration ? { configuration: saved.configuration } : {}),
+								...(effectiveConfiguration ? { configuration: effectiveConfiguration } : {}),
 							},
 						],
 						authorize,

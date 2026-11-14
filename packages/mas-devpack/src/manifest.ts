@@ -1,4 +1,4 @@
-import type { ExtensionManifest, ExtensionAction } from "@pakka/webui/extension";
+import type { ExtensionManifest, ExtensionAction } from "@pakka/protocol/extensions";
 import {
 	empty,
 	activitiesInput,

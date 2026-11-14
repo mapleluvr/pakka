@@ -359,7 +359,7 @@ export function createPocketClient(options: PocketClientOptions): PocketClient {
 	}
 	if (
 		!["http:", "https:"].includes(endpoint.protocol) ||
-		endpoint.pathname !== "/pocket/rpc" ||
+		!["/pocket/rpc", "/pakka-webui/rpc"].includes(endpoint.pathname) ||
 		endpoint.username ||
 		endpoint.password ||
 		endpoint.search ||
@@ -371,7 +371,9 @@ export function createPocketClient(options: PocketClientOptions): PocketClient {
 	if (!Number.isSafeInteger(timeoutMs) || timeoutMs < 1 || timeoutMs > 60000)
 		throw new Error("Invalid finite WebUI deadline");
 	const url = endpoint.href;
+	const independent = endpoint.pathname === "/pakka-webui/rpc";
 	let serverId: string | undefined, personId: string | undefined;
+	let bindingGeneration = 0;
 	async function request(
 		command: PocketCommand,
 		input: PocketRequestOptions = {},
@@ -379,7 +381,9 @@ export function createPocketClient(options: PocketClientOptions): PocketClient {
 		const requestId = input.requestId ?? globalThis.crypto.randomUUID();
 		if (!identity(requestId)) throw new Error("Invalid WebUI request identity");
 		const encoded = decodePocketRequest({ version: 2, requestId, command });
-		if (input.signal?.aborted) throw new PocketRemoteError("FORBIDDEN", "denied", requestId);
+		const generation = command.op === "hello" ? ++bindingGeneration : bindingGeneration;
+		if (input.signal?.aborted || (independent && command.op !== "hello" && (!personId || !serverId)))
+			throw new PocketRemoteError("FORBIDDEN", "denied", requestId);
 		const controller = new AbortController(),
 			abort = () => controller.abort();
 		input.signal?.addEventListener("abort", abort, { once: true });
@@ -389,7 +393,13 @@ export function createPocketClient(options: PocketClientOptions): PocketClient {
 			if (csrf !== null && !/^[A-Za-z0-9_-]{43}$/.test(csrf)) throw new Error("Invalid CSRF binding");
 			const response = await fetch(url, {
 				method: "POST",
-				headers: { "Content-Type": "application/json", ...(csrf ? { "X-Pakka-CSRF": csrf } : {}) },
+				headers: {
+					"Content-Type": "application/json",
+					...(csrf ? { "X-Pakka-CSRF": csrf } : {}),
+					...(independent && command.op !== "hello"
+						? { "X-Pakka-Person": personId!, "X-Pakka-Server": serverId! }
+						: {}),
+				},
 				body: JSON.stringify(encoded),
 				signal: controller.signal,
 				redirect: "error",
@@ -403,6 +413,8 @@ export function createPocketClient(options: PocketClientOptions): PocketClient {
 				throw new PocketRemoteError("UNKNOWN", "unknown", requestId);
 			}
 			const decoded = decodePocketResponse(raw, requestId);
+			if (independent && generation !== bindingGeneration)
+				throw new PocketRemoteError("UNKNOWN", "unknown", requestId);
 			if (command.op !== "hello" && serverId && decoded.serverId !== serverId)
 				throw new PocketRemoteError("UNKNOWN", "unknown", requestId);
 			if ("error" in decoded)
@@ -432,7 +444,8 @@ export function createPocketClient(options: PocketClientOptions): PocketClient {
 			if (
 				list.kind !== "list" ||
 				list.serverId !== hello.serverId ||
-				list.conversations.some((ref) => ref.sessionId !== hello.sessionId)
+				new Set(list.conversations.map((ref) => JSON.stringify([ref.sessionId, ref.conversationId]))).size !==
+					list.conversations.length
 			)
 				throw new PocketRemoteError("UNKNOWN", "unknown", options.requestId ?? "reconnect");
 			return list;

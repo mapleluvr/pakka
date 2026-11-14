@@ -1,4 +1,4 @@
-import type { Schema } from "@pakka/webui/extension";
+import type { Schema } from "@pakka/protocol/extensions";
 import { memberPhases, deliveryStatuses } from "./dto.ts";
 export const label: Schema = { type: "string", minLength: 1, maxLength: 160 };
 export const referenceSchema: Schema = {
