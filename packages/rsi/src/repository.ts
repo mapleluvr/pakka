@@ -1,9 +1,10 @@
+import { workKey } from "./work-repository.ts";
 import type { JsonObject, Runtime, RuntimeRecord } from "@pakka/agent";
 import { createHash, randomUUID } from "node:crypto";
 import {
 	TicketError,
 	type Ticket,
-	type TicketReceipt,
+	type TicketRequestReceipt,
 	type TicketRun,
 	type TicketRevision,
 	type TicketEvent,
@@ -17,7 +18,7 @@ import {
 	state,
 	content,
 	handler,
-	receipt,
+	requestReceipt,
 	route,
 	text,
 	links,
@@ -25,7 +26,7 @@ import {
 	resultReferences,
 } from "./validation.ts";
 
-function recordsRefusal(
+export function recordsRefusal(
 	value: unknown,
 ): value is Error & { code: "invalid" | "conflict" | "capacity" | "denied" } {
 	return (
@@ -46,7 +47,7 @@ export type StoredRequest = {
 	actorId: string;
 	requestId: string;
 	fingerprint: string;
-	receipt: TicketReceipt;
+	receipt: TicketRequestReceipt;
 };
 export type Draft = {
 	cell: RuntimeRecord | null;
@@ -105,9 +106,10 @@ const keyHash = (value: unknown) => createHash("sha256").update(JSON.stringify(v
 export const requestKey = (actor: string, request: string) => "request:" + keyHash([actor, request]);
 const headKey = (id: string) => "ticket:" + id;
 const runKey = (ticketId: string, id: string) => "run:" + keyHash([ticketId, id]);
-export const dispatchText = (ticketId: string, revision: TicketRevision) =>
+export const dispatchText = (ticketId: string, revision: TicketRevision, workId?: string) =>
 	JSON.stringify({
 		ticketId,
+		...(workId ? { workId } : {}),
 		revision: revision.revision,
 		title: revision.title,
 		body: revision.body,
@@ -196,6 +198,7 @@ export function decodeEvent(value: unknown): TicketEvent {
 		kind !== "edited" &&
 		kind !== "assigned" &&
 		kind !== "reported" &&
+		kind !== "state-changed" &&
 		kind !== "dispatched" &&
 		kind !== "observed"
 	)
@@ -213,21 +216,29 @@ export function decodeEvent(value: unknown): TicketEvent {
 	};
 }
 export function decodeRun(value: unknown): TicketRun {
-	shape(value, [
-		"id",
-		"handlerId",
-		"contentRevision",
-		"actorId",
-		"at",
-		"requestId",
-		"state",
-		"receiptId",
-		"route",
-		"ticketId",
-		"stage",
-		"dispatchRequestId",
-		"payloadHash",
-	]);
+	shape(
+		value,
+		[
+			"id",
+			"handlerId",
+			"contentRevision",
+			"actorId",
+			"at",
+			"requestId",
+			"state",
+			"receiptId",
+			"route",
+			"ticketId",
+			"stage",
+			"dispatchRequestId",
+			"payloadHash",
+		],
+		["workId"],
+	);
+	if (value.workId !== undefined) {
+		identity(value.workId);
+		if (value.workId !== value.id) throw Error("Original work does not match the run");
+	}
 	identity(value.ticketId);
 	identity(value.dispatchRequestId);
 	const stage = value.stage;
@@ -259,6 +270,7 @@ export function decodeRun(value: unknown): TicketRun {
 		stage,
 		dispatchRequestId: value.dispatchRequestId,
 		payloadHash: value.payloadHash,
+		...(value.workId !== undefined ? { workId: value.workId } : {}),
 		id: value.id,
 		handlerId: value.handlerId,
 		contentRevision: value.contentRevision,
@@ -274,7 +286,7 @@ function decodeRequest(value: unknown): StoredRequest {
 	shape(value, ["actorId", "requestId", "fingerprint", "receipt"]);
 	identity(value.actorId);
 	identity(value.requestId);
-	receipt(value.receipt);
+	requestReceipt(value.receipt);
 	if (
 		value.requestId !== value.receipt.requestId ||
 		typeof value.fingerprint !== "string" ||
@@ -407,7 +419,29 @@ export async function ticketRepository(
 				current = await records.get(key, check);
 			reads.push({ key, version: current.version });
 			writes.push({ key, data: jsonValue(item) });
-			if (!current.data) append.push({ stream: stream(row.id, "runs"), data: { id: item.id } });
+			if (!current.data) {
+				append.push({ stream: stream(row.id, "runs"), data: { id: item.id } });
+				if (item.workId) {
+					if (!row.handler || item.handlerId !== row.handler.id)
+						throw new TicketError("invalid", "Original run contributor unavailable");
+					const work = {
+						id: item.workId,
+						ticketId: row.id,
+						ticketAuthorId: row.authorId,
+						actorId: row.handler.actorId,
+						contentRevision: item.contentRevision,
+						conversation: item.route.target,
+						runId: item.id,
+						createdAt: item.at,
+						version: 1,
+						allowed: true,
+					};
+					const key = workKey(row.id, work.id);
+					reads.push({ key, version: 0 });
+					writes.push({ key, data: jsonValue(work) });
+					append.push({ stream: "works:" + row.id, data: { workId: work.id } });
+				}
+			}
 		}
 		for (const request of saved.data.requests) {
 			const key = requestKey(request.actorId, request.requestId);
@@ -750,7 +784,7 @@ export async function ticketRepository(
 				(await records.get(`revision:${run.ticketId}:${run.contentRevision}`, check)).data,
 			);
 			if (revision.revision !== run.contentRevision) throw Error("Run content revision mismatch");
-			const text = dispatchText(run.ticketId, revision);
+			const text = dispatchText(run.ticketId, revision, run.workId);
 			if (payloadHash(text) !== run.payloadHash) throw Error("Run payload identity mismatch");
 			return { requestId: run.dispatchRequestId, text };
 		});
@@ -766,6 +800,7 @@ export async function ticketRepository(
 		history,
 		view,
 		check,
+		verified,
 		publication: (id: string) => assignmentPublication(runtime.root(), namespace, id),
 	};
 }

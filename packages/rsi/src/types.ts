@@ -35,7 +35,14 @@ export interface TicketEvent {
 	readonly version: number;
 	readonly actorId: string;
 	readonly at: number;
-	readonly kind: "submitted" | "edited" | "assigned" | "reported" | "dispatched" | "observed";
+	readonly kind:
+		| "submitted"
+		| "edited"
+		| "assigned"
+		| "reported"
+		| "state-changed"
+		| "dispatched"
+		| "observed";
 	readonly state: TicketState;
 	readonly text: string;
 	readonly links: readonly string[];
@@ -67,6 +74,8 @@ export interface TicketDispatcher {
 	): Promise<TicketDelivery | null>;
 }
 export interface TicketRun {
+	/** New runs have a trusted work relation; absent on old runs with incomplete attribution. */
+	readonly workId?: string;
 	readonly ticketId: string;
 	readonly stage: "planned" | "dispatching" | "accepted" | "unknown";
 	readonly dispatchRequestId: string;
@@ -94,9 +103,116 @@ export interface Ticket extends TicketContent {
 	readonly events: readonly TicketEvent[];
 	readonly runs: readonly TicketRun[];
 }
+/** A trusted, durable relation to fixed original work, not current ticket access or an execution claim. */
+export interface TicketWork {
+	readonly id: string;
+	readonly ticketId: string;
+	readonly ticketAuthorId: string;
+	readonly actorId: string;
+	readonly contentRevision: number;
+	readonly conversation: ConversationRef;
+	readonly runId: string | null;
+	readonly createdAt: number;
+	readonly version: number;
+	readonly allowed: boolean;
+}
+export interface TicketWorkReceipt {
+	readonly kind: "work";
+	readonly requestId: string;
+	/** Owning ticket, consistent with the original ticket receipt. */
+	readonly id: string;
+	readonly workId: string;
+	readonly workVersion: number;
+	readonly contentRevision: number;
+}
+export interface TicketReportSummary {
+	readonly id: string;
+	readonly ticketId: string;
+	readonly workId: string;
+	/** Original report author; revision never transfers ownership. */
+	readonly actorId: string;
+	/** Actual author of this fixed body revision. */
+	readonly revisionActorId: string;
+	readonly contentRevision: number;
+	readonly conversation: ConversationRef;
+	readonly runId: string | null;
+	readonly version: number;
+	readonly createdAt: number;
+	readonly updatedAt: number;
+}
+export interface TicketReportContent {
+	readonly text: string;
+	readonly links: readonly string[];
+	readonly results?: readonly TicketResultReference[];
+}
+export interface TicketReport extends TicketReportSummary, TicketReportContent {
+	readonly results: readonly TicketResultReference[];
+}
+export interface TicketReportReceipt {
+	readonly kind: "report";
+	readonly requestId: string;
+	readonly id: string;
+	readonly workId: string;
+	readonly contentRevision: number;
+	readonly reportId: string;
+	readonly reportVersion: number;
+}
+export type TicketRequestReceipt = TicketReceipt | TicketWorkReceipt | TicketReportReceipt;
+export interface TicketReportPage {
+	readonly items: readonly TicketReportSummary[];
+	readonly cursor: string | null;
+}
+export interface TicketWorkClient {
+	/** Manager-only registration for an approved current handler and exact original context. */
+	registerWork(
+		input: TicketMutation & {
+			readonly handlerId: string;
+			readonly contentRevision: number;
+			readonly conversation: ConversationRef;
+		},
+	): Promise<TicketWorkReceipt>;
+	/** Changes future contribution only; never cancels the original native run or erases history. */
+	setWorkContribution(input: {
+		readonly requestId: string;
+		readonly id: string;
+		readonly workId: string;
+		readonly expectedVersion: number;
+		readonly allowed: boolean;
+	}): Promise<TicketWorkReceipt>;
+	getWork(input: { readonly id: string; readonly workId: string }): Promise<{
+		readonly work: TicketWork;
+		readonly content: TicketRevision;
+	}>;
+	/** Append a separate report; no current ticket version, state or caller-supplied attribution. */
+	report(
+		input: TicketReportContent & {
+			readonly requestId: string;
+			readonly id: string;
+			readonly workId: string;
+		},
+	): Promise<TicketReportReceipt>;
+	reviseReport(
+		input: TicketReportContent & {
+			readonly requestId: string;
+			readonly id: string;
+			readonly reportId: string;
+			readonly expectedVersion: number;
+		},
+	): Promise<TicketReportReceipt>;
+	readReport(input: {
+		readonly id: string;
+		readonly reportId: string;
+		readonly version?: number;
+	}): Promise<TicketReport>;
+	reports(input: {
+		readonly id: string;
+		readonly cursor?: string;
+		readonly limit?: number;
+	}): Promise<TicketReportPage>;
+}
 export interface TicketPermissions {
 	readonly edit: boolean;
-	readonly report: boolean;
+	readonly setState: boolean;
 	readonly assign: boolean;
 	readonly dispatch: boolean;
 }
@@ -152,7 +268,7 @@ export interface TicketMutation {
 	readonly id: string;
 	readonly expectedVersion: number;
 }
-export interface TicketClient {
+export interface TicketClient extends TicketWorkClient {
 	readonly actorId: string;
 	submit(input: TicketContent & { readonly requestId: string }): Promise<TicketReceipt>;
 	edit(input: TicketContent & TicketMutation): Promise<TicketReceipt>;
@@ -161,15 +277,14 @@ export interface TicketClient {
 	observe(): Promise<{ readonly revision: string }>;
 	history(query: TicketHistoryQuery): Promise<TicketHistoryPage>;
 	list(query?: TicketQuery): Promise<TicketPage>;
-	lookup(requestId: string): Promise<TicketReceipt | null>;
+	lookup(requestId: string): Promise<TicketRequestReceipt | null>;
 	assign(input: TicketMutation & { readonly handlerId: string | null }): Promise<TicketReceipt>;
-	report(
+	/** Explicit current-state decision. Does not create, revise or adopt a report. */
+	setState(
 		input: TicketMutation & {
 			readonly state: TicketState;
 			readonly text: string;
 			readonly links: readonly string[];
-			readonly runId?: string;
-			readonly results?: readonly TicketResultReference[];
 		},
 	): Promise<TicketReceipt>;
 	dispatch(input: TicketMutation): Promise<TicketReceipt>;

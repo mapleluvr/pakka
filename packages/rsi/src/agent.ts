@@ -13,6 +13,7 @@ const version = { type: "integer", minimum: 1, maximum: Number.MAX_SAFE_INTEGER 
 const refs = { type: "array", maxItems: 8, items: { type: "string", minLength: 1, maxLength: 2048 } };
 const state = { enum: ["open", "active", "waiting", "closed"] };
 const body = { type: "string", minLength: 1, maxLength: 12000 };
+const note = { type: "string", minLength: 0, maxLength: 12000 };
 const content = { title: { type: "string", minLength: 1, maxLength: 200 }, body, sources: refs };
 const mutation = { requestId: id, id, expectedVersion: version };
 const results = {
@@ -29,6 +30,12 @@ const results = {
 			description: { type: "string", maxLength: 1024 },
 		},
 	},
+};
+const processRef = {
+	type: "object",
+	additionalProperties: false,
+	required: ["key", "sessionId", "conversationId", "incarnation", "profile"],
+	properties: { key: id, sessionId: id, conversationId: id, incarnation: id, profile: id },
 };
 const definitions: readonly [TicketAction, string, Record<string, object>, readonly string[]][] = [
 	[
@@ -87,10 +94,60 @@ const definitions: readonly [TicketAction, string, Record<string, object>, reado
 	],
 	[
 		"report",
-		"Assigned handler or manager: report progress or resolve/reopen the ticket, with result references.",
-		{ ...mutation, state, text: body, links: refs, runId: id, results },
+		"Save a separate report for your trusted original work, including after reassignment. Uses workId from original dispatch/registration. Does not change the current ticket state.",
+		{ requestId: id, id, workId: id, text: note, links: refs, results },
+
+		["requestId", "id", "workId", "text", "links"],
+	],
+	[
+		"set-state",
+		"Current assigned handler or manager: explicitly change ticket state. Does not save or adopt a report.",
+		{ ...mutation, state, text: note, links: refs },
 		["requestId", "id", "expectedVersion", "state", "text", "links"],
 	],
+
+	[
+		"register-work",
+		"Manager-only: register fixed original work for the approved current handler and an exact existing Conversation.",
+		{ ...mutation, handlerId: id, contentRevision: version, conversation: processRef },
+		["requestId", "id", "expectedVersion", "handlerId", "contentRevision", "conversation"],
+	],
+
+	[
+		"set-work-contribution",
+		"Manager-only: enable/disable future original-work contributions. Does not cancel native execution or erase reports.",
+		{ requestId: id, id, workId: id, expectedVersion: version, allowed: { type: "boolean" } },
+		["requestId", "id", "workId", "expectedVersion", "allowed"],
+	],
+
+	[
+		"get-work",
+		"Read your authorized fixed original work and original content revision, not the current ticket's future content.",
+		{ id, workId: id },
+		["id", "workId"],
+	],
+
+	[
+		"revise-report",
+		"Revise your saved report at its own report version; keep old versions. Does not change ticket state.",
+		{ requestId: id, id, reportId: id, expectedVersion: version, text: note, links: refs, results },
+		["requestId", "id", "reportId", "expectedVersion", "text", "links"],
+	],
+
+	[
+		"read-report",
+		"Read one authorized report, optionally at a fixed report version. Does not execute original work.",
+		{ id, reportId: id, version },
+		["id", "reportId"],
+	],
+
+	[
+		"reports",
+		"List bounded authorized report references; read bodies separately with ticket_read_report.",
+		{ id, cursor: { type: "string", maxLength: 2048 }, limit: { type: "integer", minimum: 1, maximum: 32 } },
+		["id"],
+	],
+
 	[
 		"dispatch",
 		"Manager-only: explicitly dispatch the assigned ticket revision through the approved MAS route. Does not wait for generation completion.",
@@ -123,7 +180,8 @@ export function createTicketTools(options: TicketToolsOptions): {
 	const resolve = options.resolve;
 	let revoked = false;
 	const tools: HostTool[] = definitions.map(([action, description, properties, required]) => ({
-		name: "ticket_" + action,
+		name: "ticket_" + action.replaceAll("-", "_"),
+
 		description,
 		parameters: { type: "object", properties, required, additionalProperties: false },
 		async execute(input, signal, scope) {
@@ -168,7 +226,8 @@ export function createTicketTools(options: TicketToolsOptions): {
 	return Object.freeze({
 		tools: frozen(tools),
 		instructions:
-			"Use ticket_submit to record ideas without waiting for processing. Preserve returned ticket IDs and requestIds; use ticket_get/list to observe and ticket_edit to update your own content. A saved ticket is not a completed task. On an unknown write, use ticket_lookup with the original requestId. Dispatch and management require explicit authority.",
+			"Use ticket_submit to record ideas without waiting for processing. Preserve returned ticket IDs and requestIds; use ticket_get/list to observe and ticket_edit to update your own content. A saved ticket is not a completed task. A saved report is a contribution, not a ticket state decision. Save original work reports with ticket_report and use ticket_set_state explicitly for current progress. On an unknown write, use ticket_lookup with the original requestId. Dispatch and management require explicit authority.",
+
 		revoke: () => {
 			revoked = true;
 		},

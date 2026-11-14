@@ -22,7 +22,7 @@ async function bounded<T>(work: Promise<T>): Promise<T> {
 	}
 }
 
-test("A-5: accepted escaped event must remain readable", async () => {
+test("A-5: accepted escaped state notes remain readable through bounded history", async () => {
 	const m = await runtimeFixture();
 	try {
 		const a = (await createTicketService({ runtime: m.runtime, namespace: "review-byte" })).connect(actor);
@@ -35,13 +35,12 @@ test("A-5: accepted escaped event must remain readable", async () => {
 			state: "active" as const,
 			text: u.repeat(12000),
 			links: Array(8).fill(u.repeat(2048)),
-			results: Array.from({ length: 8 }, () => ({ uri: u.repeat(1024) })),
 		};
-		await assert.rejects(a.report(report), { code: "capacity" });
-		assert.equal(await a.lookup("report"), null);
-		assert.equal((await a.get(t.id)).ticket.version, 1);
-		const accepted = { ...report, requestId: "bounded", links: [], results: [] };
-		await a.report(accepted);
+		await a.setState(report);
+		assert.ok(await a.lookup("report"));
+		assert.equal((await a.get(t.id)).ticket.version, 2);
+		const accepted = { ...report, expectedVersion: 2, requestId: "bounded", links: [] };
+		await a.setState(accepted);
 		const view = await a.get(t.id);
 		const page = await a.history({ id: t.id, kind: "events" });
 		assert.ok(Buffer.byteLength(JSON.stringify(view)) < 256 * 1024);
@@ -109,7 +108,8 @@ test("RSI final mutation publication preserves committed receipts as unknown aft
 			armed = false;
 			revoked = false;
 			const receipt = await client.lookup(timing.requestId);
-			assert.equal(receipt?.version, timing.version + 1);
+			assert.ok(receipt && "version" in receipt);
+			assert.equal(receipt.version, timing.version + 1);
 			assert.equal((await client.get(first.id)).ticket.version, timing.version + 1);
 			assert.equal(m.runtime.view().phase, "ready");
 			assert.equal(result, "unknown", timing.requestId);
@@ -176,10 +176,15 @@ test("RSI receipt publication checks the ticket read right, not the former execu
 			armed = false;
 			assert.equal(role, "reader");
 			if (row.id === foreign.id) await assert.rejects(manager.lookup(input.requestId), { code: "denied" });
-			else assert.equal((await manager.lookup(input.requestId))?.version, 2);
+			else {
+				const ownReceipt = await manager.lookup(input.requestId);
+				assert.ok(ownReceipt && "version" in ownReceipt);
+				assert.equal(ownReceipt.version, 2);
+			}
 			role = "manager";
 			const receipt = await manager.lookup(input.requestId);
-			assert.equal(receipt?.version, 2);
+			assert.ok(receipt && "version" in receipt);
+			assert.equal(receipt.version, 2);
 			assert.equal((await manager.get(row.id)).ticket.contentRevision, 2);
 			assert.deepEqual(await manager.edit(input), receipt);
 			assert.equal((await manager.get(row.id)).ticket.version, 2);
@@ -291,7 +296,7 @@ for (const operation of ["dispatch", "recover"] as const) {
 				armed = false;
 				revoked = false;
 				const receipt = await client.lookup(input.requestId);
-				assert.ok(receipt?.runId);
+				assert.ok(receipt && "runId" in receipt && receipt.runId);
 				assert.equal(sends, 1);
 				assert.deepEqual(await perform(), receipt);
 				assert.equal(sends, 1);
@@ -325,7 +330,7 @@ test("RSI post-commit receipt cannot publish a head snapshot after assignment re
 					...native,
 					async commit(...args: Parameters<typeof native.commit>) {
 						const result = await native.commit(...args);
-						if (armed && args[0].append.some((item) => item.data.kind === "reported")) committed = true;
+						if (armed && args[0].append.some((item) => item.data.kind === "state-changed")) committed = true;
 						return result;
 					},
 					async get(...args: Parameters<typeof native.get>) {
@@ -403,7 +408,7 @@ test("RSI post-commit receipt cannot publish a head snapshot after assignment re
 				text: scenario.requestId,
 				links: [],
 			};
-			const reporting = worker.report(input).then(
+			const reporting = worker.setState(input).then(
 				() => "ok",
 				(error) => error.code,
 			);
@@ -437,11 +442,12 @@ test("RSI post-commit receipt cannot publish a head snapshot after assignment re
 			});
 			const before = await manager.get(scenario.reportId);
 			assert.equal(
-				before.ticket.events.filter((event) => event.kind === "reported" && event.text === input.requestId)
-					.length,
+				before.ticket.events.filter(
+					(event) => event.kind === "state-changed" && event.text === input.requestId,
+				).length,
 				1,
 			);
-			assert.deepEqual(await worker.report(input), receipt);
+			assert.deepEqual(await worker.setState(input), receipt);
 			assert.equal((await manager.get(scenario.reportId)).ticket.version, before.ticket.version);
 			assert.equal(m.runtime.view().phase, "ready");
 		}
@@ -600,7 +606,7 @@ test("A-2: same clock and duplicate recovery must enter admission once", { timeo
 		assert.equal(admissions, 1);
 		assert.equal(m.f.requests.length, 1);
 		const original = await a.lookup("recover");
-		assert.ok(original?.runId);
+		assert.ok(original && "runId" in original && original.runId);
 		await b.refresh({ id: t.id, runId: original.runId });
 		assert.equal(admissions, 1);
 	} finally {

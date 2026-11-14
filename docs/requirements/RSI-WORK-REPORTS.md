@@ -1,6 +1,6 @@
 # RSI 插件消费设计：原工作贡献、报告与状态分离
 
-日期：2026-11-13。用户认可核心业务语义；字段、接口命名、报告修订及工作贡献授权细节待设计，不代表当前实现已具备。WebUI 通用宿主要求见[插件能力](WEBUI-PLUGIN-CAPABILITIES.md)。
+日期：2026-11-13。原工作贡献、独立报告修订、独立状态及保存后通知语义已采用；服务与 headless 消费契约见[RSI state](../state/rsi.md)、[原工作报告指南](../guides/RSI-WORK-REPORTS.md)及[API](../reference/RSI-API.md)。新 GUI/跨 Session 可视化及工作流管线界面仍属插件消费工作。WebUI 通用宿主要求见[插件能力](WEBUI-PLUGIN-CAPABILITIES.md)。
 
 ## 1. 场景和边界
 
@@ -8,9 +8,9 @@
 
 RSI 通过插件实现工单/报告可视化、业务命令、工作流与管线。MAS 提供通用通信；宿主提供通用 Session/Conversation 解析与导航。上述业务不耦合进独立 pakka-webui 核心，插件只使用公开开发契约。当前先按操作内部没有跨 Agent 权限交接的假设验证正常协作，不围绕微任务或更强末端复核构造方案。
 
-## 2. 参考实现与差异
+## 2. 原参考基线与设计差异
 
-参考 [Pakka pakka/history-book](https://github.com/mapleluvr/pakka/tree/pakka/history-book)，具体范围见[候选记录](../changes/history-reference-branches.md)。分支是现有开发实现参考，非此新模型的已完成版本或重构强制基线。
+参考 [Pakka pakka/history-book](https://github.com/mapleluvr/pakka/tree/pakka/history-book)，具体范围见[候选记录](../changes/history-reference-branches.md)。该分支是原开发候选参考，非此新模型的已完成版本或重构强制基线。以下列的是这一原基线的差异，不代表新服务契约。原工作报告切片在独立开发分支 `pakka/rsi-work-reports` 展开；它仍是开发候选，不是正式 SDK 定型、发布基线或外围重构的强制迁移要求。
 
 - assign 改 handler 并记事件，不取消原运行，也不自动提供 J 的通信地址。
 - report 追加 reported 历史事件，同时改工单 state；使用整张工单 expectedVersion，要求 manager 或当前 assigned handler。
@@ -25,7 +25,7 @@ RSI 通过插件实现工单/报告可视化、业务命令、工作流与管线
 
 报告可单独标识、列举、引用；表达作者、所属工单、原工作/run、依据的内容修订、时间、正文/产物引用及实际 Conversation 入口。一个工作可有多份报告，工单可保留 H/J 的多份报告。
 
-原工作关系必须可信登记并校验，不只靠提交 runId。单纯转派不撤销对原工作的贡献资格；身份停用、明确访问撤销、取消运行另行表达。旧工作关系不授予未来新内容的访问权。追加报告不应为无关工单头变化争抢整张工单的 expectedVersion；其自身修订、幂等及并发约束待确定。
+原工作关系必须可信登记并校验，不只靠提交 runId。单纯转派不撤销对原工作的贡献资格；身份停用、明确访问撤销、取消运行另行表达。旧工作关系不授予未来新内容的访问权。追加报告不应为无关工单头变化争抢整张工单的 expectedVersion；报告修订使用自身 expectedVersion，原请求按 actor/request 去重；追加、修订与独立工作贡献授权在实际事务中核对，不争抢无关工单头版本。
 
 报告保存不自动更新当前 state、不自动成为结论。当前状态和负责人修改仍用相应权限与版本控制；UI 明确区分提交报告与推进状态。评价/引用/接续可组合，不强制引入固定审批系统。
 
@@ -45,7 +45,7 @@ H 先直接保存报告，再经 MAS 通知 J；J 的可信地址由 workflow/�
 - 宿主/插件 SDK：持久引用与受控导航、Session/Conversation 浏览、页面/命令/连接/长操作观察。
 - MAS/交接适配：获准地址、消息与原请求投递核对。
 
-这些是概念，不是新 DTO 的冻结声明。后端数据与权限归所属服务；插件负责展示、格式、交接和工作流组合。参考开发规范见[WebUI 开发](../development/WEBUI-DEVELOPMENT.md)及[provide-as-is](../development/MONOREPO-CONVENTIONS.md#21-独立能力与下游适配)。
+这些界定组件能力与消费职责；具体 DTO 见当前 API/类型声明，开发候选不等于正式 SDK 冻结。后端数据与权限归所属服务；插件负责展示、格式、交接和工作流组合。参考开发规范见[WebUI 开发](../development/WEBUI-DEVELOPMENT.md)及[provide-as-is](../development/MONOREPO-CONVENTIONS.md#21-独立能力与下游适配)。
 
 ## 5. 领域验收
 
@@ -58,4 +58,4 @@ H 先直接保存报告，再经 MAS 通知 J；J 的可信地址由 workflow/�
 7. 重开后报告和回执保持，长列表有限分页；旧 reported 历史可查看/引用，缺失的旧元数据保持未知而不伪造。
 8. 伪造工作关系或明确停用的主体不获得贡献资格；历史贡献资格不转化为未来工单读权。
 
-以上由 RSI 及其插件、所选 MAS 与通用宿主组合验收，不作为 WebUI 核心业务实施清单。GUI 与新报告模型尚未实测；本次仅同步需求、保存参考分支，不自动实施外围功能。
+以上由 RSI 及其插件、所选 MAS 与通用宿主组合验收，不作为 WebUI 核心业务实施清单。headless 服务和真实 SQLite/MAS 消费按以上领域场景验证，实际范围和结果记入本切片验证摘要；不能由该验证推导新的 GUI、跨 Session 浏览或外围重构完成。领域工作不改变原参考分支的参考性质。

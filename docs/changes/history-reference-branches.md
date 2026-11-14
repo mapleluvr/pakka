@@ -32,7 +32,7 @@ Book/Historian、宿主页式产物/历史工作及真实 Memo/Patchouli headles
 
 用户明确 pakka-webui 将独立于 monorepo 发布；RSI、MAS、Memo 通过插件实现自己的可视化、业务控制及管线。通用宿主默认有足够公开能力，不把领域模型耦合进核心。本分支仍保留旧 apps/webui 作为当前实现/兼容参考，未搬迁目录或发布独立产品。
 
-[通用插件能力需求](../requirements/WEBUI-PLUGIN-CAPABILITIES.md)面向远端重构规划；[RSI 原工作与报告](../requirements/RSI-WORK-REPORTS.md)是消费侧领域设计。报告/状态分离核心已获认可，具体接口、贡献关系和修订尚待设计，当前代码仍追加 reported 事件并推进 state。通用 Session 浏览与交接 UI 也未据此获得验收。
+[通用插件能力需求](../requirements/WEBUI-PLUGIN-CAPABILITIES.md)面向远端重构规划；[RSI 原工作与报告](../requirements/RSI-WORK-REPORTS.md)是消费侧领域设计。在 2026-11-13 的参考保存点，报告/状态分离尚未实现，原代码仍追加 reported 事件并推进 state。后续独立分支 `pakka/rsi-work-reports` 已形成[原工作与独立报告 headless 候选](rsi-work-reports.md)，不倒写原参考保存点或其固定验证结果。通用 Session 浏览与交接 UI 仍未验收。
 
 形成与任务见[独立插件规划](../../openspec/changes/plan-independent-webui-plugins/proposal.md)、[设计](../../openspec/changes/plan-independent-webui-plugins/design.md)、[任务](../../openspec/changes/plan-independent-webui-plugins/tasks.md)和[扩展场景](../../openspec/changes/plan-independent-webui-plugins/specs/webui-extensions/spec.md)。现有扩展场景入口为[活动 WebUI change](../../openspec/changes/pakka-webui/specs/webui-extensions/spec.md)，暂无独立主 spec；新规划未归档为已实施产品。
 

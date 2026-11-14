@@ -29,7 +29,7 @@ test("ticket detail and revision pages remain transport-readable as full-size Un
 				sources: [],
 			});
 		for (let i = 0; i < 8; i++)
-			current = await author.report({
+			current = await author.setState({
 				requestId: "report-" + i,
 				id: current.id,
 				expectedVersion: current.version,

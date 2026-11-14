@@ -1,5 +1,6 @@
 import { createHash, randomUUID } from "node:crypto";
 import type { Runtime, ConversationRef, ToolInvocationScope } from "@pakka/agent";
+import { createWorkClient } from "./work-client.ts";
 import { ticketRepository, dispatchText, payloadHash, type Row, type Draft } from "./repository.ts";
 import {
 	TicketError,
@@ -17,7 +18,6 @@ import {
 } from "./types.ts";
 import {
 	content,
-	resultReferences,
 	frozen,
 	handler,
 	identity,
@@ -112,7 +112,7 @@ export async function createTicketService(options: TicketServiceOptions): Promis
 				own = row.authorId === actorId;
 			return {
 				edit: manage || (own && value !== "reader"),
-				report: manage || (value === "handler" && row.handler?.actorId === actorId),
+				setState: manage || (value === "handler" && row.handler?.actorId === actorId),
 				assign: manage,
 				dispatch: manage && !!dispatcher,
 			};
@@ -146,7 +146,7 @@ export async function createTicketService(options: TicketServiceOptions): Promis
 			});
 		}
 		function mutate(
-			op: "submit" | "recover" | keyof TicketView["permissions"],
+			op: "submit" | "recover" | "setState" | keyof TicketView["permissions"],
 			input: { requestId: string; id?: string; runId?: string },
 			change: (data: Store) => Row,
 		): Promise<TicketReceipt> {
@@ -157,9 +157,11 @@ export async function createTicketService(options: TicketServiceOptions): Promis
 			const result = tail.then(async () => {
 				current();
 				const prior = await repository.lookup(actorId, original.requestId);
+				if (prior && (prior.fingerprint !== hash || "kind" in prior.receipt))
+					throw new TicketError("conflict", "Ticket request payload conflicts with the original");
 				const saved = await repository.draft(prior?.receipt.id ?? original.id, original.runId);
 				current();
-				if (prior) {
+				if (prior && !("kind" in prior.receipt)) {
 					find(saved.data, prior.receipt.id);
 					if (prior.fingerprint !== hash)
 						throw new TicketError("conflict", "Ticket request payload conflicts with the original");
@@ -186,7 +188,7 @@ export async function createTicketService(options: TicketServiceOptions): Promis
 					} else authorize(row, op === "recover" ? "dispatch" : op);
 				});
 				if (existing) {
-					if (existing.fingerprint !== hash)
+					if (existing.fingerprint !== hash || "kind" in existing.receipt)
 						throw new TicketError("conflict", "Ticket request payload conflicts with the original");
 					const retained = await repository.draft(existing.receipt.id);
 					find(retained.data, existing.receipt.id);
@@ -309,7 +311,17 @@ export async function createTicketService(options: TicketServiceOptions): Promis
 			}
 			return updateRun(id, runId, delivery);
 		}
+		const workClient = createWorkClient({
+			repository,
+			runtime,
+			namespace,
+			actorId,
+			current,
+			fingerprint,
+			handlers,
+		});
 		const client: TicketClient = {
+			...workClient.client,
 			actorId,
 			async submit(raw) {
 				shape(raw, ["requestId", "title", "body", "sources"]);
@@ -499,6 +511,7 @@ export async function createTicketService(options: TicketServiceOptions): Promis
 					current();
 					return null;
 				}
+				if ("kind" in request.receipt) return frozen(await workClient.readReceipt(request.receipt));
 				const saved = await repository.head(request.receipt.id);
 				if (!saved.value || !visible(saved.value)) throw new TicketError("denied", "Ticket access denied");
 				return frozen(structuredClone(request.receipt));
@@ -525,32 +538,22 @@ export async function createTicketService(options: TicketServiceOptions): Promis
 					),
 				);
 			},
-			async report(raw) {
-				shape(raw, ["requestId", "id", "expectedVersion", "state", "text", "links"], ["runId", "results"]);
-				if (raw.runId !== undefined) identity(raw.runId);
-				if (raw.results !== undefined) resultReferences(raw.results);
-				identity(raw.id);
-				integer(raw.expectedVersion);
-				state(raw.state);
-				text(raw.text, 12000, true);
-				links(raw.links);
+			async setState(raw) {
 				const input = structuredClone(raw);
+				shape(input, ["requestId", "id", "expectedVersion", "state", "text", "links"]);
+				identity(input.id);
+				integer(input.expectedVersion);
+				state(input.state);
+				text(input.text, 12000, true);
+				links(input.links);
 				return publishReceipt(
 					await prepareReceipt(
-						await mutate("report", input, (data) => {
+						await mutate("setState", input, (data) => {
 							const row = find(data, input.id);
-							authorize(row, "report");
+							authorize(row, "setState");
 							version(row, input.expectedVersion);
 							row.state = input.state;
-							if (input.runId && !row.runs.some((run) => run.id === input.runId))
-								throw new TicketError("denied", "Run not found for this ticket");
-							event(row, "reported", input.text, input.links);
-							const last = row.events.pop()!;
-							row.events.push({
-								...last,
-								...(input.runId ? { runId: input.runId } : {}),
-								...(input.results ? { results: structuredClone(input.results) } : {}),
-							});
+							event(row, "state-changed", input.text, input.links);
 							return row;
 						}),
 					),
@@ -582,9 +585,10 @@ export async function createTicketService(options: TicketServiceOptions): Promis
 						body: row.body,
 						sources: row.sources,
 					};
-					const dispatchInput = { requestId: "ticket-" + id, text: dispatchText(row.id, revision) };
+					const dispatchInput = { requestId: "ticket-" + id, text: dispatchText(row.id, revision, id) };
 					dispatcher.validate(address, dispatchInput);
 					row.runs.push({
+						workId: id,
 						id,
 						ticketId: row.id,
 						stage: "planned",

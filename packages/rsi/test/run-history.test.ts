@@ -72,7 +72,7 @@ test(
 			assert.deepEqual(seen.sort(), ids.sort());
 			assert.equal(m.f.requests.length, 70);
 			const original = await client.lookup("run-0");
-			assert.ok(original?.runId);
+			assert.ok(original && "runId" in original && original.runId);
 			assert.equal(
 				(await client.refresh({ id: created.id, runId: original.runId })).ticket.version,
 				current.version,

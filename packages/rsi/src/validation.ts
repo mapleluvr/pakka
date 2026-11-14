@@ -7,6 +7,7 @@ import {
 	type TicketRoute,
 	type TicketContent,
 	type TicketResultReference,
+	type TicketRequestReceipt,
 } from "./types.ts";
 
 export function frozen<T>(value: T): T {
@@ -91,6 +92,26 @@ export function receipt(value: unknown): asserts value is TicketReceipt {
 	integer(value.contentRevision);
 	state(value.state);
 	if (value.runId !== null) identity(value.runId);
+}
+export function requestReceipt(value: unknown): asserts value is TicketRequestReceipt {
+	if (!value || typeof value !== "object" || !("kind" in value)) {
+		receipt(value);
+		return;
+	}
+	const item = value as Record<string, unknown>;
+	if (item.kind === "work") {
+		shape(item, ["kind", "requestId", "id", "workId", "workVersion", "contentRevision"]);
+		identity(item.workId);
+		integer(item.workVersion);
+	} else if (item.kind === "report") {
+		shape(item, ["kind", "requestId", "id", "workId", "contentRevision", "reportId", "reportVersion"]);
+		identity(item.workId);
+		identity(item.reportId);
+		integer(item.reportVersion);
+	} else throw new TicketError("invalid", "Invalid request receipt kind");
+	identity(item.id);
+	identity(item.requestId);
+	integer(item.contentRevision);
 }
 export function route(value: unknown): asserts value is TicketRoute {
 	shape(value, ["handlerId", "target", "source", "principal"]);

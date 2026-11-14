@@ -14,7 +14,8 @@ import {
 } from "./client.ts";
 
 type Editor = { id: string | null; version: number; title: string; body: string; sources: string };
-type WriteAction = "submit" | "edit" | "assign" | "report" | "dispatch" | "recover";
+type WriteAction = "submit" | "edit" | "assign" | "set-state" | "dispatch" | "recover";
+
 const labels: Record<TicketState, string> = {
 	open: "Open",
 	active: "In progress",
@@ -199,7 +200,7 @@ export function Tickets({ context }: WebInterfaceProps) {
 		try {
 			const operation = await context.operationByRequest(pending);
 			if (!alive()) return;
-			if (!["submit", "edit", "assign", "report", "dispatch", "recover"].includes(operation.action))
+			if (!["submit", "edit", "assign", "set-state", "dispatch", "recover"].includes(operation.action))
 				throw new Error("The original request is not a ticket mutation.");
 			let found: ActionValues["lookup"] = null;
 			if (operation.state === "done") {
@@ -582,14 +583,14 @@ export function Tickets({ context }: WebInterfaceProps) {
 											),
 										),
 									),
-								view.permissions.report &&
+								view.permissions.setState &&
 									h(
 										"form",
 										{
 											class: "rsi-section",
 											onSubmit: (event: Event) => {
 												event.preventDefault();
-												void change("report", {
+												void change("set-state", {
 													id: ticket.id,
 													expectedVersion: ticket.version,
 													state: nextState,
@@ -598,10 +599,10 @@ export function Tickets({ context }: WebInterfaceProps) {
 												});
 											},
 										},
-										h("h3", null, "Progress and result"),
+										h("h3", null, "Current state decision"),
 										field("Update", "ticket-report", report, setReport, true),
 										field(
-											"Result references · one per line",
+											"Decision references · one per line",
 											"ticket-results",
 											reportLinks,
 											setReportLinks,
@@ -628,7 +629,7 @@ export function Tickets({ context }: WebInterfaceProps) {
 											h(
 												Button,
 												{ type: "submit", disabled: busy || !!pending, "data-ticket-report": true },
-												"Save update",
+												"Save state decision",
 											),
 										),
 									),
