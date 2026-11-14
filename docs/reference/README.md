@@ -11,6 +11,7 @@
 | 跨 Session broker、受控 enrollment、worker 和恢复     | [Broker API](BROKER-API.md)                               |
 | 模型侧工具、指令及 Web facets                         | [MAS DevPack API](MAS-DEVPack-API.md)                     |
 | 显式可选策略的产品装配                                | [Dynamite 配置 API](DYNAMITE-PRODUCT-API.md)              |
+| History Book、固定产物与原 entry 读取、可选记史及馆员 | [History Book 与图书馆协作](../guides/HISTORY-LIBRARY.md) |
 | Wiki、来源、权限与原生知识工具                        | [Memo API](MEMO-API.md)                                   |
 | Server/client/CLI 的应用层装配                        | [应用指南](../guides/MAS-APPLICATION-API.md)              |
 

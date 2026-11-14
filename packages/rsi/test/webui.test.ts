@@ -235,7 +235,7 @@ test("tickets Backend: refreshing a native run remains readable for a ticket wit
 		});
 		await app.runtime.waitForIdle();
 		const ticket = (await manager.get(created.id)).ticket;
-		await manager.report({
+		await manager.setState({
 			requestId: "large-report",
 			id: created.id,
 			expectedVersion: ticket.version,

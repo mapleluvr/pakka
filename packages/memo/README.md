@@ -41,7 +41,10 @@ memo.close();
 - `write` 修改时必须给原 pageId、baseRevision 和新的 requestId。重命名保留身份；`restore` 形成新修订。
 - `exportMarkdown/importMarkdown` 保留页身份和基础版本；来源引用不完整时拒绝完整导出，防止往返丢失元数据。
 - `lookup(requestId)` 查询当前 actor 的原回执。收到 unknown 后先核对原请求。
-- 来源通过宿主 providers 注册；`check` 同步检查 read/share，`read` 返回同一 ref 的窗口，可选 `search` 返回该来源内的准确引用。Memo 校验返回身份、版本、范围并再次检查权限。
+- 来源通过宿主 providers 注册；`check` 同步检查 read/share，`read` 返回同一 ref 的窗口，可选 `search` 返回该来源内的准确引用。Memo 校验返回身份、版本、范围并再次检查权限。解析后才确定的对象权限通过 provider 的可选 `publicationCheck(originalResult)` 传递，包装端不能丢弃它。
+- 宿主异步加工 read/search 结果时，先取 `const verify = client.publicationCheck(result)`，最后一次 await 后、同步发布前调用 `verify()`。它只接受同一 Client 的原结果，不是可序列化的授权令牌。
+
+Book 适配由 `@pakka/memo/dynamite` 的 `createDynamiteSourceProvider({book,check})` 提供：宿主传入 Dynamite 的公开 Book 服务和图书馆 read/share 策略，Memo 管理来源格式及导航。Dynamite 不提供反向的 Memo 专属接口。MAS 适配仍在 `@pakka/memo/patchouli/mas`；RSI/EI 保持独立 opt-in，当前没有自动装配。普通知识安装无需这些上游，也不会隐式运行模型。
 
 原生 Agent 工具位于 `@pakka/memo/agent`，该子入口需要宿主已有的 `@pakka/agent` Runtime。使用 `bindMemoInvocation` 将当前 native scope、原 Conversation 和 actor 绑定到服务，再把 `createMemoTools` 的工具注入 Host。知识入口本身没有 Runtime 依赖。工具不暴露授权、来源登记或删除管理动作。
 

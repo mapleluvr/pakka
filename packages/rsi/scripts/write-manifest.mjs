@@ -1,6 +1,6 @@
 import { copyFile, mkdir, rm, writeFile } from "node:fs/promises";
 import { manifest } from "../dist/manifest.js";
-await writeFile(new URL("../dist/manifest.json", import.meta.url), JSON.stringify(manifest, null, 2) + "\n");
+await writeFile(new URL("../dist/manifest.json", import.meta.url), JSON.stringify(manifest) + "\n");
 const publicRoot = new URL("../dist/public/", import.meta.url);
 await rm(publicRoot, { recursive: true, force: true });
 await mkdir(publicRoot, { recursive: true });

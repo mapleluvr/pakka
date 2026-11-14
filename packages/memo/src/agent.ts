@@ -227,20 +227,26 @@ export function createMemoTools(options: {
 					signal?.addEventListener("abort", cancel, { once: true });
 				});
 				const operation = Promise.resolve().then(async () => {
-					const client = await resolve(scope);
+					const resolved = await resolve(scope);
 					check();
-					const value = await execute(client.withAuthority(check), name, input);
-					try {
-						check();
-					} catch {
-						throw new MemoError(
-							"unknown",
-							"Memo response could not be published; reconcile the original request",
-						);
-					}
-					return value;
+					const client = resolved.withAuthority(check),
+						value = await execute(client, name, input);
+					const verify =
+						name === "memo_read" || name === "memo_search" ? client.publicationCheck(value) : undefined;
+					return { value, verify };
 				});
-				return JSON.stringify({ status: "ok", value: await Promise.race([operation, interrupted]) });
+				const result = await Promise.race([operation, interrupted]);
+				try {
+					check();
+				} catch (error) {
+					if (result.verify) throw error;
+					throw new MemoError(
+						"unknown",
+						"Memo response could not be published; reconcile the original request",
+					);
+				}
+				result.verify?.();
+				return JSON.stringify({ status: "ok", value: result.value });
 			} catch (error) {
 				return JSON.stringify(
 					error instanceof MemoError

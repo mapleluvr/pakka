@@ -1,6 +1,17 @@
 import { decodeValue, isRecord, type ExtensionJson } from "@pakka/webui/extension";
 import type { WebInterfaceContext } from "@pakka/webui/ui";
-import type { TicketClient, TicketPage, TicketReceipt, TicketView, TicketHistoryPage } from "../types.ts";
+import type {
+	TicketClient,
+	TicketPage,
+	TicketReceipt,
+	TicketView,
+	TicketHistoryPage,
+	TicketRequestReceipt,
+	TicketWorkReceipt,
+	TicketReportReceipt,
+	TicketReport,
+	TicketReportPage,
+} from "../types.ts";
 import type { TicketAction } from "../commands.ts";
 import { resultSchema } from "./contract.ts";
 export type {
@@ -18,10 +29,23 @@ export interface ActionValues {
 	observe: { readonly revision: string };
 	history: TicketHistoryPage;
 	list: TicketPage;
-	lookup: TicketReceipt | null;
+	lookup: TicketRequestReceipt | null;
 	capabilities: ReturnType<TicketClient["capabilities"]>;
 	assign: TicketReceipt;
-	report: TicketReceipt;
+	report: TicketReportReceipt;
+	"set-state": TicketReceipt;
+
+	"register-work": TicketWorkReceipt;
+
+	"set-work-contribution": TicketWorkReceipt;
+
+	"get-work": Awaited<ReturnType<TicketClient["getWork"]>>;
+
+	"revise-report": TicketReportReceipt;
+
+	"read-report": TicketReport;
+
+	reports: TicketReportPage;
 	dispatch: TicketReceipt;
 	recover: TicketReceipt;
 	refresh: TicketView;

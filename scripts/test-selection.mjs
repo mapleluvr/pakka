@@ -18,6 +18,8 @@ const core = new Set([
 	"packages/rsi/test/concurrency.test.ts",
 	"packages/rsi/test/recovery.test.ts",
 	"packages/rsi/test/review-boundaries.test.ts",
+	// Short real-SQLite boundary: trusted original work, report-local CAS and state separation.
+	"packages/rsi/test/work-reports.test.ts",
 	"apps/webui/test/extension-host.test.ts",
 	"packages/agent/test/record-work.test.ts",
 ]);
@@ -77,6 +79,10 @@ const scopes = {
 	protocol: () => true,
 	runtime: () => true,
 	memo: (f) => f.startsWith("packages/memo/"),
+	history: (f) =>
+		/artifact-history|historical-entry|historical-publication|historian|compresser|source-work|sqlite-journal|strategy-adoption|native-storage/.test(
+			f,
+		),
 	rsi: (f) =>
 		f.startsWith("packages/rsi/") ||
 		f.startsWith("packages/protocol/") ||

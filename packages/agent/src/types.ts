@@ -875,8 +875,63 @@ export interface RuntimeRecords {
 	revision(stream: string, check: () => void): Promise<number>;
 }
 /** Trusted bootstrap/control plane, not an agent-facing permission grant. */
+export interface ArtifactHistoryReference {
+	readonly sessionId: string;
+	readonly conversationId: string;
+	readonly strategyId: string;
+	readonly version: number;
+	readonly ordinal: number;
+	readonly digest: string;
+}
+export interface ArtifactHistoryItem {
+	readonly ref: ArtifactHistoryReference;
+	readonly kind: string;
+	readonly bytes: number;
+}
+export interface ArtifactHistoryQuery {
+	readonly afterVersion?: number;
+	readonly through?: number;
+	readonly cursor?: string;
+	readonly limit?: number;
+	readonly maxBytes?: number;
+}
+export interface ArtifactHistoryPage {
+	readonly through: number;
+	readonly items: readonly ArtifactHistoryItem[];
+	readonly startCursor: string | null;
+	readonly cursor: string | null;
+}
+export interface ArtifactHistory {
+	head(): Promise<number>;
+	page(query?: ArtifactHistoryQuery): Promise<ArtifactHistoryPage>;
+	read(reference: ArtifactHistoryReference, maxBytes?: number): Promise<JsonValue>;
+}
+export interface HistoricalEntryInput {
+	readonly entryId: string;
+	readonly contentVersion: string;
+	readonly offset?: number;
+	readonly limit?: number;
+}
+export interface HistoricalEntryContent {
+	readonly entryId: string;
+	readonly contentVersion: string;
+	readonly text: string;
+	readonly offset: number;
+	readonly nextOffset: number | null;
+}
 export interface Runtime {
 	root(): Host;
+	/** Exact archived messages, independent of current projection. Unrecoverable effective versions are refused. */
+	readHistoricalEntry(
+		ref: ConversationRef,
+		input: HistoricalEntryInput,
+		check: () => void,
+	): Promise<HistoricalEntryContent>;
+	historicalWork(
+		options: import("./historical-types.ts").HistoricalWorkOptions,
+	): import("./historical-types.ts").HistoricalWork;
+	/** Passive exact-version access to one strategy's committed Conversation artifacts. */
+	artifactHistory(ref: ConversationRef, strategyId: string, check: () => void): ArtifactHistory;
 	view(): RuntimeView;
 	budgetPolicy(check: () => void): Promise<RuntimeBudgetSnapshot>;
 	changeBudget(input: RuntimeBudgetChange, check: () => void): Promise<RuntimeBudgetReceipt>;

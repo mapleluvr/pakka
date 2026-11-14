@@ -8,6 +8,10 @@
 			"types": "./dist/index.d.ts",
 			"import": "./dist/index.js"
 		},
+		"./dynamite": {
+			"types": "./dist/dynamite.d.ts",
+			"import": "./dist/dynamite.js"
+		},
 		"./agent": {
 			"types": "./dist/agent.d.ts",
 			"import": "./dist/agent.js"
@@ -30,10 +34,14 @@
 		"build": "tsc -p tsconfig.json"
 	},
 	"peerDependencies": {
+		"@pakka/dynamite": "0.5.0",
 		"@pakka/agent": "0.7.0",
 		"@pakka/mas": "0.4.0"
 	},
 	"peerDependenciesMeta": {
+		"@pakka/dynamite": {
+			"optional": true
+		},
 		"@pakka/agent": {
 			"optional": true
 		},

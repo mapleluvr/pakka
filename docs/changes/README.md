@@ -2,6 +2,8 @@
 
 完整的形成条件、选择、设计、任务与场景由 [OpenSpec](../../openspec/changes/)维护；本目录只提供摘要和完整引用，不复制第二套变更正文。当前预期见 [state](../state/README.md)，实际差距见[工作入口与领域任务](../OVERVIEW.md)。
 
+- [History 候选与独立插件重构参考](history-reference-branches.md)：保存工作分支、不创建 PR；通用宿主能力与 RSI 下游报告设计分别交接。
+- [History Book 与 opt-in Historian](history-book.md)：Dynamite 独立版本化史料服务、有限原生记史、原结果核对与 Patchouli 复用。
 - [Memo 知识服务](memo-knowledge.md)：独立 Wiki、来源、权限和有界检索读取；Issue #9 的第一消费切片。
 - [测试反馈成本](test-feedback.md)：显式集合、维护断言去重、隔离运行与有限轻型并发。
 - [RSI 长期工单持久化](rsi-persistence.md)：多记录事务、分页、原请求恢复及 UI 消费；承接[薄层形成](rsi-ticket-layer.md)。

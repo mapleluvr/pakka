@@ -69,6 +69,10 @@ import {
 } from "@earendil-works/pi-ai";
 import * as oac from "@earendil-works/pi-ai/api/openai-completions";
 import { copy, hash, json } from "./artifact-journal.ts";
+import { createArtifactHistoryReader } from "./artifact-history.ts";
+import type { HistoricalEntryInput, HistoricalEntryContent } from "./types.ts";
+import { createHistoricalWork } from "./historical-work.ts";
+import type { HistoricalPlan, HistoricalWork, HistoricalWorkOptions } from "./historical-types.ts";
 import type { JournalStorage, JournalMutation } from "./native-journal.ts";
 import { sourceWorkPlan, type StoredSourceWork, type SourceWorkMutation } from "./source-work.ts";
 import { planHistoryScan } from "./history-scan.ts";
@@ -88,6 +92,7 @@ import type {
 	WriterRecoveryReceipt,
 	ArtifactReceipt,
 	ArtifactSnapshot,
+	ArtifactHistory,
 	JsonValue,
 	Proposal,
 	ContextFrame,
@@ -718,9 +723,64 @@ const CompresserJobDoc = defineDoc<CompresserJobState>({
 	}),
 });
 type AuxiliaryModel = { model: Model<Api>; apiKey: string; headers?: Record<string, string> };
+const CompressorPolicy = CompresserPolicyDoc,
+	CompressorJob = CompresserJobDoc;
+const HistorianPolicyDoc = defineDoc<CompresserPolicy>({
+	kind: "pakka.historian",
+	version: 1,
+	scope: "session",
+	checkpointWhen: () => true,
+	initial: () => ({
+		sessionId: "",
+		status: "open",
+		toolCallingTolerance: 0,
+		unresolvedErrorTolerance: 0,
+		lastError: null,
+		conversations: {},
+	}),
+});
+const HistorianJobDoc = defineDoc<CompresserJobState>({
+	kind: "pakka.historian-job",
+	version: 1,
+	scope: "conversation",
+	history: "latest",
+	fork: "initial",
+	checkpointWhen: () => true,
+	initial: () => ({
+		jobId: "",
+		planId: "",
+		sourceSessionId: "",
+		sourceConversationId: "",
+		fingerprint: "",
+		status: "running",
+		pendingAttempt: null,
+		result: null,
+		sealed: false,
+		toolErrors: 0,
+		unresolvedErrors: 0,
+		lastError: null,
+		incidents: {},
+	}),
+});
+const HistorianDirectoryDoc = defineDocFamily<{ conversationId: string }, null>({
+	kind: "pakka.historian-directory",
+	version: 1,
+	scope: "session",
+	family: true,
+	checkpointWhen: () => true,
+	initial: () => ({ conversationId: "" }),
+});
 const nativeCompresserSessions = new WeakMap<
 	CompresserSession,
 	{
+		kind: "compresser" | "historian";
+		readonly sessionId: string;
+		active(jobId: string): boolean;
+		retired(
+			source: GovernedConversation["source"],
+			request: InferenceRequest,
+			check: () => void,
+		): Promise<void>;
 		check(jobId?: string): void;
 		run(input: GovernedConversation, model: AuxiliaryModel): Promise<InferenceResult>;
 		recover(source: GovernedConversation["source"], request: InferenceRequest): Promise<InferenceResult>;
@@ -733,6 +793,17 @@ const COMPLETE_REWRITE =
 export async function createCompresserSession(
 	original: CompresserSessionOptions,
 ): Promise<CompresserSession> {
+	return createAuxiliarySession(original, "compresser");
+}
+export async function createHistorianSession(original: CompresserSessionOptions): Promise<CompresserSession> {
+	return createAuxiliarySession(original, "historian");
+}
+async function createAuxiliarySession(
+	original: CompresserSessionOptions,
+	purpose: "compresser" | "historian",
+): Promise<CompresserSession> {
+	const CompresserPolicyDoc = purpose === "historian" ? HistorianPolicyDoc : CompressorPolicy;
+	const CompresserJobDoc = purpose === "historian" ? HistorianJobDoc : CompressorJob;
 	const options = { ...original, storageDir: resolve(original.storageDir) };
 	if (
 		!original.storageDir ||
@@ -764,6 +835,7 @@ export async function createCompresserSession(
 				models,
 				registry,
 				settings: {
+					...(purpose === "historian" ? { documentRetentionMs: 0, contextRetentionMs: 0 } : {}),
 					stream: { maxRetries: 0 },
 					retry: { enabled: false, maxRetries: 0 },
 					compaction: { enabled: false },
@@ -867,480 +939,532 @@ export async function createCompresserSession(
 				throw new Error("Completed Compresser candidate validation changed");
 			return result;
 		}
+		if (purpose === "historian") {
+			const saved = await harness.snapshot(HistorianDirectoryDoc, key, BACKGROUND_CONTEXT);
+			if (saved?.conversationId)
+				throw new MutationDenied("Original Historian job already exists; reconcile its result");
+		}
 		const holder = {
 			fingerprint,
 			operation: undefined! as Promise<InferenceResult>,
 			conversation: undefined as Conversation | undefined,
 		};
-		holder.operation = execute();
+		holder.operation = execute().finally(() => {
+			if (purpose === "historian") active.delete(key);
+		});
 		active.set(key, holder);
 		return holder.operation;
 		async function execute(): Promise<InferenceResult> {
-			const outputTool = input.request.outputTool!;
 			const providerId = "pakka-compresser-" + key;
-			let currentAttempt: string | undefined, answer: AssistantMessage | undefined;
-			let localFault: string | undefined;
-			let latest: InferenceResult | undefined,
-				diagnostic: string | undefined,
-				validCall: InferenceResult["toolCall"];
-			const rounds: InferenceResult[] = [];
-			let child: Conversation;
-			const raw = new Map<number, { id: string; text: string; bytes: number }>();
-			const providerApi = {
-				...oac,
-				streamSimple: (
-					model: Parameters<typeof oac.streamSimple>[0],
-					transcript: Parameters<typeof oac.streamSimple>[1],
-					streamOptions: Parameters<typeof oac.streamSimple>[2],
-				) => {
-					raw.clear();
-					return oac.streamSimple(model, transcript, {
-						...streamOptions,
-						maxRetries: 0,
-						timeoutMs: input.timeoutMs,
-						headers: { ...definition.headers, ...streamOptions?.headers },
-						onProviderStreamEvent: async (event, currentModel) => {
-							await streamOptions?.onProviderStreamEvent?.(event, currentModel);
-							const packet = event as {
-								choices?: {
-									delta?: {
-										tool_calls?: { index: number; id?: string; function?: { arguments?: string } }[];
-									};
-								}[];
-							};
-							for (const choice of packet?.choices ?? [])
-								for (const call of choice.delta?.tool_calls ?? []) {
-									const value = raw.get(call.index) ?? { id: "", text: "", bytes: 0 };
-									if (call.id) value.id = call.id;
-									const delta = call.function?.arguments ?? "";
-									value.bytes += Buffer.byteLength(delta, "utf8");
-									if (value.bytes <= 262144) value.text += delta;
-									raw.set(call.index, value);
-								}
-						},
-					});
-				},
-			};
-			models.setProvider(
-				createProvider({
-					id: providerId,
-					name: providerId,
-					baseUrl: definition.model.baseUrl,
-					auth: {
-						apiKey: {
-							name: "Host-approved auxiliary model",
-							resolve: async () => ({
-								auth: { apiKey: definition.apiKey, baseUrl: definition.model.baseUrl },
-							}),
-						},
-					},
-					api: { "openai-completions": providerApi },
-					models: [
-						{ ...definition.model, api: "openai-completions", provider: providerId, maxTokens: input.cap },
-					],
-				}),
-			);
-			const check = () => {
-				guard(key);
-				input.signal.throwIfAborted();
-				input.check();
-			};
-			async function quarantine(error: unknown) {
-				localFault ??= "Unconfirmed source completion: " + String(error);
-				sealedJobs.add(key);
-				await commit(async (tx) => {
-					const job = await tx.doc(CompresserJobDoc, child.id);
-					job.status = "quarantined";
-					job.sealed = true;
-					job.lastError = {
-						reason: localFault!,
-						incidentId: currentAttempt ?? "source-fault",
-						conversationId: String(child.id),
-						jobId: key,
-					};
-					// The pending attempt is retained: an unknown external audit is not a completion/refund.
-				});
-			}
-			async function record(
-				output: Omit<InferenceResult, "attemptId">,
-			): Promise<InferenceResult | undefined> {
-				if (localFault) return;
-				if (!currentAttempt) throw new Error("Compresser response lacks an exact request reservation");
-				const attempt = currentAttempt;
-				try {
-					latest = await input.complete(attempt, output);
-				} catch (error) {
-					await quarantine(error);
-					return;
+			let extension: ReturnType<typeof defineExtension> | undefined;
+			try {
+				return await executeNative();
+			} finally {
+				if (purpose === "historian") {
+					try {
+						await holder.conversation?.abort(BACKGROUND_CONTEXT);
+						await holder.conversation?.waitForIdle(BACKGROUND_CONTEXT);
+					} catch (error) {
+						fatal ??= "Historian cleanup could not confirm idle: " + String(error);
+						throw error;
+					} finally {
+						try {
+							if (extension) registry.uninstall(extension);
+						} finally {
+							models.deleteProvider(providerId);
+							sealedJobs.delete(key);
+						}
+					}
 				}
-				rounds.push(latest);
-				await commit(async (tx) => {
-					const job = await tx.doc(CompresserJobDoc, child.id);
-					job.pendingAttempt = null;
-					job.result = storedJson<JsonRepresentation<InferenceResult>>(latest!);
-					if (output.status !== "completed" && output.reason !== undefined)
+			}
+			async function executeNative(): Promise<InferenceResult> {
+				const outputTool = input.request.outputTool!;
+				let currentAttempt: string | undefined, answer: AssistantMessage | undefined;
+				let localFault: string | undefined;
+				let latest: InferenceResult | undefined,
+					diagnostic: string | undefined,
+					validCall: InferenceResult["toolCall"];
+				const rounds: InferenceResult[] = [];
+				let child: Conversation;
+				const raw = new Map<number, { id: string; text: string; bytes: number }>();
+				const providerApi = {
+					...oac,
+					streamSimple: (
+						model: Parameters<typeof oac.streamSimple>[0],
+						transcript: Parameters<typeof oac.streamSimple>[1],
+						streamOptions: Parameters<typeof oac.streamSimple>[2],
+					) => {
+						raw.clear();
+						return oac.streamSimple(model, transcript, {
+							...streamOptions,
+							maxRetries: 0,
+							timeoutMs: input.timeoutMs,
+							headers: { ...definition.headers, ...streamOptions?.headers },
+							onProviderStreamEvent: async (event, currentModel) => {
+								await streamOptions?.onProviderStreamEvent?.(event, currentModel);
+								const packet = event as {
+									choices?: {
+										delta?: {
+											tool_calls?: { index: number; id?: string; function?: { arguments?: string } }[];
+										};
+									}[];
+								};
+								for (const choice of packet?.choices ?? [])
+									for (const call of choice.delta?.tool_calls ?? []) {
+										const value = raw.get(call.index) ?? { id: "", text: "", bytes: 0 };
+										if (call.id) value.id = call.id;
+										const delta = call.function?.arguments ?? "";
+										value.bytes += Buffer.byteLength(delta, "utf8");
+										if (value.bytes <= 262144) value.text += delta;
+										raw.set(call.index, value);
+									}
+							},
+						});
+					},
+				};
+				models.setProvider(
+					createProvider({
+						id: providerId,
+						name: providerId,
+						baseUrl: definition.model.baseUrl,
+						auth: {
+							apiKey: {
+								name: "Host-approved auxiliary model",
+								resolve: async () => ({
+									auth: { apiKey: definition.apiKey, baseUrl: definition.model.baseUrl },
+								}),
+							},
+						},
+						api: { "openai-completions": providerApi },
+						models: [
+							{ ...definition.model, api: "openai-completions", provider: providerId, maxTokens: input.cap },
+						],
+					}),
+				);
+				const check = () => {
+					guard(key);
+					input.signal.throwIfAborted();
+					input.check();
+				};
+				async function quarantine(error: unknown) {
+					localFault ??= "Unconfirmed source completion: " + String(error);
+					sealedJobs.add(key);
+					await commit(async (tx) => {
+						const job = await tx.doc(CompresserJobDoc, child.id);
+						job.status = "quarantined";
+						job.sealed = true;
 						job.lastError = {
-							reason: output.reason,
-							incidentId: attempt + ":response",
+							reason: localFault!,
+							incidentId: currentAttempt ?? "source-fault",
 							conversationId: String(child.id),
 							jobId: key,
 						};
-				});
-				currentAttempt = undefined;
-				return latest;
-			}
-			function output(
-				status: InferenceResult["status"],
-				reason?: string,
-			): Omit<InferenceResult, "attemptId"> {
-				const known =
-					answer &&
-					[
-						answer.usage.input,
-						answer.usage.output,
-						answer.usage.cacheRead,
-						answer.usage.cacheWrite,
-						answer.usage.totalTokens,
-					].some((n) => Number.isFinite(n) && n > 0);
-				return {
-					status,
-					modelKey: input.request.modelKey,
-					...(reason ? { reason } : {}),
-					usageStatus: known ? "known" : "unknown",
-					...(known ? { usage: usageDTO(answer!.usage) } : {}),
-				};
-			}
-			async function finish(status: CompresserJobState["status"]) {
-				await commit(async (tx) => {
-					const job = await tx.doc(CompresserJobDoc, child.id);
-					job.status = status;
-				});
-			}
-			async function incident(kind: "toolErrors" | "unresolvedErrors", reason: string, id: string) {
-				const sealed = await commit(async (tx) => {
-					const job = await tx.doc(CompresserJobDoc, child.id);
-					if (!job.sealed && !job.incidents[id]) {
-						job.incidents[id] = true;
-						job[kind]++;
-						job.lastError = { reason, incidentId: id, conversationId: String(child.id), jobId: key };
-						if (
-							job.toolErrors >= options.toolCallingTolerance ||
-							job.unresolvedErrors >= options.unresolvedErrorTolerance
-						) {
-							job.sealed = true;
-							job.status = "failed";
-						}
-					}
-					return job.sealed;
-				});
-				if (sealed) sealedJobs.add(key);
-			}
-			async function steer(reason: string, attemptId: string) {
-				check();
-				await child.submit(
-					{
-						type: "input",
-						whenBusy: "steer",
-						requestId: "repair-" + attemptId,
-						content: reason + "\n" + COMPLETE_REWRITE,
-					},
-					BACKGROUND_CONTEXT,
-				);
-			}
-			const nativeTool = defineTool({
-				...outputTool,
-				parameters: outputTool.parameters as TSchema,
-				replay: "unsafe",
-				execute: async (_args, api, context) => {
+						// The pending attempt is retained: an unknown external audit is not a completion/refund.
+					});
+				}
+				async function record(
+					output: Omit<InferenceResult, "attemptId">,
+				): Promise<InferenceResult | undefined> {
+					if (localFault) return;
+					if (!currentAttempt) throw new Error("Compresser response lacks an exact request reservation");
+					const attempt = currentAttempt;
 					try {
-						check();
+						latest = await input.complete(attempt, output);
 					} catch (error) {
-						return {
-							output: [{ type: "text", text: String(error) }],
-							isError: true,
-							control: { terminate: true },
-						};
+						await quarantine(error);
+						return;
 					}
-					if (!validCall || diagnostic !== undefined)
+					rounds.push(latest);
+					await commit(async (tx) => {
+						const job = await tx.doc(CompresserJobDoc, child.id);
+						job.pendingAttempt = null;
+						job.result = storedJson<JsonRepresentation<InferenceResult>>(latest!);
+						if (output.status !== "completed" && output.reason !== undefined)
+							job.lastError = {
+								reason: output.reason,
+								incidentId: attempt + ":response",
+								conversationId: String(child.id),
+								jobId: key,
+							};
+					});
+					currentAttempt = undefined;
+					return latest;
+				}
+				function output(
+					status: InferenceResult["status"],
+					reason?: string,
+				): Omit<InferenceResult, "attemptId"> {
+					const known =
+						answer &&
+						[
+							answer.usage.input,
+							answer.usage.output,
+							answer.usage.cacheRead,
+							answer.usage.cacheWrite,
+							answer.usage.totalTokens,
+						].some((n) => Number.isFinite(n) && n > 0);
+					return {
+						status,
+						modelKey: input.request.modelKey,
+						...(reason ? { reason } : {}),
+						usageStatus: known ? "known" : "unknown",
+						...(known ? { usage: usageDTO(answer!.usage) } : {}),
+					};
+				}
+				async function finish(status: CompresserJobState["status"]) {
+					await commit(async (tx) => {
+						const job = await tx.doc(CompresserJobDoc, child.id);
+						job.status = status;
+					});
+				}
+				async function incident(kind: "toolErrors" | "unresolvedErrors", reason: string, id: string) {
+					const sealed = await commit(async (tx) => {
+						const job = await tx.doc(CompresserJobDoc, child.id);
+						if (!job.sealed && !job.incidents[id]) {
+							job.incidents[id] = true;
+							job[kind]++;
+							job.lastError = { reason, incidentId: id, conversationId: String(child.id), jobId: key };
+							if (
+								job.toolErrors >= options.toolCallingTolerance ||
+								job.unresolvedErrors >= options.unresolvedErrorTolerance
+							) {
+								job.sealed = true;
+								job.status = "failed";
+							}
+						}
+						return job.sealed;
+					});
+					if (sealed) sealedJobs.add(key);
+				}
+				async function steer(reason: string, attemptId: string) {
+					check();
+					await child.submit(
+						{
+							type: "input",
+							whenBusy: "steer",
+							requestId: "repair-" + attemptId,
+							content: reason + "\n" + COMPLETE_REWRITE,
+						},
+						BACKGROUND_CONTEXT,
+					);
+				}
+				const nativeTool = defineTool({
+					...outputTool,
+					parameters: outputTool.parameters as TSchema,
+					replay: "unsafe",
+					execute: async (_args, api, context) => {
+						try {
+							check();
+						} catch (error) {
+							return {
+								output: [{ type: "text", text: String(error) }],
+								isError: true,
+								control: { terminate: true },
+							};
+						}
+						if (!validCall || diagnostic !== undefined)
+							return {
+								output: [
+									{
+										type: "text",
+										text: (diagnostic ?? "No validated complete submission") + "\n" + COMPLETE_REWRITE,
+									},
+								],
+								isError: true,
+							};
+						const result = await record({ ...output("completed"), toolCall: validCall });
+						if (!result)
+							return {
+								output: [
+									{
+										type: "text",
+										text: "Source completion is unconfirmed; this Conversation is quarantined.",
+									},
+								],
+								isError: true,
+								control: { terminate: true },
+							};
+						check();
+						await api.commit(async (tx) => {
+							checkAuthority(check);
+							const job = await tx.doc(CompresserJobDoc, child.id);
+							job.status = result.status;
+						}, context);
 						return {
 							output: [
 								{
 									type: "text",
-									text: (diagnostic ?? "No validated complete submission") + "\n" + COMPLETE_REWRITE,
+									text: "Complete candidate recorded; host artifact adoption remains separate.",
 								},
 							],
-							isError: true,
-						};
-					const result = await record({ ...output("completed"), toolCall: validCall });
-					if (!result)
-						return {
-							output: [
-								{ type: "text", text: "Source completion is unconfirmed; this Conversation is quarantined." },
-							],
-							isError: true,
+							...(result.status === "completed" ? {} : { isError: true }),
 							control: { terminate: true },
 						};
-					check();
-					await api.commit(async (tx) => {
-						checkAuthority(check);
-						const job = await tx.doc(CompresserJobDoc, child.id);
-						job.status = result.status;
-					}, context);
-					return {
-						output: [
-							{ type: "text", text: "Complete candidate recorded; host artifact adoption remains separate." },
-						],
-						...(result.status === "completed" ? {} : { isError: true }),
-						control: { terminate: true },
-					};
-				},
-			});
-			const extension = defineExtension({
-				name: providerId,
-				tools: [nativeTool],
-				hooks: [
-					hook(ToolTask, {
-						beforeTool: () => {
-							try {
-								check();
-							} catch (error) {
-								return { block: String(error) };
-							}
-							if (diagnostic !== undefined || !validCall)
-								return { block: (diagnostic ?? "No complete output envelope") + "\n" + COMPLETE_REWRITE };
-						},
-					}),
-					hook(GenerationTask, {
-						beforeRequest: async (request) => {
-							try {
-								check();
-								currentAttempt = await input.begin();
-								answer = undefined;
-								diagnostic = undefined;
-								validCall = undefined;
-								await commit(async (tx) => {
-									const job = await tx.doc(CompresserJobDoc, child.id);
-									job.pendingAttempt = currentAttempt!;
-								});
-								if (!(await input.reserve())) throw new Error("Session auxiliary attempt budget exhausted");
-								check();
-								return { messages: request.messages, check };
-							} catch (error) {
-								if (currentAttempt) await record(output("failed", String(error)));
-								await finish(localFault || latest?.status === "quarantined" ? "quarantined" : "failed");
-								return { block: String(error) };
-							}
-						},
-						afterResponse: async (message) => {
-							answer = message;
-							try {
-								check();
-							} catch (error) {
-								await record(output("quarantined", String(error)));
-								await finish("quarantined");
-								return;
-							}
-							if (message.stopReason === "error") {
-								const attempt = currentAttempt!,
-									reason = message.errorMessage ?? "Provider request failed";
-								if (!(await record(output("failed", reason)))) return;
-								await incident("unresolvedErrors", reason, attempt + ":provider");
-								if (!sealedJobs.has(key)) await steer(reason, attempt);
-								return;
-							}
-							const calls = message.content.filter((p) => p.type === "toolCall");
-							if (
-								message.stopReason !== "toolUse" ||
-								calls.length !== 1 ||
-								calls[0].name !== outputTool.name
-							) {
-								diagnostic = "Expected exactly one complete declared submission call";
-								return;
-							}
-							try {
-								const call = calls[0],
-									wire = [...raw.values()].find((value) => value.id === call.id);
-								if (!wire || wire.bytes > 262144 || !isDeepStrictEqual(JSON.parse(wire.text), call.arguments))
-									throw new Error("Incomplete or normalized raw JSON");
-								json(call.arguments);
-								const parameters = { ...outputTool, parameters: outputTool.parameters as TSchema };
-								if (!isDeepStrictEqual(validateToolCall([parameters], structuredClone(call)), call.arguments))
-									throw new Error("Submission requires parameter coercion");
-								const candidate = copy({
-									id: call.id,
-									name: call.name,
-									arguments: call.arguments as JsonObject,
-								});
-								diagnostic = input.validateCall?.(candidate);
-								if (diagnostic !== undefined && typeof diagnostic !== "string")
-									throw new Error("Candidate validation must return a diagnostic string or undefined");
-								if (diagnostic === undefined) validCall = candidate;
-							} catch (error) {
-								diagnostic = String(error);
-							}
-						},
-						onYield: async (message) => {
-							if (!currentAttempt) return;
-							const attempt = currentAttempt,
-								reason = "No complete submission: " + message.stopReason;
-							if (!(await record(output("failed", reason)))) return;
-							await incident("unresolvedErrors", reason, attempt + ":yield");
-							if (!sealedJobs.has(key)) await steer(reason, attempt);
-						},
-						afterTools: async (_assistant, ids) => {
-							if (!currentAttempt || localFault) return;
-							const entries = await commit((tx) =>
-								Promise.all(ids.map((id) => tx.entry(ToolResultEntry, id))),
-							);
-							const errors = entries.filter(
-								(entry) => entry?.model?.[0]?.role === "toolResult" && entry.model[0].isError,
-							);
-							const reason =
-								diagnostic ??
-								(errors.length
-									? messageText(errors.at(-1)!.model?.[0])
-									: "No complete submission was recorded");
-							const attempt = currentAttempt;
-							if (!(await record(output("failed", reason)))) return;
-							for (const entry of errors)
-								await incident("toolErrors", reason, attempt + ":tool:" + entry!.id);
-							if (!errors.length) await incident("unresolvedErrors", reason, attempt + ":empty-tools");
-							if (errors.length)
-								await commit(async (tx) => {
-									for (const entry of errors) {
-										const message = entry!.model![0]!;
-										await tx.appendEntry(child.id, {
-											kind: "pakka.compresser-rewrite",
-											data: { resultEntryId: String(entry!.id) },
-											edits: [
-												{
-													target: entry!.id,
-													action: "replace",
-													messages: [
-														{
-															...message,
-															content: [{ type: "text", text: reason + "\n" + COMPLETE_REWRITE }],
-														},
-													],
-												},
-											],
-										});
-									}
-								});
-						},
-					}),
-				],
-			});
-			registry.install(extension);
-			child = await harness.createConversation(
-				{
-					ownership: { kind: "ownerless" },
-					agent: {
-						model: { provider: providerId, modelId: definition.model.id },
-						extensions: [extension],
-						tools: [nativeTool],
-						thinkingLevel: input.request.thinkingLevel ?? "off",
-						instructions: input.request.systemPrompt ?? "",
 					},
-				},
-				BACKGROUND_CONTEXT,
-			);
-			holder.conversation = child;
-			await commit(async (tx) => {
-				checkAuthority(check);
-				const policy = await tx.doc(CompresserPolicyDoc),
-					job = await tx.doc(CompresserJobDoc, child.id);
-				policy.conversations[key] = String(child.id);
-				Object.assign(job, {
-					jobId: key,
-					planId: input.source.planId,
-					sourceSessionId: input.source.sessionId,
-					sourceConversationId: input.source.conversationId,
-					fingerprint,
 				});
-				cached = storedJson<CompresserPolicy>(policy);
-			});
-			const abort = () => {
-				void child.abort(BACKGROUND_CONTEXT).catch((error) => {
-					fatal ??= "Compresser abort unknown: " + String(error);
+				extension = defineExtension({
+					name: providerId,
+					tools: [nativeTool],
+					hooks: [
+						hook(ToolTask, {
+							beforeTool: () => {
+								try {
+									check();
+								} catch (error) {
+									return { block: String(error) };
+								}
+								if (diagnostic !== undefined || !validCall)
+									return { block: (diagnostic ?? "No complete output envelope") + "\n" + COMPLETE_REWRITE };
+							},
+						}),
+						hook(GenerationTask, {
+							beforeRequest: async (request) => {
+								try {
+									check();
+									currentAttempt = await input.begin();
+									answer = undefined;
+									diagnostic = undefined;
+									validCall = undefined;
+									await commit(async (tx) => {
+										const job = await tx.doc(CompresserJobDoc, child.id);
+										job.pendingAttempt = currentAttempt!;
+									});
+									if (!(await input.reserve())) throw new Error("Session auxiliary attempt budget exhausted");
+									check();
+									return { messages: request.messages, check };
+								} catch (error) {
+									if (currentAttempt) await record(output("failed", String(error)));
+									await finish(localFault || latest?.status === "quarantined" ? "quarantined" : "failed");
+									return { block: String(error) };
+								}
+							},
+							afterResponse: async (message) => {
+								answer = message;
+								try {
+									check();
+								} catch (error) {
+									await record(output("quarantined", String(error)));
+									await finish("quarantined");
+									return;
+								}
+								if (message.stopReason === "error") {
+									const attempt = currentAttempt!,
+										reason = message.errorMessage ?? "Provider request failed";
+									if (!(await record(output("failed", reason)))) return;
+									await incident("unresolvedErrors", reason, attempt + ":provider");
+									if (!sealedJobs.has(key)) await steer(reason, attempt);
+									return;
+								}
+								const calls = message.content.filter((p) => p.type === "toolCall");
+								if (
+									message.stopReason !== "toolUse" ||
+									calls.length !== 1 ||
+									calls[0].name !== outputTool.name
+								) {
+									diagnostic = "Expected exactly one complete declared submission call";
+									return;
+								}
+								try {
+									const call = calls[0],
+										wire = [...raw.values()].find((value) => value.id === call.id);
+									if (
+										!wire ||
+										wire.bytes > 262144 ||
+										!isDeepStrictEqual(JSON.parse(wire.text), call.arguments)
+									)
+										throw new Error("Incomplete or normalized raw JSON");
+									json(call.arguments);
+									const parameters = { ...outputTool, parameters: outputTool.parameters as TSchema };
+									if (
+										!isDeepStrictEqual(validateToolCall([parameters], structuredClone(call)), call.arguments)
+									)
+										throw new Error("Submission requires parameter coercion");
+									const candidate = copy({
+										id: call.id,
+										name: call.name,
+										arguments: call.arguments as JsonObject,
+									});
+									diagnostic = input.validateCall?.(candidate);
+									if (diagnostic !== undefined && typeof diagnostic !== "string")
+										throw new Error("Candidate validation must return a diagnostic string or undefined");
+									if (diagnostic === undefined) validCall = candidate;
+								} catch (error) {
+									diagnostic = String(error);
+								}
+							},
+							onYield: async (message): Promise<undefined> => {
+								if (!currentAttempt) return;
+								const attempt = currentAttempt,
+									reason = "No complete submission: " + message.stopReason;
+								if (!(await record(output("failed", reason)))) return;
+								await incident("unresolvedErrors", reason, attempt + ":yield");
+								if (!sealedJobs.has(key)) await steer(reason, attempt);
+							},
+							afterTools: async (_assistant, ids) => {
+								if (!currentAttempt || localFault) return;
+								const entries = await commit((tx) =>
+									Promise.all(ids.map((id) => tx.entry(ToolResultEntry, id))),
+								);
+								const errors = entries.filter(
+									(entry) => entry?.model?.[0]?.role === "toolResult" && entry.model[0].isError,
+								);
+								const reason =
+									diagnostic ??
+									(errors.length
+										? messageText(errors.at(-1)!.model?.[0])
+										: "No complete submission was recorded");
+								const attempt = currentAttempt;
+								if (!(await record(output("failed", reason)))) return;
+								for (const entry of errors)
+									await incident("toolErrors", reason, attempt + ":tool:" + entry!.id);
+								if (!errors.length) await incident("unresolvedErrors", reason, attempt + ":empty-tools");
+								if (errors.length)
+									await commit(async (tx) => {
+										for (const entry of errors) {
+											const message = entry!.model![0]!;
+											await tx.appendEntry(child.id, {
+												kind: "pakka.compresser-rewrite",
+												data: { resultEntryId: String(entry!.id) },
+												edits: [
+													{
+														target: entry!.id,
+														action: "replace",
+														messages: [
+															{
+																...message,
+																content: [{ type: "text", text: reason + "\n" + COMPLETE_REWRITE }],
+															},
+														],
+													},
+												],
+											});
+										}
+									});
+							},
+						}),
+					],
 				});
-			};
-			input.signal.addEventListener("abort", abort, { once: true });
-			try {
-				check();
-				harness.resume();
-				const submission = await child.submit(
-					{ type: "input", requestId: "source-" + key, content: input.request.prompt, whenBusy: "reject" },
+				registry.install(extension);
+				child = await harness.createConversation(
+					{
+						ownership: { kind: "ownerless" },
+						agent: {
+							model: { provider: providerId, modelId: definition.model.id },
+							extensions: [extension],
+							tools: [nativeTool],
+							thinkingLevel: input.request.thinkingLevel ?? "off",
+							instructions: input.request.systemPrompt ?? "",
+						},
+					},
 					BACKGROUND_CONTEXT,
 				);
-				await submission.wait(BACKGROUND_CONTEXT);
-				await child.waitForIdle(BACKGROUND_CONTEXT);
-				if (localFault) throw new Error(localFault);
-				if (currentAttempt)
-					await record(output("quarantined", "Compresser run ended without a confirmed output"));
-				if (!latest) throw new Error("Compresser ended without an inference reservation");
-				if (latest.status === "completed") {
-					try {
-						check();
-					} catch (error) {
-						latest = { ...latest, status: "quarantined", reason: String(error) };
-					}
-				}
-				const reported = { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, totalTokens: 0 };
-				let cost: number | null = 0;
-				for (const round of rounds) {
-					for (const field of ["input", "output", "cacheRead", "cacheWrite", "totalTokens"] as const)
-						reported[field] += round.usage?.[field] ?? 0;
-					cost = cost !== null && round.usage?.cost != null ? cost + round.usage.cost : null;
-				}
-				latest = copy({
-					...latest,
-					compresser: {
-						sessionId: cached.sessionId,
-						conversationId: String(child.id),
-						attemptIds: rounds.map((round) => round.attemptId),
-						usageStatus: rounds.every((round) => round.usageStatus === "known") ? "known" : "unknown",
-						reportedUsage: { ...reported, cost },
-					},
-				});
+				holder.conversation = child;
 				await commit(async (tx) => {
-					const job = await tx.doc(CompresserJobDoc, child.id);
-					job.status = latest!.status;
-					job.result = storedJson<JsonRepresentation<InferenceResult>>(latest!);
+					checkAuthority(check);
+					const policy = await tx.doc(CompresserPolicyDoc),
+						job = await tx.doc(CompresserJobDoc, child.id);
+					policy.conversations[key] = String(child.id);
+					if (purpose === "historian") {
+						const directory = await tx.doc(HistorianDirectoryDoc, key, null);
+						if (directory.conversationId) throw new MutationDenied("Historian job identity already occupied");
+						directory.conversationId = String(child.id);
+					}
+					Object.assign(job, {
+						jobId: key,
+						planId: input.source.planId,
+						sourceSessionId: input.source.sessionId,
+						sourceConversationId: input.source.conversationId,
+						fingerprint,
+					});
+					cached = storedJson<CompresserPolicy>(policy);
 				});
-				return latest;
-			} catch (error) {
-				if (currentAttempt || fatal) {
-					const reason = localFault ?? "Unconfirmed Compresser completion: " + String(error);
-					sealedJobs.add(key);
-					await commit(async (tx) => {
-						const job = await tx.doc(CompresserJobDoc, child.id),
-							policy = await tx.doc(CompresserPolicyDoc);
-						job.status = "quarantined"; // Keep the pending reservation; uncertainty is not a release.
-						job.sealed = true;
-						job.lastError = {
-							reason,
-							incidentId: currentAttempt ?? "native-fault",
+				const abort = () => {
+					void child.abort(BACKGROUND_CONTEXT).catch((error) => {
+						fatal ??= "Compresser abort unknown: " + String(error);
+					});
+				};
+				input.signal.addEventListener("abort", abort, { once: true });
+				try {
+					check();
+					harness.resume();
+					const submission = await child.submit(
+						{ type: "input", requestId: "source-" + key, content: input.request.prompt, whenBusy: "reject" },
+						BACKGROUND_CONTEXT,
+					);
+					await submission.wait(BACKGROUND_CONTEXT);
+					await child.waitForIdle(BACKGROUND_CONTEXT);
+					if (localFault) throw new Error(localFault);
+					if (currentAttempt)
+						await record(output("quarantined", "Compresser run ended without a confirmed output"));
+					if (!latest) throw new Error("Compresser ended without an inference reservation");
+					if (latest.status === "completed") {
+						try {
+							check();
+						} catch (error) {
+							latest = { ...latest, status: "quarantined", reason: String(error) };
+						}
+					}
+					const reported = { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, totalTokens: 0 };
+					let cost: number | null = 0;
+					for (const round of rounds) {
+						for (const field of ["input", "output", "cacheRead", "cacheWrite", "totalTokens"] as const)
+							reported[field] += round.usage?.[field] ?? 0;
+						cost = cost !== null && round.usage?.cost != null ? cost + round.usage.cost : null;
+					}
+					latest = copy({
+						...latest,
+						compresser: {
+							sessionId: cached.sessionId,
 							conversationId: String(child.id),
-							jobId: key,
-						};
-						if (fatal && policy.status === "open") {
-							policy.status = "sealed";
-							policy.lastError = {
+							attemptIds: rounds.map((round) => round.attemptId),
+							usageStatus: rounds.every((round) => round.usageStatus === "known") ? "known" : "unknown",
+							reportedUsage: { ...reported, cost },
+						},
+					});
+					await commit(async (tx) => {
+						const job = await tx.doc(CompresserJobDoc, child.id);
+						job.status = latest!.status;
+						job.result = storedJson<JsonRepresentation<InferenceResult>>(latest!);
+						if (purpose === "historian" && !job.pendingAttempt && job.status !== "quarantined") {
+							const policy = await tx.doc(CompresserPolicyDoc);
+							delete policy.conversations[key];
+							cached = storedJson<CompresserPolicy>(policy);
+						}
+					});
+					return latest;
+				} catch (error) {
+					if (currentAttempt || fatal) {
+						const reason = localFault ?? "Unconfirmed Compresser completion: " + String(error);
+						sealedJobs.add(key);
+						await commit(async (tx) => {
+							const job = await tx.doc(CompresserJobDoc, child.id),
+								policy = await tx.doc(CompresserPolicyDoc);
+							job.status = "quarantined"; // Keep the pending reservation; uncertainty is not a release.
+							job.sealed = true;
+							job.lastError = {
 								reason,
 								incidentId: currentAttempt ?? "native-fault",
 								conversationId: String(child.id),
 								jobId: key,
 							};
-						}
-						cached = storedJson<CompresserPolicy>(policy);
-					}).catch(() => {
-						/* A failed seal write leaves the fatal latch and pending on-disk work for fail-closed reopen. */
-					});
+							if (fatal && policy.status === "open") {
+								policy.status = "sealed";
+								policy.lastError = {
+									reason,
+									incidentId: currentAttempt ?? "native-fault",
+									conversationId: String(child.id),
+									jobId: key,
+								};
+							}
+							cached = storedJson<CompresserPolicy>(policy);
+						}).catch(() => {
+							/* A failed seal write leaves the fatal latch and pending on-disk work for fail-closed reopen. */
+						});
+					}
+					throw error;
+				} finally {
+					input.signal.removeEventListener("abort", abort);
 				}
-				throw error;
-			} finally {
-				input.signal.removeEventListener("abort", abort);
 			}
 		}
 	}
@@ -1393,11 +1517,37 @@ export async function createCompresserSession(
 			})()),
 	});
 	nativeCompresserSessions.set(facade, {
+		kind: purpose,
+		sessionId: cached.sessionId,
+		active: (jobId) => active.has(jobId),
+		async retired(source, request, check) {
+			guard();
+			checkAuthority(check);
+			if (purpose !== "historian" || active.has(source.jobId))
+				throw new MutationDenied("Original Historian execution is still active");
+			await commit(async (tx) => {
+				checkAuthority(check);
+				if (active.has(source.jobId)) throw new MutationDenied("Original Historian execution became active");
+				const directory = await tx.doc(HistorianDirectoryDoc, source.jobId, null);
+				if (!directory.conversationId) return;
+				const job = await tx.doc(CompresserJobDoc, conversationId(directory.conversationId));
+				if (job.jobId !== source.jobId || job.fingerprint !== hash([source, request]))
+					throw new MutationDenied("Historian retirement identity mismatch");
+				const policy = await tx.doc(CompresserPolicyDoc);
+				delete policy.conversations[source.jobId];
+				cached = storedJson<CompresserPolicy>(policy);
+			});
+			sealedJobs.delete(source.jobId);
+			checkAuthority(check);
+		},
 		check: guard,
 		run,
 		async recover(source, request) {
 			guard(source.jobId);
-			const id = cached.conversations[source.jobId];
+			const id =
+				purpose === "historian"
+					? (await harness.snapshot(HistorianDirectoryDoc, source.jobId, BACKGROUND_CONTEXT))?.conversationId
+					: cached.conversations[source.jobId];
 			if (!id) throw new Error("Compresser has no confirmed result for the original source job");
 			const job = await harness.snapshot(CompresserJobDoc, conversationId(id), BACKGROUND_CONTEXT);
 			if (
@@ -2033,6 +2183,13 @@ export interface ManagedAdapterPort {
 	catalog(options: CatalogOptions): RuntimeCatalog;
 	store(options: RuntimeStoreOptions): RuntimeStore;
 	records(options: RuntimeRecordsOptions): RuntimeRecords;
+	artifactHistory(ref: ConversationRef, strategyId: string, check: () => void): ArtifactHistory;
+	historicalWork(options: HistoricalWorkOptions): HistoricalWork;
+	readHistoricalEntry(
+		ref: ConversationRef,
+		input: HistoricalEntryInput,
+		check: () => void,
+	): Promise<HistoricalEntryContent>;
 	jobs(options: RuntimeJobOptions): RuntimeJobs;
 	readConversation(
 		ref: ConversationRef,
@@ -2317,6 +2474,14 @@ const JournalIndexDoc = defineDoc<{ heads: Record<string, JournalHead> }>({
 	scope: "session",
 	checkpointWhen: () => true,
 	initial: () => ({ heads: {} }),
+});
+const JournalHeadDoc = defineDocFamily<JournalHead, null>({
+	kind: "pakka.strategy-head",
+	version: 1,
+	scope: "session",
+	family: true,
+	checkpointWhen: () => true,
+	initial: () => ({ version: 0, checksum: "" }),
 });
 const JournalBatchDoc = defineDocFamily<JournalBatch, null>({
 	kind: "pakka.strategy-batch",
@@ -3836,6 +4001,11 @@ export class DurableAdapter {
 			catalog: (options: CatalogOptions) => this.#catalog(options),
 			store: (options: RuntimeStoreOptions) => this.#store(options),
 			records: (options: RuntimeRecordsOptions) => this.#records(options),
+			artifactHistory: (ref: ConversationRef, strategyId: string, check: () => void) =>
+				this.#artifactHistory(ref, strategyId, check),
+			historicalWork: (options: HistoricalWorkOptions) => this.#historicalWork(options),
+			readHistoricalEntry: (ref: ConversationRef, input: HistoricalEntryInput, check: () => void) =>
+				this.#readHistoricalEntry(ref, input, check),
 			jobs: (options: RuntimeJobOptions) => this.#jobs(options),
 			readConversation: (ref: ConversationRef, check: () => void, options?: ConversationReadOptions) =>
 				this.#readConversation(ref, check, options),
@@ -4409,6 +4579,211 @@ export class DurableAdapter {
 			actorId: input.actorId,
 			requestId: input.requestId,
 			entryId,
+		});
+	}
+	async #readHistoricalEntry(
+		rawRef: ConversationRef,
+		rawInput: HistoricalEntryInput,
+		check: () => void,
+	): Promise<HistoricalEntryContent> {
+		const ref = copy(rawRef),
+			input = copy(rawInput),
+			offset = input.offset ?? 0,
+			limit = input.limit ?? 4096;
+		const authorize = () =>
+			checkAuthority(() => {
+				this.#validateReference(ref);
+				check();
+			});
+		authorize();
+		if (
+			!/^[1-9][0-9]*$/u.test(input.entryId) ||
+			!Number.isSafeInteger(Number(input.entryId)) ||
+			!/^[a-f0-9]{64}$/u.test(input.contentVersion) ||
+			!Number.isSafeInteger(offset) ||
+			offset < 0 ||
+			!Number.isSafeInteger(limit) ||
+			limit < 1 ||
+			limit > 16384
+		)
+			throw new MutationDenied("Invalid historical entry identity or range");
+		const storage = this.#storage,
+			archive = storage?.entryArchive;
+		if (!storage || !archive) throw new MutationDenied("Historical entry archive unavailable");
+		const id = Number(input.entryId) as EntryId,
+			conversation = conversationId(ref.conversationId);
+		const header = await archive.header(conversation, id, BACKGROUND_CONTEXT);
+		authorize();
+		if (!header || header.byteLength > 1024 * 1024)
+			throw new MutationDenied("Historical entry version unavailable within the bounded read budget");
+		const record = await storage.entry(conversation, id, BACKGROUND_CONTEXT);
+		authorize();
+		if (
+			!record ||
+			record.commitSeq !== header.commitSeq ||
+			hash([record.entry, record.entry.model ?? []]) !== input.contentVersion
+		)
+			throw new MutationDenied("Historical entry content version unavailable");
+		const points = Array.from(JSON.stringify(record.entry.model ?? []));
+		if (offset > points.length) throw new MutationDenied("Historical entry offset beyond content");
+		authorize();
+		return copy({
+			entryId: input.entryId,
+			contentVersion: input.contentVersion,
+			text: points.slice(offset, offset + limit).join(""),
+			offset,
+			nextOffset: offset + limit < points.length ? offset + limit : null,
+		});
+	}
+	#historicalWork(options: HistoricalWorkOptions): HistoricalWork {
+		const native = nativeCompresserSessions.get(options.session);
+		if (!native || native.kind !== "historian")
+			throw new MutationDenied("Explicit original Historian Session required");
+		const { namespace, maxPending, maxAttempts } = copy({
+			namespace: options.namespace,
+			maxPending: options.maxPending,
+			maxAttempts: options.maxAttempts,
+		});
+		const policy = (plan: HistoricalPlan) => {
+			const selected = this.#options.inference?.policies.find((p) => p.strategyId === plan.strategyId);
+			if (
+				!selected ||
+				!selected.modelKeys.includes(plan.request.modelKey) ||
+				plan.maxCalls > selected.maxJobCalls ||
+				!plan.request.outputTool
+			)
+				throw new MutationDenied("Historical model policy refused");
+			if (
+				plan.request.maxOutputTokens !== undefined &&
+				(!Number.isSafeInteger(plan.request.maxOutputTokens) || plan.request.maxOutputTokens < 0)
+			)
+				throw new MutationDenied("Invalid historical output limit");
+			return selected;
+		};
+		const source = (plan: HistoricalPlan): GovernedConversation["source"] => ({
+			jobId: hash([namespace, plan.source, plan.id]),
+			planId: plan.id,
+			sessionId: plan.source.sessionId,
+			conversationId: plan.source.conversationId,
+		});
+		return createHistoricalWork(
+			this.#records({ namespace }),
+			{
+				identity: async () => {
+					native.check();
+					return native.sessionId;
+				},
+				validate: async (plan, check) => {
+					policy(plan);
+					const history = this.#artifactHistory(plan.source, plan.strategyId, check);
+					for (const ref of plan.artifacts) await history.read(ref);
+					check();
+				},
+				run: async (plan, callbacks, validateCall, signal) => {
+					const approved = policy(plan),
+						definition = this.#inferenceModels.get(plan.request.modelKey);
+					if (!definition) throw new MutationDenied("Historical model unavailable");
+					const controller = new AbortController(),
+						abort = () => controller.abort(signal?.reason);
+					if (signal?.aborted) abort();
+					else signal?.addEventListener("abort", abort, { once: true });
+					const timeout = setTimeout(
+						() => controller.abort(new Error("Historian deadline reached")),
+						approved.timeoutMs,
+					);
+					timeout.unref();
+					try {
+						return await native.run(
+							{
+								source: source(plan),
+								request: plan.request,
+								cap: Math.min(
+									approved.maxOutputTokens,
+									definition.model.maxTokens,
+									plan.request.maxOutputTokens || Infinity,
+								),
+								timeoutMs: approved.timeoutMs,
+								signal: controller.signal,
+								validateCall,
+								check: () => {
+									this.#validateReference(plan.source);
+									callbacks.check();
+								},
+								begin: callbacks.begin,
+								complete: callbacks.complete,
+								reserve: async () => true,
+							},
+							definition,
+						);
+					} finally {
+						clearTimeout(timeout);
+						signal?.removeEventListener("abort", abort);
+					}
+				},
+				recover: (plan) => native.recover(source(plan), plan.request),
+				active: (plan) => native.active(source(plan).jobId),
+				retired: (plan, check) => native.retired(source(plan), plan.request, check),
+			},
+			{ maxPending, maxAttempts },
+		);
+	}
+	#artifactHistory(rawRef: ConversationRef, strategyId: string, check: () => void): ArtifactHistory {
+		const ref = copy(rawRef);
+		if (typeof strategyId !== "string" || !strategyId || strategyId.length > 256)
+			throw new MutationDenied("Invalid artifact strategy identity");
+		const authorize = () =>
+			checkAuthority(() => {
+				this.#validateReference(ref);
+				check();
+			});
+		authorize();
+		this.#boundedRecords = true;
+		const namespace = JSON.stringify([
+			"pakka.conversation-journal.v2",
+			ref.conversationId,
+			strategyId,
+			"records",
+		]);
+		const key = hash(JSON.stringify([ref.sessionId, namespace]));
+		const load = async <T>(read: () => Promise<T>): Promise<T> => {
+			try {
+				return await read();
+			} catch (error) {
+				this.storageUnknown("Artifact history storage unavailable");
+				throw error;
+			}
+		};
+		return createArtifactHistoryReader({
+			ref,
+			strategyId,
+			check: authorize,
+			head: () =>
+				load(async () => {
+					const direct = await this.#harness.snapshot(JournalHeadDoc, key, BACKGROUND_CONTEXT);
+					if (direct) return direct.version;
+					// Legacy batches remain readable; all new commits write a keyed head atomically.
+					const index = await this.#harness.snapshot(JournalIndexDoc, BACKGROUND_CONTEXT);
+					return index?.heads[key]?.version ?? 0;
+				}),
+			batch: (version) =>
+				load(async () => {
+					const batch = await this.#harness.snapshot(
+						JournalBatchDoc,
+						key + "." + version,
+						BACKGROUND_CONTEXT,
+					);
+					if (
+						!batch ||
+						batch.key !== key ||
+						batch.version !== version ||
+						!Array.isArray(batch.records) ||
+						!batch.records.length
+					)
+						throw Error("Missing artifact batch");
+					const { checksum, ...payload } = batch;
+					if (hash(payload) !== checksum) throw Error("Artifact batch digest mismatch");
+					return { records: storedJson<JsonValue[]>(batch.records), digest: checksum };
+				}),
 		});
 	}
 	#records(raw: RuntimeRecordsOptions): RuntimeRecords {
@@ -6257,6 +6632,8 @@ export class DurableAdapter {
 					if (batch.version !== 0) throw new MutationDenied("Native journal address already occupied");
 					Object.assign(batch, payload, { checksum: hash(payload) });
 					index.heads[row.key] = { version, checksum: hash(payload) };
+					const directHead = await tx.doc(JournalHeadDoc, row.key, null);
+					Object.assign(directHead, index.heads[row.key]);
 					Object.assign(receipts[i]!.receipt, { version, fingerprint: receipts[i]!.fingerprint });
 					for (const mutation of row.work ?? []) await this.#updateSourceWork(tx, row.key, mutation);
 				}

@@ -107,7 +107,7 @@ test("tickets: foreign authors cannot read/edit; assignment allows only the name
 			expectedVersion: 1,
 			handlerId: "worker",
 		});
-		const reported = await worker.report({
+		const reported = await worker.setState({
 			requestId: "report",
 			id: one.id,
 			expectedVersion: assigned.version,
@@ -174,7 +174,7 @@ test("tickets: normal Runtime reopen preserves revisions, state and mutation rec
 		const a = service.connect(actor("a")),
 			manager = service.connect(actor("owner", "manager"));
 		const first = await a.submit(request("first"));
-		await manager.report({
+		await manager.setState({
 			requestId: "close",
 			id: first.id,
 			expectedVersion: 1,
@@ -236,9 +236,10 @@ test("tickets: malformed JSON state cannot commit a status outside the declared 
 		);
 		const created = await manager.submit(request("first"));
 		await assert.rejects(
-			manager.report({
+			manager.setState({
 				requestId: "malformed",
 				id: created.id,
+
 				expectedVersion: 1,
 				state: ["closed"],
 				text: "Bad shape",

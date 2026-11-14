@@ -92,6 +92,15 @@ export async function createRuntime(options: RuntimeOptions): Promise<Runtime> {
 		conversation: attach,
 		store: (options: RuntimeStoreOptions) => port.store(options),
 		records: (options: RuntimeRecordsOptions) => port.records(options),
+		artifactHistory: (ref: ConversationRef, strategyId: string, check: () => void) =>
+			port.artifactHistory(ref, strategyId, check),
+		historicalWork: (options: import("./historical-types.ts").HistoricalWorkOptions) =>
+			port.historicalWork(options),
+		readHistoricalEntry: (
+			ref: ConversationRef,
+			input: import("./types.ts").HistoricalEntryInput,
+			check: () => void,
+		) => port.readHistoricalEntry(ref, input, check),
 		jobs: (options: RuntimeJobOptions) => port.jobs(options),
 		readConversation: (ref: ConversationRef, check: () => void, options?: ConversationReadOptions) =>
 			port.readConversation(ref, check, options),

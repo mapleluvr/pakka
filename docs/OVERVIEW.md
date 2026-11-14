@@ -4,7 +4,13 @@ Pakka 将 Pi Durable 的 Conversation、权限、持久化与 MAS 协作能力�
 
 ## 当前工作
 
-[Memo 知识服务与持久 Patchouli](changes/memo-knowledge.md)已完成实现、安装消费与独立复审：Wiki、版本、来源、书库权限、综合检索及按需读取可独立使用，馆员按显式请求与原 MAS 身份推进。当前预期见 [Memo](state/memo.md)，固定结果见[验证摘要](verification/MEMO-KNOWLEDGE.md)。Issue #9 的 History Book 生产接入、小恶魔和 GUI 尚未完成，后续见 [tasks](../openspec/changes/add-memo-knowledge/tasks.md)。
+[History Book 与 opt-in Historian](changes/history-book.md) 已形成 Dynamite 独立 Book/Agent、异步记史、原结果恢复与真实 Patchouli→Memo DB 的 headless 候选，完成多轮运行验证及限定审查整改，整包收口仍接续 [tasks](../openspec/changes/add-history-book/tasks.md)。当前契约见 [state](state/history-book.md)，本阶段保存的开发分支及其参考性质见[候选记录](changes/history-reference-branches.md)。
+
+[独立 WebUI 与插件需求](requirements/WEBUI-PLUGIN-CAPABILITIES.md)：pakka-webui 将独立发布，RSI/MAS/Memo 通过各自插件实现可视化、控制与管线；规划与接续见[任务](../openspec/changes/plan-independent-webui-plugins/tasks.md)。
+
+[RSI 原工作与独立报告](changes/rsi-work-reports.md)已形成 headless 开发候选：可信原工作、报告自身修订、独立状态操作及保存后可选 MAS 通知，选定的源码与仓库外消费验证已完成。当前契约见 [RSI](state/rsi.md)，固定结果与限制见[验证摘要](verification/RSI-WORK-REPORTS.md)，本地接续见[任务](../openspec/changes/separate-rsi-work-reports/tasks.md)。新报告 GUI、交接展示和跨 Session 过程浏览由 RSI 插件接续，不进入宿主核心。
+
+[Memo 知识服务与持久 Patchouli](changes/memo-knowledge.md)已完成实现、安装消费与独立复审：Wiki、版本、来源、书库权限、综合检索及按需读取可独立使用，馆员按显式请求与原 MAS 身份推进。当前预期见 [Memo](state/memo.md)，固定结果见[验证摘要](verification/MEMO-KNOWLEDGE.md)。本分支已有 History Book 真实生产/消费候选；Issue #9 的小恶魔和 GUI 仍未完成，后续见 [tasks](../openspec/changes/add-memo-knowledge/tasks.md)。
 
 [测试反馈成本](changes/test-feedback.md)已完成第一批：默认核心/影响域/发布集合、维护测试合并与下沉、隔离运行和有限并行。固定结果见[验证摘要](verification/TEST-FEEDBACK-COST.md)，已通过 [PR #11](https://github.com/mapleluvr/pakka/pull/11) 合入 dev；交付记录见 [tasks](../openspec/changes/reduce-test-feedback-cost/tasks.md)。
 
