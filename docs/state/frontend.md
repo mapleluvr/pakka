@@ -2,6 +2,8 @@
 
 详细场景见 [devin-frontend spec](../../openspec/changes/adopt-devin-frontend/specs/devin-frontend/spec.md)，形成记录及全部关联变更见[采用摘要](../changes/devin-frontend-adoption.md)。本页描述跨页面关系；服务字段与调用条件由对应领域细则维护。长历史、工具内容与按需 DOM 的预期由[观察与完整内容](conversation-observation.md)及[有界懒加载场景](../../openspec/changes/add-bounded-lazy-observation/specs/devin-frontend/spec.md)共同维护。
 
+开发组织遵循[前端规范](../development/FRONTEND-GUIDELINES.md)中的可维护性、开放组合及重构初期少测试政策；文件职责与公开接口由[架构说明](../development/WEBUI-ARCHITECTURE.md)维护。宿主与扩展使用同一渲染和主题运行时，公共 SDK 与独立消费者保持明确的兼容关系。
+
 ## 基座与真实状态
 
 pakka-webui 的对应原生界面行为以 [Devin 离线生产前端](https://github.com/mapleluvr/devin-ui-comparison/tree/ed20cec0aef82daa22aa50da19597b7ba1607e02/reference-dump)为绝对参考，页面操作及其适用条件由生产代码、真实 DOM 和相应运行证据确定。[视觉基座](https://github.com/mapleluvr/devin-ui-comparison/tree/ed20cec0aef82daa22aa50da19597b7ba1607e02/clean-room/current)提供页面结构、尺寸、留白和层级输入；Pakka 的 API、权限与真实状态绑定到对应事件和状态中。排版与交互质量采用[前端开发规范](../development/FRONTEND-GUIDELINES.md)及所保存的 Atlassian、Vercel 指南。
