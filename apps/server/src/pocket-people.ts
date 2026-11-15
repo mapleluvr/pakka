@@ -65,6 +65,8 @@ export interface PocketPeople {
 	/** Existing Conversation grant identity; child Sessions cannot alias a bare native ID. */
 	resourceId(ref: Pick<ConversationRef, "sessionId" | "conversationId">): string;
 	check(actor: PocketAuthority, permission: PocketPermission, resourceId?: string): void;
+	/** Read grant only. The caller must verify a known source and persisted identity; this grants no execution binding. */
+	checkReadGrant(actor: PocketAuthority, ref: Pick<ConversationRef, "sessionId" | "conversationId">): void;
 	/** Trusted service recheck of a persisted originating person. This issues no browser session/capability. */
 	authorizePerson(id: string, permission: PocketPermission, resourceId?: string): PocketPerson;
 	invite(
@@ -497,16 +499,19 @@ async function openPeople(
 			return deny();
 		return { s, p };
 	}
-	function personAllowed(p: Person, permission: PocketPermission, resource?: string) {
+	function personGranted(p: Person, permission: PocketPermission, resource?: string) {
 		if (!p.active || blockedPeople.has(p.id) || !permissions[p.role].includes(permission)) return deny();
 		if (["read", "send", "steer", "manage"].includes(permission)) {
-			if (
-				!resource ||
-				!availableResources().some((ref) => resourceId(ref) === resource) ||
-				(p.resources !== "*" && !p.resources.includes(resource))
-			)
-				return deny();
+			if (!resource || (p.resources !== "*" && !p.resources.includes(resource))) return deny();
 		} else if (p.resources !== "*") return deny();
+	}
+	function personAllowed(p: Person, permission: PocketPermission, resource?: string) {
+		personGranted(p, permission, resource);
+		if (
+			["read", "send", "steer", "manage"].includes(permission) &&
+			!availableResources().some((ref) => resourceId(ref) === resource)
+		)
+			return deny();
 	}
 	function bound(actor: PocketAuthority, permission: PocketPermission, resource?: string) {
 		const id = bindings.get(actor);
@@ -653,6 +658,11 @@ async function openPeople(
 			return personView(sessionFor(id).p);
 		},
 		resourceId,
+		checkReadGrant: (actor: PocketAuthority, ref: Pick<ConversationRef, "sessionId" | "conversationId">) => {
+			const id = bindings.get(actor);
+			if (!id) return deny();
+			personGranted(sessionFor(id).p, "read", resourceId(ref));
+		},
 		check: (actor: PocketAuthority, permission: PocketPermission, resource?: string) => {
 			bound(actor, permission, resource);
 		},

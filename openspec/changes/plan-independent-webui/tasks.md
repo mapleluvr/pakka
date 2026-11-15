@@ -20,12 +20,16 @@
 
 - [x] 3.1 根据消费清单确定 SDK/协议/client/Backend 包出口和固定开发制品渠道，避免根 overrides、私有路径和重复定义。
 - [ ] 3.2 形成最小贡献/实例、资源引用/解析、显式服务绑定及分 facet 生命周期契约，分别处理持久身份、当前运行绑定、权限和不可用状态。
+- [x] 3.2.1 按已授权的[只读接缝](readonly-history.md)形成 Chord 只读生命周期与 Durable 原生 reader，真实 SQLite 回归覆盖持久性、schema、WAL/一致性、分叉与失效视图。
+- [x] 3.2.2 固定新下游 SDK/Chord companion 源、构建锁、归档及追加式兼容记录；公开 exports 在隔离安装中消费，不修改已安装依赖。
+- [x] 3.2.3 接通 Pakka 已知未加载原 Session 的受权读取与状态，验证同号隔离、原身份、撤权及读取不恢复执行。
+- [x] 3.2.4 完成受影响类型/构建/回归与固定开发制品核对，记录实际能力、剩余独立 facet 缺口和阶段 2 未验收边界；[核对记录](../../../docs/verification/READONLY-SQLITE-HISTORY.md)保留环境/上游限制和原始失败，不将其改写为全量通过。
 - [x] 3.3 形成 `/pakka-webui` 服务与初始版本组合，保留运行时校验、原请求和安全边界；不复用旧模型 transport 为新公共形状。
 - [x] 3.4 落实已采用模型作用域的保存/创建接线、公共配置校验/写入/冲突/回执及重载；复用公开 Pi 能力，Provider `/login` 不提前实施。
 - [x] 3.5 明确共享 React/Astryx/JSX runtime、主题/portal、模块映射与 CSS/worker/CSP/资产身份的构建契约。
 - [x] 3.6 用仓库外干净消费者验证 browser SDK、GUI-only/headless 的声明/运行图和安装闭包；记录实际固定产物与限制。
 
-阶段 1 已形成独立 SDK/协议/client、服务/配置与固定资产接缝，检查见[阶段 1 验证](../../../docs/verification/INDEPENDENT-WEBUI-PHASE-1.md)。3.2 部分实现：贡献/实例、显式 bindings、已加载资源解析、完整资产身份和多 Session reconnect 已核对；未加载原历史与独立 facet 控制仍缺公开实现，保持未完成。runtime entry:null 与临时浏览器宿主不代替完整应用，后续产品任务不因这些检查而勾选。
+阶段 1 已形成独立 SDK/协议/client、服务/配置与固定资产接缝，检查见[阶段 1 验证](../../../docs/verification/INDEPENDENT-WEBUI-PHASE-1.md)。3.2 部分实现：贡献/实例、显式 bindings、已加载资源解析、完整资产身份和多 Session reconnect 已核对；未加载原历史已形成公开 SDK 与真实 HTTP 读取接缝，结果/保留失败见[只读核对](../../../docs/verification/READONLY-SQLITE-HISTORY.md)；独立 facet 控制仍缺实现，因此 3.2 总项保持未完成。runtime entry:null 与临时浏览器宿主不代替完整应用，后续产品任务不因这些检查而勾选。
 
 ## 4. 阶段 2：最小真实前端
 

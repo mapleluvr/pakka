@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { scopeContentReference, scopeConversationEntries } from "./pocket-history.ts";
 import type {
 	Runtime,
 	RuntimeView,
@@ -349,70 +350,21 @@ export function createPocketWorkspace(options: PocketWorkspaceOptions): PocketWo
 				return value;
 			};
 			const roots = () => runtime.directoryRoots(ceiling());
-			const publicReference = (
-				reference: ConversationContentReference,
-				ref: ConversationRef,
-			): ConversationContentReference => {
+			const sourceVisible = (ref: ConversationRef, conversationId: string) => {
 				const person = current();
-				if (
-					!reference.sourceConversationId ||
+				return (
 					person.resources === "*" ||
-					person.resources.includes(
-						people.resourceId({ sessionId: ref.sessionId, conversationId: reference.sourceConversationId }),
-					)
-				)
-					return reference;
-				const { sourceConversationId: _owner, ...scoped } = reference;
-				return scoped;
+					person.resources.includes(people.resourceId({ sessionId: ref.sessionId, conversationId }))
+				);
 			};
+			const publicReference = (reference: ConversationContentReference, ref: ConversationRef) =>
+				scopeContentReference(reference, (id) => sourceVisible(ref, id));
 			const publicSnapshot = (
 				snapshot: ConversationSnapshot,
 				authorize: () => void,
 			): ConversationSnapshot => {
 				authorize();
-				const person = current(),
-					ref = snapshot.ref;
-				const entries = snapshot.entries.map((entry) => {
-					const { sourceConversationId, ...rest } = entry;
-					const ownerVisible =
-						sourceConversationId &&
-						(person.resources === "*" ||
-							person.resources.includes(
-								people.resourceId({ sessionId: ref.sessionId, conversationId: sourceConversationId }),
-							));
-					return {
-						...rest,
-						...(ownerVisible ? { sourceConversationId } : {}),
-						messages: entry.messages.map((message) => ({
-							...message,
-							...(message.contentReference
-								? { contentReference: publicReference(message.contentReference, ref) }
-								: {}),
-							...(message.errorReference
-								? { errorReference: publicReference(message.errorReference, ref) }
-								: {}),
-							content:
-								typeof message.content === "string"
-									? message.content
-									: message.content.map((part) => ({
-											...part,
-											...(part.contentReference
-												? { contentReference: publicReference(part.contentReference, ref) }
-												: {}),
-										})),
-						})),
-						...(entry.display
-							? {
-									display: {
-										...entry.display,
-										...(entry.display.contentReference
-											? { contentReference: publicReference(entry.display.contentReference, ref) }
-											: {}),
-									},
-								}
-							: {}),
-					};
-				});
+				const entries = scopeConversationEntries(snapshot.entries, (id) => sourceVisible(snapshot.ref, id));
 				authorize();
 				return frozen({ ...snapshot, entries });
 			};

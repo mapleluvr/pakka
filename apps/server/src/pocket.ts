@@ -122,6 +122,7 @@ export type {
 export { resolveDirectory, listDirectories } from "./pocket-directories.js";
 export type { PocketDirectories } from "./pocket-directories.js";
 export { createPocketWorkspace, PocketMetadataConflict } from "./pocket-workspace.js";
+export { scopeContentReference, scopeConversationEntries } from "./pocket-history.js";
 export type {
 	PocketWorkspace,
 	PocketWorkspaceOptions,

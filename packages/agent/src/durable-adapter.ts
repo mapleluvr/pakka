@@ -51,8 +51,12 @@ import {
 	type LiveState,
 	type UsageState,
 } from "@earendil-works/pi-durable";
-import { SqliteStorage } from "@earendil-works/pi-durable/storage/sqlite";
-import { NodeSqliteDatabase, openNodeSqliteStorage } from "@earendil-works/pi-durable/storage/sqlite/node";
+import { SqliteStorage, SqliteReaderVersionError } from "@earendil-works/pi-durable/storage/sqlite";
+import {
+	NodeSqliteDatabase,
+	openNodeSqliteStorage,
+	openNodeSqliteReader,
+} from "@earendil-works/pi-durable/storage/sqlite/node";
 import {
 	createModels,
 	createProvider,
@@ -72,9 +76,10 @@ import { copy, hash, json } from "./artifact-journal.ts";
 import type { JournalStorage, JournalMutation } from "./native-journal.ts";
 import { sourceWorkPlan, type StoredSourceWork, type SourceWorkMutation } from "./source-work.ts";
 import { planHistoryScan } from "./history-scan.ts";
-import { indexEntryJson, decodeEntryStringRange } from "./entry-preview.ts";
+import { indexEntryJson } from "./entry-preview.ts";
 import {
 	projectConversationEntry,
+	readPreviewContent,
 	previewLiveArguments,
 	type IndexedConversationEntry,
 } from "./conversation-preview.ts";
@@ -144,6 +149,10 @@ import type {
 	RuntimeJobDefinition,
 	RuntimeJobs,
 	RuntimeContextSource,
+	StoredConversationOptions,
+	StoredConversationQuery,
+	StoredConversationResult,
+	ConversationHistoryPage,
 } from "./types.ts";
 
 import { NodeExecutionEnv } from "@earendil-works/pi-durable/env/node";
@@ -622,6 +631,61 @@ function usageDTO(usage?: Usage): UsageDTO {
 		cacheWrite: usage?.cacheWrite ?? 0,
 		totalTokens: usage?.totalTokens ?? 0,
 		cost: usage?.cost?.total ? usage.cost.total : null,
+	};
+}
+
+function previewState(
+	live: Readonly<LiveState> | undefined,
+	usage: Readonly<UsageState> | undefined,
+): Pick<ConversationSnapshot, "live" | "usage"> {
+	const total = { ...usageDTO() };
+	for (const item of [...Object.values(usage?.models ?? {}), ...Object.values(usage?.tools ?? {})]) {
+		const value = usageDTO(item);
+		total.input += value.input;
+		total.output += value.output;
+		total.cacheRead += value.cacheRead;
+		total.cacheWrite += value.cacheWrite;
+		total.totalTokens += value.totalTokens;
+		if (value.cost !== null) total.cost = (total.cost ?? 0) + value.cost;
+	}
+	const snippet = (value: string) =>
+		value.length <= 4096
+			? value
+			: value.slice(0, 1024) + "\n… [live display preview] …\n" + value.slice(-1024);
+	const original = live?.generation?.message;
+	let message: TranscriptMessage | undefined;
+	if (original) {
+		const content = original.content.map((part) => {
+			if (part.type === "text") return { ...part, text: snippet(part.text) };
+			if (part.type === "thinking") return { ...part, thinking: snippet(part.thinking) };
+			if (part.type === "toolCall") return { ...part, arguments: previewLiveArguments(part.arguments) };
+			return part;
+		});
+		message = transcriptMessage({
+			...original,
+			content,
+			...(original.errorMessage === undefined ? {} : { errorMessage: snippet(original.errorMessage) }),
+		});
+		if (message?.stopReason === "pending") {
+			const { stopReason: _pending, ...partial } = message;
+			message = partial;
+		}
+	}
+	return {
+		live: {
+			busy: live?.run !== undefined,
+			...(message ? { message } : {}),
+			tools: (live?.tools ?? []).map((tool) => ({
+				callId: tool.callId,
+				name: tool.name,
+				status: tool.status,
+				...(tool.taskId === undefined ? {} : { taskId: String(tool.taskId) }),
+				...(tool.output === undefined ? {} : { output: snippet(tool.output) }),
+				...(tool.droppedBytes === undefined ? {} : { droppedBytes: tool.droppedBytes }),
+				...(tool.droppedLines === undefined ? {} : { droppedLines: tool.droppedLines }),
+			})),
+		},
+		usage: total,
 	};
 }
 
@@ -1917,6 +1981,252 @@ const RuntimeDoc = defineDoc<RuntimeRecord>({
 		resources: {},
 	}),
 });
+
+export class StoredHistoryReadRefusal extends Error {
+	readonly reason:
+		| "unavailable"
+		| "identity-mismatch"
+		| "unsupported"
+		| "invalid-source"
+		| "busy"
+		| "denied"
+		| "invalid-request"
+		| "cancelled";
+	constructor(reason: StoredHistoryReadRefusal["reason"]) {
+		super("Stored Conversation history read refused");
+		this.name = "StoredHistoryReadRefusal";
+		this.reason = reason;
+	}
+}
+
+/** Read one trusted original source. The native reader never leaves this adapter or becomes a Runtime. */
+export async function readStoredConversation(
+	options: StoredConversationOptions,
+	rawQuery: StoredConversationQuery,
+): Promise<StoredConversationResult> {
+	const reference = copy(options.reference),
+		query = copy(rawQuery);
+	const uuid = (value: unknown): value is string =>
+		typeof value === "string" && /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/.test(value);
+	const object = (value: unknown): value is Record<string, unknown> =>
+		!!value && typeof value === "object" && !Array.isArray(value);
+	const nativeId = (value: unknown): value is string =>
+		typeof value === "string" && /^[1-9]\d*$/.test(value) && Number.isSafeInteger(Number(value));
+	if (
+		!object(reference) ||
+		Object.keys(reference).sort().join(",") !== "conversationId,sessionId" ||
+		!uuid(reference.sessionId) ||
+		!nativeId(reference.conversationId) ||
+		!object(query) ||
+		!["source", "page", "content"].includes(query.kind)
+	)
+		throw new StoredHistoryReadRefusal("invalid-request");
+	const authorize = () => {
+		if (options.signal?.aborted) throw new StoredHistoryReadRefusal("cancelled");
+		try {
+			checkAuthority(options.check);
+		} catch {
+			throw new StoredHistoryReadRefusal("denied");
+		}
+	};
+	// These are source identity checks, not writer acquisition or recovery checks.
+	const sourceIdentity = () => {
+		authorize();
+		const file = realpathSync(options.sessionFile);
+		const info = statSync(file, { bigint: true });
+		if (!info.isFile() || basename(file) !== "main.sqlite")
+			throw new StoredHistoryReadRefusal("invalid-source");
+		const text = readFileSync(join(dirname(file), "provenance.json"), "utf8");
+		if (text.length > 65536) throw new StoredHistoryReadRefusal("invalid-source");
+		const provenance: unknown = JSON.parse(text);
+		if (!object(provenance) || provenance.sessionId !== reference.sessionId)
+			throw new StoredHistoryReadRefusal("identity-mismatch");
+		return {
+			file,
+			stamp: [file, String(info.dev), String(info.ino), String(info.birthtimeNs), text].join("\0"),
+		};
+	};
+	try {
+		const before = sourceIdentity();
+		const context = executionContext(options.signal);
+		const reader = await openNodeSqliteReader(before.file);
+		let result: StoredConversationResult;
+		try {
+			authorize();
+			result = await reader.snapshot(async (read) => {
+				const id = conversationId(reference.conversationId);
+				const document = async (
+					kind: string,
+					version: number,
+					scope: { kind: "session" } | { kind: "conversation"; conversationId: ConversationId },
+				) => {
+					authorize();
+					const record = await read.findDocument({ kind, scope }, "current", context);
+					authorize();
+					if (!record) return undefined;
+					const saved = await read.document(record.id, "current", context);
+					authorize();
+					if (!saved || saved.version !== version) throw new StoredHistoryReadRefusal("unsupported");
+					return saved.value;
+				};
+				const state = await document(RuntimeDoc.definition.kind, RuntimeDoc.definition.version, {
+					kind: "session",
+				});
+				if (!state || state.sessionId !== reference.sessionId)
+					throw new StoredHistoryReadRefusal("identity-mismatch");
+				if (!object(state.resources) || !object(state.profiles))
+					throw new StoredHistoryReadRefusal("invalid-source");
+				const matches = Object.entries(state.resources).filter(
+					([, row]) => object(row) && row.conversationId === reference.conversationId,
+				);
+				if (matches.length !== 1) throw new StoredHistoryReadRefusal("unavailable");
+				const [key, row] = matches[0]!;
+				if (
+					!object(row) ||
+					row.key !== key ||
+					row.sessionId !== reference.sessionId ||
+					!uuid(row.incarnation) ||
+					typeof row.profile !== "string" ||
+					!Object.hasOwn(state.profiles, row.profile)
+				)
+					throw new StoredHistoryReadRefusal("identity-mismatch");
+				if (!(await read.conversation(id, context))) throw new StoredHistoryReadRefusal("unavailable");
+				authorize();
+				const sequence = String(read.sequence);
+				if (query.kind === "source") return { kind: "source", reference, sequence };
+				const bytes = (header: EntryHeader) => async (offset: number, length: number) => {
+					authorize();
+					const chunk = await read.entryArchive.read(
+						id,
+						header.id,
+						{ offset, length, commitSeq: header.commitSeq },
+						context,
+					);
+					authorize();
+					if (!chunk || chunk.commitSeq !== header.commitSeq || chunk.byteLength !== header.byteLength)
+						throw new StoredHistoryReadRefusal("identity-mismatch");
+					return chunk.bytes;
+				};
+				const indexed = async (header: EntryHeader) => {
+					const index = await indexEntryJson(bytes(header), header.byteLength);
+					authorize();
+					return projectConversationEntry(index, header, reference);
+				};
+				if (query.kind === "content") {
+					const content = query.content;
+					if (!content || content.source !== "entry" || !nativeId(content.entryId))
+						throw new StoredHistoryReadRefusal("invalid-request");
+					const header = await read.entryArchive.header(id, Number(content.entryId) as EntryId, context);
+					authorize();
+					if (
+						!header ||
+						String(header.commitSeq) !== content.revision ||
+						(content.sourceConversationId !== undefined &&
+							String(header.conversationId) !== content.sourceConversationId)
+					)
+						throw new StoredHistoryReadRefusal("identity-mismatch");
+					const chunk = await readPreviewContent(await indexed(header), content, query.range, bytes(header));
+					authorize();
+					return { kind: "content", reference, chunk };
+				}
+				const pageOptions: ConversationPreviewOptions = query.options ?? {};
+				if (
+					!pageOptions ||
+					typeof pageOptions !== "object" ||
+					Array.isArray(pageOptions) ||
+					Object.keys(pageOptions).some((key) => !["limit", "beforeEntryId", "maxBytes"].includes(key)) ||
+					(pageOptions.limit !== undefined &&
+						(!Number.isSafeInteger(pageOptions.limit) || pageOptions.limit < 1 || pageOptions.limit > 256)) ||
+					(pageOptions.maxBytes !== undefined &&
+						(!Number.isSafeInteger(pageOptions.maxBytes) ||
+							pageOptions.maxBytes < 16384 ||
+							pageOptions.maxBytes > 256 * 1024)) ||
+					(pageOptions.beforeEntryId !== undefined && !nativeId(pageOptions.beforeEntryId))
+				)
+					throw new StoredHistoryReadRefusal("invalid-request");
+				if (
+					pageOptions.beforeEntryId !== undefined &&
+					!(await read.entryArchive.header(id, Number(pageOptions.beforeEntryId) as EntryId, context))
+				)
+					throw new StoredHistoryReadRefusal("invalid-request");
+				const headers = await read.entryArchive.scan(
+					{
+						conversationId: id,
+						order: "descending",
+						...(pageOptions.beforeEntryId
+							? { maxEntryId: (Number(pageOptions.beforeEntryId) - 1) as EntryId }
+							: {}),
+					},
+					pageOptions.limit ?? 64,
+					undefined,
+					context,
+				);
+				const [live, usage] = await Promise.all([
+					document(LiveDoc.definition.kind, LiveDoc.definition.version, {
+						kind: "conversation",
+						conversationId: id,
+					}),
+					document(UsageDoc.definition.kind, UsageDoc.definition.version, {
+						kind: "conversation",
+						conversationId: id,
+					}),
+				]);
+				// Stored native JSON was materialized without definition migration/initialization callbacks.
+				const presentation = previewState(live as LiveState | undefined, usage as UsageState | undefined);
+				const page: ConversationHistoryPage = {
+					reference,
+					sequence,
+					entries: [],
+					entriesTruncated: false,
+					saved: presentation.live,
+					usage: presentation.usage,
+				};
+				const maxBytes = pageOptions.maxBytes ?? 256 * 1024;
+				let size = Buffer.byteLength(JSON.stringify(page), "utf8") + 256;
+				const entries: ConversationHistoryPage["entries"][number][] = [];
+				for (const header of headers.items) {
+					const item = await indexed(header);
+					const bytes = Buffer.byteLength(JSON.stringify(item.entry), "utf8") + 1;
+					if (size + bytes > maxBytes) {
+						if (!entries.length) throw new StoredHistoryReadRefusal("unavailable");
+						break;
+					}
+					entries.push(item.entry);
+					size += bytes;
+				}
+				const older = headers.next !== undefined || entries.length < headers.items.length;
+				const first = entries.at(-1);
+				const value: ConversationHistoryPage = {
+					...page,
+					entries: entries.reverse(),
+					entriesTruncated: older,
+					...(older && first ? { olderBeforeId: first.id } : {}),
+				};
+				if (Buffer.byteLength(JSON.stringify(value), "utf8") > maxBytes)
+					throw new StoredHistoryReadRefusal("unavailable");
+				authorize();
+				return { kind: "page", page: value };
+			}, context);
+		} finally {
+			// Cancellation or revoked publication authority must still close the admitted native reader.
+			await reader.close(BACKGROUND_CONTEXT);
+		}
+		if (sourceIdentity().stamp !== before.stamp) throw new StoredHistoryReadRefusal("identity-mismatch");
+		authorize();
+		return copy(result);
+	} catch (error) {
+		if (error instanceof StoredHistoryReadRefusal) throw error;
+		if (error instanceof SqliteReaderVersionError) throw new StoredHistoryReadRefusal("unsupported");
+		if (options.signal?.aborted) throw new StoredHistoryReadRefusal("cancelled");
+		const failure = error as { code?: string; errcode?: number };
+		if (failure?.errcode !== undefined && [5, 6].includes(failure.errcode & 255))
+			throw new StoredHistoryReadRefusal("busy");
+		if (["ENOENT", "EACCES", "EPERM"].includes(failure?.code ?? "") || failure?.errcode === 14)
+			throw new StoredHistoryReadRefusal("unavailable");
+		throw new StoredHistoryReadRefusal("invalid-source");
+	}
+}
+
 type BudgetHead = { version: number; bootstrapLimits: JsonRepresentation<RuntimeLimits> | null };
 const BudgetPolicyDoc = defineDoc<BudgetHead>({
 	kind: "pakka.budget-policy",
@@ -4163,57 +4473,11 @@ export class DurableAdapter {
 			this.#harness.snapshot(UsageDoc, id, BACKGROUND_CONTEXT),
 		]);
 		authorize();
-		const total = { ...usageDTO() };
-		for (const item of [...Object.values(usage?.models ?? {}), ...Object.values(usage?.tools ?? {})]) {
-			const value = usageDTO(item);
-			total.input += value.input;
-			total.output += value.output;
-			total.cacheRead += value.cacheRead;
-			total.cacheWrite += value.cacheWrite;
-			total.totalTokens += value.totalTokens;
-			if (value.cost !== null) total.cost = (total.cost ?? 0) + value.cost;
-		}
-		const snippet = (value: string) =>
-			value.length <= 4096
-				? value
-				: value.slice(0, 1024) + "\n… [live display preview] …\n" + value.slice(-1024);
-		const original = live?.generation?.message;
-		let message: TranscriptMessage | undefined;
-		if (original) {
-			const content = original.content.map((part) => {
-				if (part.type === "text") return { ...part, text: snippet(part.text) };
-				if (part.type === "thinking") return { ...part, thinking: snippet(part.thinking) };
-				if (part.type === "toolCall") return { ...part, arguments: previewLiveArguments(part.arguments) };
-				return part;
-			});
-			message = transcriptMessage({
-				...original,
-				content,
-				...(original.errorMessage === undefined ? {} : { errorMessage: snippet(original.errorMessage) }),
-			});
-			if (message?.stopReason === "pending") {
-				const { stopReason: _pending, ...partial } = message;
-				message = partial;
-			}
-		}
 		const result: ConversationSnapshot = {
 			ref,
 			entries: [],
 			entriesTruncated: false,
-			live: {
-				busy: live?.run !== undefined,
-				...(message ? { message } : {}),
-				tools: (live?.tools ?? []).map((tool) => ({
-					callId: tool.callId,
-					name: tool.name,
-					status: tool.status,
-					...(tool.taskId === undefined ? {} : { taskId: String(tool.taskId) }),
-					...(tool.output === undefined ? {} : { output: snippet(tool.output) }),
-					...(tool.droppedBytes === undefined ? {} : { droppedBytes: tool.droppedBytes }),
-					...(tool.droppedLines === undefined ? {} : { droppedLines: tool.droppedLines }),
-				})),
-			},
-			usage: total,
+			...previewState(live, usage),
 		};
 		const entries: ConversationSnapshot["entries"][number][] = [];
 		const maxBytes = options.maxBytes ?? 256 * 1024;
@@ -4297,19 +4561,7 @@ export class DurableAdapter {
 		)
 			throw new MutationDenied("Original content source revision/visibility changed");
 		const indexed = await this.#indexedEntry(ref, header, authorize);
-		const original = indexed.contents.get(reference.id);
-		// Missing owner attribution does not bypass visibility: the header above was acquired through this exact ref.
-		const normalized =
-			original && reference.sourceConversationId === undefined
-				? { ...reference, sourceConversationId: original.reference.sourceConversationId }
-				: reference;
-		if (
-			!original ||
-			!isDeepStrictEqual(original.reference, normalized) ||
-			range.offset > reference.byteLength
-		)
-			throw new MutationDenied("Unknown/altered original content reference");
-		const read = async (offset: number, length: number) => {
+		const result = await readPreviewContent(indexed, reference, range, async (offset, length) => {
 			authorize();
 			const chunk = await archive.read(
 				id,
@@ -4321,42 +4573,9 @@ export class DurableAdapter {
 			if (!chunk || chunk.commitSeq !== header.commitSeq || chunk.byteLength !== header.byteLength)
 				throw new MutationDenied("Original content source changed");
 			return chunk.bytes;
-		};
-		let text: string, nextOffset: number;
-		if (original.span.encoding === "json-string") {
-			const value = await decodeEntryStringRange(read, original.span, range.offset, range.length);
-			text = value.text;
-			nextOffset = value.nextOffset;
-		} else {
-			const size = Math.min(range.length, original.span.byteLength - range.offset);
-			if (size === 0) {
-				text = "";
-				nextOffset = range.offset;
-			} else {
-				const bytes = await read(original.span.offset + range.offset, size);
-				let end = bytes.length;
-				for (; end > 0 && end < original.span.byteLength - range.offset && (bytes[end - 1]! & 192) === 128; )
-					end--;
-				if (end < bytes.length) {
-					const lead = bytes[end - 1];
-					const width = lead !== undefined && lead >= 240 ? 4 : lead !== undefined && lead >= 224 ? 3 : 2;
-					if (bytes.length - end + 1 >= width) end = bytes.length;
-					else end--;
-				}
-				if (end === bytes.length && end > 0 && bytes[end - 1]! >= 194) end--;
-				if (end < 1) throw new MutationDenied("Original content range cannot make progress");
-				text = Buffer.from(bytes.subarray(0, end)).toString("utf8");
-				nextOffset = range.offset + end;
-			}
-		}
-		authorize();
-		return copy({
-			reference,
-			text,
-			offset: range.offset,
-			nextOffset,
-			complete: nextOffset === reference.byteLength,
 		});
+		authorize();
+		return copy(result);
 	}
 	async #writeDisplay(
 		rawRef: ConversationRef,

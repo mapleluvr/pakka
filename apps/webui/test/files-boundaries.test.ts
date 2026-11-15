@@ -106,7 +106,7 @@ test(
 			);
 			assert.equal(await viewer.evaluate("document.documentElement.scrollWidth<=innerWidth"), true);
 			const denied = await viewer.evaluate(
-				`(async()=>{const {createExtensionClient}=await import('@pakka/webui/client');const c=createExtensionClient({endpoint:location.origin+'/pocket/extensions/rpc',csrf:()=>/pakka_csrf=([^;]+)/.exec(document.cookie)?.[1]??null}),r=(await c.list(${JSON.stringify(ref)})).find(x=>x.manifest.id==='workspace-files');try{await c.call({extension:r.manifest.id,generation:r.generation,action:'write',requestId:'forged-viewer-write',target:${JSON.stringify(ref)},input:{root:'project',path:'readme.txt',expectedSha256:null,text:'FORBIDDEN'}});return 'unexpected-effect';}catch(error){return {code:error.code,outcome:error.outcome};}})()`,
+				`(async()=>{const {createExtensionClient}=await import('@pakka/client/extensions');const c=createExtensionClient({endpoint:location.origin+'/pocket/extensions/rpc',csrf:()=>/pakka_csrf=([^;]+)/.exec(document.cookie)?.[1]??null}),r=(await c.list(${JSON.stringify(ref)})).find(x=>x.manifest.id==='workspace-files');try{await c.call({extension:r.manifest.id,generation:r.generation,action:'write',requestId:'forged-viewer-write',target:${JSON.stringify(ref)},input:{root:'project',path:'readme.txt',expectedSha256:null,text:'FORBIDDEN'}});return 'unexpected-effect';}catch(error){return {code:error.code,outcome:error.outcome};}})()`,
 			);
 			assert.deepEqual(denied, { code: "FORBIDDEN", outcome: "denied" });
 			assert.equal(await readFile(join(m.f.cwd, "readme.txt"), "utf8"), "EXTERNAL-WINNING-EDIT\n");

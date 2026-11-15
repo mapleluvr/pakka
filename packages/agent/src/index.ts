@@ -12,4 +12,6 @@ export {
 	createCompresserSession,
 	recoverStorageWriter,
 	openStorageMaintenance,
+	readStoredConversation,
+	StoredHistoryReadRefusal,
 } from "./durable-adapter.ts";

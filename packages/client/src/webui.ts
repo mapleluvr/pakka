@@ -3,12 +3,14 @@ import {
 	decodeWebUiResponse,
 	WEBUI_SERVICE_MAX_BYTES,
 	WEBUI_SERVICE_PATH,
+	WEBUI_SERVICE_API,
 	type WebUiCommand,
 	type WebUiResult,
 	type WebUiResults,
 } from "@pakka/protocol/webui";
 import { PocketRemoteError, type PocketClientOptions, type PocketRequestOptions } from "./pocket.ts";
 import { identity } from "@pakka/protocol";
+import { isRecord } from "@pakka/protocol/extensions";
 export type * from "@pakka/protocol/webui";
 
 export interface WebUiServiceClient {
@@ -17,6 +19,8 @@ export interface WebUiServiceClient {
 const kinds: { readonly [K in keyof WebUiResults]: WebUiResults[K]["kind"] } = {
 	capabilities: "capabilities",
 	"resource.resolve": "resource",
+	"resource.history": "resource-history",
+	"resource.content": "resource-content",
 	"model-connections.read": "model-configuration",
 	"model-connections.reload": "model-reload",
 	"model-connections.validate": "model-validation",
@@ -34,6 +38,37 @@ function correlate(command: WebUiCommand, result: WebUiResult, personId: string 
 		return (
 			result.resolution.reference.sessionId === command.reference.sessionId &&
 			result.resolution.reference.conversationId === command.reference.conversationId
+		);
+	if (command.op === "resource.history" && result.kind === "resource-history") {
+		const page = result.history.status === "loaded" ? result.history.snapshot : result.history.page;
+		const reference =
+			result.history.status === "loaded" ? result.history.snapshot.ref : result.history.page.reference;
+		return (
+			reference.sessionId === command.reference.sessionId &&
+			reference.conversationId === command.reference.conversationId &&
+			(command.options?.limit === undefined || page.entries.length <= command.options.limit) &&
+			new TextEncoder().encode(JSON.stringify(page)).byteLength <= (command.options?.maxBytes ?? 262144)
+		);
+	}
+	if (command.op === "resource.content" && result.kind === "resource-content")
+		return (
+			result.reference.sessionId === command.reference.sessionId &&
+			result.reference.conversationId === command.reference.conversationId &&
+			[
+				"id",
+				"source",
+				"entryId",
+				"sourceConversationId",
+				"taskId",
+				"callId",
+				"revision",
+				"path",
+				"encoding",
+				"byteLength",
+				"previewComplete",
+			].every((key) => command.content[key] === result.chunk.reference[key]) &&
+			result.chunk.offset === command.range.offset &&
+			result.chunk.nextOffset <= command.range.offset + command.range.length
 		);
 	if (command.op === "model-connections.write" || command.op === "model-connections.lookup") {
 		const original = command.op === "model-connections.write" ? command.change : command.original;
@@ -128,7 +163,7 @@ export function createWebUiServiceClient(
 		if (!identity(personId) || !identity(expectedServer))
 			throw new PocketRemoteError("FORBIDDEN", "denied", requestId);
 		const encoded = decodeWebUiRequest({
-			api: 1,
+			api: WEBUI_SERVICE_API,
 			requestId,
 			binding: { personId, serverId: expectedServer },
 			command,
@@ -149,7 +184,19 @@ export function createWebUiServiceClient(
 				body: JSON.stringify(encoded),
 				signal: controller.signal,
 			});
-			const decoded = decodeWebUiResponse(await readBody(response), requestId);
+			const body = await readBody(response);
+			if (
+				isRecord(body) &&
+				Number.isSafeInteger(body.api) &&
+				body.api !== WEBUI_SERVICE_API &&
+				body.requestId === requestId &&
+				body.serverId === expectedServer &&
+				options.serverId() === expectedServer &&
+				options.personId() === personId
+			)
+				// An unsupported peer cannot certify a write's outcome; never retry it as a fresh operation.
+				throw new PocketRemoteError("VERSION_MISMATCH", "unknown", requestId);
+			const decoded = decodeWebUiResponse(body, requestId);
 			if (
 				decoded.serverId !== expectedServer ||
 				options.serverId() !== expectedServer ||

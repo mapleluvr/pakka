@@ -77,7 +77,7 @@ async function product() {
 					"X-Pakka-CSRF": input.csrf ?? csrf,
 				},
 				body: JSON.stringify({
-					api: 1,
+					api: 2,
 					requestId,
 					binding: { personId: input.personId ?? personId, serverId: input.serverId ?? app.http.serverId },
 					command,

@@ -1,0 +1,23 @@
+{
+	"filename": "earendil-works-pi-durable-1.4.0-pakka.4.tgz",
+	"sha256": "40aabe654b9531d9d98328dcc9c94687f723471bf3f57b967977841031308dec",
+	"upstreamCommit": "4a080252f06caf63a525d7873c5d94d3c23887e0",
+	"upstreamVersion": "1.4.0",
+	"patchedVersion": "1.4.0-pakka.4",
+	"sqliteCompanion": {
+		"owner": "@earendil-works/chord",
+		"upstreamVersion": "1.4.0",
+		"files": {
+			"database.js": "9c403a470e010465d94f745aedad4cde3b19058623fe85149c438ae8903703d8",
+			"database.js.map": "52efe08a5d37dcbe013bd24b9c2dab3b288898fe6df4a27d5e184b6ca111d0b5",
+			"database.d.ts": "44f713c415d46e37ae76e710880e178bbaaec50a017c26f72ce595c98ae07a7a",
+			"database.d.ts.map": "4048afcef1106f1c9fdebfd8b17ca70f27bdcda485d743b55153842154ee9c00",
+			"node.js": "ecea05e171b5cef4a03c0392279e98503154f0c419e330b8e5750b595b09a3f6",
+			"node.js.map": "1c8a1f3c087d48f344fde60a27b064d4226fa263152cf74a0d64ec274237beff",
+			"node.d.ts": "45f9378363a22fe9387f06e593428e2ff2ab8364aeebcc11ef89153420dfd9db",
+			"node.d.ts.map": "e5625eebe670b2ecc42f7b024b54df483bea47838757ca3de9db2202d31f3f7d"
+		}
+	},
+	"sourcePatchSha256": "5389e94474373e2dbbca30722a973ec55bc91df17cf691e5fefc55e19caafc4e",
+	"buildLockSha256": "232c510802467ea6df26ce16fc6e8a0646093c92f2299edc2b1e50f670704b84"
+}

@@ -1,10 +1,8 @@
 import type { Runtime } from "@pakka/agent";
 import type { PocketAuthority, PocketPeople } from "@pakka/server/pocket";
 import {
-	decodeConversationReference,
 	decodeWebUiResult,
-	type ConversationReference,
-	type ConversationResolution,
+	WEBUI_SERVICE_API,
 	type WebUiCommand,
 	type WebUiResult,
 } from "@pakka/protocol/webui";
@@ -13,10 +11,11 @@ import type { ProductModelSource } from "./product-models.ts";
 import { createModelConnections } from "./model-connections.ts";
 import { createPersonModelDefaults, type PersonModelDefaults } from "./model-defaults.ts";
 import { WebUiServiceRefusal } from "./service-refusal.ts";
+import { createResourceHistory } from "./resource-history.ts";
 
 export interface WebUiServices {
 	readonly defaults: PersonModelDefaults;
-	execute(actor: PocketAuthority, command: WebUiCommand): Promise<WebUiResult>;
+	execute(actor: PocketAuthority, command: WebUiCommand, signal?: AbortSignal): Promise<WebUiResult>;
 	close(): Promise<void>;
 }
 
@@ -33,6 +32,7 @@ export async function createWebUiServices(options: {
 	const models = options.models
 		? await createModelConnections({ runtime, people, source: options.models })
 		: undefined;
+	const history = createResourceHistory({ runtime, people, sessions });
 	let closed = false;
 	const current = (actor: PocketAuthority) => {
 		if (closed) throw new WebUiServiceRefusal("UNSUPPORTED");
@@ -42,48 +42,14 @@ export async function createWebUiServices(options: {
 		if (!models) throw new WebUiServiceRefusal("UNSUPPORTED");
 		return models;
 	}
-	async function resolve(
-		actor: PocketAuthority,
-		raw: ConversationReference,
-	): Promise<ConversationResolution> {
-		const reference = decodeConversationReference(raw);
-		const unavailable = (
-			status: "unloaded" | "unavailable" | "forbidden" | "identity-mismatch",
-		): ConversationResolution => ({ status, reference, history: "unsupported" });
-		try {
-			people.check(actor, "read", people.resourceId(reference));
-		} catch {
-			current(actor);
-			return unavailable("forbidden");
-		}
-		let owner: Runtime | undefined;
-		if (reference.sessionId === runtime.view().sessionId) owner = runtime;
-		else if (sessions) {
-			try {
-				owner = sessions.runtimeFor(reference);
-			} catch {
-				const known = (await sessions.list(actor)).find((session) => session.id === reference.sessionId);
-				current(actor);
-				return unavailable(
-					known?.status === "unavailable" && known.problem?.kind === "open-failed"
-						? "unloaded"
-						: "unavailable",
-				);
-			}
-		}
-		current(actor);
-		if (!owner) return unavailable("unavailable");
-		const view = owner.view();
-		if (view.sessionId !== reference.sessionId) return unavailable("identity-mismatch");
-		if (view.phase !== "ready") return unavailable("unavailable");
-		const target = view.conversations.find((item) => item.conversationId === reference.conversationId);
-		if (!target) return unavailable("unavailable");
-		people.check(actor, "read", people.resourceId(target));
-		return { status: "loaded", reference, target };
-	}
+
 	return Object.freeze({
 		defaults,
-		execute: async (actor: PocketAuthority, command: WebUiCommand): Promise<WebUiResult> => {
+		execute: async (
+			actor: PocketAuthority,
+			command: WebUiCommand,
+			signal?: AbortSignal,
+		): Promise<WebUiResult> => {
 			current(actor);
 			let result: WebUiResult;
 			switch (command.op) {
@@ -91,11 +57,13 @@ export async function createWebUiServices(options: {
 					result = {
 						kind: "capabilities",
 						capabilities: {
-							services: 1,
+							services: WEBUI_SERVICE_API,
 							workbench: 2,
 							extensions: 2,
 							features: [
 								"resource.resolve",
+								"resource.history",
+								"resource.content",
 								"model-defaults",
 								...(models ? ["model-connections", "model-catalog"] : []),
 							],
@@ -103,7 +71,16 @@ export async function createWebUiServices(options: {
 					};
 					break;
 				case "resource.resolve":
-					result = { kind: "resource", resolution: await resolve(actor, command.reference) };
+					result = { kind: "resource", resolution: await history.resolve(actor, command.reference, signal) };
+					break;
+				case "resource.history":
+					result = {
+						kind: "resource-history",
+						history: await history.history(actor, command.reference, command.options, signal),
+					};
+					break;
+				case "resource.content":
+					result = await history.content(actor, command.reference, command.content, command.range, signal);
 					break;
 				case "model-connections.read":
 					result = { kind: "model-configuration", configuration: await modelService().read(actor) };
@@ -161,6 +138,7 @@ export async function createWebUiServices(options: {
 		close: async () => {
 			if (closed) return;
 			closed = true;
+			await history.close();
 			await models?.close();
 		},
 	});

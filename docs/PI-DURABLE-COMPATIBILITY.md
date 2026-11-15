@@ -835,3 +835,41 @@ SQLite 使用最多 32 MiB 编码 LRU，加一个串行取得的行及有界 hea
 ### 失效与接续
 
 SDK commit/version/integrity、Storage/header/range/commitSeq/分叉语义、SQLite 编码缓存、generation hook/receipt 或 Pakka 权限边界变化时，重跑受影响源码和独立安装矩阵并追加账本。只有等价的上游公开档案读取、已有 generation 门禁、Unicode/分叉/缓存/恢复与安装消费者都通过时，才切换相应源补丁；不将旧配对哈希倒写为新版本。本条不更新外部 Dynamite 固定配对，也不把浏览优化当作 worker 进程隔离或 OOM 恢复。
+
+## 条目 DURABLE-2026-11-15-17：只读原历史 SDK 与受权接入
+
+- ID: DURABLE-2026-11-15-17；related `DURABLE-2026-11-09-16`，保留此前条目。
+- 基线/升级：Pakka `b357276` 的 `1.4.0-pakka.3` → 工作分支 `1.4.0-pakka.4`；Pi `1.4.0` / `4a080252f06caf63a525d7873c5d94d3c23887e0`，主 Chord、pi-ai、pi-codemode、pi-telemetry cohort 仍为 `1.4.0`。
+- 状态：verified within the stated reader/installation scope；未合入上游、未发布 npm、未切换完整前端。
+- 影响面：Chord SQLite 只读连接/事务/关闭，Durable `SqliteReader` 与共享原生查询，Pakka 已知来源的受权历史投影，WebUI services API 2。
+- 归档：[1.4.0-pakka.4](../packages/agent/vendor/earendil-works-pi-durable-1.4.0-pakka.4.tgz)，SHA-256 `40aabe654b9531d9d98328dcc9c94687f723471bf3f57b967977841031308dec`，lock integrity `sha512-SDNd+QjK0nITmlclQ3RLIScyxhuWZQ4pI+baA0MJOAhjVe4O7EI+2nuNFd51VJNycdl6Voh80JGYyXS8vaTKgw==`。源差异、构建锁和 SQLite companion 身份见 [artifact](../patches/pi-durable/1.4.0-pakka.4/artifact.json)。
+- 环境：Windows x64、Node `24.18.0`、npm `11.16.0`、TypeScript `7.0.2`；隔离配置和本地确定性 provider。
+
+### 变化与实际代码
+
+原 `openNodeSqliteStorage` 是执行型存储初始化：即使 schema 已是当前版本，也需要写能力；`Harness.open()` 另有持久恢复。只读探针在版本表的 `INSERT OR IGNORE` 失败，但正常重开不一定改变历史字节。因此保留 writer 的初始化/迁移、事务和恢复，而不是删掉这些动作或把它们冒充只读。
+
+`packages/agent/package.json` 中该依赖字段的实际变化：
+
+```diff
+-"@earendil-works/pi-durable": "file:vendor/earendil-works-pi-durable-1.4.0-pakka.3.tgz",
++"@earendil-works/pi-durable": "file:vendor/earendil-works-pi-durable-1.4.0-pakka.4.tgz",
+```
+
+新公开 `openNodeSqliteReader` 使用只读连接，只验证既存 schema；`snapshot` 借出有限原生读视图，读取同一提交下的 Conversation、EntryArchive 和 document record/base/delta。没有构造 pi-durable Harness/Session 或恢复 Task。打开、关闭及视图失效采用读方生命周期；关闭仍完成已接纳读取的清理。接口正文来自 [.4 源补丁及 README](../patches/pi-durable/1.4.0-pakka.4/README.md)。
+
+新增 Chord 源能力只编译 Context 无关的 SQLite `database/node` 模块、声明/映射与许可证，随 Durable 交付；没有嵌套第二份完整 Chord。公开 API 探针证实跨完整 Chord 副本传递 Context 会丢失取消信号；最终安装按 ESM import 条件核对，adapter 与 reader 使用同一 Context 模块。
+
+Pakka `readStoredConversation` 在 adapter 内持有原生对象，核对确认登记、原 provenance/Runtime 身份、原 Conversation 及当前 read grant，返回前再次核对。未加载结果只有保存状态和稳定地址；已加载结果来自现有 owner。原文沿用有界投影、不可变 Entry/commitSeq 和来源信息授权；源码中复用同一投影规则，没有为 UI 伪造可执行绑定。
+
+### 固定检查与保留限制
+
+重建命令为 `npm run build:durable-patch -- <固定上游 checkout> 1.4.0-pakka.4`。Chord 3 项、Durable 11 文件/197 项、独立安装 SDK 3 文件/10 项通过；安装 reader 的严格声明检查通过。Pakka check/build、仓库外 browser SDK/client 及安装产品的真实历史 HTTP/固定资产检查通过。相同 Conversation ID、fork 来源、撤权、保存 Task 状态、真实 WAL 并存、范围/版本拒绝和取消/关闭均留证；只读浏览没有额外模型请求，也未取得发送权限。
+
+扩大 Pakka 回归初轮 240 文件/612 项为 601 pass、9 fail、2 原有平台 skip，保留 failed 原结果。两条旧浏览器安全测试更新四处已删除 facade 的导入后通过；七项维护失败定位为未改的 Windows PowerShell 5 ACL helper 长路径限制，同两文件在短隔离目录复测 13/13 通过，未降低 ACL。完整 Node 产品的严格 NodeNext 依赖声明有 43 条上游错误，已用完全不加载 Pakka 的 ModelRuntime 消费者等量复现；新 Agent reader 公共消费同样严格检查为 0 错误。完整依赖检查不改写为通过。
+
+详细执行、故障边界、LSP 与本地证据包身份见 [READONLY-SQLITE-HISTORY](verification/READONLY-SQLITE-HISTORY.md)。只读连接仍可能参与 WAL 辅助 I/O；短读快照不是跨翻页租约，64 KiB 返回上限不是全进程预算。独立 facet 控制、历史浏览 UI、默认前端切换与外部 Dynamite 固定组合未由本次认定完成。
+
+### 失效与接续
+
+SDK/cohort/hash、只读连接/事务/关闭、schema/分叉/EntryArchive/document 物化或 Pakka 来源/权限/版本关联变化时，重跑受影响原生与安装路径并追加条目。上游提供等价公开 reader 且保留既有 generation/EntryArchive 契约、同一组实际消费检查通过后，才替换此源补丁；不手改已安装依赖，不把这些结果外推到不同版本或部署组合。

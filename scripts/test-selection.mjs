@@ -50,6 +50,7 @@ export function inventory(root) {
 const lightFiles = new Set([
 	"packages/client/test/pocket-configuration.test.ts",
 	"packages/client/test/pocket-content.test.ts",
+	"packages/client/test/webui-services.test.ts",
 	"packages/client/test/pocket-credentials.test.ts",
 	"packages/client/test/pocket-notifications.test.ts",
 	"packages/client/test/pocket-observation.test.ts",
@@ -83,7 +84,13 @@ const scopes = {
 		f.startsWith("packages/client/") ||
 		/runtime-records|record-work|records-migration|lookup|extension/.test(f),
 	maintenance: (f) => /maintenance|writer-recovery|launcher|private-files/.test(f),
-	webui: (f) => f.startsWith("apps/") || f.startsWith("packages/mas-devpack/") || /webui.test/.test(f),
+	webui: (f) =>
+		f.startsWith("apps/") ||
+		f.startsWith("packages/mas-devpack/") ||
+		f.startsWith("packages/client/") ||
+		f.startsWith("packages/protocol/") ||
+		f === "packages/agent/test/stored-history.test.ts" ||
+		/webui.test/.test(f),
 };
 export function select(files, args) {
 	let suite = "core",

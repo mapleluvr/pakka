@@ -684,6 +684,46 @@ export interface ConversationPreviewOptions extends ConversationReadOptions {
 	/** At most 256 KiB; the reader stops at an entry boundary and supplies the next cursor. */
 	readonly maxBytes?: number;
 }
+/** Stable persisted identity, without a current execution binding. */
+export interface ConversationHistoryAddress {
+	readonly sessionId: string;
+	readonly conversationId: string;
+}
+export interface ConversationHistoryPage {
+	readonly reference: ConversationHistoryAddress;
+	/** Last committed native sequence visible in this page's short read snapshot. */
+	readonly sequence: string;
+	readonly entries: ConversationSnapshot["entries"];
+	readonly entriesTruncated: boolean;
+	readonly olderBeforeId?: string;
+	/** Last saved presentation; does not assert that any task is currently running. */
+	readonly saved: ConversationSnapshot["live"];
+	readonly usage: UsageDTO;
+}
+export type StoredConversationQuery =
+	| { readonly kind: "source" }
+	| { readonly kind: "page"; readonly options?: ConversationPreviewOptions }
+	| {
+			readonly kind: "content";
+			readonly content: ConversationContentReference;
+			readonly range: ConversationContentRange;
+	  };
+export type StoredConversationResult =
+	| { readonly kind: "source"; readonly reference: ConversationHistoryAddress; readonly sequence: string }
+	| { readonly kind: "page"; readonly page: ConversationHistoryPage }
+	| {
+			readonly kind: "content";
+			readonly reference: ConversationHistoryAddress;
+			readonly chunk: ConversationContentChunk;
+	  };
+export interface StoredConversationOptions {
+	/** Trusted server-selected existing Pakka source; never accept this path from a browser. */
+	readonly sessionFile: string;
+	readonly reference: ConversationHistoryAddress;
+	/** Synchronous current read-authority check, repeated after asynchronous work and cleanup. */
+	readonly check: () => void;
+	readonly signal?: AbortSignal;
+}
 export interface ConversationSpec {
 	readonly key: string;
 	readonly profile?: string;

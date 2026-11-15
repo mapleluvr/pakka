@@ -26,7 +26,8 @@
 - [Tasks：规划、已实施接缝与未完成产品工作](../../openspec/changes/plan-independent-webui/tasks.md)
 - [Phase 1：新 SDK/服务/模型/资产消费边界](../../openspec/changes/plan-independent-webui/phase-1.md)
 - [Inventory：阶段 0 功能/入口/消费者归属、缺口及真实切片](../../openspec/changes/plan-independent-webui/inventory.md)
-- 全部 delta：[independent-webui](../../openspec/changes/plan-independent-webui/specs/independent-webui/spec.md)。这是新增目标能力，尚无对应主 spec，未归档为已实现。
+- 全部 delta：[independent-webui](../../openspec/changes/plan-independent-webui/specs/independent-webui/spec.md)、[durable-storage-reader](../../openspec/changes/plan-independent-webui/specs/durable-storage-reader/spec.md)。这是新增目标能力，尚无对应主 spec，未归档为已实现。
+- 阶段 1 后续：[原历史只读接缝](../../openspec/changes/plan-independent-webui/readonly-history.md)。用户在核对 .3 opener 的写权限需求后授权独立 reader 生命周期；采用的是原生只读能力及 Pakka 原资源接入，不是删除写方迁移/恢复或提前实现独立 facet 控制。
 - 相关原活动声明：[pakka-webui](../../openspec/changes/pakka-webui/specs/pakka-webui/spec.md)、[webui-extensions](../../openspec/changes/pakka-webui/specs/webui-extensions/spec.md)，完整来路见[WebUI 与 MAS](webui-and-mas.md)。其中后端服务、权限与效果要求继续有效；本次明确替代的是独立前端的包/renderer/插件边界。
 - 相关未改主 spec：[recoverable-multi-session](../../openspec/specs/recoverable-multi-session/spec.md)、[authenticated-mas-apps](../../openspec/specs/authenticated-mas-apps/spec.md)。
 - 设计系统比较与原始文档交付：[WebUI 设计原则](webui-design-principles.md)。
@@ -52,3 +53,11 @@
 按用户授权在新前端仓库形成全新 UI SDK 与共享 runtime，后端提取 protocol/client 并接通新命名空间、受权原生配置、Person 默认与固定资产装配。原始和新实例能力分别验证；未加载原历史及独立 facet 控制仍缺实现，阶段 1 不标全完成。
 
 边界与实际出口见 [phase-1](../../openspec/changes/plan-independent-webui/phase-1.md)、[服务手册](../reference/WEBUI-SERVICES.md)；源/安装/真实 HTTP/浏览器和丢响应结果见[阶段 1 验证](../verification/INDEPENDENT-WEBUI-PHASE-1.md)。选择 68 回归文件且只新增一个必要实服务测试文件，保留 UI 低固化政策；模型私有子树先脱敏后公开校验，不复制配置 registry 或削弱 wire 校验。完整产品任务、Provider 登录、默认切换、发行与合并各自未完成。
+
+## 只读 SDK 与原资源接入
+
+用户随后批准只读 SDK 扩展。基于固定 Pi 1.4.0 构建 `1.4.0-pakka.4`，由 Chord 提供只读连接/事务/关闭，Durable 提供原生记录、分叉和 document 物化；writer 的迁移与恢复保留。实际探针发现完整 Chord 双副本会丢失 Context 取消信号，因此最终只交付 SQLite companion，主运行时与原公共 Context 保持同一接入关系。
+
+Pakka 将历史 read 授权与“执行资源已加载”分开，再核对确认登记、原身份及当前权限。未加载来源返回保存状态和稳定引用；已加载仍走现有 owner。新公开形状显式采用 services API 2，配对更新客户端与前端 manifest，不修改 workbench/extension/UI SDK 版本。
+
+原生 SDK、真实 HTTP、安装产品与固定资产核对见[只读历史验证](../verification/READONLY-SQLITE-HISTORY.md)，SDK 身份与失效条件追加在[兼容性账本](../PI-DURABLE-COMPATIBILITY.md)。原始扩大回归失败、Windows 长路径控制和上游声明限制保持各自结果。独立 facet 控制与阶段 2 的历史界面/业务插件仍未完成；此次没有把后端可读当作完整 UI 验收。

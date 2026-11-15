@@ -113,7 +113,7 @@ test(
 			await owner.wait('!document.querySelector("[data-browser-reconcile]")');
 			assert.equal(effects, 1, "visible action reconciliation after reopen does not click again");
 			const recovered = await owner.evaluate(`(async()=>{
-			 const {createExtensionClient}=await import('@pakka/webui/client');
+			 const {createExtensionClient}=await import('@pakka/client/extensions');
 			 const client=createExtensionClient({endpoint:location.origin+'/pocket/extensions/rpc',csrf:()=>/pakka_csrf=([^;]+)/.exec(document.cookie)?.[1]??null}),registration=(await client.list(${JSON.stringify(ref)})).find(row=>row.manifest.id==='workspace-browser');
 			 const command={extension:'workspace-browser',generation:registration.generation,action:'click',requestId:'lost-browser-action',target:${JSON.stringify(ref)},input:{selector:'#record'}},original=globalThis.fetch;
 			 let dropped=false,first;
@@ -147,7 +147,7 @@ test(
 			);
 			assert.equal(await viewer.evaluate("document.documentElement.scrollWidth>innerWidth"), false);
 			const outcome = await viewer.evaluate(
-				`(async()=>{const {createExtensionClient}=await import('@pakka/webui/client');const client=createExtensionClient({endpoint:location.origin+'/pocket/extensions/rpc',csrf:()=>/pakka_csrf=([^;]+)/.exec(document.cookie)?.[1]??null}),registration=(await client.list(${JSON.stringify(ref)})).find(row=>row.manifest.id==='workspace-browser');return client.call({extension:'workspace-browser',generation:registration.generation,action:'click',requestId:'forged-viewer-click',target:${JSON.stringify(ref)},input:{selector:'#record'}}).catch(error=>({name:error.name,state:error.outcome,code:error.code}));})()`,
+				`(async()=>{const {createExtensionClient}=await import('@pakka/client/extensions');const client=createExtensionClient({endpoint:location.origin+'/pocket/extensions/rpc',csrf:()=>/pakka_csrf=([^;]+)/.exec(document.cookie)?.[1]??null}),registration=(await client.list(${JSON.stringify(ref)})).find(row=>row.manifest.id==='workspace-browser');return client.call({extension:'workspace-browser',generation:registration.generation,action:'click',requestId:'forged-viewer-click',target:${JSON.stringify(ref)},input:{selector:'#record'}}).catch(error=>({name:error.name,state:error.outcome,code:error.code}));})()`,
 			);
 			assert.ok(outcome && typeof outcome === "object" && "state" in outcome);
 			assert.equal(outcome.state, "denied");
@@ -170,7 +170,7 @@ test(
 					'document.querySelector("[data-browser-pending]") && document.querySelector("[data-browser-reconcile]")?.disabled === false',
 				);
 				const original = await owner.evaluate(
-					`(async()=>{const {createExtensionClient}=await import('@pakka/webui/client');const client=createExtensionClient({endpoint:location.origin+'/pocket/extensions/rpc',csrf:()=>/pakka_csrf=([^;]+)/.exec(document.cookie)?.[1]??null});return client.operationByRequest({extension:'workspace-browser',requestId:document.querySelector('[data-browser-pending] code').textContent,target:${JSON.stringify(ref)}});})()`,
+					`(async()=>{const {createExtensionClient}=await import('@pakka/client/extensions');const client=createExtensionClient({endpoint:location.origin+'/pocket/extensions/rpc',csrf:()=>/pakka_csrf=([^;]+)/.exec(document.cookie)?.[1]??null});return client.operationByRequest({extension:'workspace-browser',requestId:document.querySelector('[data-browser-pending] code').textContent,target:${JSON.stringify(ref)}});})()`,
 				);
 				assert.ok(original && typeof original === "object" && "state" in original && "value" in original);
 				assert.equal(original.state, "done", "extension handler recorded the native result");

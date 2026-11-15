@@ -40,9 +40,9 @@
 
 稳定 Session/Conversation 引用不携带授权，不等于当前 incarnation。解析结果区分已加载、未加载、不可得、无权和身份不符；插件导航只消费所属服务的结果。资产寻址及 reconnect 必须使用完整 Session 身份，不将 root Session 误当成所有条目的所属 Session。
 
-固定 Pi Durable 1.4.0-pakka.3 的 SQLite 初始化会执行迁移；其 Node database 事务为 BEGIN IMMEDIATE，关闭还会 checkpoint。隔离公开 SDK 探针将现有库以 readOnly 打开后交给 SqliteStorage.open，实际拒绝为 `attempt to write a readonly database`，原库字节未变。
+初始候选 Pi Durable 1.4.0-pakka.3 的 SQLite opener 使用写语句初始化，并在需要时迁移。真实只读连接在版本表 INSERT OR IGNORE 处拒绝；这不代表正常读写重开每次都修改历史。写方事务和 checkpoint 属于执行型存储生命周期，不应拿来冒充历史 reader。
 
-因此阶段 1 的资源 API 不通过自动 reopen、私读 SQLite schema 或替代 Session 伪造未加载历史。已有 owner 提供公开读取时按该来源读取；否则明确报告未加载/读取不可用，并公开缺失能力。该状态不能算作阶段 2 的原历史浏览通过。需要补原生只读能力时，应沿已记录的下游源补丁流程形成公开接口和独立消费证据，不修改安装中的 Pi。
+用户随后授权[只读接缝](readonly-history.md)：.4 保留 writer，新增真正只读的 Node SQLite 连接、短快照和独立关闭。Pakka 的原资源服务已接入已确认登记的未加载来源；不通过自动 reopen、私读 schema 或替代 Session 伪造原历史。保存状态与 live 绑定分开，服务 API 2 通过 resource.history/resource.content 提供有限页面和原文范围。独立 facet 控制与阶段 2 的实际界面浏览仍未完成；源码、安装和真实 HTTP 的检查各自记录。
 
 ## UI 与资产边界
 

@@ -4,6 +4,7 @@ import { join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
 	createRuntime,
+	readStoredConversation,
 	type Runtime,
 	type ConversationRef,
 	type RuntimeOptions,
@@ -311,6 +312,16 @@ export async function startPocket(options: PocketProductOptions) {
 			workspace: rootWorkspace,
 			workspaceFor,
 			profiles,
+			readStored: (reference, query, check, signal) =>
+				readStoredConversation(
+					{
+						sessionFile: join(options.runtime.dataDir, "sessions", reference.sessionId, "main.sqlite"),
+						reference: { sessionId: reference.sessionId, conversationId: reference.conversationId },
+						check,
+						signal,
+					},
+					query,
+				),
 			open: async ({ id, cwd, reopen }) => {
 				const child = await createRuntime({
 					...options.runtime,

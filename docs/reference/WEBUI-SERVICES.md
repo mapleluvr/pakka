@@ -23,11 +23,11 @@
 
 ## 2. 同源服务与身份
 
-工作台使用 `/pakka-webui/rpc` 和 `/pakka-webui/events`，延用已声明的 v2 DTO；新服务使用 `/pakka-webui/services` 的 `api: 1`。extension 客户端可使用 `/pakka-webui/extensions/rpc`。人类身份交换、资产、下载、通知和 worker 沿各自已有安全处理接缝接入新 namespace；旧 `/pocket/models/rpc` 不映射成新模型接口。
+工作台使用 `/pakka-webui/rpc` 和 `/pakka-webui/events`，延用已声明的 v2 DTO；新服务使用 `/pakka-webui/services` 的 `api: 2`。extension 客户端可使用 `/pakka-webui/extensions/rpc`。人类身份交换、资产、下载、通知和 worker 沿各自已有安全处理接缝接入新 namespace；旧 `/pocket/models/rpc` 不映射成新模型接口。
 
 浏览器使用同源 Cookie 与 `X-Pakka-CSRF`，endpoint 不接受认证信息、query/hash 或跨 origin；前端开发用同源代理。服务 request 在发送前固定工作台 hello 得到的 `personId/serverId`；后端从 Cookie 获取真正 actor，核对预期身份后才执行命令。客户端在响应、身份切换和异步返回时再次核对 request、server、Person 与结果种类。
 
-服务的 `capabilities` 返回实际可用 features。当前组合是 services 1、workbench 2、extensions 2；其中 extension 兼容声明不等于 `ExtensionManifest.api: 1`，UI SDK/runtime 又是另一项组合。服务 API、renderer 描述和文件 hash 各自检查，不通过给 closed hello 偷加字段协商。
+服务的 `capabilities` 返回实际可用 features。当前组合是 services 2、workbench 2、extensions 2；其中 extension 兼容声明不等于 `ExtensionManifest.api: 1`，UI SDK/runtime 又是另一项组合。服务 API、renderer 描述和文件 hash 各自检查，不通过给 closed hello 偷加字段协商。
 
 Node 的 `publicOrigin`、trusted proxy 和 TLS 约束保持原实现：带 forwarding/trusted-peer 元数据的代理模式需要显式 HTTPS public origin；本地 HTTP origin 模式不靠伪造这些头部绕过要求。客户端、HTTP boundary 和受权服务缺一不可。
 
@@ -38,7 +38,9 @@ Node 的 `publicOrigin`、trusted proxy 和 TLS 约束保持原实现：带 forw
 | 命令                         | 结果和责任                                                    |
 | ---------------------------- | ------------------------------------------------------------- |
 | `capabilities`               | 服务组合与实际 features                                       |
-| `resource.resolve`           | 原 Session/Conversation 的身份、权限和已加载状态              |
+| `resource.resolve`           | 原 Session/Conversation 的身份、权限、运行绑定及历史可读状态  |
+| `resource.history`           | 已加载 owner 的预览，或已知未加载来源的有限保存历史页         |
+| `resource.content`           | 原资源与内容引用绑定的连续正文范围，不接受任意文件/JSON 路径  |
 | `model-connections.read`     | 原生配置的脱敏快照、opaque version、protectedPaths 与加载状态 |
 | `model-connections.validate` | 候选定点修改的公开 ModelRuntime 校验，不保存或推理            |
 | `model-connections.write`    | 实例配置保存/重载回执                                         |
@@ -76,7 +78,15 @@ extension 原请求链路仍是 `operationByRequest(browserRequestId)` → 外�
 
 `ConversationReference` 包含 kind、sessionId、conversationId。解析不只比较 Conversation id，也不把当前 root Session 用作所有资源的 owner。扩展资产请求和 public `reconnect()` 保留完整 Session 身份；跨资源结果仍检查所属对象。
 
-当前公开服务只解析已有 owner 已加载的资源。未加载、不可得、无权、错身份分别报告；未加载的原历史读取明确为 `history: "unsupported"`，不自动 reopen writer。原生 SQLite 初始化有写入行为，不能用 readonly flag 或私读 schema 冒充公开历史 API。
+`resource.resolve` 的 loaded 结果携带当前合法 target；已登记但未加载、且原历史可读的结果为 `status: "unloaded", history: "readable"`，没有可执行 target。不可得、无权和身份不符分别报告；不兼容格式、错误来源及忙状态保持明确拒绝。Session 列表的 unavailable 表示执行 owner 未就绪，不直接决定原历史是否可读。
+
+`resource.history` 接收稳定 reference 与可选 limit/beforeEntryId/maxBytes。已加载返回 `status: "loaded", snapshot`；未加载返回 `status: "unloaded", page`。后者使用 reference、sequence、entries、分页位置、saved 和 usage，没有 AgentRef 或 live 字段；保存的 busy/running 不是当前执行活动证明。默认 64 条、最大 256 条，页面最大 256 KiB；翻页使用返回的 olderBeforeId，不在浏览器等待期间保持 SQLite 事务。
+
+`resource.content` 接收同一 reference、页面取得的 content 与 offset/length，单次最多 64 KiB。客户端核对原 Session/Conversation、完整内容定位及返回范围；按 nextOffset 继续，不用字符数推算字节位置。入口只读取既有公开投影中的正文，不能改 path 读取原生 data/configuration。分叉自身可见内容与来源身份的披露权限分开，不能凭继承内容取得源 Conversation 权限。
+
+未加载路径经 `@pakka/agent` 的受信任 `readStoredConversation` 接到 Durable .4 的公开 SQLite reader，不创建 Runtime、不取得 writer 或恢复任务。Pakka 先验证已确认登记、原 Session/Conversation、来源与 read grant，返回前再次核对；执行、发送及管理仍要求已加载绑定。Node 定位、原生对象与数据库路径不进入浏览器协议。具体 SDK 边界见[只读 SDK](../../patches/pi-durable/1.4.0-pakka.4/README.md)。
+
+本次新历史形状显式替代未合并的 services API 1。固定客户端与前端 manifest 同步声明 services 2；旧候选不透明兼容。客户端遇到身份关联正确但不支持的响应版本报告 VERSION_MISMATCH/unknown，不把它当成持久写入未发生的证明，也不自动换版本重提。
 
 UI dispose 属于单个界面实例。整体 extension enable/disable/reload 不等于分 facet 停启；独立 Backend/Agent/WebUI/Client 控制尚未形成，不返回假成功。浏览、UI 关闭和停止等待不启动模型、不取消已接纳工作。
 
@@ -98,4 +108,4 @@ const app = await startPocket({
 
 加载后 HTTP 提供已核对的内存字节，生产者后来改磁盘文件不改变正在提供的版本。无下载、运行时构建、npm latest 或失败后替换成另一份 UI。manifest 只描述 renderer 兼容，不让 Node 了解 Button、theme provider 或插件组件树。
 
-本轮尚未切换默认产品。阶段 1 结果与未完成的原历史/facet/完整应用范围以[任务](../../openspec/changes/plan-independent-webui/tasks.md)及其验证记录为准。
+本轮尚未切换默认产品。阶段 1 结果与仍未完成的独立 facet/完整应用范围以[任务](../../openspec/changes/plan-independent-webui/tasks.md)及其验证记录为准。

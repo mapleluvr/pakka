@@ -1,10 +1,23 @@
 import { identity } from "./index.ts";
-import type { AgentRef, PocketFailure, PocketThinkingLevel } from "./pocket.ts";
+import {
+	isPocketEntries,
+	isPocketActivity,
+	isPocketUsage,
+	isPocketSnapshot,
+	isPocketContentReference,
+	isPocketContentChunk,
+	type AgentRef,
+	type PocketFailure,
+	type PocketThinkingLevel,
+	type PocketSnapshot,
+	type PocketContentReference,
+	type PocketContentChunk,
+} from "./pocket.ts";
 import { decodeJson, decodeTarget } from "./extension-rpc.ts";
 import { frozen, isRecord, type ExtensionJson } from "./extensions.ts";
 
 /** Service API, not the UI SDK/renderer version or an artifact identity. */
-export const WEBUI_SERVICE_API = 1;
+export const WEBUI_SERVICE_API = 2;
 export const WEBUI_SERVICE_PATH = "/pakka-webui/services";
 export const WEBUI_SERVICE_MAX_BYTES = 2_097_152;
 
@@ -15,14 +28,34 @@ export interface ConversationReference {
 }
 export type ConversationResolution =
 	| { readonly status: "loaded"; readonly reference: ConversationReference; readonly target: AgentRef }
+	| { readonly status: "unloaded"; readonly reference: ConversationReference; readonly history: "readable" }
 	| {
-			readonly status: "unloaded" | "unavailable" | "forbidden" | "identity-mismatch";
+			readonly status: "unavailable" | "forbidden" | "identity-mismatch";
 			readonly reference: ConversationReference;
-			/** This result does not grant a writer or silently reopen a Session. */
 			readonly history: "unsupported";
+			readonly reason?: "unsupported" | "invalid-source" | "busy";
 	  };
+export interface ConversationHistoryOptions {
+	readonly limit?: number;
+	readonly beforeEntryId?: string;
+	readonly maxBytes?: number;
+}
+export interface StoredConversationPage {
+	readonly reference: ConversationReference;
+	/** The page's short read snapshot, not a lease on an arbitrary historical database version. */
+	readonly sequence: string;
+	readonly entries: PocketSnapshot["entries"];
+	readonly entriesTruncated: boolean;
+	readonly olderBeforeId?: string;
+	/** Last saved activity, not a claim that its tasks are currently executing. */
+	readonly saved: PocketSnapshot["live"];
+	readonly usage: PocketSnapshot["usage"];
+}
+export type ConversationHistory =
+	| { readonly status: "loaded"; readonly snapshot: PocketSnapshot }
+	| { readonly status: "unloaded"; readonly page: StoredConversationPage };
 export interface WebUiCapabilities {
-	readonly services: 1;
+	readonly services: 2;
 	readonly workbench: 2;
 	readonly extensions: 2;
 	readonly features: readonly string[];
@@ -102,6 +135,17 @@ export interface ModelCatalogPage {
 export type WebUiCommand =
 	| { readonly op: "capabilities" }
 	| { readonly op: "resource.resolve"; readonly reference: ConversationReference }
+	| {
+			readonly op: "resource.history";
+			readonly reference: ConversationReference;
+			readonly options?: ConversationHistoryOptions;
+	  }
+	| {
+			readonly op: "resource.content";
+			readonly reference: ConversationReference;
+			readonly content: PocketContentReference;
+			readonly range: { readonly offset: number; readonly length: number };
+	  }
 	| { readonly op: "model-connections.read" | "model-connections.reload" }
 	| { readonly op: "model-connections.validate"; readonly change: ModelConfigurationChange }
 	| { readonly op: "model-connections.write"; readonly change: ModelConfigurationChange }
@@ -114,6 +158,12 @@ export type WebUiCommand =
 export interface WebUiResults {
 	capabilities: { readonly kind: "capabilities"; readonly capabilities: WebUiCapabilities };
 	"resource.resolve": { readonly kind: "resource"; readonly resolution: ConversationResolution };
+	"resource.history": { readonly kind: "resource-history"; readonly history: ConversationHistory };
+	"resource.content": {
+		readonly kind: "resource-content";
+		readonly reference: ConversationReference;
+		readonly chunk: PocketContentChunk;
+	};
 	"model-connections.read": {
 		readonly kind: "model-configuration";
 		readonly configuration: ModelConfigurationView;
@@ -147,14 +197,14 @@ export interface WebUiResults {
 }
 export type WebUiResult = WebUiResults[keyof WebUiResults];
 export interface WebUiRequest {
-	readonly api: 1;
+	readonly api: 2;
 	readonly requestId: string;
 	/** Expected identity from the workbench handshake; checked before any service effect. */
 	readonly binding: { readonly personId: string; readonly serverId: string };
 	readonly command: WebUiCommand;
 }
 export type WebUiResponse = {
-	readonly api: 1;
+	readonly api: 2;
 	readonly requestId: string;
 	readonly serverId: string;
 } & ({ readonly result: WebUiResult } | { readonly error: PocketFailure });
@@ -290,6 +340,34 @@ export function decodeWebUiCommand(command: unknown): WebUiCommand {
 			shape(command, ["op", "reference"]);
 			decodeConversationReference(command.reference);
 			break;
+		case "resource.history": {
+			shape(command, ["op", "reference"], ["options"]);
+			decodeConversationReference(command.reference);
+			if (command.options !== undefined) {
+				const options = command.options;
+				shape(options, [], ["limit", "beforeEntryId", "maxBytes"]);
+				if (
+					(options.limit !== undefined && (!count(options.limit, 256) || options.limit < 1)) ||
+					(options.beforeEntryId !== undefined && !identity(options.beforeEntryId)) ||
+					(options.maxBytes !== undefined && (!count(options.maxBytes, 262144) || options.maxBytes < 16384))
+				)
+					throw new Error("Invalid bounded history query");
+			}
+			break;
+		}
+		case "resource.content": {
+			shape(command, ["op", "reference", "content", "range"]);
+			decodeConversationReference(command.reference);
+			shape(command.range, ["offset", "length"]);
+			if (
+				!isPocketContentReference(command.content) ||
+				!count(command.range.offset) ||
+				!count(command.range.length, 65536) ||
+				command.range.length < 1
+			)
+				throw new Error("Invalid history content range");
+			break;
+		}
 		case "model-connections.validate":
 		case "model-connections.write":
 			shape(command, ["op", "change"]);
@@ -351,6 +429,35 @@ export function decodeWebUiRequest(value: unknown): WebUiRequest {
 	// SAFETY: The closed envelope, expected identities, complete command and byte bound were checked.
 	return frozen(structuredClone(value)) as unknown as WebUiRequest;
 }
+export function decodeConversationHistory(history: unknown): ConversationHistory {
+	if (!isRecord(history)) throw new Error("Invalid resource history");
+	if (history.status === "loaded") {
+		shape(history, ["status", "snapshot"]);
+		if (!isPocketSnapshot(history.snapshot)) throw new Error("Invalid loaded history");
+	} else {
+		shape(history, ["status", "page"]);
+		if (history.status !== "unloaded") throw new Error("Invalid history mode");
+		const page = history.page;
+		shape(
+			page,
+			["reference", "sequence", "entries", "entriesTruncated", "saved", "usage"],
+			["olderBeforeId"],
+		);
+		const reference = decodeConversationReference(page.reference);
+		if (
+			typeof page.sequence !== "string" ||
+			!/^(0|[1-9][0-9]{0,18})$/.test(page.sequence) ||
+			!isPocketEntries(page.entries, reference.conversationId) ||
+			typeof page.entriesTruncated !== "boolean" ||
+			(page.olderBeforeId !== undefined && (!page.entriesTruncated || !identity(page.olderBeforeId))) ||
+			!isPocketActivity(page.saved) ||
+			!isPocketUsage(page.usage)
+		)
+			throw new Error("Invalid saved history");
+	}
+	// SAFETY: Both closed variants, original identity, bounded transcript, activity and usage were checked.
+	return frozen(structuredClone(history)) as unknown as ConversationHistory;
+}
 export function decodeWebUiResult(value: unknown): WebUiResult {
 	if (!isRecord(value)) throw new Error("Invalid WebUI result");
 	switch (value.kind) {
@@ -359,7 +466,7 @@ export function decodeWebUiResult(value: unknown): WebUiResult {
 			const caps = value.capabilities;
 			shape(caps, ["services", "workbench", "extensions", "features"]);
 			if (
-				caps.services !== 1 ||
+				caps.services !== WEBUI_SERVICE_API ||
 				caps.workbench !== 2 ||
 				caps.extensions !== 2 ||
 				!Array.isArray(caps.features) ||
@@ -380,16 +487,31 @@ export function decodeWebUiResult(value: unknown): WebUiResult {
 				const target = decodeTarget(resolution.target);
 				if (target.sessionId !== reference.sessionId || target.conversationId !== reference.conversationId)
 					throw new Error("Resource identity mismatch");
-			} else {
+			} else if (resolution.status === "unloaded") {
 				shape(resolution, ["status", "reference", "history"]);
+				if (resolution.history !== "readable") throw new Error("Invalid stored resource");
+			} else {
+				shape(resolution, ["status", "reference", "history"], ["reason"]);
 				if (
-					!member(resolution.status, ["unloaded", "unavailable", "forbidden", "identity-mismatch"]) ||
-					resolution.history !== "unsupported"
+					!member(resolution.status, ["unavailable", "forbidden", "identity-mismatch"]) ||
+					resolution.history !== "unsupported" ||
+					(resolution.reason !== undefined &&
+						(resolution.status !== "unavailable" ||
+							!member(resolution.reason, ["unsupported", "invalid-source", "busy"])))
 				)
 					throw new Error("Invalid unavailable resource");
 			}
 			break;
 		}
+		case "resource-history":
+			shape(value, ["kind", "history"]);
+			decodeConversationHistory(value.history);
+			break;
+		case "resource-content":
+			shape(value, ["kind", "reference", "chunk"]);
+			decodeConversationReference(value.reference);
+			if (!isPocketContentChunk(value.chunk)) throw new Error("Invalid resource content");
+			break;
 		case "model-configuration": {
 			shape(value, ["kind", "configuration"]);
 			const config = value.configuration;

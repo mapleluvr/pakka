@@ -41,6 +41,7 @@ import {
 	decodeWebUiResponse,
 	WEBUI_SERVICE_PATH,
 	WEBUI_SERVICE_MAX_BYTES,
+	WEBUI_SERVICE_API,
 } from "@pakka/protocol/webui";
 import { streamPocketObservation } from "./observation-stream.ts";
 import { streamOriginalContent } from "./content-download.ts";
@@ -852,6 +853,8 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 					const a = await actor(req);
 					guard(() => a.verifyCsrf(header(req, "x-pakka-csrf")));
 					if (!options.webuiServices) throw new Refusal(404, "UNSUPPORTED");
+					if (raw && typeof raw === "object" && "api" in raw && raw.api !== WEBUI_SERVICE_API)
+						throw new Refusal(400, "VERSION_MISMATCH", true);
 					let parsed;
 					try {
 						parsed = decodeWebUiRequest(raw);
@@ -862,9 +865,13 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 						throw new Refusal(403, "FORBIDDEN");
 					try {
 						dispatched = true;
-						const result = await options.webuiServices.execute(a, parsed.command);
+						const result = await options.webuiServices.execute(a, parsed.command, controller.signal);
 						guard(() => people.current(a));
-						send(res, 200, decodeWebUiResponse({ api: 1, requestId, serverId, result }, requestId));
+						send(
+							res,
+							200,
+							decodeWebUiResponse({ api: WEBUI_SERVICE_API, requestId, serverId, result }, requestId),
+						);
 					} catch (error) {
 						if (error instanceof WebUiServiceRefusal) {
 							const statuses: Partial<Record<PocketErrorCode, number>> = {
@@ -1273,7 +1280,7 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 			const refusal = error instanceof Refusal,
 				status = refusal ? error.status : 500;
 			send(res, status, {
-				...(serviceRequest ? { api: 1 } : { version: 2 }),
+				...(serviceRequest ? { api: WEBUI_SERVICE_API } : { version: 2 }),
 				requestId,
 				serverId,
 				error: {

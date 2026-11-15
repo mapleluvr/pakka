@@ -742,71 +742,82 @@ function snapshotPatch(v: unknown): v is PocketSnapshotPatch {
 		candidate.entries.every((entry) => (v.entryIds as readonly string[]).includes(entry.id))
 	);
 }
-function snapshot(v: unknown): v is PocketSnapshot {
-	if (
-		!shape(v, ["ref", "entries", "entriesTruncated", "live", "usage"], ["olderBeforeId"]) ||
-		!ref(v.ref) ||
-		!Array.isArray(v.entries) ||
-		v.entries.length > 256 ||
-		typeof v.entriesTruncated !== "boolean" ||
-		(v.olderBeforeId !== undefined && (!v.entriesTruncated || !entryId(v.olderBeforeId))) ||
-		!shape(v.live, ["busy", "tools"], ["message"]) ||
-		typeof v.live.busy !== "boolean" ||
-		!Array.isArray(v.live.tools) ||
-		v.live.tools.length > 256 ||
-		(v.live.message !== undefined && !message(v.live.message)) ||
-		!shape(v.usage, ["input", "output", "cacheRead", "cacheWrite", "totalTokens", "cost"])
-	)
-		return false;
-	const id = v.ref.conversationId;
-	if (
-		!v.entries.every(
-			(e) =>
+/** Shared transcript payload guards: stored history has no executable AgentRef. */
+export function isPocketEntries(value: unknown, conversationId: string): value is PocketSnapshot["entries"] {
+	return (
+		Array.isArray(value) &&
+		value.length <= 256 &&
+		value.every(
+			(entry) =>
 				shape(
-					e,
+					entry,
 					["id", "conversationId", "kind", "messages"],
 					["taskId", "display", "sourceConversationId"],
 				) &&
-				entryId(e.id) &&
-				e.conversationId === id &&
-				(e.sourceConversationId === undefined ||
-					(identity(e.sourceConversationId) && e.sourceConversationId !== id)) &&
-				entryId(e.kind) &&
-				(e.taskId === undefined || entryId(e.taskId)) &&
-				Array.isArray(e.messages) &&
-				e.messages.length <= 256 &&
-				e.messages.every(message) &&
-				(e.display === undefined || display(e.display)),
+				entryId(entry.id) &&
+				entry.conversationId === conversationId &&
+				(entry.sourceConversationId === undefined ||
+					(identity(entry.sourceConversationId) && entry.sourceConversationId !== conversationId)) &&
+				entryId(entry.kind) &&
+				(entry.taskId === undefined || entryId(entry.taskId)) &&
+				Array.isArray(entry.messages) &&
+				entry.messages.length <= 256 &&
+				entry.messages.every(message) &&
+				(entry.display === undefined || display(entry.display)),
 		)
-	)
-		return false;
-	if (
-		!v.live.tools.every(
-			(t) =>
+	);
+}
+export function isPocketActivity(value: unknown): value is PocketSnapshot["live"] {
+	return (
+		shape(value, ["busy", "tools"], ["message"]) &&
+		typeof value.busy === "boolean" &&
+		Array.isArray(value.tools) &&
+		value.tools.length <= 256 &&
+		(value.message === undefined || message(value.message)) &&
+		value.tools.every(
+			(tool) =>
 				shape(
-					t,
+					tool,
 					["callId", "name", "status"],
 					["taskId", "output", "contentReference", "droppedBytes", "droppedLines"],
 				) &&
-				(t.contentReference === undefined || contentReference(t.contentReference)) &&
-				(t.droppedBytes === undefined || integer(t.droppedBytes)) &&
-				(t.droppedLines === undefined || integer(t.droppedLines)) &&
-				entryId(t.callId) &&
-				entryId(t.name) &&
-				["pending", "running", "done"].includes(t.status as string) &&
-				(t.taskId === undefined || entryId(t.taskId)) &&
-				(t.output === undefined || string(t.output)),
+				(tool.contentReference === undefined || contentReference(tool.contentReference)) &&
+				(tool.droppedBytes === undefined || integer(tool.droppedBytes)) &&
+				(tool.droppedLines === undefined || integer(tool.droppedLines)) &&
+				entryId(tool.callId) &&
+				entryId(tool.name) &&
+				["pending", "running", "done"].includes(tool.status as string) &&
+				(tool.taskId === undefined || entryId(tool.taskId)) &&
+				(tool.output === undefined || string(tool.output)),
 		)
-	)
-		return false;
-	return (
-		[v.usage.input, v.usage.output, v.usage.cacheRead, v.usage.cacheWrite, v.usage.totalTokens].every((n) =>
-			integer(n),
-		) &&
-		(v.usage.cost === null ||
-			(typeof v.usage.cost === "number" && Number.isFinite(v.usage.cost) && v.usage.cost >= 0))
 	);
 }
+export function isPocketUsage(value: unknown): value is PocketSnapshot["usage"] {
+	return (
+		shape(value, ["input", "output", "cacheRead", "cacheWrite", "totalTokens", "cost"]) &&
+		[value.input, value.output, value.cacheRead, value.cacheWrite, value.totalTokens].every((n) =>
+			integer(n),
+		) &&
+		(value.cost === null ||
+			(typeof value.cost === "number" && Number.isFinite(value.cost) && value.cost >= 0))
+	);
+}
+function snapshot(v: unknown): v is PocketSnapshot {
+	return (
+		shape(v, ["ref", "entries", "entriesTruncated", "live", "usage"], ["olderBeforeId"]) &&
+		ref(v.ref) &&
+		isPocketEntries(v.entries, v.ref.conversationId) &&
+		typeof v.entriesTruncated === "boolean" &&
+		(v.olderBeforeId === undefined || (v.entriesTruncated && entryId(v.olderBeforeId))) &&
+		isPocketActivity(v.live) &&
+		isPocketUsage(v.usage)
+	);
+}
+export {
+	snapshot as isPocketSnapshot,
+	contentReference as isPocketContentReference,
+	contentChunk as isPocketContentChunk,
+};
 const configurationText = (v: unknown, max: number): v is string =>
 	string(v, max) && !!v && v.trim() === v && !/[\x00-\x1f\x7f]/.test(v);
 const thinkingLevel = (v: unknown): v is PocketThinkingLevel =>
