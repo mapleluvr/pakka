@@ -42,6 +42,94 @@ export interface ExtensionClient {
 		options?: PocketRequestOptions,
 	): Promise<ExtensionControlReceipt | null>;
 }
+/** A Backend service binding, separate from UI instance operations and Client-facet module loading. */
+export interface ExtensionServiceBinding {
+	readonly extensionId: string;
+	readonly personId: string;
+	/** Current HTTP handshake identity; not a persistent business receipt identity. */
+	readonly serverId: string;
+	readonly target?: AgentRef;
+	readonly signal: AbortSignal;
+	call(
+		action: string,
+		input?: import("@pakka/protocol/extensions").ExtensionJson,
+		options?: PocketRequestOptions,
+	): Promise<ExtensionOperation>;
+	operation(id: string, options?: PocketRequestOptions): Promise<ExtensionOperation>;
+	operationByRequest(requestId: string, options?: PocketRequestOptions): Promise<ExtensionOperation>;
+}
+
+/** Bind an already checked client. New calls read the current Backend publication; receipt queries do not depend on its phase/generation. */
+export function bindExtensionService(
+	client: ExtensionClient,
+	input: {
+		readonly extensionId: string;
+		readonly personId: string;
+		readonly serverId: string;
+		readonly target?: AgentRef;
+		readonly signal: AbortSignal;
+		readonly backend: () => ExtensionRegistration | undefined;
+	},
+): ExtensionServiceBinding {
+	if (!extensionId(input.extensionId) || !identity(input.personId) || !identity(input.serverId))
+		throw new Error("Invalid extension service identity");
+	const extension = input.extensionId,
+		target = input.target ? Object.freeze({ ...input.target }) : undefined;
+	const optionsFor = (options: PocketRequestOptions = {}): PocketRequestOptions => ({
+		...options,
+		signal: AbortSignal.any([input.signal, ...(options.signal ? [options.signal] : [])]),
+	});
+	async function correlated(result: Promise<ExtensionOperation>) {
+		const operation = await result;
+		if (operation.extension !== extension || operation.actorId !== input.personId)
+			throw new PocketRemoteError("UNKNOWN", "unknown", operation.requestId);
+		return operation;
+	}
+	return Object.freeze<ExtensionServiceBinding>({
+		extensionId: extension,
+		personId: input.personId,
+		serverId: input.serverId,
+		target,
+		signal: input.signal,
+		call(action, value = {}, options = {}) {
+			const requestId = options.requestId ?? globalThis.crypto.randomUUID();
+			const backend = input.backend();
+			if (
+				input.signal.aborted ||
+				options.signal?.aborted ||
+				backend?.facet !== "backend" ||
+				backend.manifest.id !== extension ||
+				backend.phase !== "ready"
+			)
+				return Promise.reject(new PocketRemoteError("UNSUPPORTED", "denied", requestId));
+			return correlated(
+				client.call(
+					{
+						extension,
+						generation: backend.generation,
+						action,
+						input: value,
+						requestId,
+						...(target ? { target } : {}),
+					},
+					optionsFor({ ...options, requestId }),
+				),
+			);
+		},
+		operation(id, options) {
+			return correlated(client.operation(id, optionsFor(options)));
+		},
+		operationByRequest(requestId, options) {
+			return correlated(
+				client.operationByRequest(
+					{ extension, requestId, ...(target ? { target } : {}) },
+					optionsFor(options),
+				),
+			);
+		},
+	});
+}
+
 /** Explicit same-origin capability client; reads no token/configuration at import and never retries a mutation. */
 export function createExtensionClient(
 	options: PocketClientOptions & {

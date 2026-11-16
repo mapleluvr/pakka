@@ -5,6 +5,7 @@ import { join } from "node:path";
 const core = new Set([
 	"scripts/test/runner.test.mjs",
 	"packages/protocol/test/codec.test.ts",
+	"packages/protocol/test/webui-assets.test.ts",
 	"packages/protocol/test/session-recovery.test.ts",
 	"packages/protocol/test/observation-patch.test.ts",
 	"packages/client/test/session-recovery.test.ts",
@@ -70,6 +71,7 @@ const lightFiles = new Set([
 	"packages/protocol/test/pocket.test.ts",
 	"packages/protocol/test/preview-content.test.ts",
 	"packages/protocol/test/session-recovery.test.ts",
+	"packages/protocol/test/webui-assets.test.ts",
 ]);
 export function light(file) {
 	return lightFiles.has(file);

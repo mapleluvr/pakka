@@ -6,7 +6,17 @@ export const manifest: ExtensionManifest = {
 	id: "rsi",
 	version: "0.1.0",
 	title: "Tickets",
-	facets: { backend: "backend.js", client: "client.js", webui: { entry: "index.js", publicDir: "public" } },
+	facets: {
+		backend: "backend.js",
+		client: "client.js",
+		webui: {
+			entry: "index.js",
+			publicDir: "public",
+			api: 1,
+			runtime: "react19-astryx0.7.15",
+			styles: ["tickets.css"],
+		},
+	},
 	services: ["tickets"],
 	actions: (Object.keys(inputs) as TicketAction[]).map((id) => ({
 		id,

@@ -1,6 +1,7 @@
 /** Static frontend delivery contract. Contains no renderer, Node loader, credentials or service implementation. */
+export const WEBUI_ASSET_SCHEMA = 2 as const;
 export interface WebUiAssetManifest {
-	readonly schema: 1;
+	readonly schema: typeof WEBUI_ASSET_SCHEMA;
 	readonly requires: { readonly services: number; readonly workbench: number; readonly extensions: number };
 	/** Descriptive UI compatibility; the backend does not interpret component or theme APIs. */
 	readonly runtime: {
@@ -12,6 +13,8 @@ export interface WebUiAssetManifest {
 	readonly entry: string | null;
 	readonly imports: Readonly<Record<string, string>>;
 	readonly styles: readonly string[];
+	/** Exact SHA-256 hex digests of static style text emitted by the trusted runtime. */
+	readonly inlineStyleHashes: readonly string[];
 	readonly workers: readonly string[];
 	readonly files: readonly {
 		readonly path: string;
@@ -75,6 +78,16 @@ function strings(value: unknown, max: number): string[] {
 	if (new Set(entries).size !== entries.length) return invalid();
 	return entries;
 }
+export function decodeWebUiInlineStyleHashes(value: unknown): readonly string[] {
+	if (
+		!Array.isArray(value) ||
+		value.length > 16 ||
+		value.some((hash) => typeof hash !== "string" || !/^[a-f0-9]{64}$/.test(hash)) ||
+		new Set(value).size !== value.length
+	)
+		return invalid();
+	return [...value];
+}
 export function decodeWebUiAssetManifest(value: unknown): WebUiAssetManifest {
 	const data = object(value, [
 		"schema",
@@ -83,10 +96,11 @@ export function decodeWebUiAssetManifest(value: unknown): WebUiAssetManifest {
 		"entry",
 		"imports",
 		"styles",
+		"inlineStyleHashes",
 		"workers",
 		"files",
 	]);
-	if (data.schema !== 1) return invalid();
+	if (data.schema !== WEBUI_ASSET_SCHEMA) return invalid();
 	const needs = object(data.requires, ["services", "workbench", "extensions"]);
 	const runtime = object(data.runtime, ["id", "sdk", "packages"]);
 	const packageMap = object(runtime.packages),
@@ -121,7 +135,7 @@ export function decodeWebUiAssetManifest(value: unknown): WebUiAssetManifest {
 	)
 		return invalid();
 	return {
-		schema: 1,
+		schema: WEBUI_ASSET_SCHEMA,
 		requires: {
 			services: version(needs.services),
 			workbench: version(needs.workbench),
@@ -131,6 +145,7 @@ export function decodeWebUiAssetManifest(value: unknown): WebUiAssetManifest {
 		entry,
 		imports: modules,
 		styles,
+		inlineStyleHashes: decodeWebUiInlineStyleHashes(data.inlineStyleHashes),
 		workers,
 		files,
 	};

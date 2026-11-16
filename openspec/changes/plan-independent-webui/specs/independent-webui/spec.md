@@ -14,6 +14,12 @@ WebUI SHALL 能够只消费声明的公开客户端、协议、UI SDK 与固定�
 - **THEN** 前端可在无后端源码的环境独立构建，并连接受支持的未修改后端制品
 - **AND** 默认产品启动直接提供选定前端字节，不在启动时拉取浮动源码
 
+#### Scenario: Fixed runtime styles under CSP
+
+- **WHEN** 受信任固定前端制品声明其运行时需要的静态样式 hash
+- **THEN** 加载器核对制品身份和受支持资产 schema，只接纳有界且格式准确的 SHA-256 列表
+- **AND** HTTP 仅允许这些精确样式与同源样式，未知 inline 样式仍被拦截；浏览器请求不能提交任意 CSP 或扩展许可
+
 ### Requirement: Public and symmetric plugin capabilities
 
 插件 SHALL 通过公开声明和 SDK 贡献界面、导航、命名空间命令、服务调用和观察；Agent、Backend、Client、WebUI facets 按实际需要组合。默认与普通业务插件 SHALL 使用相同公开入口，领域可视化、控制和管线由所属插件负责。

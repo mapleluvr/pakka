@@ -2,15 +2,18 @@ import { test } from "node:test";
 import { strict as assert } from "node:assert";
 import { fileURLToPath } from "node:url";
 import { join } from "node:path";
-import { mkdir, writeFile } from "node:fs/promises";
+import { createServer } from "node:http";
+import { listenHttp } from "@pakka/server/http-listener";
+
 import { runtimeFixture } from "../../agent/test/runtime-fixture.ts";
 import { startPocket } from "../../../apps/webui/src/bootstrap.ts";
-import { ownedBrowser } from "../../../apps/webui/test/browser.ts";
-import { openConversations, settleFrontend } from "../../../apps/webui/test/frontend-controls.ts";
+import { createExtensionClient, bindExtensionService } from "@pakka/client/extensions";
+import { createPocketClient, PocketRemoteError } from "@pakka/client/pocket";
+import { reconcileTicketWrite, type PendingTicketWrite } from "../src/browser/pending.ts";
 import { createTicketService, type NativeTicketService } from "@pakka/rsi";
 import { createMasTicketDispatcher } from "@pakka/rsi/mas";
 import { createMas } from "@pakka/mas";
-import { readTicketResult, TicketCallError } from "@pakka/rsi/client";
+import { readTicketResult, ticketCall, TicketCallError } from "@pakka/rsi/client";
 import type { ExtensionJson } from "@pakka/protocol/extensions";
 
 async function backend(): Promise<typeof import("../src/backend.ts")> {
@@ -25,15 +28,19 @@ async function backend(): Promise<typeof import("../src/backend.ts")> {
 }
 
 test(
-	"tickets UI: lost submission response is reconciled without duplicates; edits and reports reopen on desktop and mobile",
+	"tickets HTTP: outer and inner receipts reconcile committed writes; bounds and disabled Backend preserve the original outcome",
 	{ timeout: 45000 },
 	async () => {
 		const module = await backend(),
 			m = await runtimeFixture();
 		await m.runtime.close();
-		let app: Awaited<ReturnType<typeof startPocket>> | undefined,
-			browser: Awaited<ReturnType<typeof ownedBrowser>> | undefined,
-			service!: NativeTicketService;
+		let app: Awaited<ReturnType<typeof startPocket>> | undefined, service!: NativeTicketService;
+		let proxy: ReturnType<typeof createServer> | undefined;
+		let holdEdit = false,
+			releaseEdit = () => {};
+		const held = new Promise<void>((resolve) => {
+			releaseEdit = resolve;
+		});
 		try {
 			app = await startPocket({
 				runtime: { ...m.config, dataDir: join(m.f.root, "product") },
@@ -47,135 +54,217 @@ test(
 				],
 				extensionServices: async (context) => {
 					service = await createTicketService({ runtime: context.runtime, namespace: "tickets" });
-					return { tickets: module.ticketExtensionService(context, service) };
+					const original = module.ticketExtensionService(context, service);
+					return {
+						tickets: {
+							...original,
+							bind(...args: Parameters<typeof original.bind>) {
+								const client = original.bind(...args);
+								return {
+									...client,
+									async edit(input: Parameters<typeof client.edit>[0]) {
+										const result = await client.edit(input);
+										if (holdEdit) {
+											holdEdit = false;
+											await held;
+										}
+										return result;
+									},
+								};
+							},
+						},
+					};
 				},
 			});
-			const ownerAuthority = await app.people.authenticate(app.initialOwner!.token);
-			const mobileInvite = await app.people.invite(ownerAuthority, {
-				requestId: "mobile-admin",
-				role: "admin",
-				resources: "*",
-				ttlMs: 60000,
+			const signed = await fetch(app.http.origin + "/pakka-webui/exchange", {
+				method: "POST",
+				headers: { Origin: app.http.origin, "Content-Type": "application/json" },
+				body: JSON.stringify({ kind: "session", token: app.initialOwner!.token }),
 			});
-			const mobileSession = await app.people.redeem(mobileInvite.token!, "Mobile owner");
-			browser = await ownedBrowser(join(m.f.root, "ticket-browser"));
-			const page = await browser.page(app.http.origin + "/#signin=" + app.initialOwner!.token);
-			await page.wait('document.querySelector("[data-action=signin]")');
-			await page.click("[data-action=signin]");
-			await page.wait('document.querySelector("[data-interface=rsi-tickets]")');
-			await page.click("[data-interface=rsi-tickets]");
-			await page.wait('document.querySelector("[data-ticket-new]")');
-			await page.click("[data-ticket-new]");
-			await page.wait('document.querySelector("[name=ticket-title]")');
-			await page.type("[name=ticket-title]", "Lightweight collaboration filesystem");
-			await page.type("[name=ticket-body]", "Compare costs using real agent workspaces.");
-			await page.evaluate(`(() => {
-			const realFetch = window.fetch.bind(window); let dropped = false;
-			window.fetch = async (url, options) => {
-				let request; try { request = JSON.parse(options?.body || "null"); } catch { request = null; }
-				const response = await realFetch(url, options);
-				if (!dropped && request?.command?.call?.action === "submit") {
-					await response.clone().text(); dropped = true; throw new TypeError("Owned test dropped the committed response");
-				}
-				return response;
+			assert.equal(signed.status, 200);
+			const cookies = signed.headers
+				.getSetCookie()
+				.map((row) => row.split(";")[0]!)
+				.join("; ");
+			const csrf = /pakka_csrf=([^;]+)/.exec(cookies)![1]!;
+			const calls: string[] = [];
+			let drop = true;
+			proxy = createServer((request, response) => {
+				void (async () => {
+					if (!request.url?.startsWith("/pakka-webui/")) {
+						response.writeHead(404).end();
+						return;
+					}
+					const chunks: Buffer[] = [];
+					for await (const chunk of request) chunks.push(Buffer.from(chunk));
+					const body = Buffer.concat(chunks);
+					let action: unknown;
+					try {
+						action = JSON.parse(body.toString()).command?.call?.action;
+					} catch {
+						action = null;
+					}
+					if (typeof action === "string") calls.push(action);
+					const upstream = await fetch(app!.http.origin + request.url, {
+						method: request.method,
+						body,
+						headers: {
+							Origin: app!.http.origin,
+							Cookie: cookies,
+							"Content-Type": "application/json",
+							"X-Pakka-CSRF": String(request.headers["x-pakka-csrf"] ?? ""),
+							"X-Pakka-Person": String(request.headers["x-pakka-person"] ?? ""),
+							"X-Pakka-Server": String(request.headers["x-pakka-server"] ?? ""),
+						},
+					});
+					const bytes = Buffer.from(await upstream.arrayBuffer());
+					// Real committed bytes arrive before the downstream socket is cut.
+					if (drop && action === "submit") {
+						drop = false;
+						response.destroy();
+						return;
+					}
+					response.writeHead(upstream.status, { "Content-Type": "application/json" }).end(bytes);
+				})().catch((reason) => response.destroy(reason instanceof Error ? reason : undefined));
+			});
+			const address = await listenHttp(proxy, { host: "127.0.0.1" });
+			const origin = "http://127.0.0.1:" + address.port;
+			const workbench = createPocketClient({ endpoint: origin + "/pakka-webui/rpc", csrf: () => csrf });
+			const hello = await workbench.request({ op: "hello" });
+			assert.equal(hello.kind, "hello");
+			if (hello.kind !== "hello") throw new Error("Handshake failed");
+			const extensions = createExtensionClient({
+				endpoint: origin + "/pakka-webui/extensions/rpc",
+				csrf: () => csrf,
+				timeoutMs: 15000,
+				personId: () => hello.person.id,
+				serverId: () => hello.serverId,
+			});
+			let registration = (await extensions.list()).find(
+				(row) => row.facet === "backend" && row.manifest.id === "rsi",
+			)!;
+			const signal = new AbortController().signal;
+			const binding = bindExtensionService(extensions, {
+				extensionId: "rsi",
+				personId: hello.person.id,
+				serverId: hello.serverId,
+				signal,
+				backend: () => registration,
+			});
+			const original: PendingTicketWrite = {
+				version: 1,
+				action: "submit",
+				requestId: "original-submit",
+				ticketId: null,
 			};
-		})()`);
-			await page.click("[data-ticket-save]");
-			await page.wait(
-				'document.querySelector(".rsi-pending button") && !document.querySelector(".rsi-pending button").disabled',
+			await assert.rejects(
+				binding.call(
+					"submit",
+					{ title: "Bounded collaboration", body: "Original evidence", sources: [] },
+					{ requestId: original.requestId },
+				),
+				(error) => error instanceof PocketRemoteError && error.outcome === "unknown",
 			);
-			const manager = service.connect({ id: "test-manager", role: () => "manager", check() {} });
+			const manager = service.connect({ id: "manager", role: () => "manager", check() {} });
 			assert.equal((await manager.list()).items.length, 1);
-			await page.click(".rsi-pending button");
-			await page.wait(
-				'document.querySelector("[data-ticket-detail]")?.textContent.includes("Compare costs")',
+			const confirmed = await reconcileTicketWrite(binding, original, signal);
+			assert.equal(confirmed.status, "saved");
+			if (confirmed.status !== "saved") throw new Error("Submission was not confirmed");
+			const first = confirmed.receipt;
+			assert.equal(calls.filter((action) => action === "submit").length, 1);
+			const outer = await binding.operationByRequest(original.requestId);
+			assert.equal(first.requestId, outer.id);
+			assert.notEqual(first.requestId, original.requestId);
+
+			// A real durable edit commits, but the approved Backend action misses its deadline.
+			holdEdit = true;
+			const edit: PendingTicketWrite = {
+				version: 1,
+				action: "edit",
+				requestId: "original-edit",
+				ticketId: first.id,
+			};
+			const timed = await binding.call(
+				"edit",
+				{
+					id: first.id,
+					expectedVersion: first.version,
+					title: "Bounded collaboration",
+					body: "Saved before timeout",
+					sources: [],
+				},
+				{ requestId: edit.requestId },
 			);
-			assert.equal((await manager.list()).items.length, 1, "reconciliation did not submit another ticket");
-			const first = (await manager.list()).items[0]!;
-			assert.equal(first.title, "Lightweight collaboration filesystem");
-			assert.equal(m.f.requests.length, 0);
-			await page.click("[data-ticket-edit]");
-			await page.wait('document.querySelector("[name=ticket-title]")');
-			await page.evaluate(
-				'(()=>{const node=document.querySelector("[name=ticket-body]");node.value="";node.dispatchEvent(new Event("input",{bubbles:true}));})()',
-			);
-			await page.type("[name=ticket-body]", "Retain concurrent-write evidence.");
-			await page.click("[data-ticket-save]");
-			await page.wait(
-				'document.querySelector("[data-ticket-detail]")?.textContent.includes("Retain concurrent-write evidence")',
-			);
-			await page.type("[name=ticket-report]", "An existing tool is sufficient.");
-			await page.evaluate(
-				'(()=>{const n=document.querySelector("[name=ticket-state]");n.value="closed";n.dispatchEvent(new Event("change",{bubbles:true}));})()',
-			);
-			await page.click("[data-ticket-report]");
-			await page.wait('document.querySelector("[data-ticket-state=closed]")');
-			const saved = await manager.get(first.id);
-			assert.equal(saved.ticket.revisions.length, 2);
-			assert.equal(saved.ticket.state, "closed");
-			let revision = saved.ticket.version;
-			for (let i = 0; i < 45; i++)
-				revision = (
+			assert.equal(timed.state, "unknown");
+			const recovered = await reconcileTicketWrite(binding, edit, signal);
+			assert.equal(recovered.status, "saved");
+			if (recovered.status !== "saved") throw new Error("Inner receipt was not confirmed");
+			assert.equal(recovered.receipt.requestId, timed.id);
+			assert.equal(calls.filter((action) => action === "edit").length, 1);
+			assert.equal((await manager.get(first.id)).ticket.revisions.length, 2);
+			releaseEdit();
+			const closed = await ticketCall(binding, "report", {
+				id: first.id,
+				expectedVersion: recovered.receipt.version,
+				state: "closed",
+				text: "Evidence retained",
+				links: [],
+			});
+			assert.equal(closed.state, "closed");
+			let version = closed.version;
+			for (let index = 0; index < 45; index++)
+				version = (
 					await manager.edit({
-						requestId: `history-${i}`,
+						requestId: "history-" + index,
 						id: first.id,
-						expectedVersion: revision,
-						title: `Historical ${i}`,
-						body: `BODY-${i}`,
+						expectedVersion: version,
+						title: "Historical " + index,
+						body: "BODY-" + index,
 						sources: [],
 					})
 				).version;
-			await page.click(`[data-ticket-row="${first.id}"]`);
-			await page.wait('document.querySelector("[data-ticket-history=revisions]")');
-			await page.evaluate('document.querySelector("details.rsi-section").open = true');
-			assert.equal(await page.evaluate('document.querySelectorAll(".rsi-revision").length'), 32);
-			await page.click('[data-ticket-history="revisions"]');
-			await page.wait('document.querySelector(".rsi-revision h4")?.textContent.startsWith("Revision 15")');
-			assert.equal(await page.evaluate('document.querySelectorAll(".rsi-revision").length'), 15);
-			assert.equal(
-				await page.evaluate('document.querySelector("[data-ticket-detail] > h2").textContent'),
-				"Historical 44",
-			);
-			const last = await manager.get(first.id);
-			await manager.edit({
-				requestId: "restore-body",
+			const latest = await ticketCall(binding, "get", { id: first.id });
+			assert.equal(latest.ticket.revisions.length, 32);
+			const earlier = await ticketCall(binding, "history", {
 				id: first.id,
-				expectedVersion: last.ticket.version,
-				title: "Lightweight collaboration filesystem",
-				body: "Retain concurrent-write evidence.",
-				sources: [],
+				kind: "revisions",
+				cursor: latest.cursors.revisions,
+				limit: 32,
 			});
-			const artifacts = join(process.env.PAKKA_TEST_ARTIFACTS ?? m.f.root, "ticket-ui");
-			await mkdir(artifacts, { recursive: true });
-			await writeFile(join(artifacts, "desktop.png"), await page.screenshot());
-			const mobile = await browser.page(app.http.origin + "/#signin=" + mobileSession.token, {
-				width: 390,
-				height: 650,
+			assert.equal(earlier.items.length, 15);
+			assert.equal(latest.ticket.title, "Historical 44");
+
+			await extensions.control({
+				extension: "rsi",
+				facet: "backend",
+				action: "disable",
+				expectedGeneration: registration.generation,
+				requestId: "disable",
 			});
-			await mobile.wait('document.querySelector("[data-action=signin]")');
-			await mobile.click("[data-action=signin]");
-			await mobile.wait('document.querySelector("[data-interface=rsi-tickets]")');
-			await openConversations(mobile);
-			await mobile.click("[data-interface=rsi-tickets]");
-			await mobile.wait('document.querySelector("[data-ticket-row]")');
-			await settleFrontend(mobile);
-			await mobile.click("[data-ticket-row]");
-			await mobile.wait('document.querySelector("[data-ticket-detail]")');
-			assert.equal(
-				await mobile.evaluate(
-					'document.querySelector("[data-ticket-detail]").textContent.includes("Retain concurrent-write evidence")',
-				),
-				true,
+			registration = (await extensions.list()).find(
+				(row) => row.facet === "backend" && row.manifest.id === "rsi",
+			)!;
+			assert.equal(registration.phase, "disabled");
+			await assert.rejects(
+				binding.call("edit", {
+					id: first.id,
+					expectedVersion: version,
+					title: "No",
+					body: "No",
+					sources: [],
+				}),
+				(error) => error instanceof PocketRemoteError && error.outcome === "denied",
 			);
-			assert.equal(
-				await mobile.evaluate(
-					'(()=>{const n=document.querySelector("[data-rsi-tickets]");return n.scrollWidth<=n.clientWidth+1;})()',
-				),
-				true,
-			);
-			await writeFile(join(artifacts, "mobile.png"), await mobile.screenshot());
+			assert.deepEqual(await reconcileTicketWrite(binding, original, signal), confirmed);
+			assert.equal((await manager.get(first.id)).ticket.version, version);
+			assert.equal(m.f.requests.length, 0);
 		} finally {
-			await browser?.close();
+			releaseEdit();
+			if (proxy)
+				await new Promise<void>((resolve) => {
+					proxy!.close(() => resolve());
+					proxy!.closeAllConnections();
+				});
 			await app?.close();
 			await m.close();
 		}

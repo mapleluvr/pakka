@@ -128,6 +128,8 @@ const app = await startPocket({
 
 `runtime` 是受信任装配参数，不从浏览器接收。先核对 manifest digest、closed schema、受支持服务组合、有限文件及其内容 hash，再打开 Session；拒绝路径逃逸、符号链接、重复 URL、服务路由遮蔽、未声明 import/CSS/worker 与内容篡改。完整前端必须有已声明的 HTML entry；共享 runtime 的 entry:null 不能作为完整应用启动。
 
+当前资产 schema 为 `2`，必填 `inlineStyleHashes` 是至多 16 个唯一、小写 SHA-256 hex，可为空。它只许可受信任构建已核对的固定运行时样式文本；Node 转为 CSP hash source，不接受任意 policy、外部 origin、`unsafe-inline` 或 `unsafe-hashes`。前端负责将摘要绑定实际依赖版本并验证字节；修改摘要属于修改固定制品，须重新批准 manifest digest。资产 schema 1 明确拒绝，不能把其中缺失的许可静默当成已支持。该格式版本独立于 services 3 / extensions 3 / workbench 2。
+
 加载后 HTTP 提供已核对的内存字节，生产者后来改磁盘文件不改变正在提供的版本。无下载、运行时构建、npm latest 或失败后替换成另一份 UI。manifest 只描述 renderer 兼容，不让 Node 了解 Button、theme provider 或插件组件树。
 
 本轮尚未切换默认产品。阶段 1 各项实际核对与尚未完成的产品范围以[任务](../../openspec/changes/plan-independent-webui/tasks.md)及其验证记录为准。

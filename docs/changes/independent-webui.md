@@ -68,4 +68,12 @@ Pakka 将历史 read 授权与“执行资源已加载”分开，再核对确�
 
 版本核对发现 services API 2 将 extension 版本闭合为 2；因此两者显式配对升级为 3，workbench 保持 2，Node 加载器读取协议常量，前端制品独立声明所需版本，并通过真实装配核对两者。旧默认消费者同步使用正确 facet 身份；停用 Backend 保留已授权命令声明，避免 slash 输入落入模型消息。没有为兼容恢复整包控制 facade。
 
-[独立 facet 验证](../verification/INDEPENDENT-FACET-CONTROL.md)记录真实原生/HTTP/安装/浏览器、回归和保留失败。已批准的后续工作为阶段 2 最小真实应用；本轮不把临时浏览器宿主计为完整 UI，不改变 Provider 登录、默认切换、发包和合并边界。
+[独立 facet 验证](../verification/INDEPENDENT-FACET-CONTROL.md)记录真实原生/HTTP/安装/浏览器、回归和保留失败。已批准的后续工作为[阶段 2 最小真实应用](../../openspec/changes/plan-independent-webui/phase-2.md)；本轮不把临时浏览器宿主计为完整 UI，不改变 Provider 登录、默认切换、发包和合并边界。
+
+## 阶段 2 独立应用与 RSI 切片
+
+独立前端形成应用入口、同源开发、registry、GUI-only、原历史和模型/Thinking 设置。Pakka 侧公开现有 `openProductModels` 装配入口，客户端提供独立 Backend binding；RSI 包拥有 React/Astryx 工单界面，读取/编辑复用领域协议。丢响应后按浏览器原请求找外层 operation，再确认 operation.id 对应的工单回执，实例替换不取消已接纳工作。
+
+实际模型分页暴露 Astryx Layer 的固定样式注入，资产格式显式升至 schema 2 并声明有限精确 hash；服务 wire 仍为 services 3 / extensions 3 / workbench 2。安装版生产入口验证许可样式生效、其他 inline style 被拒绝。输入跨重开定位与多设置实例并发记录缺陷经真实响应顺序复现并修正；公共输入回执查询保留在阶段 4。
+
+[阶段 2 核对](../verification/INDEPENDENT-WEBUI-PHASE-2.md)记录干净安装、模型真实请求、双 Session 原历史、RSI 两层回执、publication/撤权清理、移动交互与受影响回归。新增持久测试只覆盖资产 closed decoder，RSI 现有浏览器场景下沉到真实 HTTP 并保留实际 React 界面检查；没有将试用 DOM 固定为长期契约。阶段 3–5、默认切换、发布与合并各自保留未完成状态。

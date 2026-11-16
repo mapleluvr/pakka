@@ -11,6 +11,7 @@ import type {
 } from "@pakka/server/pocket";
 import { decodePocketRequest, decodePocketResponse, POCKET_MAX_BYTES } from "@pakka/protocol/pocket";
 import { identity } from "@pakka/protocol";
+import { decodeWebUiInlineStyleHashes } from "@pakka/protocol/webui-assets";
 import { listenHttp } from "@pakka/server/http-listener";
 import QRCode from "qrcode";
 import {
@@ -77,6 +78,8 @@ export interface PocketHttpOptions {
 	readonly maxObservers?: number;
 	/** Host-approved sources only; browser requests cannot supply modules or paths. */
 	readonly extensions?: ExtensionHost;
+	/** Trusted fixed-artifact hashes only. Never arbitrary policy text or browser input. */
+	readonly inlineStyleHashes?: readonly string[];
 	/** Host-accepted fixed public bytes only, no provider/configuration files. */
 	readonly assets?: ReadonlyMap<string, { readonly type: string; readonly body: string | Uint8Array }>;
 }
@@ -224,6 +227,9 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 		.get("/")
 		?.body.toString()
 		.match(/<script type="importmap">([^<]+)<\/script>/)?.[1];
+	const stylePolicy = decodeWebUiInlineStyleHashes(options.inlineStyleHashes ?? [])
+		.map((hash) => " 'sha256-" + Buffer.from(hash, "hex").toString("base64") + "'")
+		.join("");
 	const mapPolicy = importMap
 		? // HTML parsing normalizes CRLF and CR before CSP hashes the script text.
 			" 'sha256-" + createHash("sha256").update(importMap.replace(/\r\n?/g, "\n")).digest("base64") + "'"
@@ -760,7 +766,9 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 			"Content-Security-Policy",
 			"default-src 'self'; script-src 'self'" +
 				mapPolicy +
-				"; style-src 'self'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; frame-src 'self' blob:; object-src 'none'; base-uri 'none'; frame-ancestors 'none'",
+				"; style-src 'self'" +
+				stylePolicy +
+				"; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; frame-src 'self' blob:; object-src 'none'; base-uri 'none'; frame-ancestors 'none'",
 		);
 		const controller = new AbortController();
 		res.once("close", () => controller.abort());

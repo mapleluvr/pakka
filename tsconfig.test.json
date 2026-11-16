@@ -5,12 +5,14 @@
 		"moduleResolution": "NodeNext",
 		"strict": true,
 		"skipLibCheck": true,
+		"jsx": "react-jsx",
 		"noEmit": true,
 		"allowJs": true,
 		"allowImportingTsExtensions": true
 	},
 	"include": [
 		"packages/*/src/**/*.ts",
+		"packages/*/src/**/*.tsx",
 		"packages/*/test/**/*.ts",
 		"apps/*/src/**/*.ts",
 		"apps/*/test/**/*.ts"

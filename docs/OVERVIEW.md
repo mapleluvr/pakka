@@ -4,7 +4,7 @@ Pakka 将 Pi Durable 的 Conversation、权限、持久化与 MAS 协作能力�
 
 ## 当前工作
 
-[独立 WebUI 与通用插件规划](changes/independent-webui.md)已采用分仓、React/Astryx、配置作用域与旧实现清理边界。阶段 0 [消费盘点](../openspec/changes/plan-independent-webui/inventory.md)已交付；阶段 1 已形成独立 SDK/协议/client、原生模型配置、Person 默认与固定 Node 资产接缝，实际结果见[阶段 1 验证](verification/INDEPENDENT-WEBUI-PHASE-1.md)。未加载原 Session 的公开只读 SDK、受权 HTTP 和固定制品接缝见[只读历史核对](verification/READONLY-SQLITE-HISTORY.md)；独立 facet 的原生/HTTP/安装/浏览器结果及阶段 1 收口见[facet 核对](verification/INDEPENDENT-FACET-CONTROL.md)。用户已授权验收后进入阶段 2：独立应用/registry、GUI-only 与 RSI 真实切片、模型双入口和跨 Session 历史界面；[任务](../openspec/changes/plan-independent-webui/tasks.md)逐项记录，Provider `/login` 延期。
+[独立 WebUI 与通用插件规划](changes/independent-webui.md)已采用分仓、React/Astryx、配置作用域与旧实现清理边界。阶段 0 [消费盘点](../openspec/changes/plan-independent-webui/inventory.md)已交付；阶段 1 已形成独立 SDK/协议/client、原生模型配置、Person 默认与固定 Node 资产接缝，实际结果见[阶段 1 验证](verification/INDEPENDENT-WEBUI-PHASE-1.md)。未加载原 Session 的公开只读 SDK、受权 HTTP 和固定制品接缝见[只读历史核对](verification/READONLY-SQLITE-HISTORY.md)；独立 facet 的原生/HTTP/安装/浏览器结果及阶段 1 收口见[facet 核对](verification/INDEPENDENT-FACET-CONTROL.md)。阶段 2 已形成独立应用/registry、GUI-only 与 RSI 真实切片、模型双入口和跨 Session 历史界面；实际读写、两层回执、重开/并发保护及固定生产制品见[阶段 2 核对](verification/INDEPENDENT-WEBUI-PHASE-2.md)。后续为跨仓交付配对与完整功能迁移；[任务](../openspec/changes/plan-independent-webui/tasks.md)逐项记录，输入公共回执查询仍待补齐，Provider `/login` 延期。
 
 [Memo 知识服务与持久 Patchouli](changes/memo-knowledge.md)已完成实现、安装消费与独立复审：Wiki、版本、来源、书库权限、综合检索及按需读取可独立使用，馆员按显式请求与原 MAS 身份推进。当前预期见 [Memo](state/memo.md)，固定结果见[验证摘要](verification/MEMO-KNOWLEDGE.md)。Issue #9 的 History Book 生产接入、小恶魔和 GUI 尚未完成，后续见 [tasks](../openspec/changes/add-memo-knowledge/tasks.md)。
 

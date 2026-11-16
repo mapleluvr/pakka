@@ -32,6 +32,7 @@ import { createWebUiServices, type WebUiServices } from "./webui-services.ts";
 import { createPersonModelDefaults } from "./model-defaults.ts";
 import { loadWebUiAssets, type WebUiArtifactSource } from "./assets.ts";
 export type { PocketServiceContext } from "./backend.ts";
+export { openProductModels, type ProductModelSource } from "./product-models.ts";
 export interface PocketProductOptions {
 	readonly runtime: RuntimeOptions;
 	/** Trusted native configuration service, never supplied through browser RPC. */
@@ -410,6 +411,7 @@ export async function startPocket(options: PocketProductOptions) {
 			notifications,
 			extensions,
 			assets,
+			inlineStyleHashes: frontend?.manifest.inlineStyleHashes,
 		});
 		let closed = false;
 		return Object.freeze({
