@@ -4,7 +4,7 @@ Pakka 将 Pi Durable 的 Conversation、权限、持久化与 MAS 协作能力�
 
 ## 当前工作
 
-[独立 WebUI 与通用插件规划](changes/independent-webui.md)已采用分仓、React/Astryx、配置作用域与旧实现清理边界。阶段 0 [消费盘点](../openspec/changes/plan-independent-webui/inventory.md)已交付；阶段 1 已形成独立 SDK/协议/client、原生模型配置、Person 默认与固定 Node 资产接缝，实际结果见[阶段 1 验证](verification/INDEPENDENT-WEBUI-PHASE-1.md)。未加载原 Session 的公开只读 SDK、受权 HTTP 和固定制品接缝见[只读历史核对](verification/READONLY-SQLITE-HISTORY.md)；[任务 3.2](../openspec/changes/plan-independent-webui/tasks.md)仍缺独立 facet 控制；完整应用/registry/业务插件与模型双入口继续后续任务，Provider `/login` 延期。
+[独立 WebUI 与通用插件规划](changes/independent-webui.md)已采用分仓、React/Astryx、配置作用域与旧实现清理边界。阶段 0 [消费盘点](../openspec/changes/plan-independent-webui/inventory.md)已交付；阶段 1 已形成独立 SDK/协议/client、原生模型配置、Person 默认与固定 Node 资产接缝，实际结果见[阶段 1 验证](verification/INDEPENDENT-WEBUI-PHASE-1.md)。未加载原 Session 的公开只读 SDK、受权 HTTP 和固定制品接缝见[只读历史核对](verification/READONLY-SQLITE-HISTORY.md)；独立 facet 的原生/HTTP/安装/浏览器结果及阶段 1 收口见[facet 核对](verification/INDEPENDENT-FACET-CONTROL.md)。用户已授权验收后进入阶段 2：独立应用/registry、GUI-only 与 RSI 真实切片、模型双入口和跨 Session 历史界面；[任务](../openspec/changes/plan-independent-webui/tasks.md)逐项记录，Provider `/login` 延期。
 
 [Memo 知识服务与持久 Patchouli](changes/memo-knowledge.md)已完成实现、安装消费与独立复审：Wiki、版本、来源、书库权限、综合检索及按需读取可独立使用，馆员按显式请求与原 MAS 身份推进。当前预期见 [Memo](state/memo.md)，固定结果见[验证摘要](verification/MEMO-KNOWLEDGE.md)。Issue #9 的 History Book 生产接入、小恶魔和 GUI 尚未完成，后续见 [tasks](../openspec/changes/add-memo-knowledge/tasks.md)。
 
@@ -18,7 +18,7 @@ Pakka 将 Pi Durable 的 Conversation、权限、持久化与 MAS 协作能力�
 
 ## 产品后续入口
 
-- WebUI 重构先读[开发原则](development/FRONTEND-GUIDELINES.md)、[独立前端职责与接口](development/WEBUI-ARCHITECTURE.md)和[阶段设计](../openspec/changes/plan-independent-webui/design.md)。React 19 / Astryx 为采用路线，运行时仍待真实验证；旧 Preact 插件不迁移。比较来路见[调研](development/WEBUI-DESIGN-SYSTEMS.md)与[原文档交付](changes/webui-design-principles.md)。
+- WebUI 重构先读[开发原则](development/FRONTEND-GUIDELINES.md)、[独立前端职责与接口](development/WEBUI-ARCHITECTURE.md)和[阶段设计](../openspec/changes/plan-independent-webui/design.md)。React 19 / Astryx 的共享运行时接缝已验证，完整应用仍按阶段 2–5 推进；旧 Preact 插件不迁移。比较来路见[调研](development/WEBUI-DESIGN-SYSTEMS.md)与[原文档交付](changes/webui-design-principles.md)。
 - [Runtime 与默认入口](../openspec/changes/enable-product-runtime-and-launcher/tasks.md)：受控长上下文/重试、附件、长期容量治理；固定结果见[验证记录](verification/PRODUCT-RUNTIME-LAUNCHER.md)。
 - [资源压力](../openspec/changes/add-local-maintenance-and-delivery/tasks.md#near-term-resource-pressure)：冷浏览/有界观察已交付；完整执行上下文、活跃 Runtime 预算、闲置卸载及独立 worker/OOM 恢复仍需接续。
 - [工作台导航与本机恢复](../openspec/changes/improve-webui-navigation-and-local-recovery/tasks.md)：维护与登录由本轮接续，可寻址设置及逐页交互仍待办。

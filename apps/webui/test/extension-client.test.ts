@@ -9,7 +9,7 @@ test(
 	"Extension client: original-result reads reject a different extension, request or actor without replay",
 	{ timeout: 10000 },
 	async () => {
-		for (const override of [{ extension: "foreign" }, { requestId: "foreign" }, { actorId: "foreign" }]) {
+		for (const override of [{}, { extension: "foreign" }, { requestId: "foreign" }, { actorId: "foreign" }]) {
 			const commands: unknown[] = [];
 			const server = createServer(async (req, res) => {
 				const chunks: Buffer[] = [];
@@ -19,7 +19,7 @@ test(
 				res.writeHead(200, { "Content-Type": "application/json" });
 				res.end(
 					JSON.stringify({
-						version: 2,
+						version: 3,
 						requestId: envelope.requestId,
 						serverId: "owned-server",
 						result: {
@@ -46,10 +46,10 @@ test(
 					endpoint: `http://127.0.0.1:${address.port}/pocket/extensions/rpc`,
 					personId: () => "current-person",
 				});
-				await assert.rejects(
-					client.operationByRequest({ extension: "sample", requestId: "original" }),
-					(error: Error & { outcome?: string }) => error.outcome === "unknown",
-				);
+				const result = client.operationByRequest({ extension: "sample", requestId: "original" });
+				if (!Object.keys(override).length) assert.equal((await result).state, "done");
+				else
+					await assert.rejects(result, (error: Error & { outcome?: string }) => error.outcome === "unknown");
 				assert.deepEqual(commands, [
 					{ op: "operationByRequest", request: { extension: "sample", requestId: "original" } },
 				]);

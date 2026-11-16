@@ -180,6 +180,8 @@ import type {
 	LocalExecutionOptions,
 } from "./execution-types.ts";
 
+import { agentFacetSource, AgentFacetRevoked, type AgentFacet } from "./agent-facet.ts";
+
 // Fixed public filesystem operations. The count is the number of arguments before signal/Context.
 const executionMethods = {
 	absolutePath: 1,
@@ -2371,6 +2373,34 @@ export interface ManagedAdapterPort {
 	waitForIdle(): Promise<void>;
 	close(): Promise<void>;
 }
+function prepareAgentFacets(
+	value: readonly AgentFacet[] | undefined,
+	profiles: ReadonlyMap<string, HostOptions>,
+): readonly AgentFacet[] {
+	if (value === undefined) return Object.freeze([]);
+	if (!Array.isArray(value) || value.length > 64) throw Error("Invalid finite Agent facets");
+	const ids = new Set<string>();
+	for (const facet of value) {
+		const { definition } = agentFacetSource(facet);
+		if (ids.has(definition.id) || definition.profiles.some((id) => !profiles.has(id)))
+			throw Error("Duplicate or unapproved Agent facet profile");
+		ids.add(definition.id);
+	}
+	for (const [id, options] of profiles) {
+		const names = new Set<string>(options.execution?.tools ?? []);
+		const tools = [
+			...(options.tools ?? []),
+			...value
+				.filter((facet) => facet.profiles.includes(id))
+				.flatMap((facet) => agentFacetSource(facet).definition.tools),
+		];
+		for (const tool of tools) {
+			if (names.has(tool.name)) throw Error("Approved Agent tool collision");
+			names.add(tool.name);
+		}
+	}
+	return Object.freeze([...value]);
+}
 function prepareContextSources(
 	value: unknown,
 	profiles: ReadonlyMap<string, HostOptions>,
@@ -2471,13 +2501,30 @@ function profileHash(
 	options: HostOptions,
 	contextSources: readonly RuntimeContextSource[],
 	profileId: string,
+	agentFacets: readonly AgentFacet[],
 ): string {
 	const selected = contextSources.filter((source) => source.profiles.includes(profileId));
+	const contributions = agentFacets
+		.filter((facet) => facet.profiles.includes(profileId))
+		.map((facet) => {
+			const { definition } = agentFacetSource(facet);
+			return {
+				id: definition.id,
+				version: definition.version,
+				instructions: definition.instructions ?? "",
+				tools: definition.tools.map(({ name, description, parameters }) => ({
+					name,
+					description,
+					parameters,
+				})),
+			};
+		});
 	return hash({
 		...(options.models ? { modelAccess: "native-v1" } : { endpoint: options.endpoint, model: options.model }),
 		cwd: resolve(options.cwd),
 		systemPrompt: options.systemPrompt ?? "",
 		...(selected.length ? { contextSources: selected.map(({ id, version }) => ({ id, version })) } : {}),
+		...(contributions.length ? { agentFacets: contributions } : {}),
 		...(options.execution ? { execution: executionFingerprint(options.execution) } : {}),
 		tools: (options.tools ?? []).map(({ name, description, parameters }) => ({
 			name,
@@ -3113,6 +3160,7 @@ export class DurableAdapter {
 	#disposed = false;
 	#providerSessionId: string | undefined;
 	#registry: Registry | undefined;
+	#facetSubscriptions: (() => void)[] = [];
 	#nativeInvocations = new WeakMap<
 		object,
 		{ api: ToolExecutionApi; active: boolean; signal?: AbortSignal }
@@ -3168,7 +3216,14 @@ export class DurableAdapter {
 		control: AdapterControl,
 		managedOptions?: Pick<
 			RuntimeOptions,
-			"limits" | "profiles" | "cwdRoots" | "reservedSessionId" | "jobs" | "contextSources" | "observation"
+			| "limits"
+			| "profiles"
+			| "cwdRoots"
+			| "reservedSessionId"
+			| "jobs"
+			| "contextSources"
+			| "observation"
+			| "agentFacets"
 		>,
 	): Promise<DurableAdapter> {
 		const profiles = new Map<string, HostOptions>([["default", profileOptions(options)]]);
@@ -3188,6 +3243,7 @@ export class DurableAdapter {
 			}
 		}
 		const contextSources = prepareContextSources(managedOptions?.contextSources, profiles);
+		const agentFacets = prepareAgentFacets(managedOptions?.agentFacets, profiles);
 		if (
 			managedOptions?.cwdRoots !== undefined &&
 			(!Array.isArray(managedOptions.cwdRoots) ||
@@ -3204,7 +3260,7 @@ export class DurableAdapter {
 		];
 		for (const profile of profiles.values()) approvedDirectory(profile.cwd, cwdRoots);
 		const approvedHashes = Object.fromEntries(
-			[...profiles].map(([id, profile]) => [id, profileHash(profile, contextSources, id)]),
+			[...profiles].map(([id, profile]) => [id, profileHash(profile, contextSources, id, agentFacets)]),
 		);
 		if (managedOptions?.cwdRoots !== undefined) approvedHashes["@cwdRoots"] = hash(cwdRoots);
 		const modelKeys = new Set<string>();
@@ -3299,6 +3355,7 @@ export class DurableAdapter {
 		let openedHarness: Harness | undefined;
 		let openedStorage: SqliteStorage | undefined;
 		let openedDatabase: OwnedSqlite | undefined;
+		const facetSubscriptions: (() => void)[] = [];
 		try {
 			const storage = await openPersistentStorage(
 				storageDir,
@@ -3350,9 +3407,20 @@ export class DurableAdapter {
 			const routes = new Map<ConversationId, DurableAdapter>();
 			const extensions = new Map<string, ReturnType<typeof defineExtension>>();
 			for (const [id, profile] of profiles) {
-				const extension = DurableAdapter.#extension(profile, routes, id);
+				const extension = DurableAdapter.#extension(profile, routes, id, agentFacets);
 				registry.install(extension);
 				extensions.set(id, extension);
+			}
+			for (const facet of agentFacets) {
+				facetSubscriptions.push(
+					agentFacetSource(facet).subscribe(() => {
+						for (const id of facet.profiles) {
+							const extension = DurableAdapter.#extension(profiles.get(id)!, routes, id, agentFacets);
+							registry.install(extension);
+							extensions.set(id, extension);
+						}
+					}),
+				);
 			}
 			const ext = extensions.get("default")!;
 
@@ -3503,6 +3571,7 @@ export class DurableAdapter {
 			adapter.#storage = storage;
 			adapter.#routes = routes;
 			adapter.#registry = registry;
+			adapter.#facetSubscriptions = facetSubscriptions;
 			routes.set(conversation.id, adapter);
 			if (managedOptions) {
 				const hashes = { ...approvedHashes };
@@ -3574,6 +3643,7 @@ export class DurableAdapter {
 			await adapter.refreshCache();
 			return adapter;
 		} catch (error) {
+			for (const unsubscribe of facetSubscriptions) unsubscribe();
 			// A claim is released only after the known writer is closed; cleanup failure retains it.
 			if (openedHarness) await openedHarness.close(BACKGROUND_CONTEXT);
 			else if (openedStorage) await openedStorage.close(BACKGROUND_CONTEXT);
@@ -3701,7 +3771,29 @@ export class DurableAdapter {
 		});
 	}
 
-	static #extension(options: HostOptions, routes: Map<ConversationId, DurableAdapter>, profile: string) {
+	static #extension(
+		options: HostOptions,
+		routes: Map<ConversationId, DurableAdapter>,
+		profile: string,
+		facets: readonly AgentFacet[],
+	) {
+		const active = facets
+			.filter((facet) => facet.profiles.includes(profile) && facet.status().phase === "ready")
+			.map((facet) => {
+				const source = agentFacetSource(facet),
+					generation = facet.status().generation;
+				return { definition: source.definition, check: () => source.check(generation) };
+			});
+		const contributedTools = active.flatMap(({ definition, check }) =>
+			definition.tools.map((tool): NonNullable<HostOptions["tools"]>[number] => ({
+				...tool,
+				execute(args, signal, scope) {
+					check();
+					// Admission is checked once here. Accepted work retains its own service/Runtime lifecycle.
+					return tool.execute(args, signal, scope);
+				},
+			})),
+		);
 		const resolveAdapter = (id: ConversationId) => {
 			const adapter = routes.get(id);
 			if (!adapter || adapter.#disposed) throw new Error("Conversation authority is not bound");
@@ -3742,7 +3834,7 @@ export class DurableAdapter {
 			name: profile === "default" ? "pakka-core-extension" : "pakka-profile-" + profile,
 			tools: [
 				...nativeTools,
-				...(options.tools ?? []).map((tool) =>
+				...[...(options.tools ?? []), ...contributedTools].map((tool) =>
 					defineTool({
 						name: tool.name,
 						description: tool.description,
@@ -3758,7 +3850,14 @@ export class DurableAdapter {
 					}),
 				),
 			],
-			sections: options.systemPrompt ? [section("system", () => options.systemPrompt, { tag: false })] : [],
+			sections: [
+				...(options.systemPrompt ? [section("system", () => options.systemPrompt, { tag: false })] : []),
+				...active.flatMap(({ definition }) =>
+					definition.instructions
+						? [section("facet-" + definition.id, () => definition.instructions, { tag: false })]
+						: [],
+				),
+			],
 			hooks: [
 				hook(GenerationTask, {
 					beforeRequest: async (_request, api, context) => {
@@ -3774,7 +3873,7 @@ export class DurableAdapter {
 							const permitted = await adapter.#control.project(context.abortSignal);
 							permitted.check();
 							if ("block" in permitted) return { block: permitted.block };
-							const checks: (() => void)[] = [permitted.check];
+							const checks: (() => void)[] = [permitted.check, ...active.map((source) => source.check)];
 							const sections: Record<string, string> = {};
 							let chars = 0;
 							for (const source of adapter.#managed?.contextSources ?? []) {
@@ -3848,7 +3947,8 @@ export class DurableAdapter {
 							return { messages, check };
 						} catch (error) {
 							const failure = error instanceof Error ? error : new Error(String(error));
-							if (!(failure instanceof LifecycleTransitionRevoked)) adapter?.markFailed(failure);
+							if (!(failure instanceof LifecycleTransitionRevoked) && !(failure instanceof AgentFacetRevoked))
+								adapter?.markFailed(failure);
 							return { block: failure.message };
 						}
 					},
@@ -4253,6 +4353,7 @@ export class DurableAdapter {
 			close: async () => {
 				if (this.#managed!.closed) return;
 				this.#managed!.closed = true;
+				for (const unsubscribe of this.#facetSubscriptions.splice(0)) unsubscribe();
 				await this.#harness.close(BACKGROUND_CONTEXT);
 				await Promise.all([...this.#routes.values()].map((route) => route.#closeExecution()));
 				await this.#database?.close();

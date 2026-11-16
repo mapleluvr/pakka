@@ -77,9 +77,11 @@ test(
 				// transient mount immediately undone by the previous sheet's history.back().
 				await writeFile(join(evidence, `extensions-${size.width}.png`), await page.screenshot());
 				assert.equal(await page.evaluate('document.querySelectorAll(".settings-view").length'), 1);
-				assert.equal(
-					await page.evaluate('document.querySelectorAll(".pocket-extension-registration").length'),
-					2,
+				assert.deepEqual(
+					await page.evaluate(
+						'[...document.querySelectorAll(".pocket-extension-registration")].map(row => row.dataset.facet).sort()',
+					),
+					["backend", "client", "webui", "webui"],
 				);
 				assert.equal(await page.evaluate("document.documentElement.scrollWidth<=innerWidth"), true);
 				assert.equal(

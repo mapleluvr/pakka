@@ -8,14 +8,22 @@ import type {
 	ExtensionOperation,
 	ExtensionOperationRequest,
 	ExtensionRegistration,
+	ExtensionFacetControl,
+	ExtensionControlIdentity,
+	ExtensionControlReceipt,
 } from "@pakka/protocol/extensions";
-import { decodeExtensionRequest, decodeExtensionResponse } from "@pakka/protocol/extension-rpc";
+import {
+	decodeExtensionRequest,
+	decodeExtensionResponse,
+	EXTENSION_VERSION,
+} from "@pakka/protocol/extension-rpc";
 import type { ExtensionCommandEnvelope, ExtensionResult } from "@pakka/protocol/extension-rpc";
 
 export interface ExtensionClient {
 	/** Exact public asset URL with complete Session/Conversation identity; no authority is granted. */
 	assetUrl(
 		extension: string,
+		facet: "webui" | "client",
 		generation: string,
 		path: string,
 		target?: Pick<AgentRef, "sessionId" | "conversationId">,
@@ -27,11 +35,12 @@ export interface ExtensionClient {
 		request: ExtensionOperationRequest,
 		options?: PocketRequestOptions,
 	): Promise<ExtensionOperation>;
-	control(
-		extension: string,
-		action: "enable" | "disable" | "reload",
+	control(change: ExtensionFacetControl, options?: PocketRequestOptions): Promise<ExtensionControlReceipt>;
+	/** Queries only: null/unknown never authorizes replay of a control. */
+	controlByRequest(
+		original: ExtensionControlIdentity,
 		options?: PocketRequestOptions,
-	): Promise<void>;
+	): Promise<ExtensionControlReceipt | null>;
 }
 /** Explicit same-origin capability client; reads no token/configuration at import and never retries a mutation. */
 export function createExtensionClient(
@@ -68,7 +77,7 @@ export function createExtensionClient(
 		input: PocketRequestOptions = {},
 	): Promise<ExtensionResult> {
 		const requestId = input.requestId ?? globalThis.crypto.randomUUID(),
-			encoded = decodeExtensionRequest({ version: 2, requestId, command });
+			encoded = decodeExtensionRequest({ version: EXTENSION_VERSION, requestId, command });
 		const personId = options.personId?.() ?? null;
 		const expectedServer = options.serverId?.() ?? serverId;
 		if (input.signal?.aborted || (independent && (!identity(personId) || !identity(expectedServer))))
@@ -151,12 +160,14 @@ export function createExtensionClient(
 	return Object.freeze({
 		assetUrl: (
 			extension: string,
+			facet: "webui" | "client",
 			generation: string,
 			path: string,
 			target?: Pick<AgentRef, "sessionId" | "conversationId">,
 		) => {
 			if (
 				!extensionId(extension) ||
+				(facet !== "webui" && facet !== "client") ||
 				!identity(generation) ||
 				!publicPath(path) ||
 				(target && (!identity(target.sessionId) || !identity(target.conversationId)))
@@ -168,7 +179,7 @@ export function createExtensionClient(
 					: "app/"
 				: "";
 			const asset = new URL(
-				`${independent ? "/pakka-webui" : "/pocket"}/extensions/assets/${extension}/${generation}/${scope}${path}`,
+				`${independent ? "/pakka-webui" : "/pocket"}/extensions/assets/${extension}/${facet}/${generation}/${scope}${path}`,
 				endpoint,
 			);
 			if (target && !independent) {
@@ -181,7 +192,8 @@ export function createExtensionClient(
 			const result = await request({ op: "list", ...(target ? { target } : {}) }, input);
 			if (result.kind !== "registrations") return unknown(input.requestId);
 			declarations.clear();
-			for (const item of result.registrations) declarations.set(item.manifest.id, item);
+			for (const item of result.registrations)
+				if (item.facet === "backend") declarations.set(item.manifest.id + ":" + item.generation, item);
 			return result.registrations;
 		},
 		call: async (call: ExtensionCall, input: PocketRequestOptions = {}) => {
@@ -193,7 +205,9 @@ export function createExtensionClient(
 				result.operation.requestId !== call.requestId
 			)
 				return unknown(input.requestId);
-			const action = declarations.get(call.extension)?.manifest.actions.find((row) => row.id === call.action);
+			const action = declarations
+				.get(call.extension + ":" + call.generation)
+				?.manifest.actions.find((row) => row.id === call.action);
 			if (result.operation.state === "done" && action) {
 				try {
 					decodeValue(action.output, result.operation.value);
@@ -218,14 +232,39 @@ export function createExtensionClient(
 				return unknown(input.requestId);
 			return correlated(result.operation, input);
 		},
-		control: async (
-			extension: string,
-			action: "enable" | "disable" | "reload",
-			input: PocketRequestOptions = {},
-		) => {
-			const result = await request({ op: action, extension }, input);
-			if (result.kind !== "updated") return unknown(input.requestId);
-			declarations.delete(extension);
+		control: async (change: ExtensionFacetControl, input: PocketRequestOptions = {}) => {
+			const result = await request(
+				{ op: "control", change },
+				{ ...input, requestId: input.requestId ?? change.requestId },
+			);
+			if (
+				result.kind !== "control" ||
+				result.receipt.extension !== change.extension ||
+				result.receipt.facet !== change.facet ||
+				result.receipt.requestId !== change.requestId ||
+				result.receipt.action !== change.action ||
+				result.receipt.expectedGeneration !== change.expectedGeneration ||
+				(options.personId && result.receipt.actorId !== options.personId())
+			)
+				return unknown(input.requestId ?? change.requestId);
+			if (change.facet === "backend")
+				for (const [key, row] of declarations)
+					if (row.manifest.id === change.extension) declarations.delete(key);
+			return result.receipt;
+		},
+		controlByRequest: async (original: ExtensionControlIdentity, input: PocketRequestOptions = {}) => {
+			const result = await request({ op: "controlByRequest", original }, input);
+			if (result.kind !== "control-operation") return unknown(input.requestId);
+			const receipt = result.receipt;
+			if (
+				receipt &&
+				(receipt.extension !== original.extension ||
+					receipt.facet !== original.facet ||
+					receipt.requestId !== original.requestId ||
+					(options.personId && receipt.actorId !== options.personId()))
+			)
+				return unknown(input.requestId);
+			return receipt;
 		},
 	});
 }

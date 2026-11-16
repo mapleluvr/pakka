@@ -10,6 +10,7 @@ const core = new Set([
 	"packages/client/test/session-recovery.test.ts",
 	"packages/client/test/pocket-observation.test.ts",
 	"packages/agent/test/permissions.test.ts",
+	"packages/agent/test/agent-facet.test.ts",
 	"packages/agent/test/runtime-safety.test.ts",
 	"packages/agent/test/runtime-records.test.ts",
 	"packages/agent/test/sqlite-persistence.test.ts",
@@ -90,6 +91,7 @@ const scopes = {
 		f.startsWith("packages/client/") ||
 		f.startsWith("packages/protocol/") ||
 		f === "packages/agent/test/stored-history.test.ts" ||
+		f === "packages/agent/test/agent-facet.test.ts" ||
 		/webui.test/.test(f),
 };
 export function select(files, args) {

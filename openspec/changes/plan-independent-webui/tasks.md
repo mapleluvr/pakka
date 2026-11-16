@@ -4,7 +4,7 @@
 - [x] 1.2 同步已采用的分仓、模型作用域、旧实现清理、插件职责及跨 Session 浏览到 state、开发入口和本地计划；Provider `/login` 继续延期。
 - [x] 1.3 核对完整文档 diff、内部链接/锚点、格式、主动 LSP 与 OpenSpec strict，记录实际检查及未运行的产品验证；见[核对记录](../../../docs/verification/WEBUI-DESIGN-PRINCIPLES.md#独立前端规划修订)。
 
-阶段 0 已完成并以 29cb207 交付。用户随后授权建立 public pakka-webui 仓库（0ee6bdc），并于 2026-11-14 授权执行阶段 1；具体边界和接缝设计见 [phase-1](phase-1.md)。旧 monorepo WebUI 不作为新 UI 的设计起点，必要时重写。默认发行切换、完整页面、Provider /login、npm 发布和合并不在本轮；阶段 2 之后的能力验收仍保持未完成。
+阶段 0 已完成并以 29cb207 交付。用户随后授权建立 public pakka-webui 仓库（0ee6bdc），并于 2026-11-14 授权执行阶段 1；具体边界和接缝设计见 [phase-1](phase-1.md)。旧 monorepo WebUI 不作为新 UI 的设计起点，必要时重写。默认发行切换、完整页面、Provider /login、npm 发布和合并不在本轮；用户随后要求先完成阶段 1 验收再进入阶段 2；该顺序已获授权，阶段 2 的能力须由实际应用切片另行验收。
 
 ## 2. 阶段 0：完整基线与消费清单
 
@@ -19,19 +19,24 @@
 ## 3. 阶段 1：可独立消费的接缝
 
 - [x] 3.1 根据消费清单确定 SDK/协议/client/Backend 包出口和固定开发制品渠道，避免根 overrides、私有路径和重复定义。
-- [ ] 3.2 形成最小贡献/实例、资源引用/解析、显式服务绑定及分 facet 生命周期契约，分别处理持久身份、当前运行绑定、权限和不可用状态。
+- [x] 3.2 形成最小贡献/实例、资源引用/解析、显式服务绑定及分 facet 生命周期契约，分别处理持久身份、当前运行绑定、权限和不可用状态。
 - [x] 3.2.1 按已授权的[只读接缝](readonly-history.md)形成 Chord 只读生命周期与 Durable 原生 reader，真实 SQLite 回归覆盖持久性、schema、WAL/一致性、分叉与失效视图。
 - [x] 3.2.2 固定新下游 SDK/Chord companion 源、构建锁、归档及追加式兼容记录；公开 exports 在隔离安装中消费，不修改已安装依赖。
 - [x] 3.2.3 接通 Pakka 已知未加载原 Session 的受权读取与状态，验证同号隔离、原身份、撤权及读取不恢复执行。
 - [x] 3.2.4 完成受影响类型/构建/回归与固定开发制品核对，记录实际能力、剩余独立 facet 缺口和阶段 2 未验收边界；[核对记录](../../../docs/verification/READONLY-SQLITE-HISTORY.md)保留环境/上游限制和原始失败，不将其改写为全量通过。
+- [x] 3.2.5 按[独立 facet 控制](facets.md)以公开 pi-durable Registry 形成可信 approved-profile Agent 接缝，核对实际工具/指令、停用、在途工作和重开边界。
+- [x] 3.2.6 形成逐 facet 发现/身份、受权控制与原请求回执，真实 HTTP 核对 Backend/WebUI/Client/Agent 的独立性、部分失败和持久状态。
+- [x] 3.2.7 补齐纯浏览器 WebUI facet 实例清理与旧结果隔离、extension wire 3 制品配对及仓库外实际安装消费；记录选定回归和剩余产品范围。
 - [x] 3.3 形成 `/pakka-webui` 服务与初始版本组合，保留运行时校验、原请求和安全边界；不复用旧模型 transport 为新公共形状。
 - [x] 3.4 落实已采用模型作用域的保存/创建接线、公共配置校验/写入/冲突/回执及重载；复用公开 Pi 能力，Provider `/login` 不提前实施。
 - [x] 3.5 明确共享 React/Astryx/JSX runtime、主题/portal、模块映射与 CSS/worker/CSP/资产身份的构建契约。
 - [x] 3.6 用仓库外干净消费者验证 browser SDK、GUI-only/headless 的声明/运行图和安装闭包；记录实际固定产物与限制。
 
-阶段 1 已形成独立 SDK/协议/client、服务/配置与固定资产接缝，检查见[阶段 1 验证](../../../docs/verification/INDEPENDENT-WEBUI-PHASE-1.md)。3.2 部分实现：贡献/实例、显式 bindings、已加载资源解析、完整资产身份和多 Session reconnect 已核对；未加载原历史已形成公开 SDK 与真实 HTTP 读取接缝，结果/保留失败见[只读核对](../../../docs/verification/READONLY-SQLITE-HISTORY.md)；独立 facet 控制仍缺实现，因此 3.2 总项保持未完成。runtime entry:null 与临时浏览器宿主不代替完整应用，后续产品任务不因这些检查而勾选。
+阶段 1 已形成独立 SDK/协议/client、服务/配置与固定资产接缝，检查见[阶段 1 验证](../../../docs/verification/INDEPENDENT-WEBUI-PHASE-1.md)。3.2 已完成：贡献/实例、显式 bindings、已加载资源解析、完整资产身份和多 Session reconnect 已核对；未加载原历史见[只读核对](../../../docs/verification/READONLY-SQLITE-HISTORY.md)；独立 facet 原生/HTTP/浏览器/安装与 335 个 release 文件的分轮结果见[facet 核对](../../../docs/verification/INDEPENDENT-FACET-CONTROL.md)。原长路径 ACL、上游声明失败与跳过保持明确，不改写为全量无条件通过。runtime entry:null 与临时浏览器宿主不代替完整应用，后续产品任务不因这些检查而勾选。
 
 ## 4. 阶段 2：最小真实前端
+
+阶段 1 接缝验收已完成；按用户授权进入本阶段。最小真实应用从已采用需求与公开制品形成，旧 monorepo 页面作为功能/边界参考；不会把临时验收宿主直接宣称为正式应用。
 
 - [ ] 4.1 在已授权创建的独立前端仓库形成可独立安装/构建的前端，真实挂载 GUI-only 插件，核对共享 runtime/主题/portal/focus 及打开/关闭零新增模型请求。
 - [ ] 4.2 新 SDK 业务插件连接真实受权服务，读取有限数据，完成一次受控写入与丢响应后的原请求核对；关闭/替换清理不取消服务工作。

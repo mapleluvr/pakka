@@ -36,6 +36,8 @@
 | 2026-10-21 文档清理与外置恢复   | [清理记录](DOCUMENTATION-CLEANUP.md)                                                                         |
 | 更早阶段                        | [历史资料索引](../archive/README.md)                                                                         |
 
+[独立 facet 控制与阶段 1 收口](INDEPENDENT-FACET-CONTROL.md)补充逐 facet 原生/HTTP/浏览器控制、固定制品与最终回归结果；与阶段 1 原接缝及只读历史记录共同说明进入阶段 2 的范围。
+
 ## 静态调查（不构成产品验收）
 
 - [独立 WebUI 阶段 0](INDEPENDENT-WEBUI-PHASE-0.md)：网络/资产、公开出口/消费者、功能归属、G1–G6 缺口及后续真实切片；没有新前端或安装/运行验收。

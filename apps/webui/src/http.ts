@@ -31,7 +31,11 @@ import {
 } from "./sessions.ts";
 import { ExtensionRefusal } from "./extension-host.ts";
 import { NavigationRefusal, type PersonalNavigation } from "./navigation.ts";
-import { decodeExtensionRequest, decodeExtensionResponse } from "@pakka/protocol/extension-rpc";
+import {
+	decodeExtensionRequest,
+	decodeExtensionResponse,
+	EXTENSION_VERSION,
+} from "@pakka/protocol/extension-rpc";
 import { decodeValue, publicPath } from "@pakka/protocol/extensions";
 import type { ProductModelSource } from "./product-models.ts";
 import type { WebUiServices } from "./webui-services.ts";
@@ -762,7 +766,8 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 		res.once("close", () => controller.abort());
 		let requestId = "invalid",
 			dispatched = false,
-			serviceRequest = false;
+			serviceRequest = false,
+			extensionRequest = false;
 		void (async () => {
 			if (closed) throw new Refusal(503, "CAPACITY");
 			boundary(req, false);
@@ -776,6 +781,7 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 			const independent = url.pathname.startsWith("/pakka-webui/");
 			// Shared handlers keep one authorization path; the legacy model transport is not exposed here.
 			const routePath = independent ? "/pocket/" + url.pathname.slice("/pakka-webui/".length) : url.pathname;
+			extensionRequest = routePath === "/pocket/extensions/rpc";
 			const observing = req.method === "GET" && routePath === "/pocket/events";
 			if (observing) {
 				if (observers >= observerCapacity) throw new Refusal(503, "CAPACITY");
@@ -931,6 +937,8 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 					const raw = await json(req);
 					if (raw && typeof raw === "object" && "requestId" in raw && identity(raw.requestId))
 						requestId = raw.requestId;
+					if (raw && typeof raw === "object" && "version" in raw && raw.version !== EXTENSION_VERSION)
+						throw new Refusal(400, "VERSION_MISMATCH");
 					let parsed;
 					try {
 						parsed = decodeExtensionRequest(raw);
@@ -969,6 +977,7 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 										.find(
 											(row) =>
 												row.manifest.id === call.extension &&
+												row.facet === "backend" &&
 												row.generation === call.generation &&
 												row.phase === "ready",
 										);
@@ -983,27 +992,40 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 								result = { kind: "operation", operation: await extensions.call(a, call, controller.signal) };
 								break;
 							}
-							default:
+							case "control":
 								guard(() => people.check(a, "extensions.install"));
 								dispatched = true;
-								if (command.op === "reload") await extensions.reload(a, command.extension);
-								else await extensions.setEnabled(a, command.extension, command.op === "enable");
-								result = { kind: "updated" };
+								result = { kind: "control", receipt: await extensions.control(a, command.change) };
+								break;
+							case "controlByRequest":
+								result = {
+									kind: "control-operation",
+									receipt: await extensions.controlByRequest(a, command.original),
+								};
+								break;
 						}
 					} catch (error) {
-						if (error instanceof ExtensionRefusal && !dispatched)
-							throw new Refusal(error.code === "INVALID_REQUEST" ? 400 : 403, error.code);
+						if (error instanceof ExtensionRefusal)
+							throw new Refusal(
+								error.code === "INVALID_REQUEST" ? 400 : error.code === "CONFLICT" ? 409 : 403,
+								error.code,
+								error.outcome === "denied",
+							);
 						throw error;
 					}
 					guard(() => people.current(a));
-					send(res, 200, decodeExtensionResponse({ version: 2, requestId, serverId, result }, requestId));
+					send(
+						res,
+						200,
+						decodeExtensionResponse({ version: EXTENSION_VERSION, requestId, serverId, result }, requestId),
+					);
 					return;
 				}
 				if (req.method === "GET" && routePath.startsWith("/pocket/extensions/assets/")) {
 					if (!options.extensions) throw new Refusal(404, "UNSUPPORTED");
 					const a = await actor(req),
 						parts = routePath.slice("/pocket/extensions/assets/".length).split("/");
-					const [id, generation, ...path] = parts;
+					const [id, facet, generation, ...path] = parts;
 					let resource = url.searchParams.get("conversationId"),
 						sessionId = url.searchParams.get("sessionId");
 					if (independent) {
@@ -1021,6 +1043,7 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 					}
 					if (
 						!id ||
+						(facet !== "webui" && facet !== "client") ||
 						!generation ||
 						!publicPath(path.join("/")) ||
 						[...url.searchParams.keys()].some((key) => !["conversationId", "sessionId"].includes(key)) ||
@@ -1043,7 +1066,7 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 						: undefined;
 					if (resource && !target) throw new Refusal(403, "FORBIDDEN");
 					try {
-						const asset = await options.extensions.asset(a, id, generation, path.join("/"), target);
+						const asset = await options.extensions.asset(a, id, facet, generation, path.join("/"), target);
 						guard(() => people.current(a));
 						res.writeHead(200, { "Content-Type": asset.type });
 						res.end(asset.body);
@@ -1280,7 +1303,9 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 			const refusal = error instanceof Refusal,
 				status = refusal ? error.status : 500;
 			send(res, status, {
-				...(serviceRequest ? { api: WEBUI_SERVICE_API } : { version: 2 }),
+				...(serviceRequest
+					? { api: WEBUI_SERVICE_API }
+					: { version: extensionRequest ? EXTENSION_VERSION : 2 }),
 				requestId,
 				serverId,
 				error: {

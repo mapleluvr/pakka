@@ -76,7 +76,7 @@ async function setup() {
 					"X-Pakka-CSRF": auth.csrf,
 					...extra,
 				},
-				body: JSON.stringify({ version: 2, requestId, command }),
+				body: JSON.stringify({ version: 3, requestId, command }),
 			});
 		return { response, decoded: decodeExtensionResponse(await response.json(), requestId) };
 	}
@@ -102,7 +102,8 @@ test(
 			const listed = await m.extensionRpc({ op: "list", target: m.ref });
 			assert.equal(listed.response.status, 200);
 			assert.ok("result" in listed.decoded && listed.decoded.result.kind === "registrations");
-			const registration = listed.decoded.result.registrations[0]!;
+			const registration = listed.decoded.result.registrations.find((row) => row.facet === "backend")!;
+			const ui = listed.decoded.result.registrations.find((row) => row.facet === "webui")!;
 			const call = {
 				extension: "http-example",
 				generation: registration.generation,
@@ -157,7 +158,7 @@ test(
 			assert.equal(denied.decoded.error.outcome, "denied");
 			const csrf = await m.extensionRpc({ op: "call", call }, m.admin, { "X-Pakka-CSRF": "" });
 			assert.equal(csrf.response.status, 403);
-			const asset = `/pocket/extensions/assets/http-example/${registration.generation}/index.js?conversationId=${m.ref.conversationId}`;
+			const asset = `/pocket/extensions/assets/http-example/webui/${ui.generation}/index.js?conversationId=${m.ref.conversationId}`;
 			assert.equal((await fetch(m.pluginHttp.origin + asset)).status, 401);
 			assert.match(
 				await (await fetch(m.pluginHttp.origin + asset, { headers: { Cookie: viewer.cookies } })).text(),
@@ -263,7 +264,13 @@ test(
 					result,
 				);
 				assert.equal(m.f.requests.length, 1);
-				await client.control(row.manifest.id, "disable");
+				await client.control({
+					extension: row.manifest.id,
+					facet: "backend",
+					action: "disable",
+					expectedGeneration: row.generation,
+					requestId: "disable-backend",
+				});
 				await assert.rejects(
 					client.call({ ...call, requestId: "stale" }),
 					(error) => !!error && typeof error === "object" && "outcome" in error && error.outcome === "denied",

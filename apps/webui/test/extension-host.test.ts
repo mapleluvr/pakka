@@ -1,4 +1,5 @@
 import { test } from "node:test";
+import { controlFacet } from "./fixtures/extension-control.ts";
 import { strict as assert } from "node:assert";
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
@@ -270,7 +271,7 @@ test(
 			assert.deepEqual(await m.call("uncertain", "same"), unknown);
 			assert.deepEqual(await m.host.operation(m.actor, unknown.id), unknown);
 			assert.equal(m.f.requests.length, 1);
-			await m.host.setEnabled(m.actor, m.registration.manifest.id, false);
+			await controlFacet(m.host, m.actor, m.registration.manifest.id, "backend", "disable");
 			await assert.rejects(m.call("uncertain", "late"));
 			assert.equal(m.f.requests.length, 1);
 		} finally {
@@ -280,7 +281,7 @@ test(
 );
 
 test(
-	"Extension backend: viewer cannot mutate and stale generations or modified assets are refused",
+	"Extension backend: viewer cannot mutate; UI snapshots retain exact bytes and reject another facet generation",
 	{ timeout: 15000 },
 	async () => {
 		const m = await fixture();
@@ -303,22 +304,38 @@ test(
 					target: m.target,
 				}),
 			);
+			const ui = m.host.list(viewer, m.target).find((row) => row.facet === "webui")!;
 			const asset = await m.host.asset(
 				viewer,
 				m.registration.manifest.id,
-				m.registration.generation,
+				"webui",
+				ui.generation,
 				"index.js",
 				m.target,
 			);
 			assert.match(new TextDecoder().decode(asset.body), /Example settings/);
-			await writeFile(join(m.root, "web/index.js"), "throw new Error('new unaccepted bytes')");
 			await assert.rejects(
-				m.host.asset(viewer, m.registration.manifest.id, m.registration.generation, "index.js", m.target),
+				m.host.asset(
+					viewer,
+					m.registration.manifest.id,
+					"webui",
+					m.registration.generation,
+					"index.js",
+					m.target,
+				),
+			);
+			await writeFile(join(m.root, "web/index.js"), "throw new Error('new unaccepted bytes')");
+			assert.deepEqual(
+				(await m.host.asset(viewer, m.registration.manifest.id, "webui", ui.generation, "index.js", m.target))
+					.body,
+				asset.body,
 			);
 			await writeFile(join(m.root, "manifest.json"), '{"api":99}');
-			await assert.rejects(m.host.reload(m.actor, m.registration.manifest.id));
-			await assert.rejects(
-				m.host.asset(viewer, m.registration.manifest.id, m.registration.generation, "index.js", m.target),
+			await assert.rejects(controlFacet(m.host, m.actor, m.registration.manifest.id, "webui", "reload"));
+			assert.deepEqual(
+				(await m.host.asset(viewer, m.registration.manifest.id, "webui", ui.generation, "index.js", m.target))
+					.body,
+				asset.body,
 			);
 			assert.equal(m.f.requests.length, 0);
 		} finally {

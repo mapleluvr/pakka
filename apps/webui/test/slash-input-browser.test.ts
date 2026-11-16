@@ -118,7 +118,7 @@ test(
 			await openExtensionManager(f.page);
 			await f.page.wait('document.querySelector(".pocket-extension-registration button")');
 			// This fixture registers only the preferences extension.
-			await f.page.click(".pocket-extension-registration button");
+			await f.page.click('.pocket-extension-registration[data-facet="backend"] button');
 			await f.page.wait('document.querySelector(".extension-phase")?.textContent !== "ready"');
 			await f.page.click(".back-to-app");
 			const disabled = '/preferences-card {"text":"DISABLED-PRIVATE-CARD"}';

@@ -37,7 +37,7 @@ test("WebUI history client: original Session, content identity, byte range and s
 		for await (const part of request) parts.push(part);
 		const parsed = JSON.parse(Buffer.concat(parts).toString("utf8"));
 		calls++;
-		assert.equal(parsed.api, 2);
+		assert.equal(parsed.api, 3);
 		const target = mode === "session" ? { ...reference, sessionId: "session-b" } : reference;
 		const result =
 			parsed.command.op === "resource.history"
@@ -56,7 +56,7 @@ test("WebUI history client: original Session, content identity, byte range and s
 		response.setHeader("Content-Type", "application/json");
 		response.end(
 			JSON.stringify({
-				api: mode === "version" ? 1 : 2,
+				api: mode === "version" ? 2 : 3,
 				requestId: parsed.requestId,
 				serverId: "server",
 				result,

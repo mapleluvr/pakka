@@ -17,7 +17,7 @@ import { decodeJson, decodeTarget } from "./extension-rpc.ts";
 import { frozen, isRecord, type ExtensionJson } from "./extensions.ts";
 
 /** Service API, not the UI SDK/renderer version or an artifact identity. */
-export const WEBUI_SERVICE_API = 2;
+export const WEBUI_SERVICE_API = 3;
 export const WEBUI_SERVICE_PATH = "/pakka-webui/services";
 export const WEBUI_SERVICE_MAX_BYTES = 2_097_152;
 
@@ -55,9 +55,10 @@ export type ConversationHistory =
 	| { readonly status: "loaded"; readonly snapshot: PocketSnapshot }
 	| { readonly status: "unloaded"; readonly page: StoredConversationPage };
 export interface WebUiCapabilities {
-	readonly services: 2;
-	readonly workbench: 2;
-	readonly extensions: 2;
+	readonly services: typeof WEBUI_SERVICE_API;
+	/** Advertised versions; consumers check compatibility for each protocol independently. */
+	readonly workbench: number;
+	readonly extensions: number;
 	readonly features: readonly string[];
 }
 export interface ModelIdentity {
@@ -197,14 +198,14 @@ export interface WebUiResults {
 }
 export type WebUiResult = WebUiResults[keyof WebUiResults];
 export interface WebUiRequest {
-	readonly api: 2;
+	readonly api: typeof WEBUI_SERVICE_API;
 	readonly requestId: string;
 	/** Expected identity from the workbench handshake; checked before any service effect. */
 	readonly binding: { readonly personId: string; readonly serverId: string };
 	readonly command: WebUiCommand;
 }
 export type WebUiResponse = {
-	readonly api: 2;
+	readonly api: typeof WEBUI_SERVICE_API;
 	readonly requestId: string;
 	readonly serverId: string;
 } & ({ readonly result: WebUiResult } | { readonly error: PocketFailure });
@@ -467,8 +468,10 @@ export function decodeWebUiResult(value: unknown): WebUiResult {
 			shape(caps, ["services", "workbench", "extensions", "features"]);
 			if (
 				caps.services !== WEBUI_SERVICE_API ||
-				caps.workbench !== 2 ||
-				caps.extensions !== 2 ||
+				!count(caps.workbench, 1000) ||
+				caps.workbench < 1 ||
+				!count(caps.extensions, 1000) ||
+				caps.extensions < 1 ||
 				!Array.isArray(caps.features) ||
 				caps.features.length > 64 ||
 				!caps.features.every((feature) => text(feature, 128)) ||

@@ -12,7 +12,8 @@
 | `@pakka/protocol/extensions`、`extension-rpc` | 通用 extension manifest、资源和 wire 定义 | 无运行时依赖                 |
 | `@pakka/client/pocket`                        | 工作台请求、事件观察、重连、正文和通知    | 只依赖 protocol              |
 | `@pakka/client/webui`                         | 绑定身份的新服务 typed client             | 只依赖 protocol              |
-| `@pakka/client/extensions`                    | extension 发现、调用与原 operation 核对   | 只依赖 protocol              |
+| `@pakka/client/extensions`                    | 逐 facet 发现/控制、调用与两类原请求核对  | 只依赖 protocol              |
+| `@pakka/agent` 的 `createAgentFacet`          | 可信 Agent 贡献、profile 上限与原生启停   | Agent/Pi，不依赖 WebUI       |
 | `@pakka/webui/backend`                        | Node Backend context 与受权服务           | Node 产品包，不是前端依赖    |
 | `@pakka/webui/assets`                         | 固定前端制品的 Node 读取与核对            | Node 产品包，不是前端依赖    |
 | `@pakka/webui`                                | 默认 Node 产品装配 `startPocket`          | Agent、Server 和公开 Pi 能力 |
@@ -23,11 +24,11 @@
 
 ## 2. 同源服务与身份
 
-工作台使用 `/pakka-webui/rpc` 和 `/pakka-webui/events`，延用已声明的 v2 DTO；新服务使用 `/pakka-webui/services` 的 `api: 2`。extension 客户端可使用 `/pakka-webui/extensions/rpc`。人类身份交换、资产、下载、通知和 worker 沿各自已有安全处理接缝接入新 namespace；旧 `/pocket/models/rpc` 不映射成新模型接口。
+工作台使用 `/pakka-webui/rpc` 和 `/pakka-webui/events`，延用已声明的 v2 DTO；新服务使用 `/pakka-webui/services` 的 `api: 3`。extension 客户端可使用 `/pakka-webui/extensions/rpc`。人类身份交换、资产、下载、通知和 worker 沿各自已有安全处理接缝接入新 namespace；旧 `/pocket/models/rpc` 不映射成新模型接口。
 
 浏览器使用同源 Cookie 与 `X-Pakka-CSRF`，endpoint 不接受认证信息、query/hash 或跨 origin；前端开发用同源代理。服务 request 在发送前固定工作台 hello 得到的 `personId/serverId`；后端从 Cookie 获取真正 actor，核对预期身份后才执行命令。客户端在响应、身份切换和异步返回时再次核对 request、server、Person 与结果种类。
 
-服务的 `capabilities` 返回实际可用 features。当前组合是 services 2、workbench 2、extensions 2；其中 extension 兼容声明不等于 `ExtensionManifest.api: 1`，UI SDK/runtime 又是另一项组合。服务 API、renderer 描述和文件 hash 各自检查，不通过给 closed hello 偷加字段协商。
+服务的 `capabilities` 返回实际可用 features。当前组合是 services 3、workbench 2、extensions 3；其中 extension wire 不等于 `ExtensionManifest.api: 1`，UI SDK/runtime 又是另一项组合。capabilities 中的协议版本是有界声明值，由对应消费者判断是否支持；不能因为服务能力响应可解码就认定所有协议都兼容。服务 API、renderer 描述和文件 hash 各自检查，不通过给 closed hello 偷加字段协商。
 
 Node 的 `publicOrigin`、trusted proxy 和 TLS 约束保持原实现：带 forwarding/trusted-peer 元数据的代理模式需要显式 HTTPS public origin；本地 HTTP origin 模式不靠伪造这些头部绕过要求。客户端、HTTP boundary 和受权服务缺一不可。
 
@@ -86,11 +87,32 @@ extension 原请求链路仍是 `operationByRequest(browserRequestId)` → 外�
 
 未加载路径经 `@pakka/agent` 的受信任 `readStoredConversation` 接到 Durable .4 的公开 SQLite reader，不创建 Runtime、不取得 writer 或恢复任务。Pakka 先验证已确认登记、原 Session/Conversation、来源与 read grant，返回前再次核对；执行、发送及管理仍要求已加载绑定。Node 定位、原生对象与数据库路径不进入浏览器协议。具体 SDK 边界见[只读 SDK](../../patches/pi-durable/1.4.0-pakka.4/README.md)。
 
-本次新历史形状显式替代未合并的 services API 1。固定客户端与前端 manifest 同步声明 services 2；旧候选不透明兼容。客户端遇到身份关联正确但不支持的响应版本报告 VERSION_MISMATCH/unknown，不把它当成持久写入未发生的证明，也不自动换版本重提。
+客户端遇到身份关联正确但不支持的服务响应版本报告 VERSION_MISMATCH/unknown，不把它当成持久写入未发生的证明，也不自动换版本重提。固定制品声明的服务需求必须与实际服务配对。
 
-UI dispose 属于单个界面实例。整体 extension enable/disable/reload 不等于分 facet 停启；独立 Backend/Agent/WebUI/Client 控制尚未形成，不返回假成功。浏览、UI 关闭和停止等待不启动模型、不取消已接纳工作。
+UI dispose 属于单个界面实例；WebUI facet dispose 清理该 publication 的实例集合。它们都不是 Backend/Agent 的停用，更不取得持久工作取消权。浏览、UI 关闭和停止等待不启动模型。
 
-## 6. 固定前端制品
+## 6. 独立 facet 控制
+
+一个获准来源可分别提供 backend、agent、webui、client。发现结果是逐 facet 的 registration，各自有 manifest/version、generation 和 phase，不再提供整扩展开关。Backend call 使用 backend generation；`assetUrl(extension, facet, generation, path, target?)` 只接受 webui/client 的对应 generation，目标资源仍保留 Session/Conversation 身份。
+
+`control(change)` 的 change 包含 extension、facet、action（enable/disable/reload）、expectedGeneration、requestId。服务要求当前 Person 的 `extensions.install`，接纳及受控效果前重验；控制以已批准来源为上限，不从浏览器安装路径、代码或 profile。准备失败保留仍确认的旧 publication；相同原请求返回原结果，同身份不同控制参数拒绝。
+
+`controlByRequest({ extension, facet, requestId })` 只查当前 Person 的原控制回执。lookup 的闭合输入只有这三个字段，不传整个 change。返回的 done 回执含原控制参数、actorId 和当时的 publication；当前状态另行 list。null 或 unknown 不证明没有效果，不允许自动重提或换 requestId。控制回执不等于 Backend 业务 operation；后者继续通过 operation / operationByRequest 核对。
+
+| facet   | 控制的实际边界                                                                                                                                |
+| ------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| Backend | 停止该注册的新调用和未通过有效性检查的后续效果；不销毁所属服务、既有历史、持久 job 或原回执。未确认初始化只隔离本 facet；重开不自动重入代码。 |
+| Agent   | 在可信批准的 profiles 中改变后续工具/指令资格；不改 Conversation 身份，不因停用取消已接纳的原生工具结果或改写历史。                           |
+| WebUI   | 改变该 UI publication 的装载资格，接入层通知纯 UI host 清理其实例；其他 facet 的改变不触发这项清理。                                          |
+| Client  | 改变客户端模块的装载与绑定资格；不能撤回已经交付的 JavaScript，也不是浏览器代码安全沙箱。                                                     |
+
+Agent 接缝由 `@pakka/agent` 的 `createAgentFacet` 构造，固定 id/version、profiles、tools 和可选 instructions，默认 disabled；通过 Runtime 的 agentFacets 及可信 extension source 显式组合。Agent-only 消费不安装 WebUI。公开 pi-durable Registry 始终位于 durable-adapter 内，不为此构建第二套注册系统。
+
+`setEnabled` / `reconcile` 是可信 Node 控制端，不是浏览器授权凭据；reconcile 只重新发布该固定定义，不加载新代码。安装源码改变而没有对应可信定义时明确拒绝，不能把浏览器 reload 称作任意 Agent 热更新。端口 status 的 generation 标识原生调用资格，bindings 是已附着的原生 registry 数量，不是 UI 实例数；它与服务 publication generation 分开。
+
+旧 generation 的延迟调用在资格边界被拒绝，重新启用也不恢复旧调用资格。已保存的指令和工具结果仍属历史；停用通过后续原生请求撤下贡献，而不是删除过去的文本。关闭先停止接纳；Agent 撤回未确认会报告清理失败，重复 facet close 保留同一次结果，不误报成功。
+
+## 7. 固定前端制品
 
 ```ts
 import { startPocket } from "@pakka/webui";
@@ -108,4 +130,4 @@ const app = await startPocket({
 
 加载后 HTTP 提供已核对的内存字节，生产者后来改磁盘文件不改变正在提供的版本。无下载、运行时构建、npm latest 或失败后替换成另一份 UI。manifest 只描述 renderer 兼容，不让 Node 了解 Button、theme provider 或插件组件树。
 
-本轮尚未切换默认产品。阶段 1 结果与仍未完成的独立 facet/完整应用范围以[任务](../../openspec/changes/plan-independent-webui/tasks.md)及其验证记录为准。
+本轮尚未切换默认产品。阶段 1 各项实际核对与尚未完成的产品范围以[任务](../../openspec/changes/plan-independent-webui/tasks.md)及其验证记录为准。

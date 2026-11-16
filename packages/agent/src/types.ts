@@ -520,6 +520,8 @@ export type ConversationConfigurationChange = {
 	readonly thinkingLevel?: ModelThinkingLevel;
 };
 export interface RuntimeOptions extends HostOptions {
+	/** Fixed, trusted Agent contributions; each explicitly selects its allowed profiles and starts disabled. */
+	readonly agentFacets?: readonly import("./agent-facet.ts").AgentFacet[];
 	/** Product cold browsing is opt-in; independent SDK hosts keep the existing eager frame behavior. */
 	readonly observation?: "lazy" | "eager";
 	/** Explicit server directory roots; defaults to the approved profiles' cwd trees. Not an OS sandbox. */

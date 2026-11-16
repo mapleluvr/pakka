@@ -47,6 +47,7 @@ export function useExtensions({ person, target, csrf, notice, error, navigate, o
 	const latest = useRef({});
 	latest.current = { person, target, notice, error, navigate, opened };
 	const pending = useRef(new Map());
+	const pendingControls = useRef(new Map());
 	const client = useMemo(
 		() =>
 			createExtensionClient({
@@ -96,6 +97,7 @@ export function useExtensions({ person, target, csrf, notice, error, navigate, o
 					return scoped.some(
 						(row) =>
 							row.manifest.id === instance.registration.manifest.id &&
+							row.facet === "webui" &&
 							row.generation === instance.registration.generation &&
 							row.phase === "ready" &&
 							row.manifest.interfaces.some((view) => view.id === instance.view.id),
@@ -126,6 +128,7 @@ export function useExtensions({ person, target, csrf, notice, error, navigate, o
 		const accepted = registry.current.find(
 				(row) =>
 					row.manifest.id === registration.manifest.id &&
+					row.facet === "webui" &&
 					row.generation === registration.generation &&
 					row.phase === "ready",
 			),
@@ -155,11 +158,27 @@ export function useExtensions({ person, target, csrf, notice, error, navigate, o
 		registration,
 		actionId,
 		input,
-		{ signal, requestId } = {},
+		{ signal, requestId, readOnly = false } = {},
 		resource = latest.current.target,
 	) => {
-		const action = registration.manifest.actions.find((row) => row.id === actionId);
-		if (!action) throw new Error("Action is unavailable");
+		const rows = await client.list(resource, { signal });
+		if (
+			!rows.some(
+				(row) =>
+					row.manifest.id === registration.manifest.id &&
+					row.facet === registration.facet &&
+					row.generation === registration.generation &&
+					row.phase === "ready",
+			)
+		)
+			throw new Error("Extension publication is unavailable");
+		const backend = rows.find(
+			(row) =>
+				row.manifest.id === registration.manifest.id && row.facet === "backend" && row.phase === "ready",
+		);
+		const action = backend?.manifest.actions.find((row) => row.id === actionId);
+		if (!action || (readOnly && action.effect !== "read")) throw new Error("Action is unavailable");
+		registration = backend;
 		const payload = decodeValue(action.input, input),
 			target = action.scope === "conversation" ? resource : undefined;
 		if (action.scope === "conversation" && !target) throw new Error("Select a conversation first");
@@ -221,6 +240,7 @@ export function useExtensions({ person, target, csrf, notice, error, navigate, o
 			registry.current.some(
 				(row) =>
 					row.manifest.id === registration.manifest.id &&
+					row.facet === registration.facet &&
 					row.generation === registration.generation &&
 					row.phase === "ready",
 			);
@@ -290,42 +310,67 @@ export function useExtensions({ person, target, csrf, notice, error, navigate, o
 		}
 		return dispatch(found.registration, found.command, input);
 	};
+	const control = async (registration, action) => {
+		const personId = latest.current.person?.id;
+		const key = JSON.stringify([personId, registration.manifest.id, registration.facet]);
+		let original = pendingControls.current.get(key);
+		if (original?.busy) return;
+		const checking = Boolean(original);
+		if (!original) {
+			original = {
+				change: {
+					extension: registration.manifest.id,
+					facet: registration.facet,
+					action,
+					expectedGeneration: registration.generation,
+					requestId: crypto.randomUUID(),
+				},
+			};
+			pendingControls.current.set(key, original);
+		}
+		original.busy = true;
+		try {
+			const { extension, facet, requestId } = original.change;
+			const receipt = checking
+				? await client.controlByRequest({ extension, facet, requestId })
+				: await client.control(original.change);
+			if (latest.current.person?.id !== personId) return;
+			if (receipt?.state !== "done") {
+				latest.current.notice("Control unconfirmed. Check this facet again.");
+				return;
+			}
+			pendingControls.current.delete(key);
+			if (receipt.action === "disable")
+				latest.current.notice(
+					facet === "webui"
+						? "Interface disabled. Running work continues."
+						: facet + " disabled. Running work continues.",
+				);
+		} catch (failure) {
+			if (failure.outcome === "denied") pendingControls.current.delete(key);
+			if (latest.current.person?.id === personId) latest.current.error(failure);
+		} finally {
+			original.busy = false;
+		}
+	};
 	const controls = registrations.map(
 		(registration) =>
-			html`<section key=${registration.manifest.id} class="settings-card-row pocket-extension-registration">
+			html`<section
+				key=${registration.manifest.id + ":" + registration.facet}
+				data-facet=${registration.facet}
+				class="settings-card-row pocket-extension-registration"
+			>
 				<div class="extension-identity">
-					<strong>${registration.manifest.title}</strong>
+					<strong>${registration.manifest.title} · ${registration.facet}</strong>
 					<div class="extension-phase">${registration.phase}</div>
 				</div>
 				${person?.role === "admin" &&
 				html`<div class="extension-actions">
 					<button
-						onClick=${async () => {
-							try {
-								const personId = latest.current.person?.id;
-								await client.control(
-									registration.manifest.id,
-									registration.phase === "ready" ? "disable" : "enable",
-								);
-								if (registration.phase === "ready" && latest.current.person?.id === personId)
-									latest.current.notice("Interface disabled. Running work continues.");
-							} catch (failure) {
-								latest.current.error(failure);
-							}
-						}}
+						onClick=${() => control(registration, registration.phase === "ready" ? "disable" : "enable")}
 					>
 						${registration.phase === "ready" ? "Disable" : "Enable"}</button
-					><button
-						onClick=${async () => {
-							try {
-								await client.control(registration.manifest.id, "reload");
-							} catch (failure) {
-								latest.current.error(failure);
-							}
-						}}
-					>
-						Reload
-					</button>
+					><button onClick=${() => control(registration, "reload")}>Reload</button>
 				</div>`}
 			</section>`,
 	);
@@ -403,7 +448,10 @@ export function useExtensions({ person, target, csrf, notice, error, navigate, o
 						const rows = await client.list(origin.target);
 						if (latest.current.person?.id !== personId) return;
 						const registration = rows.find(
-							(row) => row.manifest.id === origin.registration.manifest.id && row.phase === "ready",
+							(row) =>
+								row.manifest.id === origin.registration.manifest.id &&
+								row.facet === "webui" &&
+								row.phase === "ready",
 						);
 						if (!registration) {
 							setReturnInterface(null);
@@ -552,6 +600,7 @@ function HostInterface({ instance, client, execute, open, close, notice, navigat
 					? (await client.list(resource, { signal: controller.signal })).find(
 							(row) =>
 								row.manifest.id === instance.registration.manifest.id &&
+								row.facet === "webui" &&
 								row.generation === instance.registration.generation &&
 								row.phase === "ready",
 						)
@@ -589,9 +638,8 @@ function HostInterface({ instance, client, execute, open, close, notice, navigat
 			},
 			subscribe: (action, input, receive, { intervalMs = 1000 } = {}) => {
 				check();
-				const declaration = instance.registration.manifest.actions.find((row) => row.id === action);
 				if (
-					declaration?.effect !== "read" ||
+					typeof action !== "string" ||
 					!Number.isSafeInteger(intervalMs) ||
 					intervalMs < 100 ||
 					intervalMs > 5000
@@ -605,7 +653,7 @@ function HostInterface({ instance, client, execute, open, close, notice, navigat
 							instance.registration,
 							action,
 							input,
-							{ signal: controller.signal },
+							{ signal: controller.signal, readOnly: true },
 							instance.target,
 						);
 						if (active && !controller.signal.aborted && result.state === "done") receive(result.value);
@@ -637,6 +685,7 @@ function HostInterface({ instance, client, execute, open, close, notice, navigat
 						const registration = rows.find(
 							(row) =>
 								row.manifest.id === instance.registration.manifest.id &&
+								row.facet === "webui" &&
 								row.generation === instance.registration.generation &&
 								row.phase === "ready",
 						);
@@ -662,20 +711,13 @@ function HostInterface({ instance, client, execute, open, close, notice, navigat
 			setFailed(true);
 			return () => controller.abort();
 		}
-		const url =
-			"/pocket/extensions/assets/" +
-			registration.manifest.id +
-			"/" +
-			registration.generation +
-			"/" +
-			registration.manifest.facets.webui.entry +
-			(instance.target
-				? "?" +
-					new URLSearchParams({
-						sessionId: instance.target.sessionId,
-						conversationId: instance.target.conversationId,
-					})
-				: "");
+		const url = client.assetUrl(
+			registration.manifest.id,
+			"webui",
+			registration.generation,
+			registration.manifest.facets.webui.entry,
+			instance.target,
+		);
 		void import(url)
 			.then((module) => {
 				if (controller.signal.aborted) return;

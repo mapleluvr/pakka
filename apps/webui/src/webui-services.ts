@@ -12,6 +12,7 @@ import { createModelConnections } from "./model-connections.ts";
 import { createPersonModelDefaults, type PersonModelDefaults } from "./model-defaults.ts";
 import { WebUiServiceRefusal } from "./service-refusal.ts";
 import { createResourceHistory } from "./resource-history.ts";
+import { EXTENSION_VERSION } from "@pakka/protocol/extension-rpc";
 
 export interface WebUiServices {
 	readonly defaults: PersonModelDefaults;
@@ -59,7 +60,7 @@ export async function createWebUiServices(options: {
 						capabilities: {
 							services: WEBUI_SERVICE_API,
 							workbench: 2,
-							extensions: 2,
+							extensions: EXTENSION_VERSION,
 							features: [
 								"resource.resolve",
 								"resource.history",

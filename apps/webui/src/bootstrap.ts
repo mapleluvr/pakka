@@ -24,7 +24,7 @@ import {
 import { createPocketHttp, type PocketHttpOptions } from "./http.ts";
 import { createPersonalNavigation } from "./navigation.ts";
 import { createExtensionHost, type ExtensionSource } from "./extension-host.ts";
-import type { ExtensionService, PocketServiceContext } from "./backend.ts";
+import type { ExtensionHost, ExtensionService, PocketServiceContext } from "./backend.ts";
 import { createManagedSessions, type ManagedSessions } from "./sessions.ts";
 import { observeNotifications } from "./notification-monitor.ts";
 import type { ProductModelSource } from "./product-models.ts";
@@ -176,6 +176,7 @@ export async function startPocket(options: PocketProductOptions) {
 	let http: Awaited<ReturnType<typeof createPocketHttp>> | undefined,
 		notifications: PocketNotifications | undefined,
 		webuiServices: WebUiServices | undefined,
+		extensions: ExtensionHost | undefined,
 		services: Readonly<Record<string, ExtensionService>> | undefined,
 		servicesDisposed = false;
 	const monitors = new Map<string, { close(): Promise<void> }>();
@@ -183,6 +184,11 @@ export async function startPocket(options: PocketProductOptions) {
 		if (servicesDisposed) return;
 		servicesDisposed = true;
 		let failed = false;
+		try {
+			await extensions?.close();
+		} catch {
+			failed = true;
+		}
 		try {
 			await webuiServices?.close();
 		} catch {
@@ -375,7 +381,7 @@ export async function startPocket(options: PocketProductOptions) {
 				workspace.registerResources(service.conversations);
 			}
 		}
-		const extensions = await createExtensionHost({
+		extensions = await createExtensionHost({
 			runtime,
 			runtimeFor,
 			people,

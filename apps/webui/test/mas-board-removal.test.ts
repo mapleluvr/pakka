@@ -124,7 +124,7 @@ test(
 			);
 			await openExtensionManager(owner);
 			await owner.wait('document.querySelector(".pocket-extension-registration button")');
-			await owner.click(".pocket-extension-registration button");
+			await owner.click('.pocket-extension-registration[data-facet="webui"] button');
 			await owner.wait('!document.querySelector("[data-interface=mas-devpack-board],[data-member-phase]")');
 			await viewer.wait('!document.querySelector("[data-interface=mas-devpack-board],[data-member-phase]")');
 			assert.equal((await catalog.receipt(receiptId, () => {})).status, "placed");

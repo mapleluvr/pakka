@@ -69,12 +69,34 @@ export interface ExtensionManifest {
 	readonly commands: readonly ExtensionCommand[];
 	readonly interfaces: readonly ExtensionInterface[];
 }
+/** One approved facet, not an aggregate extension lifecycle. Manifest/version belong to this publication. */
 export interface ExtensionRegistration {
 	readonly manifest: ExtensionManifest;
 	readonly generation: string;
-	readonly facets: readonly ExtensionFacet[];
+	readonly facet: ExtensionFacet;
 	readonly phase: "ready" | "disabled" | "unknown";
 }
+export interface ExtensionFacetControl {
+	readonly extension: string;
+	readonly facet: ExtensionFacet;
+	readonly action: "enable" | "disable" | "reload";
+	readonly expectedGeneration: string;
+	readonly requestId: string;
+}
+export type ExtensionControlIdentity = Pick<ExtensionFacetControl, "extension" | "facet" | "requestId">;
+export type ExtensionControlReceipt = ExtensionFacetControl & {
+	readonly actorId: string;
+} & (
+		| {
+				readonly state: "done";
+				readonly publication: {
+					readonly version: string;
+					readonly generation: string;
+					readonly phase: "ready" | "disabled";
+				};
+		  }
+		| { readonly state: "unknown" }
+	);
 export interface ExtensionCall {
 	readonly extension: string;
 	readonly generation: string;

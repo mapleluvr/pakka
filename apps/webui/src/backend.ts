@@ -12,6 +12,9 @@ import type {
 	ExtensionOperation,
 	ExtensionOperationRequest,
 	ExtensionRegistration,
+	ExtensionFacetControl,
+	ExtensionControlIdentity,
+	ExtensionControlReceipt,
 	ExtensionPermission,
 	Schema,
 } from "@pakka/protocol/extensions";
@@ -111,16 +114,21 @@ export interface ExtensionHost {
 		actor: import("@pakka/server/pocket").PocketAuthority,
 		request: ExtensionOperationRequest,
 	): Promise<ExtensionOperation>;
-	setEnabled(
+	/** One approved facet and one original request; does not cancel resource-owned work. */
+	control(
 		actor: import("@pakka/server/pocket").PocketAuthority,
-		id: string,
-		enabled: boolean,
-	): Promise<void>;
-	/** Re-prepare an already-approved source. Browser cannot select a path or module. */
-	reload(actor: import("@pakka/server/pocket").PocketAuthority, id: string): Promise<void>;
+		change: ExtensionFacetControl,
+	): Promise<ExtensionControlReceipt>;
+	controlByRequest(
+		actor: import("@pakka/server/pocket").PocketAuthority,
+		original: ExtensionControlIdentity,
+	): Promise<ExtensionControlReceipt | null>;
+	/** Revoke publication guards on product close; resource owners dispose their own services. */
+	close(): Promise<void>;
 	asset(
 		actor: import("@pakka/server/pocket").PocketAuthority,
 		id: string,
+		facet: "webui" | "client",
 		generation: string,
 		path: string,
 		target?: ConversationRef,

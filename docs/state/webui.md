@@ -55,6 +55,10 @@ HTTP listener 自动分配端口时，仅发布 Fetch 与浏览器可访问的�
 - 文件/Git、审批、owned browser、Memory、schedules、Webhook、通知和语音分别通过有限服务访问批准资源。每项效果按该服务的 schema、权限和资源 scope 校验。
 - owned browser 进程停止与临时 profile 删除分别确认；OS 占用导致残留时保留私密清理记录，不通过强删或终止其他组件伪造清理完成。浏览器缓存不属于 Session 持久历史或备份。
 
+每个已批准 facet 以自身的 version、generation 与 phase 发现和控制。Backend 调用使用 Backend generation，WebUI/Client 资产使用所属 facet 的 generation；控制要求安装权限、预期 generation 和稳定原请求身份，结果由独立控制回执核对。Backend 停用仍保留经权限过滤的命令声明，使界面可识别命令并报告不可用。
+
+Agent 贡献由可信启动明确批准 profiles，以 pi-durable 的公开 Registry 发布工具与指令；停用撤回后续接纳资格，已接纳工作保留所属生命周期。WebUI publication 拥有其实例集合，关闭清理所属实例并使旧回调失效；清理失败及未确认初始化保持可见的 unknown 状态。具体契约见[服务手册](../reference/WEBUI-SERVICES.md)与[分 facet 场景](../../openspec/changes/plan-independent-webui/specs/extension-facet-control/spec.md)。
+
 页面结构、菜单位置和视觉交互见[前端声明](frontend.md)。服务 schema、请求身份、期限与权限由[WebUI 开发契约](../development/WEBUI-DEVELOPMENT.md)及公开 exports 维护；独立前端/插件契约见[独立 WebUI 场景](../../openspec/changes/plan-independent-webui/specs/independent-webui/spec.md)，采用来路与实施安排见[分仓规划](../changes/independent-webui.md)。
 
 ## 领域场景

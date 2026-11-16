@@ -42,7 +42,7 @@
 
 初始候选 Pi Durable 1.4.0-pakka.3 的 SQLite opener 使用写语句初始化，并在需要时迁移。真实只读连接在版本表 INSERT OR IGNORE 处拒绝；这不代表正常读写重开每次都修改历史。写方事务和 checkpoint 属于执行型存储生命周期，不应拿来冒充历史 reader。
 
-用户随后授权[只读接缝](readonly-history.md)：.4 保留 writer，新增真正只读的 Node SQLite 连接、短快照和独立关闭。Pakka 的原资源服务已接入已确认登记的未加载来源；不通过自动 reopen、私读 schema 或替代 Session 伪造原历史。保存状态与 live 绑定分开，服务 API 2 通过 resource.history/resource.content 提供有限页面和原文范围。独立 facet 控制与阶段 2 的实际界面浏览仍未完成；源码、安装和真实 HTTP 的检查各自记录。
+用户随后授权[只读接缝](readonly-history.md)：.4 保留 writer，新增真正只读的 Node SQLite 连接、短快照和独立关闭。Pakka 的原资源服务已接入已确认登记的未加载来源；不通过自动 reopen、私读 schema 或替代 Session 伪造原历史。保存状态与 live 绑定分开，resource.history/resource.content 提供有限页面和原文范围。该接缝最初使用 services API 2；随后[独立 facet 控制](facets.md)将 services/extension 配对升级为 3，workbench 保持 2。阶段 2 的实际界面浏览由后续产品切片验收；源码、安装和真实 HTTP 的检查各自记录。
 
 ## UI 与资产边界
 

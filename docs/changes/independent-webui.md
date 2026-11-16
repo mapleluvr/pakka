@@ -26,7 +26,7 @@
 - [Tasks：规划、已实施接缝与未完成产品工作](../../openspec/changes/plan-independent-webui/tasks.md)
 - [Phase 1：新 SDK/服务/模型/资产消费边界](../../openspec/changes/plan-independent-webui/phase-1.md)
 - [Inventory：阶段 0 功能/入口/消费者归属、缺口及真实切片](../../openspec/changes/plan-independent-webui/inventory.md)
-- 全部 delta：[independent-webui](../../openspec/changes/plan-independent-webui/specs/independent-webui/spec.md)、[durable-storage-reader](../../openspec/changes/plan-independent-webui/specs/durable-storage-reader/spec.md)。这是新增目标能力，尚无对应主 spec，未归档为已实现。
+- 全部 delta：[independent-webui](../../openspec/changes/plan-independent-webui/specs/independent-webui/spec.md)、[durable-storage-reader](../../openspec/changes/plan-independent-webui/specs/durable-storage-reader/spec.md)、[extension-facet-control](../../openspec/changes/plan-independent-webui/specs/extension-facet-control/spec.md)。尚未完成的整体前端目标继续在该 change 中推进，不提前归档。
 - 阶段 1 后续：[原历史只读接缝](../../openspec/changes/plan-independent-webui/readonly-history.md)。用户在核对 .3 opener 的写权限需求后授权独立 reader 生命周期；采用的是原生只读能力及 Pakka 原资源接入，不是删除写方迁移/恢复或提前实现独立 facet 控制。
 - 相关原活动声明：[pakka-webui](../../openspec/changes/pakka-webui/specs/pakka-webui/spec.md)、[webui-extensions](../../openspec/changes/pakka-webui/specs/webui-extensions/spec.md)，完整来路见[WebUI 与 MAS](webui-and-mas.md)。其中后端服务、权限与效果要求继续有效；本次明确替代的是独立前端的包/renderer/插件边界。
 - 相关未改主 spec：[recoverable-multi-session](../../openspec/specs/recoverable-multi-session/spec.md)、[authenticated-mas-apps](../../openspec/specs/authenticated-mas-apps/spec.md)。
@@ -61,3 +61,11 @@
 Pakka 将历史 read 授权与“执行资源已加载”分开，再核对确认登记、原身份及当前权限。未加载来源返回保存状态和稳定引用；已加载仍走现有 owner。新公开形状显式采用 services API 2，配对更新客户端与前端 manifest，不修改 workbench/extension/UI SDK 版本。
 
 原生 SDK、真实 HTTP、安装产品与固定资产核对见[只读历史验证](../verification/READONLY-SQLITE-HISTORY.md)，SDK 身份与失效条件追加在[兼容性账本](../PI-DURABLE-COMPATIBILITY.md)。原始扩大回归失败、Windows 长路径控制和上游声明限制保持各自结果。独立 facet 控制与阶段 2 的历史界面/业务插件仍未完成；此次没有把后端可读当作完整 UI 验收。
+
+## 独立 facet 控制
+
+用户继续授权阶段 1 的独立生命周期，随后要求阶段 1 验收后进入阶段 2。逐 facet 发现、控制和资产身份替换整包状态；可信 Agent 定义按批准 profiles 通过公开 Registry 发布，WebUI publication 管理其实例集合。原请求控制回执独立于 Backend operation，清理失败与未确认初始化保持可核对状态。采用过程及取舍见 [facets](../../openspec/changes/plan-independent-webui/facets.md)。
+
+版本核对发现 services API 2 将 extension 版本闭合为 2；因此两者显式配对升级为 3，workbench 保持 2，Node 加载器读取协议常量，前端制品独立声明所需版本，并通过真实装配核对两者。旧默认消费者同步使用正确 facet 身份；停用 Backend 保留已授权命令声明，避免 slash 输入落入模型消息。没有为兼容恢复整包控制 facade。
+
+[独立 facet 验证](../verification/INDEPENDENT-FACET-CONTROL.md)记录真实原生/HTTP/安装/浏览器、回归和保留失败。已批准的后续工作为阶段 2 最小真实应用；本轮不把临时浏览器宿主计为完整 UI，不改变 Provider 登录、默认切换、发包和合并边界。

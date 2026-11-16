@@ -4,6 +4,7 @@ import { join, resolve } from "node:path";
 import { decodeWebUiAssetManifest, type WebUiAssetManifest } from "@pakka/protocol/webui-assets";
 import { WEBUI_SERVICE_API } from "@pakka/protocol/webui";
 import { POCKET_VERSION } from "@pakka/protocol/pocket";
+import { EXTENSION_VERSION } from "@pakka/protocol/extension-rpc";
 
 export interface WebUiArtifactSource {
 	readonly directory: string;
@@ -80,7 +81,7 @@ export async function loadWebUiAssets(input: WebUiArtifactSource): Promise<Loade
 	if (
 		manifest.requires.services !== WEBUI_SERVICE_API ||
 		manifest.requires.workbench !== POCKET_VERSION ||
-		manifest.requires.extensions !== 2
+		manifest.requires.extensions !== EXTENSION_VERSION
 	)
 		throw new Error("Frontend requires an unsupported service version");
 	const assets = new Map<string, { type: string; body: Uint8Array }>();
