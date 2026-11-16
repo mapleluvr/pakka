@@ -77,3 +77,9 @@ Pakka 将历史 read 授权与“执行资源已加载”分开，再核对确�
 实际模型分页暴露 Astryx Layer 的固定样式注入，资产格式显式升至 schema 2 并声明有限精确 hash；服务 wire 仍为 services 3 / extensions 3 / workbench 2。安装版生产入口验证许可样式生效、其他 inline style 被拒绝。输入跨重开定位与多设置实例并发记录缺陷经真实响应顺序复现并修正；公共输入回执查询保留在阶段 4。
 
 [阶段 2 核对](../verification/INDEPENDENT-WEBUI-PHASE-2.md)记录干净安装、模型真实请求、双 Session 原历史、RSI 两层回执、publication/撤权清理、移动交互与受影响回归。新增持久测试只覆盖资产 closed decoder，RSI 现有浏览器场景下沉到真实 HTTP 并保留实际 React 界面检查；没有将试用 DOM 固定为长期契约。阶段 3–5、默认切换、发布与合并各自保留未完成状态。
+
+## 阶段 3 固定交付
+
+用户在阶段 2 收口后批准推进。独立前端补齐本地应用 pack 命令，SDK 与应用分开交付；Pakka 的 [integrations/webui](../../integrations/webui/README.md)固定完整归档和对应服务/后端包身份。打包采用 npm 标准格式，核对资产与许可；已有目录、篡改资产和元数据同名覆盖均明确拒绝。
+
+[phase-3](../../openspec/changes/plan-independent-webui/phase-3.md)落实剩余条件；[阶段 3 核对](../verification/INDEPENDENT-WEBUI-PHASE-3.md)记录两个真实前端候选、同一安装版后端 A → B → A、原 Session/Conversation 身份和启动前不兼容拒绝。B 为隔离 GUI-only 变体，不是另一公开发行。阶段 3 已验收；阶段 4–5、默认切换、Provider /login、发布和合并保持各自后续边界。

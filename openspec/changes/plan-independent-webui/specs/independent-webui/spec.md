@@ -14,6 +14,17 @@ WebUI SHALL 能够只消费声明的公开客户端、协议、UI SDK 与固定�
 - **THEN** 前端可在无后端源码的环境独立构建，并连接受支持的未修改后端制品
 - **AND** 默认产品启动直接提供选定前端字节，不在启动时拉取浮动源码
 
+#### Scenario: Fixed application archive
+
+- **WHEN** 独立前端交付一个固定应用候选
+- **THEN** 归档包含已核对的声明资产、上游许可和必要元数据，并提供可被消费方固定的归档及 manifest 内容身份
+- **AND** SDK 可独立消费，归档元数据不覆盖资产，已有交付不被静默覆盖
+
+#### Scenario: Reject invalid frontend before opening storage
+
+- **WHEN** 候选的身份、资产格式或服务版本不兼容，文件被篡改，或缺少完整应用入口
+- **THEN** Node 装配在打开 Session 前明确拒绝，不创建替代存储、自动下载或选择另一个前端
+
 #### Scenario: Fixed runtime styles under CSP
 
 - **WHEN** 受信任固定前端制品声明其运行时需要的静态样式 hash

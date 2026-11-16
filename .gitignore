@@ -32,6 +32,8 @@ artifacts/
 !packages/agent/vendor/earendil-works-pi-durable-1.4.0-pakka.4.tgz
 # Fixed browser SDK needed to build the independently owned RSI UI facet.
 !integrations/webui/sdk/pakka-webui-sdk-c1f99cd939aa0ffc.tgz
+# Exact opt-in static application paired through integrations/webui; not the default product.
+!integrations/webui/app/pakka-webui-app-0.1.0-bc3c6f49f4e6e11b.tgz
 
 # --- Pakka runtime state -----------------------------------------------------
 .pakka/

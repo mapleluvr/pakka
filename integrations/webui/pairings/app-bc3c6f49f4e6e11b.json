@@ -1,0 +1,61 @@
+{
+	"schema": 1,
+	"frontend": {
+		"repository": "https://github.com/mapleluvr/pakka-webui",
+		"applicationSource": "977b138c074fcc17a16ba4ad00bfc7ca76b3332b",
+		"schema": 1,
+		"application": {
+			"name": "@pakka/webui-app",
+			"version": "0.1.0"
+		},
+		"archive": {
+			"file": "../app/pakka-webui-app-0.1.0-bc3c6f49f4e6e11b.tgz",
+			"sha256": "bc3c6f49f4e6e11b2ffbc947e35df1b0504f552726e715c752d4fba345f68482",
+			"bytes": 1184383
+		},
+		"manifestSha256": "418033338b02ad0f6dec8ab24dcbbf3278b9d71b8f8454197418f9669d396e15",
+		"assetSchema": 2,
+		"requires": {
+			"services": 3,
+			"workbench": 2,
+			"extensions": 3
+		},
+		"runtime": {
+			"id": "react19-astryx0.7.15",
+			"sdk": "0.1.0",
+			"packages": {
+				"react": "19.3.1",
+				"react-dom": "19.3.1",
+				"@astryxdesign/core": "0.7.15",
+				"@astryxdesign/theme-neutral": "0.7.15",
+				"@stylexjs/stylex": "0.19.2",
+				"lucide-react": "1.73.0"
+			}
+		},
+		"entry": "/",
+		"files": 637
+	},
+	"backend": {
+		"source": "ed05a2f202df5fd77b7c919b5eb8e545fde06e99",
+		"product": {
+			"package": "@pakka/webui",
+			"version": "0.1.0",
+			"sha256": "7a5f45f28ababfcd040f1cbba235d48dba0c145242bb915a1c0cd58dfc8a35ed"
+		},
+		"protocol": {
+			"package": "@pakka/protocol",
+			"version": "0.1.0",
+			"sha256": "c57ec7c43f2d8156648e285bd79acadb52563c5806ae4a163eea49dc094e3033"
+		},
+		"client": {
+			"package": "@pakka/client",
+			"version": "0.1.0",
+			"sha256": "96236109a3fb92a39d609c6a1caf6c7b528e18524fb2194a73cc514a92b24994"
+		}
+	},
+	"sdk": {
+		"file": "../sdk/pakka-webui-sdk-c1f99cd939aa0ffc.tgz",
+		"sha256": "c1f99cd939aa0ffc88400939bf5639fe42c36929d523e45f1197eedd3901dca7"
+	},
+	"mode": "explicit-frontend-option"
+}
