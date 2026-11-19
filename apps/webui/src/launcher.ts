@@ -446,7 +446,7 @@ export async function runLauncher(args: readonly string[]): Promise<number> {
 			? await prepareRecoveryLink(app.runtime, app.http.origin, flags.loginFile)
 			: undefined;
 		if (app.initialOwner)
-			await writeFile(ownerFile, `${app.http.origin}/#signin=${app.initialOwner.token}\n`, {
+			await writeFile(ownerFile, `${app.http.origin}/#session=${app.initialOwner.token}\n`, {
 				flag: "wx",
 				mode: 0o600,
 				flush: true,
@@ -483,7 +483,7 @@ export async function runLauncher(args: readonly string[]): Promise<number> {
 		if (!flags.noOpen && !stop.requested) {
 			const url =
 				loginLink?.url ??
-				(app.initialOwner ? `${ready.origin}/#signin=${app.initialOwner.token}` : ready.origin);
+				(app.initialOwner ? `${ready.origin}/#session=${app.initialOwner.token}` : ready.origin);
 			if (!(await openBrowser(url)))
 				process.stderr.write(
 					"无法自动打开浏览器；请手动打开上述地址（首次登录使用私密 owner 文件），或使用 --no-open。\n",

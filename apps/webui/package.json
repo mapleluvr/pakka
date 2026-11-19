@@ -27,30 +27,20 @@
 			"types": "./dist/backend.d.ts",
 			"import": "./dist/backend.js"
 		},
-		"./ui": {
-			"types": "./dist/ui.d.ts",
-			"import": "./dist/ui.js"
-		},
 		"./workflows": {
 			"types": "./dist/workflows.d.ts",
 			"import": "./dist/workflows.js"
-		},
-		"./components": {
-			"types": "./dist/components.d.ts",
-			"import": "./dist/components.js"
 		}
 	},
 	"files": [
 		"dist",
-		"web",
-		"licenses",
 		"LICENSE.pi-pocket",
 		"NOTICE.md",
 		"examples",
 		"contributions"
 	],
 	"scripts": {
-		"build": "tsc -p tsconfig.json && tsc -p tsconfig.contributions.json && node scripts/build-browser-vendors.mjs && node scripts/build-contributions.mjs"
+		"build": "node scripts/clean-build.mjs && tsc -p tsconfig.json && tsc -p tsconfig.contributions.json && node scripts/install-frontend.mjs && node scripts/build-contributions.mjs"
 	},
 	"dependencies": {
 		"@earendil-works/pi-ai": "1.4.0",
@@ -59,12 +49,7 @@
 		"@pakka/client": "0.1.0",
 		"@pakka/protocol": "0.1.0",
 		"@pakka/server": "0.5.0",
-		"@tanstack/virtual-core": "3.19.11",
-		"dompurify": "3.4.16",
-		"htm": "3.1.1",
 		"jsonc-parser": "3.3.1",
-		"marked": "18.1.0",
-		"preact": "11.0.1",
 		"qrcode": "1.5.4"
 	},
 	"devDependencies": {

@@ -1,6 +1,6 @@
 # pakka-webui WebUI 与扩展开发规范
 
-本文件维护 WebUI 的服务、扩展、组件、配置与验证方法细则。独立前端/React/Astryx 已采用；本页涉及 `/pocket`、旧 SDK 精确字段和 legacy 装配的内容用于现有实现定位，不是新前端必须兼容的接口。新服务命名空间、模型作用域、插件与清理边界以 [WebUI state](../state/webui.md)和[分仓设计](../../openspec/changes/plan-independent-webui/design.md)为准；权限、持久化和原请求要求继续有效。查文件、职责和 public exports 先读[架构说明](WEBUI-ARCHITECTURE.md)；可维护性、开放组合与重构初期少测试政策见[前端规范](FRONTEND-GUIDELINES.md)。整体预期见 [WebUI state](../state/webui.md)，页面结构与交互由[前端声明](../state/frontend.md)维护；当前工作见[工作入口](../OVERVIEW.md)和所指 OpenSpec tasks。公共 API 通过明确 exports 和独立消费者核对，实际实现较窄不自动缩减目标。
+本文件维护 WebUI 的服务、扩展、配置与验证方法细则。浏览器应用和 React/Astryx UI SDK 由独立 pakka-webui 维护；Pakka 保留服务协议、Backend SDK 和 Node 装配。显式单-provider 装配与原生模型配置装配各有自己的公开入口。新服务命名空间、模型作用域、插件与清理边界以 [WebUI state](../state/webui.md)和[分仓设计](../../openspec/changes/plan-independent-webui/design.md)为准；权限、持久化和原请求要求继续有效。查文件、职责和 public exports 先读[架构说明](WEBUI-ARCHITECTURE.md)；可维护性、开放组合与重构初期少测试政策见[前端规范](FRONTEND-GUIDELINES.md)。整体预期见 [WebUI state](../state/webui.md)，页面结构与交互由[前端声明](../state/frontend.md)维护；当前工作见[工作入口](../OVERVIEW.md)和所指 OpenSpec tasks。公共 API 通过明确 exports 和独立消费者核对，实际实现较窄不自动缩减目标。
 
 ## 1. 产品核心与扩展的分工
 
@@ -50,7 +50,7 @@ RSI、MAS、Memo 的可视化、业务控制和管线通过右侧通用贡献方
 - 状态分别处理 loading、empty、denied、conflict、unknown、stale/disconnected 和 terminal；不要把它们合成同一个红/绿点。
 - 显示已持久 membership 与 native live readiness 的区别；generation done 不等于业务目标或工具副作用已完成。
 - 表单写入前展示 scope；危险操作需要明确目标和动作反馈，重复点击复用同一 pending operation，不能静默分配新请求。
-- 使用公开 tokens/classes，CSS 作用于自身内容，不覆盖全局登录/权限/别的插件。公共 `@pakka/webui/components` 的 `Icon` 提供共享 SVG 图标；可访问名称、尺寸及触达条件由[前端声明](../state/frontend.md#响应式与可访问性)维护。
+- 使用公开 tokens/classes，CSS 作用于自身内容，不覆盖全局登录/权限/别的插件。独立 UI SDK 的 React context 与共享 Astryx 部件承载界面组合，SVG 图标由所属共享 UI 或插件提供；可访问名称、尺寸及触达条件由[前端声明](../state/frontend.md#响应式与可访问性)维护。
 - 键盘可操作、focus trap/return、Escape、屏幕阅读标签、窄屏可滚动和触摸交互是组件要求，不是最后加的桌面补丁。
 - Files、Schedules、Memory、Webhooks、MAS 与其他插件消费同一公共扩展插槽，不增加权限或隐式启用 Agent facet。宿主页面/命令入口与实例语义见前端声明和下面的 command/lifecycle 契约。
 - 页面和面板卸载时释放 host subscriptions、listeners、timers 和 abortable reads；关闭界面不表示已接受的服务端工作取消或回滚。
@@ -81,7 +81,7 @@ Card 是显示记录，不是偷偷添加 system/user message。必须用下一�
 - 业务 settings/notes 等使用明确 namespace 与版本冲突规则；user、Conversation 和 extension 的 scope 不能仅靠 UI 选项约束。
 - 长工作通过受控 job/receipt 服务；HTTP 与 wait 均有有限期限，关闭/取消 wait 不等于取消已接受的 job。
 - 同 actor/resource/request 的相同参数只 reconciliation；不同参数拒绝冲突。未知 handler 不自动重进，不能宣称任意外部效果 exactly-once。
-- 实际 public SDK 的 `ExtensionClient.operationByRequest({ extension, requestId, target })` 可在丢失 host operation ID 时只读查询原请求；服务端绑定当前 person 和精确 AgentRef，并在发布前重查原权限。`WebInterfaceContext.operationByRequest(requestId)` 另绑定当前 open instance。
+- 实际 public SDK 的 `ExtensionClient.operationByRequest({ extension, requestId, target })` 可在丢失 host operation ID 时只读查询原请求；服务端绑定当前 person 和精确 AgentRef，并在发布前重查原权限。前端通过显式注入的 `ExtensionServiceBinding` 绑定所属资源和当前 Backend，原请求查询保留提交时的完整身份。
 - 外层 operation 已记录 `done` 不证明内层 job/browser/native effect 已完成；内层仍为 `unknown` 时必须保留待确认身份，不解锁重复效果。
 - 明确 pre-effect guard 的拒绝可报 denied；opaque callback 可能已有效果，其异常/断连/超时保持 unknown。不要解析报错文本推断 rollback。
 - Memory 是相同插槽的另一实际消费者：`workspaceMemoryService`/`workspaceMemoryExtensionRoot` 绑定当前人类与精确资源；宿主分别选择 `createPocketMemory().tools` 与 `.source`。人类界面不自动激活 Agent 能力；提议须经授权审批才进入来源；编辑、审批和遗忘按精确 expectedVersion 提交，冲突保留当前草稿。暂停只停止内容贡献，移除人类界面保留已批准记录及宿主显式工具；响应不明按原 operation 核对。每条文本最多 300 个 UTF-16 code units，项目/global 各最多 40/30 条，未批准提议最多 20 条，保留记录／mutation ledger 上限为 256/512。
@@ -134,9 +134,9 @@ Verification 的选用与记录按[通用方法](VERIFICATION.md#选用与记录
 
 普通产品根／子 Runtime 默认冷观察。页面使用 v2 `preview`、`content.read` 及 `mode=preview` 的观察端口；旧完整 SDK/read 语义不被静默截断。预览按条数与字节封顶，大文字、参数和图片通过原来源/版本引用按需读取，不能每轮先创建完整 native watch 再裁剪。
 
-观察流按 333 ms 合并变化，无变化只小心跳，长流与短控制请求分开计量。多资源请求必须整体通过当前权限校验；浏览器合并状态只接受同 server/person/Session/resource/stream 的确切基线和连续版本，缺页重新读而不是补空数据。可用 SharedWorker 时同身份页面共享连接，回退直连仍保留浏览器连接池限制。
+观察流按 333 ms 合并变化，无变化只小心跳，长流与短控制请求分开计量。多资源请求必须整体通过当前权限校验；浏览器合并状态只接受同 server/person/Session/resource/stream 的确切基线和连续版本，缺页重新读而不是补空数据。独立前端按活动资源管理可取消 SSE 读取，隐藏、关闭或连接失效时释放所属观察；连接仍受浏览器同源连接池限制。
 
-历史用固定的虚拟化内核与原行 key 管理绝对定位、测量、前插锚点及唯一焦点行，原文、正文缓存与 DOM 分别受预算约束；不能将 CSS 折叠或缓存淘汰称为存档删除。标准构建产出 browser vendor 与输入/输出摘要，运行时不安装或改写依赖。接口见 [Runtime API](../reference/RUNTIME-API.md#冷观察预览与完整内容)，操作见[使用指南](../guides/WEBUI-GUIDE.md#历史工具摘要与完整原文)，预期见[观察声明](../state/conversation-observation.md)。
+历史用固定的虚拟化内核与原行 key 管理绝对定位、测量、前插锚点及唯一焦点行，原文、正文缓存与 DOM 分别受预算约束；不能将 CSS 折叠或缓存淘汰称为存档删除。独立前端构建共享 runtime、完整应用与有内容身份的 manifest，Pakka 构建校验并装入固定制品，启动直接提供这些字节。接口见 [Runtime API](../reference/RUNTIME-API.md#冷观察预览与完整内容)，操作见[使用指南](../guides/WEBUI-GUIDE.md#3-工作台创建与阅读)，预期见[观察声明](../state/conversation-observation.md)。
 
 ### 独立选择模型和 Conversation 工作目录
 
@@ -144,14 +144,14 @@ Verification 的选用与记录按[通用方法](VERIFICATION.md#选用与记录
 
 当前模型独立显示；未选模型用 `model: ""` 表示，仍可进入设置和管理 Session。新入口另提供 `/model` 悬浮选择、完整 provider/model 准确直接选择和 `/thinking` 与点击/触控共用操作；持久配置经 Pakka 提交 pi-durable。选择器参考 pi-coding-agent 在 pi-tui 上实现的 `/model` 的输入焦点、上下键循环、高亮候选、Enter 确认、Escape 关闭及位置/匹配总数反馈。检索和键盘移动不提交配置，空结果下 Enter 无效果，中文等输入法组合期间不把 Enter 当作选择。提供商/模型参数由设置中的可视化控件及校验后的高级编辑接入原生配置；当前选择归 Conversation，显式默认归 Person 并在后端跨设备保存，实例连接定义由配置权限管理。刷新不覆盖既有选择或发送生成请求。
 
-工作目录入口**只在 Conversation 标题下方**，Settings 不提供目录变更入口。点击当前服务器路径打开目录选择器：
+工作目录与工具预设在 Conversation 输入工具栏的配置入口中编辑，服务器目录选择器按批准根目录浏览：
 
 - Locations 是宿主批准的位置；目录浏览、面包屑、上一级和粘贴绝对路径均只在这些位置内导航。
-- 最近使用与收藏保存在当前浏览器，按 server/person 隔离，退出时清除；服务端每次重新验证快捷路径，越权、失效及逃出批准范围的符号链接不展示。
+- 目录列表与提交路径均由服务端重新核对批准范围，越权、失效及逃出批准范围的符号链接被拒绝。
 - 浏览或关闭不会修改 Conversation；只有 **Use this directory** 明确应用。手机使用单栏滚动内容与固定确认区，默认最短目标为宽∶高 3∶5。
 - 普通新建 Conversation 的模型/Thinking 缺省使用 Person 保存的默认；显式创建参数及同一基础 profile 的分叉保留所指定/来源配置。目录沿用创建入口的明确上下文；这些选择不隐式替换指令或工具。
 
-Pi Durable 公开 configure 支持 model/cwd/thinkingLevel 局部修改。Pakka 分别持久化选定字段；成功应用更换 incarnation、撤销旧绑定，保留历史和已花额度，不搬文件、不重放工作。已有工作或队列未清空时拒绝切换，不自动取消工作。未知结果只能读取当前配置核对，不自动重试。Viewer 可查看当前配置，但不能打开配置菜单、浏览服务器目录或修改它们。
+Pi Durable 公开 configure 支持 model/cwd/thinkingLevel 局部修改。Pakka 分别持久化选定字段；成功应用更换 incarnation、撤销旧绑定，保留历史和已花额度，不搬文件、不重放工作。已有工作或队列未清空时拒绝切换，不自动取消工作。未知结果保留原请求并只读查询配置回执，当前配置单独读取；旧回执与当前值分别呈现。Viewer 可查看当前配置，但不能打开配置菜单、浏览服务器目录或修改它们。
 
 目录浏览沿用服务器 roots 约束：默认使用 `runtime.cwd` 及整组 Agent 预设允许的目录作为可浏览根目录。可通过可选的 `runtime.cwdRoots` 一次批准项目根树，新子项目无需新增“模型 × 目录”profile。下面是显式 legacy JSON 宿主配置的局部片段；完整装配仍须提供其模型访问与初始 limits。无参数产品入口则由 Pi 原生模型来源和本地预设装配，无需这份 JSON：
 
@@ -182,9 +182,9 @@ New Session / New Conversation 使用独立创建表单。`session.list` 对有�
 
 管理目录位于控制 Session 的 `pocket.sessions` namespace，最多 31 个新增 Session，加已有控制 Session 最多 32 项。它先持久记录保留的 Session ID 和 unknown，再以公开 `createRuntime` 打开独立 storage/writer，原生初始化和 ready 注册均确认后才发布。重开沿原 ID 与目录，保留预算消费；unknown 初始化、writer claim 和历史输入分别保留原边界。已确认子存储打开失败时，保留 unavailable 登记，健康 Session 继续服务；该目录不是跨 Session 的 Runtime、总预算域或进程隔离。
 
-具备全局 Session 创建权限的人可在设置中发起 `session.reopen`，仅尝试打开启动时未能取得 Runtime 的原登记。活跃 writer、运行中已封闭或清理未确认的 Runtime、unknown 初始化、缺失/损坏/异属数据库继续拒绝；不补库、不清锁、不重放。客户端核对返回的原 Session ID，打开与发布前重验权限。响应未知时只读目录核对，不以可用状态证明原请求完成者；打开已确认而目录刷新失败时，先重读目录，不能按旧状态再次打开。
+具备全局 Session 创建权限的人可在工作台发起 `session.reopen`，仅尝试打开启动时未能取得 Runtime 的原登记。活跃 writer、运行中已封闭或清理未确认的 Runtime、unknown 初始化、缺失/损坏/异属数据库继续拒绝；不补库、不清锁、不重放。客户端核对返回的原 Session ID，打开与发布前重验权限。响应未知时只读目录核对，不以可用状态证明原请求完成者；打开已确认而目录刷新失败时，先重读目录，不能按旧状态再次打开。
 
-`create` 在明确的 sessionId 内创建 Conversation；可选 `configuration: {model?,cwd?,thinkingLevel?}` 与创建同次原生提交，不替换整组 Agent 预设。没有可用父项时，确认执行 Session → Conversation 两步，保留各自原请求；父项成功后不因第二步失败重建或删除。请求未知时仅 lookup，明确确认才接续第二步。待核对身份保存在当前页面状态，关闭并重开对话框可读取；整页刷新重新加载资源清单，未确认创建草稿仅在原页面存续。
+`create` 在明确的 sessionId 内创建 Conversation；可选 `configuration: {model?,cwd?,thinkingLevel?}` 与创建同次原生提交，不替换整组 Agent 预设。没有可用父项时，先显式创建 Session；确认成功后再打开 Conversation 创建表单。两类操作分别保存完整原请求，响应未知只读 lookup，查询为空继续待核对。记录保存在当前标签页 sessionStorage，刷新和原服务重开后可核对；关闭浏览器标签页的存储寿命与服务持久回执分别管理。
 
 读取、SSE、协作、通知、扩展服务与 Native 操作按完整 Session/Conversation 地址选择所属 Runtime。资源 grant 同样区分两级身份；原单 Session 裸 ID 兼容授权只代表原控制 Session，不向同号的新 Session 扩权。receipt/wait/withdraw 保留原生 receipt ID，sessionId 作为单独寻址字段；客户端同时核对响应父项，不用重编码的 ID 冒充新原生回执。
 

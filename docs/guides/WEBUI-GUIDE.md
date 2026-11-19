@@ -1,12 +1,10 @@
 # WebUI 使用与启动
 
-pakka-webui 的原生操作参考 Devin 离线生产前端；界面接入 Pakka 的实际 API、权限、持久状态和原生调度。
+Pakka WebUI 是围绕持久 Session 和 Conversation 的浏览器工作台。它提供原历史阅读、原生输入、配置、多人协作和宿主装配的插件。页面按当前人类身份显示可读资源，操作由后端核对权限与原请求。
 
-pakka-webui 是可选的 Web 工作台。它提供普通 Conversation、原生输入、多人协作和宿主装配的服务／插件；模型工具与界面按各自权限启用。产品组成见[产品声明](../state/product.md)。
+## 1. 安装与启动
 
-## 1. 从源码启动
-
-要求 Node 24+ 与 npm 11。以下命令从仓库根目录运行：
+源码安装要求 Node 24+ 与 npm 11，在 Pakka 仓库根执行：
 
 ```sh
 npm ci --ignore-scripts
@@ -15,130 +13,98 @@ npm link --workspace @pakka/cli --ignore-scripts
 pakka
 ```
 
-`pakka` 默认启动 WebUI 并打开浏览器，无需预先提供宿主 JSON、模型或凭据；也不增加首次使用 wizard。不链接 shell 命令时，可运行 `node apps/cli/dist/main.js`。`--no-open` 只启动服务，Ctrl+C 正常停止。以上使用本地源码 workspace；不假定这些私有包已发布到 npm。
+`pakka` 默认提供随包固定的独立前端，并打开浏览器。无需预先选择模型或填写宿主 JSON；`--no-open` 只启动服务，Ctrl+C 正常停止。未链接 shell 命令时，可运行 `node apps/cli/dist/main.js`。这些私有 workspace 包通过源码或固定归档安装，安装渠道见[固定前端配对](../../integrations/webui/README.md)与[本机交付](LOCAL-MAINTENANCE.md)。
 
-Pakka 产品定位和数据默认保存到 `~/.pakka`（可用 `PAKKA_HOME` 指定）。首次启动绑定当前目录，之后无参数运行会重开已记录工作区与原控制 Session，而不是根据新的 shell cwd 换库。Pi 原生配置使用 `PI_CODING_AGENT_DIR` 或 `~/.pi/agent`，与产品数据分开。
+产品定位与数据使用 `PAKKA_HOME`，默认 `~/.pakka`。首次启动绑定当前项目目录，后续启动重开该工作区与原控制 Session。Pi 模型配置使用 `PI_CODING_AGENT_DIR`，默认 `~/.pi/agent`。
 
-模型/provider 可以随时配置：继续使用 Pi 配置工具编辑原生 `models.json`、`auth.json`、`settings.json`，然后在 **Settings → Models & Providers** 刷新或使用原生认证。无模型时可以管理 Session 和设置；明确选择模型并发送输入后才开始工作。原生默认模型/thinking 影响以后创建，不替换已有 Conversation 的选择。配置文件不等于执行扩展：外部工具写入的 Pi 原生模型配置可刷新，依赖 Coding Agent 扩展事件的自定义行为不会随文件一起执行。
+首次 owner 登录链接写入私密 `owner-link.txt`；打开链接后在页面确认登录。兑换后浏览器保存登录 Cookie 并清除地址片段，原 Session 重开保留人类身份。丢失登录时使用第 6 节的恢复入口。
 
-本地 `default` 预设提供 read/write/edit，以及 Windows PowerShell 或 POSIX Bash；`read-only` 预设只注册 read。工具以当前 OS 用户运行，不是沙箱。命令子进程不继承模型凭据或 Node 启动钩子，但仍能访问该用户的文件及网络。项目和用户 instructions、skills、templates 通过 Pi 原生本地发现读取；只展示 skills/templates 索引，不自动安装包、执行扩展/MCP 或展开模板正文。
+## 2. 模型来源与工具预设
 
-### 高级宿主装配
+模型/provider 定义来自 Pi 原生 `models.json`，认证由可信宿主的 Pi 配置管理。可用外部 Pi 配置工具维护 `auth.json`、`settings.json` 和连接定义，再在 WebUI 的“提供商与模型”中读取、编辑或重新加载。页面支持参数表单与受校验的高级编辑；已存秘密保持保护状态。Provider `/login` 和私密凭据的新页面交互按当前交付范围延期，认证仍通过宿主工具管理。
 
-显式配置优先级为命令行参数、`PAKKA_CONFIG`、已保存来源、`PAKKA_HOME/config.json`、默认本地装配。保留下面的旧 JSON 兼容入口；它不是普通用户启动 WebUI 的必要条件，也不是登记完整 Pi 模型目录的方式：
+“个人模型默认”按 Person 保存，影响以后创建的 Conversation；当前 Conversation 的模型与 Thinking 可独立改变。输入区 `/model` 或模型按钮打开搜索选择器；`/model provider/model` 精确选择完整身份。`/thinking` 与 Thinking 按钮使用当前模型提供的级别。
+
+默认本地 `default` 预设装配原生 read/write/edit 及 Windows PowerShell 或 POSIX Bash；`read-only` 只注册 read。工具以宿主 OS 用户运行，访问范围取决于实际执行环境。项目/用户 instructions、skills、templates 使用 Pi 本地发现；模型获得 skills/templates 索引，可按需读取正文。
+
+工作目录与工具预设在 Conversation 配置中设置。目录属于服务器，浏览范围由宿主 `runtime.cwdRoots` 或批准 profile 决定。模型、Thinking、目录与预设分别表达各自配置；工作或队列未结束时，服务按原生准入规则拒绝冲突变更。
+
+## 3. 工作台、创建与阅读
+
+工作台列出当前可读、已加载的 Conversations，可按 Session、归档状态和标题筛选。点击标题进入原对话。“新建 Session”与“新建 Conversation”分别确认：先创建的 Session 保留独立存储和预算，子 Conversation 由后续显式动作创建。表单提供名称、批准目录与预设；初始模型/Thinking 使用个人缺省或宿主默认。
+
+已登记但不可用的 Session 可在原来源恢复后显式重新打开。创建响应丢失时，页面保留原请求并提供核对；查不到结果继续保持待核对。重开响应丢失后，通过刷新工作台确认原 Session 是否已加载；读取失败时保留核对状态。
+
+工作台的原历史入口接受已知 Session ID 和 Conversation ID，由服务重新核对身份与访问授权。未加载 Session 的可读保存历史标明保存状态，浏览不会打开执行 Runtime。同号 Conversation 通过完整 Session 身份区分。
+
+Conversation 页面分为阅读区和输入区。更早历史、返回最新与当前页搜索均使用有限页面；搜索范围在页面中明确显示。工具卡区分流式声明、执行与保存结果，分叉继承和当前调用各保留其来源。
+
+消息“原文”打开单条消息的阅读模式，固定阅读导航提供“返回消息预览”。原文按块读取，可继续查找、复制当前内容或下载原文；搜索完整引用与搜索预览分别表达。图片按需加载，无法直接展示的格式保留原文下载入口。手动滚动或操作正文会暂停自动跟随，“到本页最新消息”可返回当前页末端；明确发送新消息会接续新回复。
+
+## 4. 输入、命令与恢复
+
+普通输入使用原生调度：
+
+- “发送消息”提交 prompt。
+- “调整当前工作”提交 steer。
+- “本轮结束后执行”提交 followUp。
+
+发送前保存完整原绑定与请求。响应不可确认时，页面显示待核对，并可展开查看原正文、模式和请求号。刷新或重开后点击核对只查询该原请求；unknown 保留原请求。等待期间新写的草稿会保留，已确认的旧回执与当前输入分别展示。“我的输入”用于检查原生接纳与结果。
+
+命令按插件声明发现、校验与分流。普通 `/tmp/report.txt` 等字面输入可发送；命令发现失败时，疑似命令参数留在草稿。UI command 进入相应实例，Backend command 按 App/Conversation scope 调用；有持久效果的命令使用原请求恢复，读取命令失败可显式再读。插件 display 内容不会自动成为模型输入。
+
+听写从输入工具栏启动。识别文本先进入预览，结束后由用户插入草稿，再显式发送；听写期间的手动修改保持。浏览器权限由用户选择。本轮真实识别因本机无录音设备获授权跳过，识别质量仍未验证。
+
+停止观察、关闭页面或取消等待只结束相应界面活动。停止工作需显式请求服务操作，是否已停止、是否产生效果和预算消耗以原生回执判断。
+
+## 5. 导航、外观与插件
+
+桌面侧栏提供功能、设置和已打开页面；手机通过导航按钮打开抽屉，选择入口后返回内容。关闭页面会释放所属观察，切换保留的页面维持各自草稿与阅读位置。返回和 Escape 按当前弹窗/抽屉处理焦点。
+
+“外观”提供跟随系统、明暗模式、字体与字号，保存到当前浏览器，并应用于正文、共享部件与弹窗。设置中的人员、预算、模型、通知和 facets 入口按权限与当前资源开放。
+
+人员管理员可创建带角色和资源范围的邀请，第二个人在独立登录中兑换。只读成员可参与获准的人类聊天和 reactions；模型输入、共享笔记、pin 与 driver 控制各按其权限处理。聊天/笔记通过“协作”入口操作，输入控制权影响真实模型输入准入。
+
+宿主装配相应贡献后提供以下入口：
+
+| 功能             | 操作                                                                |
+| ---------------- | ------------------------------------------------------------------- |
+| Files / Git      | 读取、编辑、上传与导出；核对文件冲突、分支及受控 worktree           |
+| Memory           | 条目、提议、批准内容与版本                                          |
+| Scheduled inputs | 创建、取消定时计划，检查原 job 与逐次投递                           |
+| Webhooks         | 登记、签名密钥轮换、移除和投递记录                                  |
+| 审批             | 决定当前受管工具的允许/拒绝，并核对实际结果                         |
+| 受管浏览器       | 访问批准 origin、查看画面和执行获准操作                             |
+| Team / MAS       | Graph、Agents、Activity，成员输入、回复、原 Conversation 与退休管理 |
+| RSI              | 工单详情、分派、执行与结果核对                                      |
+
+“扩展与 facets”分别管理 Backend、Agent、WebUI、Client。WebUI 停用释放页面实例，已接纳工作和持久记录由所属服务继续维护。命令、插件操作、外层 operation 与内层 native receipt 使用同一套服务权限与原请求关系。
+
+通知设置按 Person 保存偏好，设备可登记到当前 Conversation。浏览器原生权限由用户确认；系统显示检查与实际工作完成推送分别操作。推送包含有限事件定位，worker 读取正文时重新授权。设备停用覆盖其关联资源，撤权/注销使后续正文读取失效。不同部署设备的原生权限、推送渠道和系统显示需按实际环境核对。
+
+## 6. 正常停止、重开与维护
+
+正常停止后再次运行 `pakka`，启动器使用保存的来源、工作区、端口和原 sessionFile。资源、回执、当前模型/目录/Thinking 与累计消费保留，启动本身不发送输入。
+
+`PAKKA_STARTUP_UNCONFIRMED` 表示启动结果未确认。核对原数据后可显式 `pakka --recover`；它按已记录身份重开。数据库、WAL、writer claim 和缺失定位分别核对，不能通过创建替代库恢复原请求。
+
+Cookie 丢失、注销或过期时，`pakka recover login` 预览原身份，再用 `--confirm <原 Session ID>` 私密签发一次性凭据；`pakka --login-file <凭据文件>` 为实际地址准备链接。writer 异常占用使用单独的 `pakka recover writer` 流程。
+
+停服后的 `pakka backup`、`pakka restore`、`pakka upgrade` 核对原身份、固定归档与恢复状态。数据恢复后旧登录失效，任务保持停机，先核对外部效果再显式恢复。完整参数见[本机维护](LOCAL-MAINTENANCE.md)。
+
+归档/恢复整理当前人的 Conversation 列表；MAS retire 管理成员准入与 tombstone。两者保留原历史。预算按原生累计消费和有审计的上限管理，原请求核对不重放输入或退还已消费额度。
+
+## 7. 高级装配与部署
+
+配置优先级为命令行、`PAKKA_CONFIG`、已保存来源、`PAKKA_HOME/config.json`、默认本地装配。显式 JSON 与可信 ESM 可配置 Runtime、批准资源和服务/插件：
 
 ```sh
 pakka --config /absolute/private/pakka.json --owner-file /absolute/private/owner-link.txt
+pakka --config-module /absolute/private/config.mjs --owner-file /absolute/private/owner-link.txt
 ```
 
-`pakka-webui --config ... --owner-file ...` 仍可直接启动高级宿主。下面示例的目录、endpoint、模型 ID 和认证字符串需要替换为实际值；不要把真实凭据提交到仓库：
+`pakka-webui` executable 也接受同样的显式装配选项。JSON 单-provider 配置与原生本地产品装配各有自己的工具来源，具体形状见[开发契约](../development/WEBUI-DEVELOPMENT.md)。可信 ESM 可传入公开 `modelConfiguration` 和固定 `frontend`，前端摘要、兼容性与完整资产在打开 Session 前核对。
 
-```json
-{
-	"runtime": {
-		"cwd": "/srv/projects/project-a",
-		"cwdRoots": ["/srv/projects"],
-		"dataDir": "/srv/pakka-data",
-		"endpoint": "http://127.0.0.1:8000/v1",
-		"model": "your-local-model-id",
-		"apiKey": "local-provider-key",
-		"limits": {
-			"maxConversations": 20,
-			"maxPrimaryAttempts": 2000,
-			"maxAuxiliaryAttempts": 1000
-		}
-	},
-	"owner": "Owner",
-	"initial": [{ "name": "Work", "profile": "default" }],
-	"profiles": ["default"],
-	"transport": { "host": "127.0.0.1", "port": 45000 }
-}
-```
+默认监听 loopback HTTP。远程入口明确配置 `transport.publicOrigin`、受信代理 peer、TLS 终止和 SSE 转发；请求继续受 Host、Origin、Cookie、CSRF 与身份绑定约束。开发前端使用保持这些关系的同源代理。代理的 SSE 支持与连接期限须按实际部署检查；Cloudflare Quick Tunnel 不作为 SSE 正向验收环境。
 
-这是兼容的单-provider 宿主示例；JSON 模式不会隐式增加原生执行工具。Files、Memory 等服务与插件仍由宿主明确装配，其入口随安装贡献出现；具体示例见 [WebUI 开发规范](../development/WEBUI-DEVELOPMENT.md)。可信 ESM 启动模块可用 `--config-module /absolute/private/config.mjs` 加载，它是宿主代码，不是浏览器提交的配置。
-
-初次启动把 owner 登录链接写入指定的新私有文件；默认位置为数据目录的 `owner-link.txt`，终端不打印登录 token。配置、owner 文件及数据目录应放在受保护的位置，并核对平台 ACL。打开 owner 链接兑换后，浏览器保存人员会话并清除地址片段；请保护 Cookie 和邀请链接。原 Session 重开不重新签发初始 owner。
-
-## 2. Conversation、模型与工作目录
-
-从侧栏 **Sessions** 选择 Conversation；首页的 **New Session / New Conversation** 打开独立配置向导。填写名称，选择父 Session、工具预设、模型/thinking 和服务器目录，明确确认后创建并打开。没有可用父项时可先创建 Session，再创建 Conversation；部分成功保留已创建父项，unknown 保留原请求核对。创建不提交模型输入，进入会话后明确 **Send** 才开始工作。
-
-输入模式按目的选择：
-
-- **Prompt**：启动普通模型工作。
-- **Steer**：工作进行中提交原生 steering。
-- **Follow up**：使用原生 follow-up 队列。
-- **People Chat**：人类旁聊，不自动成为模型输入。
-
-模型按钮位于输入区，查询完整原生目录，支持跨 provider 搜索和分页。方向键移动高亮，Enter 确认，Escape 取消；当前选择及真实模型能力单独显示，thinking level 使用该模型支持的级别。模型选择不要求新增 profile，也不改变工具预设。账号认证与配置刷新在 **Settings → Models & Providers**，不是模型选择菜单的副作用。
-
-工作目录入口位于 **Conversation 标题下方的服务器路径**。打开后可浏览批准位置、面包屑、最近目录、收藏或输入路径，点击 **Use this directory** 才应用。模型和目录分别保存，变更任意一个都保留另一个、指令和工具。新会话以及同基础 profile 的分叉继承当前选择。
-
-会话右上角 **Conversation options → Settings** 提供用量和凭据；同一菜单的 **Conversation** 提供重命名、归档、fork 和有限导出。cwd 从会话页头的目录路径进入。工作或队列尚未结束时，配置变更被拒绝，已有任务继续按原规则运行。Viewer 可查看当前模型与路径，配置和目录浏览按服务端权限开放。
-
-`runtime.cwdRoots` 是宿主批准的目录树；未显式设置时从批准 profile 的目录推导位置。路径属于运行服务器，不是手机文件系统。选择 cwd 不授予额外 Files 权限，也不构成执行沙箱。
-
-## 3. 手机导航与外观
-
-手机默认最短测试比例为宽∶高 **3∶5**，例如 360×600 或 390×650。左上角侧栏图标开关抽屉；从 **Sessions** 选择会话，从 **Commands & extensions** 进入命令与扩展页。点击抽屉右侧暗区或按 Escape 返回会话。
-
-页面由侧栏、首页、Conversation、palette 和独立 Settings 组成，入口随已安装服务与当前授权呈现。桌面侧栏可通过侧栏顶部面板图标或 Ctrl/⌘ B 收起；手机该快捷键开关抽屉。搜索图标或 Ctrl/⌘ K 打开当前身份可见的 Conversation 搜索；在搜索 palette 中选择 **Include archived**，归档项可显式 **Restore**。会话页头搜索只筛选已加载的历史，不发送模型工作。
-
-侧栏底部 **Settings** 单击进入独立配置页，默认显示 **Appearance**。页内分类导航提供外观、Conversation settings（用量与凭据）、Notifications，以及按权限显示的 Models & Providers、预算、Session 管理、People & invitations 和 Extensions。Conversation 专属分类在选中会话后可用；手机上可横向滚动分类栏。**Back to app** 返回原页面并保留当前会话与未发送草稿。可选择 Dark / Light、默认 Inter、JetBrains Mono、系统无衬线或衬线字体，以及 14–24px 字号；合法的已保存字体／字号偏好继续生效。选择即时应用并保存到当前浏览器，代码块维持等宽显示。模型按钮在输入卡片内，Input mode 与 Send 同行；窄屏模型入口为带可访问名称的图标。
-
-### 历史、工具摘要与完整原文
-
-普通启动先冷打开原 Session；目录、状态和历史预览不装载模型执行历史。工作中的状态与工具预览按 333 ms 合并更新。支持 SharedWorker 的同源同身份页面共用读取连接；回退直连时仍受浏览器自身连接池约束，不因服务端额度增加而消除该边界。
-
-**Show earlier history** 显式读取更早的有界页。页面保留有限的预览字节窗口并只创建当前视口附近的行；工具卡在收起时不创建完整参数、结果或图片 DOM。缓存淘汰会提示原档案仍保留，**Back to latest history** 返回最新窗口；离屏回收不删除原文、重放工作或撤回输入。会话页头 Find 筛选已加载预览，不是全档案检索。
-
-没有原文引用的实时内容会标明 **Preview only**：**Copy preview** 只复制当前预览，搜索也只检查预览。预览未匹配不会报告完整原文不存在；参数/结果正式发布且原文引用可用后，再进行原文操作。
-
-展开带有原文引用的工具或原文项后，**Load more** 按范围继续读，**Read full original** 明确顺序取到结尾；取完不等于全文长期驻留或渲染，正文只保留有限文本行与字节缓存。**Find next** 在所选原文中逐块执行区分大小写的字面搜索，Enter 也可搜索，不发送模型输入。**Copy this block** 仅复制当前块；**Save original** 提供完整流式交付。图片须单独展开，超出媒体预算时使用原文交付，不隐式解码所有历史图片。
-
-空闲补取只补可见／展开材料，稳定两秒后按一次一块与约 128 KiB/s 节流；新操作、离页、压力或撤权优先取消浏览读取。停止读取或收起卡片不 abort 工具。源采集已经丢弃的 bytes/lines 保留截断提示，成功读取不能恢复未保存的内容。细节与边界见[观察与完整内容声明](../state/conversation-observation.md)。
-
-## 4. 人员、服务和插件
-
-管理员在 **Settings → People & Invitations** 按批准资源创建邀请，第二身份可在独立浏览器窗口兑换。角色、资源范围、审批和撤权以服务端当前判断为准；显示一个卡片或菜单不会授予执行权限。
-
-当宿主安装了相应贡献时：
-
-| 入口             | 常用操作                                                |
-| ---------------- | ------------------------------------------------------- |
-| Files & changes  | 编辑、导出及 Changes & Git 分支操作；文件根目录独立批准 |
-| Memory           | 记忆条目、Sender 提议、Owner 审批及版本查看             |
-| Scheduled inputs | 显式创建、取消定时输入并核对原操作                      |
-| Webhooks         | 创建、轮换凭据和确认 Remove webhook 删除                |
-| Notifications    | 设备授权、订阅及点击进入目标 Conversation               |
-| Team（MAS）      | Graph / Activity / Agents、成员会话、通信和管理         |
-
-**Commands & extensions** 打开可筛选 palette，Commands 区列出命令，Pages 区列出当前身份可见的页面。方向键导航、Enter 执行、Escape 关闭；命令参数由插件声明，缺少必填参数时显示具体用法。**Manage extensions…** 进入独立 Settings 页，执行 Disable / Reload / Enable；停用 UI 不会自动取消已提交工作或删除历史。
-
-Team 使用单层页头与 **Graph / Activity / Agents** 三视图。选择成员显示右侧 inspector；手机改为底部面板。**Open Conversation** 进入真实成员会话并可返回原选择；**More → Member controls…** 提供输入及获准回复，控制界面的 **Management** 提供 Stop work 与退休确认，不是创建表单。个人视图切换不启动模型工作。操作见[Team 指南](MAS-BOARD.md)，目标见[前端声明](../state/frontend.md#team)。
-
-## 5. 正常关闭与重开
-
-正常停止后再次运行 `pakka`，启动器使用已保存的来源、工作区、端口和原 sessionFile 重开，无需手工编辑配置。已有身份、资源、回执、实际模型／cwd／thinking 和累计消费保持；重开不重新发送输入或签发 owner 凭据。
-
-未确认的启动会给出 `PAKKA_STARTUP_UNCONFIRMED`。确认原数据后可运行 `pakka --recover`；该动作只重开已记录的原身份，不清理 writer 锁、不补建丢失数据库、不猜测缺失定位，也不重放工作。损坏定位记录需依据原路径处理；高级宿主可显式提供同一个 `runtime.reopenSessionFile`。不要删除数据库、WAL 或 claim 来绕过故障。
-
-Session 管理设置显示不可用的已登记子 Session。健康 Session 可以继续使用；恢复原库之后，具有全局管理权限的用户可显式重开。原登记未知、仍持有但已封闭的 Runtime 或清理未确认的实例不能靠再次打开修复。
-
-预算设置展示累计消费和现行上限，并支持有审计的调整。相同启动配置不会覆盖管理修改；响应丢失时先查原请求，版本冲突后显式重读。调整不退款、不清零，也不改变未确认工作的结果。
-
-归档／恢复整理当前人的 Conversation 列表，保留原会话数据。MAS retire 另行停止成员准入并保存 tombstone；这两类操作均保留持久历史。
-
-未知结果先通过原请求与当前状态只读核对；刷新、关闭面板或退出浏览器都不自动重放输入，也不退还已消费额度。强制终止后的 claim 或未知存储需要另行恢复判断，受信宿主的 writer 维护命令见 [Strategy API](../reference/STRATEGY-API.md#trusted-writer-maintenance)。
-
-### 本机维护入口
-
-Cookie 丢失、注销或过期可用 `pakka recover login` 预览原身份，再以 `--confirm <原 Session ID>` 私密发行一次性凭据；`pakka --login-file <凭据文件>` 为实际地址准备链接。崩溃占用使用 `pakka recover writer`，不与 `--recover` 混用。
-
-停服后的 `pakka backup`、`pakka restore` 和 `pakka upgrade` 统一核对原身份。恢复后旧登录失效，任务保持停机，先核对外部效果再显式恢复。参数、范围、故障续完和保全规则见[本机维护指南](LOCAL-MAINTENANCE.md)。
-
-## 6. 远程连接
-
-默认 loopback HTTP。远程部署需明确 `transport.publicOrigin`、受信反向代理 peer、TLS 终止及 SSE 传输；未经配置的新域名会被拒绝。Cloudflare Quick Tunnel 声明不支持 SSE，不能用作这套实时界面的正向验收环境。
-
-真实 OS 通知、本地 TLS、真实设备公网推送、LAN、tailnet 和不同平台分别验证，部署时应选择与实际传输和设备匹配的检查。传输与扩展装配契约见[开发规范](../development/WEBUI-DEVELOPMENT.md)，验证方式见[验证入口](../verification/README.md)。
+前端替换使用获准归档与 manifest pin，正常停止并重开原 Session。兼容回退只选择前端字节，数据库与未知效果继续保留。操作和支持组合见[固定制品](../../integrations/webui/README.md)。

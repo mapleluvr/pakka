@@ -1,7 +1,5 @@
 import { createHash } from "node:crypto";
-import { readdir, readFile, lstat } from "node:fs/promises";
-import { join, relative } from "node:path";
-import { fileURLToPath } from "node:url";
+import { join } from "node:path";
 import {
 	createRuntime,
 	readStoredConversation,
@@ -31,13 +29,14 @@ import type { ProductModelSource } from "./product-models.ts";
 import { createWebUiServices, type WebUiServices } from "./webui-services.ts";
 import { createPersonModelDefaults } from "./model-defaults.ts";
 import { loadWebUiAssets, type WebUiArtifactSource } from "./assets.ts";
+import { defaultWebUiArtifact } from "./default-frontend.ts";
 export type { PocketServiceContext } from "./backend.ts";
 export { openProductModels, type ProductModelSource } from "./product-models.ts";
 export interface PocketProductOptions {
 	readonly runtime: RuntimeOptions;
 	/** Trusted native configuration service, never supplied through browser RPC. */
 	readonly modelConfiguration?: ProductModelSource;
-	/** Explicit fixed frontend candidate; absent keeps the existing product until the later default switch. */
+	/** Trusted fixed frontend override. Omitted uses the artifact bundled with this product. */
 	readonly frontend?: WebUiArtifactSource;
 	readonly owner: string;
 	readonly initial?: readonly { readonly name: string; readonly profile: string }[];
@@ -66,74 +65,6 @@ export interface PocketProductOptions {
 		| "extensions"
 	>;
 }
-const types: Readonly<Record<string, string>> = {
-	html: "text/html; charset=utf-8",
-	js: "text/javascript; charset=utf-8",
-	css: "text/css; charset=utf-8",
-	svg: "image/svg+xml",
-	png: "image/png",
-	woff2: "font/woff2",
-	txt: "text/plain; charset=utf-8",
-	webmanifest: "application/manifest+json",
-};
-async function publicAssets() {
-	const directory = fileURLToPath(new URL("../web/", import.meta.url)),
-		assets = new Map<string, { type: string; body: Uint8Array }>();
-	let bytes = 0;
-	async function walk(folder: string): Promise<void> {
-		for (const name of await readdir(folder)) {
-			if (name.startsWith(".") || name.includes(":")) throw new Error("Invalid public WebUI asset");
-			const path = join(folder, name),
-				stat = await lstat(path);
-			if (stat.isSymbolicLink()) throw new Error("Public WebUI asset link refused");
-			if (stat.isDirectory()) {
-				await walk(path);
-				continue;
-			}
-			const type = types[name.split(".").at(-1)!];
-			if (
-				!stat.isFile() ||
-				!type ||
-				stat.size > 2 * 1024 * 1024 ||
-				(bytes += stat.size) > 16 * 1024 * 1024 ||
-				assets.size >= 128
-			)
-				throw new Error("Invalid bounded public WebUI assets");
-			const key = "/" + relative(directory, path).replaceAll("\\", "/");
-			assets.set(key === "/index.html" ? "/" : key, { type, body: await readFile(path) });
-		}
-	}
-	await walk(directory);
-	// Browser/client entry points are copied from built public exports; never source or native runtime modules.
-	for (const [specifier, key] of [
-		["@pakka/client/pocket", "/client/pocket.js"],
-		["@pakka/protocol/pocket", "/protocol/pocket.js"],
-		["@pakka/protocol", "/protocol/index.js"],
-		["@pakka/protocol/extensions", "/protocol/extensions.js"],
-		["@pakka/protocol/extension-rpc", "/protocol/extension-rpc.js"],
-		["@pakka/client/extensions", "/client/extensions.js"],
-		["@pakka/webui/components", "/sdk/components.js"],
-		["@pakka/webui/ui", "/sdk/ui.js"],
-		["preact", "/vendor/preact.mjs"],
-		["preact/hooks", "/vendor/hooks.mjs"],
-		["htm", "/vendor/htm.mjs"],
-		["marked", "/vendor/marked.mjs"],
-		["dompurify", "/vendor/purify.mjs"],
-	]) {
-		assets.set(key!, {
-			type: types.js!,
-			body: await readFile(fileURLToPath(import.meta.resolve(specifier!))),
-		});
-	}
-	assets.set("/vendor/virtual-core.js", {
-		type: types.js!,
-		body: await readFile(
-			fileURLToPath(new URL("./browser-virtual-core.js", import.meta.resolve("@pakka/webui"))),
-		),
-	});
-	return assets;
-}
-
 /** Trusted composition entry. initialOwner is delivered to the local caller only, never an unauthenticated HTTP response. */
 export async function startPocket(options: PocketProductOptions) {
 	const initial = options.initial ?? [],
@@ -150,10 +81,10 @@ export async function startPocket(options: PocketProductOptions) {
 		initial.some((row) => !profiles.includes(row.profile))
 	)
 		throw new Error("Invalid approved WebUI product configuration");
-	const frontend = options.frontend ? await loadWebUiAssets(options.frontend) : undefined;
-	if (frontend && frontend.manifest.entry !== "/")
+	const frontend = await loadWebUiAssets(options.frontend ?? defaultWebUiArtifact());
+	if (frontend.manifest.entry !== "/")
 		throw new Error("The product requires a declared frontend HTML entry at /");
-	const assets = frontend?.assets ?? (await publicAssets());
+	const assets = frontend.assets;
 	const bootstrapCredential =
 		options.runtime.resolveApiKey ??
 		(() => {
@@ -415,8 +346,8 @@ export async function startPocket(options: PocketProductOptions) {
 			notifications,
 			extensions,
 			assets,
-			inlineStyleHashes: frontend?.manifest.inlineStyleHashes,
-			workers: frontend?.manifest.workers,
+			inlineStyleHashes: frontend.manifest.inlineStyleHashes,
+			workers: frontend.manifest.workers,
 		});
 		let closed = false;
 		return Object.freeze({

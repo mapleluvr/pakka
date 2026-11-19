@@ -28,11 +28,11 @@ npm link --workspace @pakka/cli --ignore-scripts
 pakka
 ```
 
-首次运行前切到希望使用的项目目录。`pakka` 启动 WebUI 并打开浏览器，模型与凭据可随后在设置中配置。也可直接运行 `node apps/cli/dist/main.js`；`pakka --no-open` 只启动服务，Ctrl+C 正常停止。
+首次运行前切到希望使用的项目目录。`pakka` 提供随包固定的 WebUI 并打开浏览器，模型连接可随后在设置中编辑，认证由宿主 Pi 配置管理。也可直接运行 `node apps/cli/dist/main.js`；`pakka --no-open` 只启动服务，Ctrl+C 正常停止。
 
 产品定位与数据使用 `PAKKA_HOME`（默认 `~/.pakka`），Pi 配置使用 `PI_CODING_AGENT_DIR`（默认 `~/.pi/agent`）。首次启动绑定当前目录，后续运行重开已记录的工作区与原 Session。
 
-模型、provider 和认证沿用 Pi 原生目录，可继续使用外部配置工具，再在 **Settings → Models & Providers** 刷新或认证。默认本地编码预设装配原生文件与命令工具，另有只读预设；这些工具具有本机用户权限，并非沙箱。安装来源仍是本仓库或配套归档，不假定私有 workspace 已发布到 npm。高级宿主配置、私密 owner 文件、预算及恢复见 [WebUI 指南](docs/guides/WEBUI-GUIDE.md)。
+模型、provider 和认证沿用 Pi 原生目录，可使用外部配置工具，再在“提供商与模型”中读取或重新加载。Provider 登录与私密凭据的新页面交互仍延期。默认本地编码预设装配原生文件与命令工具，另有只读预设；这些工具具有本机用户权限，并非沙箱。安装来源仍是本仓库或配套归档，不假定私有 workspace 已发布到 npm。高级宿主配置、私密 owner 文件、预算及恢复见 [WebUI 指南](docs/guides/WEBUI-GUIDE.md)。
 
 ## 单 Conversation
 
@@ -70,15 +70,16 @@ Prompt、Steer 和 Follow up 使用原生调度。停止等待、请求 abort、
 
 ## 组件与装配
 
-| 组件                                | 职责                                            |
-| ----------------------------------- | ----------------------------------------------- |
-| `@pakka/agent`                      | Pi 适配、身份授权、输入、上下文、受控存储与推理 |
-| `@pakka/mas`                        | 成员 catalog、所有权策略、投递、回复与 Broker   |
-| `@pakka/mas-devpack`                | 批准的模型工具、指令与可选 Team facets          |
-| `@pakka/protocol` / `@pakka/client` | 有界协议与共享远端 client                       |
-| server / CLI                        | 受信任服务装配及命令行客户端                    |
-| `@pakka/webui`                      | 工作台与公开扩展 SDK                            |
-| `@pakka/dynamite`                   | 独立仓库中的上下文策略、产物与宿主端口适配      |
+| 组件                                    | 职责                                            |
+| --------------------------------------- | ----------------------------------------------- |
+| `@pakka/agent`                          | Pi 适配、身份授权、输入、上下文、受控存储与推理 |
+| `@pakka/mas`                            | 成员 catalog、所有权策略、投递、回复与 Broker   |
+| `@pakka/mas-devpack`                    | 批准的模型工具、指令与可选 Team facets          |
+| `@pakka/protocol` / `@pakka/client`     | 有界协议与共享远端 client                       |
+| server / CLI                            | 受信任服务装配及命令行客户端                    |
+| `@pakka/webui`                          | Node 装配、HTTP、Backend SDK 与固定前端消费     |
+| 独立 `pakka-webui` / `@pakka/webui-sdk` | 浏览器工作台、通用 UI host、React 插件 SDK      |
+| `@pakka/dynamite`                       | 独立仓库中的上下文策略、产物与宿主端口适配      |
 
 Dynamite 由宿主显式选用；固定配对及执行入口见 [integrations/dynamite](integrations/dynamite/README.md)。程序化 SQLite 接入和 headless server 可选贡献各遵循自己的配对与配置契约。
 

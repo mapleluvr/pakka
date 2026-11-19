@@ -111,7 +111,8 @@ test("pakka needs no host JSON or selected model to start WebUI and reopen its o
 		const first = await child.ready();
 		assert.equal((await fetch(first.origin)).status, 200);
 		const owner = await readFile(join(f.home, "data", "owner-link.txt"), "utf8");
-		const token = new URL(owner.trim()).hash.slice("#signin=".length);
+		const token = new URLSearchParams(new URL(owner.trim()).hash.slice(1)).get("session");
+		assert.ok(token);
 		const login = await fetch(first.origin + "/pocket/exchange", {
 			method: "POST",
 			headers: { Origin: first.origin, "Content-Type": "application/json" },
@@ -181,13 +182,17 @@ test("default WebUI serves assets, remembers configuration and reopens exactly t
 		const first = await child.ready();
 		const page = await fetch(first.origin);
 		assert.equal(page.status, 200);
-		assert.ok((await page.text()).includes("<title>pakka-webui</title>"));
-		assert.equal((await fetch(`${first.origin}/app.js`)).status, 200);
+		const html = await page.text();
+		assert.match(html, /@pakka\/webui-sdk/);
+		const entry = /<script type="module" src="([^"]+)"/.exec(html)?.[1];
+		assert.ok(entry?.startsWith("/pakka-webui/assets/"));
+		assert.equal((await fetch(first.origin + entry)).status, 200);
+		assert.equal((await fetch(first.origin + "/pakka-webui/service-worker.js")).status, 200);
 		const owner = await readFile(join(f.dataDir, "owner-link.txt"), "utf8");
-		assert.match(owner, /#signin=/);
+		assert.match(owner, /#session=/);
 		assert.doesNotMatch(
 			child.result.stdout + child.result.stderr,
-			/#signin=|launcher-test-private-credential/,
+			/#session=|launcher-test-private-credential/,
 		);
 		const state = JSON.parse(await readFile(join(f.dataDir, "launcher-state.json"), "utf8"));
 		assert.equal(state.sessionFile, first.sessionFile);

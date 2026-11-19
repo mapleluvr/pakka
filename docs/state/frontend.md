@@ -1,108 +1,69 @@
 # 前端交互
 
-详细场景见 [devin-frontend spec](../../openspec/changes/adopt-devin-frontend/specs/devin-frontend/spec.md)，形成记录及全部关联变更见[采用摘要](../changes/devin-frontend-adoption.md)。本页描述跨页面关系；服务字段与调用条件由对应领域细则维护。长历史、工具内容与按需 DOM 的预期由[观察与完整内容](conversation-observation.md)及[有界懒加载场景](../../openspec/changes/add-bounded-lazy-observation/specs/devin-frontend/spec.md)共同维护。
+独立 pakka-webui 拥有工作台、通用 UI host、共享 React/Astryx 环境与界面交互。完整的前端预期由其 [WebUI state](https://github.com/mapleluvr/pakka-webui/blob/pakka/independent-webui-seams/docs/state/webui.md)维护；本页维护与 Pakka 服务和业务插件共同承担的行为。架构入口见[文件与接口](../development/WEBUI-ARCHITECTURE.md)，采用来路见[独立前端](../changes/independent-webui.md)。
 
-开发组织遵循[前端规范](../development/FRONTEND-GUIDELINES.md)中的可维护性、开放组合及重构初期少测试政策；文件职责与公开接口由[架构说明](../development/WEBUI-ARCHITECTURE.md)维护。宿主与扩展使用同一渲染和主题运行时，公共 SDK 与独立消费者保持明确的兼容关系。
+## 身份、导航与页面
 
-## 基座与真实状态
+页面标题、Session/Conversation、模型、目录、人员和状态来自实际授权响应。资源解析按完整身份区分已加载、未加载、不可得、无权和身份不符；保存历史由受权只读路径提供。浏览、筛选与导航只读取或整理呈现，模型输入由显式工作动作提交。
 
-pakka-webui 的对应原生界面行为以 [Devin 离线生产前端](https://github.com/mapleluvr/devin-ui-comparison/tree/ed20cec0aef82daa22aa50da19597b7ba1607e02/reference-dump)为绝对参考，页面操作及其适用条件由生产代码、真实 DOM 和相应运行证据确定。[视觉基座](https://github.com/mapleluvr/devin-ui-comparison/tree/ed20cec0aef82daa22aa50da19597b7ba1607e02/clean-room/current)提供页面结构、尺寸、留白和层级输入；Pakka 的 API、权限与真实状态绑定到对应事件和状态中。排版与交互质量采用[前端开发规范](../development/FRONTEND-GUIDELINES.md)及所保存的 Atlassian、Vercel 指南。
+桌面侧栏与手机抽屉集中提供功能、设置和已打开页面。Conversation 使用独立阅读区、下部输入区与紧凑配置工具栏。页面与弹窗各自管理 focus/返回，保留当前作用域的草稿和阅读位置；隐藏、关闭、替换、身份失效时释放所属观察与敏感内容。
 
-- shell 使用参考 app-shell、300px sidebar、primary navigation、Sessions、footer、hero/composer、conversation、menus/palette 和 settings-view。
-- `apps/webui/web/reference.css` 保持参考 commit 的 Git blob 字节，UTF-8 LF，SHA-256 为 `084adce8bc6e1feab314b301f57ddac0bab5081cfa08d1c911addece9bdb9974`。
-- 生产页的布局样式由参考基座及独立的产品附加样式组成。默认 shell/hero/导航/菜单几何取固定参考 CSS；产品附加样式承接认证、原生工具结果、专属字段、用户字体偏好、浏览器字号缩放与触控可访问性。
-- 身份、会话、模型、目录、消息和状态来自实际授权响应。
-- 页面切换、查看和筛选处理本地呈现与授权读取；模型输入由明确的发送动作提交。各页面操作使用同一资源与原请求身份、权限校验、native 调度和 unknown 核对契约。
+工作台按真实 Session 或个人单层文件夹组织当前可读资源，搜索范围明确标为已加载对话。已知原历史入口提交完整 Session/Conversation 地址，由服务重新授权。同号 Conversation、不同 Person 和不同服务来源保持各自的读取与待核对记录。
 
-## 页面与操作
+## 创建与导航
 
-| 位置               | 预期行为                                                                                                                |
-| ------------------ | ----------------------------------------------------------------------------------------------------------------------- |
-| 组织/账号菜单      | 显示当前人类；提供获准的 People/invite/settings 与退出                                                                  |
-| Primary navigation | 由已安装的工作区页面与通用命令入口组成                                                                                  |
-| Conversations      | 当前授权列表；Sort Per Session 按真实 Session 分组，Default 按个人文件夹分组；选择保持完整资源身份                      |
-| 首页               | 展示工作区开始入口；New Session / New Conversation 打开独立配置向导，名称不占用消息输入区                               |
-| Conversation head  | 实际标题和下方 cwd；管理动作收进精简 options                                                                            |
-| 消息与工具         | 参考 message/avatar/byline/tool-card 结构，接入原生 history/live/receipt；保留 live、合法不可预览 part 和工具跨载体身份 |
-| 模型按钮           | 列出服务已配置 provider 的可用模型；Conversation 配置权限与 busy 条件决定能否应用                                       |
-| cwd                | 入口为 Conversation 标题下的当前路径；选择器限定批准目录，仅 Use this directory 明确应用所选目录                        |
-| Send caret         | 工作输入使用原生 Prompt/Steer/Follow up 调度；People Chat 使用独立的人类协作通道                                        |
-| Palette            | 会话搜索、命令、主题和导航共用参考层级，保留键盘与焦点行为                                                              |
-| Settings           | 左下角按钮单击进入独立配置页，默认 Appearance；页内分类导航连接配置、凭据、人员、通知和扩展                             |
+新建 Session 创建独立存储和预算，新建 Conversation 使用确认的父 Session。两类表单各自显式提交，提供名称、批准目录与工具预设；模型/Thinking 使用当前 Person 缺省或服务默认。Session 创建成功不会自动发起后续创建或模型输入。unknown 保留完整原请求并锁定会产生重复效果的操作。
 
-设置页的 Conversation 分类在选中会话后可用，人员管理入口按管理员权限呈现。手机分类栏支持横向滚动。Back to app 返回原页面并保留会话和未发送草稿。详细场景及命名契约见[设置与命名 delta](../../openspec/changes/correct-webui-settings-and-name/specs/devin-frontend/spec.md)，采用记录见[变更摘要](../changes/webui-settings-and-name.md)。
+可恢复的原 Session 重开通过真实目录读取确认可用性。正在发送与等待核对分别呈现；读取失败保留待核对，成功刷新解除相应锁定。已确认重开与随后目录刷新失败分别保留结果。
 
-模型目录以原生 provider/modelId 组合寻址，分页搜索并展示真实能力；拥有 Conversation 配置权限的人可选择目录中的任一模型。旧配置响应的有限投影不代表完整可选目录，也不以 Agent profile 数量裁剪模型。当前 Conversation 的模型/thinking 与以后创建所用默认值分别管理；未选择模型是可显示的状态，不妨碍打开工作台与设置。整组 Agent 预设的工具/指令授权独立于模型选择。模型/cwd 持久化、服务器目录 roots、incarnation 和配置拒绝的详细条件由[开发契约](../development/WEBUI-DEVELOPMENT.md#独立选择模型和-conversation-工作目录)维护。
+当前 Conversation 模型/Thinking 按原生完整身份选择；`/model` 打开搜索选择器，完整 provider/model 精确选择，`/thinking` 与触控入口使用模型声明级别。当前选择、个人默认、实例连接定义分别保存。提供商/模型编辑保持原生继承、校验、版本冲突和原请求回执；已存秘密仅返回保护状态。
 
-Model Selection 为可用模型列表提供检索框，覆盖模型 ID 和配置标识；检索忽略大小写，空格与 `/` 分隔的词各自按顺序字符匹配，并将更紧密的匹配排在前面。打开时定位当前模型，输入查询后定位首个匹配；上下键循环移动候选高亮，搜索框保持输入焦点，Enter 明确确认，Escape 关闭并返回模型入口。候选位置/匹配总数始终可见，空结果为 0 / 0，当前已应用模型有独立标记。列表滚动保留搜索入口与位置反馈，触屏可直接选择。检索、移动和取消只改变本地呈现；明确选择后仍由原配置命令核验权限、busy 和 unknown。详细场景及形成记录见[模型索引 delta](../../openspec/changes/improve-webui-navigation-and-local-recovery/specs/devin-frontend/spec.md#requirement-model-selection-has-a-searchable-keyboard-index)与[设计 §6.4](../../openspec/changes/improve-webui-navigation-and-local-recovery/design.md#64-2026-10-25-model-selection-检索索引)。
+普通输入提供发送消息、调整当前工作、本轮结束后执行，分别提交 prompt/steer/followUp。人类聊天由独立协作入口处理。模型输入仍核对 role、资源、driver、profile 和实际忙碌状态；停止请求与原生工作结束分别呈现。
 
-普通斜杠文本通过原输入路径发送，只有精确注册的命令进入 dispatcher。已注册命令的参数错误、不可用及执行拒绝不会回退成模型输入；命令目录未知时，疑似命令保留草稿，不把读取失败当成空目录。
+输入/命令写入前保存原请求与完整绑定。响应未知后只查原请求，换绑定或正常重开仍使用原记录；原正文、模式和请求号可辨认。确认后只在输入框仍等于原正文时清空，新写草稿保留。只读回执查询不会重发模型工作。
 
-### 工作区设置
+精确注册的命令进入 namespaced dispatcher，普通 slash 文本走普通输入。疑似命令发现失败时保留草稿。Backend action 校验 scope、effect 和 JSON 参数；App write/model 的待核对记录按 Person 共享，Conversation 记录按原资源隔离。read 沿本次读取结果处理，失败可显式再读。
 
-Models & Providers 展示 Pi 原生配置来源、目录刷新和受权认证。密钥提交后清空，不写入页面持久存储或 Session；认证响应丢失时核对原交互，不重复提交答案。Session Budget 区分所属 Session、已消费额度、现行政策和版本；调整使用 CAS 与原请求核对，读取冲突后的政策不自动重新提交。
+预算设置区分所属 Session、累计消费、当前上限、版本及原请求回执。人员邀请按获准角色、资源和有效期创建，字段选择只改草稿，确认才执行。共享协作与个人偏好使用各自的授权和持久版本。
 
-Sessions 设置页展示每份受管存储的可用状态；单个子 Session 无法打开时仍可进入。获准的显式重开只针对原身份。打开响应丢失时保留原请求与待核对状态，离开设置页不清空；读取当前目录不重复重开，也不证明原请求由谁完成。打开结果已知但目录刷新失败时，保留已知结果并先重读状态，不能按过时列表再次打开。未知创建、仍持有的封闭 Runtime 和清理未确认状态不提供强制恢复按钮。
+## 阅读、工具与原文
 
-### 创建与导航
+历史页面按条数/字节预算读取，正文和工具结果按引用加载。当前页搜索覆盖已载入预览，完整原文搜索沿固定内容版本逐块读取。折叠和离屏回收释放正文 DOM；展开、搜索与行内位置按原条目保留，当前聚焦控件保持可用。
 
-New Session 创建独立的 Durable 存储与提交域，New Conversation 在确认的父 Session 内创建资源。创建表单提供名称、父项、获准 Agent 预设、初始模型/thinking 与服务器工作目录，打开/取消仅改变表单草稿。Session 清单确认没有可用父项时预填待建 Session，显式确认后按 Session → Conversation 顺序创建；部分成功保留父项，unknown 保留原请求并先核对。成功打开 Conversation 后，明确 Send 才提交模型输入。
+流式工具声明、执行状态与结果按 Session、来源 Conversation 和调用 ID 对齐。分叉继承与当前同号调用各保留来源；声明不在当前页时结果仍可识别。`isError` 在折叠卡片中仍明确呈现；格式无法预览的原文提供可理解的说明与受权交付入口。
 
-Sidebar 的 Sort Per Session 表达原生父子归属；Default 使用当前人的持久单层文件夹和未分类组。每个 Conversation 至多归入一个个人文件夹，删除文件夹后回到未分类；切换视图和归类仅改变个人导航元数据。读取、选择、SSE 与资源授权同时绑定 Session 和 Conversation，名称或裸 Conversation ID 不授予跨 Session 访问。详细创建、持久化与恢复条件见[创建场景](../../openspec/changes/improve-webui-navigation-and-local-recovery/specs/devin-frontend/spec.md#requirement-dedicated-creation-distinguishes-native-sessions-and-conversations)及[受管存储场景](../../openspec/changes/improve-webui-navigation-and-local-recovery/specs/devin-frontend/spec.md#requirement-managed-sessions-preserve-native-identity-and-authorization)。
+同一读取范围刷新保留阅读实例；手动滚动、查找和正文操作暂停跟随。明确发送退出原文模式并接续新消息。固定阅读导航提供返回预览，同一视图只展开一条原文，各条的搜索词与位置独立保留。
 
-Conversation Grouping 使用与工作台其他菜单一致的主题化弹出行，当前偏好有独立标记；箭头浏览、Escape/Tab 离开仅改变焦点，明确确认才更新个人导航。首页 New Conversation 与 New Session 是图文同轴、相同排版的透明平级入口，中间有灰色短竖线；窄屏/放大文字下分组、可见焦点和 44px 触达完整保留。具体场景见[控件 delta](../../openspec/changes/polish-webui-grouping-and-creation-controls/specs/devin-frontend/spec.md)，采用与实施入口见[变更摘要](../changes/webui-grouping-and-creation-controls.md)。
-
-People & Invitations 的 Invite Role 采用 Appearance 式同行布局：标签居左，紧凑选择按钮居右，内容适宽的主题菜单从按钮右缘展开，不占满整行。保留 Viewer/Sender/Driver/Admin 与 Viewer 默认。焦点浏览/取消不改邀请草稿，明确选择仅改草稿，Create Invitation 才执行原邀请；范围、有效期和授权按原邀请契约处理。手机/放大字号保持菜单、选中标记与 44px 触达；场景见[邀请角色 delta](../../openspec/changes/polish-webui-invitation-role-menu/specs/devin-frontend/spec.md)，记录见[变更摘要](../changes/webui-invitation-role-menu.md)。
-
-### 文案与操作信息
-
-页面以准确标题、字段、状态和当前操作结果呈现信息。首页、创建、模型、文件夹和内置贡献省去重复教学及后台自我担保；People Chat 表达人类聊天，Shared Notes 表达共享笔记。服务器目录/浏览器与设备本地收藏、偏好使用短标签；Session 密钥注明未来请求作用域，额度计数与 Webhook 接入限制通过默认收起的帮助阅读。语音来源在启动前可读，监听时显示短状态。归档、扩展 UI 禁用、worktree 和取消的后果由相关动作结果反馈，定时输入以 Inputs Submitted 区分模型完成。Memory 显示原有作用域和 Awaiting approval 标记。未确认、部分成功、冲突、拒绝、截断、秘密及不可逆后果继续提供真实状态及原身份核对入口。完整场景及采用记录见[文案 delta](../../openspec/changes/simplify-webui-explanatory-copy/specs/devin-frontend/spec.md)与[变更摘要](../changes/webui-explanatory-copy.md)。
-
-### 主次文字、表单与 SVG 图标
-
-产品维护的固定页面/分区标题与导航/菜单名称采用 Title Case，例如 `Conversation Settings`、`People & Invitations`、`Commands & Extensions`、`New Session`；保留空格与 `&`。不以 CSS text-transform 伪装标题，不改写用户会话名、模型 ID、原文内容或第三方自定义标题。
-
-Dictate 使用可见 SVG 麦克风，监听时使用 SVG 停止图标；两态保留可访问名称、pressed 状态、启动前可读取的浏览器语音服务来源、监听时的短状态和至少 44×44px 命中区。语音只改当前草稿，仍由明确 Send 提交。
-
-模型 ID 与 profile、姓名与角色、版本与操作等复合内容具有明确的主次字号、颜色和间距，身份字符串完整保留。模型选择列表以独立行组织主信息和元数据，长 ID 在可用宽度内换行；列表选择标记占独立位置。
-
-凭据、Conversation/Fork 和 Team 表单的标签与字段、相邻字段和相邻操作按钮有独立布局间距。控件随容器宽度换行，360×600、390×650、390×844 及放大文字下保持可读、可达。公共 Button/Field/Notice/Stack 消费者同样具有动作、标签与说明的独立间距及主题化控件；Memory、Webhooks、Scheduled Inputs 等扩展不因缺少私有容器 class 而退回未排版的浏览器默认外观。真实凭据仍为仅写密码输入，版式取证使用隔离测试数据。
-
-产品内充当图标的方向箭头、快捷键、折叠标记和插件关系方向均由 SVG path 绘制；适用处使用共享 Icon。SVG 作为装饰时由所属控件提供可访问名称，独立图标控件具有至少 44×44px 命中区。用户消息、代码、后端语义值与正常文字标点按原内容呈现。
-
-### Conversation 可观察状态
-
-- 仅以授权 DTO 的 `live.busy`、`live.message`、`live.tools`、`entries` 和输入回执驱动工作呈现。进行中的消息以 `data-live=true`/`message-live` 区分；只有 busy 且存在该消息时，消息列末尾显示紧凑的 Streaming。合法但不支持内联预览的 `image/*` 以中性占位和 MIME 文本保留，不能静默消失；未知 DTO 仍由协议闭锁。
-- 工具调用在 `toolCall.id`、`live.callId`、`toolResult.toolCallId` 三个载体间与来源 Conversation 组成同一键：历史用 `sourceConversationId ?? conversationId`，live 用当前 Conversation。卡片暴露 `data-source-conversation`，live 与持久声明并存时只显示一卡，live 状态取原 DTO，输出从同卡可读；找不到当前声明的结果保留有标识的孤儿卡。不同 Conversation/fork 的相同 ID 不跨域合并；更新与分页保留已展开卡片，流式 toolCall 初次落盘也维持同型父层及调用键。原生结果 `isError:true` 在折叠卡内仍以显式 error 标记可辨，不靠颜色单独表达。
-- Send 禁用保持原判定并分别说明只读、提交中、视图未就绪和 Prompt 生成中原因。原生 Stop 在发送组主位；停止请求不代替 `busy=false` 的实际结束，持续忙碌提供有界再次停止。Steer/Follow up 的原生调度不被串行化。
-- receipt 保留原生 reason；只有 `reason:"blocked"` 以 blocked 和指导修改输入呈现，`aborted` 表示撤回，其他未回答统一中性 not delivered，不从自由文本 reason 猜测 policy refusal 或撤回；reason 缺省时不伪造属性值。`unknown` 以 needs review 和指导先核对呈现，保留原状态及请求身份。blocked 表达 generation 的策略拒绝；权限 denied 由授权检查表达。
-- Sessions 列表的 `version` 和 `archived` 表达版本与归档状态；Conversation 运行状态由当前授权的 live 观测与回执表达。
+预览、原生源截断和完整存档范围分别表达。图片按需解码，正文下载逐段核对原身份与权限；HTML 采用安全呈现。详情见[观察与完整内容](conversation-observation.md)。
 
 ## Team
 
-Team 是 MAS 工作区页面，与工作台共享界面语言、导航和输入组件。数据与操作条件见 [MAS](mas.md)。
+Team 由 MAS 插件提供 Graph / Agents / Activity，共用宿主导航、主题和公开 SDK。成员关系、历史、原生回执与生命周期来自受权 MAS DTO。
 
-1. Team 从主导航直接进入；共享 sidebar，采用单层页头和 **Graph / Activity / Agents** 视图切换。
-2. Graph 使用中性色 surface、细边线、12px 圆角和 compact 图标。节点给出成员名、生命周期与至多两行摘要。
-3. 创建与通信使用可区分的有向关系层；关系及显式回复关联取自授权 DTO。计数打开对应的 Activity 范围。
-4. 桌面选择成员后在右侧约 320px inspector 展示身份、状态、来源和 **Open Conversation**；次要动作收在 More/Management。快捷输入复用 compact composer 与 native send-caret。
-5. 手机 inspector 使用受控底部面板；视图切换在可用宽度内保持同一层级。成员列表和键盘提供等价路径；拖动把手处理布局移动，成员导航目标处理打开动作。
-6. 打开成员进入完整 Conversation；返回 Team 保留选择、视图与个人布局。Activity/Agents 与画布共享真实数据，查看和筛选使用授权读取。
-7. View options 的隐藏/图层/位置作用于个人呈现；Retire 经过确认和当前权限检查后执行成员生命周期操作。denied 与 unknown 分别按拒绝和待核对状态呈现。
-8. 页面分别呈现未选择、加载、空团队、撤权、失败和重连状态；inspector 随成员选择展示对应信息与当前获准动作。
+- 图中创建与通信关系可区分，显式回复关联到原投递；计数和 Activity 使用一致的数据范围。
+- 成员详情提供原 Conversation、身份、状态和当前允许的操作。桌面详情区和手机底部面板管理同一成员目标，键盘与成员列表提供等价入口。
+- 成员输入、steer/followUp、回复与停止按原生协议处理；退休经确认与权限检查。关闭控制面板返回原入口，已接纳工作继续由服务维护。
+- 返回 Team 保留选择、视图与个人布局。隐藏/恢复只改变个人呈现，成员 phase 与 tombstone 保持。
+- 真实 `board.css` 成功加载后才挂载可操作成员界面；加载失败呈现明确状态，显式刷新重新装载。
 
-Team 的动态 `board.css` 节点在加载、成功和失败之间保持同一身份。可操作 Board 的挂载以该样式成功 load 为前提；error 时显示可访问 alert 并保持闭锁。重新进入 Team 时同样校验样式就绪状态。
+## 语音、外观与通知
+
+浏览器 SpeechRecognition 的文字先进入预览，结束后由用户插入草稿并通过普通输入发送。识别期间的手动草稿保持；取消、换目标、隐藏和关闭清理原识别实例，晚到结果只能作用于原实例。实际权限与设备能力由浏览器提供。
+
+明暗模式、字体与字号保存到当前浏览器，并用于页面、普通插件与浮层。跟随系统读取系统偏好，正文通过公开字体 token 应用，代码保留等宽阅读。
+
+通知偏好归 Person，设备登记按获准 Conversation，设备停用覆盖其关联资源。worker 收到事件/设备定位后重新授权读取，点击再次授权并打开原 Conversation。服务接纳、浏览器显示调用与系统显示分别核对；注销、撤权和 worker 替换清理所属内容。
+
+## 文案与操作信息
+
+页面使用准确标题、字段、当前状态和操作结果。已接纳、工作完成、冲突、拒绝和待核对各有明确含义；身份、用户命名、模型 ID 与原文保留真实内容。技术详情在核对原请求、定位原资源或作出操作决定时可展开读取。
 
 ## 响应式与可访问性
 
-- 页面按完整的实际 viewport 响应布局，覆盖桌面、360×600、390×650 和常规手机 390×844；默认最短手机目标为宽∶高 3∶5。
-- 侧栏列表独立滚动；抽屉/弹层转换以目标入口可见且可操作为就绪条件。提示完整可读，字号变大后操作仍可达；目录确认区保持在可用屏幕内。
-- 图标使用 SVG paths 与公共 Icon。常用图标清楚可见于 24px；独立图标控件有至少 44×44px 点击区域与可访问名称。
-- 控件支持键盘操作与可见焦点；组合发送按钮的每个可用动作有独立、完整的焦点边界，描边留在胶囊裁切区内并贴合首尾圆角，不能只剩接缝竖线。模态管理 focus trap/return，支持 Escape/Back 及关闭后焦点返回。导航交接后，关闭与清理只作用于所属弹层实例。
-- unknown/pending 操作保留原身份及交互锁；重开后以原 request ID 进行只读核对。
+实际布局覆盖桌面、短窗口和手机，包括 360×600、390×650、390×844 及放大文字。页面与控件以准确标题、可读字段、当前结果和明确操作组织；身份、用户原文和技术标识保留真实内容。
 
-配置页按页面标题、分区标题、控件正文和说明维护相对文字角色，随字体偏好及浏览器基准字号缩放。手机配置控件的触达高度至少为 44px，手机文字输入至少为 16px，并保留更大的阅读偏好。composer 的文本焦点由外层圆角 `.composer-card` 给出可见指示，内部 surface 与 textarea 不重复描边；鼠标点击和 Tab 到达文本输入时均保持完整、未裁切的指示。采用来路见[指南变更](../changes/webui-frontend-guidelines.md)。
+图标使用 SVG paths，常用图标清楚可见于24px；独立图标控件提供至少44×44px命中区域和可访问名称。手机输入至少16px，并保留更大的阅读偏好。长模型名、资源名和秘密字段在可用宽度内保持操作可达。
 
-## 可检验条件
+键盘焦点完整可见。模态管理 focus trap、Escape 和回焦；确认区聚焦时滚入可见范围。文字、间距和主题使用共享部件及公开 tokens，局部样式作用于所属内容。
 
-功能路径由实际服务的正向动作、原生结果与请求/效果计数支持；前端符合性由相同实际 viewport 的参考/候选直接检查、几何和完整差图支持。功能、视觉、安装与独立 GUI 各自满足[交付声明](delivery.md)中的条件。
+功能验证使用真实服务动作、原生结果与请求/效果计数；视觉与交互检查使用实际 viewport、截图、几何和直接操作。验证范围与结果由[交付声明](delivery.md)和所属 verification 记录承接。

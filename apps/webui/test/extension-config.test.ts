@@ -15,7 +15,7 @@ const config = {
 	},
 };
 test("Extension product config: explicit trusted roots/facets survive finite decoding; arbitrary runtime/service injection is refused", () => {
-	const root = resolve("apps/webui/examples/hello");
+	const root = resolve("apps/webui/contributions/files");
 	assert.deepEqual(decodePocketProduct({ ...config, extensions: [{ root, facets: ["webui"] }] }).extensions, [
 		{ root, facets: ["webui"] },
 	]);

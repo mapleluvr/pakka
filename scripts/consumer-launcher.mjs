@@ -4,12 +4,16 @@ import { mkdir, readFile, readdir } from "node:fs/promises";
 import { delimiter, dirname, join } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
+import { createHash } from "node:crypto";
+import { loginHttp, connectHttp } from "./consumer-webui-http.mjs";
 
 const consumer = dirname(fileURLToPath(import.meta.url));
-const home = join(consumer, "launcher-home"),
-	agentDir = join(consumer, "launcher-agent");
-const project = join(consumer, "launcher-project"),
-	elsewhere = join(consumer, "launcher-elsewhere");
+const run = join(consumer, "launcher-run-" + crypto.randomUUID());
+await mkdir(run);
+const home = join(run, "home"),
+	agentDir = join(run, "agent");
+const project = join(run, "project"),
+	elsewhere = join(run, "elsewhere");
 await Promise.all([home, agentDir, project, elsewhere].map((path) => mkdir(path)));
 const env = {
 	...process.env,
@@ -89,45 +93,30 @@ let child;
 try {
 	child = launch(project);
 	const first = await child.ready();
-	for (const path of [
-		"/",
-		"/app.js",
-		"/creation.js",
-		"/product-model-settings.js",
-		"/budget-settings.js",
-		"/session-settings.js",
-	])
-		assert.equal((await fetch(first.origin + path)).status, 200, "installed public asset " + path);
+	const frontend = join(consumer, "node_modules/@pakka/webui/dist/frontend");
+	const manifest = JSON.parse(await readFile(join(frontend, "asset-manifest.json"), "utf8"));
+	for (const asset of manifest.files) {
+		const response = await fetch(first.origin + asset.url);
+		assert.equal(response.status, 200, "installed public asset " + asset.path);
+		const bytes = Buffer.from(await response.arrayBuffer());
+		assert.equal(createHash("sha256").update(bytes).digest("hex"), asset.sha256);
+	}
 	const ownerFile = join(home, "data", "owner-link.txt");
 	const originalOwner = await readFile(ownerFile, "utf8");
 	const owner = new URL(originalOwner.trim());
 	assert.equal(owner.origin, first.origin);
-	assert.ok(owner.hash.startsWith("#signin="));
-	const login = await fetch(first.origin + "/pocket/exchange", {
-		method: "POST",
-		headers: { Origin: first.origin, "Content-Type": "application/json" },
-		body: JSON.stringify({ kind: "session", token: owner.hash.slice("#signin=".length) }),
-	});
-	assert.equal(login.status, 200);
-	const cookie = login.headers
-		.getSetCookie()
-		.map((value) => value.split(";")[0])
-		.join("; ");
-	const csrf = /pakka_csrf=([^;]+)/.exec(cookie)?.[1];
-	assert.ok(csrf);
+	assert.ok(owner.hash.startsWith("#session="));
+	const client = await loginHttp(first.origin, owner.hash.slice("#session=".length));
 	async function status(origin) {
-		const response = await fetch(origin + "/pocket/models/rpc", {
-			method: "POST",
-			headers: { Origin: origin, Cookie: cookie, "X-Pakka-CSRF": csrf, "Content-Type": "application/json" },
-			body: JSON.stringify({ version: 2, requestId: "installed-status", command: { op: "status" } }),
-		});
-		assert.equal(response.status, 200);
-		const body = await response.json();
-		assert.equal(body.result.status.defaults.model, undefined);
-		assert.equal(body.result.status.sources.models, join(agentDir, "models.json"));
+		const current = await connectHttp(origin, client.cookies);
+		assert.equal((await current.services({ op: "model-defaults.read" })).defaults.model, null);
+		const connections = await current.services({ op: "model-connections.read" });
+		assert.equal(connections.configuration.source, "models.json");
+		assert.equal(connections.configuration.load, "ready");
+		assert.deepEqual(connections.configuration.document, {});
 	}
 	await status(first.origin);
-	assert.doesNotMatch(child.result.stdout + child.result.stderr, /#signin=/);
+	assert.ok(!(child.result.stdout + child.result.stderr).includes(owner.hash.slice("#session=".length)));
 	assert.equal((await child.stop()).code, 0);
 	child = launch(elsewhere);
 	const second = await child.ready();

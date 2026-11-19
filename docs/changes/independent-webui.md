@@ -82,4 +82,14 @@ Pakka 将历史 read 授权与“执行资源已加载”分开，再核对确�
 
 用户在阶段 2 收口后批准推进。独立前端补齐本地应用 pack 命令，SDK 与应用分开交付；Pakka 的 [integrations/webui](../../integrations/webui/README.md)固定完整归档和对应服务/后端包身份。打包采用 npm 标准格式，核对资产与许可；已有目录、篡改资产和元数据同名覆盖均明确拒绝。
 
-[phase-3](../../openspec/changes/plan-independent-webui/phase-3.md)落实剩余条件；[阶段 3 核对](../verification/INDEPENDENT-WEBUI-PHASE-3.md)记录两个真实前端候选、同一安装版后端 A → B → A、原 Session/Conversation 身份和启动前不兼容拒绝。B 为隔离 GUI-only 变体，不是另一公开发行。阶段 3 已验收；阶段 4–5、默认切换、Provider /login、发布和合并保持各自后续边界。
+[phase-3](../../openspec/changes/plan-independent-webui/phase-3.md)落实剩余条件；[阶段 3 核对](../verification/INDEPENDENT-WEBUI-PHASE-3.md)记录两个真实前端候选、同一安装版后端 A → B → A、原 Session/Conversation 身份和启动前不兼容拒绝。B 为隔离 GUI-only 变体，不是另一公开发行。阶段 3 已验收；阶段 4–5、默认切换、Provider /login、发布和合并在当时保持各自后续边界。
+
+## 阶段 4/5 功能与默认交付
+
+用户随后授权补齐所选功能、使用 design-companion 调优真实工作台，再继续到阶段 5 端到端交付。独立前端形成阅读/原文/输入恢复、模型/目录/preset、人员/预算、协作、通知、外观与语音草稿；业务插件经同一公开 React SDK 装配。主界面迭代与固定候选结果由[阶段 4](../verification/INDEPENDENT-WEBUI-PHASE-4.md)保留。
+
+阶段 5 默认装配选择经摘要和逐资产核对的独立应用，随 Node 包交付；CLI、executable 和恢复链接统一使用 `#session`。旧页面测试逐条核对其独特契约，授权、持久回执与真实效果保留在原生/公开 HTTP，新页面行为另有实操证据。旧 Preact UI/SDK、无消费者示例与重复资产构建退出，当前构建只保留所选前端归档；旧 services 3 归档的来源由历史配对和 Git 保全。
+
+核对中发现的 slash 分流/Backend action 与 Session 重开锁缺口经真实路径复现后修正，采用的 scope/effect、原请求与刷新关系同步到前端声明。两个读取根相互独立的材料复用和共享宿主接续另由[并发计划](../../openspec/changes/plan-independent-webui/shared-host.md)记录。
+
+[phase-5](../../openspec/changes/plan-independent-webui/phase-5.md)、[覆盖接续](../verification/WEBUI-COVERAGE-TRANSITION.md)与[阶段 5 验证](../verification/INDEPENDENT-WEBUI-PHASE-5.md)记录默认安装、完整 smoke、PC/390px、兼容 A → B → A、TLS 代理及 release 分轮结果。所选阶段 4/5 范围完成；Windows 深目录 ACL、平台跳过、真实录音跳过和旧 worker 仍收正文分支的限制保持。两仓工作分支 PR、集成、公共发行与 OpenSpec 归档分别处理。

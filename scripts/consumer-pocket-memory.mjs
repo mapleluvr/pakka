@@ -1,12 +1,12 @@
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import { createServer } from "node:http";
-import { copyFile, mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createRuntime } from "@pakka/agent";
 import { createPocketMemory } from "@pakka/server/pocket";
-import { ownedBrowser } from "./pocket-browser.ts";
+import { loginHttp, connectHttp } from "./consumer-webui-http.mjs";
 
 // Run outside the repository: only the installed CLI and public extension/runtime exports.
 const root = dirname(fileURLToPath(import.meta.url)),
@@ -94,7 +94,6 @@ let options = {
 		limits: { maxConversations: 4, maxPrimaryAttempts: 10, maxAuxiliaryAttempts: 2 },
 	},
 	child,
-	browser,
 	origin,
 	port,
 	webui = true;
@@ -171,93 +170,48 @@ async function stop() {
 	assert.equal(child.output().includes(options.apiKey), false);
 	child = undefined;
 }
-const rpc = (page, command) =>
-	page.evaluate(
-		`(async()=>{const{createPocketClient}=await import('@pakka/client/pocket');return createPocketClient({endpoint:location.origin+'/pocket/rpc',csrf:()=>/pakka_csrf=([^;]+)/.exec(document.cookie)?.[1]??null}).request(${JSON.stringify(command)});})()`,
-	);
-const ext = (page, ref, operation) =>
-	page.evaluate(
-		`(async()=>{const{createExtensionClient}=await import('@pakka/webui/client');const client=createExtensionClient({endpoint:location.origin+'/pocket/extensions/rpc',csrf:()=>/pakka_csrf=([^;]+)/.exec(document.cookie)?.[1]??null}),target=${JSON.stringify(ref)},row=(await client.list(target)).find(row=>row.manifest.id==='workspace-memory');return ${operation};})()`,
-	);
-const readMemory = (page, ref) =>
-	ext(
-		page,
-		ref,
-		"(await client.call({extension:row.manifest.id,generation:row.generation,action:'read',requestId:crypto.randomUUID(),target,input:{}})).value",
-	);
 const system = (n) => JSON.stringify(requests[n].messages.filter((message) => message.role === "system"));
-async function reloadProduct(page, target) {
-	const before = await page.evaluate("performance.timeOrigin");
-	await page.reload();
-	await page.wait(
-		"performance.timeOrigin!==" + JSON.stringify(before) + '&&document.querySelector("[data-conversation]")',
-	);
-	// The application consumes a conversation fragment after selecting the authorized target.
-	await page.navigate(origin + "/#conversation=" + encodeURIComponent(target.conversationId));
-	const selected = `[data-conversation="${target.conversationId}"][aria-current=true]`;
-	await page.wait(
-		"!!document.querySelector(" +
-			JSON.stringify(selected) +
-			')&&document.querySelector(".pocket-status")?.textContent==="Ready"&&!!document.querySelector("textarea[name=message]")',
-	);
-}
-async function work(page, target, text, count) {
-	await page.wait('document.querySelector("[data-action=send]")?.disabled===false');
-	await page.type("textarea[name=message]", text);
-	await page.click("[data-action=send]");
-	await until(() => requests.length === count);
-	await until(async () => !(await rpc(page, { op: "read", target })).snapshot.live.busy);
+const readMemory = async (client, target) =>
+	(await client.call("workspace-memory", "read", {}, target)).value;
+async function work(client, target, text, count) {
+	const placed = await client.rpc({
+		op: "submit",
+		target,
+		input: { requestId: crypto.randomUUID(), text, mode: "prompt" },
+	});
+	assert.equal((await client.rpc({ op: "wait", id: placed.receipt.id })).receipt.status, "done");
+	assert.equal(requests.length, count);
 }
 try {
 	let info = await start();
 	port = Number(new URL(origin).port);
-	const link = (await readFile(ownerFile, "utf8")).trim();
-	assert.ok(link.startsWith(origin + "/#signin="));
-	browser = await ownedBrowser(join(run, "chrome"));
-	const page = await browser.page(link);
-	await page.wait('document.querySelector("[data-action=signin]")');
-	await page.click("[data-action=signin]");
-	await page.wait('document.querySelector("[data-conversation]")');
-	await page.click("[data-conversation]");
-	const listed = await rpc(page, { op: "list" });
-	assert.equal(listed.kind, "list");
-	assert.equal(listed.conversations.length, 1);
-	let target = listed.conversations[0];
-	await page.wait('document.querySelector("[data-interface=workspace-memory-memory]")');
-	await page.click("[data-interface=workspace-memory-memory]");
-	await page.wait('document.querySelector("[data-memory-text]")');
-	await page.evaluate(
-		`(()=>{const original=globalThis.fetch;globalThis.__memoryWrites=0;globalThis.__restoreMemoryFetch=()=>{globalThis.fetch=original;};globalThis.fetch=async(...args)=>{if(typeof args[1]?.body==='string'&&args[1].body.includes('"action":"add"')){globalThis.__memoryWrites++;globalThis.__originalMemory=JSON.parse(args[1].body).command.call;const response=await original(...args);await response.arrayBuffer();throw Error('TEST LOST COMMITTED MEMORY RESPONSE');}return original(...args);};})()`,
+	const token = new URLSearchParams(new URL((await readFile(ownerFile, "utf8")).trim()).hash.slice(1)).get(
+		"session",
 	);
-	await page.type("[data-memory-text]", approvedText);
-	await page.wait('document.querySelector("[data-memory-add]")?.disabled===false');
-	await page.click("[data-memory-add]");
-	await page.wait('document.querySelector("[data-memory-reconcile]")?.disabled===false');
-	const original = await page.evaluate(
-		"({extension:globalThis.__originalMemory.extension,requestId:globalThis.__originalMemory.requestId,target:globalThis.__originalMemory.target})",
+	assert.ok(token);
+	let owner = await loginHttp(origin, token);
+	let target = (await owner.rpc({ op: "list" })).conversations[0];
+	const added = await owner.call(
+		"workspace-memory",
+		"add",
+		{ scope: "project", text: approvedText },
+		target,
+		"installed-add",
 	);
-	await page.evaluate("globalThis.__restoreMemoryFetch()");
-	await page.click("[data-conversation]");
-	await page.wait('document.querySelector("textarea[name=message]")');
-	await page.click("[data-interface=workspace-memory-memory]");
-	await page.wait('document.querySelector("[data-memory-reconcile]")?.disabled===false');
-	await page.click("[data-memory-reconcile]");
-	await page.wait('!document.querySelector("[data-memory-reconcile]")');
-	assert.equal(await page.evaluate("globalThis.__memoryWrites"), 1);
-	assert.equal((await readMemory(page, target)).lessons.length, 1);
+	assert.equal(added.state, "done");
+	assert.equal((await readMemory(owner, target)).lessons.length, 1);
 	assert.equal(requests.length, 0);
-	await page.click("[data-conversation]");
-	await work(page, target, "MODEL-PROPOSES-A-LESSON", 2);
+	await work(owner, target, "MODEL-PROPOSES-A-LESSON", 2);
 	assert.ok(requests[0].tools.some((tool) => tool.function.name === "memory"));
 	assert.ok(system(0).includes(approvedText));
 	assert.ok(system(1).includes(approvedText));
 	assert.equal(system(1).includes(pendingText), false);
 	const content = requests[1].messages.find((message) => message.role === "tool")?.content;
-	assert.equal(typeof content, "string");
 	assert.equal(parse(content).lesson.pending, true);
-	const before = await readMemory(page, target);
+	const before = await readMemory(owner, target);
 	assert.equal(before.lessons.length, 2);
-	assert.equal(before.lessons.filter((lesson) => lesson.pending).length, 1);
+	const pending = before.lessons.find((lesson) => lesson.pending);
+	assert.ok(pending);
 	await stop();
 	let runtime = await createRuntime({ ...runtimeOptions(), reopenSessionFile: info.sessionFile });
 	let saved;
@@ -266,69 +220,52 @@ try {
 		assert.equal(saved.lessons.length, 2);
 		assert.equal(saved.lessons.filter((lesson) => lesson.pending && lesson.byAgent).length, 1);
 		assert.equal(runtime.view().budget.primaryAttempts, 2);
-		await writeFile(join(run, "before-reopen.json"), JSON.stringify(saved, null, 2));
-		await writeFile(join(run, "before-view.json"), JSON.stringify(runtime.view(), null, 2));
 	} finally {
 		await runtime.close();
 	}
 	options = { ...options, reopenSessionFile: info.sessionFile };
 	info = await start();
-	await reloadProduct(page, target);
-	await page.wait('document.querySelector("[data-interface=workspace-memory-memory]")');
-	await page.click("[data-interface=workspace-memory-memory]");
-	await page.wait('document.querySelector("[data-memory-approve]")?.disabled===false');
-	assert.equal(await page.evaluate('document.querySelectorAll("[data-memory-lesson]").length'), 2);
-	await page.click("[data-memory-approve]");
-	await page.wait('!document.querySelector("[data-memory-pending]")');
-	const recovered = await ext(
-		page,
-		target,
-		"await client.operationByRequest(" + JSON.stringify(original) + ")",
-	);
+	owner = await connectHttp(origin, owner.cookies);
+	const recovered = await owner.operationByRequest("workspace-memory", "installed-add", target);
+	assert.equal(recovered.id, added.id);
 	assert.equal(recovered.state, "done");
+	const approved = await owner.call(
+		"workspace-memory",
+		"change",
+		{ id: pending.id, expectedVersion: pending.version, action: "approve" },
+		target,
+		"installed-approve",
+	);
+	assert.equal(approved.state, "done");
+	assert.equal((await readMemory(owner, target)).lessons.filter((lesson) => lesson.pending).length, 0);
 	assert.equal(requests.length, 2);
-	await page.click("[data-conversation]");
-	await work(page, target, "AFTER-APPROVAL-AND-REOPEN", 3);
+	await work(owner, target, "AFTER-APPROVAL-AND-REOPEN", 3);
 	assert.ok(system(2).includes(approvedText));
 	assert.ok(system(2).includes(pendingText));
-	await page.click("[data-interface=workspace-memory-memory]");
-	await page.wait('document.querySelector("[data-memory-enabled]")?.disabled===false');
-	await page.click("[data-memory-enabled]");
-	await page.wait('document.querySelector("[data-memory-enabled]")?.getAttribute("aria-pressed")==="false"');
-	await page.click("[data-conversation]");
-	await work(page, target, "AFTER-AUTOMATIC-CONTEXT-DISABLED", 4);
+	await owner.call("workspace-memory", "activation", { enabled: false }, target);
+	await work(owner, target, "AFTER-AUTOMATIC-CONTEXT-DISABLED", 4);
 	assert.equal(system(3).includes(approvedText), false);
 	assert.equal(system(3).includes(pendingText), false);
-	const configured = await rpc(page, { op: "configure", target, profile: "plain" });
-	assert.equal(configured.kind, "reference");
+	const configured = await owner.rpc({ op: "configure", target, profile: "plain" });
 	assert.equal(configured.ref.conversationId, target.conversationId);
 	assert.notEqual(configured.ref.incarnation, target.incarnation);
 	target = configured.ref;
-	const activated = await ext(
-		page,
-		target,
-		"await client.call({extension:row.manifest.id,generation:row.generation,action:'activation',requestId:crypto.randomUUID(),target,input:{enabled:true}})",
-	);
-	assert.equal(activated.state, "done");
-	assert.equal((await readMemory(page, target)).enabled, true);
+	assert.equal((await owner.call("workspace-memory", "activation", { enabled: true }, target)).state, "done");
 	await stop();
 	webui = false;
 	info = await start();
-	await reloadProduct(page, target);
-	assert.equal(
-		await page.evaluate('document.querySelector("[data-interface=workspace-memory-memory]")'),
-		null,
-	);
-	await work(page, target, "AFTER-WEBUI-REMOVAL-AND-PROFILE-SWITCH", 5);
+	owner = await connectHttp(origin, owner.cookies);
+	const registrations = (await owner.extensions({ op: "list", target })).registrations;
+	assert.ok(!registrations.some((row) => row.manifest.id === "workspace-memory" && row.facet === "webui"));
+	await work(owner, target, "AFTER-WEBUI-REMOVAL-AND-PROFILE-SWITCH", 5);
 	assert.equal(
 		(requests[4].tools ?? []).some((tool) => tool.function.name === "memory"),
 		false,
 	);
 	assert.equal(system(4).includes(approvedText), false);
 	assert.equal(system(4).includes(pendingText), false);
-	const after = await readMemory(page, target);
+	const after = await readMemory(owner, target);
 	assert.equal(after.enabled, true);
-	assert.equal(after.lessons.length, 2);
 	assert.ok(after.lessons.every((lesson) => !lesson.pending));
 	assert.deepEqual(
 		after.lessons.map((lesson) => lesson.id).sort(),
@@ -339,37 +276,16 @@ try {
 	try {
 		assert.equal(runtime.view().budget.primaryAttempts, 5);
 		assert.equal(runtime.view().sessionId, target.sessionId);
-		await writeFile(join(run, "after-view.json"), JSON.stringify(runtime.view(), null, 2));
-		await writeFile(
-			join(run, "after-reopen.json"),
-			JSON.stringify(
-				(await runtime.store({ namespace: memoryOptions.namespace, maxBytes: 1048576 }).snapshot()).data,
-				null,
-				2,
-			),
-		);
 	} finally {
 		await runtime.close();
 	}
-	await copyFile(info.sessionFile, join(run, "native-storage.jsonl"));
 	assert.deepEqual(errors, []);
 	await writeFile(join(run, "provider-requests.json"), JSON.stringify(requests, null, 2) + "\n");
 	console.log(
-		JSON.stringify({
-			installedMemory: true,
-			modelHttp: requests.length,
-			spentAttempts: 5,
-			nativeToolResults: 1,
-			lostResponseNeverReplayed: true,
-			approvedMemoryOnly: true,
-			webuiRemovalPreservesRecords: true,
-			evidence: run,
-		}),
+		"Installed Memory HTTP passed: native tool proposal, approved-only context, original operation across reopen, activation/profile controls and WebUI removal retain records; 5 local requests.",
 	);
 } finally {
-	await browser?.close();
 	if (child) {
-		child.stdin.end("stop\n");
 		child.kill();
 		await child.finished;
 	}

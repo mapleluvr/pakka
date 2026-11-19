@@ -4,7 +4,7 @@ Pakka 将 Pi Durable 的 Conversation、权限、持久化与 MAS 协作能力�
 
 ## 当前工作
 
-[独立 WebUI 与通用插件规划](changes/independent-webui.md)已采用分仓、React/Astryx、配置作用域与旧实现清理边界。阶段 0 [消费盘点](../openspec/changes/plan-independent-webui/inventory.md)已交付；阶段 1 已形成独立 SDK/协议/client、原生模型配置、Person 默认与固定 Node 资产接缝，实际结果见[阶段 1 验证](verification/INDEPENDENT-WEBUI-PHASE-1.md)。未加载原 Session 的公开只读 SDK、受权 HTTP 和固定制品接缝见[只读历史核对](verification/READONLY-SQLITE-HISTORY.md)；独立 facet 的原生/HTTP/安装/浏览器结果及阶段 1 收口见[facet 核对](verification/INDEPENDENT-FACET-CONTROL.md)。阶段 2 已形成独立应用/registry、GUI-only 与 RSI 真实切片、模型双入口和跨 Session 历史界面；实际读写、两层回执、重开/并发保护及固定生产制品见[阶段 2 核对](verification/INDEPENDENT-WEBUI-PHASE-2.md)。阶段 3 的[固定交付核对](verification/INDEPENDENT-WEBUI-PHASE-3.md)已完成两仓配对、干净 checkout、A → B → A 与启动前拒绝；阶段 4 的普通输入/配置回执、工作台、所选插件、协作、原生通知、外观和语音草稿已完成分项核对；最终 Node 24 固定安装与真实登录/输入/刷新/撤权路径通过。扩大回归仍有 13 个失败文件、1 个未完成文件，阶段退出受阻，实际结果与限制见[阶段 4 候选](verification/INDEPENDENT-WEBUI-PHASE-4.md)。真实录音因用户无设备获授权跳过，质量仍未验证。默认切换属阶段 5；[任务](../openspec/changes/plan-independent-webui/tasks.md)与[阶段记录](../openspec/changes/plan-independent-webui/phase-4.md)逐项记录，Provider `/login` 延期。
+[独立 WebUI 与通用插件](changes/independent-webui.md)已完成阶段 0–5 的所选范围：独立 React/Astryx 前端与公开 SDK、原 Session 只读历史、独立 facets、完整工作台/所选业务插件，以及默认固定产物装配。Node 24 最终归档安装、headless 隔离、默认 CLI、PC/390px、TLS 代理及兼容前端 A → B → A 已通过；旧 UI/SDK/重复构建按[覆盖记录](verification/WEBUI-COVERAGE-TRANSITION.md)退出。release 274 文件全部完成，三文件经修正/短目录复验收口；平台跳过、Windows 深目录 ACL、真实录音授权跳过和旧 worker 迟到正文未覆盖分支见[阶段 5 验证](verification/INDEPENDENT-WEBUI-PHASE-5.md)。[任务](../openspec/changes/plan-independent-webui/tasks.md)与[阶段 5](../openspec/changes/plan-independent-webui/phase-5.md)维护交付；两仓工作分支 PR、集成、公共发布与 OpenSpec 归档分别记录。Provider `/login` 继续延期。
 
 [Memo 知识服务与持久 Patchouli](changes/memo-knowledge.md)已完成实现、安装消费与独立复审：Wiki、版本、来源、书库权限、综合检索及按需读取可独立使用，馆员按显式请求与原 MAS 身份推进。当前预期见 [Memo](state/memo.md)，固定结果见[验证摘要](verification/MEMO-KNOWLEDGE.md)。Issue #9 的 History Book 生产接入、小恶魔和 GUI 尚未完成，后续见 [tasks](../openspec/changes/add-memo-knowledge/tasks.md)。
 
@@ -18,7 +18,7 @@ Pakka 将 Pi Durable 的 Conversation、权限、持久化与 MAS 协作能力�
 
 ## 产品后续入口
 
-- WebUI 重构先读[开发原则](development/FRONTEND-GUIDELINES.md)、[独立前端职责与接口](development/WEBUI-ARCHITECTURE.md)和[阶段设计](../openspec/changes/plan-independent-webui/design.md)。React 19 / Astryx 的共享运行时接缝已验证，完整应用仍按阶段 2–5 推进；旧 Preact 插件不迁移。比较来路见[调研](development/WEBUI-DESIGN-SYSTEMS.md)与[原文档交付](changes/webui-design-principles.md)。
+- WebUI 重构先读[开发原则](development/FRONTEND-GUIDELINES.md)、[独立前端职责与接口](development/WEBUI-ARCHITECTURE.md)和[阶段设计](../openspec/changes/plan-independent-webui/design.md)。React 19 / Astryx 的共享运行时、完整应用与默认安装已按阶段核对；业务功能由新 SDK 插件提供。比较来路见[调研](development/WEBUI-DESIGN-SYSTEMS.md)与[原文档交付](changes/webui-design-principles.md)。
 - [Runtime 与默认入口](../openspec/changes/enable-product-runtime-and-launcher/tasks.md)：受控长上下文/重试、附件、长期容量治理；固定结果见[验证记录](verification/PRODUCT-RUNTIME-LAUNCHER.md)。
 - [资源压力](../openspec/changes/add-local-maintenance-and-delivery/tasks.md#near-term-resource-pressure)：冷浏览/有界观察已交付；完整执行上下文、活跃 Runtime 预算、闲置卸载及独立 worker/OOM 恢复仍需接续。
 - [工作台导航与本机恢复](../openspec/changes/improve-webui-navigation-and-local-recovery/tasks.md)：维护与登录由本轮接续，可寻址设置及逐页交互仍待办。

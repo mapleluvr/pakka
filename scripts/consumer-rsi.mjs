@@ -6,8 +6,9 @@ import { fileURLToPath } from "node:url";
 import { startTicketWorkbench } from "./rsi-workbench.mjs";
 import { readTicketResult } from "@pakka/rsi/client";
 import "@pakka/memo";
+import { loginHttp } from "./consumer-webui-http.mjs";
 
-const directory = join(dirname(fileURLToPath(import.meta.url)), "rsi-consumer-data");
+const directory = join(dirname(fileURLToPath(import.meta.url)), "rsi-consumer-" + crypto.randomUUID());
 await mkdir(directory, { recursive: true });
 const requests = [],
 	errors = [];
@@ -114,36 +115,9 @@ try {
 	assert.equal(requests.length, 2);
 	// Actual authenticated HTTP extension boundary; no handler-only success claim.
 	const origin = app.http.origin;
-	const login = await fetch(origin + "/pocket/exchange", {
-		method: "POST",
-		headers: { "content-type": "application/json", origin },
-		body: JSON.stringify({ kind: "session", token: app.initialOwner.token }),
-	});
-	assert.equal(login.status, 200);
-	const cookies = login.headers.getSetCookie().map((value) => value.split(";")[0]);
-	const cookie = cookies.join("; "),
-		csrf = cookies.find((value) => value.startsWith("pakka_csrf="))?.slice("pakka_csrf=".length);
-	assert.ok(csrf);
-	const rpc = async (command) => {
-		const requestId = crypto.randomUUID();
-		const response = await fetch(origin + "/pocket/extensions/rpc", {
-			method: "POST",
-			headers: { "content-type": "application/json", cookie, origin, "x-pakka-csrf": csrf },
-			body: JSON.stringify({ version: 2, requestId, command }),
-		});
-		const result = await response.json();
-		assert.equal(response.status, 200, JSON.stringify(result));
-		assert.equal(result.requestId, requestId);
-		assert.ok(!result.error, JSON.stringify(result));
-		return result.result;
-	};
-	const registration = (await rpc({ op: "list" })).registrations.find((row) => row.manifest.id === "rsi");
-	assert.ok(registration);
+	const owner = await loginHttp(origin, app.initialOwner.token);
 	const call = async (action, requestId, input) => {
-		const { operation } = await rpc({
-			op: "call",
-			call: { extension: "rsi", generation: registration.generation, action, requestId, input },
-		});
+		const operation = await owner.call("rsi", action, input, undefined, requestId);
 		assert.equal(operation.state, "done", JSON.stringify(operation));
 		return readTicketResult(action, operation.value);
 	};

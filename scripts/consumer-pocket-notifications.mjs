@@ -15,11 +15,10 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createRuntime } from "@pakka/agent";
-import { ownedBrowser } from "./pocket-browser.ts";
-import { conversationAction, organizationAction, openConversations } from "./frontend-controls.ts";
+import { loginHttp, connectHttp } from "./consumer-webui-http.mjs";
+import { WEBUI_NOTIFICATION_EVENT_PATH } from "@pakka/protocol/webui";
 
-// Installed-package subject. All providers, TLS keys, people and browser contexts are owned by this run.
-// TLS encryption/service acceptance and CDP-delivered native worker display are distinct assertions.
+// Installed CLI + real TLS push receiver. System display is covered by separate native-browser acceptance.
 const root = dirname(fileURLToPath(import.meta.url));
 const run = join(root, "notification-run-" + crypto.randomUUID());
 await mkdir(run, { recursive: true });
@@ -143,7 +142,7 @@ const json = (text) => {
 		throw Error("Invalid owned notification JSON", { cause: error });
 	}
 };
-let child, browser, listener;
+let child, listener;
 async function start() {
 	await writeFile(configFile, JSON.stringify(config));
 	child = spawn(
@@ -193,14 +192,6 @@ async function stop() {
 	assert.equal(child.output().includes(config.runtime.apiKey), false);
 	child = undefined;
 }
-const rpc = (page, command) =>
-	page.evaluate(
-		`(async()=>{const{createPocketClient}=await import('@pakka/client/pocket');return createPocketClient({endpoint:location.origin+'/pocket/rpc',csrf:()=>/pakka_csrf=([^;]+)/.exec(document.cookie)?.[1]??null}).request(${JSON.stringify(command)});})()`,
-	);
-const settled = (page) =>
-	page.wait(
-		'(async()=>{await document.fonts.ready;return document.getAnimations().every(row=>row.playState!=="running");})()',
-	);
 function decrypt(index, publicKey) {
 	const row = pushes[index];
 	assert.equal(row.encoding, "aes128gcm");
@@ -251,35 +242,20 @@ function decrypt(index, publicKey) {
 }
 try {
 	let info = await start();
-	const link = (await readFile(ownerFile, "utf8")).trim(),
-		ownerURL = new URL(link);
+	const ownerURL = new URL((await readFile(ownerFile, "utf8")).trim());
 	assert.equal(ownerURL.origin, info.origin);
-	const token = new URLSearchParams(ownerURL.hash.slice(1)).get("signin");
+	const token = new URLSearchParams(ownerURL.hash.slice(1)).get("session");
 	assert.ok(token);
 	assert.equal(child.output().includes(token), false);
-	browser = await ownedBrowser(join(run, "browser"));
-	const owner = await browser.page(link);
-	await owner.wait('document.querySelector("[data-action=signin]")');
-	await owner.click("[data-action=signin]");
-	await owner.wait('document.querySelector("[data-conversation]")');
-	await owner.click("[data-conversation]");
-	const refs = (await rpc(owner, { op: "list" })).conversations,
+	let owner = await loginHttp(info.origin, token);
+	const refs = (await owner.rpc({ op: "list" })).conversations,
 		target = refs[0];
-	assert.ok(target && refs[1]);
-	await owner.allowNotifications();
-	await conversationAction(owner, "notifications");
-	await owner.wait('document.querySelector("[data-notification-test]")?.disabled===false');
-	await settled(owner);
-	await owner.click("[data-notification-test]");
-	await owner.waitNotification("pakka-device-test");
-	await owner.wait(
-		'(async()=>{const r=await navigator.serviceWorker.ready;return(await r.getNotifications({tag:"pakka-device-test"})).length===1;})()',
-	);
-	const registered = await rpc(owner, {
+	const original = {
 		op: "notification.subscribe",
 		target,
 		input: { requestId: "installed-device", subscription },
-	});
+	};
+	const registered = await owner.rpc(original);
 	assert.equal(registered.status.devices.length, 1);
 	assert.equal(
 		registered.status.devices[0].subscriptionKey,
@@ -289,104 +265,70 @@ try {
 		JSON.stringify(registered),
 		/owned-installed-device|endpoint|privateKey|SYNTHETIC-INSTALLED-NOTIFICATION-KEY/,
 	);
-	await owner.click('[aria-label="Close notifications"]');
-	await owner.type("textarea[name=message]", "INSTALLED-REAL-NOTIFICATION-WORK");
-	await owner.click("[data-action=send]");
-	await owner.wait('document.querySelector("main").innerText.includes("INSTALLED-NOTIFICATION-ANSWER")');
-	await until(() => pushes.length === 1);
-	const wake = decrypt(0, registered.status.publicKey);
-	await owner.pushNotification(wake);
-	await owner.waitNotification("pakka-" + wake.eventId);
-	await owner.wait(
-		'(async()=>{const r=await navigator.serviceWorker.ready;return(await r.getNotifications()).some(row=>row.body==="The agent finished this conversation.");})()',
-	);
-	const repeated = await rpc(owner, {
-		op: "submit",
-		target,
-		input: { requestId: "installed-stable-native", text: "SECOND-STABLE-WORK", mode: "prompt" },
-	});
-	// This second real input supplies an exact stable receipt for normal-reopen dedup verification.
-	assert.equal(repeated.kind, "receipt");
-	await rpc(owner, { op: "wait", id: repeated.receipt.id });
+	const input = { requestId: "installed-stable-native", text: "SECOND-STABLE-WORK", mode: "prompt" };
+	for (const message of [
+		{ requestId: "first", text: "INSTALLED-REAL-NOTIFICATION-WORK", mode: "prompt" },
+		input,
+	]) {
+		const receipt = (await owner.rpc({ op: "submit", target, input: message })).receipt;
+		assert.equal((await owner.rpc({ op: "wait", id: receipt.id })).receipt.status, "done");
+	}
 	await until(() => pushes.length === 2);
+	const wake = decrypt(0, registered.status.publicKey);
 	decrypt(1, registered.status.publicKey);
-	await conversationAction(owner, "notifications");
-	await owner.wait('document.querySelector("[data-notification-kind=chat]")');
-	await settled(owner);
-	await owner.click("[data-notification-kind=chat]");
-	await owner.wait(
-		`(async()=>{const{createPocketClient}=await import('@pakka/client/pocket');return(await createPocketClient({endpoint:location.origin+'/pocket/rpc',csrf:()=>/pakka_csrf=([^;]+)/.exec(document.cookie)?.[1]??null}).request({op:'notification.status',target:${JSON.stringify(target)}})).status.preferences.chat===false;})()`,
-	);
+	await owner.rpc({
+		op: "notification.preferences",
+		target,
+		input: { requestId: "chat-off", preferences: { chat: false } },
+	});
 	const filtered = {
 		op: "collaboration.post",
 		target,
-		input: { requestId: "installed-filtered-human", text: "INSTALLED-HUMAN-CANARY" },
+		input: { requestId: "filtered-human", text: "INSTALLED-HUMAN-CANARY" },
 	};
-	await rpc(owner, filtered);
-	await owner.click("[data-notification-kind=chat]");
-	await owner.wait('document.querySelector("[data-notification-kind=chat]")?.disabled===false');
-	await until(
-		async () => (await rpc(owner, { op: "notification.status", target })).status.preferences.chat === true,
-	);
+	await owner.rpc(filtered);
+	assert.equal((await owner.rpc({ op: "notification.status", target })).status.preferences.chat, false);
+	await owner.rpc({
+		op: "notification.preferences",
+		target,
+		input: { requestId: "chat-on", preferences: { chat: true } },
+	});
 	loseResponse = true;
-	const unknownChat = { ...filtered, input: { ...filtered.input, requestId: "installed-lost-push" } };
-	await rpc(owner, unknownChat);
+	const unknownChat = { ...filtered, input: { ...filtered.input, requestId: "lost-push" } };
+	await owner.rpc(unknownChat);
 	await until(() => pushes.length === 3);
-	const unknownWake = decrypt(2, registered.status.publicKey);
-	await rpc(owner, unknownChat);
-	await owner.click('[aria-label="Close notifications"]');
-	const invitation = await rpc(owner, {
+	decrypt(2, registered.status.publicKey);
+	await owner.rpc(unknownChat);
+	const invitation = await owner.rpc({
 		op: "invite",
-		requestId: "installed-notification-viewer",
+		requestId: "notification-viewer",
 		role: "viewer",
 		resources: [target.conversationId],
 		ttlMs: 60000,
 	});
-	assert.ok(invitation.token);
-	const viewer = await browser.page(info.origin + "/#invite=" + invitation.token, {
-		width: 390,
-		height: 844,
+	let viewer = await loginHttp(info.origin, invitation.token, "invite", "Viewer");
+	const eventPath = WEBUI_NOTIFICATION_EVENT_PATH + "?eventId=" + wake.eventId + "&deviceId=" + wake.deviceId;
+	const metadata = await fetch(info.origin + eventPath, { headers: { Cookie: owner.cookies } });
+	assert.equal(metadata.status, 200);
+	assert.equal((await metadata.json()).preview, "The agent finished this conversation.");
+	assert.equal((await fetch(info.origin + eventPath, { headers: { Cookie: viewer.cookies } })).status, 403);
+	await assert.rejects(viewer.rpc({ op: "notification.status", target: refs[1] }), {
+		code: "FORBIDDEN",
+		outcome: "denied",
 	});
-	await viewer.wait('document.querySelector("[data-action=signin]")');
-	await viewer.type("input[name=person]", "Mobile viewer");
-	await viewer.click("[data-action=signin]");
-	await viewer.wait('document.querySelector("[data-conversation]")');
-	await openConversations(viewer);
-	await viewer.click("[data-conversation]");
-	await viewer.allowNotifications();
-	await conversationAction(viewer, "notifications");
-	await viewer.wait('document.querySelector("[data-notification-test]")?.disabled===false');
-	await viewer.evaluate(
-		'navigator.serviceWorker.addEventListener("message",event=>{if(event.data?.type==="pakka.notification")globalThis.__notificationCheck=event.data;})',
-	);
-	await viewer.pushNotification(wake);
-	await viewer.wait("globalThis.__notificationCheck?.displayed===false");
-	assert.equal(
-		await viewer.evaluate(
-			"(async()=>{const r=await navigator.serviceWorker.ready;return(await r.getNotifications()).length;})()",
-		),
-		0,
-	);
-	const denied = await rpc(viewer, { op: "notification.status", target: refs[1] }).catch((error) =>
-		String(error),
-	);
-	assert.match(String(denied), /WebUI|Browser evaluation/);
-	assert.equal(await viewer.evaluate("document.documentElement.scrollWidth>innerWidth"), false);
-	for (const page of [owner, viewer]) await settled(page);
-	await writeFile(join(run, "desktop.png"), await owner.screenshot());
-	await writeFile(join(run, "mobile.png"), await viewer.screenshot());
+	assert.equal((await viewer.services({ op: "notification.lookup", original })).status, null);
 	await stop();
 	let runtime = await createRuntime({ ...config.runtime, reopenSessionFile: info.sessionFile });
 	try {
 		assert.equal(runtime.view().budget.primaryAttempts, 2);
-		const saved = await runtime.store({ namespace: "pocket.notifications", maxBytes: 1048576 }).snapshot();
-		assert.equal(saved.data.events.length, 4);
+		const saved = (await runtime.store({ namespace: "pocket.notifications", maxBytes: 1048576 }).snapshot())
+			.data;
+		assert.equal(saved.events.length, 4);
 		assert.equal(
-			saved.data.events.filter((row) => row.deliveries.some((delivery) => delivery.state === "unknown"))
-				.length,
+			saved.events.filter((row) => row.deliveries.some((delivery) => delivery.state === "unknown")).length,
 			1,
 		);
-		await writeFile(join(run, "before-reopen.json"), JSON.stringify(saved.data, null, 2));
+		await writeFile(join(run, "before-reopen.json"), JSON.stringify(saved, null, 2));
 	} finally {
 		await runtime.close();
 	}
@@ -398,77 +340,53 @@ try {
 	const oldOrigin = info.origin;
 	info = await start();
 	assert.equal(info.origin, oldOrigin);
-	await owner.navigate(info.origin + "/#conversation=" + target.conversationId);
-	await owner.wait('document.querySelector("textarea[name=message]")');
-	const after = await rpc(owner, { op: "notification.status", target });
-	assert.deepEqual(after.status, registered.status);
-	await rpc(owner, {
-		op: "submit",
-		target,
-		input: { requestId: "installed-stable-native", text: "SECOND-STABLE-WORK", mode: "prompt" },
-	});
-	await rpc(owner, unknownChat);
+	owner = await connectHttp(info.origin, owner.cookies);
+	viewer = await connectHttp(info.origin, viewer.cookies);
+	assert.deepEqual((await owner.rpc({ op: "notification.status", target })).status, registered.status);
+	assert.deepEqual((await owner.services({ op: "notification.lookup", original })).status, registered.status);
+	await owner.rpc({ op: "submit", target, input });
+	await owner.rpc(unknownChat);
 	assert.equal(requests.length, 2);
 	assert.equal(pushes.length, 3);
-	const metadata = await owner.evaluate(
-		`(async()=>{const response=await fetch('/pocket/notifications/event?eventId='+${JSON.stringify(wake.eventId)}+'&deviceId='+${JSON.stringify(wake.deviceId)});return{status:response.status,data:await response.json()};})()`,
-	);
-	assert.equal(metadata.status, 200);
-	assert.equal(metadata.data.preview, "The agent finished this conversation.");
-	await rpc(owner, {
+	assert.equal((await fetch(info.origin + eventPath, { headers: { Cookie: owner.cookies } })).status, 200);
+	await owner.rpc({
 		op: "notification.unsubscribe",
 		target,
-		input: { requestId: "installed-off", deviceId: registered.status.devices[0].id },
+		input: { requestId: "off", deviceId: registered.status.devices[0].id },
 	});
-	assert.equal((await rpc(owner, { op: "notification.status", target })).status.devices.length, 0);
-	const viewerIdentity = await rpc(viewer, { op: "hello" });
-	assert.equal(typeof viewerIdentity.person.id, "string");
-	await rpc(owner, { op: "person.revoke", id: viewerIdentity.person.id });
-	await viewer.wait('document.querySelector("[data-action=signin]")');
-	await organizationAction(owner, "logout");
-	await owner.wait('document.querySelector("[data-action=signin]")');
-	await owner.wait(
-		"(async()=>{const r=await navigator.serviceWorker.ready;return(await r.getNotifications()).length===0;})()",
+	assert.equal((await owner.rpc({ op: "notification.status", target })).status.devices.length, 0);
+	assert.equal((await fetch(info.origin + eventPath, { headers: { Cookie: owner.cookies } })).status, 403);
+	await owner.rpc({ op: "person.revoke", id: viewer.person.id });
+	await assert.rejects(viewer.rpc({ op: "notification.status", target }), (error) =>
+		["FORBIDDEN", "UNAUTHORIZED"].includes(error.code),
 	);
-	await owner.evaluate(
-		'navigator.serviceWorker.addEventListener("message",event=>{if(event.data?.type==="pakka.notification")globalThis.__notificationCheck=event.data;})',
-	);
-	await owner.pushNotification(unknownWake);
-	await owner.wait("globalThis.__notificationCheck?.displayed===false");
+	await owner.rpc({ op: "session.logout" });
+	assert.equal((await fetch(info.origin + eventPath, { headers: { Cookie: owner.cookies } })).status, 401);
 	await stop();
 	runtime = await createRuntime(config.runtime);
 	try {
 		assert.equal(runtime.view().budget.primaryAttempts, 2);
-		const saved = await runtime.store({ namespace: "pocket.notifications", maxBytes: 1048576 }).snapshot();
-		assert.equal(saved.data.events.length, 4);
-		assert.equal(saved.data.devices.filter((row) => row.active).length, 0);
+		const saved = (await runtime.store({ namespace: "pocket.notifications", maxBytes: 1048576 }).snapshot())
+			.data;
+		assert.equal(saved.events.length, 4);
+		assert.equal(saved.devices.filter((row) => row.active).length, 0);
 	} finally {
 		await runtime.close();
 	}
 	assert.equal(requests.length, 2);
 	assert.equal(pushes.length, 3);
-	assert.equal(fixtureErrors.length, 0);
+	assert.deepEqual(fixtureErrors, []);
 	assert.doesNotMatch(JSON.stringify(requests), /INSTALLED-HUMAN-CANARY/);
 	console.log(
-		JSON.stringify({
-			installedNotifications: true,
-			modelHttp: requests.length,
-			tlsPushes: pushes.length,
-			nativeWorkerDisplay: true,
-			unknownNeverReplayed: true,
-			spentAttempts: 2,
-			evidence: run,
-		}),
+		"Installed notifications HTTP passed: encrypted TLS push/VAPID, preference filtering, unknown delivery retained without replay, original subscribe receipt after reopen, owner/viewer/revoke/logout filtering; 2 model requests, 3 TLS pushes. System display is separate.",
 	);
 } finally {
-	await browser?.close();
 	if (child) {
-		child.stdin.end("stop\n");
 		child.kill();
 		await child.finished;
 	}
 	for (const server of [provider, receiver]) {
 		server.closeAllConnections();
-		await new Promise((resolve) => server.close(() => resolve()));
+		await new Promise((resolve) => server.close(resolve));
 	}
 }

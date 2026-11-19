@@ -1,22 +1,26 @@
 # 独立 WebUI 固定制品
 
-## 完整应用
+## 默认完整应用
 
-当前显式候选记录在 [app-bc3c6f49f4e6e11b.json](pairings/app-bc3c6f49f4e6e11b.json)。归档为 `app/pakka-webui-app-0.1.0-bc3c6f49f4e6e11b.tgz`，1,184,383 字节，完整 SHA-256：
+默认 `pakka` 启动消费 `app/pakka-webui-app-0.1.0-97c5bcd821a91b3a.tgz`。完整 SHA-256：
 
-`bc3c6f49f4e6e11b2ffbc947e35df1b0504f552726e715c752d4fba345f68482`
+`97c5bcd821a91b3a4c7ab4f80a7fffdd3b2172b84c77572c874f6f0dd71ce1ad`
 
-manifest SHA-256：
+归档为 1,304,838 字节，manifest SHA-256：
 
-`418033338b02ad0f6dec8ab24dcbbf3278b9d71b8f8454197418f9669d396e15`
+`a4ea8a221f173c4ac4c3e5d0f81c8019bb42d057fc7c91f2c7ef290c02631941`
 
-应用源码对应独立前端提交 `977b138c074fcc17a16ba4ad00bfc7ca76b3332b`；阶段 3 新增的 `npm run pack:app` 使用 npm pack 形成标准静态归档，重建后与原验收应用字节一致。配对记录列出实际安装后端的固定包 hash；不使用 `0.1.0` 版本名替代内容身份。
+它包含 713 项声明资产及 npm/manifest 元数据，要求 services 4 / workbench 2 / extensions 3、资产 schema 2 和 `react19-astryx0.7.15` runtime。应用源码与安装后端的固定包身份见 [配对记录](pairings/app-97c5bcd821a91b3a.json)。版本名 `0.1.0` 之外，实际交付以归档与 manifest 摘要定位。
 
-从获准配对记录取得预期摘要，核对归档后解包至新的空目录，例如在本目录执行：
+Pakka 构建先核对固定归档摘要、完整成员及每项资产，再把已验证字节放入 `@pakka/webui/dist/frontend`。包的安装和启动无需独立前端源码、前端编译或额外下载。`startPocket` 未指定 `frontend` 时使用随包产物，并在打开 Session 前重新验证资产与服务兼容性。选择常量由 `apps/webui/src/default-frontend.ts` 维护。
+
+## 显式替换与兼容回退
+
+从受信配对记录取得预期摘要，核对完整归档后解包到新的空目录。例如在本目录执行：
 
 ```powershell
-$archive = 'app/pakka-webui-app-0.1.0-bc3c6f49f4e6e11b.tgz'
-$expected = 'bc3c6f49f4e6e11b2ffbc947e35df1b0504f552726e715c752d4fba345f68482'
+$archive = 'app/pakka-webui-app-0.1.0-97c5bcd821a91b3a.tgz'
+$expected = '97c5bcd821a91b3a4c7ab4f80a7fffdd3b2172b84c77572c874f6f0dd71ce1ad'
 if ((Get-FileHash $archive -Algorithm SHA256).Hash.ToLowerInvariant() -ne $expected) {
     throw 'Frontend archive identity mismatch'
 }
@@ -26,20 +30,20 @@ tar -xzf $archive -C $destination
 if ($LASTEXITCODE -ne 0) { throw 'Extraction failed' }
 ```
 
-可信 Node 启动显式传入 `frontend: { directory: '<absolute>/dist/webui-candidate/package', manifestSha256: '<above manifest SHA-256>' }`。`startPocket` 使用公开 `loadWebUiAssets` 在 Session 打开前校验全部资产与服务兼容性；需要 `/` HTML entry。独立前端的 [交付说明](https://github.com/mapleluvr/pakka-webui/blob/pakka/independent-webui-seams/docs/development/DELIVERY.md)说明构建和更新，服务接口见[公共接缝](../../docs/reference/WEBUI-SERVICES.md)。
+可信 Node 或 ESM 装配可传入 `frontend: { directory: '<absolute>/dist/webui-candidate/package', manifestSha256: '<approved manifest SHA-256>' }`。JSON 配置保持其闭合字段。后端校验失败时停止启动，不下载替代内容。`entry: null` 的共享 runtime 不能代替完整网页。
 
-归档含 637 项声明资产及两项 npm/manifest 元数据，包括上游许可；没有 Node runtime 依赖、源码、原始验证材料或凭据。它是显式装配候选，不自动进入现有 `pakka` 默认启动，不是 npm 发行。
+切换需要正常停止服务，并以原 Session 定位和服务配置重新启动。回退使用兼容的完整前端归档，保留数据库、身份、已接纳工作与待核对请求。阶段 5 在同一安装版后端验证当前默认归档 → 阶段 4 services 4 归档 → 当前默认归档；两笔输入各只执行一次，丢响应的原请求只查询一次。旧阶段 3 的 services 3 归档没有当前构建消费者，已从当前树退出；[历史配对](pairings/app-bc3c6f49f4e6e11b.json)与 [Git 中的原归档](https://github.com/mapleluvr/pakka/blob/c3da4628df8114aa341b9c0718536dbaba435349/integrations/webui/app/pakka-webui-app-0.1.0-bc3c6f49f4e6e11b.tgz)保留来源。它不能用于当前默认服务组合。
+
+独立前端的[交付说明](https://github.com/mapleluvr/pakka-webui/blob/pakka/independent-webui-seams/docs/development/DELIVERY.md)维护构建方式，服务接口见[公共接缝](../../docs/reference/WEBUI-SERVICES.md)。本目录固定的是产品所需的静态归档；registry 发布与分支集成分别记录。
 
 ## UI SDK
 
-`@pakka/rsi` 的 React/Astryx browser facet 消费独立 `pakka-webui` 仓库拥有的 `@pakka/webui-sdk`。本仓固定实际 SDK 归档，不复制公共类型或 React context。
-
-SDK 归档为 `sdk/pakka-webui-sdk-c1f99cd939aa0ffc.tgz`，版本 `0.1.0`，SDK 源码与前端阶段 1 提交 `48adf83` 一致，归档元数据来自阶段 2；SDK 字节已与最终构建核对。完整 SHA-256：
+`@pakka/webui-sdk` 由独立 `pakka-webui` 仓库维护。本仓固定 `sdk/pakka-webui-sdk-c1f99cd939aa0ffc.tgz`，完整 SHA-256：
 
 `c1f99cd939aa0ffc88400939bf5639fe42c36929d523e45f1197eedd3901dca7`
 
-SDK 是构建期依赖；RSI 将 React、SDK 和 Astryx external 到前端共享 runtime。SDK 归档不能代替完整网页。
+SDK 版本为 `0.1.0`，源码与前端阶段 1 提交 `48adf83` 一致，归档元数据来自阶段 2。业务插件将 React、SDK 和 Astryx external 到共享 runtime；SDK 是独立的构建期依赖。headless 消费方无需安装静态网页或 React/Astryx。
 
-## 验证范围
+## 实际核对
 
-[阶段 3 验证](../../docs/verification/INDEPENDENT-WEBUI-PHASE-3.md)记录干净 checkout、归档边界、同一安装版后端的 A → B → A、原资源身份和启动前拒绝。候选 B 是隔离 checkout 中普通 GUI-only 插件的受控变体，未作为第二个公开版本发布。模型和 RSI 功能验收保留在[阶段 2](../../docs/verification/INDEPENDENT-WEBUI-PHASE-2.md)。阶段 4–5 的功能、默认切换、发布和合并分别推进。
+[阶段 5 验证](../../docs/verification/INDEPENDENT-WEBUI-PHASE-5.md)记录最终安装、默认启动、兼容回退和部署边界。历史 [阶段 3](../../docs/verification/INDEPENDENT-WEBUI-PHASE-3.md)保留原 services 3 组合、GUI-only 变体和启动前拒绝；原始结果保持各自候选范围。
