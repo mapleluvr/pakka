@@ -27,6 +27,7 @@ import type {
 	MemberPhase,
 	MemberSpec,
 	SendSpec,
+	MasConfigurationRequest,
 } from "./types.ts";
 export type * from "./types.ts";
 
@@ -161,7 +162,9 @@ export async function createMas(options: MasOptions): Promise<Mas> {
 			throw new Error("Invalid principal/grants");
 		const principal = spec.principal,
 			source = spec.source === null ? null : dto(spec.source),
+			initiator = spec.initiator ? dto(spec.initiator) : undefined,
 			allowed = new Set(spec.grants),
+			configurationPrincipal = initiator?.id ?? principal,
 			revision = revocations.get(principal) ?? 0;
 		if (source) target(source);
 		function check() {
@@ -221,8 +224,8 @@ export async function createMas(options: MasOptions): Promise<Mas> {
 					...(replyTo ? { replyTo } : {}),
 					...(invocation && source
 						? { initiator: { kind: "agent" as const, id: source.conversationId } }
-						: spec.initiator
-							? { initiator: dto(spec.initiator) }
+						: initiator
+							? { initiator }
 							: {}),
 				},
 				check,
@@ -244,7 +247,7 @@ export async function createMas(options: MasOptions): Promise<Mas> {
 						principal,
 						source,
 						grants: [...allowed],
-						...(spec.initiator ? { initiator: spec.initiator } : {}),
+						...(initiator ? { initiator } : {}),
 					},
 					invocation,
 					() => {
@@ -274,12 +277,11 @@ export async function createMas(options: MasOptions): Promise<Mas> {
 					address = dto(ref);
 				await refresh();
 				grant("send");
-				const to = target(address);
 				const value = await catalog.lookupRequest(
 					{
 						principal,
 						source,
-						target: to.ref,
+						target: address,
 						requestId: query.requestId,
 						text: query.text,
 						mode: query.mode ?? "prompt",
@@ -349,22 +351,54 @@ export async function createMas(options: MasOptions): Promise<Mas> {
 				await catalog.stop(ref, () => owner(ref, "retire"));
 				return change(found.key, "retired", () => owner(ref, "retire"));
 			},
-			configure: async (ref: ConversationRef, profile: string) => {
+			configure: async (ref: ConversationRef, profile: string, requestId?: string) => {
+				const saved = dto(ref);
 				await refresh();
-				owner(ref, "configure");
-				const changed = await catalog.configure(ref, profile, () => owner(ref, "configure"));
+				owner(saved, "configure");
+				const changed = await catalog.configure(
+					saved,
+					profile,
+					() => owner(saved, "configure"),
+					requestId === undefined ? undefined : { requestId, principal: configurationPrincipal },
+				);
 				await refresh();
 				return member(changed);
 			},
 			configureAgent: async (
 				ref: ConversationRef,
 				change: import("@pakka/agent").ConversationConfigurationChange,
+				requestId?: string,
 			) => {
+				const saved = dto(ref),
+					selection = dto(change);
 				await refresh();
-				owner(ref, "configure");
-				const changed = await catalog.configureAgent(ref, change, () => owner(ref, "configure"));
+				owner(saved, "configure");
+				const changed = await catalog.configureAgent(
+					saved,
+					selection,
+					() => owner(saved, "configure"),
+					requestId === undefined ? undefined : { requestId, principal: configurationPrincipal },
+				);
 				await refresh();
 				return member(changed);
+			},
+			configurationReceipt: async (input: MasConfigurationRequest) => {
+				const original = dto(input);
+				grant("configure");
+				await refresh();
+				const authorize = () => {
+					grant("configure");
+					const found = cache.members.find(
+						({ ref }) =>
+							ref.key === original.target.key &&
+							ref.sessionId === original.target.sessionId &&
+							ref.conversationId === original.target.conversationId,
+					);
+					if (!found) throw new MasRequestDenied("Foreign configuration member");
+					owner(found.ref, "configure");
+				};
+				authorize();
+				return catalog.configurationReceipt({ ...original, principal: configurationPrincipal }, authorize);
 			},
 			fork: async (ref: ConversationRef, input: { readonly key: string; readonly entryId: string }) => {
 				await refresh();
@@ -400,7 +434,7 @@ export async function createMas(options: MasOptions): Promise<Mas> {
 						principal,
 						source,
 						grants: [...allowed],
-						...(spec.initiator ? { initiator: spec.initiator } : {}),
+						...(initiator ? { initiator } : {}),
 					},
 					scope,
 					check,

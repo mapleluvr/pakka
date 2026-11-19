@@ -1,5 +1,6 @@
 /** Static frontend delivery contract. Contains no renderer, Node loader, credentials or service implementation. */
 export const WEBUI_ASSET_SCHEMA = 2 as const;
+export const WEBUI_SERVICE_WORKER_PATH = "/pakka-webui/service-worker.js" as const;
 export interface WebUiAssetManifest {
 	readonly schema: typeof WEBUI_ASSET_SCHEMA;
 	readonly requires: { readonly services: number; readonly workbench: number; readonly extensions: number };
@@ -67,7 +68,7 @@ function url(value: unknown): string {
 		path === "/pakka-webui" ||
 		(path.startsWith("/pakka-webui/") &&
 			!path.startsWith("/pakka-webui/assets/") &&
-			path !== "/pakka-webui/service-worker.js")
+			path !== WEBUI_SERVICE_WORKER_PATH)
 	)
 		return invalid();
 	return path;

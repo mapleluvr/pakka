@@ -821,6 +821,23 @@ export interface DeliveryReceipt {
 	readonly entryId?: string;
 	readonly reason?: string;
 }
+export type CatalogConfigurationSelection =
+	| { readonly kind: "agent"; readonly change: ConversationConfigurationChange }
+	| { readonly kind: "profile"; readonly profile: string };
+export interface CatalogConfigurationIdentity {
+	readonly requestId: string;
+	readonly principal: string;
+}
+export interface CatalogConfigurationRequest extends CatalogConfigurationIdentity {
+	readonly target: ConversationRef;
+	readonly selection: CatalogConfigurationSelection;
+}
+export interface CatalogConfigurationReceipt {
+	readonly original: CatalogConfigurationRequest;
+	/** Historical resulting binding, not a promise that it is still the current binding. */
+	readonly ref: ConversationRef;
+	readonly at: number;
+}
 export interface RuntimeCatalog {
 	/** Read-only observation. The trusted synchronous predicate is evaluated before body/status publication. */
 	history(
@@ -843,12 +860,24 @@ export interface RuntimeCatalog {
 		expectedVersion: number,
 		check: () => void,
 	): Promise<CatalogSnapshot>;
-	configure(ref: ConversationRef, profile: string, check: () => void): Promise<CatalogMember>;
+	/** Optional request identity retains a receipt atomically with native configuration. Never retry to recover. */
+	configure(
+		ref: ConversationRef,
+		profile: string,
+		check: () => void,
+		request?: CatalogConfigurationIdentity,
+	): Promise<CatalogMember>;
 	configureAgent(
 		ref: ConversationRef,
 		change: ConversationConfigurationChange,
 		check: () => void,
+		request?: CatalogConfigurationIdentity,
 	): Promise<CatalogMember>;
+	/** Exact original read; accepts its historical binding and never applies a configuration. */
+	configurationReceipt(
+		original: CatalogConfigurationRequest,
+		check: () => void,
+	): Promise<CatalogConfigurationReceipt | null>;
 	deliver(spec: CatalogDeliverySpec, check: () => void): Promise<DeliveryReceipt>;
 	receipt(id: string, check: () => void): Promise<DeliveryReceipt>;
 	wait(id: string, check: () => void, signal?: AbortSignal): Promise<DeliveryReceipt>;

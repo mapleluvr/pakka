@@ -615,6 +615,7 @@ const invite = (v: unknown): v is PocketInvite =>
 	resources(v.resources) &&
 	integer(v.expiresAt, 1) &&
 	["pending", "redeemed", "revoked"].includes(v.status as string);
+export { invite as isPocketInvite };
 const entryId = (v: unknown): v is string =>
 	typeof v === "string" && v.length > 0 && v.length <= 256 && !/[\x00-\x1f\x7f]/.test(v);
 const contentReference = (v: unknown): v is PocketContentReference =>
@@ -817,6 +818,8 @@ export {
 	snapshot as isPocketSnapshot,
 	contentReference as isPocketContentReference,
 	contentChunk as isPocketContentChunk,
+	receipt as isPocketInputReceipt,
+	configuration as isPocketConfiguration,
 };
 const configurationText = (v: unknown, max: number): v is string =>
 	string(v, max) && !!v && v.trim() === v && !/[\x00-\x1f\x7f]/.test(v);
@@ -965,6 +968,8 @@ function collaboration(v: unknown): v is PocketCollaborationView {
 		new Set(presence.map((p) => p.personId)).size === presence.length
 	);
 }
+export { collaboration as isPocketCollaborationView };
+
 function collaborationCommand(v: Record<string, unknown>): boolean {
 	if (v.op === "collaboration.read") return shape(v, ["op", "target"]) && ref(v.target);
 	if (!shape(v, ["op", "target", "input"]) || !ref(v.target)) return false;
@@ -1007,6 +1012,13 @@ function collaborationCommand(v: Record<string, unknown>): boolean {
 		default:
 			return false;
 	}
+}
+export function isPocketAgentRef(value: unknown): value is AgentRef {
+	return ref(value);
+}
+export const isPocketNotificationStatus = notificationStatus;
+export function isPocketNotificationCommand(value: unknown): value is PocketNotificationCommand {
+	return record(value) && notificationCommand(value);
 }
 function notificationStatus(v: unknown): v is PocketNotificationStatus {
 	return (

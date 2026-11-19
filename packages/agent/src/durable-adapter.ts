@@ -131,6 +131,9 @@ import type {
 	RuntimeRecordsReceipt,
 	DeliveryReceipt,
 	CatalogDeliverySpec,
+	CatalogConfigurationIdentity,
+	CatalogConfigurationRequest,
+	CatalogConfigurationReceipt,
 	JsonObject,
 	ConversationProfile,
 	ConversationSnapshot,
@@ -2627,6 +2630,13 @@ async function claimWriter(storageDir: string, offline = false): Promise<() => P
 	return release;
 }
 class MutationDenied extends Error {}
+/** This configuration attempt was refused before commit. Any earlier request retains its own receipt. */
+export class ConfigurationChangeRefusedError extends MutationDenied {
+	constructor(message: string) {
+		super(message);
+		this.name = "ConfigurationChangeRefusedError";
+	}
+}
 /** A records request was rejected without committing effects. */
 export class RecordsRequestRefusedError extends MutationDenied {
 	readonly code: "invalid" | "conflict" | "capacity" | "denied";
@@ -2754,6 +2764,20 @@ const CatalogDoc = defineDocFamily<CatalogRecord, JsonRepresentation<CatalogOpti
 			throw new Error("Invalid legacy catalog layout");
 		return storedJson<CatalogRecord>(value);
 	},
+});
+const CatalogConfigurationDoc = defineDocFamily<
+	{
+		namespace: string;
+		receipt: JsonRepresentation<CatalogConfigurationReceipt> | null;
+	},
+	null
+>({
+	kind: "pakka.catalog-configuration",
+	version: 1,
+	checkpointWhen: () => true,
+	scope: "session",
+	family: true,
+	initial: () => ({ namespace: "", receipt: null }),
 });
 type CatalogDeliveryRecord = {
 	namespace: string;
@@ -5328,6 +5352,82 @@ export class DurableAdapter {
 			if (!member) throw new MutationDenied("Foreign catalog member reference");
 			return member;
 		};
+		const configurationOriginal = (raw: CatalogConfigurationRequest): CatalogConfigurationRequest => {
+			const original = storedJson<CatalogConfigurationRequest>(raw);
+			const ref = original?.target,
+				selection = original?.selection;
+			if (
+				!original ||
+				Object.keys(original).sort().join(",") !== "principal,requestId,selection,target" ||
+				!validKey(original.requestId) ||
+				!validKey(original.principal) ||
+				!ref ||
+				Object.keys(ref).sort().join(",") !== "conversationId,incarnation,key,profile,sessionId" ||
+				ref.sessionId !== this.#sessionId ||
+				![ref.sessionId, ref.key, ref.incarnation, ref.profile].every(validKey) ||
+				!selection ||
+				!["agent", "profile"].includes(selection.kind)
+			)
+				throw new MutationDenied("Invalid original configuration identity");
+			try {
+				conversationId(ref.conversationId);
+			} catch {
+				throw new MutationDenied("Invalid original Conversation identity");
+			}
+			if (selection.kind === "profile") {
+				if (Object.keys(selection).sort().join(",") !== "kind,profile" || !validKey(selection.profile))
+					throw new MutationDenied("Invalid original profile selection");
+			} else {
+				const change = selection.change;
+				if (
+					Object.keys(selection).sort().join(",") !== "change,kind" ||
+					!change ||
+					typeof change !== "object" ||
+					Array.isArray(change) ||
+					!Object.keys(change).length ||
+					Object.keys(change).some((key) => !["model", "cwd", "thinkingLevel"].includes(key)) ||
+					(change.model !== undefined &&
+						(typeof change.model !== "string" || !change.model || change.model.length > 1024)) ||
+					(change.cwd !== undefined &&
+						(typeof change.cwd !== "string" || !change.cwd || change.cwd.length > 8192)) ||
+					(change.thinkingLevel !== undefined &&
+						!["off", "minimal", "low", "medium", "high", "xhigh", "max"].includes(change.thinkingLevel))
+				)
+					throw new MutationDenied("Invalid original configuration selection");
+			}
+			return copy(original);
+		};
+		const configurationKey = (original: CatalogConfigurationRequest) =>
+			hash([options.namespace, original.principal, original.requestId]);
+		const retainConfiguration = async (
+			tx: Tx,
+			original: CatalogConfigurationRequest | undefined,
+			ref: ConversationRef,
+		) => {
+			if (!original) return;
+			const doc = await tx.doc(CatalogConfigurationDoc, configurationKey(original), null);
+			if (doc.receipt)
+				throw new MutationDenied("Configuration request identity conflict; query the original");
+			doc.namespace = options.namespace;
+			doc.receipt = storedJson<CatalogConfigurationReceipt>({ original, ref, at: Date.now() });
+		};
+		const configurationReceipt = async (raw: CatalogConfigurationRequest, check: () => void) => {
+			this.#managedReady();
+			checkAuthority(check);
+			const original = configurationOriginal(raw);
+			const doc = await this.#harness.snapshot(
+				CatalogConfigurationDoc,
+				configurationKey(original),
+				BACKGROUND_CONTEXT,
+			);
+			checkAuthority(check);
+			if (!doc) return null;
+			if (doc.namespace !== options.namespace || !doc.receipt)
+				throw new Error("Configuration receipt unavailable");
+			if (!isDeepStrictEqual(doc.receipt.original, original))
+				throw new MutationDenied("Original configuration conflict");
+			return copy(doc.receipt);
+		};
 		const status = async (stored: StoredDelivery): Promise<DeliveryReceipt> => {
 			const native = await this.#harness.submission(stored.submissionId as SubmissionId, BACKGROUND_CONTEXT);
 			if (!native) {
@@ -5390,6 +5490,7 @@ export class DurableAdapter {
 			return view();
 		};
 		return Object.freeze({
+			configurationReceipt,
 			snapshot: view,
 			lookupRequest: async (original: CatalogDeliverySpec, check: () => void) => {
 				checkAuthority(check);
@@ -5406,7 +5507,16 @@ export class DurableAdapter {
 				const spec = copy(original),
 					state = await read();
 				if (!state) throw new MutationDenied("Original catalog missing");
-				requireMember(state, spec.target);
+				// A retained delivery keeps its original target. Authorize the current member,
+				// then compare the full original route to the stored request below.
+				const current = Object.values(state.members).find(
+					({ ref }) =>
+						ref.key === spec.target.key &&
+						ref.sessionId === spec.target.sessionId &&
+						ref.conversationId === spec.target.conversationId,
+				)?.ref;
+				if (!current) throw new MutationDenied("Foreign catalog member reference");
+				requireMember(state, current);
 				if (spec.source) requireMember(state, spec.source);
 				const stored = (await readDelivery(deliveryId(spec), state))?.record;
 				checkAuthority(check);
@@ -5770,112 +5880,154 @@ export class DurableAdapter {
 				ref: ConversationRef,
 				raw: ConversationConfigurationChange,
 				check: () => void,
+				request?: CatalogConfigurationIdentity,
 			) => {
-				checkAuthority(check);
-				validateRef(ref);
-				const change = copy(raw),
-					managed = this.#managedReady();
-				const route = this.#routes.get(conversationId(ref.conversationId));
-				if (!route || route.#disposed || route.#failedReason) throw new MutationDenied("Member not ready");
-				if (
-					!change ||
-					typeof change !== "object" ||
-					Array.isArray(change) ||
-					!Object.keys(change).length ||
-					Object.keys(change).some((key) => !["model", "cwd", "thinkingLevel"].includes(key)) ||
-					(Object.hasOwn(change, "thinkingLevel") &&
-						!this.#approvedThinking(change.model ?? route.#options.model, change.thinkingLevel)) ||
-					(Object.hasOwn(change, "model") &&
-						(typeof change.model !== "string" || !this.#approvedModel(change.model)))
-				)
-					throw new MutationDenied("Unapproved configuration change");
-				const cwd = Object.hasOwn(change, "cwd")
-					? approvedDirectory(change.cwd, managed.cwdRoots)
-					: undefined;
-				const configured = await this.#persist(async (tx) => {
-					const state = await mutableState(tx, check),
-						runtime = await tx.doc(RuntimeDoc);
-					optionsMatch(state);
-
-					const found = requireMember(state, ref),
-						to = conversationId(ref.conversationId);
-					if (
-						found.data.phase !== "active" ||
-						(await tx.doc(LiveDoc, to)).run ||
-						(await tx.doc(InboxDoc, to)).items.length
-					)
-						throw new MutationDenied("Configure requires active idle member");
+				let committed = false;
+				try {
+					const original =
+						request &&
+						configurationOriginal({
+							requestId: request.requestId,
+							principal: request.principal,
+							target: ref,
+							selection: { kind: "agent", change: raw },
+						});
 					checkAuthority(check);
-					if (cwd !== undefined && approvedDirectory(cwd, managed.cwdRoots) !== cwd)
-						throw new MutationDenied("Directory changed");
-					await configure(tx, to, {
-						...(change.model !== undefined
-							? {
-									model: modelReference(route.#options, change.model),
-								}
-							: {}),
+					validateRef(ref);
+					const change = copy(raw),
+						managed = this.#managedReady();
+					const route = this.#routes.get(conversationId(ref.conversationId));
+					if (!route || route.#disposed || route.#failedReason) throw new MutationDenied("Member not ready");
+					if (
+						!change ||
+						typeof change !== "object" ||
+						Array.isArray(change) ||
+						!Object.keys(change).length ||
+						Object.keys(change).some((key) => !["model", "cwd", "thinkingLevel"].includes(key)) ||
+						(Object.hasOwn(change, "thinkingLevel") &&
+							!this.#approvedThinking(change.model ?? route.#options.model, change.thinkingLevel)) ||
+						(Object.hasOwn(change, "model") &&
+							(typeof change.model !== "string" || !this.#approvedModel(change.model)))
+					)
+						throw new MutationDenied("Unapproved configuration change");
+					const cwd = Object.hasOwn(change, "cwd")
+						? approvedDirectory(change.cwd, managed.cwdRoots)
+						: undefined;
+					const configured = await this.#persist(async (tx) => {
+						const state = await mutableState(tx, check),
+							runtime = await tx.doc(RuntimeDoc);
+						optionsMatch(state);
+
+						const found = requireMember(state, ref),
+							to = conversationId(ref.conversationId);
+						if (
+							found.data.phase !== "active" ||
+							(await tx.doc(LiveDoc, to)).run ||
+							(await tx.doc(InboxDoc, to)).items.length
+						)
+							throw new MutationDenied("Configure requires active idle member");
+						checkAuthority(check);
+						if (cwd !== undefined && approvedDirectory(cwd, managed.cwdRoots) !== cwd)
+							throw new MutationDenied("Directory changed");
+						await configure(tx, to, {
+							...(change.model !== undefined
+								? {
+										model: modelReference(route.#options, change.model),
+									}
+								: {}),
+							...(cwd !== undefined ? { cwd } : {}),
+							...(change.thinkingLevel !== undefined ? { thinkingLevel: change.thinkingLevel } : {}),
+						});
+						checkAuthority(check);
+						const next = { ...ref, incarnation: randomUUID() };
+						await retainConfiguration(tx, original, next);
+						checkAuthority(check);
+						runtime.resources[ref.key] = next;
+						state.members[found.key]!.ref = next;
+						state.version++;
+						return storedJson<StoredMember>(state.members[found.key]);
+					});
+					committed = true;
+					route.#options = {
+						...route.#options,
+						...(change.model !== undefined ? { model: change.model } : {}),
 						...(cwd !== undefined ? { cwd } : {}),
 						...(change.thinkingLevel !== undefined ? { thinkingLevel: change.thinkingLevel } : {}),
-					});
-					checkAuthority(check);
-					const next = { ...ref, incarnation: randomUUID() };
-					runtime.resources[ref.key] = next;
-					state.members[found.key]!.ref = next;
-					state.version++;
-					return storedJson<StoredMember>(state.members[found.key]);
-				});
-				route.#options = {
-					...route.#options,
-					...(change.model !== undefined ? { model: change.model } : {}),
-					...(cwd !== undefined ? { cwd } : {}),
-					...(change.thinkingLevel !== undefined ? { thinkingLevel: change.thinkingLevel } : {}),
-				};
-				route.#control.configurationChanged();
-				await route.refreshCache();
-				return configured;
+					};
+					route.#control.configurationChanged();
+					await route.refreshCache();
+					return configured;
+				} catch (error) {
+					if (!committed && error instanceof MutationDenied)
+						throw new ConfigurationChangeRefusedError(error.message);
+					throw error;
+				}
 			},
-			configure: async (ref: ConversationRef, profileId: string, check: () => void) => {
-				checkAuthority(check);
-				validateRef(ref);
-				const profile = this.#managedReady().profiles.get(profileId);
-				if (!profile) throw new MutationDenied("Unapproved runtime profile");
-				const route = this.#routes.get(conversationId(ref.conversationId));
-				if (!route || route.#disposed || route.#failedReason) throw new MutationDenied("Member not ready");
-				const configured = await this.#persist(async (tx) => {
-					const state = await mutableState(tx, check),
-						runtime = await tx.doc(RuntimeDoc);
-					optionsMatch(state);
+			configure: async (
+				ref: ConversationRef,
+				profileId: string,
+				check: () => void,
+				request?: CatalogConfigurationIdentity,
+			) => {
+				let committed = false;
+				try {
+					const original =
+						request &&
+						configurationOriginal({
+							requestId: request.requestId,
+							principal: request.principal,
+							target: ref,
+							selection: { kind: "profile", profile: profileId },
+						});
+					checkAuthority(check);
+					validateRef(ref);
+					const profile = this.#managedReady().profiles.get(profileId);
+					if (!profile) throw new MutationDenied("Unapproved runtime profile");
+					const route = this.#routes.get(conversationId(ref.conversationId));
+					if (!route || route.#disposed || route.#failedReason) throw new MutationDenied("Member not ready");
+					const configured = await this.#persist(async (tx) => {
+						const state = await mutableState(tx, check),
+							runtime = await tx.doc(RuntimeDoc);
+						optionsMatch(state);
 
-					const found = requireMember(state, ref),
-						to = conversationId(ref.conversationId);
-					if (
-						found.data.phase !== "active" ||
-						(await tx.doc(LiveDoc, to)).run ||
-						(await tx.doc(InboxDoc, to)).items.length
-					)
-						throw new MutationDenied("Configure requires active idle member");
-					checkAuthority(check);
-					const extension = this.#registry!.snapshot().extension(
-						profileId === "default" ? "pakka-core-extension" : "pakka-profile-" + profileId,
-					)!;
-					await configure(tx, to, {
-						model: modelReference(profile, profile.model),
-						extensions: [extension],
-						instructions: profile.systemPrompt,
-						thinkingLevel: profile.thinkingLevel,
-						cwd: profile.cwd,
+						const found = requireMember(state, ref),
+							to = conversationId(ref.conversationId);
+						if (
+							found.data.phase !== "active" ||
+							(await tx.doc(LiveDoc, to)).run ||
+							(await tx.doc(InboxDoc, to)).items.length
+						)
+							throw new MutationDenied("Configure requires active idle member");
+						checkAuthority(check);
+						const extension = this.#registry!.snapshot().extension(
+							profileId === "default" ? "pakka-core-extension" : "pakka-profile-" + profileId,
+						)!;
+						await configure(tx, to, {
+							model: modelReference(profile, profile.model),
+							extensions: [extension],
+							instructions: profile.systemPrompt,
+							thinkingLevel: profile.thinkingLevel,
+							cwd: profile.cwd,
+						});
+						checkAuthority(check);
+						const next = { ...ref, incarnation: randomUUID(), profile: profileId };
+						await retainConfiguration(tx, original, next);
+						checkAuthority(check);
+						runtime.resources[ref.key] = next;
+						state.members[found.key]!.ref = next;
+						state.version++;
+						return storedJson<StoredMember>(state.members[found.key]);
 					});
-					checkAuthority(check);
-					const next = { ...ref, incarnation: randomUUID(), profile: profileId };
-					runtime.resources[ref.key] = next;
-					state.members[found.key]!.ref = next;
-					state.version++;
-					return storedJson<StoredMember>(state.members[found.key]);
-				});
-				route.#options = profile;
-				route.#control.configurationChanged();
-				await route.refreshCache();
-				return configured;
+					committed = true;
+					route.#options = profile;
+					route.#control.configurationChanged();
+					await route.refreshCache();
+					return configured;
+				} catch (error) {
+					if (!committed && error instanceof MutationDenied)
+						throw new ConfigurationChangeRefusedError(error.message);
+					throw error;
+				}
 			},
 			deliver: async (original: CatalogDeliverySpec, check: () => void) => {
 				checkAuthority(check);

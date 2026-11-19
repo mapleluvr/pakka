@@ -1,4 +1,5 @@
 import { test } from "node:test";
+import { createHash } from "node:crypto";
 import { controlFacet } from "./fixtures/extension-control.ts";
 import { strict as assert } from "node:assert";
 import { mkdir, writeFile } from "node:fs/promises";
@@ -462,6 +463,162 @@ test(
 			assert.equal(m.f.requests.length, 0);
 		} finally {
 			await m.close();
+		}
+	},
+);
+
+test(
+	"Extension backend: original requests include Session identity and preserve earlier done/unknown records",
+	{ timeout: 15000 },
+	async () => {
+		const first = await runtimeFixture(),
+			second = await runtimeFixture();
+		try {
+			const roots = [];
+			for (const fixture of [first, second]) {
+				const people = await createPocketPeople({
+					runtime: fixture.runtime,
+					namespace: "scope.people",
+					resources: () => [first, second].flatMap((item) => item.runtime.view().conversations),
+				});
+				const session = await people.initializeOwner("Owner"),
+					actor = await people.authenticate(session.token);
+				const workspace = createPocketWorkspace({
+					runtime: fixture.runtime,
+					people,
+					catalog: { namespace: "scope.workspace", maxDeliveries: 8, maxPending: 2 },
+					profileCeiling: () => ["default"],
+				});
+				const target = await workspace
+					.bind(actor)
+					.create({ requestId: "one", name: "Work", profile: "default" });
+				roots.push({ people, actor, workspace, target });
+			}
+			const a = roots[0]!,
+				b = roots[1]!;
+			assert.equal(a.target.conversationId, b.target.conversationId);
+			assert.notEqual(a.target.sessionId, b.target.sessionId);
+			const root = join(first.f.root, "scope-plugin");
+			await mkdir(root);
+			const action = { ...policy, id: "save", input: text };
+			await writeFile(
+				join(root, "manifest.json"),
+				JSON.stringify({
+					api: 1,
+					id: "scope-check",
+					version: "1.0.0",
+					title: "Scope check",
+					facets: { backend: "backend.mjs" },
+					actions: [action],
+					commands: [],
+					interfaces: [],
+				}),
+			);
+			await writeFile(
+				join(root, "backend.mjs"),
+				'export const actions={save:async(c,input)=>{const old=await c.settings.get("saved","resource");await c.settings.compareAndSet("saved",old.version,input,"resource");return {text:String(old.version+1)};}};',
+			);
+			const host = await createExtensionHost({
+				runtime: first.runtime,
+				runtimeFor: (target) =>
+					target.sessionId === first.runtime.view().sessionId ? first.runtime : second.runtime,
+				people: a.people,
+				workspace: a.workspace,
+				sources: [{ root }],
+			});
+			try {
+				const row = host.list(a.actor, a.target).find((row) => row.facet === "backend")!;
+				const base = {
+					extension: row.manifest.id,
+					generation: row.generation,
+					action: "save",
+					requestId: "same-request",
+					input: { text: "VALUE" },
+				};
+				const firstCall = { ...base, target: a.target },
+					secondCall = { ...base, target: b.target };
+				const saved = await host.call(a.actor, firstCall),
+					other = await host.call(a.actor, secondCall);
+				assert.notEqual(saved.id, other.id);
+				assert.deepEqual(saved.value, { text: "1" });
+				assert.deepEqual(other.value, { text: "1" });
+				assert.deepEqual(await host.call(a.actor, firstCall), saved);
+				assert.deepEqual(await host.call(a.actor, secondCall), other);
+				for (const [target, expected] of [
+					[a.target, saved],
+					[b.target, other],
+				] as const)
+					assert.deepEqual(
+						await host.operationByRequest(a.actor, {
+							extension: base.extension,
+							requestId: base.requestId,
+							target,
+						}),
+						expected,
+					);
+				const hash = (value: unknown) => createHash("sha256").update(JSON.stringify(value)).digest("hex");
+				const records = first.runtime.records({ namespace: "pocket.extension-operations" });
+				// Stored-format upgrade fixtures preserve the historical identity supplied to the handler.
+				for (const state of ["done", "unknown"] as const) {
+					const requestId = "legacy-" + state,
+						id =
+							"operation-" +
+							hash([base.extension, a.actor.person.id, a.target.conversationId, requestId]).slice(0, 48);
+					const data = {
+						id,
+						extension: base.extension,
+						action: "save",
+						actorId: a.actor.person.id,
+						requestId,
+						fingerprint: hash([
+							row.manifest.version,
+							row.manifest.actions.find((item) => item.id === "save"),
+							base.input,
+							a.target,
+						]),
+						permission: "send",
+						target: { ...a.target },
+						state,
+						...(state === "done" ? { value: { text: "legacy-record" } } : {}),
+					};
+					await records.commit(
+						{
+							requestId: "fixture-" + state,
+							reads: [{ key: id, version: 0 }],
+							writes: [{ key: id, data }],
+							append: [],
+							work: [{ key: id, state: state === "done" ? null : state }],
+						},
+						() => {},
+					);
+					const original = await host.operationByRequest(a.actor, {
+						extension: base.extension,
+						requestId,
+						target: a.target,
+					});
+					assert.equal(original.id, id);
+					assert.equal(original.state, state);
+					assert.deepEqual(await host.call(a.actor, { ...firstCall, requestId }), original);
+					await assert.rejects(host.call(a.actor, { ...firstCall, requestId, input: { text: "CONFLICT" } }));
+					await assert.rejects(
+						host.operationByRequest(a.actor, { extension: base.extension, requestId, target: b.target }),
+					);
+					const separate = await host.call(a.actor, { ...secondCall, requestId });
+					assert.notEqual(separate.id, id);
+					assert.equal(separate.state, "done");
+				}
+				assert.deepEqual(
+					(await host.call(a.actor, { ...firstCall, requestId: "next" })).value,
+					{ text: "2" },
+					"legacy originals never execute their handlers again",
+				);
+				assert.equal(first.f.requests.length + second.f.requests.length, 0);
+			} finally {
+				await host.close();
+			}
+		} finally {
+			await second.close();
+			await first.close();
 		}
 	},
 );

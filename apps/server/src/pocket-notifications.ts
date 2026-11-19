@@ -35,8 +35,21 @@ export interface PocketNotificationReceipt {
 	readonly state: "accepted" | "unknown" | "filtered" | "no-devices";
 	readonly accepted: number;
 }
+export type PocketNotificationOriginal =
+	| { readonly kind: "subscribe"; readonly requestId: string; readonly subscription: PushSubscriptionData }
+	| { readonly kind: "unsubscribe"; readonly requestId: string; readonly deviceId: string }
+	| {
+			readonly kind: "preferences";
+			readonly requestId: string;
+			readonly preferences: Partial<PocketNotificationPreferences>;
+	  };
 export interface PocketNotificationClient {
 	status(target: ConversationRef): Promise<PocketNotificationStatus>;
+	/** Read the exact saved request only; current resource authority is independent of the old runtime binding. */
+	lookup(
+		target: ConversationRef,
+		original: PocketNotificationOriginal,
+	): Promise<PocketNotificationStatus | null>;
 	subscribe(
 		target: ConversationRef,
 		input: { readonly requestId: string; readonly subscription: PushSubscriptionData },
@@ -175,6 +188,29 @@ function subscription(value: unknown): PushSubscriptionData {
 	const keys = { p256dh: value.keys.p256dh, auth: value.keys.auth };
 	if (!validSubscriptionKeys(keys)) throw Error("Invalid push subscription keys");
 	return { endpoint: value.endpoint, keys };
+}
+function preferencePatch(value: unknown): value is Partial<PocketNotificationPreferences> {
+	return (
+		object(value) &&
+		Object.keys(value).length > 0 &&
+		Object.keys(value).every(
+			(field) => kinds.some((kind) => kind === field) && typeof value[field] === "boolean",
+		)
+	);
+}
+function originalFingerprint(value: unknown): string {
+	if (!object(value) || !id(value.requestId)) throw Error("Invalid notification original request");
+	if (value.kind === "subscribe" && shape(value, ["kind", "requestId", "subscription"]))
+		return hash(["subscribe", subscription(value.subscription)]);
+	if (value.kind === "unsubscribe" && shape(value, ["kind", "requestId", "deviceId"]) && id(value.deviceId))
+		return hash(["unsubscribe", value.deviceId]);
+	if (
+		value.kind === "preferences" &&
+		shape(value, ["kind", "requestId", "preferences"]) &&
+		preferencePatch(value.preferences)
+	)
+		return hash(["preferences", { ...value.preferences }]);
+	throw Error("Invalid notification original request");
 }
 function statusValue(value: unknown): PocketNotificationStatus {
 	if (
@@ -649,10 +685,15 @@ export async function createPocketNotifications(
 		},
 		bind(actor: PocketAuthority, check: () => void = () => {}): PocketNotificationClient {
 			const actorId = people.current(actor).id;
-			const authorize = (target: ConversationRef) => {
-				currentRef(target);
+			const authorizeRecord = (target: ConversationRef) => {
+				ready();
+				if (!ref(target)) return denied();
 				people.check(actor, "read", people.resourceId(target));
 				check();
+			};
+			const authorize = (target: ConversationRef) => {
+				currentRef(target);
+				authorizeRecord(target);
 			};
 			const mutate = (
 				target: ConversationRef,
@@ -687,6 +728,20 @@ export async function createPocketNotifications(
 					authorize(target);
 					if (!state) return unavailable();
 					return publicStatus(state, actorId, target);
+				},
+				lookup: async (target: ConversationRef, original: PocketNotificationOriginal) => {
+					target = Object.freeze({ ...target });
+					authorizeRecord(target);
+					const fingerprint = originalFingerprint(original),
+						requestId = original.requestId;
+					const state = (await load()).value;
+					authorizeRecord(target);
+					if (!state) return unavailable();
+					const prior = state.writes.find((row) => row.actorId === actorId && row.requestId === requestId);
+					if (!prior) return null;
+					if (prior.fingerprint !== fingerprint || !same(prior.target, target))
+						throw Error("Notification request conflict");
+					return presentStatus(prior.result);
 				},
 				subscribe: async (
 					target: ConversationRef,
@@ -769,14 +824,7 @@ export async function createPocketNotifications(
 					if (!object(input) || !shape(input, ["requestId", "preferences"]))
 						throw Error("Invalid notification preferences");
 					const raw: unknown = input.preferences;
-					if (
-						!object(raw) ||
-						!Object.keys(raw).length ||
-						Object.keys(raw).some(
-							(field) => !kinds.some((kind) => kind === field) || typeof raw[field] !== "boolean",
-						)
-					)
-						throw Error("Invalid notification preferences");
+					if (!preferencePatch(raw)) throw Error("Invalid notification preferences");
 					const patch = { ...input.preferences };
 					return mutate(target, input.requestId, hash(["preferences", patch]), (state) => {
 						const existing = state.preferences.find((row) => row.actorId === actorId);

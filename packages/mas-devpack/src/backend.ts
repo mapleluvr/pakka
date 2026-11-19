@@ -47,17 +47,34 @@ export function masWorkbenchService(
 					options.people.check(actor, permission, ref.conversationId);
 				},
 			});
-			const selected = (ref: NonNullable<typeof target>) => {
+			const selected = (ref: NonNullable<typeof target>, historical = false) => {
 				if (
 					target &&
-					["key", "sessionId", "conversationId", "incarnation", "profile"].some(
-						(key) => ref[key as keyof typeof ref] !== target[key as keyof typeof target],
-					)
+					(historical
+						? ["key", "sessionId", "conversationId"]
+						: ["key", "sessionId", "conversationId", "incarnation", "profile"]
+					).some((key) => ref[key as keyof typeof ref] !== target[key as keyof typeof target])
 				)
 					throw new Error("Foreign action target");
 			};
 			const scoped: MasWorkbenchClient = {
 				...bound,
+				canConfigure: (ref) => {
+					selected(ref);
+					return bound.canConfigure(ref);
+				},
+				configure: (ref, profile, requestId) => {
+					selected(ref);
+					return bound.configure(ref, profile, requestId);
+				},
+				configureAgent: (ref, change, requestId) => {
+					selected(ref);
+					return bound.configureAgent(ref, change, requestId);
+				},
+				configurationReceipt: (original) => {
+					selected(original.target, true);
+					return bound.configurationReceipt(original);
+				},
 				inspect: (ref) => {
 					selected(ref);
 					return bound.inspect(ref);

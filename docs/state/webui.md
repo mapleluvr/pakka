@@ -28,7 +28,7 @@ pakka-webui 的人类身份与权限由服务端绑定，浏览器请求按该�
 
 发现、HTTP/RPC、SSE、assets、历史、查询、导出和操作核对在序列化前按当前授权过滤。撤权停止后续读写与事件发布；已发布字节处于接收端。模型密钥通过独立的受控凭据命令提交、保存和解析；输入提交后清空，状态读取返回版本与 configured。表单回填、通用 settings、URL、浏览器持久存储、模型历史和广播对已存模型密钥仅读取公开配置状态。
 
-人类 presence、side chat、notes、pins/reactions 和 turn-taking 各自处理 scope、冲突与持久性。明确发送动作把选定内容送入模型；SSE 重连使用当前 incarnation、cursor、snapshot 恢复读取并核对原操作。mutation 的接纳使用独立的显式请求和原请求身份。
+人类协作按原 Session/Conversation 处理 side chat、notes、pins/reactions 和 driver 的 scope、授权及版本冲突。修改效果与原请求回执在协作协调存储的同一次 CAS 中提交；纯查询匹配原发起人、完整原请求和旧绑定，并核对当前所需授权。历史回执与当前共享状态分别读取。presence 为短期状态，所属观察结束时停止其心跳与事件读取；SSE 重连以当前身份和 snapshot 恢复。模型输入由明确发送动作提交，原生准入核对当前 driver 与期限。
 
 ## Session 管理与个人导航
 

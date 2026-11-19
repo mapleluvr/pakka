@@ -5,6 +5,71 @@ import { join } from "node:path";
 import { createRuntime, type ConversationRef, type StrategyBinding } from "../src/index.ts";
 import { runtimeFixture } from "./runtime-fixture.ts";
 
+// Configuration changes rotate the live binding; recovery must retain the original intent and result.
+test("Configuration receipts: exact original survives later configuration and Session reopen without replay", async () => {
+	const m = await runtimeFixture({ profiles: [{ id: "alternate", model: "alternate-model" }] });
+	let runtime = m.runtime;
+	try {
+		const options = { namespace: "configuration-receipts", maxPending: 4 };
+		let catalog = runtime.catalog(options);
+		const allow = () => {};
+		const target = (
+			await catalog.enroll([{ key: "config", profile: "default", data: { phase: "active" } }], allow)
+		)[0]!.ref;
+		const original = {
+			requestId: "model-choice",
+			principal: "operator",
+			target,
+			selection: { kind: "agent" as const, change: { model: "alternate-model" } },
+		};
+		assert.equal(await catalog.configurationReceipt(original, allow), null);
+		const result = await catalog.configureAgent(target, original.selection.change, allow, original);
+		const receipt = await catalog.configurationReceipt(original, allow);
+		assert.deepEqual(receipt?.ref, result.ref);
+		assert.deepEqual(receipt?.original, original);
+		assert.notEqual(result.ref.incarnation, target.incarnation);
+		const preset = {
+			requestId: "profile-choice",
+			principal: "operator",
+			target: result.ref,
+			selection: { kind: "profile" as const, profile: "alternate" },
+		};
+		const next = await catalog.configure(result.ref, "alternate", allow, preset);
+		assert.deepEqual((await catalog.configurationReceipt(preset, allow))?.ref, next.ref);
+		assert.deepEqual(await catalog.configurationReceipt(original, allow), receipt);
+		await assert.rejects(
+			catalog.configurationReceipt(
+				{ ...original, selection: { kind: "agent", change: { cwd: m.f.cwd } } },
+				allow,
+			),
+			/conflict/i,
+		);
+		assert.equal(await catalog.configurationReceipt({ ...original, principal: "another" }, allow), null);
+		await assert.rejects(
+			catalog.configurationReceipt(original, () => {
+				throw Error("authority ended");
+			}),
+		);
+		// A reused identity must roll back the native change and its rotated resource binding together.
+		await assert.rejects(
+			catalog.configureAgent(next.ref, { model: "local-model" }, allow, original),
+			/conflict/i,
+		);
+		assert.deepEqual((await catalog.snapshot()).members[0]!.ref, next.ref);
+		assert.equal((await runtime.configuration(next.ref)).model, "alternate-model");
+		const sessionFile = runtime.view().sessionFile;
+		await runtime.close();
+		runtime = await createRuntime({ ...m.config, reopenSessionFile: sessionFile });
+		catalog = runtime.catalog(options);
+		assert.deepEqual(await catalog.configurationReceipt(original, allow), receipt);
+		assert.deepEqual(await runtime.configuration(next.ref), { model: "alternate-model", cwd: m.f.cwd });
+		assert.equal(m.f.requests.length, 0);
+	} finally {
+		await runtime.close();
+		await m.f.close();
+	}
+});
+
 // Whole-profile replacement would change tools/instructions/cwd when choosing a model, or lose the model after choosing cwd.
 test("Independent configuration: actual provider, tool cwd and instructions remain independent across reopen", async () => {
 	const m = await runtimeFixture({}, undefined, (_body, n) =>

@@ -70,7 +70,7 @@ test(
 			);
 			const url =
 				app.http.origin +
-				"/pocket/ingress/workspace-hooks/hooks/" +
+				"/pakka-webui/ingress/workspace-hooks/hooks/" +
 				credentials.id +
 				"/" +
 				credentials.secret;

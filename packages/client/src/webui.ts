@@ -1,5 +1,13 @@
 import {
 	decodeWebUiRequest,
+	matchesSessionBudgetReceipt,
+	matchesPeopleReceipt,
+	matchesConversationConfigurationReceipt,
+	matchesCollaborationReceipt,
+	collaborationIntent,
+	sameConversationConfigurationRequest,
+	notificationIntent,
+	type NotificationRequest,
 	decodeWebUiResponse,
 	WEBUI_SERVICE_MAX_BYTES,
 	WEBUI_SERVICE_PATH,
@@ -17,7 +25,23 @@ export interface WebUiServiceClient {
 	request<C extends WebUiCommand>(command: C, options?: PocketRequestOptions): Promise<WebUiResults[C["op"]]>;
 }
 const kinds: { readonly [K in keyof WebUiResults]: WebUiResults[K]["kind"] } = {
+	"notification.lookup": "notification-operation",
+	"collaboration.read": "collaboration",
+	"collaboration.write": "collaboration-receipt",
+	"collaboration.lookup": "collaboration-operation",
+	"conversation-configuration.read": "conversation-configuration",
+	"conversation-configuration.write": "conversation-configuration-receipt",
+	"conversation-configuration.lookup": "conversation-configuration-operation",
+	"people.write": "people-receipt",
+	"people.lookup": "people-operation",
+	"people.invite.lookup": "people-invitation",
+	"session-budget.read": "session-budget",
+	"session-budget.history": "session-budget-history",
+	"session-budget.write": "session-budget-receipt",
+	"session-budget.lookup": "session-budget-operation",
 	capabilities: "capabilities",
+	"input.lookup": "input-operation",
+	"input.history": "input-history",
 	"resource.resolve": "resource",
 	"resource.history": "resource-history",
 	"resource.content": "resource-content",
@@ -34,6 +58,137 @@ const kinds: { readonly [K in keyof WebUiResults]: WebUiResults[K]["kind"] } = {
 };
 function correlate(command: WebUiCommand, result: WebUiResult, personId: string | null): boolean {
 	if (kinds[command.op] !== result.kind) return false;
+	if (command.op === "notification.lookup")
+		return (
+			result.kind === "notification-operation" &&
+			result.actorId === personId &&
+			notificationIntent(result.original) === notificationIntent(command.original)
+		);
+	if (command.op === "collaboration.read" && result.kind === "collaboration") {
+		const a = result.view.target,
+			b = command.target;
+		return (
+			a.key === b.key &&
+			a.sessionId === b.sessionId &&
+			a.conversationId === b.conversationId &&
+			a.incarnation === b.incarnation &&
+			a.profile === b.profile
+		);
+	}
+	if (command.op === "collaboration.write" || command.op === "collaboration.lookup") {
+		if (
+			personId === null ||
+			(result.kind !== "collaboration-receipt" && result.kind !== "collaboration-operation")
+		)
+			return false;
+		const original = command.op === "collaboration.write" ? command.change : command.original;
+		if (
+			result.kind === "collaboration-operation" &&
+			(result.actorId !== personId || collaborationIntent(result.original) !== collaborationIntent(original))
+		)
+			return false;
+		return result.receipt === null || matchesCollaborationReceipt(result.receipt, original, personId);
+	}
+	if (command.op === "conversation-configuration.read" && result.kind === "conversation-configuration") {
+		const target = result.view.configuration.ref;
+		return ["key", "sessionId", "conversationId", "incarnation", "profile"].every(
+			(key) => target[key as keyof typeof target] === command.target[key as keyof typeof target],
+		);
+	}
+	if (
+		command.op === "conversation-configuration.write" ||
+		command.op === "conversation-configuration.lookup"
+	) {
+		if (
+			personId === null ||
+			(result.kind !== "conversation-configuration-receipt" &&
+				result.kind !== "conversation-configuration-operation")
+		)
+			return false;
+		const original = command.op === "conversation-configuration.write" ? command.change : command.original;
+		if (
+			result.kind === "conversation-configuration-operation" &&
+			(result.actorId !== personId || !sameConversationConfigurationRequest(result.original, original))
+		)
+			return false;
+		return (
+			result.receipt === null || matchesConversationConfigurationReceipt(result.receipt, original, personId)
+		);
+	}
+	if (command.op === "people.write" || command.op === "people.lookup") {
+		if (personId === null || (result.kind !== "people-receipt" && result.kind !== "people-operation"))
+			return false;
+		const original = command.op === "people.write" ? command.change : command.original;
+		if (
+			result.kind === "people-operation" &&
+			(result.actorId !== personId || result.requestId !== original.requestId)
+		)
+			return false;
+		return result.receipt === null || matchesPeopleReceipt(result.receipt, original, personId);
+	}
+	if (command.op === "people.invite.lookup" && result.kind === "people-invitation") {
+		const original = command.original;
+		return (
+			result.issuerId === personId &&
+			result.requestId === original.requestId &&
+			(result.invite === null ||
+				(result.invite.role === original.role &&
+					JSON.stringify(result.invite.resources === "*" ? "*" : [...result.invite.resources].sort()) ===
+						JSON.stringify(original.resources === "*" ? "*" : [...original.resources].sort())))
+		);
+	}
+	if (command.op === "session-budget.read" && result.kind === "session-budget")
+		return result.sessionId === command.sessionId;
+	if (command.op === "session-budget.history" && result.kind === "session-budget-history")
+		return (
+			result.sessionId === command.sessionId &&
+			result.page.items.length <= (command.limit ?? 50) &&
+			result.page.items.every(
+				(row) => command.beforeVersion === undefined || row.version < command.beforeVersion,
+			)
+		);
+	if (command.op === "session-budget.write" || command.op === "session-budget.lookup") {
+		if (result.kind !== "session-budget-receipt" && result.kind !== "session-budget-operation") return false;
+		const original = command.op === "session-budget.write" ? command.change : command.original;
+		return (
+			result.sessionId === command.sessionId &&
+			(result.receipt === null ||
+				(personId !== null && matchesSessionBudgetReceipt(result.receipt, original, personId)))
+		);
+	}
+	if (command.op === "input.history" && result.kind === "input-history") {
+		const sameResource = (value: typeof command.target) =>
+			value.sessionId === command.target.sessionId && value.conversationId === command.target.conversationId;
+		return (
+			sameResource(result.target) &&
+			result.target.key === command.target.key &&
+			result.target.incarnation === command.target.incarnation &&
+			result.target.profile === command.target.profile &&
+			result.page.items.every(
+				(item) => item.receipt.actorId === personId && sameResource(item.receipt.target),
+			) &&
+			new Set(result.page.items.map((item) => item.receipt.id)).size === result.page.items.length &&
+			(result.page.nextCursor === undefined ||
+				result.page.nextCursor === result.page.items.at(-1)?.receipt.id)
+		);
+	}
+	if (command.op === "input.lookup" && result.kind === "input-operation") {
+		const { target, input } = command.original;
+		const sameTarget = (value: typeof target) =>
+			value.key === target.key &&
+			value.sessionId === target.sessionId &&
+			value.conversationId === target.conversationId &&
+			value.incarnation === target.incarnation &&
+			value.profile === target.profile;
+		return (
+			result.requestId === input.requestId &&
+			sameTarget(result.target) &&
+			(result.receipt === null ||
+				(result.receipt.requestId === input.requestId &&
+					result.receipt.actorId === personId &&
+					sameTarget(result.receipt.target)))
+		);
+	}
 	if (command.op === "resource.resolve" && result.kind === "resource")
 		return (
 			result.resolution.reference.sessionId === command.reference.sessionId &&
@@ -103,6 +258,20 @@ function correlate(command: WebUiCommand, result: WebUiResult, personId: string 
 			)
 		);
 	return true;
+}
+/** Fingerprint of the normalized browser subscription used by the native device registry. */
+export async function notificationSubscriptionKey(
+	subscription: Extract<
+		NotificationRequest,
+		{ readonly op: "notification.subscribe" }
+	>["input"]["subscription"],
+): Promise<string> {
+	const value = {
+		endpoint: subscription.endpoint,
+		keys: { p256dh: subscription.keys.p256dh, auth: subscription.keys.auth },
+	};
+	const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(JSON.stringify(value)));
+	return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 async function readBody(response: Response): Promise<unknown> {
 	const reader = response.body?.getReader();
@@ -175,7 +344,7 @@ export function createWebUiServiceClient(
 		try {
 			const csrf = options.csrf?.() ?? null;
 			if (csrf !== null && !/^[A-Za-z0-9_-]{43}$/.test(csrf)) throw new Error("Invalid CSRF binding");
-			const response = await fetch(endpoint.href, {
+			const response = await (options.fetch ?? fetch)(endpoint.href, {
 				method: "POST",
 				credentials: "same-origin",
 				redirect: "error",
@@ -207,6 +376,19 @@ export function createWebUiServiceClient(
 				throw new PocketRemoteError(decoded.error.code, decoded.error.outcome, requestId);
 			if (!response.ok || !correlate(command, decoded.result, personId))
 				throw new Error("Uncorrelated service result");
+			if (
+				command.op === "notification.lookup" &&
+				command.original.op === "notification.subscribe" &&
+				decoded.result.kind === "notification-operation" &&
+				decoded.result.status !== null
+			) {
+				const key = await notificationSubscriptionKey(command.original.input.subscription);
+				if (!decoded.result.status.devices.some((device) => device.subscriptionKey === key))
+					throw new Error("Wrong notification subscription result");
+				controller.signal.throwIfAborted();
+				if (options.serverId() !== expectedServer || options.personId() !== personId)
+					throw new Error("Service identity changed");
+			}
 			// SAFETY: the closed result decoder and correlate checked the command's exact result kind and identities.
 			return decoded.result as WebUiResults[C["op"]];
 		} catch (error) {

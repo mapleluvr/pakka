@@ -1,14 +1,17 @@
 {
 	"api": 1,
 	"id": "workspace-hooks",
-	"version": "1.0.0",
+	"version": "2.0.0",
 	"title": "Webhooks",
 	"facets": {
 		"backend": "backend.mjs",
 		"client": "client.js",
 		"webui": {
 			"entry": "index.js",
-			"publicDir": "web"
+			"publicDir": "dist/web",
+			"api": 1,
+			"runtime": "react19-astryx0.7.15",
+			"styles": ["hooks.css"]
 		}
 	},
 	"services": ["hooks"],

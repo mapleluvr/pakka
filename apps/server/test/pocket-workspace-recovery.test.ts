@@ -29,8 +29,23 @@ test("WebUI workspace: shared resource does not share message authority or allow
 		const visitorSession = await people.redeem(invite.token, "Visitor"),
 			actor = await people.authenticate(visitorSession.token),
 			visitor = workspace.bind(actor);
-		const admitted = await owner.submit(ref, { requestId: "private", text: "OWNER-INPUT", mode: "prompt" });
+		const input = { requestId: "private", text: "OWNER-INPUT", mode: "prompt" as const };
+		assert.equal(await owner.inputReceipt(ref, input), null);
+		assert.equal(m.f.requests.length, 0);
+		const admitted = await owner.submit(ref, input);
 		await owner.wait(admitted.id);
+		assert.equal((await owner.inputReceipt(ref, input))?.id, admitted.id);
+		assert.equal(await visitor.inputReceipt(ref, input), null);
+		assert.deepEqual((await visitor.inputHistory(ref)).items, []);
+		const history = await owner.inputHistory(ref);
+		assert.equal(history.items[0]?.receipt.id, admitted.id);
+		assert.equal(history.items[0]?.preview, input.text);
+		await assert.rejects(visitor.inputHistory(ref, admitted.id), /cursor|scope/i);
+		for (const changed of [
+			{ ...input, text: "ALTERED" },
+			{ ...input, mode: "followUp" as const },
+		])
+			await assert.rejects(owner.inputReceipt(ref, changed), /conflict/i);
 		for (const operation of [
 			() => visitor.receipt(admitted.id),
 			() => visitor.wait(admitted.id),
@@ -92,7 +107,7 @@ test("WebUI workspace: normal reopen reattaches original creation/admission with
 			actor,
 		);
 		assert.deepEqual(await client.create(spec), ref);
-		assert.equal((await client.submit(ref, input)).id, receipt.id);
+		assert.equal((await client.inputReceipt(ref, input))?.id, receipt.id);
 		assert.equal((await client.receipt(receipt.id)).status, "done");
 		assert.equal((await client.list()).length, 1);
 		assert.equal(
@@ -136,6 +151,12 @@ test("WebUI workspace: cancelled receipt wait preserves native delivery and an e
 			mode: "followUp",
 		});
 		assert.equal(follow.status, "queued");
+		const page = await client.inputHistory(ref);
+		assert.deepEqual(
+			page.items.map((row) => row.receipt.id),
+			[follow.id, receipt.id],
+		);
+		assert.equal(page.items[0]?.mode, "followUp");
 		const controller = new AbortController(),
 			wait = client.wait(receipt.id, controller.signal);
 		controller.abort(new Error("BROWSER-LEFT"));

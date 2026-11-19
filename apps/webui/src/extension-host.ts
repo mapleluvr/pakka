@@ -325,7 +325,34 @@ export async function createExtensionHost(options: ExtensionHostOptions): Promis
 		requestId: string,
 	) =>
 		"operation-" +
-		hash(JSON.stringify([extension, actorId, target?.conversationId ?? null, requestId])).slice(0, 48);
+		hash(
+			JSON.stringify([
+				extension,
+				actorId,
+				target ? [target.sessionId, target.conversationId] : null,
+				requestId,
+			]),
+		).slice(0, 48);
+	const originalOperation = async (
+		extension: string,
+		actorId: string,
+		target: ConversationRef | undefined,
+		requestId: string,
+		check: () => void,
+	): Promise<Saved | null> => {
+		const id = operationId(extension, actorId, target, requestId),
+			current = (await findOperation(id, check)).value;
+		if (current || !target) return current;
+		// Preserve the handler identity of already admitted operations. Reading an old record never migrates or replays it.
+		const legacyId =
+			"operation-" +
+			hash(JSON.stringify([extension, actorId, target.conversationId, requestId])).slice(0, 48);
+		const legacy = (await findOperation(legacyId, check)).value;
+		return legacy?.target?.sessionId === target.sessionId &&
+			legacy.target.conversationId === target.conversationId
+			? legacy
+			: null;
+	};
 	const facets = await createFacetLifecycle({
 		runtime,
 		people,
@@ -365,6 +392,28 @@ export async function createExtensionHost(options: ExtensionHostOptions): Promis
 			}
 		}
 	};
+	// Original receipts keep their full target for correlation, but do not execute that old incarnation.
+	// Recheck the same currently loaded Session/Conversation and the recorded permission.
+	const authorizeReceipt = (
+		actor: PocketAuthority,
+		permission: ExtensionAction["permission"],
+		target?: ConversationRef,
+	) => {
+		if (!target) return authorize(actor, permission);
+		current(actor);
+		try {
+			const source = options.runtimeFor?.(target) ?? runtime;
+			const ref = source
+				.view()
+				.conversations.find(
+					(row) => row.sessionId === target.sessionId && row.conversationId === target.conversationId,
+				);
+			if (!ref) return refuse();
+			people.check(actor, permission, people.resourceId(ref));
+		} catch {
+			return refuse();
+		}
+	};
 	const entryFor = (id: string, facet: ExtensionFacet, generation?: string) => {
 		facets.live();
 		const entry = accepted.get(facetKey(id, facet));
@@ -390,7 +439,7 @@ export async function createExtensionHost(options: ExtensionHostOptions): Promis
 		const person = current(actor),
 			saved = (await findOperation(id, () => current(actor))).value;
 		if (!saved || saved.actorId !== person.id) return refuse();
-		authorize(actor, saved.permission, saved.target ?? undefined);
+		authorizeReceipt(actor, saved.permission, saved.target ?? undefined);
 		return present(saved);
 	};
 	return Object.freeze({
@@ -529,13 +578,14 @@ export async function createExtensionHost(options: ExtensionHostOptions): Promis
 				Object.keys(request).some((key) => !["extension", "requestId", "target"].includes(key))
 			)
 				return refuse("INVALID_REQUEST");
-			authorize(actor, "read", request.target);
-			const saved = (
-				await findOperation(
-					operationId(request.extension, person.id, request.target, request.requestId),
-					() => current(actor),
-				)
-			).value;
+			authorizeReceipt(actor, "read", request.target);
+			const saved = await originalOperation(
+				request.extension,
+				person.id,
+				request.target,
+				request.requestId,
+				() => current(actor),
+			);
 			if (
 				!saved ||
 				saved.extension !== request.extension ||
@@ -544,7 +594,7 @@ export async function createExtensionHost(options: ExtensionHostOptions): Promis
 				(saved.target ? !request.target || !sameRef(saved.target, request.target) : !!request.target)
 			)
 				return refuse();
-			authorize(actor, saved.permission, saved.target ?? undefined);
+			authorizeReceipt(actor, saved.permission, saved.target ?? undefined);
 			return present(saved);
 		},
 		control: facets.control,
@@ -599,13 +649,15 @@ export async function createExtensionHost(options: ExtensionHostOptions): Promis
 				authorize(actor, action.permission, target);
 			};
 			check();
-			const id =
-					"operation-" +
-					hash(
-						JSON.stringify([input.extension, person.id, target?.conversationId ?? null, input.requestId]),
-					).slice(0, 48),
+			const id = operationId(input.extension, person.id, target, input.requestId),
 				fingerprint = hash(JSON.stringify([entry.view.manifest.version, action, payload, target ?? null]));
 			if (action.effect !== "read") {
+				const existing = await originalOperation(input.extension, person.id, target, input.requestId, check);
+				if (existing) {
+					if (existing.fingerprint !== fingerprint) return refuse("CONFLICT");
+					check();
+					return present(existing);
+				}
 				const prior = await updateOperation(
 					id,
 					(row) => {

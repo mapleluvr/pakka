@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import { strict as assert } from "node:assert";
-import { createRuntime } from "@pakka/agent";
+import { createRuntime, type Runtime } from "@pakka/agent";
 import { runtimeFixture } from "../../../packages/agent/test/runtime-fixture.ts";
 import { createPocketPeople } from "../src/pocket-people.ts";
 import { createPocketWorkspace } from "../src/pocket-workspace.ts";
@@ -243,6 +243,127 @@ test("WebUI collaboration: durable records/driver reopen with the original write
 		assert.equal(f.m.f.requests.length, 0);
 	} finally {
 		await runtime?.close();
+		await f.m.close();
+	}
+});
+
+// These protect new durable receipt semantics, not a provisional browser component shape.
+test("WebUI collaboration: exact own receipts survive later edits, configuration rotation and original Session reopen without replay", async () => {
+	const f = await setup();
+	let reopened: Awaited<ReturnType<typeof createRuntime>> | undefined;
+	try {
+		const client = f.collaboration.bind(f.owner);
+		const original = {
+			requestId: "original-note",
+			target: f.ref,
+			action: { kind: "note" as const, expectedVersion: 0, text: "ORIGINAL-SHARED-NOTE" },
+		};
+		const first = await client.write(original);
+		assert.deepEqual(first.result, { kind: "note", version: 1 });
+		await client.write({
+			requestId: "later-note",
+			target: f.ref,
+			action: { kind: "note", expectedVersion: 1, text: "LATER-SHARED-NOTE" },
+		});
+		assert.deepEqual(await client.lookup(original), first);
+		await assert.rejects(
+			client.lookup({ ...original, action: { ...original.action, text: "CHANGED-ORIGINAL" } }),
+			/request conflict/i,
+		);
+		assert.equal(await f.collaboration.bind(f.guest).lookup(original), null);
+		assert.equal(await client.lookup({ ...original, target: f.hidden }), null);
+		const rotated = await f.client.configure(f.ref, "default");
+		assert.notEqual(rotated.incarnation, f.ref.incarnation);
+		assert.deepEqual(await client.lookup(original), first);
+		await assert.rejects(client.write(original), /stale|denied/i);
+		assert.equal((await client.snapshot(rotated)).note.text, "LATER-SHARED-NOTE");
+
+		const driver = {
+			requestId: "driver-original",
+			target: rotated,
+			action: { kind: "driver" as const, expectedVersion: 0, action: "claim" as const, ttlMs: 60000 },
+		};
+		const claimed = await client.write(driver);
+		await client.setDriver(rotated, { expectedVersion: 1, action: "release" });
+		assert.deepEqual(await client.lookup(driver), claimed);
+		assert.equal((await client.snapshot(rotated)).driver.personId, null);
+		const sessionFile = f.m.runtime.view().sessionFile;
+		await f.m.runtime.close();
+		reopened = await createRuntime({ ...f.m.config, reopenSessionFile: sessionFile });
+		const people = await createPocketPeople({ runtime: reopened, namespace: "collab.people" });
+		const actor = await people.authenticate(f.session.token);
+		const collaboration = await createPocketCollaboration({
+			runtime: reopened,
+			people,
+			namespace: "collab.shared",
+			now: () => f.now,
+		});
+		assert.deepEqual(await collaboration.bind(actor).lookup(original), first);
+		assert.deepEqual(await collaboration.bind(actor).lookup(driver), claimed);
+		assert.equal((await collaboration.bind(actor).snapshot(rotated)).note.text, "LATER-SHARED-NOTE");
+		assert.equal(f.m.f.requests.length, 0);
+		await people.revokePerson(actor, f.guest.person.id);
+		const denied = await people.authenticate(f.guestSession.token).catch(() => null);
+		assert.equal(denied, null);
+		assert.deepEqual(f.m.f.errors, []);
+	} finally {
+		await reopened?.close();
+		await f.m.close();
+	}
+});
+
+test("WebUI collaboration: actual store CAS rolls back effect and receipt together; lost commit return is recovered without another CAS", async () => {
+	const f = await setup();
+	try {
+		let mode: "before" | "after" | "complete" = "before",
+			attempts = 0,
+			commits = 0;
+		// Wrap the public bootstrap Store port only; every successful commit is the actual production CAS.
+		const wrapped: Runtime = {
+			...f.m.runtime,
+			store: (options) => {
+				const native = f.m.runtime.store(options);
+				return {
+					snapshot: () => native.snapshot(),
+					compareAndSet: async (version, data, check) => {
+						attempts++;
+						if (mode === "before") throw new Error("Controlled failure before native CAS");
+						const result = await native.compareAndSet(version, data, check);
+						commits++;
+						if (mode === "after") throw new Error("Controlled lost native CAS return");
+						return result;
+					},
+				};
+			},
+		};
+		const collaboration = await createPocketCollaboration({
+			runtime: wrapped,
+			people: f.people,
+			namespace: "collab.atomic",
+			now: () => f.now,
+		});
+		const subject = collaboration.bind(f.owner);
+		const original = {
+			requestId: "atomic-note",
+			target: f.ref,
+			action: { kind: "note" as const, expectedVersion: 0, text: "ATOMIC-NOTE" },
+		};
+		await assert.rejects(subject.write(original), /before native CAS/);
+		assert.equal(await subject.lookup(original), null);
+		assert.equal((await subject.snapshot(f.ref)).note.version, 0);
+		mode = "after";
+		await assert.rejects(subject.write(original), /lost native CAS return/);
+		const receipt = await subject.lookup(original);
+		assert.ok(receipt);
+		assert.deepEqual(receipt.result, { kind: "note", version: 1 });
+		assert.equal((await subject.snapshot(f.ref)).note.text, "ATOMIC-NOTE");
+		mode = "complete";
+		assert.deepEqual(await subject.write(original), receipt);
+		assert.equal(attempts, 2);
+		assert.equal(commits, 1);
+		assert.equal(f.m.f.requests.length, 0);
+		assert.deepEqual(f.m.f.errors, []);
+	} finally {
 		await f.m.close();
 	}
 });

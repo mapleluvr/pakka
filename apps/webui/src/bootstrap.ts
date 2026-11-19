@@ -62,6 +62,7 @@ export interface PocketProductOptions {
 		| "webuiServices"
 		| "notifications"
 		| "assets"
+		| "workers"
 		| "extensions"
 	>;
 }
@@ -393,6 +394,9 @@ export async function startPocket(options: PocketProductOptions) {
 		webuiServices = await createWebUiServices({
 			runtime,
 			people,
+			workspace,
+			collaboration,
+			notifications,
 			sessions,
 			models: options.modelConfiguration,
 			defaults: personDefaults,
@@ -412,6 +416,7 @@ export async function startPocket(options: PocketProductOptions) {
 			extensions,
 			assets,
 			inlineStyleHashes: frontend?.manifest.inlineStyleHashes,
+			workers: frontend?.manifest.workers,
 		});
 		let closed = false;
 		return Object.freeze({

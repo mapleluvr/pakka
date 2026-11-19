@@ -1,22 +1,35 @@
 import type { ServerResponse } from "node:http";
-import type { PocketWorkspaceClient } from "@pakka/server/pocket";
-import type { AgentRef, PocketContentReference } from "@pakka/protocol/pocket";
+import { isPocketContentChunk, type PocketContentReference } from "@pakka/protocol/pocket";
 
 /** Read-only streamed original delivery; no whole-body Buffer/Blob, no task progress API. */
 export async function streamOriginalContent(options: {
 	readonly response: ServerResponse;
 	readonly signal: AbortSignal;
-	readonly client: PocketWorkspaceClient;
-	readonly target: AgentRef;
+	readonly read: (offset: number, check: () => void) => Promise<unknown>;
 	readonly reference: PocketContentReference;
 	readonly check: () => void;
 }): Promise<void> {
-	const { response: res, signal, client, target, reference } = options;
+	const { response: res, signal, reference } = options;
 	const check = () => {
 		if (signal.aborted || res.destroyed || res.writableEnded) throw new Error("Original download ended");
 		options.check();
 	};
-	const read = (offset: number) => client.readContent(target, reference, { offset, length: 65536 }, check);
+	const read = async (offset: number) => {
+		check();
+		const chunk = await options.read(offset, check);
+		check();
+		if (
+			!isPocketContentChunk(chunk) ||
+			chunk.offset !== offset ||
+			chunk.nextOffset < offset ||
+			chunk.nextOffset > reference.byteLength ||
+			(!chunk.complete && chunk.nextOffset === offset) ||
+			chunk.complete !== (chunk.nextOffset === reference.byteLength) ||
+			Object.keys(reference).some((key) => chunk.reference[key] !== reference[key])
+		)
+			throw new Error("Original download range is unconfirmed");
+		return chunk;
+	};
 	// Acquire the first exact authorized range before publishing attachment/200 headers.
 	let chunk = await read(0);
 	check();

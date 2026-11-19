@@ -50,7 +50,7 @@
 		"contributions"
 	],
 	"scripts": {
-		"build": "tsc -p tsconfig.json && node scripts/build-browser-vendors.mjs"
+		"build": "tsc -p tsconfig.json && tsc -p tsconfig.contributions.json && node scripts/build-browser-vendors.mjs && node scripts/build-contributions.mjs"
 	},
 	"dependencies": {
 		"@earendil-works/pi-ai": "1.4.0",

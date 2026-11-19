@@ -50,6 +50,8 @@ export interface ExtensionServiceBinding {
 	readonly serverId: string;
 	readonly target?: AgentRef;
 	readonly signal: AbortSignal;
+	/** Select an explicit Conversation for this extension. Authority remains with the server; UI lifetime is inherited. */
+	forConversation(target: AgentRef, options?: Pick<PocketRequestOptions, "signal">): ExtensionServiceBinding;
 	call(
 		action: string,
 		input?: import("@pakka/protocol/extensions").ExtensionJson,
@@ -73,8 +75,17 @@ export function bindExtensionService(
 ): ExtensionServiceBinding {
 	if (!extensionId(input.extensionId) || !identity(input.personId) || !identity(input.serverId))
 		throw new Error("Invalid extension service identity");
-	const extension = input.extensionId,
-		target = input.target ? Object.freeze({ ...input.target }) : undefined;
+	const extension = input.extensionId;
+	let target: AgentRef | undefined;
+	if (input.target) {
+		const command = decodeExtensionRequest({
+			version: EXTENSION_VERSION,
+			requestId: "service-binding",
+			command: { op: "list", target: input.target },
+		}).command;
+		if (command.op !== "list" || !command.target) throw new Error("Invalid Conversation binding");
+		target = Object.freeze({ ...command.target });
+	}
 	const optionsFor = (options: PocketRequestOptions = {}): PocketRequestOptions => ({
 		...options,
 		signal: AbortSignal.any([input.signal, ...(options.signal ? [options.signal] : [])]),
@@ -91,6 +102,13 @@ export function bindExtensionService(
 		serverId: input.serverId,
 		target,
 		signal: input.signal,
+		forConversation(ref, options = {}) {
+			return bindExtensionService(client, {
+				...input,
+				target: ref,
+				signal: optionsFor(options).signal!,
+			});
+		},
 		call(action, value = {}, options = {}) {
 			const requestId = options.requestId ?? globalThis.crypto.randomUUID();
 			const backend = input.backend();

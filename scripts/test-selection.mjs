@@ -94,6 +94,7 @@ const scopes = {
 		f.startsWith("packages/protocol/") ||
 		f === "packages/agent/test/stored-history.test.ts" ||
 		f === "packages/agent/test/agent-facet.test.ts" ||
+		f === "packages/agent/test/runtime-configuration.test.ts" ||
 		/webui.test/.test(f),
 };
 export function select(files, args) {

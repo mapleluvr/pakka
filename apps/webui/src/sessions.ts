@@ -299,6 +299,11 @@ export async function createManagedSessions(options: {
 				list: async () => Object.freeze((await navigation()).map((row) => row.ref)),
 				navigation,
 				configuration: (ref) => clientFor(actor, ref).configuration(ref),
+				configurationOptions: (ref) => clientFor(actor, ref).configurationOptions(ref),
+				changeConfiguration: (original, check) =>
+					clientFor(actor, original.target).changeConfiguration(original, check),
+				configurationReceipt: (original, check) =>
+					clientFor(actor, original.target).configurationReceipt(original, check),
 				setMetadata: async (ref, input) =>
 					Object.freeze({
 						...(await clientFor(actor, ref).setMetadata(ref, input)),
@@ -322,6 +327,9 @@ export async function createManagedSessions(options: {
 					clientFor(actor, ref).readContent(ref, reference, range, check),
 				display: (ref, input) => clientFor(actor, ref).display(ref, input),
 				submit: (ref, input) => clientFor(actor, ref).submit(ref, input),
+				// The existing Session owner performs this observation; lookup never reopens a writer.
+				inputReceipt: (ref, input) => clientFor(actor, ref).inputReceipt(ref, input),
+				inputHistory: (ref, cursor) => clientFor(actor, ref).inputHistory(ref, cursor),
 				receipt: (nativeId, sessionId) => routeReceipt(actor, nativeId, "receipt", sessionId),
 				wait: (nativeId, signal, sessionId) => routeReceipt(actor, nativeId, "wait", sessionId, signal),
 				withdraw: (nativeId, sessionId) => routeReceipt(actor, nativeId, "withdraw", sessionId),

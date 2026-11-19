@@ -11,6 +11,7 @@ import type {
 } from "@pakka/server/pocket";
 import { decodePocketRequest, decodePocketResponse, POCKET_MAX_BYTES } from "@pakka/protocol/pocket";
 import { identity } from "@pakka/protocol";
+import { WEBUI_NOTIFICATION_EVENT_PATH, decodeNotificationEvent } from "@pakka/protocol/webui";
 import { decodeWebUiInlineStyleHashes } from "@pakka/protocol/webui-assets";
 import { listenHttp } from "@pakka/server/http-listener";
 import QRCode from "qrcode";
@@ -45,11 +46,13 @@ import {
 	decodeWebUiRequest,
 	decodeWebUiResponse,
 	WEBUI_SERVICE_PATH,
+	WEBUI_CONTENT_DOWNLOAD_PATH,
 	WEBUI_SERVICE_MAX_BYTES,
 	WEBUI_SERVICE_API,
 } from "@pakka/protocol/webui";
 import { streamPocketObservation } from "./observation-stream.ts";
 import { streamOriginalContent } from "./content-download.ts";
+import { streamResourceDownload } from "./resource-download.ts";
 import {
 	decodeProductModelRequest,
 	executeProductModelRequest,
@@ -80,6 +83,8 @@ export interface PocketHttpOptions {
 	readonly extensions?: ExtensionHost;
 	/** Trusted fixed-artifact hashes only. Never arbitrary policy text or browser input. */
 	readonly inlineStyleHashes?: readonly string[];
+	/** Worker URLs declared by the accepted artifact; only these scripts may claim root scope. */
+	readonly workers?: readonly string[];
 	/** Host-accepted fixed public bytes only, no provider/configuration files. */
 	readonly assets?: ReadonlyMap<string, { readonly type: string; readonly body: string | Uint8Array }>;
 }
@@ -223,6 +228,17 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 			},
 		]),
 	);
+	const workerUrls = options.workers ?? [];
+	if (
+		!Array.isArray(workerUrls) ||
+		workerUrls.length > 32 ||
+		new Set(workerUrls).size !== workerUrls.length ||
+		workerUrls.some(
+			(path) => typeof path !== "string" || assets.get(path)?.type !== "text/javascript; charset=utf-8",
+		)
+	)
+		throw new Error("Invalid fixed frontend worker declaration");
+	const workers = new Set(workerUrls);
 	const importMap = assets
 		.get("/")
 		?.body.toString()
@@ -881,6 +897,30 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 						dispatched = true;
 						const result = await options.webuiServices.execute(a, parsed.command, controller.signal);
 						guard(() => people.current(a));
+						if (
+							parsed.command.op === "collaboration.write" &&
+							parsed.command.change.action.kind === "post" &&
+							result.kind === "collaboration-receipt" &&
+							result.receipt.result.kind === "post"
+						) {
+							const messageId = result.receipt.result.messageId,
+								target = parsed.command.change.target;
+							notifyEvent({
+								requestId: "chat." + messageId,
+								target,
+								kind: "chat",
+								preview: "There is a new message in team chat.",
+							});
+							const mentions = parsed.command.change.action.mentions;
+							if (mentions?.length)
+								notifyEvent({
+									requestId: "mention." + messageId,
+									target,
+									kind: "mention",
+									preview: "You were mentioned in team chat.",
+									recipientIds: mentions,
+								});
+						}
 						send(
 							res,
 							200,
@@ -1084,6 +1124,34 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 					}
 					return;
 				}
+				if (req.method === "GET" && url.pathname === WEBUI_CONTENT_DOWNLOAD_PATH && !url.hash) {
+					serviceRequest = true;
+					if (!options.webuiServices) throw new Refusal(404, "UNSUPPORTED");
+					const a = await actor(req);
+					try {
+						await streamResourceDownload({
+							query: url.searchParams,
+							actor: a,
+							people,
+							serverId,
+							services: options.webuiServices,
+							response: res,
+							signal: controller.signal,
+						});
+					} catch (error) {
+						if (error instanceof WebUiServiceRefusal) {
+							const statuses: Partial<Record<PocketErrorCode, number>> = {
+								INVALID_REQUEST: 400,
+								FORBIDDEN: 403,
+								UNSUPPORTED: 404,
+								CAPACITY: 413,
+							};
+							throw new Refusal(statuses[error.code] ?? 500, error.code);
+						}
+						throw error;
+					}
+					return;
+				}
 				if (req.method === "GET" && routePath === "/pocket/content/download") {
 					if (
 						url.searchParams.size !== 2 ||
@@ -1115,8 +1183,10 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 					await streamOriginalContent({
 						response: res,
 						signal: controller.signal,
-						client: workspace.bind(a),
-						target: command.target,
+						read: (offset, check) =>
+							workspace
+								.bind(a)
+								.readContent(command.target, command.reference, { offset, length: 65536 }, check),
 						reference: command.reference,
 						check: () => preflight(a, command),
 					});
@@ -1151,7 +1221,7 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 					send(res, 200, response);
 					return;
 				}
-				if (req.method === "GET" && routePath === "/pocket/notifications/event") {
+				if (req.method === "GET" && url.pathname === WEBUI_NOTIFICATION_EVENT_PATH) {
 					if (!options.notifications) throw new Refusal(404, "UNSUPPORTED");
 					const eventId = url.searchParams.get("eventId"),
 						deviceId = url.searchParams.get("deviceId");
@@ -1168,7 +1238,7 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 					const a = await actor(req);
 					let entry;
 					try {
-						entry = await options.notifications.bind(a).event(eventId, deviceId);
+						entry = decodeNotificationEvent(await options.notifications.bind(a).event(eventId, deviceId));
 					} catch {
 						throw new Refusal(403, "FORBIDDEN");
 					}
@@ -1293,6 +1363,7 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 				if (req.method === "GET" && !url.search) {
 					const asset = assets.get(url.pathname);
 					if (asset) {
+						if (workers.has(url.pathname)) res.setHeader("Service-Worker-Allowed", "/");
 						res.writeHead(200, { "Content-Type": asset.type });
 						res.end(asset.body);
 						return;

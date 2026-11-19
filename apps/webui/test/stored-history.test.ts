@@ -6,6 +6,7 @@ import { createRuntime, type Runtime } from "@pakka/agent";
 import { PocketRemoteError } from "@pakka/client/pocket";
 import {
 	WEBUI_SERVICE_API,
+	WEBUI_CONTENT_DOWNLOAD_PATH,
 	decodeWebUiResponse,
 	type ConversationReference,
 	type WebUiCommand,
@@ -53,7 +54,7 @@ async function login(app: Product, token: string) {
 		assert.equal(reply.status, 200);
 		return reply.value.result;
 	}
-	return { actor, personId, token: sessionToken, raw, service };
+	return { actor, personId, token: sessionToken, cookie, raw, service };
 }
 
 // Removing confirmed-source resolution, original identity checks, fork attribution redaction, or read authorization must fail on real HTTP.
@@ -200,6 +201,42 @@ test("Stored history HTTP: an unloaded original Session is readable without taki
 			offset = result.chunk.nextOffset;
 		}
 		assert.equal(rebuilt, original);
+		// The download path must use the same original identity and read-only owner as bounded RPC.
+		const downloadRequest = {
+			api: WEBUI_SERVICE_API,
+			requestId: "download-history",
+			binding: { personId: viewer.personId, serverId: app.http.serverId },
+			command: {
+				op: "resource.content",
+				reference: address(fork),
+				content,
+				range: { offset: 0, length: 65536 },
+			},
+		};
+		const download = (request: unknown = downloadRequest) =>
+			fetch(
+				app!.http.origin +
+					WEBUI_CONTENT_DOWNLOAD_PATH +
+					"?" +
+					new URLSearchParams({ request: JSON.stringify(request) }),
+				{ headers: { Origin: app!.http.origin, Cookie: viewer.cookie } },
+			);
+		const attachment = await download();
+		assert.equal(attachment.status, 200);
+		assert.match(attachment.headers.get("content-disposition") ?? "", /^attachment;/);
+		assert.deepEqual(Buffer.from(await attachment.arrayBuffer()), Buffer.from(original));
+		for (const request of [
+			{ ...downloadRequest, api: WEBUI_SERVICE_API - 1 },
+			{ ...downloadRequest, binding: { ...downloadRequest.binding, personId: owner.personId } },
+			{ ...downloadRequest, binding: { ...downloadRequest.binding, serverId: "former-server" } },
+			{ ...downloadRequest, command: { ...downloadRequest.command, reference: address(parent) } },
+			{ ...downloadRequest, command: { ...downloadRequest.command, content: { ...content, revision: "0" } } },
+		]) {
+			const refused = await download(request);
+			assert.notEqual(refused.status, 200);
+			assert.equal(refused.headers.get("content-disposition"), null);
+			assert.equal((await refused.text()).includes("CHILD-FIRST"), false);
+		}
 		await assert.rejects(
 			viewer.service({
 				op: "resource.content",
@@ -253,6 +290,10 @@ test("Stored history HTTP: an unloaded original Session is readable without taki
 		await assert.rejects(viewer.service({ op: "resource.history", reference: address(fork) }), {
 			code: "UNAUTHORIZED",
 		});
+		const revokedDownload = await download();
+		assert.equal(revokedDownload.status, 401);
+		assert.equal(revokedDownload.headers.get("content-disposition"), null);
+		assert.equal((await revokedDownload.text()).includes("CHILD-FIRST"), false);
 		const oldApi = await owner.raw({ op: "capabilities" }, 1);
 		assert.ok("error" in oldApi.value);
 		assert.equal(oldApi.value.error.code, "VERSION_MISMATCH");

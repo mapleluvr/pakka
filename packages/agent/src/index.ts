@@ -7,6 +7,7 @@ export { createRuntime } from "./runtime.ts";
 export { createAgentFacet } from "./agent-facet.ts";
 export type { AgentFacet, AgentFacetDefinition, AgentFacetStatus } from "./agent-facet.ts";
 export {
+	ConfigurationChangeRefusedError,
 	BudgetChangeRefusedError,
 	RecordsRequestRefusedError,
 	RecordsPublicationError,

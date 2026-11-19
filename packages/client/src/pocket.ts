@@ -15,6 +15,8 @@ import type {
 export type * from "@pakka/protocol/pocket";
 export interface PocketClientOptions {
 	readonly endpoint: string;
+	/** Instance-local transport, e.g. a terminal's cookie jar bound to this origin. */
+	readonly fetch?: typeof fetch;
 	/** Supplied by the product's cookie binding; never discovers credentials or reads browser state at import. */
 	readonly csrf?: () => string | null;
 	readonly timeoutMs?: number;
@@ -391,7 +393,7 @@ export function createPocketClient(options: PocketClientOptions): PocketClient {
 		try {
 			const csrf = options.csrf?.() ?? null;
 			if (csrf !== null && !/^[A-Za-z0-9_-]{43}$/.test(csrf)) throw new Error("Invalid CSRF binding");
-			const response = await fetch(url, {
+			const response = await (options.fetch ?? fetch)(url, {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/json",

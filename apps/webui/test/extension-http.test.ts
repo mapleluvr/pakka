@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { fixture } from "./fixture.ts";
 import { createPocketHttp } from "../src/http.ts";
 import { createExtensionHost } from "../src/extension-host.ts";
-import { createExtensionClient } from "@pakka/client/extensions";
+import { createExtensionClient, bindExtensionService } from "@pakka/client/extensions";
 import { decodeExtensionResponse } from "@pakka/protocol/extension-rpc";
 
 const empty = { type: "object", properties: {}, required: [] };
@@ -241,15 +241,44 @@ test(
 					endpoint: `http://127.0.0.1:${address.port}/pocket/extensions/rpc`,
 					personId: () => m.actor.person.id,
 				});
-				const row = (await client.list(m.ref))[0]!,
-					call = {
-						extension: row.manifest.id,
-						generation: row.generation,
-						action: "work",
-						requestId: "one-effect",
-						input: {},
-						target: m.ref,
-					};
+				const row = (await client.list(m.ref)).find((item) => item.facet === "backend")!;
+				const lifetime = new AbortController(),
+					memberLifetime = new AbortController();
+				const service = bindExtensionService(client, {
+					extensionId: row.manifest.id,
+					personId: m.actor.person.id,
+					serverId: "test-server",
+					signal: lifetime.signal,
+					backend: () => row,
+				});
+				const selected = service.forConversation(m.ref, { signal: memberLifetime.signal });
+				const card = await selected.call("card", {}, { requestId: "selected-card" });
+				assert.deepEqual(await selected.operationByRequest("selected-card"), card);
+				const peer = await m.client.create({ requestId: "peer", name: "Peer", profile: "default" });
+				await assert.rejects(service.forConversation(peer).operationByRequest("selected-card"));
+				assert.throws(() => service.forConversation({ ...m.ref, extra: true } as typeof m.ref));
+				memberLifetime.abort();
+				await assert.rejects(selected.call("card", {}, { requestId: "closed-member" }));
+				await assert.rejects(
+					selected.forConversation(peer).call("card", {}, { requestId: "inherited-close" }),
+				);
+				assert.equal(service.signal.aborted, false);
+				lifetime.abort();
+				await assert.rejects(service.forConversation(peer).call("card", {}, { requestId: "closed-ui" }));
+				assert.equal(
+					(await m.client.read(m.ref)).entries.filter((item) => item.display?.text === "HTTP-PLUGIN-CARD")
+						.length,
+					1,
+				);
+				assert.equal((await m.client.read(peer)).entries.length, 0);
+				const call = {
+					extension: row.manifest.id,
+					generation: row.generation,
+					action: "work",
+					requestId: "one-effect",
+					input: {},
+					target: m.ref,
+				};
 				const result = await client.call(call);
 				assert.equal(result.state, "unknown");
 				await m.runtime.waitForIdle();

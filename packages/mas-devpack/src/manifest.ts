@@ -32,7 +32,13 @@ export const manifest: ExtensionManifest = {
 		agent: "profiles.js",
 		backend: "backend.js",
 		client: "client.js",
-		webui: { entry: "index.js", publicDir: "public" },
+		webui: {
+			entry: "index.js",
+			publicDir: "public",
+			api: 1,
+			runtime: "react19-astryx0.7.15",
+			styles: ["board.css"],
+		},
 	},
 	services: ["mas"],
 	actions: [
