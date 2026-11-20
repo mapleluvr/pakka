@@ -1,8 +1,16 @@
+import { isDeepStrictEqual } from "node:util";
 import type { EntryHeader } from "@earendil-works/pi-durable";
 import { hash } from "./artifact-journal.ts";
-import type { EntryJsonIndex, EntryContentSpan } from "./entry-preview.ts";
+import {
+	decodeEntryStringRange,
+	type EntryBytes,
+	type EntryJsonIndex,
+	type EntryContentSpan,
+} from "./entry-preview.ts";
 import type {
 	ConversationContentReference,
+	ConversationContentRange,
+	ConversationContentChunk,
 	ConversationRef,
 	ConversationSnapshot,
 	JsonObject,
@@ -107,7 +115,7 @@ export function previewLiveArguments<T extends JsonObject>(value: T): T | { read
 export function projectConversationEntry(
 	index: EntryJsonIndex,
 	header: EntryHeader,
-	ref: ConversationRef,
+	ref: Pick<ConversationRef, "conversationId">,
 ): IndexedConversationEntry {
 	const raw = index.value;
 	if (
@@ -264,4 +272,59 @@ export function projectConversationEntry(
 			: {}),
 	};
 	return { header, entry, contents };
+}
+
+/** Read only a projected, source-bound display span; arbitrary native JSON paths are never public content. */
+export async function readPreviewContent(
+	indexed: IndexedConversationEntry,
+	reference: ConversationContentReference,
+	range: ConversationContentRange,
+	read: EntryBytes,
+): Promise<ConversationContentChunk> {
+	const original = indexed.contents.get(reference.id);
+	const normalized =
+		original && reference.sourceConversationId === undefined
+			? { ...reference, sourceConversationId: original.reference.sourceConversationId }
+			: reference;
+	if (
+		!original ||
+		!isDeepStrictEqual(original.reference, normalized) ||
+		!range ||
+		Object.keys(range).some((key) => !["offset", "length"].includes(key)) ||
+		!Number.isSafeInteger(range.offset) ||
+		range.offset < 0 ||
+		range.offset > reference.byteLength ||
+		!Number.isSafeInteger(range.length) ||
+		range.length < 8 ||
+		range.length > 65536
+	)
+		throw new Error("Unknown/altered original content reference or range");
+	let text: string, nextOffset: number;
+	if (original.span.encoding === "json-string") {
+		const value = await decodeEntryStringRange(read, original.span, range.offset, range.length);
+		text = value.text;
+		nextOffset = value.nextOffset;
+	} else {
+		const size = Math.min(range.length, original.span.byteLength - range.offset);
+		if (size === 0) {
+			text = "";
+			nextOffset = range.offset;
+		} else {
+			const bytes = await read(original.span.offset + range.offset, size);
+			let end = bytes.length;
+			for (; end > 0 && end < original.span.byteLength - range.offset && (bytes[end - 1]! & 192) === 128; )
+				end--;
+			if (end < bytes.length) {
+				const lead = bytes[end - 1];
+				const width = lead !== undefined && lead >= 240 ? 4 : lead !== undefined && lead >= 224 ? 3 : 2;
+				if (bytes.length - end + 1 >= width) end = bytes.length;
+				else end--;
+			}
+			if (end === bytes.length && end > 0 && bytes[end - 1]! >= 194) end--;
+			if (end < 1) throw new Error("Original content range cannot make progress");
+			text = Buffer.from(bytes.subarray(0, end)).toString("utf8");
+			nextOffset = range.offset + end;
+		}
+	}
+	return { reference, text, offset: range.offset, nextOffset, complete: nextOffset === reference.byteLength };
 }

@@ -2,6 +2,7 @@ import { DurableAdapter, type ManagedAdapterPort } from "./durable-adapter.ts";
 import { createHostWithAdapter } from "./host.ts";
 import type {
 	CatalogOptions,
+	CatalogConfigurationIdentity,
 	ConversationConfigurationChange,
 	CatalogEnroll,
 	RuntimeCatalog,
@@ -120,13 +121,19 @@ export async function createRuntime(options: RuntimeOptions): Promise<Runtime> {
 					ref: ConversationRef,
 					change: ConversationConfigurationChange,
 					check: () => void,
+					request?: CatalogConfigurationIdentity,
 				) => {
-					const member = await catalog.configureAgent(ref, change, check);
+					const member = await catalog.configureAgent(ref, change, check, request);
 					await attach(member.ref);
 					return member;
 				},
-				configure: async (ref: ConversationRef, profile: string, check: () => void) => {
-					const member = await catalog.configure(ref, profile, check);
+				configure: async (
+					ref: ConversationRef,
+					profile: string,
+					check: () => void,
+					request?: CatalogConfigurationIdentity,
+				) => {
+					const member = await catalog.configure(ref, profile, check, request);
 					await attach(member.ref);
 					return member;
 				},

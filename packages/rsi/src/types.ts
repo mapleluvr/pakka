@@ -1,4 +1,4 @@
-import type { ConversationRef } from "@pakka/agent";
+import type { AgentRef as ConversationRef } from "@pakka/protocol/pocket";
 
 export type TicketState = "open" | "active" | "waiting" | "closed";
 export type TicketRole = "reader" | "submitter" | "handler" | "manager";

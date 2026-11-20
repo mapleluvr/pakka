@@ -51,8 +51,12 @@ import {
 	type LiveState,
 	type UsageState,
 } from "@earendil-works/pi-durable";
-import { SqliteStorage } from "@earendil-works/pi-durable/storage/sqlite";
-import { NodeSqliteDatabase, openNodeSqliteStorage } from "@earendil-works/pi-durable/storage/sqlite/node";
+import { SqliteStorage, SqliteReaderVersionError } from "@earendil-works/pi-durable/storage/sqlite";
+import {
+	NodeSqliteDatabase,
+	openNodeSqliteStorage,
+	openNodeSqliteReader,
+} from "@earendil-works/pi-durable/storage/sqlite/node";
 import {
 	createModels,
 	createProvider,
@@ -72,9 +76,10 @@ import { copy, hash, json } from "./artifact-journal.ts";
 import type { JournalStorage, JournalMutation } from "./native-journal.ts";
 import { sourceWorkPlan, type StoredSourceWork, type SourceWorkMutation } from "./source-work.ts";
 import { planHistoryScan } from "./history-scan.ts";
-import { indexEntryJson, decodeEntryStringRange } from "./entry-preview.ts";
+import { indexEntryJson } from "./entry-preview.ts";
 import {
 	projectConversationEntry,
+	readPreviewContent,
 	previewLiveArguments,
 	type IndexedConversationEntry,
 } from "./conversation-preview.ts";
@@ -126,6 +131,9 @@ import type {
 	RuntimeRecordsReceipt,
 	DeliveryReceipt,
 	CatalogDeliverySpec,
+	CatalogConfigurationIdentity,
+	CatalogConfigurationRequest,
+	CatalogConfigurationReceipt,
 	JsonObject,
 	ConversationProfile,
 	ConversationSnapshot,
@@ -144,6 +152,10 @@ import type {
 	RuntimeJobDefinition,
 	RuntimeJobs,
 	RuntimeContextSource,
+	StoredConversationOptions,
+	StoredConversationQuery,
+	StoredConversationResult,
+	ConversationHistoryPage,
 } from "./types.ts";
 
 import { NodeExecutionEnv } from "@earendil-works/pi-durable/env/node";
@@ -170,6 +182,8 @@ import type {
 	ExecutionResult,
 	LocalExecutionOptions,
 } from "./execution-types.ts";
+
+import { agentFacetSource, AgentFacetRevoked, type AgentFacet } from "./agent-facet.ts";
 
 // Fixed public filesystem operations. The count is the number of arguments before signal/Context.
 const executionMethods = {
@@ -622,6 +636,61 @@ function usageDTO(usage?: Usage): UsageDTO {
 		cacheWrite: usage?.cacheWrite ?? 0,
 		totalTokens: usage?.totalTokens ?? 0,
 		cost: usage?.cost?.total ? usage.cost.total : null,
+	};
+}
+
+function previewState(
+	live: Readonly<LiveState> | undefined,
+	usage: Readonly<UsageState> | undefined,
+): Pick<ConversationSnapshot, "live" | "usage"> {
+	const total = { ...usageDTO() };
+	for (const item of [...Object.values(usage?.models ?? {}), ...Object.values(usage?.tools ?? {})]) {
+		const value = usageDTO(item);
+		total.input += value.input;
+		total.output += value.output;
+		total.cacheRead += value.cacheRead;
+		total.cacheWrite += value.cacheWrite;
+		total.totalTokens += value.totalTokens;
+		if (value.cost !== null) total.cost = (total.cost ?? 0) + value.cost;
+	}
+	const snippet = (value: string) =>
+		value.length <= 4096
+			? value
+			: value.slice(0, 1024) + "\n… [live display preview] …\n" + value.slice(-1024);
+	const original = live?.generation?.message;
+	let message: TranscriptMessage | undefined;
+	if (original) {
+		const content = original.content.map((part) => {
+			if (part.type === "text") return { ...part, text: snippet(part.text) };
+			if (part.type === "thinking") return { ...part, thinking: snippet(part.thinking) };
+			if (part.type === "toolCall") return { ...part, arguments: previewLiveArguments(part.arguments) };
+			return part;
+		});
+		message = transcriptMessage({
+			...original,
+			content,
+			...(original.errorMessage === undefined ? {} : { errorMessage: snippet(original.errorMessage) }),
+		});
+		if (message?.stopReason === "pending") {
+			const { stopReason: _pending, ...partial } = message;
+			message = partial;
+		}
+	}
+	return {
+		live: {
+			busy: live?.run !== undefined,
+			...(message ? { message } : {}),
+			tools: (live?.tools ?? []).map((tool) => ({
+				callId: tool.callId,
+				name: tool.name,
+				status: tool.status,
+				...(tool.taskId === undefined ? {} : { taskId: String(tool.taskId) }),
+				...(tool.output === undefined ? {} : { output: snippet(tool.output) }),
+				...(tool.droppedBytes === undefined ? {} : { droppedBytes: tool.droppedBytes }),
+				...(tool.droppedLines === undefined ? {} : { droppedLines: tool.droppedLines }),
+			})),
+		},
+		usage: total,
 	};
 }
 
@@ -1917,6 +1986,252 @@ const RuntimeDoc = defineDoc<RuntimeRecord>({
 		resources: {},
 	}),
 });
+
+export class StoredHistoryReadRefusal extends Error {
+	readonly reason:
+		| "unavailable"
+		| "identity-mismatch"
+		| "unsupported"
+		| "invalid-source"
+		| "busy"
+		| "denied"
+		| "invalid-request"
+		| "cancelled";
+	constructor(reason: StoredHistoryReadRefusal["reason"]) {
+		super("Stored Conversation history read refused");
+		this.name = "StoredHistoryReadRefusal";
+		this.reason = reason;
+	}
+}
+
+/** Read one trusted original source. The native reader never leaves this adapter or becomes a Runtime. */
+export async function readStoredConversation(
+	options: StoredConversationOptions,
+	rawQuery: StoredConversationQuery,
+): Promise<StoredConversationResult> {
+	const reference = copy(options.reference),
+		query = copy(rawQuery);
+	const uuid = (value: unknown): value is string =>
+		typeof value === "string" && /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/.test(value);
+	const object = (value: unknown): value is Record<string, unknown> =>
+		!!value && typeof value === "object" && !Array.isArray(value);
+	const nativeId = (value: unknown): value is string =>
+		typeof value === "string" && /^[1-9]\d*$/.test(value) && Number.isSafeInteger(Number(value));
+	if (
+		!object(reference) ||
+		Object.keys(reference).sort().join(",") !== "conversationId,sessionId" ||
+		!uuid(reference.sessionId) ||
+		!nativeId(reference.conversationId) ||
+		!object(query) ||
+		!["source", "page", "content"].includes(query.kind)
+	)
+		throw new StoredHistoryReadRefusal("invalid-request");
+	const authorize = () => {
+		if (options.signal?.aborted) throw new StoredHistoryReadRefusal("cancelled");
+		try {
+			checkAuthority(options.check);
+		} catch {
+			throw new StoredHistoryReadRefusal("denied");
+		}
+	};
+	// These are source identity checks, not writer acquisition or recovery checks.
+	const sourceIdentity = () => {
+		authorize();
+		const file = realpathSync(options.sessionFile);
+		const info = statSync(file, { bigint: true });
+		if (!info.isFile() || basename(file) !== "main.sqlite")
+			throw new StoredHistoryReadRefusal("invalid-source");
+		const text = readFileSync(join(dirname(file), "provenance.json"), "utf8");
+		if (text.length > 65536) throw new StoredHistoryReadRefusal("invalid-source");
+		const provenance: unknown = JSON.parse(text);
+		if (!object(provenance) || provenance.sessionId !== reference.sessionId)
+			throw new StoredHistoryReadRefusal("identity-mismatch");
+		return {
+			file,
+			stamp: [file, String(info.dev), String(info.ino), String(info.birthtimeNs), text].join("\0"),
+		};
+	};
+	try {
+		const before = sourceIdentity();
+		const context = executionContext(options.signal);
+		const reader = await openNodeSqliteReader(before.file);
+		let result: StoredConversationResult;
+		try {
+			authorize();
+			result = await reader.snapshot(async (read) => {
+				const id = conversationId(reference.conversationId);
+				const document = async (
+					kind: string,
+					version: number,
+					scope: { kind: "session" } | { kind: "conversation"; conversationId: ConversationId },
+				) => {
+					authorize();
+					const record = await read.findDocument({ kind, scope }, "current", context);
+					authorize();
+					if (!record) return undefined;
+					const saved = await read.document(record.id, "current", context);
+					authorize();
+					if (!saved || saved.version !== version) throw new StoredHistoryReadRefusal("unsupported");
+					return saved.value;
+				};
+				const state = await document(RuntimeDoc.definition.kind, RuntimeDoc.definition.version, {
+					kind: "session",
+				});
+				if (!state || state.sessionId !== reference.sessionId)
+					throw new StoredHistoryReadRefusal("identity-mismatch");
+				if (!object(state.resources) || !object(state.profiles))
+					throw new StoredHistoryReadRefusal("invalid-source");
+				const matches = Object.entries(state.resources).filter(
+					([, row]) => object(row) && row.conversationId === reference.conversationId,
+				);
+				if (matches.length !== 1) throw new StoredHistoryReadRefusal("unavailable");
+				const [key, row] = matches[0]!;
+				if (
+					!object(row) ||
+					row.key !== key ||
+					row.sessionId !== reference.sessionId ||
+					!uuid(row.incarnation) ||
+					typeof row.profile !== "string" ||
+					!Object.hasOwn(state.profiles, row.profile)
+				)
+					throw new StoredHistoryReadRefusal("identity-mismatch");
+				if (!(await read.conversation(id, context))) throw new StoredHistoryReadRefusal("unavailable");
+				authorize();
+				const sequence = String(read.sequence);
+				if (query.kind === "source") return { kind: "source", reference, sequence };
+				const bytes = (header: EntryHeader) => async (offset: number, length: number) => {
+					authorize();
+					const chunk = await read.entryArchive.read(
+						id,
+						header.id,
+						{ offset, length, commitSeq: header.commitSeq },
+						context,
+					);
+					authorize();
+					if (!chunk || chunk.commitSeq !== header.commitSeq || chunk.byteLength !== header.byteLength)
+						throw new StoredHistoryReadRefusal("identity-mismatch");
+					return chunk.bytes;
+				};
+				const indexed = async (header: EntryHeader) => {
+					const index = await indexEntryJson(bytes(header), header.byteLength);
+					authorize();
+					return projectConversationEntry(index, header, reference);
+				};
+				if (query.kind === "content") {
+					const content = query.content;
+					if (!content || content.source !== "entry" || !nativeId(content.entryId))
+						throw new StoredHistoryReadRefusal("invalid-request");
+					const header = await read.entryArchive.header(id, Number(content.entryId) as EntryId, context);
+					authorize();
+					if (
+						!header ||
+						String(header.commitSeq) !== content.revision ||
+						(content.sourceConversationId !== undefined &&
+							String(header.conversationId) !== content.sourceConversationId)
+					)
+						throw new StoredHistoryReadRefusal("identity-mismatch");
+					const chunk = await readPreviewContent(await indexed(header), content, query.range, bytes(header));
+					authorize();
+					return { kind: "content", reference, chunk };
+				}
+				const pageOptions: ConversationPreviewOptions = query.options ?? {};
+				if (
+					!pageOptions ||
+					typeof pageOptions !== "object" ||
+					Array.isArray(pageOptions) ||
+					Object.keys(pageOptions).some((key) => !["limit", "beforeEntryId", "maxBytes"].includes(key)) ||
+					(pageOptions.limit !== undefined &&
+						(!Number.isSafeInteger(pageOptions.limit) || pageOptions.limit < 1 || pageOptions.limit > 256)) ||
+					(pageOptions.maxBytes !== undefined &&
+						(!Number.isSafeInteger(pageOptions.maxBytes) ||
+							pageOptions.maxBytes < 16384 ||
+							pageOptions.maxBytes > 256 * 1024)) ||
+					(pageOptions.beforeEntryId !== undefined && !nativeId(pageOptions.beforeEntryId))
+				)
+					throw new StoredHistoryReadRefusal("invalid-request");
+				if (
+					pageOptions.beforeEntryId !== undefined &&
+					!(await read.entryArchive.header(id, Number(pageOptions.beforeEntryId) as EntryId, context))
+				)
+					throw new StoredHistoryReadRefusal("invalid-request");
+				const headers = await read.entryArchive.scan(
+					{
+						conversationId: id,
+						order: "descending",
+						...(pageOptions.beforeEntryId
+							? { maxEntryId: (Number(pageOptions.beforeEntryId) - 1) as EntryId }
+							: {}),
+					},
+					pageOptions.limit ?? 64,
+					undefined,
+					context,
+				);
+				const [live, usage] = await Promise.all([
+					document(LiveDoc.definition.kind, LiveDoc.definition.version, {
+						kind: "conversation",
+						conversationId: id,
+					}),
+					document(UsageDoc.definition.kind, UsageDoc.definition.version, {
+						kind: "conversation",
+						conversationId: id,
+					}),
+				]);
+				// Stored native JSON was materialized without definition migration/initialization callbacks.
+				const presentation = previewState(live as LiveState | undefined, usage as UsageState | undefined);
+				const page: ConversationHistoryPage = {
+					reference,
+					sequence,
+					entries: [],
+					entriesTruncated: false,
+					saved: presentation.live,
+					usage: presentation.usage,
+				};
+				const maxBytes = pageOptions.maxBytes ?? 256 * 1024;
+				let size = Buffer.byteLength(JSON.stringify(page), "utf8") + 256;
+				const entries: ConversationHistoryPage["entries"][number][] = [];
+				for (const header of headers.items) {
+					const item = await indexed(header);
+					const bytes = Buffer.byteLength(JSON.stringify(item.entry), "utf8") + 1;
+					if (size + bytes > maxBytes) {
+						if (!entries.length) throw new StoredHistoryReadRefusal("unavailable");
+						break;
+					}
+					entries.push(item.entry);
+					size += bytes;
+				}
+				const older = headers.next !== undefined || entries.length < headers.items.length;
+				const first = entries.at(-1);
+				const value: ConversationHistoryPage = {
+					...page,
+					entries: entries.reverse(),
+					entriesTruncated: older,
+					...(older && first ? { olderBeforeId: first.id } : {}),
+				};
+				if (Buffer.byteLength(JSON.stringify(value), "utf8") > maxBytes)
+					throw new StoredHistoryReadRefusal("unavailable");
+				authorize();
+				return { kind: "page", page: value };
+			}, context);
+		} finally {
+			// Cancellation or revoked publication authority must still close the admitted native reader.
+			await reader.close(BACKGROUND_CONTEXT);
+		}
+		if (sourceIdentity().stamp !== before.stamp) throw new StoredHistoryReadRefusal("identity-mismatch");
+		authorize();
+		return copy(result);
+	} catch (error) {
+		if (error instanceof StoredHistoryReadRefusal) throw error;
+		if (error instanceof SqliteReaderVersionError) throw new StoredHistoryReadRefusal("unsupported");
+		if (options.signal?.aborted) throw new StoredHistoryReadRefusal("cancelled");
+		const failure = error as { code?: string; errcode?: number };
+		if (failure?.errcode !== undefined && [5, 6].includes(failure.errcode & 255))
+			throw new StoredHistoryReadRefusal("busy");
+		if (["ENOENT", "EACCES", "EPERM"].includes(failure?.code ?? "") || failure?.errcode === 14)
+			throw new StoredHistoryReadRefusal("unavailable");
+		throw new StoredHistoryReadRefusal("invalid-source");
+	}
+}
+
 type BudgetHead = { version: number; bootstrapLimits: JsonRepresentation<RuntimeLimits> | null };
 const BudgetPolicyDoc = defineDoc<BudgetHead>({
 	kind: "pakka.budget-policy",
@@ -2061,6 +2376,34 @@ export interface ManagedAdapterPort {
 	waitForIdle(): Promise<void>;
 	close(): Promise<void>;
 }
+function prepareAgentFacets(
+	value: readonly AgentFacet[] | undefined,
+	profiles: ReadonlyMap<string, HostOptions>,
+): readonly AgentFacet[] {
+	if (value === undefined) return Object.freeze([]);
+	if (!Array.isArray(value) || value.length > 64) throw Error("Invalid finite Agent facets");
+	const ids = new Set<string>();
+	for (const facet of value) {
+		const { definition } = agentFacetSource(facet);
+		if (ids.has(definition.id) || definition.profiles.some((id) => !profiles.has(id)))
+			throw Error("Duplicate or unapproved Agent facet profile");
+		ids.add(definition.id);
+	}
+	for (const [id, options] of profiles) {
+		const names = new Set<string>(options.execution?.tools ?? []);
+		const tools = [
+			...(options.tools ?? []),
+			...value
+				.filter((facet) => facet.profiles.includes(id))
+				.flatMap((facet) => agentFacetSource(facet).definition.tools),
+		];
+		for (const tool of tools) {
+			if (names.has(tool.name)) throw Error("Approved Agent tool collision");
+			names.add(tool.name);
+		}
+	}
+	return Object.freeze([...value]);
+}
 function prepareContextSources(
 	value: unknown,
 	profiles: ReadonlyMap<string, HostOptions>,
@@ -2161,13 +2504,30 @@ function profileHash(
 	options: HostOptions,
 	contextSources: readonly RuntimeContextSource[],
 	profileId: string,
+	agentFacets: readonly AgentFacet[],
 ): string {
 	const selected = contextSources.filter((source) => source.profiles.includes(profileId));
+	const contributions = agentFacets
+		.filter((facet) => facet.profiles.includes(profileId))
+		.map((facet) => {
+			const { definition } = agentFacetSource(facet);
+			return {
+				id: definition.id,
+				version: definition.version,
+				instructions: definition.instructions ?? "",
+				tools: definition.tools.map(({ name, description, parameters }) => ({
+					name,
+					description,
+					parameters,
+				})),
+			};
+		});
 	return hash({
 		...(options.models ? { modelAccess: "native-v1" } : { endpoint: options.endpoint, model: options.model }),
 		cwd: resolve(options.cwd),
 		systemPrompt: options.systemPrompt ?? "",
 		...(selected.length ? { contextSources: selected.map(({ id, version }) => ({ id, version })) } : {}),
+		...(contributions.length ? { agentFacets: contributions } : {}),
 		...(options.execution ? { execution: executionFingerprint(options.execution) } : {}),
 		tools: (options.tools ?? []).map(({ name, description, parameters }) => ({
 			name,
@@ -2270,6 +2630,13 @@ async function claimWriter(storageDir: string, offline = false): Promise<() => P
 	return release;
 }
 class MutationDenied extends Error {}
+/** This configuration attempt was refused before commit. Any earlier request retains its own receipt. */
+export class ConfigurationChangeRefusedError extends MutationDenied {
+	constructor(message: string) {
+		super(message);
+		this.name = "ConfigurationChangeRefusedError";
+	}
+}
 /** A records request was rejected without committing effects. */
 export class RecordsRequestRefusedError extends MutationDenied {
 	readonly code: "invalid" | "conflict" | "capacity" | "denied";
@@ -2397,6 +2764,20 @@ const CatalogDoc = defineDocFamily<CatalogRecord, JsonRepresentation<CatalogOpti
 			throw new Error("Invalid legacy catalog layout");
 		return storedJson<CatalogRecord>(value);
 	},
+});
+const CatalogConfigurationDoc = defineDocFamily<
+	{
+		namespace: string;
+		receipt: JsonRepresentation<CatalogConfigurationReceipt> | null;
+	},
+	null
+>({
+	kind: "pakka.catalog-configuration",
+	version: 1,
+	checkpointWhen: () => true,
+	scope: "session",
+	family: true,
+	initial: () => ({ namespace: "", receipt: null }),
 });
 type CatalogDeliveryRecord = {
 	namespace: string;
@@ -2803,6 +3184,7 @@ export class DurableAdapter {
 	#disposed = false;
 	#providerSessionId: string | undefined;
 	#registry: Registry | undefined;
+	#facetSubscriptions: (() => void)[] = [];
 	#nativeInvocations = new WeakMap<
 		object,
 		{ api: ToolExecutionApi; active: boolean; signal?: AbortSignal }
@@ -2858,7 +3240,14 @@ export class DurableAdapter {
 		control: AdapterControl,
 		managedOptions?: Pick<
 			RuntimeOptions,
-			"limits" | "profiles" | "cwdRoots" | "reservedSessionId" | "jobs" | "contextSources" | "observation"
+			| "limits"
+			| "profiles"
+			| "cwdRoots"
+			| "reservedSessionId"
+			| "jobs"
+			| "contextSources"
+			| "observation"
+			| "agentFacets"
 		>,
 	): Promise<DurableAdapter> {
 		const profiles = new Map<string, HostOptions>([["default", profileOptions(options)]]);
@@ -2878,6 +3267,7 @@ export class DurableAdapter {
 			}
 		}
 		const contextSources = prepareContextSources(managedOptions?.contextSources, profiles);
+		const agentFacets = prepareAgentFacets(managedOptions?.agentFacets, profiles);
 		if (
 			managedOptions?.cwdRoots !== undefined &&
 			(!Array.isArray(managedOptions.cwdRoots) ||
@@ -2894,7 +3284,7 @@ export class DurableAdapter {
 		];
 		for (const profile of profiles.values()) approvedDirectory(profile.cwd, cwdRoots);
 		const approvedHashes = Object.fromEntries(
-			[...profiles].map(([id, profile]) => [id, profileHash(profile, contextSources, id)]),
+			[...profiles].map(([id, profile]) => [id, profileHash(profile, contextSources, id, agentFacets)]),
 		);
 		if (managedOptions?.cwdRoots !== undefined) approvedHashes["@cwdRoots"] = hash(cwdRoots);
 		const modelKeys = new Set<string>();
@@ -2989,6 +3379,7 @@ export class DurableAdapter {
 		let openedHarness: Harness | undefined;
 		let openedStorage: SqliteStorage | undefined;
 		let openedDatabase: OwnedSqlite | undefined;
+		const facetSubscriptions: (() => void)[] = [];
 		try {
 			const storage = await openPersistentStorage(
 				storageDir,
@@ -3040,9 +3431,20 @@ export class DurableAdapter {
 			const routes = new Map<ConversationId, DurableAdapter>();
 			const extensions = new Map<string, ReturnType<typeof defineExtension>>();
 			for (const [id, profile] of profiles) {
-				const extension = DurableAdapter.#extension(profile, routes, id);
+				const extension = DurableAdapter.#extension(profile, routes, id, agentFacets);
 				registry.install(extension);
 				extensions.set(id, extension);
+			}
+			for (const facet of agentFacets) {
+				facetSubscriptions.push(
+					agentFacetSource(facet).subscribe(() => {
+						for (const id of facet.profiles) {
+							const extension = DurableAdapter.#extension(profiles.get(id)!, routes, id, agentFacets);
+							registry.install(extension);
+							extensions.set(id, extension);
+						}
+					}),
+				);
 			}
 			const ext = extensions.get("default")!;
 
@@ -3193,6 +3595,7 @@ export class DurableAdapter {
 			adapter.#storage = storage;
 			adapter.#routes = routes;
 			adapter.#registry = registry;
+			adapter.#facetSubscriptions = facetSubscriptions;
 			routes.set(conversation.id, adapter);
 			if (managedOptions) {
 				const hashes = { ...approvedHashes };
@@ -3264,6 +3667,7 @@ export class DurableAdapter {
 			await adapter.refreshCache();
 			return adapter;
 		} catch (error) {
+			for (const unsubscribe of facetSubscriptions) unsubscribe();
 			// A claim is released only after the known writer is closed; cleanup failure retains it.
 			if (openedHarness) await openedHarness.close(BACKGROUND_CONTEXT);
 			else if (openedStorage) await openedStorage.close(BACKGROUND_CONTEXT);
@@ -3391,7 +3795,29 @@ export class DurableAdapter {
 		});
 	}
 
-	static #extension(options: HostOptions, routes: Map<ConversationId, DurableAdapter>, profile: string) {
+	static #extension(
+		options: HostOptions,
+		routes: Map<ConversationId, DurableAdapter>,
+		profile: string,
+		facets: readonly AgentFacet[],
+	) {
+		const active = facets
+			.filter((facet) => facet.profiles.includes(profile) && facet.status().phase === "ready")
+			.map((facet) => {
+				const source = agentFacetSource(facet),
+					generation = facet.status().generation;
+				return { definition: source.definition, check: () => source.check(generation) };
+			});
+		const contributedTools = active.flatMap(({ definition, check }) =>
+			definition.tools.map((tool): NonNullable<HostOptions["tools"]>[number] => ({
+				...tool,
+				execute(args, signal, scope) {
+					check();
+					// Admission is checked once here. Accepted work retains its own service/Runtime lifecycle.
+					return tool.execute(args, signal, scope);
+				},
+			})),
+		);
 		const resolveAdapter = (id: ConversationId) => {
 			const adapter = routes.get(id);
 			if (!adapter || adapter.#disposed) throw new Error("Conversation authority is not bound");
@@ -3432,7 +3858,7 @@ export class DurableAdapter {
 			name: profile === "default" ? "pakka-core-extension" : "pakka-profile-" + profile,
 			tools: [
 				...nativeTools,
-				...(options.tools ?? []).map((tool) =>
+				...[...(options.tools ?? []), ...contributedTools].map((tool) =>
 					defineTool({
 						name: tool.name,
 						description: tool.description,
@@ -3448,7 +3874,14 @@ export class DurableAdapter {
 					}),
 				),
 			],
-			sections: options.systemPrompt ? [section("system", () => options.systemPrompt, { tag: false })] : [],
+			sections: [
+				...(options.systemPrompt ? [section("system", () => options.systemPrompt, { tag: false })] : []),
+				...active.flatMap(({ definition }) =>
+					definition.instructions
+						? [section("facet-" + definition.id, () => definition.instructions, { tag: false })]
+						: [],
+				),
+			],
 			hooks: [
 				hook(GenerationTask, {
 					beforeRequest: async (_request, api, context) => {
@@ -3464,7 +3897,7 @@ export class DurableAdapter {
 							const permitted = await adapter.#control.project(context.abortSignal);
 							permitted.check();
 							if ("block" in permitted) return { block: permitted.block };
-							const checks: (() => void)[] = [permitted.check];
+							const checks: (() => void)[] = [permitted.check, ...active.map((source) => source.check)];
 							const sections: Record<string, string> = {};
 							let chars = 0;
 							for (const source of adapter.#managed?.contextSources ?? []) {
@@ -3538,7 +3971,8 @@ export class DurableAdapter {
 							return { messages, check };
 						} catch (error) {
 							const failure = error instanceof Error ? error : new Error(String(error));
-							if (!(failure instanceof LifecycleTransitionRevoked)) adapter?.markFailed(failure);
+							if (!(failure instanceof LifecycleTransitionRevoked) && !(failure instanceof AgentFacetRevoked))
+								adapter?.markFailed(failure);
 							return { block: failure.message };
 						}
 					},
@@ -3943,6 +4377,7 @@ export class DurableAdapter {
 			close: async () => {
 				if (this.#managed!.closed) return;
 				this.#managed!.closed = true;
+				for (const unsubscribe of this.#facetSubscriptions.splice(0)) unsubscribe();
 				await this.#harness.close(BACKGROUND_CONTEXT);
 				await Promise.all([...this.#routes.values()].map((route) => route.#closeExecution()));
 				await this.#database?.close();
@@ -4163,57 +4598,11 @@ export class DurableAdapter {
 			this.#harness.snapshot(UsageDoc, id, BACKGROUND_CONTEXT),
 		]);
 		authorize();
-		const total = { ...usageDTO() };
-		for (const item of [...Object.values(usage?.models ?? {}), ...Object.values(usage?.tools ?? {})]) {
-			const value = usageDTO(item);
-			total.input += value.input;
-			total.output += value.output;
-			total.cacheRead += value.cacheRead;
-			total.cacheWrite += value.cacheWrite;
-			total.totalTokens += value.totalTokens;
-			if (value.cost !== null) total.cost = (total.cost ?? 0) + value.cost;
-		}
-		const snippet = (value: string) =>
-			value.length <= 4096
-				? value
-				: value.slice(0, 1024) + "\n… [live display preview] …\n" + value.slice(-1024);
-		const original = live?.generation?.message;
-		let message: TranscriptMessage | undefined;
-		if (original) {
-			const content = original.content.map((part) => {
-				if (part.type === "text") return { ...part, text: snippet(part.text) };
-				if (part.type === "thinking") return { ...part, thinking: snippet(part.thinking) };
-				if (part.type === "toolCall") return { ...part, arguments: previewLiveArguments(part.arguments) };
-				return part;
-			});
-			message = transcriptMessage({
-				...original,
-				content,
-				...(original.errorMessage === undefined ? {} : { errorMessage: snippet(original.errorMessage) }),
-			});
-			if (message?.stopReason === "pending") {
-				const { stopReason: _pending, ...partial } = message;
-				message = partial;
-			}
-		}
 		const result: ConversationSnapshot = {
 			ref,
 			entries: [],
 			entriesTruncated: false,
-			live: {
-				busy: live?.run !== undefined,
-				...(message ? { message } : {}),
-				tools: (live?.tools ?? []).map((tool) => ({
-					callId: tool.callId,
-					name: tool.name,
-					status: tool.status,
-					...(tool.taskId === undefined ? {} : { taskId: String(tool.taskId) }),
-					...(tool.output === undefined ? {} : { output: snippet(tool.output) }),
-					...(tool.droppedBytes === undefined ? {} : { droppedBytes: tool.droppedBytes }),
-					...(tool.droppedLines === undefined ? {} : { droppedLines: tool.droppedLines }),
-				})),
-			},
-			usage: total,
+			...previewState(live, usage),
 		};
 		const entries: ConversationSnapshot["entries"][number][] = [];
 		const maxBytes = options.maxBytes ?? 256 * 1024;
@@ -4297,19 +4686,7 @@ export class DurableAdapter {
 		)
 			throw new MutationDenied("Original content source revision/visibility changed");
 		const indexed = await this.#indexedEntry(ref, header, authorize);
-		const original = indexed.contents.get(reference.id);
-		// Missing owner attribution does not bypass visibility: the header above was acquired through this exact ref.
-		const normalized =
-			original && reference.sourceConversationId === undefined
-				? { ...reference, sourceConversationId: original.reference.sourceConversationId }
-				: reference;
-		if (
-			!original ||
-			!isDeepStrictEqual(original.reference, normalized) ||
-			range.offset > reference.byteLength
-		)
-			throw new MutationDenied("Unknown/altered original content reference");
-		const read = async (offset: number, length: number) => {
+		const result = await readPreviewContent(indexed, reference, range, async (offset, length) => {
 			authorize();
 			const chunk = await archive.read(
 				id,
@@ -4321,42 +4698,9 @@ export class DurableAdapter {
 			if (!chunk || chunk.commitSeq !== header.commitSeq || chunk.byteLength !== header.byteLength)
 				throw new MutationDenied("Original content source changed");
 			return chunk.bytes;
-		};
-		let text: string, nextOffset: number;
-		if (original.span.encoding === "json-string") {
-			const value = await decodeEntryStringRange(read, original.span, range.offset, range.length);
-			text = value.text;
-			nextOffset = value.nextOffset;
-		} else {
-			const size = Math.min(range.length, original.span.byteLength - range.offset);
-			if (size === 0) {
-				text = "";
-				nextOffset = range.offset;
-			} else {
-				const bytes = await read(original.span.offset + range.offset, size);
-				let end = bytes.length;
-				for (; end > 0 && end < original.span.byteLength - range.offset && (bytes[end - 1]! & 192) === 128; )
-					end--;
-				if (end < bytes.length) {
-					const lead = bytes[end - 1];
-					const width = lead !== undefined && lead >= 240 ? 4 : lead !== undefined && lead >= 224 ? 3 : 2;
-					if (bytes.length - end + 1 >= width) end = bytes.length;
-					else end--;
-				}
-				if (end === bytes.length && end > 0 && bytes[end - 1]! >= 194) end--;
-				if (end < 1) throw new MutationDenied("Original content range cannot make progress");
-				text = Buffer.from(bytes.subarray(0, end)).toString("utf8");
-				nextOffset = range.offset + end;
-			}
-		}
-		authorize();
-		return copy({
-			reference,
-			text,
-			offset: range.offset,
-			nextOffset,
-			complete: nextOffset === reference.byteLength,
 		});
+		authorize();
+		return copy(result);
 	}
 	async #writeDisplay(
 		rawRef: ConversationRef,
@@ -5008,6 +5352,82 @@ export class DurableAdapter {
 			if (!member) throw new MutationDenied("Foreign catalog member reference");
 			return member;
 		};
+		const configurationOriginal = (raw: CatalogConfigurationRequest): CatalogConfigurationRequest => {
+			const original = storedJson<CatalogConfigurationRequest>(raw);
+			const ref = original?.target,
+				selection = original?.selection;
+			if (
+				!original ||
+				Object.keys(original).sort().join(",") !== "principal,requestId,selection,target" ||
+				!validKey(original.requestId) ||
+				!validKey(original.principal) ||
+				!ref ||
+				Object.keys(ref).sort().join(",") !== "conversationId,incarnation,key,profile,sessionId" ||
+				ref.sessionId !== this.#sessionId ||
+				![ref.sessionId, ref.key, ref.incarnation, ref.profile].every(validKey) ||
+				!selection ||
+				!["agent", "profile"].includes(selection.kind)
+			)
+				throw new MutationDenied("Invalid original configuration identity");
+			try {
+				conversationId(ref.conversationId);
+			} catch {
+				throw new MutationDenied("Invalid original Conversation identity");
+			}
+			if (selection.kind === "profile") {
+				if (Object.keys(selection).sort().join(",") !== "kind,profile" || !validKey(selection.profile))
+					throw new MutationDenied("Invalid original profile selection");
+			} else {
+				const change = selection.change;
+				if (
+					Object.keys(selection).sort().join(",") !== "change,kind" ||
+					!change ||
+					typeof change !== "object" ||
+					Array.isArray(change) ||
+					!Object.keys(change).length ||
+					Object.keys(change).some((key) => !["model", "cwd", "thinkingLevel"].includes(key)) ||
+					(change.model !== undefined &&
+						(typeof change.model !== "string" || !change.model || change.model.length > 1024)) ||
+					(change.cwd !== undefined &&
+						(typeof change.cwd !== "string" || !change.cwd || change.cwd.length > 8192)) ||
+					(change.thinkingLevel !== undefined &&
+						!["off", "minimal", "low", "medium", "high", "xhigh", "max"].includes(change.thinkingLevel))
+				)
+					throw new MutationDenied("Invalid original configuration selection");
+			}
+			return copy(original);
+		};
+		const configurationKey = (original: CatalogConfigurationRequest) =>
+			hash([options.namespace, original.principal, original.requestId]);
+		const retainConfiguration = async (
+			tx: Tx,
+			original: CatalogConfigurationRequest | undefined,
+			ref: ConversationRef,
+		) => {
+			if (!original) return;
+			const doc = await tx.doc(CatalogConfigurationDoc, configurationKey(original), null);
+			if (doc.receipt)
+				throw new MutationDenied("Configuration request identity conflict; query the original");
+			doc.namespace = options.namespace;
+			doc.receipt = storedJson<CatalogConfigurationReceipt>({ original, ref, at: Date.now() });
+		};
+		const configurationReceipt = async (raw: CatalogConfigurationRequest, check: () => void) => {
+			this.#managedReady();
+			checkAuthority(check);
+			const original = configurationOriginal(raw);
+			const doc = await this.#harness.snapshot(
+				CatalogConfigurationDoc,
+				configurationKey(original),
+				BACKGROUND_CONTEXT,
+			);
+			checkAuthority(check);
+			if (!doc) return null;
+			if (doc.namespace !== options.namespace || !doc.receipt)
+				throw new Error("Configuration receipt unavailable");
+			if (!isDeepStrictEqual(doc.receipt.original, original))
+				throw new MutationDenied("Original configuration conflict");
+			return copy(doc.receipt);
+		};
 		const status = async (stored: StoredDelivery): Promise<DeliveryReceipt> => {
 			const native = await this.#harness.submission(stored.submissionId as SubmissionId, BACKGROUND_CONTEXT);
 			if (!native) {
@@ -5070,6 +5490,7 @@ export class DurableAdapter {
 			return view();
 		};
 		return Object.freeze({
+			configurationReceipt,
 			snapshot: view,
 			lookupRequest: async (original: CatalogDeliverySpec, check: () => void) => {
 				checkAuthority(check);
@@ -5086,7 +5507,16 @@ export class DurableAdapter {
 				const spec = copy(original),
 					state = await read();
 				if (!state) throw new MutationDenied("Original catalog missing");
-				requireMember(state, spec.target);
+				// A retained delivery keeps its original target. Authorize the current member,
+				// then compare the full original route to the stored request below.
+				const current = Object.values(state.members).find(
+					({ ref }) =>
+						ref.key === spec.target.key &&
+						ref.sessionId === spec.target.sessionId &&
+						ref.conversationId === spec.target.conversationId,
+				)?.ref;
+				if (!current) throw new MutationDenied("Foreign catalog member reference");
+				requireMember(state, current);
 				if (spec.source) requireMember(state, spec.source);
 				const stored = (await readDelivery(deliveryId(spec), state))?.record;
 				checkAuthority(check);
@@ -5450,112 +5880,154 @@ export class DurableAdapter {
 				ref: ConversationRef,
 				raw: ConversationConfigurationChange,
 				check: () => void,
+				request?: CatalogConfigurationIdentity,
 			) => {
-				checkAuthority(check);
-				validateRef(ref);
-				const change = copy(raw),
-					managed = this.#managedReady();
-				const route = this.#routes.get(conversationId(ref.conversationId));
-				if (!route || route.#disposed || route.#failedReason) throw new MutationDenied("Member not ready");
-				if (
-					!change ||
-					typeof change !== "object" ||
-					Array.isArray(change) ||
-					!Object.keys(change).length ||
-					Object.keys(change).some((key) => !["model", "cwd", "thinkingLevel"].includes(key)) ||
-					(Object.hasOwn(change, "thinkingLevel") &&
-						!this.#approvedThinking(change.model ?? route.#options.model, change.thinkingLevel)) ||
-					(Object.hasOwn(change, "model") &&
-						(typeof change.model !== "string" || !this.#approvedModel(change.model)))
-				)
-					throw new MutationDenied("Unapproved configuration change");
-				const cwd = Object.hasOwn(change, "cwd")
-					? approvedDirectory(change.cwd, managed.cwdRoots)
-					: undefined;
-				const configured = await this.#persist(async (tx) => {
-					const state = await mutableState(tx, check),
-						runtime = await tx.doc(RuntimeDoc);
-					optionsMatch(state);
-
-					const found = requireMember(state, ref),
-						to = conversationId(ref.conversationId);
-					if (
-						found.data.phase !== "active" ||
-						(await tx.doc(LiveDoc, to)).run ||
-						(await tx.doc(InboxDoc, to)).items.length
-					)
-						throw new MutationDenied("Configure requires active idle member");
+				let committed = false;
+				try {
+					const original =
+						request &&
+						configurationOriginal({
+							requestId: request.requestId,
+							principal: request.principal,
+							target: ref,
+							selection: { kind: "agent", change: raw },
+						});
 					checkAuthority(check);
-					if (cwd !== undefined && approvedDirectory(cwd, managed.cwdRoots) !== cwd)
-						throw new MutationDenied("Directory changed");
-					await configure(tx, to, {
-						...(change.model !== undefined
-							? {
-									model: modelReference(route.#options, change.model),
-								}
-							: {}),
+					validateRef(ref);
+					const change = copy(raw),
+						managed = this.#managedReady();
+					const route = this.#routes.get(conversationId(ref.conversationId));
+					if (!route || route.#disposed || route.#failedReason) throw new MutationDenied("Member not ready");
+					if (
+						!change ||
+						typeof change !== "object" ||
+						Array.isArray(change) ||
+						!Object.keys(change).length ||
+						Object.keys(change).some((key) => !["model", "cwd", "thinkingLevel"].includes(key)) ||
+						(Object.hasOwn(change, "thinkingLevel") &&
+							!this.#approvedThinking(change.model ?? route.#options.model, change.thinkingLevel)) ||
+						(Object.hasOwn(change, "model") &&
+							(typeof change.model !== "string" || !this.#approvedModel(change.model)))
+					)
+						throw new MutationDenied("Unapproved configuration change");
+					const cwd = Object.hasOwn(change, "cwd")
+						? approvedDirectory(change.cwd, managed.cwdRoots)
+						: undefined;
+					const configured = await this.#persist(async (tx) => {
+						const state = await mutableState(tx, check),
+							runtime = await tx.doc(RuntimeDoc);
+						optionsMatch(state);
+
+						const found = requireMember(state, ref),
+							to = conversationId(ref.conversationId);
+						if (
+							found.data.phase !== "active" ||
+							(await tx.doc(LiveDoc, to)).run ||
+							(await tx.doc(InboxDoc, to)).items.length
+						)
+							throw new MutationDenied("Configure requires active idle member");
+						checkAuthority(check);
+						if (cwd !== undefined && approvedDirectory(cwd, managed.cwdRoots) !== cwd)
+							throw new MutationDenied("Directory changed");
+						await configure(tx, to, {
+							...(change.model !== undefined
+								? {
+										model: modelReference(route.#options, change.model),
+									}
+								: {}),
+							...(cwd !== undefined ? { cwd } : {}),
+							...(change.thinkingLevel !== undefined ? { thinkingLevel: change.thinkingLevel } : {}),
+						});
+						checkAuthority(check);
+						const next = { ...ref, incarnation: randomUUID() };
+						await retainConfiguration(tx, original, next);
+						checkAuthority(check);
+						runtime.resources[ref.key] = next;
+						state.members[found.key]!.ref = next;
+						state.version++;
+						return storedJson<StoredMember>(state.members[found.key]);
+					});
+					committed = true;
+					route.#options = {
+						...route.#options,
+						...(change.model !== undefined ? { model: change.model } : {}),
 						...(cwd !== undefined ? { cwd } : {}),
 						...(change.thinkingLevel !== undefined ? { thinkingLevel: change.thinkingLevel } : {}),
-					});
-					checkAuthority(check);
-					const next = { ...ref, incarnation: randomUUID() };
-					runtime.resources[ref.key] = next;
-					state.members[found.key]!.ref = next;
-					state.version++;
-					return storedJson<StoredMember>(state.members[found.key]);
-				});
-				route.#options = {
-					...route.#options,
-					...(change.model !== undefined ? { model: change.model } : {}),
-					...(cwd !== undefined ? { cwd } : {}),
-					...(change.thinkingLevel !== undefined ? { thinkingLevel: change.thinkingLevel } : {}),
-				};
-				route.#control.configurationChanged();
-				await route.refreshCache();
-				return configured;
+					};
+					route.#control.configurationChanged();
+					await route.refreshCache();
+					return configured;
+				} catch (error) {
+					if (!committed && error instanceof MutationDenied)
+						throw new ConfigurationChangeRefusedError(error.message);
+					throw error;
+				}
 			},
-			configure: async (ref: ConversationRef, profileId: string, check: () => void) => {
-				checkAuthority(check);
-				validateRef(ref);
-				const profile = this.#managedReady().profiles.get(profileId);
-				if (!profile) throw new MutationDenied("Unapproved runtime profile");
-				const route = this.#routes.get(conversationId(ref.conversationId));
-				if (!route || route.#disposed || route.#failedReason) throw new MutationDenied("Member not ready");
-				const configured = await this.#persist(async (tx) => {
-					const state = await mutableState(tx, check),
-						runtime = await tx.doc(RuntimeDoc);
-					optionsMatch(state);
+			configure: async (
+				ref: ConversationRef,
+				profileId: string,
+				check: () => void,
+				request?: CatalogConfigurationIdentity,
+			) => {
+				let committed = false;
+				try {
+					const original =
+						request &&
+						configurationOriginal({
+							requestId: request.requestId,
+							principal: request.principal,
+							target: ref,
+							selection: { kind: "profile", profile: profileId },
+						});
+					checkAuthority(check);
+					validateRef(ref);
+					const profile = this.#managedReady().profiles.get(profileId);
+					if (!profile) throw new MutationDenied("Unapproved runtime profile");
+					const route = this.#routes.get(conversationId(ref.conversationId));
+					if (!route || route.#disposed || route.#failedReason) throw new MutationDenied("Member not ready");
+					const configured = await this.#persist(async (tx) => {
+						const state = await mutableState(tx, check),
+							runtime = await tx.doc(RuntimeDoc);
+						optionsMatch(state);
 
-					const found = requireMember(state, ref),
-						to = conversationId(ref.conversationId);
-					if (
-						found.data.phase !== "active" ||
-						(await tx.doc(LiveDoc, to)).run ||
-						(await tx.doc(InboxDoc, to)).items.length
-					)
-						throw new MutationDenied("Configure requires active idle member");
-					checkAuthority(check);
-					const extension = this.#registry!.snapshot().extension(
-						profileId === "default" ? "pakka-core-extension" : "pakka-profile-" + profileId,
-					)!;
-					await configure(tx, to, {
-						model: modelReference(profile, profile.model),
-						extensions: [extension],
-						instructions: profile.systemPrompt,
-						thinkingLevel: profile.thinkingLevel,
-						cwd: profile.cwd,
+						const found = requireMember(state, ref),
+							to = conversationId(ref.conversationId);
+						if (
+							found.data.phase !== "active" ||
+							(await tx.doc(LiveDoc, to)).run ||
+							(await tx.doc(InboxDoc, to)).items.length
+						)
+							throw new MutationDenied("Configure requires active idle member");
+						checkAuthority(check);
+						const extension = this.#registry!.snapshot().extension(
+							profileId === "default" ? "pakka-core-extension" : "pakka-profile-" + profileId,
+						)!;
+						await configure(tx, to, {
+							model: modelReference(profile, profile.model),
+							extensions: [extension],
+							instructions: profile.systemPrompt,
+							thinkingLevel: profile.thinkingLevel,
+							cwd: profile.cwd,
+						});
+						checkAuthority(check);
+						const next = { ...ref, incarnation: randomUUID(), profile: profileId };
+						await retainConfiguration(tx, original, next);
+						checkAuthority(check);
+						runtime.resources[ref.key] = next;
+						state.members[found.key]!.ref = next;
+						state.version++;
+						return storedJson<StoredMember>(state.members[found.key]);
 					});
-					checkAuthority(check);
-					const next = { ...ref, incarnation: randomUUID(), profile: profileId };
-					runtime.resources[ref.key] = next;
-					state.members[found.key]!.ref = next;
-					state.version++;
-					return storedJson<StoredMember>(state.members[found.key]);
-				});
-				route.#options = profile;
-				route.#control.configurationChanged();
-				await route.refreshCache();
-				return configured;
+					committed = true;
+					route.#options = profile;
+					route.#control.configurationChanged();
+					await route.refreshCache();
+					return configured;
+				} catch (error) {
+					if (!committed && error instanceof MutationDenied)
+						throw new ConfigurationChangeRefusedError(error.message);
+					throw error;
+				}
 			},
 			deliver: async (original: CatalogDeliverySpec, check: () => void) => {
 				checkAuthority(check);

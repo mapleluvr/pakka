@@ -135,7 +135,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
 		JSON.stringify({ schema: 1, sessionFile: workbench.app.runtime.view().sessionFile }) + "\n",
 	);
 	const token = workbench.app.initialOwner?.token;
-	console.log(workbench.app.http.origin + (token ? "/#signin=" + token : ""));
+	console.log(workbench.app.http.origin + (token ? "/#session=" + token : ""));
 	console.log(
 		"Tickets are ready. Agent execution uses the explicitly configured provider. Ctrl+C closes the workbench; records remain in its SQLite storage.",
 	);

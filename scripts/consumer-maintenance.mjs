@@ -101,7 +101,7 @@ try {
 	app = launch(["--no-open", "--control-stdin", "--login-file", login.file]);
 	const resumed = await app.ready();
 	assert.equal(resumed.sessionFile, original.sessionFile);
-	const response = await fetch(resumed.origin + "/pocket/exchange", {
+	const response = await fetch(resumed.origin + "/pakka-webui/exchange", {
 		method: "POST",
 		headers: { Origin: resumed.origin, "Content-Type": "application/json" },
 		body: JSON.stringify({ kind: "session", token: credential.token }),

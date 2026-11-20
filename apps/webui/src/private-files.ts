@@ -60,18 +60,21 @@ export async function privateDirectory(path: string): Promise<void> {
 	if (!(await lstat(path)).isDirectory()) throw new Error("Private directory required");
 	await verifyPrivatePath(path);
 }
-export async function writePrivateJson(path: string, value: unknown): Promise<void> {
+export async function writePrivateText(path: string, value: string): Promise<void> {
 	await verifyPrivatePath(dirname(path));
 	const file = await open(path, "wx", 0o600);
 	try {
 		if (process.platform === "win32") await windowsAcl(path, true);
 		await verifyPrivatePath(path);
-		await file.writeFile(JSON.stringify(value) + "\n");
+		await file.writeFile(value);
 		await file.sync();
 	} finally {
 		await file.close();
 	}
 	await verifyPrivatePath(path);
+}
+export async function writePrivateJson(path: string, value: unknown): Promise<void> {
+	await writePrivateText(path, JSON.stringify(value) + "\n");
 }
 export async function replacePrivateJson(path: string, value: unknown): Promise<void> {
 	await verifyPrivatePath(dirname(path));

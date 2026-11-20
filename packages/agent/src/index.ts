@@ -4,7 +4,10 @@ export type * from "./execution-types.ts";
 export { createLocalExecutionEnvironment, executionFor } from "./durable-adapter.ts";
 export { createHost } from "./host.ts";
 export { createRuntime } from "./runtime.ts";
+export { createAgentFacet } from "./agent-facet.ts";
+export type { AgentFacet, AgentFacetDefinition, AgentFacetStatus } from "./agent-facet.ts";
 export {
+	ConfigurationChangeRefusedError,
 	BudgetChangeRefusedError,
 	RecordsRequestRefusedError,
 	RecordsPublicationError,
@@ -12,4 +15,6 @@ export {
 	createCompresserSession,
 	recoverStorageWriter,
 	openStorageMaintenance,
+	readStoredConversation,
+	StoredHistoryReadRefusal,
 } from "./durable-adapter.ts";

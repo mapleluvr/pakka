@@ -47,7 +47,7 @@ export async function prepareRecoveryLink(runtime: Runtime, origin: string, file
 		receipt.expiresAt <= Date.now()
 	)
 		throw new Error("Original recovery issuance is unavailable or expired");
-	const url = origin + "/#signin=" + credential.token,
+	const url = origin + "/#session=" + credential.token,
 		path = join(dirname(file), "browser-link.json"),
 		value = { schema: 1, sessionId, recoveryId: credential.recoveryId, url };
 	let exists = false;

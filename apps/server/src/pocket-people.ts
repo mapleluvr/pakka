@@ -1,5 +1,22 @@
 import { createHash, randomBytes, randomUUID, timingSafeEqual } from "node:crypto";
 import type { ConversationRef, JsonObject, Runtime, StorageMaintenance } from "@pakka/agent";
+import {
+	decodePeopleChange,
+	decodePeopleReceipt,
+	peopleIntent,
+	type PeopleAction,
+	type PeopleChange,
+	type PeopleReceipt,
+} from "@pakka/protocol/webui";
+
+export class PocketPeopleChangeRefused extends Error {
+	readonly code: "FORBIDDEN" | "CONFLICT";
+	constructor(code: "FORBIDDEN" | "CONFLICT") {
+		super(`WebUI people change ${code === "CONFLICT" ? "conflict" : "denied"}`);
+		this.name = "PocketPeopleChangeRefused";
+		this.code = code;
+	}
+}
 
 export type PocketRole = "viewer" | "sender" | "driver" | "admin";
 export type PocketPermission =
@@ -65,12 +82,19 @@ export interface PocketPeople {
 	/** Existing Conversation grant identity; child Sessions cannot alias a bare native ID. */
 	resourceId(ref: Pick<ConversationRef, "sessionId" | "conversationId">): string;
 	check(actor: PocketAuthority, permission: PocketPermission, resourceId?: string): void;
+	/** Read grant only. The caller must verify a known source and persisted identity; this grants no execution binding. */
+	checkReadGrant(actor: PocketAuthority, ref: Pick<ConversationRef, "sessionId" | "conversationId">): void;
 	/** Trusted service recheck of a persisted originating person. This issues no browser session/capability. */
 	authorizePerson(id: string, permission: PocketPermission, resourceId?: string): PocketPerson;
 	invite(
 		actor: PocketAuthority,
 		input: PocketInviteInput,
 	): Promise<{ readonly invite: PocketInvite; readonly token: string | null }>;
+	/** Observe an original invitation without creating it or returning its one-time secret. */
+	lookupInvite(actor: PocketAuthority, original: PocketInviteInput): Promise<PocketInvite | null>;
+	/** Commit authority and its original-request receipt in the same existing People CAS. */
+	change(actor: PocketAuthority, change: PeopleChange, check?: () => void): Promise<PeopleReceipt>;
+	lookupChange(actor: PocketAuthority, original: PeopleChange): Promise<PeopleReceipt | null>;
 	setPerson(
 		actor: PocketAuthority,
 		id: string,
@@ -117,7 +141,16 @@ type Invite = {
 	redeemedTo: string | null;
 	targetPersonId: string | null;
 };
-type State = { schema: 1; sessionId: string; people: Person[]; sessions: Session[]; invites: Invite[] };
+type SavedPeopleReceipt = { [K in keyof PeopleReceipt]: PeopleReceipt[K] };
+type State = {
+	schema: 2;
+	sessionId: string;
+	people: Person[];
+	sessions: Session[];
+	invites: Invite[];
+	changes: SavedPeopleReceipt[];
+};
+const MAX_CHANGES = 512;
 const MAX_PEOPLE = 128,
 	MAX_SESSIONS = 512,
 	MAX_INVITES = 512,
@@ -168,6 +201,33 @@ function freeze<T>(value: T): T {
 function deny(): never {
 	throw new Error("WebUI authority denied");
 }
+function invitationIntent(input: PocketInviteInput) {
+	if (
+		!record(input) ||
+		Object.keys(input).some(
+			(key) => !["requestId", "personId", "role", "resources", "ttlMs"].includes(key),
+		) ||
+		!isId(input.requestId) ||
+		!isRole(input.role) ||
+		!isScope(input.resources) ||
+		(input.personId !== undefined && !isId(input.personId)) ||
+		!Number.isSafeInteger(input.ttlMs) ||
+		input.ttlMs < 1 ||
+		input.ttlMs > 7 * 24 * 60 * 60 * 1000
+	)
+		throw new Error("Invalid finite WebUI invitation");
+	const { requestId, role, ttlMs } = input,
+		targetPersonId = input.personId ?? null;
+	const resources: "*" | string[] = input.resources === "*" ? "*" : [...input.resources].sort();
+	return {
+		requestId,
+		role,
+		ttlMs,
+		targetPersonId,
+		resources,
+		fingerprint: digest(JSON.stringify({ role, resources, ttlMs, targetPersonId })),
+	};
+}
 function personView(p: Person): PocketPerson {
 	return freeze({ ...p, resources: p.resources === "*" ? "*" : [...p.resources] });
 }
@@ -182,14 +242,19 @@ function inviteView(i: Invite): PocketInvite {
 }
 function decode(data: JsonObject, version: number, sessionId: string): State {
 	if (version === 0 && Object.keys(data).length === 0)
-		return { schema: 1, sessionId, people: [], sessions: [], invites: [] };
+		return { schema: 2, sessionId, people: [], sessions: [], invites: [], changes: [] };
 	const bad = () => {
 		throw new Error("Invalid persisted WebUI people state");
 	};
 	if (
 		!record(data) ||
-		!keys(data, ["schema", "sessionId", "people", "sessions", "invites"]) ||
-		data.schema !== 1 ||
+		!keys(
+			data,
+			data.schema === 1
+				? ["schema", "sessionId", "people", "sessions", "invites"]
+				: ["schema", "sessionId", "people", "sessions", "invites", "changes"],
+		) ||
+		(data.schema !== 1 && data.schema !== 2) ||
 		data.sessionId !== sessionId ||
 		!Array.isArray(data.people) ||
 		!Array.isArray(data.sessions) ||
@@ -302,7 +367,26 @@ function decode(data: JsonObject, version: number, sessionId: string): State {
 		!people.some((p) => p.active && p.role === "admin" && p.resources === "*")
 	)
 		return bad();
-	return { schema: 1, sessionId, people, sessions, invites };
+	const changes: SavedPeopleReceipt[] = [];
+	if (data.schema === 2) {
+		if (!Array.isArray(data.changes) || data.changes.length > MAX_CHANGES) return bad();
+		let previous = 0;
+		for (const value of data.changes) {
+			const receipt = decodePeopleReceipt(value);
+			if (
+				receipt.sessionId !== sessionId ||
+				receipt.version <= previous ||
+				receipt.version > version ||
+				!people.some((person) => person.id === receipt.actorId)
+			)
+				return bad();
+			changes.push(receipt);
+			previous = receipt.version;
+		}
+		if (new Set(changes.map((row) => row.actorId + ":" + row.requestId)).size !== changes.length)
+			return bad();
+	}
+	return { schema: 2, sessionId, people, sessions, invites, changes };
 }
 
 /** Trusted local maintenance; never exposed through an unauthenticated HTTP route. */
@@ -497,16 +581,19 @@ async function openPeople(
 			return deny();
 		return { s, p };
 	}
-	function personAllowed(p: Person, permission: PocketPermission, resource?: string) {
+	function personGranted(p: Person, permission: PocketPermission, resource?: string) {
 		if (!p.active || blockedPeople.has(p.id) || !permissions[p.role].includes(permission)) return deny();
 		if (["read", "send", "steer", "manage"].includes(permission)) {
-			if (
-				!resource ||
-				!availableResources().some((ref) => resourceId(ref) === resource) ||
-				(p.resources !== "*" && !p.resources.includes(resource))
-			)
-				return deny();
+			if (!resource || (p.resources !== "*" && !p.resources.includes(resource))) return deny();
 		} else if (p.resources !== "*") return deny();
+	}
+	function personAllowed(p: Person, permission: PocketPermission, resource?: string) {
+		personGranted(p, permission, resource);
+		if (
+			["read", "send", "steer", "manage"].includes(permission) &&
+			!availableResources().some((ref) => resourceId(ref) === resource)
+		)
+			return deny();
 	}
 	function bound(actor: PocketAuthority, permission: PocketPermission, resource?: string) {
 		const id = bindings.get(actor);
@@ -598,6 +685,70 @@ async function openPeople(
 		);
 		return operation;
 	}
+	function applyAuthority(data: State, actor: PocketAuthority, action: PeopleAction, block: boolean) {
+		const issuer = bound(actor, "invite");
+		const refused = () => {
+			throw new PocketPeopleChangeRefused("FORBIDDEN");
+		};
+		if (action.op === "invite.revoke") {
+			const invite = data.invites.find((row) => row.id === action.id);
+			if (!invite) return refused();
+			if (block) blockedInvites.add(invite.id);
+			if (invite.status === "pending") invite.status = "revoked";
+			return;
+		}
+		const id = action.op === "person.set" ? action.personId : action.id;
+		const target = data.people.find((person) => person.id === id);
+		if (!target || issuer.p.id === id) return refused();
+		if (action.op === "person.set") {
+			if (!target.active) return refused();
+			let resources: "*" | string[];
+			try {
+				resources = scope(action.resources);
+			} catch {
+				return refused();
+			}
+			target.role = action.role;
+			target.resources = resources;
+			if (block)
+				for (const session of data.sessions) if (session.personId === id) blockedSessions.add(session.id);
+			for (const invite of data.invites)
+				if ((invite.issuerId === id || invite.targetPersonId === id) && invite.status === "pending")
+					invite.status = "revoked";
+		} else {
+			if (
+				target.active &&
+				target.role === "admin" &&
+				target.resources === "*" &&
+				data.people.filter((person) => person.active && person.role === "admin" && person.resources === "*")
+					.length < 2
+			)
+				return refused();
+			target.active = false;
+			if (block) blockedPeople.add(id);
+			for (const invite of data.invites)
+				if (invite.issuerId === id && invite.status === "pending") invite.status = "revoked";
+		}
+		for (const session of data.sessions) if (session.personId === id) session.active = false;
+		if (block) notifyAuthority();
+	}
+	function previousChange(data: State, actorId: string, original: PeopleChange) {
+		const prior = data.changes.find((row) => row.actorId === actorId && row.requestId === original.requestId);
+		if (prior && peopleIntent(prior.action) !== peopleIntent(original.action))
+			throw new PocketPeopleChangeRefused("CONFLICT");
+		return prior ?? null;
+	}
+	function legacyChange(actor: PocketAuthority, action: PeopleAction) {
+		const checked = decodePeopleChange({ requestId: "legacy-validation", action }).action;
+		// Existing calls retain immediate local revocation while the durable CAS is pending.
+		applyAuthority(structuredClone(state), actor, checked, true);
+		return mutate(
+			(draft) => applyAuthority(draft, actor, checked, false),
+			() => {
+				bound(actor, "invite");
+			},
+		);
+	}
 	await refresh();
 	return Object.freeze({
 		lease: (
@@ -653,6 +804,11 @@ async function openPeople(
 			return personView(sessionFor(id).p);
 		},
 		resourceId,
+		checkReadGrant: (actor: PocketAuthority, ref: Pick<ConversationRef, "sessionId" | "conversationId">) => {
+			const id = bindings.get(actor);
+			if (!id) return deny();
+			personGranted(sessionFor(id).p, "read", resourceId(ref));
+		},
 		check: (actor: PocketAuthority, permission: PocketPermission, resource?: string) => {
 			bound(actor, permission, resource);
 		},
@@ -704,25 +860,19 @@ async function openPeople(
 			bindings.set(actor, found.id);
 			return actor;
 		},
+		lookupInvite: async (actor: PocketAuthority, original: PocketInviteInput) => {
+			bound(actor, "invite");
+			const { requestId, fingerprint } = invitationIntent(original);
+			await refresh();
+			const { p } = bound(actor, "invite");
+			const prior = state.invites.find((row) => row.issuerId === p.id && row.requestId === requestId);
+			if (prior && prior.fingerprint !== fingerprint) throw new Error("WebUI invitation request conflict");
+			return prior ? inviteView(prior) : null;
+		},
 		invite: async (actor: PocketAuthority, input: PocketInviteInput) => {
 			bound(actor, "invite");
-			if (
-				!input ||
-				Object.keys(input).some(
-					(key) => !["requestId", "personId", "role", "resources", "ttlMs"].includes(key),
-				) ||
-				!isId(input.requestId) ||
-				!isRole(input.role) ||
-				(input.personId !== undefined && !isId(input.personId)) ||
-				!Number.isSafeInteger(input.ttlMs) ||
-				input.ttlMs < 1 ||
-				input.ttlMs > 7 * 24 * 60 * 60 * 1000
-			)
-				throw new Error("Invalid finite WebUI invitation");
-			const { requestId, role, ttlMs } = input,
-				targetPersonId = input.personId ?? null;
-			const resources = scope(input.resources),
-				fingerprint = digest(JSON.stringify({ role, resources, ttlMs, targetPersonId }));
+			const { requestId, role, ttlMs, targetPersonId, resources, fingerprint } = invitationIntent(input);
+			scope(resources);
 			return mutate(
 				(draft) => {
 					const { p } = bound(actor, "invite");
@@ -796,88 +946,58 @@ async function openPeople(
 				},
 			);
 		},
+		change: async (
+			actor: PocketAuthority,
+			input: PeopleChange,
+			check?: () => void,
+		): Promise<PeopleReceipt> => {
+			const original = decodePeopleChange(input);
+			const actorId = bound(actor, "invite").p.id;
+			return mutate(
+				(draft) => {
+					const prior = previousChange(draft, actorId, original);
+					if (prior) return freeze(structuredClone(prior));
+					if (draft.changes.length >= MAX_CHANGES) throw new PocketPeopleChangeRefused("FORBIDDEN");
+					applyAuthority(draft, actor, original.action, true);
+					const receipt = decodePeopleReceipt({
+						...original,
+						actorId,
+						sessionId,
+						version: version + 1,
+						at: time(),
+					});
+					draft.changes.push(receipt);
+					return receipt;
+				},
+				() => {
+					bound(actor, "invite");
+					check?.();
+				},
+			);
+		},
+		lookupChange: async (actor: PocketAuthority, input: PeopleChange): Promise<PeopleReceipt | null> => {
+			const original = decodePeopleChange(input);
+			await refresh();
+			const prior = previousChange(state, bound(actor, "invite").p.id, original);
+			return prior ? freeze(structuredClone(prior)) : null;
+		},
 		setPerson: async (
 			actor: PocketAuthority,
 			id: string,
 			input: { readonly role: PocketRole; readonly resources: PocketResources },
 		) => {
-			const issuer = bound(actor, "invite");
-			if (
-				issuer.p.id === id ||
-				!input ||
-				Object.keys(input).some((key) => !["role", "resources"].includes(key)) ||
-				!isRole(input.role) ||
-				!state.people.some((p) => p.id === id && p.active)
-			)
-				return deny();
-			const role = input.role,
-				resources = scope(input.resources);
-			for (const s of state.sessions) if (s.personId === id) blockedSessions.add(s.id);
-			notifyAuthority();
-			await mutate(
-				(draft) => {
-					const target = draft.people.find((p) => p.id === id && p.active);
-					if (!target) return deny();
-					target.role = role;
-					target.resources = resources;
-					for (const s of draft.sessions) if (s.personId === id) s.active = false;
-					for (const i of draft.invites)
-						if ((i.issuerId === id || i.targetPersonId === id) && i.status === "pending")
-							i.status = "revoked";
-				},
-				() => {
-					bound(actor, "invite");
-				},
-			);
+			if (!input || Object.keys(input).some((key) => !["role", "resources"].includes(key))) return deny();
+			return legacyChange(actor, { op: "person.set", personId: id, ...input });
 		},
 		list: async (actor: PocketAuthority) => {
 			await refresh();
 			bound(actor, "invite");
 			return freeze({ people: state.people.map(personView), invites: state.invites.map(inviteView) });
 		},
-		revokeInvite: async (actor: PocketAuthority, id: string) => {
-			bound(actor, "invite");
-			if (!isId(id)) return deny();
-			if (!state.invites.some((i) => i.id === id)) return deny();
-			blockedInvites.add(id);
-			await mutate(
-				(draft) => {
-					const invite = draft.invites.find((row) => row.id === id);
-					if (!invite) return deny();
-					if (invite.status === "pending") invite.status = "revoked";
-				},
-				() => {
-					bound(actor, "invite");
-				},
-			);
-		},
-		revokePerson: async (actor: PocketAuthority, id: string) => {
-			const issuer = bound(actor, "invite");
-			const target = state.people.find((p) => p.id === id);
-			if (!target || issuer.p.id === id) return deny();
-			if (
-				target.active &&
-				target.role === "admin" &&
-				target.resources === "*" &&
-				state.people.filter((p) => p.active && p.role === "admin" && p.resources === "*").length < 2
-			)
-				return deny();
-			blockedPeople.add(id);
-			notifyAuthority();
-			await mutate(
-				(draft) => {
-					const target = draft.people.find((p) => p.id === id);
-					if (!target) return deny();
-					target.active = false;
-					for (const s of draft.sessions) if (s.personId === id) s.active = false;
-					for (const i of draft.invites)
-						if (i.issuerId === id && i.status === "pending") i.status = "revoked";
-				},
-				() => {
-					bound(actor, "invite");
-				},
-			);
-		},
+		revokeInvite: async (actor: PocketAuthority, id: string) =>
+			legacyChange(actor, { op: "invite.revoke", id }),
+		revokePerson: async (actor: PocketAuthority, id: string) =>
+			legacyChange(actor, { op: "person.revoke", id }),
 		rotate: async (actor: PocketAuthority) => {
 			const id = bindings.get(actor);
 			if (!id) return deny();

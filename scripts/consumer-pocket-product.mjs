@@ -4,9 +4,7 @@ import { createServer } from "node:http";
 import { mkdir, readFile, writeFile, cp } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { createPocketClient } from "@pakka/client/pocket";
-import { ownedBrowser } from "./pocket-browser.ts";
-import { conversationAction, organizationAction, openConversations } from "./frontend-controls.ts";
+import { loginHttp, connectHttp } from "./consumer-webui-http.mjs";
 
 const root = dirname(fileURLToPath(import.meta.url)),
 	requests = [],
@@ -48,13 +46,15 @@ const provider = createServer((req, res) => {
 	});
 });
 await new Promise((resolve) => provider.listen(0, "127.0.0.1", resolve));
-const cwd = join(root, "pocket-product-cwd"),
-	dataDir = join(root, "pocket-product-data"),
-	configFile = join(root, "pocket-product.json"),
-	ownerFile = join(root, "pocket-owner.txt");
+const run = join(root, "product-run-" + crypto.randomUUID());
+await mkdir(run);
+const cwd = join(run, "cwd"),
+	dataDir = join(run, "data"),
+	configFile = join(run, "product.json"),
+	ownerFile = join(run, "owner.txt");
 await mkdir(cwd);
 await mkdir(dataDir);
-const extensionRoot = join(root, "installed-extension-examples");
+const extensionRoot = join(run, "installed-extension-examples");
 await cp(join(root, "node_modules/@pakka/webui/examples"), extensionRoot, { recursive: true });
 let config = {
 	runtime: {
@@ -69,12 +69,12 @@ let config = {
 	},
 	owner: "Operator",
 	profiles: ["default", "alternate"],
-	extensions: ["hello", "preferences"].map((name) => ({
+	extensions: ["preferences"].map((name) => ({
 		root: join(extensionRoot, name),
 	})),
 	initial: [{ name: "Installed project", profile: "default" }],
 };
-let child, browser;
+let child;
 async function start() {
 	await writeFile(configFile, JSON.stringify(config));
 	child = spawn(
@@ -132,109 +132,82 @@ async function stop() {
 try {
 	let info = await start();
 	const link = (await readFile(ownerFile, "utf8")).trim();
-	assert.equal(
-		child.captured().includes(new URLSearchParams(new URL(link).hash.slice(1)).get("signin")),
-		false,
+	const token = new URLSearchParams(new URL(link).hash.slice(1)).get("session");
+	assert.ok(token);
+	assert.equal(child.captured().includes(token), false);
+	let owner = await loginHttp(info.origin, token);
+	const html = await fetch(info.origin).then((response) => response.text());
+	assert.match(html, /@pakka\/webui-sdk/);
+	const entry = /<script type="module" src="([^"]+)"/.exec(html)?.[1];
+	assert.ok(entry);
+	assert.equal((await fetch(info.origin + entry)).status, 200);
+	assert.equal((await fetch(info.origin + "/pakka-webui/service-worker.js")).status, 200);
+	assert.doesNotMatch(html, /PRIVATE-PROVIDER-CANARY/);
+	const listed = await owner.rpc({ op: "list" });
+	assert.equal(listed.conversations.length, 1);
+	let target = listed.conversations[0];
+	const preference = await owner.call(
+		"preferences",
+		"save",
+		{ text: "PRIVATE-INSTALLED-PREFERENCE" },
+		undefined,
+		"installed-preference",
 	);
-	browser = await ownedBrowser(join(root, "pocket-owned-profile"));
-	const owner = await browser.page(link);
-	await owner.wait('document.querySelector("[data-action=signin]")');
-	await owner.click("[data-action=signin]");
-	await owner.wait('document.querySelector("[data-interface=hello-home]")');
-	await owner.click("[data-interface=hello-home]");
-	await owner.wait('document.querySelector("[data-hello-count]")?.textContent === "0"');
-	await owner.click("[data-increment]");
-	await owner.wait('document.querySelector("[data-hello-count]")?.textContent === "1"');
-	await owner.click("[data-interface=preferences-settings]");
-	await owner.wait('document.querySelector("input[name=exampleLabel]")');
-	await owner.type("input[name=exampleLabel]", "PRIVATE-INSTALLED-PREFERENCE");
-	await owner.click("[data-save-label]");
-	await owner.wait(
-		'document.querySelector("[data-current-label]")?.textContent === "PRIVATE-INSTALLED-PREFERENCE"',
+	assert.equal(preference.state, "done");
+	const card = await owner.call(
+		"preferences",
+		"card",
+		{ text: "INSTALLED-DISPLAY-CARD" },
+		target,
+		"installed-card",
 	);
-	await owner.click('[aria-label="Close Example preferences"]');
-	await owner.click("[data-action=commands]");
-	await owner.wait('document.querySelector("[data-command=preferences-status]")');
-	await owner.click("[data-command=preferences-status]");
-	await owner.wait(
-		'document.querySelector("[role=alert]")?.textContent.includes("PRIVATE-INSTALLED-PREFERENCE")',
-	);
+	assert.equal(card.state, "done");
 	assert.equal(requests.length, 0);
-	await owner.wait('document.querySelector("[data-conversation]")');
-	await owner.click("[data-conversation]");
-	await owner.wait('document.querySelector("[data-action=send]")?.disabled === false');
-	assert.equal(await owner.evaluate('typeof process + ":" + typeof require'), "undefined:undefined");
-	assert.equal(
-		await owner.evaluate(
-			'document.querySelector("[data-conversation]").textContent.includes("Installed project")',
-		),
-		true,
-	);
-	await owner.type("textarea[name=message]", '/preferences-card {"text":"INSTALLED-DISPLAY-CARD"}');
-	await owner.click("[data-action=send]");
-	await owner.wait('document.querySelector(".tool-card")?.textContent.includes("INSTALLED-DISPLAY-CARD")');
-	assert.equal(requests.length, 0);
-	await conversationAction(owner, "settings");
-	await owner.wait('document.querySelector("[data-cost]")');
-	assert.match(String(await owner.evaluate('document.querySelector("[data-cost]").innerText')), /unknown/i);
-	await owner.wait('document.querySelector("[data-credential-input]")?.disabled===false');
-	await owner.type("[data-credential-input]", "SYNTHETIC-INSTALLED-REPLACEMENT");
-	await owner.click("[data-credential-replace]");
-	await owner.wait(
-		'document.querySelector("[data-credential-status]")?.dataset.version==="1"&&document.querySelector("[data-credential-input]").value===""',
-	);
-	assert.equal(
-		await owner.evaluate(
-			'JSON.stringify({...localStorage,...sessionStorage}).includes("SYNTHETIC-INSTALLED-REPLACEMENT")||document.body.innerText.includes("SYNTHETIC-INSTALLED-REPLACEMENT")',
-		),
-		false,
-	);
-	await owner.click('[aria-label="Close settings"]');
-	await owner.click("[data-action=model]");
-	await owner.wait('document.querySelector("[data-pick-model=installed-alternate]")');
-	await owner.click("[data-pick-model=installed-alternate]");
-	await owner.wait(
-		'!document.querySelector("[data-pick-model]")&&document.querySelector("[data-action=model]")?.textContent.includes("installed-alternate")&&document.querySelector("[data-action=send]")?.disabled===false',
-	);
-	await owner.type("textarea[name=message]", "INSTALLED-EXPLICIT-WORK");
-	await owner.click("[data-action=send]");
-	await owner.wait('document.querySelector("main").innerText.includes("INSTALLED-POCKET-ANSWER")');
+	const replaced = await owner.rpc({
+		op: "credential.replace",
+		input: { requestId: "replace", expectedVersion: 0, secret: "SYNTHETIC-INSTALLED-REPLACEMENT" },
+	});
+	assert.equal(replaced.status.version, 1);
+	assert.ok(!JSON.stringify(replaced).includes("SYNTHETIC-INSTALLED-REPLACEMENT"));
+	const configured = await owner.rpc({ op: "configure", target, profile: "alternate" });
+	assert.equal(configured.kind, "reference");
+	assert.notEqual(configured.ref.incarnation, target.incarnation);
+	target = configured.ref;
+	const input = { requestId: "installed-work", text: "INSTALLED-EXPLICIT-WORK", mode: "prompt" };
+	const receipt = (await owner.rpc({ op: "submit", target, input })).receipt;
+	const done = (await owner.rpc({ op: "wait", id: receipt.id })).receipt;
+	assert.equal(done.status, "done");
 	assert.equal(requests.length, 1);
 	assert.equal(requests[0].model, "installed-alternate");
 	assert.equal(authorization[0], "Bearer SYNTHETIC-INSTALLED-REPLACEMENT");
-	await organizationAction(owner, "people");
-	await owner.wait('document.querySelector("[data-action=invite]")');
-	await owner.click("[data-action=invite]");
-	await owner.wait('document.querySelector("input[name=inviteLink]")?.value.includes("#invite=")');
-	const invitation = String(await owner.evaluate('document.querySelector("input[name=inviteLink]").value'));
-	const viewer = await browser.page(invitation, { width: 390, height: 844 });
-	await viewer.wait('document.querySelector("[data-action=signin]")');
-	await viewer.type("input[name=person]", "Installed viewer");
-	await viewer.click("[data-action=signin]");
-	await viewer.wait('document.querySelector("[data-conversation]")');
-	await openConversations(viewer);
-	await viewer.click("[data-conversation]");
-	await viewer.wait('document.querySelector("main").innerText.includes("INSTALLED-POCKET-ANSWER")');
-	assert.equal(await viewer.evaluate('document.querySelector("[data-action=send]").disabled'), true);
-	assert.equal(await viewer.evaluate("document.documentElement.scrollWidth > innerWidth"), false);
-	await conversationAction(viewer, "settings");
-	await viewer.wait('document.querySelector("[data-cost]")');
-	assert.equal(await viewer.evaluate('document.querySelector("[data-action=model]").disabled'), true);
-	assert.equal(await viewer.evaluate('document.querySelector("[data-action=cwd]").disabled'), true);
-	assert.equal(await viewer.evaluate('Boolean(document.querySelector("[data-session-budget]"))'), false);
-	assert.equal(await viewer.evaluate('Boolean(document.querySelector("[data-credential-input]"))'), false);
-	await viewer.click('[aria-label="Close settings"]');
-	const stranger = await browser.page(info.origin);
-	await stranger.wait('document.querySelector("[data-action=signin]")');
-	assert.equal(await stranger.evaluate('document.body.innerText.includes("INSTALLED-EXPLICIT-WORK")'), false);
-	// Real native history and stable identity through the installed finite client, using browser-owned cookies only.
-	const cookies = await owner.evaluate("document.cookie");
-	assert.equal(cookies.includes("pakka_pocket="), false);
-	assert.ok(createPocketClient({ endpoint: info.origin + "/pocket/rpc" }));
-	await owner.click('[aria-label="Close people"]');
-	await mkdir(join(root, "pocket-product-evidence"));
-	await writeFile(join(root, "pocket-product-evidence/desktop.png"), await owner.screenshot());
-	await writeFile(join(root, "pocket-product-evidence/mobile.png"), await viewer.screenshot());
+	const invitation = await owner.rpc({
+		op: "invite",
+		requestId: "viewer",
+		role: "viewer",
+		resources: [target.conversationId],
+		ttlMs: 60000,
+	});
+	const inviteToken = invitation.token;
+	assert.ok(inviteToken);
+	let viewer = await loginHttp(info.origin, inviteToken, "invite", "Installed viewer");
+	assert.match(JSON.stringify(await viewer.rpc({ op: "read", target })), /INSTALLED-POCKET-ANSWER/);
+	await assert.rejects(viewer.rpc({ op: "submit", target, input: { ...input, requestId: "denied" } }), {
+		code: "FORBIDDEN",
+		outcome: "denied",
+	});
+	await assert.rejects(viewer.rpc({ op: "credential.status" }), { code: "FORBIDDEN", outcome: "denied" });
+	await assert.rejects(viewer.rpc({ op: "configure", target, profile: "default" }), {
+		code: "FORBIDDEN",
+		outcome: "denied",
+	});
+	const stranger = await fetch(info.origin + "/pakka-webui/rpc", {
+		method: "POST",
+		headers: { Origin: info.origin, "Content-Type": "application/json" },
+		body: JSON.stringify({ version: 2, requestId: "stranger", command: { op: "read", target } }),
+	});
+	assert.equal(stranger.status, 401);
+	assert.ok(!(await stranger.text()).includes("INSTALLED-POCKET-ANSWER"));
+
 	const sessionFile = info.sessionFile;
 	await stop();
 	config = {
@@ -244,85 +217,85 @@ try {
 	};
 	info = await start();
 	assert.equal(info.sessionFile, sessionFile);
-	await owner.navigate(info.origin);
-	await owner.wait('document.querySelector("[data-conversation]")');
-	await owner.click("[data-conversation]");
-	await owner.wait('document.querySelector("main").innerText.includes("INSTALLED-POCKET-ANSWER")');
-	await conversationAction(owner, "settings");
-	await owner.wait('document.querySelector("[data-cost]")');
+	owner = await connectHttp(info.origin, owner.cookies);
+	viewer = await connectHttp(info.origin, viewer.cookies);
+	assert.deepEqual((await owner.rpc({ op: "receipt", id: receipt.id })).receipt, done);
 	assert.equal(
-		await owner.evaluate('document.querySelector("[data-settings-model]").textContent'),
+		(await owner.services({ op: "session-budget.read", sessionId: target.sessionId })).policy.budget
+			.primaryAttempts,
+		1,
+	);
+	assert.equal(
+		(await owner.rpc({ op: "configuration", target })).configuration.current.model,
 		"installed-alternate",
 	);
-	assert.match(
-		String(await owner.evaluate('document.querySelector("[data-session-budget]").innerText')),
-		/1 \/ 3/,
-	);
-	await owner.wait('document.querySelector("[data-credential-clear]")?.disabled===false');
-	assert.equal(
-		await owner.evaluate('document.querySelector("[data-credential-status]").dataset.version'),
-		"1",
-	);
-	await owner.click("[data-credential-clear]");
-	await owner.wait(
-		'document.querySelector("[data-credential-status]")?.dataset.version==="2"&&document.querySelector("[data-credential-status]").dataset.configured==="false"',
-	);
-	await owner.click('[aria-label="Close settings"]');
-	await owner.wait('document.querySelector("[data-action=send]")?.disabled===false');
-	await owner.type("textarea[name=message]", "INSTALLED-AFTER-PRIVATE-CLEAR");
-	await owner.click("[data-action=send]");
-	await owner.wait('document.querySelector(".pocket-receipt")?.innerText.includes("unanswered")');
+	assert.equal((await owner.call("preferences", "status")).value.text, "PRIVATE-INSTALLED-PREFERENCE");
+	assert.equal((await owner.operationByRequest("preferences", "installed-preference")).id, preference.id);
+	const cleared = await owner.rpc({
+		op: "credential.clear",
+		input: { requestId: "clear", expectedVersion: 1 },
+	});
+	assert.equal(cleared.status.version, 2);
+	assert.equal(cleared.status.configured, false);
+	const failed = (
+		await owner.rpc({
+			op: "submit",
+			target,
+			input: { ...input, requestId: "cleared", text: "INSTALLED-AFTER-PRIVATE-CLEAR" },
+		})
+	).receipt;
+	assert.equal((await owner.rpc({ op: "wait", id: failed.id })).receipt.status, "unanswered");
 	assert.equal(requests.length, 1);
-	await owner.click("[data-interface=preferences-settings]");
-	await owner.wait(
-		'document.querySelector("[data-current-label]")?.textContent === "PRIVATE-INSTALLED-PREFERENCE"',
+	await owner.rpc({ op: "person.revoke", id: viewer.person.id });
+	await assert.rejects(viewer.rpc({ op: "read", target }), (error) =>
+		["FORBIDDEN", "UNAUTHORIZED"].includes(error.code),
 	);
-	await owner.click('[aria-label="Close Example preferences"]');
-	await organizationAction(owner, "people");
-	await owner.wait('document.querySelector(".pocket-person-row button")');
-	await owner.click(".pocket-person-row button");
-	await owner.wait('document.querySelector("[role=dialog]").innerText.includes("Revoked")');
-	await viewer.navigate(info.origin);
-	await viewer.wait('document.querySelector("[data-action=signin]")');
-	assert.equal(await viewer.evaluate('document.body.innerText.includes("INSTALLED-POCKET-ANSWER")'), false);
-	assert.equal(requests.length, 1);
-	assert.equal(JSON.stringify(requests).includes("PRIVATE-INSTALLED-PREFERENCE"), false);
-	assert.equal(JSON.stringify(requests).includes("INSTALLED-DISPLAY-CARD"), false);
-	assert.equal(JSON.stringify(requests).includes("SYNTHETIC-INSTALLED-REPLACEMENT"), false);
-	await owner.click('[aria-label="Close people"]');
 	await stop();
+
 	info = await start();
-	assert.equal(info.sessionFile, sessionFile);
-	await owner.navigate(info.origin);
-	await owner.wait('document.querySelector("[data-conversation]")');
-	await owner.click("[data-conversation]");
-	await conversationAction(owner, "settings");
-	await owner.wait('document.querySelector("[data-credential-status]")?.dataset.version==="2"');
+	owner = await connectHttp(info.origin, owner.cookies);
+	assert.equal((await owner.rpc({ op: "credential.status" })).status.configured, false);
 	assert.equal(
-		await owner.evaluate('document.querySelector("[data-credential-status]").dataset.configured'),
-		"false",
+		(await owner.services({ op: "session-budget.read", sessionId: target.sessionId })).policy.budget
+			.primaryAttempts,
+		2,
 	);
-	assert.match(
-		String(await owner.evaluate('document.querySelector("[data-session-budget]").innerText')),
-		/2 \/ 3/,
+	const history = await owner.services({
+		op: "resource.history",
+		reference: { kind: "conversation", sessionId: target.sessionId, conversationId: target.conversationId },
+	});
+	assert.match(JSON.stringify(history), /Configured provider credential unavailable/);
+	const afterReopen = (
+		await owner.rpc({
+			op: "submit",
+			target,
+			input: { ...input, requestId: "cleared-reopen", text: "INSTALLED-PRIVATE-CLEAR-REOPEN" },
+		})
+	).receipt;
+	assert.equal((await owner.rpc({ op: "wait", id: afterReopen.id })).receipt.status, "unanswered");
+	assert.equal(
+		(await owner.services({ op: "session-budget.read", sessionId: target.sessionId })).policy.budget
+			.primaryAttempts,
+		3,
 	);
-	await owner.click('[aria-label="Close settings"]');
-	await owner.wait('document.querySelector("[data-action=send]")?.disabled===false');
-	await owner.type("textarea[name=message]", "INSTALLED-PRIVATE-CLEAR-REOPEN");
-	await owner.click("[data-action=send]");
-	await owner.wait('document.querySelector(".pocket-receipt")?.innerText.includes("unanswered")');
-	assert.equal(requests.length, 1, "a cleared key never falls back after normal reopen");
+	assert.equal(requests.length, 1, "A cleared credential cannot fall back after reopen");
+	for (const privateText of [
+		"PRIVATE-INSTALLED-PREFERENCE",
+		"INSTALLED-DISPLAY-CARD",
+		"SYNTHETIC-INSTALLED-REPLACEMENT",
+	])
+		assert.ok(!JSON.stringify(requests).includes(privateText));
 	assert.equal(child.captured().includes("SYNTHETIC-INSTALLED-REPLACEMENT"), false);
 	assert.deepEqual(errors, []);
-	await writeFile(join(root, "pocket-product-evidence/requests.json"), JSON.stringify(requests, null, 2));
 	console.log(
-		"Installed WebUI product passed: real executable/assets/public GUI-only and backend settings extensions, desktop/mobile isolated Chrome, invitation/viewer/revocation, exact approved model selection, private provider replace/clear and scoped usage across normal reopen; 1 local HTTP, 3 charged attempts and no fallback or duplicate model work.",
+		"Installed default assets and public HTTP passed: executable, identity/scope, preference/card exclusion, model selection, credential replace/clear, original receipts and spent attempts across reopen; 1 local model request, 3 charged attempts.",
 	);
+	await stop();
 } finally {
-	await browser?.close();
 	if (child) {
 		child.kill();
 		await child.finished;
 	}
+	provider.closeAllConnections();
 	await new Promise((resolve) => provider.close(resolve));
 }

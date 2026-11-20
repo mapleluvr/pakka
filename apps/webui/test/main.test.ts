@@ -67,14 +67,14 @@ test(
 			assert.equal(allowed.origin, endpoint.origin);
 			const link = new URL((await readFile(owner, "utf8")).trim());
 			assert.equal(link.origin, endpoint.origin);
-			const token = new URLSearchParams(link.hash.slice(1)).get("signin");
+			const token = new URLSearchParams(link.hash.slice(1)).get("session");
 			assert.ok(token);
 			assert.equal(stdout.includes(token), false);
 			assert.equal(stderr.includes(token), false);
 			assert.equal(stdout.includes(m.config.apiKey), false);
 			const page = await fetch(allowed);
 			assert.equal(page.status, 200);
-			assert.match(await page.text(), /pakka-webui/);
+			assert.match(await page.text(), /@pakka\/webui-sdk/);
 			const login = await fetch(endpoint.origin + "/pocket/exchange", {
 				method: "POST",
 				headers: { Origin: endpoint.origin, "Content-Type": "application/json" },

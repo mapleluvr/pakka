@@ -8,7 +8,7 @@ import type {
 	RuntimeJobReceipt,
 } from "@pakka/agent";
 import type { PocketAuthority, PocketPeople } from "./pocket-people.js";
-import type { PocketWorkspace } from "./pocket-workspace.js";
+import type { PocketInputReceipt, PocketWorkspace } from "./pocket-workspace.js";
 
 export interface PocketScheduleInput {
 	readonly requestId: string;
@@ -30,10 +30,21 @@ export interface PocketSchedule {
 	readonly completed: number;
 	readonly state: "waiting" | "running" | "done" | "cancelled" | "unknown";
 	readonly jobId: string | null;
+	/** Persisted cancellation intent; the native terminal receipt is observed separately. */
+	readonly cancellationRequested: boolean;
 	readonly nativeTerminal?: "aborted" | "completed";
 	readonly deliveryId?: string;
 }
+export interface ScheduleDeliveries {
+	readonly originalBinding: boolean;
+	readonly items: readonly {
+		readonly run: number;
+		readonly id: string;
+		readonly status: PocketInputReceipt["status"];
+	}[];
+}
 export interface PocketScheduleClient {
+	deliveries(target: ConversationRef, id: string): Promise<ScheduleDeliveries>;
 	list(target: ConversationRef): Promise<readonly PocketSchedule[]>;
 	add(target: ConversationRef, input: PocketScheduleInput): Promise<PocketSchedule>;
 	cancel(target: ConversationRef, id: string): Promise<PocketSchedule>;
@@ -80,6 +91,9 @@ const keys = (
 const integer = (v: unknown, min = 0, max = Number.MAX_SAFE_INTEGER): v is number =>
 	typeof v === "number" && Number.isSafeInteger(v) && v >= min && v <= max;
 const hash = (v: unknown) => createHash("sha256").update(JSON.stringify(v)).digest("hex");
+const scheduledRequestId = (id: string, index: number) => "scheduled-" + hash([id, index]);
+const sameConversation = (a: ConversationRef, b: ConversationRef) =>
+	a.sessionId === b.sessionId && a.conversationId === b.conversationId && a.key === b.key;
 const same = (a: ConversationRef, b: ConversationRef) =>
 	["key", "sessionId", "conversationId", "incarnation", "profile"].every(
 		(k) => a[k as keyof ConversationRef] === b[k as keyof ConversationRef],
@@ -306,6 +320,7 @@ export function createPocketSchedules(options: {
 						? "waiting"
 						: (receipt?.state ?? "unknown"),
 			jobId: row.jobId,
+			cancellationRequested: row.cancelled,
 			...(receipt?.nativeTerminal ? { nativeTerminal: receipt.nativeTerminal } : {}),
 			...(deliveryId ? { deliveryId } : {}),
 		});
@@ -367,7 +382,7 @@ export function createPocketSchedules(options: {
 			const delivery = await ready().workspace.submitScheduled(
 				row.actorId,
 				row.target,
-				{ requestId: "scheduled-" + hash([row.id, completed]), text: row.input.text },
+				{ requestId: scheduledRequestId(row.id, completed), text: row.input.text },
 				check,
 			);
 			check();
@@ -438,11 +453,34 @@ export function createPocketSchedules(options: {
 						ctx.workspace.checkScheduledInput(actorId, target);
 					};
 					return Object.freeze({
+						deliveries: async (raw: ConversationRef, id: string) => {
+							const target = freeze({ ...raw }),
+								guard = () => read(target);
+							guard();
+							await load();
+							guard();
+							const row = find(id);
+							if (!sameConversation(row.target, target) || row.actorId !== actorId)
+								throw Error("Schedule delivery history denied");
+							const client = ctx.workspace.bind(actor),
+								items = [];
+							for (let index = 0; index < row.input.maxRuns; index++) {
+								const receipt = await client.inputReceipt(row.target, {
+									requestId: scheduledRequestId(row.id, index),
+									text: row.input.text,
+									mode: "followUp",
+								});
+								guard();
+								if (!receipt) break;
+								items.push({ run: index + 1, id: receipt.id, status: receipt.status });
+							}
+							return freeze({ originalBinding: same(row.target, target), items });
+						},
 						list: async (raw: ConversationRef) => {
 							const target = freeze({ ...raw });
 							read(target);
 							await load();
-							const rows = state!.rows.filter((row) => same(row.target, target));
+							const rows = state!.rows.filter((row) => sameConversation(row.target, target));
 							const output = [];
 							for (const row of rows) output.push(await view(row, () => read(target)));
 							read(target);
@@ -513,11 +551,11 @@ export function createPocketSchedules(options: {
 								ctx.people.check(actor, "steer", target.conversationId);
 							};
 							if (!identity(id)) throw Error("Invalid schedule identity");
-							if (!same(find(id).target, target)) throw Error("Schedule denied");
+							if (!sameConversation(find(id).target, target)) throw Error("Schedule denied");
 							// Fence effects before awaiting persistence; an unconfirmed cancellation cannot release it.
 							pendingCancellation.add(id);
 							const row = await alter((draft) => {
-								const row = draft.rows.find((row) => row.id === id && same(row.target, target));
+								const row = draft.rows.find((row) => row.id === id && sameConversation(row.target, target));
 								if (!row) throw Error("Schedule denied");
 								row.cancelled = true;
 								return row;

@@ -1,5 +1,13 @@
 import { createHash, randomUUID } from "node:crypto";
-import type { Runtime, JsonObject, ConversationRef } from "@pakka/agent";
+import {
+	StoredHistoryReadRefusal,
+	type Runtime,
+	type JsonObject,
+	type ConversationRef,
+	type ConversationHistoryAddress,
+	type StoredConversationQuery,
+	type StoredConversationResult,
+} from "@pakka/agent";
 import type {
 	PocketCreationDefaults,
 	PocketDirectoryView,
@@ -30,6 +38,13 @@ export interface ManagedSessions {
 	/** Trusted composition only. References remain native; this is not a combined Runtime. */
 	runtimeFor(ref: Pick<ConversationRef, "sessionId">): Runtime;
 	runtimes(): readonly Runtime[];
+	/** Confirmed original registration only; returns saved history, never an execution binding. */
+	readStored(
+		actor: PocketAuthority,
+		reference: ConversationHistoryAddress,
+		query: StoredConversationQuery,
+		signal?: AbortSignal,
+	): Promise<StoredConversationResult>;
 	list(actor: PocketAuthority): Promise<readonly ManagedSession[]>;
 	defaults(actor: PocketAuthority): Promise<PocketCreationDefaults>;
 	directories(
@@ -127,6 +142,13 @@ export async function createManagedSessions(options: {
 		readonly reopen: boolean;
 	}) => Promise<Runtime>;
 	readonly workspaceFor: (runtime: Runtime) => PocketWorkspace;
+	/** Trusted source locator/reader; the Session directory validates registration and grant first. */
+	readonly readStored?: (
+		reference: ConversationHistoryAddress,
+		query: StoredConversationQuery,
+		check: () => void,
+		signal?: AbortSignal,
+	) => Promise<StoredConversationResult>;
 }): Promise<ManagedSessions> {
 	const { runtime, people } = options;
 	const rootId = runtime.view().sessionId;
@@ -146,6 +168,7 @@ export async function createManagedSessions(options: {
 		}
 	};
 	let tail: Promise<unknown> = Promise.resolve();
+	let historyClosed = false;
 	const serial = <T>(operation: () => Promise<T>): Promise<T> => {
 		const running = tail.then(operation);
 		tail = running.then(
@@ -276,6 +299,11 @@ export async function createManagedSessions(options: {
 				list: async () => Object.freeze((await navigation()).map((row) => row.ref)),
 				navigation,
 				configuration: (ref) => clientFor(actor, ref).configuration(ref),
+				configurationOptions: (ref) => clientFor(actor, ref).configurationOptions(ref),
+				changeConfiguration: (original, check) =>
+					clientFor(actor, original.target).changeConfiguration(original, check),
+				configurationReceipt: (original, check) =>
+					clientFor(actor, original.target).configurationReceipt(original, check),
 				setMetadata: async (ref, input) =>
 					Object.freeze({
 						...(await clientFor(actor, ref).setMetadata(ref, input)),
@@ -299,6 +327,9 @@ export async function createManagedSessions(options: {
 					clientFor(actor, ref).readContent(ref, reference, range, check),
 				display: (ref, input) => clientFor(actor, ref).display(ref, input),
 				submit: (ref, input) => clientFor(actor, ref).submit(ref, input),
+				// The existing Session owner performs this observation; lookup never reopens a writer.
+				inputReceipt: (ref, input) => clientFor(actor, ref).inputReceipt(ref, input),
+				inputHistory: (ref, cursor) => clientFor(actor, ref).inputHistory(ref, cursor),
 				receipt: (nativeId, sessionId) => routeReceipt(actor, nativeId, "receipt", sessionId),
 				wait: (nativeId, signal, sessionId) => routeReceipt(actor, nativeId, "wait", sessionId, signal),
 				withdraw: (nativeId, sessionId) => routeReceipt(actor, nativeId, "withdraw", sessionId),
@@ -332,6 +363,30 @@ export async function createManagedSessions(options: {
 		runtimeFor: (ref) => entry(ref).runtime,
 		runtimes: () =>
 			Object.freeze([...entries.values()].filter((value) => value.published).map((value) => value.runtime)),
+		readStored: async (actor, reference, query, signal) => {
+			const check = () => {
+				if (signal?.aborted) throw new StoredHistoryReadRefusal("cancelled");
+				try {
+					people.checkReadGrant(actor, reference);
+				} catch {
+					throw new StoredHistoryReadRefusal("denied");
+				}
+				if (historyClosed || entries.has(reference.sessionId) || quarantined.has(reference.sessionId))
+					throw new StoredHistoryReadRefusal("unavailable");
+			};
+			check();
+			if (!options.readStored || !uuid(reference.sessionId))
+				throw new StoredHistoryReadRefusal("unavailable");
+			const row = (await currentRows()).rows.find((item) => item.id === reference.sessionId);
+			check();
+			if (row?.status !== "ready") throw new StoredHistoryReadRefusal("unavailable");
+			const result = await options.readStored(reference, query, check, signal);
+			const after = (await currentRows()).rows.find((item) => item.id === reference.sessionId);
+			check();
+			if (JSON.stringify(after) !== JSON.stringify(row))
+				throw new StoredHistoryReadRefusal("identity-mismatch");
+			return result;
+		},
 		list: async (actor) => {
 			const person = people.current(actor);
 			const rows: ManagedSession[] = [];
@@ -467,6 +522,7 @@ export async function createManagedSessions(options: {
 				}
 			}),
 		close: async () => {
+			historyClosed = true;
 			await tail;
 			const owned = new Set(
 				[...entries.values()].map((value) => value.runtime).concat([...quarantined.values()]),

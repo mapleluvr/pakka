@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { decodePocketResponse } from "@pakka/protocol/pocket";
 import { startPocket } from "../src/bootstrap.ts";
 import { runtimeFixture } from "../../../packages/agent/test/runtime-fixture.ts";
+import { loginHttpSession } from "./fixtures/http-session.ts";
 
 test("Session recovery HTTP uses the original identity, safe diagnostics and current global authority", async () => {
 	const m = await runtimeFixture();
@@ -38,28 +39,12 @@ test("Session recovery HTTP uses the original identity, safe diagnostics and cur
 		app = await startPocket({ runtime: { ...config, reopenSessionFile: controlFile }, owner: "Owner" });
 		const origin = app.http.origin;
 		const signIn = async (token: string) => {
-			const response = await fetch(origin + "/pocket/exchange", {
-				method: "POST",
-				headers: { Origin: origin, "Content-Type": "application/json" },
-				body: JSON.stringify({ kind: "session", token }),
-			});
-			assert.equal(response.status, 200);
-			const cookie = response.headers
-				.getSetCookie()
-				.map((value) => value.split(";")[0])
-				.join("; ");
-			const csrf = /pakka_csrf=([^;]+)/.exec(cookie)?.[1];
-			assert.ok(csrf);
+			const session = await loginHttpSession(origin, token);
 			return async (command: Record<string, unknown>) => {
 				const requestId = crypto.randomUUID();
-				const response = await fetch(origin + "/pocket/rpc", {
+				const response = await fetch(origin + "/pakka-webui/rpc", {
 					method: "POST",
-					headers: {
-						Origin: origin,
-						Cookie: cookie,
-						"X-Pakka-CSRF": csrf,
-						"Content-Type": "application/json",
-					},
+					headers: session.headers,
 					body: JSON.stringify({ version: 2, requestId, command }),
 				});
 				const body = await response.json();

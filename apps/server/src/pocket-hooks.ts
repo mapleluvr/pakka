@@ -158,6 +158,9 @@ const refKeys = ["key", "sessionId", "conversationId", "incarnation", "profile"]
 const reference = (value: unknown): value is ConversationRef =>
 	shape(value, refKeys) && refKeys.every((key) => identity(value[key]));
 const sameRef = (a: ConversationRef, b: ConversationRef) => refKeys.every((key) => a[key] === b[key]);
+// Metadata management follows the stable resource; ingress still checks the exact saved executable ref.
+const sameConversation = (a: ConversationRef, b: ConversationRef) =>
+	a.sessionId === b.sessionId && a.conversationId === b.conversationId;
 const clone = <T>(value: T): T => structuredClone(value);
 function frozen<T>(value: T): T {
 	if (value && typeof value === "object") {
@@ -570,7 +573,7 @@ async function openHooks(
 			};
 			authorize();
 			const owned = (row: Hook, person: PocketPerson) =>
-				sameRef(row.target, ref) && (row.creatorId === person.id || owner(person));
+				sameConversation(row.target, ref) && (row.creatorId === person.id || owner(person));
 			const find = (id: string, person: PocketPerson, state = current) => {
 				const row = state.hooks.find((hook) => hook.id === id && owned(hook, person));
 				if (!row) throw Error("Webhook authority denied");
@@ -603,14 +606,16 @@ async function openHooks(
 						throw Error("Invalid bounded webhook configuration");
 				} else if (!identity(input.id) || !integer(input.expectedVersion, 1))
 					throw Error("Invalid webhook version");
-				const operationId = "hook-op-" + fingerprint([person.id, ref, input.requestId]),
+				const changing = action !== "create" ? find(String(input.id), person) : null;
+				// Existing endpoint mutations retain its immutable binding and original idempotence scope.
+				const originalTarget = changing?.target ?? ref;
+				const operationId = "hook-op-" + fingerprint([person.id, originalTarget, input.requestId]),
 					key = fingerprint([action, input]);
 				const prior = current.operations.find((row) => row.id === operationId);
 				if (prior) {
 					if (prior.fingerprint !== key) throw Error("Webhook request conflict");
 					return Promise.resolve(frozen(clone(prior.result)));
 				}
-				const changing = action !== "create" ? find(String(input.id), person) : null;
 				if (changing && changing.version !== input.expectedVersion)
 					return Promise.resolve(frozen({ state: "conflict", hook: view(changing) }));
 				if (changing) block(changing.id);
@@ -664,7 +669,7 @@ async function openHooks(
 						before.state.operations.push({
 							id: operationId,
 							actorId: person.id,
-							target: clone(ref),
+							target: clone(originalTarget),
 							requestId: input.requestId,
 							fingerprint: key,
 							result: clone(result),
@@ -704,13 +709,16 @@ async function openHooks(
 					if (!identity(requestId)) throw Error("Invalid webhook request identity");
 					const before = await load();
 					current = before.state;
-					const person = authorize(true),
-						row = before.state.operations.find(
-							(item) =>
-								item.actorId === person.id && item.requestId === requestId && sameRef(item.target, ref),
-						);
-					if (!row) throw Error("Webhook operation unavailable");
-					return frozen(clone(row.result));
+					const person = authorize(true);
+					const rows = before.state.operations.filter(
+						(item) =>
+							item.actorId === person.id &&
+							item.requestId === requestId &&
+							sameConversation(item.target, ref),
+					);
+					// A lower-level caller may reuse an ID across old bindings; never choose an ambiguous receipt.
+					if (rows.length !== 1) throw Error("Webhook operation unavailable");
+					return frozen(clone(rows[0]!.result));
 				},
 				deliveries: async (id: string) => {
 					const before = await load();

@@ -5,11 +5,13 @@ import { join } from "node:path";
 const core = new Set([
 	"scripts/test/runner.test.mjs",
 	"packages/protocol/test/codec.test.ts",
+	"packages/protocol/test/webui-assets.test.ts",
 	"packages/protocol/test/session-recovery.test.ts",
 	"packages/protocol/test/observation-patch.test.ts",
 	"packages/client/test/session-recovery.test.ts",
 	"packages/client/test/pocket-observation.test.ts",
 	"packages/agent/test/permissions.test.ts",
+	"packages/agent/test/agent-facet.test.ts",
 	"packages/agent/test/runtime-safety.test.ts",
 	"packages/agent/test/runtime-records.test.ts",
 	"packages/agent/test/sqlite-persistence.test.ts",
@@ -50,6 +52,7 @@ export function inventory(root) {
 const lightFiles = new Set([
 	"packages/client/test/pocket-configuration.test.ts",
 	"packages/client/test/pocket-content.test.ts",
+	"packages/client/test/webui-services.test.ts",
 	"packages/client/test/pocket-credentials.test.ts",
 	"packages/client/test/pocket-notifications.test.ts",
 	"packages/client/test/pocket-observation.test.ts",
@@ -68,6 +71,7 @@ const lightFiles = new Set([
 	"packages/protocol/test/pocket.test.ts",
 	"packages/protocol/test/preview-content.test.ts",
 	"packages/protocol/test/session-recovery.test.ts",
+	"packages/protocol/test/webui-assets.test.ts",
 ]);
 export function light(file) {
 	return lightFiles.has(file);
@@ -83,7 +87,15 @@ const scopes = {
 		f.startsWith("packages/client/") ||
 		/runtime-records|record-work|records-migration|lookup|extension/.test(f),
 	maintenance: (f) => /maintenance|writer-recovery|launcher|private-files/.test(f),
-	webui: (f) => f.startsWith("apps/") || f.startsWith("packages/mas-devpack/") || /webui.test/.test(f),
+	webui: (f) =>
+		f.startsWith("apps/") ||
+		f.startsWith("packages/mas-devpack/") ||
+		f.startsWith("packages/client/") ||
+		f.startsWith("packages/protocol/") ||
+		f === "packages/agent/test/stored-history.test.ts" ||
+		f === "packages/agent/test/agent-facet.test.ts" ||
+		f === "packages/agent/test/runtime-configuration.test.ts" ||
+		/webui.test/.test(f),
 };
 export function select(files, args) {
 	let suite = "core",

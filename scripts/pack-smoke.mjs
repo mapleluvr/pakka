@@ -6,6 +6,16 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
 const consumer = realpathSync.native(mkdtempSync(join(tmpdir(), "pakka-packed-consumer-")));
+let workspace;
+try {
+	workspace = JSON.parse(readFileSync(join(root, "package.json"), "utf8"));
+} catch (cause) {
+	throw new Error("Invalid workspace package metadata", { cause });
+}
+const sdkArchive = workspace.devDependencies["@pakka/webui-sdk"];
+if (!sdkArchive.startsWith("file:integrations/webui/sdk/"))
+	throw new Error("Expected fixed WebUI SDK archive");
+copyFileSync(join(root, sdkArchive.slice(5)), join(consumer, "pakka-webui-sdk.tgz"));
 const versions = Object.fromEntries(
 	["agent", "mas", "mas-devpack", "protocol", "client", "cli", "server", "webui", "rsi", "memo"].map(
 		(name) => {
@@ -117,7 +127,14 @@ writeFileSync(
 				"@pakka/rsi": `file:./pakka-rsi-${versions.rsi}.tgz`,
 				"@pakka/memo": `file:./pakka-memo-${versions.memo}.tgz`,
 			},
-			devDependencies: { typescript: "7.0.2", "@types/node": "26.6.4" },
+			devDependencies: {
+				typescript: "7.0.2",
+				"@types/node": "26.6.4",
+				"@types/react": workspace.devDependencies["@types/react"],
+				"@pakka/webui-sdk": "file:./pakka-webui-sdk.tgz",
+				react: workspace.devDependencies.react,
+				"@astryxdesign/core": workspace.devDependencies["@astryxdesign/core"],
+			},
 		},
 		null,
 		2,
@@ -147,11 +164,11 @@ copyFileSync(
 	join(root, "scripts", "consumer-pocket-controlled.mjs"),
 	join(consumer, "pocket-controlled.mjs"),
 );
+copyFileSync(join(root, "scripts", "consumer-webui-http.mjs"), join(consumer, "consumer-webui-http.mjs"));
 copyFileSync(join(root, "scripts", "consumer-pocket-product.mjs"), join(consumer, "pocket-product.mjs"));
 copyFileSync(join(root, "scripts", "consumer-pocket-schedules.mjs"), join(consumer, "pocket-schedules.mjs"));
 copyFileSync(join(root, "scripts", "consumer-pocket-memory.mjs"), join(consumer, "pocket-memory.mjs"));
 copyFileSync(join(root, "scripts", "consumer-pocket-hooks.mjs"), join(consumer, "pocket-hooks.mjs"));
-copyFileSync(join(root, "scripts", "consumer-pocket-voice.mjs"), join(consumer, "pocket-voice.mjs"));
 copyFileSync(
 	join(root, "scripts", "consumer-pocket-notifications.mjs"),
 	join(consumer, "pocket-notifications.mjs"),
@@ -160,9 +177,6 @@ mkdirSync(join(consumer, "tls"));
 for (const asset of ["key.pem", "cert.pem"])
 	copyFileSync(join(root, "apps", "webui", "test", "tls", asset), join(consumer, "tls", asset));
 copyFileSync(join(root, "apps/webui/test/browser.ts"), join(consumer, "pocket-browser.ts"));
-// Reuse the source regression entry points: native clicks through reference menus,
-// never a hidden old toolbar or a backend shortcut. Its browser import is type-only.
-copyFileSync(join(root, "apps/webui/test/frontend-controls.ts"), join(consumer, "frontend-controls.ts"));
 copyFileSync(join(root, "scripts", "consumer-browser.ts"), join(consumer, "consumer-browser.ts"));
 writeFileSync(
 	join(consumer, "tsconfig.browser.json"),
@@ -187,7 +201,7 @@ run(
 // A separate sibling install must not resolve optional browser peers from this full consumer's node_modules.
 const headless = realpathSync.native(mkdtempSync(join(tmpdir(), "pakka-headless-consumer-")));
 const headlessDependencies = {};
-for (const name of ["agent", "mas", "mas-devpack", "rsi", "memo"]) {
+for (const name of ["agent", "mas", "mas-devpack", "rsi", "memo", "protocol"]) {
 	const archive = `pakka-${name}-${versions[name]}.tgz`;
 	copyFileSync(join(consumer, archive), join(headless, archive));
 	headlessDependencies["@pakka/" + name] = "file:./" + archive;
@@ -260,5 +274,4 @@ console.log(run("pocket-notifications", [join(consumer, "pocket-notifications.mj
 console.log(run("pocket-schedules", [join(consumer, "pocket-schedules.mjs")], consumer));
 console.log(run("pocket-memory", [join(consumer, "pocket-memory.mjs")], consumer));
 console.log(run("pocket-hooks", [join(consumer, "pocket-hooks.mjs")], consumer));
-console.log(run("pocket-voice", [join(consumer, "pocket-voice.mjs")], consumer));
 writeFileSync(join(artifacts, "consumer-path.txt"), consumer + "\n");

@@ -1,4 +1,4 @@
-import { decodeValue } from "@pakka/webui/extension";
+import { decodeValue } from "@pakka/protocol/extensions";
 import {
 	inboxSchema,
 	memberSchema,

@@ -39,7 +39,15 @@ if (revision !== baseline.upstreamCommit) throw new Error("Upstream commit diffe
 const archive = join(stage, "upstream.tar");
 run(
 	"git",
-	["archive", "--format=tar", "--output=" + archive, revision, "packages/durable", "tsconfig.base.json"],
+	[
+		"archive",
+		"--format=tar",
+		"--output=" + archive,
+		revision,
+		"packages/durable",
+		"tsconfig.base.json",
+		...(baseline.sqliteCompanion ? ["packages/chord", "LICENSE"] : []),
+	],
 	resolve(upstream),
 );
 run("tar", ["-xf", archive]);
@@ -64,13 +72,15 @@ const overrides = {
 };
 if (pkg.dependencies["@earendil-works/pi-codemode"])
 	overrides["@earendil-works/pi-codemode"] = baseline.upstreamVersion;
+// Build only the SQLite companion from this source workspace. The released Chord runtime stays unchanged.
+if (baseline.sqliteCompanion) delete overrides["@earendil-works/chord"];
 writeFileSync(
 	join(stage, "package.json"),
 	JSON.stringify(
 		{
 			name: "pakka-durable-patch-build",
 			private: true,
-			workspaces: ["packages/durable"],
+			workspaces: ["packages/durable", ...(baseline.sqliteCompanion ? ["packages/chord"] : [])],
 			devDependencies: { typescript: "7.0.2", "@types/node": "26.6.4", ...baseline.buildDevDependencies },
 			overrides,
 		},
@@ -80,6 +90,34 @@ writeFileSync(
 );
 cpSync(join(patchDir, "build-lock.json"), join(stage, "package-lock.json"));
 run(process.execPath, [npmCli, "ci", "--ignore-scripts", "--no-audit", "--no-fund"]);
+let sqliteCompanion;
+if (baseline.sqliteCompanion) {
+	const chord = join(stage, "packages", "chord");
+	run(process.execPath, [
+		join(stage, "node_modules", "typescript", "bin", "tsc"),
+		"-p",
+		join(chord, "tsconfig.build.json"),
+	]);
+	const target = join(durableDir, "dist", "storage", "sqlite", "chord-sqlite");
+	mkdirSync(target, { recursive: true });
+	const files = {};
+	for (const module of ["database", "node"]) {
+		for (const extension of [".js", ".js.map", ".d.ts", ".d.ts.map"]) {
+			const name = module + extension;
+			cpSync(join(chord, "dist", "sqlite", name), join(target, name));
+			files[name] = createHash("sha256")
+				.update(readFileSync(join(target, name)))
+				.digest("hex");
+		}
+	}
+	cpSync(join(stage, "LICENSE"), join(target, "LICENSE"));
+	sqliteCompanion = { owner: "@earendil-works/chord", upstreamVersion: baseline.upstreamVersion, files };
+	run(
+		process.execPath,
+		[join(stage, "node_modules", "vitest", "vitest.mjs"), "run", ...baseline.sqliteCompanion.testFiles],
+		chord,
+	);
+}
 let tsconfig;
 if (baseline.buildDevDependencies?.["jsonc-parser"]) {
 	const { parse } = createRequire(join(stage, "package.json"))("jsonc-parser");
@@ -137,7 +175,11 @@ if (baseline.consumerTestFiles?.length) {
 					"@earendil-works/pi-ai": baseline.upstreamVersion,
 					"@earendil-works/chord": baseline.upstreamVersion,
 				},
-				devDependencies: { vitest: vitestVersion },
+				devDependencies: {
+					vitest: vitestVersion,
+					...(baseline.consumerTypeFiles?.length ? { typescript: "7.0.2", "@types/node": "26.6.4" } : {}),
+					...baseline.consumerDevDependencies,
+				},
 			},
 			null,
 			"\t",
@@ -161,6 +203,31 @@ if (baseline.consumerTestFiles?.length) {
 		[join(consumer, "node_modules", "vitest", "vitest.mjs"), "run", "--reporter=verbose"],
 		consumer,
 	);
+	if (baseline.consumerTypeFiles?.length) {
+		writeFileSync(
+			join(consumer, "tsconfig.json"),
+			JSON.stringify(
+				{
+					compilerOptions: {
+						target: "ES2024",
+						module: "NodeNext",
+						moduleResolution: "NodeNext",
+						strict: true,
+						noEmit: true,
+						types: ["node"],
+					},
+					include: baseline.consumerTypeFiles.map((file) => basename(file)),
+				},
+				null,
+				"\t",
+			) + "\n",
+		);
+		run(
+			process.execPath,
+			[join(consumer, "node_modules", "typescript", "bin", "tsc"), "-p", join(consumer, "tsconfig.json")],
+			consumer,
+		);
+	}
 	console.log(JSON.stringify({ consumer, installedVersion: installed.version }));
 }
 const destination = join(vendor, filename);
@@ -175,6 +242,7 @@ writeFileSync(
 			upstreamCommit: revision,
 			upstreamVersion: baseline.upstreamVersion,
 			patchedVersion: baseline.patchedVersion,
+			...(sqliteCompanion ? { sqliteCompanion } : {}),
 			sourcePatchSha256: createHash("sha256")
 				.update(readFileSync(join(patchDir, "source.patch")))
 				.digest("hex"),

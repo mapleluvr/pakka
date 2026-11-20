@@ -3,40 +3,28 @@ import assert from "node:assert/strict";
 import { join } from "node:path";
 import { runtimeFixture } from "../../../packages/agent/test/runtime-fixture.ts";
 import { startPocket } from "../src/bootstrap.ts";
-import { ownedBrowser } from "./browser.ts";
-import { settleFrontend } from "./frontend-controls.ts";
+import { connectHttpSession, loginHttpSession } from "./fixtures/http-session.ts";
 
 type Product = Awaited<ReturnType<typeof startPocket>>;
 async function signIn(app: Product, token = app.initialOwner?.token) {
 	assert.ok(token);
-	const origin = app.http.origin;
-	const response = await fetch(origin + "/pocket/exchange", {
-		method: "POST",
-		headers: { Origin: origin, "Content-Type": "application/json" },
-		body: JSON.stringify({ kind: "session", token }),
-	});
-	assert.equal(response.status, 200);
-	const cookie = response.headers
-		.getSetCookie()
-		.map((value) => value.split(";")[0])
-		.join("; ");
-	const csrf = /pakka_csrf=([^;]+)/.exec(cookie)?.[1];
-	assert.ok(csrf);
-	return Object.assign(rpcFor(app, { cookie, csrf }), { cookie, csrf });
+	const session = await loginHttpSession(app.http.origin, token);
+	return rpcFor(app, session);
 }
-function rpcFor(app: Product, { cookie, csrf }: { cookie: string; csrf: string }) {
-	const origin = app.http.origin;
-	return async (command: Record<string, unknown>) => {
+async function rpcFor(app: Product, auth: { cookies: string }) {
+	const session = await connectHttpSession(app.http.origin, auth.cookies);
+	const rpc = async (command: Record<string, unknown>) => {
 		const requestId = crypto.randomUUID();
-		const result = await fetch(origin + "/pocket/rpc", {
+		const response = await fetch(app.http.origin + "/pakka-webui/rpc", {
 			method: "POST",
-			headers: { Origin: origin, Cookie: cookie, "X-Pakka-CSRF": csrf, "Content-Type": "application/json" },
+			headers: session.headers,
 			body: JSON.stringify({ version: 2, requestId, command }),
 		});
-		const body = await result.json();
-		assert.equal(result.status, 200, JSON.stringify(body));
+		const body = await response.json();
+		assert.equal(response.status, 200, JSON.stringify(body));
 		return body.result;
 	};
+	return Object.assign(rpc, { cookies: session.cookies });
 }
 
 // A second name in the old catalog cannot satisfy separate native Session identity/storage/budgets.
@@ -166,7 +154,7 @@ test("Session creation: authenticated creation makes independent native Sessions
 			runtime: { ...m.config, dataDir: join(m.f.root, "managed"), reopenSessionFile: controlFile },
 			owner: "Owner",
 		});
-		const reopened = rpcFor(app, rpc);
+		const reopened = await rpcFor(app, rpc);
 		assert.deepEqual(
 			(await reopened({ op: "session.list" })).sessions.map((row: { id: string }) => row.id),
 			[first.id, second.id],
@@ -278,51 +266,3 @@ test("Session authorization: a Conversation grant never reads its same-ID peer o
 		await m.close();
 	}
 });
-
-// A dialog layered over the old home-name composer is still a second creation path: cancel must leave no naming form/resource.
-test(
-	"Conversation creation browser: New Session opens a dedicated configuration dialog and cancel leaves neither a home naming form nor native effects",
-	{ timeout: 30000 },
-	async () => {
-		const m = await runtimeFixture();
-		let app: Product | undefined, browser: Awaited<ReturnType<typeof ownedBrowser>> | undefined;
-		try {
-			await m.runtime.close();
-			app = await startPocket({
-				runtime: { ...m.config, dataDir: join(m.f.root, "dialog") },
-				owner: "Owner",
-			});
-			assert.ok(app.initialOwner);
-			browser = await ownedBrowser(join(m.f.root, "dialog-browser"));
-			const page = await browser.page(app.http.origin + "/#signin=" + app.initialOwner.token);
-			await page.wait('document.querySelector("[data-action=signin]")');
-			await page.click("[data-action=signin]");
-			await page.wait('document.querySelector(".app-shell")');
-			await settleFrontend(page);
-			await page.click(".primary-nav .new-session");
-			await page.wait('document.querySelector("[data-creation-form] input[name=sessionName]")');
-			await settleFrontend(page);
-			const dialog = await page.evaluate(
-				`(()=>{const d=document.querySelector('[role="dialog"]');return {open:Boolean(d),name:d?.querySelector('h1,h2')?.textContent?.trim(),hasName:Boolean(d?.querySelector('input[name="sessionName"]')),hasConfiguration:Boolean(d?.querySelector('[name="cwd"]'))};})()`,
-			);
-			assert.deepEqual(dialog, { open: true, name: "New Session", hasName: true, hasConfiguration: true });
-			await page.type('input[name="sessionName"]', "CANCELLED-SESSION", { replace: true });
-			await page.key("Escape");
-			await page.wait('!document.querySelector("[role=dialog]")');
-			assert.equal(
-				await page.evaluate('Boolean(document.querySelector(".home-view textarea, [data-home-create]"))'),
-				false,
-			);
-			assert.equal(app.runtime.view().conversations.length, 1);
-			const listed = (await page.evaluate(
-				`fetch('/pocket/rpc',{method:'POST',headers:{'Content-Type':'application/json','X-Pakka-CSRF':document.cookie.match(/(?:^|; )pakka_csrf=([^;]+)/)[1]},body:JSON.stringify({version:2,requestId:'after-cancel',command:{op:'session.list'}})}).then(r=>r.json())`,
-			)) as { result?: { sessions?: unknown[] } };
-			assert.deepEqual(listed.result?.sessions, []);
-			assert.equal(m.f.requests.length, 0);
-		} finally {
-			await browser?.close();
-			await app?.close();
-			await m.close();
-		}
-	},
-);

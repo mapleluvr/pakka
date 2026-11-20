@@ -5,8 +5,8 @@ import { join } from "node:path";
 import { fixture } from "./fixture.ts";
 import { createPocketHttp } from "../src/http.ts";
 import { createExtensionHost } from "../src/extension-host.ts";
-import { createExtensionClient } from "../src/extension-client.ts";
-import { decodeExtensionResponse } from "../src/extension-rpc.ts";
+import { createExtensionClient, bindExtensionService } from "@pakka/client/extensions";
+import { decodeExtensionResponse } from "@pakka/protocol/extension-rpc";
 
 const empty = { type: "object", properties: {}, required: [] };
 const manifest = {
@@ -76,7 +76,7 @@ async function setup() {
 					"X-Pakka-CSRF": auth.csrf,
 					...extra,
 				},
-				body: JSON.stringify({ version: 2, requestId, command }),
+				body: JSON.stringify({ version: 3, requestId, command }),
 			});
 		return { response, decoded: decodeExtensionResponse(await response.json(), requestId) };
 	}
@@ -102,7 +102,8 @@ test(
 			const listed = await m.extensionRpc({ op: "list", target: m.ref });
 			assert.equal(listed.response.status, 200);
 			assert.ok("result" in listed.decoded && listed.decoded.result.kind === "registrations");
-			const registration = listed.decoded.result.registrations[0]!;
+			const registration = listed.decoded.result.registrations.find((row) => row.facet === "backend")!;
+			const ui = listed.decoded.result.registrations.find((row) => row.facet === "webui")!;
 			const call = {
 				extension: "http-example",
 				generation: registration.generation,
@@ -157,7 +158,7 @@ test(
 			assert.equal(denied.decoded.error.outcome, "denied");
 			const csrf = await m.extensionRpc({ op: "call", call }, m.admin, { "X-Pakka-CSRF": "" });
 			assert.equal(csrf.response.status, 403);
-			const asset = `/pocket/extensions/assets/http-example/${registration.generation}/index.js?conversationId=${m.ref.conversationId}`;
+			const asset = `/pocket/extensions/assets/http-example/webui/${ui.generation}/index.js?conversationId=${m.ref.conversationId}`;
 			assert.equal((await fetch(m.pluginHttp.origin + asset)).status, 401);
 			assert.match(
 				await (await fetch(m.pluginHttp.origin + asset, { headers: { Cookie: viewer.cookies } })).text(),
@@ -240,15 +241,44 @@ test(
 					endpoint: `http://127.0.0.1:${address.port}/pocket/extensions/rpc`,
 					personId: () => m.actor.person.id,
 				});
-				const row = (await client.list(m.ref))[0]!,
-					call = {
-						extension: row.manifest.id,
-						generation: row.generation,
-						action: "work",
-						requestId: "one-effect",
-						input: {},
-						target: m.ref,
-					};
+				const row = (await client.list(m.ref)).find((item) => item.facet === "backend")!;
+				const lifetime = new AbortController(),
+					memberLifetime = new AbortController();
+				const service = bindExtensionService(client, {
+					extensionId: row.manifest.id,
+					personId: m.actor.person.id,
+					serverId: "test-server",
+					signal: lifetime.signal,
+					backend: () => row,
+				});
+				const selected = service.forConversation(m.ref, { signal: memberLifetime.signal });
+				const card = await selected.call("card", {}, { requestId: "selected-card" });
+				assert.deepEqual(await selected.operationByRequest("selected-card"), card);
+				const peer = await m.client.create({ requestId: "peer", name: "Peer", profile: "default" });
+				await assert.rejects(service.forConversation(peer).operationByRequest("selected-card"));
+				assert.throws(() => service.forConversation({ ...m.ref, extra: true } as typeof m.ref));
+				memberLifetime.abort();
+				await assert.rejects(selected.call("card", {}, { requestId: "closed-member" }));
+				await assert.rejects(
+					selected.forConversation(peer).call("card", {}, { requestId: "inherited-close" }),
+				);
+				assert.equal(service.signal.aborted, false);
+				lifetime.abort();
+				await assert.rejects(service.forConversation(peer).call("card", {}, { requestId: "closed-ui" }));
+				assert.equal(
+					(await m.client.read(m.ref)).entries.filter((item) => item.display?.text === "HTTP-PLUGIN-CARD")
+						.length,
+					1,
+				);
+				assert.equal((await m.client.read(peer)).entries.length, 0);
+				const call = {
+					extension: row.manifest.id,
+					generation: row.generation,
+					action: "work",
+					requestId: "one-effect",
+					input: {},
+					target: m.ref,
+				};
 				const result = await client.call(call);
 				assert.equal(result.state, "unknown");
 				await m.runtime.waitForIdle();
@@ -263,7 +293,13 @@ test(
 					result,
 				);
 				assert.equal(m.f.requests.length, 1);
-				await client.control(row.manifest.id, "disable");
+				await client.control({
+					extension: row.manifest.id,
+					facet: "backend",
+					action: "disable",
+					expectedGeneration: row.generation,
+					requestId: "disable-backend",
+				});
 				await assert.rejects(
 					client.call({ ...call, requestId: "stale" }),
 					(error) => !!error && typeof error === "object" && "outcome" in error && error.outcome === "denied",

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { readFile, writeFile, lstat, realpath } from "node:fs/promises";
 import { isAbsolute } from "node:path";
-import type { ExtensionFacet } from "./extension.ts";
+import type { ExtensionFacet } from "@pakka/protocol/extensions";
 import { pathToFileURL } from "node:url";
 import { startPocket, type PocketProductOptions } from "./bootstrap.ts";
 
@@ -197,6 +197,8 @@ export function decodePocketProduct(value: unknown): PocketProductOptions {
 }
 const productKeys = [
 	"runtime",
+	"modelConfiguration",
+	"frontend",
 	"owner",
 	"initial",
 	"profiles",
@@ -258,7 +260,7 @@ export async function runPocket(args: readonly string[]): Promise<number> {
 		}
 		app = await startPocket(options);
 		if (app.initialOwner)
-			await writeFile(args[3], `${app.http.origin}/#signin=${app.initialOwner.token}\n`, {
+			await writeFile(args[3], `${app.http.origin}/#session=${app.initialOwner.token}\n`, {
 				flag: "wx",
 				mode: 0o600,
 			});

@@ -4,7 +4,11 @@ export const { actions } = defineBackend({
 	actions: {
 		view: async (context) => {
 			const view = await service(context).snapshot();
-			return { view, ...(view.open ? { frame: await service(context).frame() } : {}) };
+			return {
+				view,
+				canAct: context.person.role !== "viewer",
+				...(view.open ? { frame: await service(context).frame() } : {}),
+			};
 		},
 		navigate: (context, input) => service(context).navigate({ ...input, requestId: context.requestId }),
 		click: (context, input) => service(context).click({ ...input, requestId: context.requestId }),

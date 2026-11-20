@@ -42,6 +42,7 @@ test(
 			const input = { requestId: "once", dueAt: Date.now() + 500, text: "NATIVE-SCHEDULED-WORK" };
 			const row = await client.add(f.ref, input);
 			assert.ok(row.jobId);
+			assert.equal(row.cancellationRequested, false);
 			assert.equal(f.m.f.requests.length, 0, "admission is not immediate delivery");
 			await t.waitFor(async () => assert.equal((await client.list(f.ref))[0]!.state, "done"), {
 				timeout: 4000,
@@ -83,11 +84,17 @@ test(
 				},
 				{ timeout: 2000 },
 			);
-			await client.cancel(f.ref, row.id);
+			const requested = await client.cancel(f.ref, row.id);
+			assert.equal(
+				requested.cancellationRequested,
+				true,
+				"abort intent is confirmed before its native terminal is required",
+			);
 			await t.waitFor(
 				async () => {
 					const actual = (await client.list(f.ref))[0]!;
 					assert.equal(actual.state, "cancelled");
+					assert.equal(actual.cancellationRequested, true);
 					assert.equal(actual.nativeTerminal, "aborted");
 				},
 				{ timeout: 3000 },

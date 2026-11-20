@@ -1,4 +1,5 @@
 import { test } from "node:test";
+import { controlFacet } from "./fixtures/extension-control.ts";
 import assert from "node:assert/strict";
 import { join } from "node:path";
 import { runtimeFixture } from "../../../packages/agent/test/runtime-fixture.ts";
@@ -69,7 +70,7 @@ test(
 			);
 			const url =
 				app.http.origin +
-				"/pocket/ingress/workspace-hooks/hooks/" +
+				"/pakka-webui/ingress/workspace-hooks/hooks/" +
 				credentials.id +
 				"/" +
 				credentials.secret;
@@ -90,7 +91,7 @@ test(
 			);
 			assert.equal((await app.workspace.bind(actor).receipt(result.receiptId)).status, "queued");
 			assert.equal(m.f.requests.length, 1);
-			await app.extensions.setEnabled(actor, "workspace-hooks", false);
+			await controlFacet(app.extensions, actor, "workspace-hooks", "backend", "disable");
 			assert.equal((await fetch(url, { method: "POST", body: "NO-NEW-DISABLED-INPUT" })).status, 404);
 			release.resolve();
 			await app.runtime.waitForIdle();

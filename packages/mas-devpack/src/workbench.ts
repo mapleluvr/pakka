@@ -3,8 +3,15 @@ import type {
 	DeliveryReceipt,
 	Runtime,
 	ConversationConfigurationChange,
+	CatalogConfigurationReceipt,
 } from "@pakka/agent";
-import { MasRequestDenied, type Mas, type Member, type SendSpec } from "@pakka/mas";
+import {
+	MasRequestDenied,
+	type Mas,
+	type Member,
+	type SendSpec,
+	type MasConfigurationRequest,
+} from "@pakka/mas";
 import { projectActivity } from "./activity.ts";
 import { masAgentPrincipal } from "./ownership.ts";
 import type {
@@ -31,8 +38,13 @@ export interface WorkbenchAuthority {
 }
 export interface MasWorkbenchClient {
 	canConfigure(ref: ConversationRef): boolean;
-	configure(ref: ConversationRef, profile: string): Promise<WorkbenchMember>;
-	configureAgent(ref: ConversationRef, change: ConversationConfigurationChange): Promise<WorkbenchMember>;
+	configure(ref: ConversationRef, profile: string, requestId?: string): Promise<WorkbenchMember>;
+	configureAgent(
+		ref: ConversationRef,
+		change: ConversationConfigurationChange,
+		requestId?: string,
+	): Promise<WorkbenchMember>;
+	configurationReceipt(original: MasConfigurationRequest): Promise<CatalogConfigurationReceipt | null>;
 	view(): Promise<WorkbenchView>;
 	history(query?: WorkbenchHistoryQuery): Promise<WorkbenchHistoryPage>;
 	activities(refs: readonly ConversationRef[]): Promise<readonly WorkbenchActivity[]>;
@@ -104,10 +116,16 @@ export function createMasWorkbench(options: { readonly mas: Mas; readonly runtim
 				return true;
 			};
 			const all = () => mas.connect({ principal: id, source: null, grants: ["discover"] }).discover();
-			const authorizeOwner = (ref: ConversationRef) => {
+			const authorizeOwner = (ref: ConversationRef, historical = false) => {
 				check("manage", ref);
 				const members = all(),
-					member = members.find((row) => same(row.ref, ref));
+					member = members.find((row) =>
+						historical
+							? row.ref.key === ref.key &&
+								row.ref.sessionId === ref.sessionId &&
+								row.ref.conversationId === ref.conversationId
+							: same(row.ref, ref),
+					);
 				if (!member || !rootOwned(member, members)) return denied();
 				return member;
 			};
@@ -331,19 +349,48 @@ export function createMasWorkbench(options: { readonly mas: Mas; readonly runtim
 						return false;
 					}
 				},
-				configure: async (ref: ConversationRef, profile: string) => {
+				configure: async (ref: ConversationRef, profile: string, requestId?: string) => {
 					const owned = authorizeOwner(ref);
 					const client = mas
-						.connect({ principal: owned.owner, source: null, grants: ["configure"] })
+						.connect({
+							principal: owned.owner,
+							source: null,
+							grants: ["configure"],
+							initiator: { kind: "human", id },
+						})
 						.withAuthority(() => authorizeOwner(ref));
-					return project(await client.configure(ref, profile), all());
+					return project(await client.configure(ref, profile, requestId), all());
 				},
-				configureAgent: async (ref: ConversationRef, change: ConversationConfigurationChange) => {
+				configureAgent: async (
+					ref: ConversationRef,
+					change: ConversationConfigurationChange,
+					requestId?: string,
+				) => {
 					const owned = authorizeOwner(ref);
 					const client = mas
-						.connect({ principal: owned.owner, source: null, grants: ["configure"] })
+						.connect({
+							principal: owned.owner,
+							source: null,
+							grants: ["configure"],
+							initiator: { kind: "human", id },
+						})
 						.withAuthority(() => authorizeOwner(ref));
-					return project(await client.configureAgent(ref, change), all());
+					return project(await client.configureAgent(ref, change, requestId), all());
+				},
+				configurationReceipt: async (input: MasConfigurationRequest) => {
+					const original = structuredClone(input);
+					current();
+					await mas.view();
+					const owned = authorizeOwner(original.target, true);
+					return mas
+						.connect({
+							principal: owned.owner,
+							source: null,
+							grants: ["configure"],
+							initiator: { kind: "human", id },
+						})
+						.withAuthority(() => authorizeOwner(original.target, true))
+						.configurationReceipt(original);
 				},
 				view: async () => {
 					current();

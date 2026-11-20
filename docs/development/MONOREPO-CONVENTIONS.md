@@ -6,6 +6,8 @@
 
 ## 1. 目录与命名
 
+下图用于当前源码定位；独立前端边界已采用，实施阶段见[分仓规划](../changes/independent-webui.md)。`apps/webui` 的混合实现不是应整体搬到新仓的目标结构。
+
 ```text
 pakka/
 ├── packages/
@@ -32,7 +34,7 @@ pakka/
 
 package/app 的建立以实际消费者和可执行路径为依据；产品组成见[产品预期](../state/product.md)。
 
-`packages/` 放可复用库及 extension；`apps/` 放可执行产品与 composition root。pakka-webui 采用单一产品包 `@pakka/webui`，不另造空 SDK 包；可通过纯 public SDK 子路径供 extension peer 消费，边界见下节。只有真实应用加入时才扩展 workspace、构建和检查范围。进程部署拓扑由应用明确选择，与 package/repository 的数量无关。
+`packages/` 放可复用库及 extension；`apps/` 放可执行产品与 composition root。pakka-webui 前端及纯浏览器 SDK 在独立仓库维护，Pakka 保留 Node 装配与后端服务并消费固定前端产物；服务 protocol/client 继续由 Pakka 维护并提供独立消费制品。确切 SDK 包/出口按真实消费者形成，不预建空包，也不为旧 WebUI/SDK 兼容保留 facade。进程部署拓扑与 package/repository 数量分别设计。
 
 `@pakka/agent` 是宿主与权限执行包的正式名称。文档可用“gate 职责”描述其作用；生产 import 和 metadata 使用同一名称。
 
@@ -59,7 +61,7 @@ Dynamite adapter ──→ principal-bound StrategyBinding
 @pakka/agent     ──→ 固定的 patched Durable + pi-ai/chord
 ```
 
-MAS 和 Dynamite 不依赖 CLI；agent 不反向 import MAS、DevPack 或 Dynamite。`apps/` 可以装配库，核心库不能依赖 app。pakka-webui 的明确例外仅为可选 extension facet peer-consume `@pakka/webui` 的纯 public SDK exports：不得 import executable、私有 store/router/backend startup；现有 Agent-only export 不加载 WebUI。纯 SDK、browser/backend graph 与安装消费者必须独立验收。默认启用、工具组合、模型配置来源、认证、预算与 worker 隔离由受信任 bootstrap 明确装配；产品不再用 Agent profile 列表充当模型目录或另加逐模型 ACL。
+MAS 和 Dynamite 不依赖 CLI；agent 不反向 import MAS、DevPack 或 Dynamite。`apps/` 可以装配库，核心库不能依赖 app。可选 extension facet 只消费其需要的公开 SDK：浏览器 UI 面归独立前端，Backend/Agent 服务面归所属后端；不得 import executable、私有 store/router/backend startup。Agent-only 不加载 WebUI；纯 SDK 的 runtime/声明图、GUI-only/headless 与标准安装分别验收。默认启用、工具组合、模型配置来源、认证、预算与 worker 隔离由受信任 bootstrap 明确装配；产品不再用 Agent profile 列表充当模型目录或另加逐模型 ACL。
 
 MAS policy 决定资源关系和可授予的动作；agent 在实际效果边界绑定调用身份、目标与有效期，并执行授权。MAS 通过窄端口完成登记和编排，不能取得可任意调用的原始事务或 Harness。可信 bootstrap 的控制端口与 agent-facing 端口必须分别授予。
 
@@ -152,13 +154,13 @@ Dynamite 由宿主显式选用。程序化接入遵循[持久化契约](../state
 
 ## 9. Repository 拆分规则
 
-| 组件                                | 当前选择                               | 重新评估的条件                              |
-| ----------------------------------- | -------------------------------------- | ------------------------------------------- |
-| agent / gate 职责 / Durable adapter | 同仓、同包                             | 存在真实独立消费者、稳定端口和独立发布需要  |
-| Durable patch                       | Pakka 内版本化 patch                   | 有其他 downstream 消费者和独立发布/回归流程 |
-| MAS 服务与 DevPack                  | 同仓、分包                             | 契约稳定且能够适配其他宿主                  |
-| Dynamite                            | 保持现有独立仓库                       | 通过固定版本的跨仓验收维护兼容              |
-| pakka-webui                         | 单一 `@pakka/webui` 产品包，与主仓维护 | 出现稳定公开协议、独立交付和真实拆仓需要    |
-| CLI / server                        | 同仓应用                               | 出现独立维护、发布或部署需求                |
+| 组件                                | 当前选择                              | 重新评估的条件                                  |
+| ----------------------------------- | ------------------------------------- | ----------------------------------------------- |
+| agent / gate 职责 / Durable adapter | 同仓、同包                            | 存在真实独立消费者、稳定端口和独立发布需要      |
+| Durable patch                       | Pakka 内版本化 patch                  | 有其他 downstream 消费者和独立发布/回归流程     |
+| MAS 服务与 DevPack                  | 同仓、分包                            | 契约稳定且能够适配其他宿主                      |
+| Dynamite                            | 保持现有独立仓库                      | 通过固定版本的跨仓验收维护兼容                  |
+| pakka-webui                         | 独立前端仓库；Node 产品装配留在 Pakka | 先独立消费/最小真实切片，再搬仓并按固定制品验收 |
+| CLI / server                        | 同仓应用                              | 出现独立维护、发布或部署需求                    |
 
 独立 package 可以拥有自己的版本而留在同仓；独立进程也可以由同仓应用启动。只有消费契约、release 和集成验收均可独立时才拆 repo。涉及上游材料时保留来源、许可和固定版本；跨组件接入由公开契约和固定安装消费者核对。

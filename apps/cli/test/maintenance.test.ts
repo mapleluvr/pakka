@@ -77,7 +77,9 @@ async function setup() {
 	const running = launch(["--no-open", "--control-stdin"]);
 	const ready = await running.ready();
 	const ownerText = await readFile(join(home, "data", "owner-link.txt"), "utf8"),
-		oldToken = new URL(ownerText.trim()).hash.slice(8);
+		oldToken = new URLSearchParams(new URL(ownerText.trim()).hash.slice(1)).get("session");
+	assert.ok(oldToken);
+	assert.equal(oldToken.length, 43);
 	return {
 		root,
 		home,
@@ -153,7 +155,7 @@ test("pakka recover login checks writer/identity then recovers the original owne
 		assert.ok(ready.loginFile);
 		const link = JSON.parse(await readFile(ready.loginFile, "utf8"));
 		assert.equal(link.sessionId, f.sessionId);
-		assert.equal(link.url, ready.origin + "/#signin=" + credential.token);
+		assert.equal(link.url, ready.origin + "/#session=" + credential.token);
 		const exchange = (token: string) =>
 			fetch(ready.origin + "/pocket/exchange", {
 				method: "POST",

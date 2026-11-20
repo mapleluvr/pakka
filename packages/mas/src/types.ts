@@ -11,6 +11,8 @@ import type {
 	CatalogDeliverySpec,
 	CatalogHistoryQuery,
 	CatalogHistoryPage,
+	CatalogConfigurationRequest,
+	CatalogConfigurationReceipt,
 } from "@pakka/agent";
 export type { ConversationRef as AgentRef, DeliveryReceipt, MemberLifetime } from "@pakka/agent";
 
@@ -60,6 +62,7 @@ export interface SendSpec {
 	readonly text: string;
 	readonly mode?: InputMode;
 }
+export type MasConfigurationRequest = Omit<CatalogConfigurationRequest, "principal">;
 export interface MasClient {
 	/** Serializable identity is descriptive only; the bound closures carry authority. */
 	readonly identity: { readonly principal: string; readonly source: ConversationRef | null };
@@ -80,8 +83,15 @@ export interface MasClient {
 	spawn(spec: Omit<MemberSpec, "owner">): Promise<Member>;
 	abort(ref: ConversationRef): Promise<Member>;
 	retire(ref: ConversationRef): Promise<Member>;
-	configure(ref: ConversationRef, profile: string): Promise<Member>;
-	configureAgent(ref: ConversationRef, change: ConversationConfigurationChange): Promise<Member>;
+	/** Optional request identity is retained atomically; query it to recover instead of resubmitting. */
+	configure(ref: ConversationRef, profile: string, requestId?: string): Promise<Member>;
+	configureAgent(
+		ref: ConversationRef,
+		change: ConversationConfigurationChange,
+		requestId?: string,
+	): Promise<Member>;
+	/** Reads this bound initiator's exact original under current owner authority, including historical bindings. */
+	configurationReceipt(original: MasConfigurationRequest): Promise<CatalogConfigurationReceipt | null>;
 	fork(ref: ConversationRef, spec: { readonly key: string; readonly entryId: string }): Promise<Member>;
 	/** Exact live native invocation; copying/serialization or a peer scope never grants authority. */
 	forInvocation(scope: ToolInvocationScope): MasClient;

@@ -1,5 +1,6 @@
-import { decodeValue, isRecord, type ExtensionJson } from "@pakka/webui/extension";
-import type { WebInterfaceContext } from "@pakka/webui/ui";
+import { decodeValue, isRecord, type ExtensionJson } from "@pakka/protocol/extensions";
+import type { ExtensionServiceBinding } from "@pakka/client/extensions";
+import type { PocketRequestOptions } from "@pakka/client/pocket";
 import type { TicketClient, TicketPage, TicketReceipt, TicketView, TicketHistoryPage } from "../types.ts";
 import type { TicketAction } from "../commands.ts";
 import { resultSchema } from "./contract.ts";
@@ -42,12 +43,12 @@ export function readTicketResult<K extends TicketAction>(action: K, raw: unknown
 	return result.value as ActionValues[K];
 }
 export async function ticketCall<K extends TicketAction>(
-	context: Pick<WebInterfaceContext, "call">,
+	context: Pick<ExtensionServiceBinding, "call">,
 	action: K,
 	input: ExtensionJson = {},
-	requestId?: string,
+	options?: PocketRequestOptions,
 ): Promise<ActionValues[K]> {
-	const operation = await context.call(action, input, requestId ? { requestId } : undefined);
+	const operation = await context.call(action, input, options);
 	if (operation.state !== "done")
 		throw new TicketCallError("unknown", "Result unconfirmed. Check the original request.");
 	return readTicketResult(action, operation.value);

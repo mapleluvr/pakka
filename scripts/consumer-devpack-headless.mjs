@@ -11,7 +11,15 @@ import "@pakka/memo";
 
 const runtimeRequire = createRequire(import.meta.resolve("@pakka/agent"));
 assert.throws(() => runtimeRequire.resolve("@earendil-works/pi-coding-agent"), { code: "MODULE_NOT_FOUND" });
-for (const dependency of ["@pakka/webui", "preact", "@earendil-works/pi-coding-agent"]) {
+for (const dependency of [
+	"@pakka/webui",
+	"@pakka/webui-sdk",
+	"react",
+	"react-dom",
+	"@astryxdesign/core",
+	"preact",
+	"@earendil-works/pi-coding-agent",
+]) {
 	await assert.rejects(access(new URL("./node_modules/" + dependency, import.meta.url)), { code: "ENOENT" });
 	assert.throws(() => import.meta.resolve(dependency), { code: "ERR_MODULE_NOT_FOUND" });
 }
@@ -45,5 +53,5 @@ assert.equal(typeof createTicketService, "function");
 assert.throws(() => createMasTicketDispatcher({ routes: [] }).plan("unapproved"));
 ticketTools.revoke();
 console.log(
-	"Headless RSI/Memo and DevPack imports passed with no WebUI, Preact or Coding Agent installed or resolvable; no model dispatch.",
+	"Headless RSI/Memo and DevPack imports passed with no WebUI/SDK, React/Astryx, Preact or Coding Agent installed or resolvable; no model dispatch.",
 );

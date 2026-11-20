@@ -520,6 +520,8 @@ export type ConversationConfigurationChange = {
 	readonly thinkingLevel?: ModelThinkingLevel;
 };
 export interface RuntimeOptions extends HostOptions {
+	/** Fixed, trusted Agent contributions; each explicitly selects its allowed profiles and starts disabled. */
+	readonly agentFacets?: readonly import("./agent-facet.ts").AgentFacet[];
 	/** Product cold browsing is opt-in; independent SDK hosts keep the existing eager frame behavior. */
 	readonly observation?: "lazy" | "eager";
 	/** Explicit server directory roots; defaults to the approved profiles' cwd trees. Not an OS sandbox. */
@@ -684,6 +686,46 @@ export interface ConversationPreviewOptions extends ConversationReadOptions {
 	/** At most 256 KiB; the reader stops at an entry boundary and supplies the next cursor. */
 	readonly maxBytes?: number;
 }
+/** Stable persisted identity, without a current execution binding. */
+export interface ConversationHistoryAddress {
+	readonly sessionId: string;
+	readonly conversationId: string;
+}
+export interface ConversationHistoryPage {
+	readonly reference: ConversationHistoryAddress;
+	/** Last committed native sequence visible in this page's short read snapshot. */
+	readonly sequence: string;
+	readonly entries: ConversationSnapshot["entries"];
+	readonly entriesTruncated: boolean;
+	readonly olderBeforeId?: string;
+	/** Last saved presentation; does not assert that any task is currently running. */
+	readonly saved: ConversationSnapshot["live"];
+	readonly usage: UsageDTO;
+}
+export type StoredConversationQuery =
+	| { readonly kind: "source" }
+	| { readonly kind: "page"; readonly options?: ConversationPreviewOptions }
+	| {
+			readonly kind: "content";
+			readonly content: ConversationContentReference;
+			readonly range: ConversationContentRange;
+	  };
+export type StoredConversationResult =
+	| { readonly kind: "source"; readonly reference: ConversationHistoryAddress; readonly sequence: string }
+	| { readonly kind: "page"; readonly page: ConversationHistoryPage }
+	| {
+			readonly kind: "content";
+			readonly reference: ConversationHistoryAddress;
+			readonly chunk: ConversationContentChunk;
+	  };
+export interface StoredConversationOptions {
+	/** Trusted server-selected existing Pakka source; never accept this path from a browser. */
+	readonly sessionFile: string;
+	readonly reference: ConversationHistoryAddress;
+	/** Synchronous current read-authority check, repeated after asynchronous work and cleanup. */
+	readonly check: () => void;
+	readonly signal?: AbortSignal;
+}
 export interface ConversationSpec {
 	readonly key: string;
 	readonly profile?: string;
@@ -779,6 +821,23 @@ export interface DeliveryReceipt {
 	readonly entryId?: string;
 	readonly reason?: string;
 }
+export type CatalogConfigurationSelection =
+	| { readonly kind: "agent"; readonly change: ConversationConfigurationChange }
+	| { readonly kind: "profile"; readonly profile: string };
+export interface CatalogConfigurationIdentity {
+	readonly requestId: string;
+	readonly principal: string;
+}
+export interface CatalogConfigurationRequest extends CatalogConfigurationIdentity {
+	readonly target: ConversationRef;
+	readonly selection: CatalogConfigurationSelection;
+}
+export interface CatalogConfigurationReceipt {
+	readonly original: CatalogConfigurationRequest;
+	/** Historical resulting binding, not a promise that it is still the current binding. */
+	readonly ref: ConversationRef;
+	readonly at: number;
+}
 export interface RuntimeCatalog {
 	/** Read-only observation. The trusted synchronous predicate is evaluated before body/status publication. */
 	history(
@@ -801,12 +860,24 @@ export interface RuntimeCatalog {
 		expectedVersion: number,
 		check: () => void,
 	): Promise<CatalogSnapshot>;
-	configure(ref: ConversationRef, profile: string, check: () => void): Promise<CatalogMember>;
+	/** Optional request identity retains a receipt atomically with native configuration. Never retry to recover. */
+	configure(
+		ref: ConversationRef,
+		profile: string,
+		check: () => void,
+		request?: CatalogConfigurationIdentity,
+	): Promise<CatalogMember>;
 	configureAgent(
 		ref: ConversationRef,
 		change: ConversationConfigurationChange,
 		check: () => void,
+		request?: CatalogConfigurationIdentity,
 	): Promise<CatalogMember>;
+	/** Exact original read; accepts its historical binding and never applies a configuration. */
+	configurationReceipt(
+		original: CatalogConfigurationRequest,
+		check: () => void,
+	): Promise<CatalogConfigurationReceipt | null>;
 	deliver(spec: CatalogDeliverySpec, check: () => void): Promise<DeliveryReceipt>;
 	receipt(id: string, check: () => void): Promise<DeliveryReceipt>;
 	wait(id: string, check: () => void, signal?: AbortSignal): Promise<DeliveryReceipt>;

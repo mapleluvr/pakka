@@ -13,6 +13,7 @@ import {
 	type PocketApproval,
 	type PocketSchedule,
 	type PocketScheduleInput,
+	type ScheduleDeliveries,
 	type PocketSchedulesPreparation,
 	type PocketMemoryPreparation,
 	type PocketMemoryClient,
@@ -110,6 +111,7 @@ export async function workspaceMemoryService(
 
 export type WorkspaceSchedule = Omit<PocketSchedule, "target">;
 export interface WorkspaceSchedulesClient {
+	deliveries(id: string): Promise<ScheduleDeliveries>;
 	list(): Promise<readonly WorkspaceSchedule[]>;
 	add(input: PocketScheduleInput): Promise<WorkspaceSchedule>;
 	cancel(id: string): Promise<WorkspaceSchedule>;
@@ -135,6 +137,7 @@ export async function workspaceSchedulesService(
 			const client = schedules.bind(actor, check);
 			return Object.freeze({
 				list: async () => Object.freeze((await client.list(target)).map(scheduleView)),
+				deliveries: (id: string) => client.deliveries(target, id),
 				add: async (input: PocketScheduleInput) => scheduleView(await client.add(target, input)),
 				cancel: async (id: string) => scheduleView(await client.cancel(target, id)),
 			});

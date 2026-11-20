@@ -72,12 +72,71 @@ async function fixture(wrap: (workspace: PocketWorkspace) => PocketWorkspace = (
 			driver = await people.authenticate(driverSession.token);
 		const schedules = await prepared.attach({ runtime: m.runtime, people, workspace });
 		const jobs = m.runtime.jobs({ namespace: "schedules.boundaries.jobs", maxJobs: 8, maxBytes: 1048576 });
-		return { m, people, owner, driverSession, driver, target, hidden, schedules, collaboration, jobs };
+		return {
+			m,
+			workspace,
+			people,
+			owner,
+			driverSession,
+			driver,
+			target,
+			hidden,
+			schedules,
+			collaboration,
+			jobs,
+		};
 	} catch (error) {
 		await m.close();
 		throw error;
 	}
 }
+
+test("A rebound Conversation can inspect and cancel its original waiting job", async () => {
+	const f = await fixture();
+	try {
+		const client = f.schedules.bind(f.owner);
+		const completed = await client.add(f.target, {
+			requestId: "two",
+			text: "Delivered twice",
+			dueAt: Date.now() + 70,
+			intervalMs: 1000,
+			maxRuns: 2,
+		});
+		await f.jobs.wait(completed.jobId!, () => {});
+		await f.m.runtime.waitForIdle();
+		const row = await client.add(f.target, {
+			requestId: "before-rebind",
+			text: "Original only",
+			dueAt: Date.now() + 60000,
+		});
+		const changed = await f.workspace.bind(f.owner).changeConfiguration({
+			requestId: "rebind",
+			target: f.target,
+			selection: { kind: "agent", change: { cwd: f.m.f.cwd } },
+		});
+		const current = changed.ref;
+		assert.notEqual(current.incarnation, f.target.incarnation);
+		const visible = (await client.list(current)).find((item) => item.id === row.id);
+		const evidence = await client.deliveries(current, completed.id);
+		assert.equal(evidence.originalBinding, false);
+		assert.deepEqual(
+			evidence.items.map((item) => item.status),
+			["done", "done"],
+		);
+		assert.equal(new Set(evidence.items.map((item) => item.id)).size, 2);
+		await assert.rejects(client.deliveries(f.hidden, completed.id));
+		await assert.rejects(f.schedules.bind(f.driver).deliveries(current, completed.id));
+		assert.equal(visible?.jobId, row.jobId);
+		assert.deepEqual(visible?.target, f.target);
+		await assert.rejects(client.cancel(f.hidden, row.id));
+		const cancelled = await client.cancel(current, row.id);
+		assert.equal(cancelled.cancellationRequested, true);
+		assert.equal((await f.jobs.wait(row.jobId!, () => {})).nativeTerminal, "aborted");
+		assert.equal(f.m.f.requests.length, 2);
+	} finally {
+		await f.m.close();
+	}
+});
 
 test(
 	"WebUI schedule authority: resource scopes and viewers cannot register native work or claim a different incarnation",

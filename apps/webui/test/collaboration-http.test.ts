@@ -5,6 +5,9 @@ import { runtimeFixture } from "../../../packages/agent/test/runtime-fixture.ts"
 import { startPocket } from "../src/bootstrap.ts";
 import { decodePocketResponse } from "@pakka/protocol/pocket";
 import { stream } from "./events.ts";
+import { decodeWebUiResponse, WEBUI_SERVICE_API, type WebUiCommand } from "@pakka/protocol/webui";
+import { executeCollaboration } from "../src/collaboration-service.ts";
+import { WebUiServiceRefusal } from "../src/service-refusal.ts";
 
 // Rejecting a concurrent stale edit must leave the winner unchanged and publish a definite conflict,
 // not an opaque unknown or a forged/foreign resource's data. Exercise actual Cookie/RPC/SSE.
@@ -143,6 +146,116 @@ test(
 			assert.ok("result" in final.value && final.value.result.kind === "collaboration");
 			assert.equal(final.value.result.snapshot.note.text, "WINNING-NOTE");
 			assert.equal(final.value.result.snapshot.note.version, 1);
+			const instance = app;
+			async function service(command: WebUiCommand, auth = admin) {
+				const actor = await instance.people.authenticate(/pakka_pocket=([^;]+)/.exec(auth.cookie)![1]!);
+				const requestId = crypto.randomUUID();
+				const response = await fetch(origin + "/pakka-webui/services", {
+					method: "POST",
+					headers: {
+						Origin: origin,
+						Cookie: auth.cookie,
+						"X-Pakka-CSRF": auth.csrf,
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify({
+						api: WEBUI_SERVICE_API,
+						requestId,
+						binding: { personId: instance.people.current(actor).id, serverId: instance.http.serverId },
+						command,
+					}),
+				});
+				return { status: response.status, value: decodeWebUiResponse(await response.json(), requestId) };
+			}
+			const viewerView = await service({ op: "collaboration.read", target: ref }, viewer);
+			assert.equal(viewerView.status, 200);
+			assert.ok("result" in viewerView.value && viewerView.value.result.kind === "collaboration");
+			assert.equal(viewerView.value.result.view.canEditNote, false);
+			assert.equal(viewerView.value.result.view.canPin, false);
+			assert.equal(viewerView.value.result.view.canControl, false);
+			const original = {
+				requestId: "public-note",
+				target: ref,
+				action: { kind: "note" as const, expectedVersion: 1, text: "PUBLIC-ORIGINAL-NOTE" },
+			};
+			const written = await service({ op: "collaboration.write", change: original });
+			assert.equal(written.status, 200);
+			assert.ok("result" in written.value && written.value.result.kind === "collaboration-receipt");
+			assert.deepEqual(written.value.result.receipt.result, { kind: "note", version: 2 });
+			await service({
+				op: "collaboration.write",
+				change: {
+					requestId: "public-later-note",
+					target: ref,
+					action: { kind: "note", expectedVersion: 2, text: "PUBLIC-LATER-NOTE" },
+				},
+			});
+			const recovered = await service({ op: "collaboration.lookup", original });
+			assert.equal(recovered.status, 200);
+			assert.ok("result" in recovered.value && recovered.value.result.kind === "collaboration-operation");
+			assert.deepEqual(recovered.value.result.receipt, written.value.result.receipt);
+			const wrong = await service({
+				op: "collaboration.lookup",
+				original: { ...original, action: { ...original.action, text: "ALTERED-ORIGINAL" } },
+			});
+			assert.equal(wrong.status, 409);
+			const other = await service({ op: "collaboration.lookup", original }, viewer);
+			assert.ok("result" in other.value && other.value.result.kind === "collaboration-operation");
+			assert.equal(other.value.result.receipt, null);
+			const forbidden = await service(
+				{ op: "collaboration.write", change: { ...original, requestId: "viewer-note" } },
+				viewer,
+			);
+			assert.equal(forbidden.status, 403);
+			assert.ok("error" in forbidden.value && forbidden.value.error.outcome === "denied");
+			const conflict = await service({
+				op: "collaboration.write",
+				change: { ...original, requestId: "stale-public-note" },
+			});
+			assert.equal(conflict.status, 409);
+			assert.ok("error" in conflict.value && conflict.value.error.outcome === "denied");
+
+			const ownerActor = await instance.people.authenticate(/pakka_pocket=([^;]+)/.exec(admin.cookie)![1]!);
+			const afterCommit = {
+				requestId: "after-commit",
+				target: ref,
+				action: { kind: "note" as const, expectedVersion: 3, text: "NOTE-LANDED-BEFORE-REFUSAL" },
+			};
+			let landed = false;
+			const observed = {
+				...instance.collaboration,
+				bind: (actor: typeof ownerActor) => {
+					const native = instance.collaboration.bind(actor);
+					return {
+						...native,
+						write: async (request: typeof afterCommit) => {
+							const receipt = await native.write(request);
+							landed = true;
+							return receipt;
+						},
+					};
+				},
+			};
+			await assert.rejects(
+				executeCollaboration(
+					{
+						actor: ownerActor,
+						people: instance.people,
+						collaboration: observed,
+						check: () => {
+							if (landed) throw new WebUiServiceRefusal("FORBIDDEN");
+						},
+					},
+					{ op: "collaboration.write", change: afterCommit },
+				),
+				(error: unknown) =>
+					error instanceof WebUiServiceRefusal && error.code === "UNKNOWN" && !error.confirmedNoEffect,
+			);
+			assert.equal(
+				(await instance.collaboration.bind(ownerActor).snapshot(ref)).note.text,
+				afterCommit.action.text,
+			);
+			assert.ok(await instance.collaboration.bind(ownerActor).lookup(afterCommit));
 			assert.equal(m.f.requests.length, 0);
 			assert.deepEqual(m.f.errors, []);
 		} finally {

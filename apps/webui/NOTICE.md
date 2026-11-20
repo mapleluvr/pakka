@@ -1,11 +1,7 @@
-# pakka-webui third-party notices
+# Pakka WebUI Backend notices
 
-pakka-webui adapts the pi-pocket Web workbench, interaction patterns, theme/CSS and fonts from Tanner Middleton's pi-pocket. The adopted UI baseline is `TannerMidd/pi-pocket@de612d5622cdc66b6b8b4900c650c6f2efdf4c63`; command/interface design also references `mapleluvr/pi-pocket@58a4fdcc88ed755023aea9fac897735fca7396fe` (issue #35 Phase 2).
+This package provides the Pakka HTTP service, product assembly and Backend contributions. The browser application is delivered as a fixed artifact from the independent pakka-webui repository; its third-party notices and licenses are included inside `dist/frontend` with the verified application assets.
 
-The history viewport uses the exact npm package `@tanstack/virtual-core` 3.19.11. The reproducible esbuild browser bundle defines the build-time production environment and is served locally; the MIT copyright and permission notice is retained in `licenses/virtual-core-MIT.txt`.
+Parts of the service and workbench design descend from Tanner Middleton's pi-pocket (`TannerMidd/pi-pocket@de612d5622cdc66b6b8b4900c650c6f2efdf4c63`), with command/interface references from `mapleluvr/pi-pocket@58a4fdcc88ed755023aea9fac897735fca7396fe`. The original MIT notice is retained in `LICENSE.pi-pocket`. Historical source ancestry is recorded under `integrations/pocket/` in the Pakka repository.
 
-The original MIT copyright and permission notice is retained in `LICENSE.pi-pocket`. The included JetBrains Mono font and its SIL Open Font License are retained together in `web/fonts/`. Dependency code (Preact, htm, marked, DOMPurify and QRCode) is consumed from the exact declared npm packages and retains their respective package licenses.
-
-The Devin-like shell adopts the static reference structure and original LF CSS from `mapleluvr/devin-ui-comparison@ed20cec` (`clean-room/current`) and binds them to Pakka services. The included Inter variable font is redistributed under the SIL Open Font License in `web/fonts/Inter-OFL.txt`. No Devin production bundle, production stylesheet, authenticated dump, organization data or screenshot is shipped. Source selection, license identities and adoption scope are recorded in the [adoption change](../../openspec/changes/adopt-devin-frontend/design.md).
-
-The workbench application and transport are adapted to Pakka's public clients, controlled services, human identity and native Conversation records. The original pi-pocket runtime, SQLite writer, subagent scheduler/documents and PiP authority are not imported. Source ancestry, per-file provenance and the independently recorded upstream failure baseline are maintained in the Pakka repository under `integrations/pocket/`.
+Backend contributions use Pakka's public services, human identity and native Conversation records. React/Astryx UI contributions consume the shared runtime provided by the independent frontend. Node dependencies, including QRCode, retain the licenses in their installed packages.

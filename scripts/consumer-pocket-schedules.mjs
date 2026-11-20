@@ -6,7 +6,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createRuntime } from "@pakka/agent";
 import { createPocketSchedules } from "@pakka/server/pocket";
-import { ownedBrowser } from "./pocket-browser.ts";
+import { loginHttp, connectHttp } from "./consumer-webui-http.mjs";
 
 // Real installed CLI + public extension SDK, never a repository source import.
 const root = dirname(fileURLToPath(import.meta.url)),
@@ -74,7 +74,6 @@ function parse(text) {
 	}
 }
 let child,
-	browser,
 	origin,
 	webui = true,
 	port;
@@ -130,71 +129,40 @@ async function stop() {
 	assert.equal(child.output().includes(options.apiKey), false);
 	child = undefined;
 }
-const rpc = (page, command) =>
-	page.evaluate(
-		`(async()=>{const{createPocketClient}=await import('@pakka/client/pocket');return createPocketClient({endpoint:location.origin+'/pocket/rpc',csrf:()=>/pakka_csrf=([^;]+)/.exec(document.cookie)?.[1]??null}).request(${JSON.stringify(command)});})()`,
-	);
-const ext = (page, ref, op) =>
-	page.evaluate(
-		`(async()=>{const{createExtensionClient}=await import('@pakka/webui/client');const client=createExtensionClient({endpoint:location.origin+'/pocket/extensions/rpc',csrf:()=>/pakka_csrf=([^;]+)/.exec(document.cookie)?.[1]??null}),row=(await client.list(${JSON.stringify(ref)})).find(row=>row.manifest.id==='workspace-schedules');return ${op};})()`,
-	);
+const listSchedules = async (client, target) =>
+	(await client.call("workspace-schedules", "list", {}, target)).value.schedules;
 try {
 	let info = await start();
 	port = Number(new URL(origin).port);
-	const link = (await readFile(ownerFile, "utf8")).trim();
-	assert.ok(link.startsWith(origin + "/#signin="));
-	browser = await ownedBrowser(join(run, "chrome"));
-	const page = await browser.page(link);
-	await page.wait('document.querySelector("[data-action=signin]")');
-	await page.click("[data-action=signin]");
-	await page.wait('document.querySelector("[data-conversation]")');
-	await page.click("[data-conversation]");
-	const list = await rpc(page, { op: "list" });
-	assert.equal(list.kind, "list");
-	assert.equal(list.conversations.length, 1);
-	const target = list.conversations[0];
-	await page.wait('document.querySelector("[data-interface=workspace-schedules-schedules]")');
-	await page.click("[data-interface=workspace-schedules-schedules]");
-	await page.wait('document.querySelector("[data-schedule-add]")');
-	await page.type("[data-schedule-text]", "ONCE-INSTALLED-LOST-SCHEDULE");
-	await page.type("[data-schedule-delay]", "2", { replace: true });
-	assert.equal(await page.evaluate('document.querySelector("[data-schedule-delay]").value'), "2");
-	await page.evaluate(
-		`(()=>{const original=globalThis.fetch;globalThis.__scheduleWrites=0;globalThis.__restoreScheduleFetch=()=>{globalThis.fetch=original;};globalThis.fetch=async(...args)=>{if(typeof args[1]?.body==='string'&&args[1].body.includes('"action":"add"')){globalThis.__scheduleWrites++;globalThis.__originalSchedule=JSON.parse(args[1].body).command.call;const response=await original(...args);await response.arrayBuffer();throw Error('TEST LOST COMMITTED SCHEDULE RESPONSE');}return original(...args);};})()`,
+	const token = new URLSearchParams(new URL((await readFile(ownerFile, "utf8")).trim()).hash.slice(1)).get(
+		"session",
 	);
-	await page.click("[data-schedule-add]");
-	await page.wait('document.querySelector("[data-schedule-reconcile]")?.disabled===false');
-	const original = await page.evaluate(
-		"({extension:globalThis.__originalSchedule.extension,requestId:globalThis.__originalSchedule.requestId,target:globalThis.__originalSchedule.target})",
-	);
-	await page.evaluate("globalThis.__restoreScheduleFetch()");
-	await page.click("[data-conversation]");
-	await page.wait('document.querySelector("textarea[name=message]")');
-	await page.click("[data-interface=workspace-schedules-schedules]");
-	await page.wait('document.querySelector("[data-schedule-reconcile]")?.disabled===false');
-	// The extension stylesheet can arrive after the pending button is rendered.
-	await page.wait(
-		'Array.from(document.querySelectorAll("link[rel=stylesheet]")).some(link => link.href.endsWith("/schedules.css") && !!link.sheet)',
-	);
-	await page.click("[data-schedule-reconcile]");
-	await page.wait('!document.querySelector("[data-schedule-reconcile]")');
-	assert.equal(await page.evaluate("globalThis.__scheduleWrites"), 1);
-	await until(() => requests.length === 1);
-	await page.wait('document.querySelector("[data-schedule-state=done]")');
-	const before = await ext(
-		page,
+	assert.ok(token);
+	let owner = await loginHttp(origin, token);
+	const target = (await owner.rpc({ op: "list" })).conversations[0];
+	const made = await owner.call(
+		"workspace-schedules",
+		"add",
+		{ text: "ONCE-INSTALLED-SCHEDULE", dueAt: Date.now() + 1000 },
 		target,
-		"(await client.call({extension:row.manifest.id,generation:row.generation,action:'list',requestId:crypto.randomUUID(),target:" +
-			JSON.stringify(target) +
-			",input:{}})).value.schedules",
+		"installed-first",
 	);
+	assert.equal(made.state, "done");
+	await until(async () => (await listSchedules(owner, target))[0]?.state === "done");
+	const before = await listSchedules(owner, target);
 	assert.equal(before.length, 1);
-	assert.equal((await rpc(page, { op: "wait", id: before[0].deliveryId })).receipt.status, "done");
-	await page.type("[data-schedule-text]", "AFTER-REOPEN-WITHOUT-WEBUI-FACET", { replace: true });
-	await page.type("[data-schedule-delay]", "5", { replace: true });
-	assert.equal(await page.evaluate('document.querySelector("[data-schedule-delay]").value'), "5");
-	await page.click("[data-schedule-add]");
-	await page.wait('document.querySelectorAll("[data-schedule]").length===2');
+	assert.equal((await owner.rpc({ op: "wait", id: before[0].deliveryId })).receipt.status, "done");
+	assert.equal(requests.length, 1);
+	const future = await owner.call(
+		"workspace-schedules",
+		"add",
+		{ text: "AFTER-REOPEN-WITHOUT-WEBUI-FACET", dueAt: Date.now() + 8000 },
+		target,
+		"installed-future",
+	);
+	assert.equal(future.state, "done");
+	const scheduled = await listSchedules(owner, target);
+	assert.equal(scheduled.length, 2);
 	await stop();
 	const prepared = createPocketSchedules({ namespace: "installed.schedules", maxSchedules: 16 });
 	let runtime = await createRuntime({
@@ -207,16 +175,15 @@ try {
 		saved = await runtime.store({ namespace: "installed.schedules", maxBytes: 1048576 }).snapshot();
 		assert.equal(saved.data.rows.length, 2);
 		assert.equal(runtime.view().budget.primaryAttempts, 1);
-		const future = saved.data.rows[1];
+		const row = saved.data.rows[1];
 		assert.equal(
 			(
 				await runtime
 					.jobs({ namespace: "installed.schedules.jobs", maxJobs: 16, maxBytes: 1048576 })
-					.receipt(future.jobId, () => {})
+					.receipt(row.jobId, () => {})
 			).checkpoint.nextDueAt,
-			future.input.dueAt,
+			row.input.dueAt,
 		);
-		await writeFile(join(run, "before-reopen.json"), JSON.stringify(saved.data, null, 2));
 	} finally {
 		await runtime.close();
 	}
@@ -225,81 +192,47 @@ try {
 	const priorOrigin = origin;
 	info = await start();
 	assert.equal(origin, priorOrigin);
-	await page.navigate(origin + "/#conversation=" + target.conversationId);
-	await page.wait('document.querySelector("textarea[name=message]")');
-	await page.wait('!document.querySelector("[data-interface=workspace-schedules-schedules]")');
-	await until(() => requests.length === 2);
-	await page.wait('document.querySelector("main").innerText.includes("INSTALLED-SCHEDULE-RESULT")');
-	const after = await ext(
-		page,
-		target,
-		"(await client.call({extension:row.manifest.id,generation:row.generation,action:'list',requestId:crypto.randomUUID(),target:" +
-			JSON.stringify(target) +
-			",input:{}})).value.schedules",
+	owner = await connectHttp(origin, owner.cookies);
+	assert.ok(
+		!(await owner.extensions({ op: "list", target })).registrations.some(
+			(row) => row.manifest.id === "workspace-schedules" && row.facet === "webui",
+		),
 	);
+	await until(async () => (await listSchedules(owner, target)).every((row) => row.state === "done"));
+	const after = await listSchedules(owner, target);
 	assert.equal(after.length, 2);
 	assert.deepEqual(
 		after.map((row) => row.jobId),
 		saved.data.rows.map((row) => row.jobId),
 	);
-	assert.ok(after.every((row) => row.state === "done"));
-	const deliveries = [];
 	for (const row of after) {
-		const result = await rpc(page, { op: "wait", id: row.deliveryId });
-		assert.equal(result.kind, "receipt");
-		assert.equal(result.receipt.status, "done");
-		assert.deepEqual(result.receipt.target, target);
-		deliveries.push(result.receipt);
+		const receipt = (await owner.rpc({ op: "wait", id: row.deliveryId })).receipt;
+		assert.equal(receipt.status, "done");
+		assert.deepEqual(receipt.target, target);
 	}
-	await writeFile(join(run, "native-deliveries.json"), JSON.stringify(deliveries, null, 2));
-	const recovered = await ext(
-		page,
-		target,
-		"await client.operationByRequest(" + JSON.stringify(original) + ")",
-	);
-	assert.equal(recovered.state, "done");
+	const recovered = await owner.operationByRequest("workspace-schedules", "installed-first", target);
+	assert.equal(recovered.id, made.id);
 	assert.equal(requests.length, 2);
 	await stop();
-	runtime = await createRuntime({
-		...options,
-		jobs: [createPocketSchedules({ namespace: "installed.schedules", maxSchedules: 16 }).definition],
-	});
+	runtime = await createRuntime({ ...options, jobs: [prepared.definition] });
 	try {
 		assert.equal(runtime.view().budget.primaryAttempts, 2);
 		assert.equal(runtime.view().sessionId, target.sessionId);
-		await writeFile(
-			join(run, "after-reopen.json"),
-			JSON.stringify(
-				(await runtime.store({ namespace: "installed.schedules", maxBytes: 1048576 }).snapshot()).data,
-				null,
-				2,
-			),
-		);
 	} finally {
 		await runtime.close();
 	}
-	assert.ok(JSON.stringify(requests[0]).includes("ONCE-INSTALLED-LOST-SCHEDULE"));
+	assert.ok(JSON.stringify(requests[0]).includes("ONCE-INSTALLED-SCHEDULE"));
 	assert.ok(JSON.stringify(requests[1]).includes("AFTER-REOPEN-WITHOUT-WEBUI-FACET"));
-	assert.equal(errors.length, 0);
+	assert.deepEqual(errors, []);
 	await writeFile(join(run, "provider-requests.json"), JSON.stringify(requests, null, 2) + "\n");
 	console.log(
-		JSON.stringify({
-			installedSchedules: true,
-			modelHttp: requests.length,
-			spentAttempts: 2,
-			lostResponseNeverReplayed: true,
-			nativeJobsPreserved: true,
-			webuiRemovalPreservesWork: true,
-			evidence: run,
-		}),
+		"Installed schedules HTTP passed: original operation, native jobs/checkpoint/delivery IDs preserved across reopen, work continues without WebUI; 2 local model requests.",
 	);
 } finally {
-	await browser?.close();
 	if (child) {
-		child.stdin.end("stop\n");
 		child.kill();
 		await child.finished;
 	}
 	provider.closeAllConnections();
-	await new Promise((resolve) => provider.close(() => resolve()));
+	await new Promise((resolve) => provider.close(resolve));
 }

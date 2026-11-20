@@ -8,7 +8,10 @@
 		"client": "client.js",
 		"webui": {
 			"entry": "index.js",
-			"publicDir": "web"
+			"publicDir": "dist/web",
+			"api": 1,
+			"runtime": "react19-astryx0.7.15",
+			"styles": ["browser.css"]
 		}
 	},
 	"services": ["browser"],
@@ -28,6 +31,9 @@
 			"output": {
 				"type": "object",
 				"properties": {
+					"canAct": {
+						"type": "boolean"
+					},
 					"view": {
 						"type": "object",
 						"properties": {
@@ -63,7 +69,7 @@
 						"required": ["type", "base64"]
 					}
 				},
-				"required": ["view"]
+				"required": ["view", "canAct"]
 			}
 		},
 		{

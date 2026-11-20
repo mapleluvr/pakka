@@ -1,4 +1,4 @@
-import type { Schema } from "@pakka/webui/extension";
+import type { Schema } from "@pakka/protocol/extensions";
 import type { TicketAction } from "../commands.ts";
 const string = (maxLength: number, minLength = 0): Schema => ({ type: "string", maxLength, minLength });
 const object = (
