@@ -1,0 +1,19 @@
+# MAS A2A Intent Separation Design
+
+## Adopted Contract
+
+- `inform` is a durable, passive contribution. It uses a new explicit `inform` grant and is bound to the current source principal/incarnation, request ID, exact active target reference and target profile allowlist. The host admission callback runs before persistence and its live authority is rechecked at the record commit boundary. A conflict with an existing identity refuses changed payload or route.
+- Inform rows, a stream index and a capacity record are committed through public `RuntimeRecords` in one bounded transaction. The default retained count is 256, configurable to at most 512; the default rendered page is at most the latest 32 rows and 65,536 UTF-16 code units, including both framing markers. `maxContextCharacters` may be configured from 512 through 65,536. RuntimeContextSource has no independent per-source character limit: all sources share the Runtime-wide 65,536 UTF-16 code-unit aggregate budget. These records survive Runtime reopen. A source registered for the target's approved profile reads only rows addressed to the exact current target and formats them as untrusted, provenance-labelled context. This does not mutate transcript entries or schedule input.
+- Inform receipts report `pending`, meaning the durable contribution remains available for at-least-once projection. The public `RuntimeContextSource` exposes only `render() -> { text, check }`: it cannot bind a completion observation to the exact GenerationTask and preparation attempt. No additive completion callback is added, no consumed/completed status is claimed, and no Durable private API is changed. Failed, cancelled, timed-out or unknown provider/generation outcomes do not clear the pending contribution.
+- `send()` remains the native request operation. `MasClient.reply(receiptId)` verifies the real root receipt and recipient readiness before reservation, then admits the exact response identity. An initial explicit refusal/inactive readiness releases active capacity so the same root can be corrected; admission/commit/delivery unknown pins the original payload. Exact retries recheck recipient admission while reusing the native request ID; a later refusal cannot release an already approved/unknown identity. Active reservations are bounded to 256 per MAS namespace, and responses cannot be answered as new roots.
+- DevPack adds `mas_inform` under the same invocation-bound resolver. `mas_ask` remains a wait for a generation receipt, not an application-level response.
+
+## Authority and Failure Boundaries
+
+The context source is opt-in twice: the host registers `informContext.source` in Runtime `contextSources`, and the same context object is passed to `createMas`. A profile not listed by the context receives no passive projection. Reopen rebinds the explicit source to the reopened Runtime. Unknown record writes fail closed; deterministic conflicts retry only with the same identity. A context-source failure prevents dispatch under the Runtime public contract. There is no implicit cleanup after render or wait.
+
+The existing API method signatures for `send`, `reply` and `mas_ask` remain intact. The new grant and methods are additive. The one-response-per-root bound is an intentional behavioral restriction needed to make response association and continuation finite; it does not replace native placement modes.
+
+## Verification
+
+Focused tests exercise persistence across reopen, zero native tasks/inputs/wakeups for inform, exact-target and profile projection on a later natural request, no transcript rewrite, authority/revocation/idempotency/capacity, target incarnation changes, root response association/retry/conflict/no response chain, and the real DevPack tool path. Existing MAS busy-delivery, observation, broker and inbox regressions verify prior native delivery and `mas_ask` contracts.

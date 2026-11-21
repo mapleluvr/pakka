@@ -3,7 +3,7 @@ import { strict as assert } from "node:assert";
 import type { HostOptions, ConversationRef, ToolInvocationScope } from "../../agent/src/index.ts";
 import { runtimeFixture } from "../../agent/test/runtime-fixture.ts";
 import { text, deferred } from "../../agent/test/fixture.ts";
-import { createMas, type MasClient } from "../../mas/src/index.ts";
+import { createMas, createMasInformContext, type MasClient } from "../../mas/src/index.ts";
 
 // The missing factory is the initial red condition, not a replacement for behavioral assertions.
 async function factory() {
@@ -201,6 +201,71 @@ test(
 				.readiness(child.ref);
 			assert.equal(observed.phase, "ended");
 			assert.equal(m.f.requests.length, 2, "creation alone never dispatches a child provider request");
+		} finally {
+			await m.close();
+		}
+	},
+);
+
+test(
+	"M4: mas_inform persists passively and is offered in the addressed member's future natural requests",
+	{ timeout: 20000 },
+	async () => {
+		const create = await factory();
+		let actor!: MasClient;
+		let targetRef!: ConversationRef;
+		const context = createMasInformContext({ namespace: "devpack-inform", profiles: ["worker"] });
+		const pack = create({ resolve: () => actor });
+		const m = await runtimeFixture(
+			{
+				profiles: [
+					{ id: "pack", systemPrompt: pack.instructions, tools: pack.tools },
+					{ id: "worker", tools: [] },
+				],
+				contextSources: [context.source],
+			},
+			undefined,
+			(payload) =>
+				text(payload).includes("TRIGGER-INFORM") &&
+				!payload.messages.some((message) => message.role === "tool")
+					? {
+							tool: "mas_inform",
+							args: { target: targetRef, requestId: "note-1", text: "PASSIVE-CONTRIBUTION" },
+						}
+					: { text: "finished" },
+		);
+		try {
+			const mas = await createMas({
+				runtime: m.runtime,
+				namespace: "devpack-inform",
+				maxPending: 4,
+				informContext: context,
+			});
+			await mas.bootstrap([
+				{ key: "sender", owner: "operator", profile: "pack" },
+				{ key: "worker", owner: "operator", profile: "worker" },
+			]);
+			await mas.activate();
+			const [sender, worker] = (await mas.view()).members;
+			targetRef = worker!.ref;
+			actor = mas.connect({ principal: "sender", source: sender!.ref, grants: ["inform"] });
+			const admin = mas.connect({ principal: "operator", source: null, grants: ["send"] });
+			const triggered = await admin.send(sender!.ref, { requestId: "trigger", text: "TRIGGER-INFORM" });
+			await admin.wait(triggered.id);
+			await m.runtime.waitForIdle();
+			assert.equal(m.f.requests.length, 2, "inform from a tool must not wake its recipient");
+			assert.ok(
+				await actor.lookupInform(worker!.ref, { requestId: "note-1", text: "PASSIVE-CONTRIBUTION" }),
+				"the tool must durably store its inform before returning",
+			);
+			assert.equal((await m.runtime.conversation(worker!.ref)).view().context.length, 0);
+			const natural = await admin.send(worker!.ref, { requestId: "natural", text: "Proceed naturally." });
+			await admin.wait(natural.id);
+			await m.runtime.waitForIdle();
+			assert.equal(m.f.requests.length, 3);
+			assert.match(text(m.f.requests[2]!), /PASSIVE-CONTRIBUTION/);
+			assert.match(text(m.f.requests[2]!), /sender/);
+			assert.equal(m.f.errors.length, 0);
 		} finally {
 			await m.close();
 		}

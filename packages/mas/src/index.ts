@@ -14,6 +14,7 @@ import type {
 	CatalogMember,
 	ConversationRef,
 	RuntimeCatalog,
+	RuntimeRecords,
 	ToolInvocationScope,
 	DeliveryReceipt,
 } from "@pakka/agent";
@@ -22,6 +23,7 @@ import type {
 	Mas,
 	MasClient,
 	MasGrant,
+	MasInformSpec,
 	MasOptions,
 	Member,
 	MemberPhase,
@@ -29,6 +31,10 @@ import type {
 	SendSpec,
 	MasConfigurationRequest,
 } from "./types.ts";
+import { bindMasInformContext, a2aRecordsNamespace, masInformRevision } from "./inform-context.ts";
+import { approveMasResponse, releaseMasResponseAfterRefusal, reserveMasResponse } from "./response-ledger.ts";
+export { createMasInformContext } from "./inform-context.ts";
+export type { MasInformContextOptions, MasInformContext } from "./inform-context.ts";
 export type * from "./types.ts";
 
 function frozen<T>(value: T): T {
@@ -63,6 +69,7 @@ const phases: readonly MemberPhase[] = [
 const grants: readonly MasGrant[] = [
 	"discover",
 	"send",
+	"inform",
 	"reply",
 	"observe",
 	"spawn",
@@ -88,7 +95,18 @@ function member(value: CatalogMember): Member {
 
 /** MAS owns policy and metadata; native state and mutations are behind the trusted catalog port. */
 export async function createMas(options: MasOptions): Promise<Mas> {
-	const catalog: RuntimeCatalog = options.runtime.catalog(options);
+	const catalog: RuntimeCatalog = options.runtime.catalog(options),
+		records: RuntimeRecords = options.runtime.records({ namespace: a2aRecordsNamespace(options.namespace) }),
+		revision = masInformRevision(options.runtime, options.namespace);
+	const inform = options.informContext
+		? bindMasInformContext(options.informContext, {
+				namespace: options.namespace,
+				runtime: options.runtime,
+				catalog,
+				records,
+				revision,
+			})
+		: undefined;
 	let cache: CatalogSnapshot = await catalog.snapshot();
 	const revocations = new Map<string, number>();
 	let admission: (request: Admission) => boolean | Promise<boolean> = () => true;
@@ -108,6 +126,7 @@ export async function createMas(options: MasOptions): Promise<Mas> {
 		const nextData = { ...found.data, phase, reason };
 		if (reason === undefined) Reflect.deleteProperty(nextData, "reason");
 		cache = await catalog.update(key, nextData, cache.version, check);
+		revision.bump();
 		return member(cache.members.find((m) => m.key === key)!);
 	}
 	async function ready(keys: readonly string[]) {
@@ -165,11 +184,11 @@ export async function createMas(options: MasOptions): Promise<Mas> {
 			initiator = spec.initiator ? dto(spec.initiator) : undefined,
 			allowed = new Set(spec.grants),
 			configurationPrincipal = initiator?.id ?? principal,
-			revision = revocations.get(principal) ?? 0;
+			revocationEpoch = revocations.get(principal) ?? 0;
 		if (source) target(source);
 		function check() {
 			parentCheck?.();
-			if ((revocations.get(principal) ?? 0) !== revision) throw new Error("Principal revoked");
+			if ((revocations.get(principal) ?? 0) !== revocationEpoch) throw new Error("Principal revoked");
 			if (options.runtime.view().phase !== "ready") throw new Error("Runtime is not ready");
 			if (source) {
 				const from = target(source);
@@ -192,44 +211,72 @@ export async function createMas(options: MasOptions): Promise<Mas> {
 				throw new MasRequestDenied("Foreign delivery receipt");
 			return found;
 		}
-		async function sendAs(
-			ref: ConversationRef,
-			input: SendSpec,
-			action: "send" | "reply" = "send",
-			replyTo?: string,
-		) {
+		async function prepareSend(ref: ConversationRef, input: SendSpec, action: "send" | "reply") {
 			await refresh();
 			grant(action);
 			const to = target(ref),
 				actual = dto(input);
 			if (to.phase !== "active") throw new MasRequestDenied("Recipient admission inactive or retired");
 			if (actual.mode === "steer") grant("steer");
+			return { to, actual };
+		}
+		function deliverySpec(to: Member, actual: SendSpec, replyTo?: string) {
+			return {
+				requestId: actual.requestId,
+				principal,
+				source,
+				target: to.ref,
+				text: actual.text,
+				mode: actual.mode ?? "prompt",
+				...(replyTo ? { replyTo } : {}),
+				...(invocation && source
+					? { initiator: { kind: "agent" as const, id: source.conversationId } }
+					: initiator
+						? { initiator }
+						: {}),
+			};
+		}
+		async function admit(to: Member, actual: SendSpec, action: "send" | "reply") {
 			let decision: boolean;
 			try {
 				decision = await admission(dto({ principal, source, target: to, input: actual }));
 			} catch (error) {
-				// Opaque policy code may already have effects; its error type proves no rollback.
 				throw new Error("Recipient admission unconfirmed", { cause: error });
 			}
 			grant(action);
 			if (decision !== true) throw new Error("Recipient admission denied");
-			return catalog.deliver(
-				{
-					requestId: actual.requestId,
-					principal,
-					source,
-					target: to.ref,
-					text: actual.text,
-					mode: actual.mode ?? "prompt",
-					...(replyTo ? { replyTo } : {}),
-					...(invocation && source
-						? { initiator: { kind: "agent" as const, id: source.conversationId } }
-						: initiator
-							? { initiator }
-							: {}),
-				},
-				check,
-			);
+		}
+		async function replyRecipientReady(ref: ConversationRef) {
+			await refresh();
+			grant("reply");
+			const recipient = target(ref);
+			if (recipient.phase !== "active") return false;
+			const readiness = await catalog.readiness(recipient.ref);
+			check();
+			return readiness.phase === "ready";
+		}
+		async function sendAs(
+			ref: ConversationRef,
+			input: SendSpec,
+			action: "send" | "reply" = "send",
+			replyTo?: string,
+		) {
+			const { to, actual } = await prepareSend(ref, input, action);
+			await admit(to, actual, action);
+			return catalog.deliver(deliverySpec(to, actual, replyTo), check);
+		}
+		async function originalRequest(id: string, targetRef: ConversationRef) {
+			let cursor: string | undefined;
+			do {
+				const page = await catalog.history({ limit: 64, ...(cursor ? { cursor } : {}) }, check, (spec) =>
+					same(spec.target, targetRef),
+				);
+				check();
+				const found = page.items.find((item) => item.receipt.id === id);
+				if (found) return found;
+				cursor = page.nextCursor;
+			} while (cursor);
+			throw new MasRequestDenied("Incoming request identity is unavailable");
 		}
 		return Object.freeze({
 			identity: dto({ principal, source }),
@@ -292,12 +339,81 @@ export async function createMas(options: MasOptions): Promise<Mas> {
 				return value;
 			},
 			send: (ref: ConversationRef, input: SendSpec) => sendAs(ref, input, "send"),
+			inform: async (ref: ConversationRef, input: MasInformSpec) => {
+				if (!inform) throw new MasRequestDenied("Passive inform context is not configured");
+				await refresh();
+				grant("inform");
+				const recipient = target(ref);
+				if (recipient.phase !== "active") throw new MasRequestDenied("Inform recipient inactive or retired");
+				const startRevision = revision.value,
+					guard = () => {
+						check();
+						if (revision.value !== startRevision)
+							throw new Error("MAS membership changed during inform admission");
+					};
+				return inform.inform(principal, source, recipient.ref, input, guard, async (request) => {
+					let decision: boolean;
+					try {
+						decision = await admission(dto(request));
+					} catch (error) {
+						throw new Error("Recipient admission unconfirmed", { cause: error });
+					}
+					return decision === true;
+				});
+			},
+			lookupInform: async (ref: ConversationRef, input: MasInformSpec) => {
+				if (!inform) throw new MasRequestDenied("Passive inform context is not configured");
+				await refresh();
+				grant("inform");
+				const recipient = target(ref),
+					startRevision = revision.value,
+					guard = () => {
+						check();
+						if (revision.value !== startRevision)
+							throw new Error("MAS membership changed during inform lookup");
+					};
+				return inform.lookup(principal, source, recipient.ref, input, guard);
+			},
 			reply: async (id: string, input: SendSpec) => {
 				grant("reply");
 				const found = await receipt(id);
 				if (!source || !same(found.target, source) || !found.source)
-					throw new Error("Receipt has no authorized reply target");
-				return sendAs(found.source, input, "reply", id);
+					throw new MasRequestDenied("Receipt has no authorized reply target");
+				const original = await originalRequest(id, found.target);
+				if (original.replyTo !== undefined)
+					throw new MasRequestDenied("Application responses cannot receive another response");
+				const response = { requestId: input.requestId, text: input.text, mode: input.mode ?? "prompt" },
+					prepared = await prepareSend(found.source, response, "reply");
+				if (!(await replyRecipientReady(found.source)))
+					throw new MasRequestDenied("Reply recipient is inactive or not ready");
+				const reservation = await reserveMasResponse(
+					{ rootReceiptId: id, principal, source, target: found.source, message: prepared.actual },
+					records,
+					check,
+				);
+				if (reservation.status === "claimed") {
+					let decision: boolean;
+					try {
+						decision = await admission(
+							dto({ principal, source, target: prepared.to, input: prepared.actual }),
+						);
+					} catch (error) {
+						throw new Error("Recipient admission unconfirmed", { cause: error });
+					}
+					grant("reply");
+					if (decision !== true) {
+						await releaseMasResponseAfterRefusal(id, reservation.fingerprint, records, check);
+						throw new Error("Recipient admission denied");
+					}
+					if (!(await replyRecipientReady(found.source))) {
+						await releaseMasResponseAfterRefusal(id, reservation.fingerprint, records, check);
+						throw new MasRequestDenied("Reply recipient became inactive or not ready");
+					}
+					await approveMasResponse(id, reservation.fingerprint, records, check);
+				} else {
+					await admit(prepared.to, prepared.actual, "reply");
+				}
+				return catalog.deliver(deliverySpec(prepared.to, prepared.actual, id), check);
 			},
 			receipt,
 			wait: async (id: string, signal?: AbortSignal) => {
@@ -326,6 +442,7 @@ export async function createMas(options: MasOptions): Promise<Mas> {
 					],
 					check,
 				);
+				revision.bump();
 				await refresh();
 				check();
 				const observed = await catalog.readiness(created[0]!.ref);
@@ -361,6 +478,7 @@ export async function createMas(options: MasOptions): Promise<Mas> {
 					() => owner(saved, "configure"),
 					requestId === undefined ? undefined : { requestId, principal: configurationPrincipal },
 				);
+				revision.bump();
 				await refresh();
 				return member(changed);
 			},
@@ -379,6 +497,7 @@ export async function createMas(options: MasOptions): Promise<Mas> {
 					() => owner(saved, "configure"),
 					requestId === undefined ? undefined : { requestId, principal: configurationPrincipal },
 				);
+				revision.bump();
 				await refresh();
 				return member(changed);
 			},
@@ -415,6 +534,7 @@ export async function createMas(options: MasOptions): Promise<Mas> {
 					],
 					() => owner(ref, "fork"),
 				);
+				revision.bump();
 				await refresh();
 				const observed = await catalog.readiness(created!.ref);
 				if (target(ref).phase !== "active") throw new Error("Fork source inactive");
@@ -473,6 +593,7 @@ export async function createMas(options: MasOptions): Promise<Mas> {
 					})),
 					() => {},
 				);
+			revision.bump();
 			await refresh();
 			await ready(cache.members.filter((m) => m.data.phase === "preparing").map((m) => m.key));
 			return view();
@@ -491,7 +612,10 @@ export async function createMas(options: MasOptions): Promise<Mas> {
 			const updates = eligible
 				.filter((entry) => entry.data.phase !== "active")
 				.map((entry) => ({ key: entry.key, data: { ...entry.data, phase: "active" } }));
-			if (updates.length) cache = await catalog.updateMany(updates, snapshot.version, () => {});
+			if (updates.length) {
+				cache = await catalog.updateMany(updates, snapshot.version, () => {});
+				revision.bump();
+			}
 			return view();
 		},
 		view,
