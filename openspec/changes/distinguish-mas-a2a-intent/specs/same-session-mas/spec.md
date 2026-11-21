@@ -50,12 +50,30 @@ The MAS MUST verify the reply grant, recipient activity and readiness before res
 - **THEN** no active response reservation remains and a corrected payload may be submitted for the same root after recovery
 - **AND** the refusal does not consume the bounded active-reservation capacity
 
+#### Scenario: Definite refusal cleans up after caller revocation
+
+- **WHEN** the caller is revoked while recipient admission is pending and admission then explicitly returns `false`
+- **THEN** the MAS performs only a root/fingerprint/version-CAS cleanup through the same ready Runtime-bound RuntimeRecords service
+- **AND** the old invocation is still rejected, gains no restored authority and dispatches nothing
+- **AND** a newly authorized client may submit a corrected response for that root
+
 ### Requirement: Unknown response outcomes preserve identity
 
-Admission exceptions, unknown reservation commits, uncertain native delivery, cancellation or timeout MUST preserve the original response identity and fail closed. An identical approved retry MUST recheck current recipient admission and reuse its native request; a later refusal MUST NOT release an already approved/unknown identity. A changed payload or request ID MUST be refused. Active reservations MUST remain bounded to 256 per MAS namespace.
+Admission exceptions, unknown commit/delivery, cancellation, timeout, or revocation after admission succeeds MUST keep the identity bound; revoked clients MUST NOT dispatch. A changed payload or request ID MUST be refused, and active reservations MUST remain bounded to 256 per MAS namespace.
 
 #### Scenario: Unknown admission or delivery remains bound
 
 - **WHEN** admission throws or native delivery has an uncertain outcome
 - **THEN** the root remains pinned to the original response identity and payload
 - **AND** a different payload or request ID is refused while an identical approved native request may be retried
+
+#### Scenario: Revocation does not turn unknown or approved admission into refusal
+
+- **WHEN** the caller is revoked while admission is pending and admission throws or explicitly returns `true`
+- **THEN** the provisional identity remains bound and the revoked client does not dispatch
+- **AND** a different response identity is refused
+
+#### Scenario: Later refusal preserves an approved response identity
+
+- **WHEN** a later exact retry of an approved response is refused by current admission policy
+- **THEN** the existing response identity and capacity reservation remain bound

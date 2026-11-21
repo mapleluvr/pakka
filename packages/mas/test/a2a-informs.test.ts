@@ -511,6 +511,174 @@ test("MAS response: explicit admission refusal releases active capacity and perm
 	}
 });
 
+test("MAS response: definite refusal releases only its provisional reservation after client revocation", async () => {
+	const namespace = "revoked-refused-response",
+		m = await runtimeFixture(),
+		entered = deferred();
+	let decide!: (value: boolean) => void;
+	const decision = new Promise<boolean>((resolve) => (decide = resolve));
+	try {
+		const mas = await createMas({ runtime: m.runtime, namespace, maxPending: 4 });
+		await mas.bootstrap([
+			{ key: "a", owner: "operator" },
+			{ key: "b", owner: "operator" },
+		]);
+		await mas.activate();
+		const [a, b] = (await mas.view()).members,
+			requester = mas.connect({ principal: "a", source: a!.ref, grants: ["send"] }),
+			responder = mas.connect({ principal: "responder", source: b!.ref, grants: ["reply"] });
+		const root = await requester.send(b!.ref, { requestId: "revoked-false-root", text: "Need a finding." });
+		await requester.wait(root.id);
+		mas.setAdmission(async () => {
+			entered.resolve();
+			return decision;
+		});
+		const pending = responder.reply(root.id, { requestId: "refused-before-revoke", text: "Rejected draft." });
+		await entered.promise;
+		mas.revoke("responder");
+		decide(false);
+		await assert.rejects(pending, /Principal revoked/);
+		assert.equal(m.f.requests.length, 1, "the revoked invocation must not dispatch");
+
+		const records = responseRecords(m.runtime, namespace),
+			reservation = await records.get(reservationKey(root.id), () => {}),
+			capacity = await records.get("response.capacity", () => {});
+		assert.equal(reservation.data?.status, "retryable");
+		assert.equal(capacity.data?.count, 0, "definite refusal frees only its active reservation");
+		await assert.rejects(
+			responder.reply(root.id, { requestId: "still-revoked", text: "Old client cannot continue." }),
+			/Principal revoked/,
+		);
+
+		mas.setAdmission(() => true);
+		const reauthorized = mas.connect({
+			principal: "responder",
+			source: b!.ref,
+			grants: ["reply"],
+		});
+		const corrected = await reauthorized.reply(root.id, {
+			requestId: "corrected-after-revoke",
+			text: "Corrected answer after explicit refusal.",
+		});
+		await reauthorized.wait(corrected.id);
+		assert.equal(m.f.requests.length, 2, "only the corrected response reaches the provider");
+		assert.match(text(m.f.requests[1]!), /Corrected answer after explicit refusal/);
+	} finally {
+		decide(false);
+		await m.close();
+	}
+});
+
+test("MAS response: admission exception after revocation preserves the unknown identity", async () => {
+	const namespace = "revoked-unknown-response",
+		m = await runtimeFixture(),
+		entered = deferred();
+	let rejectDecision!: (error: Error) => void;
+	const decision = new Promise<boolean>((_resolve, reject) => (rejectDecision = reject));
+	try {
+		const mas = await createMas({ runtime: m.runtime, namespace, maxPending: 4 });
+		await mas.bootstrap([
+			{ key: "a", owner: "operator" },
+			{ key: "b", owner: "operator" },
+		]);
+		await mas.activate();
+		const [a, b] = (await mas.view()).members,
+			requester = mas.connect({ principal: "a", source: a!.ref, grants: ["send"] }),
+			responder = mas.connect({ principal: "responder", source: b!.ref, grants: ["reply"] });
+		const root = await requester.send(b!.ref, { requestId: "revoked-unknown-root", text: "Need a finding." });
+		await requester.wait(root.id);
+		mas.setAdmission(async () => {
+			entered.resolve();
+			return decision;
+		});
+		const pending = responder.reply(root.id, { requestId: "unknown-answer", text: "Original answer." });
+		await entered.promise;
+		mas.revoke("responder");
+		rejectDecision(new Error("policy result lost"));
+		await assert.rejects(pending, /admission unconfirmed/i);
+		assert.equal(m.f.requests.length, 1, "unknown admission never dispatches");
+
+		const records = responseRecords(m.runtime, namespace),
+			reservation = await records.get(reservationKey(root.id), () => {}),
+			capacity = await records.get("response.capacity", () => {});
+		assert.equal(reservation.data?.status, "admitting");
+		assert.equal(capacity.data?.count, 1, "unknown admission remains capacity-bound");
+		await assert.rejects(
+			responder.reply(root.id, { requestId: "old-client", text: "Old client is revoked." }),
+			/Principal revoked/,
+		);
+		const reauthorized = mas.connect({
+			principal: "responder",
+			source: b!.ref,
+			grants: ["reply"],
+		});
+		await assert.rejects(
+			reauthorized.reply(root.id, { requestId: "replacement-answer", text: "Cannot replace unknown." }),
+			/unconfirmed|already|identity/i,
+		);
+		assert.equal(m.f.requests.length, 1);
+	} finally {
+		rejectDecision(new Error("test cleanup"));
+		await m.close();
+	}
+});
+
+test("MAS response: admission success after revocation pins identity and blocks dispatch", async () => {
+	const namespace = "revoked-approved-response",
+		m = await runtimeFixture(),
+		entered = deferred();
+	let decide!: (value: boolean) => void;
+	const decision = new Promise<boolean>((resolve) => (decide = resolve));
+	try {
+		const mas = await createMas({ runtime: m.runtime, namespace, maxPending: 4 });
+		await mas.bootstrap([
+			{ key: "a", owner: "operator" },
+			{ key: "b", owner: "operator" },
+		]);
+		await mas.activate();
+		const [a, b] = (await mas.view()).members,
+			requester = mas.connect({ principal: "a", source: a!.ref, grants: ["send"] }),
+			responder = mas.connect({ principal: "responder", source: b!.ref, grants: ["reply"] });
+		const root = await requester.send(b!.ref, {
+			requestId: "revoked-approved-root",
+			text: "Need a finding.",
+		});
+		await requester.wait(root.id);
+		mas.setAdmission(async () => {
+			entered.resolve();
+			return decision;
+		});
+		const pending = responder.reply(root.id, {
+			requestId: "approved-answer",
+			text: "Approved but not dispatched.",
+		});
+		await entered.promise;
+		mas.revoke("responder");
+		decide(true);
+		await assert.rejects(pending, /Principal revoked/);
+		assert.equal(m.f.requests.length, 1, "revoked caller cannot dispatch after admission");
+
+		const records = responseRecords(m.runtime, namespace),
+			reservation = await records.get(reservationKey(root.id), () => {}),
+			capacity = await records.get("response.capacity", () => {});
+		assert.equal(reservation.data?.status, "admitting");
+		assert.equal(capacity.data?.count, 1, "post-approval revocation does not release the bound identity");
+		const reauthorized = mas.connect({
+			principal: "responder",
+			source: b!.ref,
+			grants: ["reply"],
+		});
+		await assert.rejects(
+			reauthorized.reply(root.id, { requestId: "replacement-answer", text: "Cannot replace approved." }),
+			/unconfirmed|already|identity/i,
+		);
+		assert.equal(m.f.requests.length, 1);
+	} finally {
+		decide(false);
+		await m.close();
+	}
+});
+
 test("MAS response: concurrent identities share one reservation and only the admitted payload is accepted", async () => {
 	const namespace = "concurrent-response",
 		m = await runtimeFixture(),

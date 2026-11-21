@@ -18,7 +18,7 @@ MAS 区分三类协作语义：`inform` 是无需对方答复的被动信息贡�
 
 公开 `RuntimeContextSource` 只有 `render()` 返回的 text 和同步 dispatch check，没有绑定确切 GenerationTask 的成功结束 callback。因此 inform receipt 只报告 `pending`，语义是持久保留和 at-least-once 投影；成功生成、失败、取消、超时和 unknown 均不声称模型已理解/消费，记录不会因投影或 `mas_ask` 自动清除。宿主未注册 context source 的既有 Runtime 不受影响。
 
-每个实际根请求仅允许一个显式 `reply`。首次目标明确 inactive/not-ready 或 admission 返回 `false` 时，不留下活动 response reservation，可在恢复或修正后对同一 root 重试；已批准/unknown 的响应在后续重试时即使 admission 拒绝仍保留原绑定。抛错/unknown admission、reservation commit unknown、native delivery unknown 或取消等不能证明无效果时，原 response identity/payload 保持绑定。相同 response identity/payload 重试重新校验 recipient admission 并复用原 native request；更改 payload/目标或以新 requestId 延长同一 root 拒绝，response 不能再次成为 root。MAS namespace 下 admission/已批准的活动 response reservation 最多 256 条，首次明确拒绝不消耗该容量。`send`、`reply` 的公开签名和原生 prompt/steer/followUp placement 保持；response 的单根有限约束是为保证 association 与有限续行的行为收紧。
+每个实际根请求仅允许一个显式 `reply`。首次目标明确 inactive/not-ready 时不创建 response reservation。首次 admission 明确返回 `false` 时，服务使用同一个 ready Runtime 的 session-bound RuntimeRecords，以 root ID、reservation fingerprint 和 ledger versions CAS 清理 provisional reservation；即使等待期间撤销发起 client，也释放本次 active capacity，但随后仍重验 client grant 并拒绝原调用，不恢复其 authority 或 dispatch。admission 抛错/unknown、明确通过后撤权、reservation commit unknown 或 native delivery unknown 时保持原 response identity/payload 绑定；已批准/unknown 的响应在后续重试被拒绝仍保留绑定。相同 response identity/payload 重试重新校验 recipient admission 并复用原 native request；更改 payload/目标或以新 requestId 延长同一 root 拒绝，response 不能再次成为 root。MAS namespace 下 admission/已批准的活动 response reservation 最多 256 条，首次明确拒绝不消耗该容量。`send`、`reply` 的公开签名和原生 prompt/steer/followUp placement 保持；response 的单根有限约束是为保证 association 与有限续行的行为收紧。
 
 ## 关系与活动观测
 

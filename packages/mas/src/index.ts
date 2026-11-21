@@ -97,7 +97,18 @@ function member(value: CatalogMember): Member {
 export async function createMas(options: MasOptions): Promise<Mas> {
 	const catalog: RuntimeCatalog = options.runtime.catalog(options),
 		records: RuntimeRecords = options.runtime.records({ namespace: a2aRecordsNamespace(options.namespace) }),
+		runtimeBinding = options.runtime.view(),
 		revision = masInformRevision(options.runtime, options.namespace);
+	// A definite admission refusal permits only a same-session, root/fingerprint-CAS cleanup after client revocation.
+	const checkResponseCleanup = () => {
+		const current = options.runtime.view();
+		if (
+			current.phase !== "ready" ||
+			current.sessionId !== runtimeBinding.sessionId ||
+			current.sessionFile !== runtimeBinding.sessionFile
+		)
+			throw new Error("MAS response cleanup Runtime binding changed");
+	};
 	const inform = options.informContext
 		? bindMasInformContext(options.informContext, {
 				namespace: options.namespace,
@@ -400,11 +411,13 @@ export async function createMas(options: MasOptions): Promise<Mas> {
 					} catch (error) {
 						throw new Error("Recipient admission unconfirmed", { cause: error });
 					}
-					grant("reply");
-					if (decision !== true) {
-						await releaseMasResponseAfterRefusal(id, reservation.fingerprint, records, check);
+					if (decision === false) {
+						await releaseMasResponseAfterRefusal(id, reservation.fingerprint, records, checkResponseCleanup);
+						grant("reply");
 						throw new Error("Recipient admission denied");
 					}
+					if (decision !== true) throw new Error("Recipient admission unconfirmed");
+					grant("reply");
 					if (!(await replyRecipientReady(found.source))) {
 						await releaseMasResponseAfterRefusal(id, reservation.fingerprint, records, check);
 						throw new MasRequestDenied("Reply recipient became inactive or not ready");
