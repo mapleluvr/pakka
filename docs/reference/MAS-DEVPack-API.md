@@ -38,14 +38,17 @@ const profile = { id: "researcher", tools: pack.tools, systemPrompt: pack.instru
 | `mas_inspect`             | target → 当前生命周期 metadata                                   | observe，不提供 raw Session/Conversation                                   |
 | `mas_inbox`               | 自己收到的 receipt metadata                                      | reply；无 payload/full transcript，提供真实 reply ID                       |
 | `mas_send`                | target、requestId、text、mode                                    | send；steer 另需 steer grant；followUp 原生排队                            |
+| `mas_inform`              | target、requestId、text                                          | inform；持久且被动，不向目标排 input、不要求答复                           |
 | `mas_ask`                 | 与 send 相同，等待 generation receipt                            | 不是应用层回答，不证明外部效果完成                                         |
-| `mas_reply`               | receiptId、requestId、text                                       | reply；真实 incoming source/target proof，不允许指定 sender                |
+| `mas_reply`               | receiptId、requestId、text                                       | reply；真实 incoming source/target proof，一个 root 仅一个显式 response    |
 | `mas_spawn`               | current key/profile/lifetime，或批准 template/requestId/location | spawn，不允许 endpoint、path、credential、owner、task、budget 或 tool code |
 | `mas_abort`、`mas_retire` | target                                                           | grant + owner；retire 是 tombstone，不是物理删除                           |
 | `mas_configure`           | target、批准 profile                                             | grant + owner；不能修改任意配置                                            |
 | `mas_fork`                | target、key、entryId                                             | grant + owner，指定原生历史 cutoff                                         |
 
-同 Session 的 mode 为 `prompt | steer | followUp`。reference 只是数据，复制/猜测不赋予权限。工具 schema 不接受凭据或 authority tokens；执行后的结果是 JSON metadata/receipt，不含 native handles。
+同 Session 的 `mas_send` 是要求具体新产物/决定的原生 request，mode 为 `prompt | steer | followUp`。`mas_inform` 则要求 `inform` grant，保存来源标注的被动贡献；目标必须已激活且 profile 在宿主显式批准列表中。宿主将 context source 同时注册到 Runtime `contextSources` 并传给 `createMas`；贡献仅进入精确目标的后续自然请求，保持不可信上下文且不改写 transcript。公开 RuntimeContextSource 不提供确切 GenerationTask 完成 callback，因此工具结果和持久状态只表示 `pending`，不能表述为已理解/消费，失败或不确定后也继续 at-least-once。`mas_reply` 是对一条真实 root receipt 的唯一显式 response，不能用新 requestId 续长、不能回答 response。`mas_ask` 仍只等待 generation receipt。
+
+reference 只是数据，复制/猜测不赋予权限。工具 schema 不接受凭据或 authority tokens；执行后的结果是 JSON metadata/receipt，不含 native handles。
 
 ## 创建与通信
 
@@ -81,7 +84,7 @@ root grants 来自宿主 preset；模型创建后代的有效 grants 是自身�
 
 ## 验证入口
 
-- `packages/mas-devpack/test/`：真实 model tool call、权限/复制/迟到 scope、撤销、三种 location、own inbox/reply、bounded ask、可选移除。
+- `packages/mas-devpack/test/`：真实 model tool call、权限/复制/迟到 scope、撤销、三种 location、own inbox/reply、bounded ask、passive inform 与可选移除。
 - `packages/mas/test/approved-sessions.test.ts`：真实 storage 准备后丢回执，在原 slot 恢复；`session-contention.test.ts`：distinct slot 的真实 CAS 争用；`composed-authority.test.ts`：组合 check 不恢复撤销 lease。
 - `apps/server/test/devpack-*.test.ts`：真实 PID、native temporary owner、旧输入拒绝、higher-profile grant 不能扩大。
 - `scripts/consumer-devpack.mjs`：隔离真实 tarball 的 native tools、撤销零 peer effect 与 worker 生命周期。

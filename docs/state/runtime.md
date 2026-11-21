@@ -13,6 +13,7 @@ Pi 集成使用公开 API。下游 [Durable 源补丁](durable-patch.md)为 gene
 ## 跨模块条件
 
 - Session/Conversation、generation、incarnation、host epoch、admission branch identity 分别用于资源定位、绑定失效与接纳作用域校验。
+- `RuntimeOptions.contextSources` 的 `RuntimeContextSource` 只提供受控 text，所有来源的非 null text 合计不超过 65536 个 UTF-16 code units；没有独立的单来源字符上限。超过整个 Runtime 共享总预算时在 provider dispatch 前 fail closed，来源的 authority/check 和 profile gating 不变。
 - client 绑定持有调用身份；操作 capability 绑定有效作用域；可序列化资源引用用于寻址。读取与效果各自校验所需权限。
 - prompt、steer、followUp 使用原生各自的 placement/drain 时机。工作中的 prompt 被拒绝，steer 与 followUp 按原生调度接纳。
 - 接纳、输入持久化、placement、generation、应用回复和工具效果各自核对。普通模型生成错误保留原生失败记录，idle 后可接受明确的新输入或配置修正；存储及未确认执行效果沿所属失败域关闭。字面文本可以以斜杠开头，明确命令使用注册 dispatcher。作用域变更且输入尚未转交时可释放接纳；已排队输入的释放以 Durable 精确确认撤回且未发生 placement 为条件。

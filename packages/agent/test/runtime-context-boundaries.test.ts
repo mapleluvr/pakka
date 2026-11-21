@@ -4,7 +4,7 @@ import { stat, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { createRuntime } from "../src/index.ts";
 import type { RuntimeContextSource } from "../src/index.ts";
-import { deferred } from "./fixture.ts";
+import { deferred, text } from "./fixture.ts";
 import { runtimeFixture } from "./runtime-fixture.ts";
 
 test(
@@ -85,7 +85,6 @@ test(
 for (const [label, result] of [
 	["extra output authority", { text: "CONTEXT", check: () => {}, endpoint: "https://unapproved.invalid" }],
 	["missing current text", { check: () => {} }],
-	["over-limit text", { text: "x".repeat(32769), check: () => {} }],
 ] as const) {
 	test("Runtime context decode: " + label + " blocks actual HTTP", { timeout: 10000 }, async () => {
 		const source: RuntimeContextSource = {
@@ -104,6 +103,76 @@ for (const [label, result] of [
 			await host.waitForIdle();
 			assert.equal(m.f.requests.length, 0);
 			assert.equal(host.view().phase, "failed");
+		} finally {
+			await m.close();
+		}
+	});
+}
+
+for (const [label, contribution, expectedRequests] of [
+	["one source at the aggregate limit", "LIMIT-OK" + "😀".repeat(32764), 1],
+	["one source above the aggregate limit", "LIMIT-OK" + "😀".repeat(32764) + "x", 0],
+] as const) {
+	test("Runtime context aggregate: " + label, { timeout: 10000 }, async () => {
+		const m = await runtimeFixture({
+			contextSources: [
+				{
+					id: "aggregate-boundary",
+					version: 1,
+					profiles: ["default"],
+					render: () => ({ text: contribution, check: () => {} }),
+				},
+			],
+		});
+		try {
+			const host = m.runtime.root();
+			await host
+				.connect("operator", ["input.submit"])
+				.submit({ key: label, text: "TEST-AGGREGATE-BOUNDARY" });
+			await host.waitForIdle();
+			assert.equal(contribution.length, expectedRequests ? 65536 : 65537);
+			if (expectedRequests) {
+				assert.ok(text(m.f.requests[0]!).includes("LIMIT-OK"));
+				assert.equal(host.view().phase, "ready");
+			} else {
+				assert.equal(host.view().phase, "failed");
+			}
+		} finally {
+			await m.close();
+		}
+	});
+}
+
+for (const [label, lengths, expectedRequests] of [
+	["multiple sources at the aggregate limit", [32768, 32768], 1],
+	["multiple sources above the aggregate limit", [32768, 32769], 0],
+] as const) {
+	test("Runtime context aggregate: " + label, { timeout: 10000 }, async () => {
+		const contextSources: RuntimeContextSource[] = lengths.map((length, index) => {
+			const marker = `SOURCE-${index}-`;
+			return {
+				id: "aggregate-source-" + index,
+				version: 1,
+				profiles: ["default"],
+				render: () => ({ text: marker + "x".repeat(length - marker.length), check: () => {} }),
+			};
+		});
+		const m = await runtimeFixture({ contextSources });
+		try {
+			const host = m.runtime.root();
+			await host
+				.connect("operator", ["input.submit"])
+				.submit({ key: label, text: "TEST-AGGREGATE-BOUNDARY" });
+			await host.waitForIdle();
+			assert.equal(m.f.requests.length, expectedRequests);
+			if (expectedRequests) {
+				const requestText = text(m.f.requests[0]!);
+				assert.ok(requestText.includes("SOURCE-0-"));
+				assert.ok(requestText.includes("SOURCE-1-"));
+				assert.equal(host.view().phase, "ready");
+			} else {
+				assert.equal(host.view().phase, "failed");
+			}
 		} finally {
 			await m.close();
 		}

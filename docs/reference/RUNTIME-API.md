@@ -67,7 +67,7 @@ pakka-webui 保留宿主已有 resolver 作为初始来源，仅全局管理员�
 
 `RuntimeOptions.contextSources` 接受宿主明确选择的 `RuntimeContextSource[]`。每个来源声明稳定的 `id`、正整数 `version` 和获准的 `profiles`；只有所选 profile 的主请求调用它。注册表在打开 storage 前复制并验证，来源身份参与这些 profile 的持久身份，正常重开拒绝未确认的定义替换。更改 renderer 实现时，宿主应显式更改定义版本。
 
-`render({ target, cwd, signal })` 接收冻结的精确 `ConversationRef`、当前原生 Conversation 的批准工作目录与取消信号，可以异步读取宿主服务，返回 `{ text, check }`。`text: null` 明确省略本次贡献；单源最多 32768 个 UTF-16 code units，全部来源合计最多 65536。`check()` 必须同步完成并返回 `undefined`，重新校验读取时捕获的状态；异步/thenable 返回、额外结果字段、非法文本或私密来源错误都阻止实际 provider dispatch。检查覆盖异步凭据解析之后的效果边界；已准备的 attempt 不因迟到失效退还。
+`render({ target, cwd, signal })` 接收冻结的精确 `ConversationRef`、当前原生 Conversation 的批准工作目录与取消信号，可以异步读取宿主服务，返回 `{ text, check }`。`text: null` 明确省略本次贡献；单个来源没有独立字符上限，所有来源的非空 `text` 合计最多 65536 个 UTF-16 code units，整个 Runtime 共享这一总预算。超出总量会阻止实际 provider dispatch。`check()` 必须同步完成并返回 `undefined`，重新校验读取时捕获的状态；异步/thenable 返回、额外结果字段、非法文本或私密来源错误都阻止实际 provider dispatch。检查覆盖异步凭据解析之后的效果边界；已准备的 attempt 不因迟到失效退还。
 
 这些文本只装入当前主请求的临时 system sections，不改写 raw Conversation history，也不成为永久重放的 instructions。历史中的用户内容或真实工具结果仍保留原始含义。调用方不会取得 Pi Harness、Conversation、Tx、provider 凭据或可伪造的原生 scope。通过原有公开准备 callback 保留既有的权限、projection、receipt 与配额检查。
 

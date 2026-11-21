@@ -19,6 +19,7 @@ export type { ConversationRef as AgentRef, DeliveryReceipt, MemberLifetime } fro
 export type MasGrant =
 	| "discover"
 	| "send"
+	| "inform"
 	| "reply"
 	| "observe"
 	| "spawn"
@@ -62,6 +63,19 @@ export interface SendSpec {
 	readonly text: string;
 	readonly mode?: InputMode;
 }
+export interface MasInformSpec {
+	readonly requestId: string;
+	readonly text: string;
+}
+export interface MasInformReceipt {
+	readonly id: string;
+	readonly requestId: string;
+	readonly principal: string;
+	readonly source: ConversationRef | null;
+	readonly target: ConversationRef;
+	/** Persisted, still pending for at-least-once context projection; never proof of model consumption. */
+	readonly status: "pending";
+}
 export type MasConfigurationRequest = Omit<CatalogConfigurationRequest, "principal">;
 export interface MasClient {
 	/** Serializable identity is descriptive only; the bound closures carry authority. */
@@ -76,6 +90,9 @@ export interface MasClient {
 	send(target: ConversationRef, input: SendSpec): Promise<DeliveryReceipt>;
 	/** Queries this sender’s original request without admission or execution. */
 	lookup(target: ConversationRef, input: SendSpec): Promise<DeliveryReceipt | null>;
+	/** Persists a passive, bounded contribution without scheduling native input or a generation. */
+	inform(target: ConversationRef, input: MasInformSpec): Promise<MasInformReceipt>;
+	lookupInform(target: ConversationRef, input: MasInformSpec): Promise<MasInformReceipt | null>;
 	reply(receiptId: string, input: SendSpec): Promise<DeliveryReceipt>;
 	receipt(id: string): Promise<DeliveryReceipt>;
 	wait(id: string, signal?: AbortSignal): Promise<DeliveryReceipt>;
@@ -100,10 +117,13 @@ export interface Admission {
 	readonly principal: string;
 	readonly source: ConversationRef | null;
 	readonly target: Member;
+	/** Present only for a passive inform; omitted by existing native send/request admission calls. */
+	readonly intent?: "inform";
 	readonly input: SendSpec;
 }
 export interface MasOptions extends CatalogOptions {
 	readonly runtime: Runtime;
+	readonly informContext?: import("./inform-context.ts").MasInformContext;
 }
 /** Trusted composition root; do not expose connect/revoke/activation to business tools. */
 export interface Mas {

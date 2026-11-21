@@ -1,0 +1,28 @@
+# Tasks
+
+- [x] Inspect and preserve the existing uncommitted A2A worktree files before continuing.
+- [x] Implement bounded durable `inform` identity, permission/admission checks, target/profile binding, persistence and passive context source using public Runtime APIs.
+- [x] Add additive `MasClient.inform()` / `lookupInform()` and `inform` grant without changing native `send` or `mas_ask` signatures.
+- [x] Bind each response to one verified root request; preserve same-payload retry identity, reject changed identity/payload and response chains, and bound response reservations.
+- [x] Add DevPack `mas_inform` schema, tool and intent instructions.
+- [x] Add deterministic persistence, exact-target, no-native-effect, reopen, authority/revocation, response, and real DevPack integration coverage.
+- [x] Record the public context-source lifecycle limit: informs stay pending/at-least-once; no model-consumption or completed-generation claim; no Durable private API extension.
+- [x] Update MAS state, MAS API, DevPack API, workflow guide, overview, change summary and OpenSpec specifications.
+- [x] Build affected workspaces, run focused tests and existing MAS/DevPack regressions; inspect the complete diff and staged index.
+- [x] Align RuntimeContextSource with the Runtime-wide 65,536 UTF-16 code-unit aggregate limit without a per-source character cap; count both MAS inform framing markers inside the default and configurable renderer budgets, and verify exact and exceeded boundaries.
+- [x] Close reviewer P2: preflight recipient readiness, distinguish retryable explicit refusals from pinned admission/delivery unknowns, retain the single accepted response identity under concurrency, and verify capacity/reopen behavior.
+- [x] Close reviewer P1: after explicit admission `false`, release only the provisional root/fingerprint reservation through the same ready Runtime-bound records service even if the initiating client was revoked; retain the identity for admission unknown or `true` plus revocation, and verify both races.
+
+## Test Classification
+
+`packages/agent/test/runtime-context-boundaries.test.ts` is an existing heavy Runtime/provider-boundary suite. The aggregate-only pass/fail cases were added there and selected because they exercise the shared context-source preparation path and real deterministic local HTTP dispatch; no new test-selection entry was needed. `packages/mas/test/a2a-informs.test.ts` is a heavy integration boundary: it uses the real Runtime, SQLite-backed records, native conversations and a local deterministic provider; its exact framing-budget, response-admission, concurrent identity and revoked-admission race cases are selected with the existing A2A regressions. The response refusal cases verify capacity release, corrected retry after reopen, stable accepted identity, current-admission revalidation on exact retries, revoked-client cleanup only for definite false admission, and fail-closed binding for unknown/true admission and native delivery. Neither suite is added to the default light/core set. `packages/mas-devpack/test/devpack.test.ts` is also heavy and retains its existing classification; the new tool-path scenario is added to that source-named suite. Existing `mas.test.ts`, `observations.test.ts`, `broker.test.ts` and `inbox.test.ts` are selected as affected regressions for native placement, history, broker and own-inbox behavior.
+
+## P2 Reviewer Follow-up Verification
+
+The 14-file affected MAS/DevPack selection passed 48/48 tests, including all 12 cases in `packages/mas/test/a2a-informs.test.ts`. Agent, Protocol, MAS, MAS DevPack and Server builds plus Agent/MAS/DevPack `tsc --noEmit`, Prettier, strict OpenSpec validation and `git diff --check` passed. An expanded selection including unchanged `packages/mas/test/unknown.test.ts` passed 48 tests and failed its unknown-delivery case with `ERR_SQLITE_ERROR: database is locked`; an isolated rerun reproduced the same failure after its first case passed. This SQLite lock failure is not counted as passed or addressed by the response-reservation change.
+
+## P1 Reviewer Follow-up Verification
+
+`RuntimeRecords.commit` was traced through its public implementation: the transaction performs the caller check before commit, then publishes only after the post-commit check; `RecordsRequestRefusedError` classifies a no-commit refusal/conflict, `RecordsPublicationError` means the commit is durable but publication authority ended, and other storage failures fail the Session closed. The refusal cleanup therefore uses the already-bound `RuntimeRecords` object and a service check bound to the same ready `sessionId`/`sessionFile`; the existing managed/storage checks remain active. Its transaction CASes the root row, fingerprint and ledger versions atomically with capacity. The caller grant is rechecked after cleanup, so revocation still rejects the invocation and no dispatch occurs. No empty check or Durable API change was introduced.
+
+The 14 affected MAS/DevPack files passed 51/51 tests, including 15/15 A2A cases for revoked explicit-false cleanup, thrown admission after revocation, true admission after revocation, concurrency and native delivery behavior. Adding unchanged `packages/mas/test/unknown.test.ts` yielded 52 passes and one failure; an isolated run repeated `M2 MAS: unknown deliver persistence keeps honest state and seals the Session` with `ERR_SQLITE_ERROR: database is locked` after its first case passed. Agent, Protocol, MAS, MAS DevPack and Server builds, Agent/MAS/DevPack TypeScript no-emit checks, Prettier, strict OpenSpec validation and `git diff --check` passed.
