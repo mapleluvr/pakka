@@ -3930,9 +3930,7 @@ export class DurableAdapter {
 									Object.keys(value).some((key) => !["text", "check"].includes(key)) ||
 									typeof value.check !== "function" ||
 									(value.text !== null &&
-										(typeof value.text !== "string" ||
-											value.text.length > 32768 ||
-											/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/.test(value.text)))
+										(typeof value.text !== "string" || /[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/.test(value.text)))
 								)
 									throw new Error("Invalid bounded context source result");
 								const sourceCheck = value.check;
