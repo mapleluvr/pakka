@@ -30,7 +30,11 @@ npm test -- --files packages/mas-devpack/test/telegraph.test.ts,packages/mas-dev
 
 本次 Worker 会话按授权试用紧凑工作推理/协作表达，面向人的报告保持可读。这是定性提示实践，没有对照组、外部模型 benchmark 或推理 token/总成本收益结论。提示也不保证模型遵从或无损。
 
-父会话已直接审阅 staged tree `7b7f0dafee6e4dedf3342a1f517c626172d73d4c` 的完整 diff 与证据，独立重算 14 个受检文件、源码清单和证据包的 SHA-256，均匹配，未发现本次范围的实现阻断。本轮没有另起独立 subagent review。随后仅更新进度文案并检查格式/diff，保留原受检源码和固定证据包，不重复运行代码测试或构建。本地 commit 因 Git 作者身份未配置未完成；按父会话决定保留 25 个 staged 文件，不修改身份配置。远端交付待后续。
+父会话已直接审阅 staged tree `7b7f0dafee6e4dedf3342a1f517c626172d73d4c` 的完整 diff 与证据，独立重算 14 个受检文件、源码清单和证据包的 SHA-256，均匹配，未发现本次范围的实现阻断。本轮没有另起独立 subagent review。随后仅更新进度文案并检查格式/diff，保留原受检源码和固定证据包，不重复运行代码测试或构建。初次本地 commit 因 Git 作者身份未配置而未完成，25 个 staged 文件保留到后续交付。
+
+经操作者授权，父会话通过 `gh` 核对 GitHub 身份和实际 `dev` 基线，在 Git HTTPS 两次超时后改用 GitHub API 创建工作分支上的签名提交 `853691ca187fae4c2b2e4afddfb616db90159399`。提交 tree `cd6cac8032e7c2bf66827ff9c8b5bbf3174d1912` 与最终已审阅 index 一致；精确签名 commit 对象已核对并同步到本地分支，未修改 Git 用户身份配置。[PR #18](https://github.com/mapleluvr/pakka/pull/18) 以 `dev` 为目标，集成与归档仍待后续。
+
+交付时另用本机 Pi **1.5.2** 的公共 `loadSkills` / `formatSkillsForPrompt` 加载相同 Skill 源码：零诊断、显式 Skill 可用、自动模型广告关闭；使用隔离 loader 目录，没有 Session/模型调用或用户配置变更。这项补充核对与交付记录独立保留于本地，不改写下述固定证据包。
 
 本地证据包为 `20261123-mas-telegraph-rc0lfk10/mas-telegraph-evidence.tar.gz`，大小 **31,234,796 bytes**，SHA-256：
 

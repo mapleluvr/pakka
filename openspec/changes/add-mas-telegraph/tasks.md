@@ -9,7 +9,8 @@
 - [x] Update MAS state, API, guide, overview, change record and delta spec.
 - [x] Complete formatting, strict OpenSpec/link/diff checks, final self-review and evidence summary.
 - [x] Parent direct review of the complete staged candidate and evidence; no separate subagent review was run.
-- [ ] Parent-owned remote delivery and OpenSpec archival when appropriate.
+- [x] Parent-owned remote delivery through `gh`: implementation commit `853691ca187fae4c2b2e4afddfb616db90159399` and [PR #18](https://github.com/mapleluvr/pakka/pull/18) targeting `dev`; committed tree matches the reviewed candidate.
+- [ ] Integration and OpenSpec archival when appropriate.
 
 ## Test classification and scope
 
