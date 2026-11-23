@@ -41,7 +41,10 @@ test(
 					profiles: [{ id: "pack", systemPrompt: "WORKER-PACK" }],
 				},
 				catalog: { namespace: "members", maxDeliveries: 8, maxPending: 2 },
-				devpack: { profiles: { pack: ["spawn" as const, "observe" as const] } },
+				devpack: {
+					profiles: { pack: ["spawn" as const, "observe" as const] },
+					telegraphByProfile: { pack: { reasoning: true, communication: true } },
+				},
 			};
 			manager = createWorkerManager({
 				placements: { one: preset },
@@ -88,6 +91,8 @@ test(
 			assert.notEqual(child.owner, "operator");
 			assert.notEqual(manager.view()[0]!.pid, process.pid);
 			assert.equal(f.requests.length, 3);
+			assert.match(text(f.requests[0]!), /## Reason compactly/);
+			assert.match(text(f.requests[0]!), /## Communicate compactly/);
 			assert.ok(
 				(f.requests[0]!.tools as { function: { name: string } }[]).some(
 					(tool) => tool.function.name === "mas_spawn",
@@ -124,7 +129,10 @@ test(
 							profiles: [{ id: "plain", systemPrompt: "PLAIN-WORKER" }],
 						},
 						catalog: { namespace: "members", maxDeliveries: 8, maxPending: 2 },
-						devpack: { profiles: { default: ["discover"] } },
+						devpack: {
+							profiles: { default: ["discover"] },
+							telegraphByProfile: { default: { reasoning: true, communication: true } },
+						},
 					},
 				},
 				maxWorkers: 1,
@@ -147,6 +155,7 @@ test(
 			assert.notEqual(manager.view()[0]!.pid, process.pid);
 			assert.equal(f.requests.length, 1);
 			assert.deepEqual(f.requests[0]!.tools ?? [], []);
+			assert.doesNotMatch(text(f.requests[0]!), /MAS Telegraph/);
 			assert.equal(f.errors.length, 0);
 		} finally {
 			await manager?.close();

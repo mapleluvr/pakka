@@ -11,6 +11,7 @@
 - [有界观察与 DOM 懒加载](bounded-lazy-observation.md)：333 ms 小预览、按需完整内容、虚拟窗口与预算化空闲补取。
 - [本机维护与交付](local-maintenance-and-delivery.md)：原 owner 私密恢复、无执行引擎维护、完整冷备份、停机恢复与固定归档升级；附近期 OOM 任务。
 - [长期投递记录](long-lived-deliveries.md)：原请求独立存储、按未完成工作接纳、累计历史持续保留及旧格式原子迁移。
+- [MAS Telegraph](mas-telegraph.md)：版本化显式 Skill、按 profile 独立选择的 reasoning/communication 提示与清晰的人类产物边界。
 - [MAS A2A 意图分离](mas-a2a-intent.md)：区分不唤醒的 inform、请求和单一 root 关联 response；公开 context source 不证明消费，inform 保持 pending/at-least-once。
 - [Git 协作与项目元数据](git-workflow-and-project-metadata.md)：工作分支 → dev → main 的授权、PR 与验证条件，以及贡献入口和 state-evo 文档接续。
 - [可演进 Runtime 与默认入口](product-runtime-and-launcher.md)：Pi 原生模型/认证、配置与预算演进、Session 隔离、默认执行与 `pakka → WebUI`。

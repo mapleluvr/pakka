@@ -29,7 +29,10 @@ test(
 						{ key: "plain", owner: "operator", profile: "plain" },
 					],
 					roles: [{ token, principal: "operator", sourceKey: null, grants: ["discover", "send", "observe"] }],
-					devpack: { profiles: { default: ["discover"] } },
+					devpack: {
+						profiles: { default: ["discover"] },
+						telegraphByProfile: { default: { reasoning: true, communication: true } },
+					},
 				}),
 			);
 			const client = createClient({ endpoint: app.server.endpoint, token }),
@@ -46,6 +49,7 @@ test(
 			assert.equal(done.receipt.status, "done");
 			assert.equal(m.f.requests.length, 1);
 			assert.deepEqual(m.f.requests[0]!.tools ?? [], []);
+			assert.doesNotMatch(text(m.f.requests[0]!), /MAS Telegraph/);
 			assert.equal(m.f.errors.length, 0);
 		} finally {
 			await app?.close();
@@ -94,7 +98,11 @@ test(
 						{ key: "peer", owner: "operator", profile: "plain" },
 					],
 					roles: [{ token, principal: "operator", sourceKey: null, grants: ["discover", "send", "observe"] }],
-					devpack: { profiles: { default: ["spawn"], power: ["send"] }, operationTimeoutMs: 1000 },
+					devpack: {
+						profiles: { default: ["spawn"], power: ["send"] },
+						operationTimeoutMs: 1000,
+						telegraphByProfile: { default: { reasoning: true }, power: { communication: true } },
+					},
 					http: { port: 0, origins: [] },
 				}),
 			);
@@ -154,6 +162,10 @@ test(
 			const firstTools = m.f.requests[0]!.tools as { function: { name: string } }[];
 			assert.ok(firstTools.some((tool) => tool.function.name === "mas_spawn"));
 			assert.equal(m.f.requests.length, 4);
+			assert.match(text(m.f.requests[0]!), /## Reason compactly/);
+			assert.doesNotMatch(text(m.f.requests[0]!), /## Communicate compactly/);
+			assert.match(text(m.f.requests[2]!), /## Communicate compactly/);
+			assert.doesNotMatch(text(m.f.requests[2]!), /## Reason compactly/);
 			assert.equal(
 				m.f.requests.filter((payload) => text(payload).includes("M6-UNAUTHORIZED-PEER")).length,
 				0,

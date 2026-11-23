@@ -42,6 +42,10 @@ MAS 区分三类协作语义：`inform` 是无需对方答复的被动信息贡�
 
 Team 通过 MAS DevPack 的 Backend/WebUI/Client facets 提供，与其他扩展使用同一公共接口。宿主分别选择界面贡献和 Agent tools/instructions。移除界面清理其导航和订阅；成员、历史和已接纳工作继续由 MAS/Runtime 管理。页面结构见[前端交互](frontend.md#team)。
 
+宿主可通过 DevPack 的 `telegraph` 或按 profile 的 `telegraphByProfile` 独立选择紧凑 reasoning 与 inter-agent communication，默认均关闭。选择只增加 prompt guidance；工具、权限、admission、投递身份、持久化和预算保持所属服务契约。共同规则保留语义锚点、证据与 unknown，面向人的产物按最终读者保持可读。内部交流按有用增量、具体请求和单根实质回复推进，不以重复 inform 投影、同一 URL 或新 requestId 制造确认循环；真正阻塞的新问题可提出有具体目的的澄清请求。
+
+版本化 `mas-telegraph/SKILL.md` 随 DevPack 归档交付，具有公开文件 export 和显式加载语义；Pi 自动模型选择被关闭。选项、安装与移除条件见 [DevPack API](../reference/MAS-DEVPack-API.md#可选-mas-telegraph)。提示不构成模型遵守、无损或 token/成本降低的保证。
+
 ## 契约定位
 
 | 领域                        | 详细声明                                                                                                     |

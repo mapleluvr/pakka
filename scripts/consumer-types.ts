@@ -233,6 +233,7 @@ export async function pocketServiceContract(
 export function productContract(config: BootstrapConfig) {
 	const contribution: NonNullable<BootstrapConfig["devpack"]> = {
 		profiles: { default: ["spawn", "observe"] },
+		telegraphByProfile: { default: { reasoning: true, communication: false } },
 	};
 	// @ts-expect-error strategy inference is not an agent MAS creation grant.
 	const _invalid: NonNullable<BootstrapConfig["devpack"]> = { profiles: { default: ["model.infer"] } };
@@ -248,6 +249,7 @@ export function devpackContract(client: MasClient, sessions: ApprovedSessions) {
 		resolve: () => client,
 		sessions: () => sessions,
 		operationTimeoutMs: 1000,
+		telegraph: { reasoning: true, communication: true },
 	};
 	const pack = createMasDevPack(options);
 	const tools: HostOptions["tools"] = pack.tools;

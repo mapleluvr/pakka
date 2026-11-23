@@ -4,6 +4,7 @@
 	"private": true,
 	"type": "module",
 	"exports": {
+		"./skills/mas-telegraph/SKILL.md": "./skills/mas-telegraph/SKILL.md",
 		".": {
 			"types": "./dist/index.d.ts",
 			"import": "./dist/index.js"
@@ -30,7 +31,8 @@
 		}
 	},
 	"files": [
-		"dist"
+		"dist",
+		"skills"
 	],
 	"scripts": {
 		"build": "tsc -p tsconfig.json",

@@ -75,6 +75,7 @@ test(
 		let resolutions = 0,
 			forced = false;
 		const pack = createMasDevPack({
+			telegraph: { reasoning: true, communication: true },
 			resolve: () => {
 				resolutions++;
 				return actor;
@@ -118,6 +119,8 @@ test(
 			const next = await admin.send(switched.ref, { requestId: "next", text: "WITHOUT-OPTIONAL-PACK" });
 			await admin.wait(next.id);
 			await m.runtime.waitForIdle();
+			assert.match(text(m.f.requests[0]!), /## Reason compactly/);
+			assert.match(text(m.f.requests[0]!), /## Communicate compactly/);
 			const initial = m.f.requests[0]!.tools as { function: { name: string } }[];
 			assert.ok(initial.some((tool) => tool.function.name.startsWith("mas_")));
 			const last = m.f.requests.at(-1)!;
@@ -137,6 +140,7 @@ test(
 				false,
 				"Current system update still selected removed instructions",
 			);
+			assert.doesNotMatch(String(updates.at(-1)!.content), /MAS Telegraph/);
 			assert.equal(resolutions, 1, "Removed native tool still executed its contribution");
 			assert.ok(forced);
 			assert.equal(m.f.requests.length, 4);

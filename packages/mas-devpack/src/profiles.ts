@@ -1,10 +1,27 @@
 import { masAgentPrincipal } from "./ownership.ts";
 import type { Mas, Member, MasGrant } from "@pakka/mas";
 import { createMasDevPack } from "./index.ts";
+import { validateMasTelegraph, type MasTelegraphOptions } from "./telegraph.ts";
 
 export interface MasProfilePacksOptions {
 	readonly profiles: Readonly<Record<string, readonly MasGrant[]>>;
 	readonly operationTimeoutMs?: number;
+	/** Only explicitly named DevPack profiles receive style guidance. */
+	readonly telegraphByProfile?: Readonly<Record<string, MasTelegraphOptions>>;
+}
+/** Shared validation for host JSON presets and public profile composition. */
+export function validateMasProfileTelegraph(
+	value: unknown,
+	profiles: Readonly<Record<string, unknown>>,
+): asserts value is MasProfilePacksOptions["telegraphByProfile"] {
+	if (value === undefined) return;
+	if (!value || typeof value !== "object" || Array.isArray(value))
+		throw new Error("Invalid MAS Telegraph profile selection");
+	for (const [id, options] of Object.entries(value)) {
+		if (!Object.hasOwn(profiles, id) || options === undefined)
+			throw new Error("Unapproved MAS Telegraph profile: " + id);
+		validateMasTelegraph(options);
+	}
 }
 const principal = (member: Member) => masAgentPrincipal(member.ref);
 /** Validate retained descendants against the trusted initial roots; owner data is never a new grant. */
@@ -68,6 +85,7 @@ export function createMasProfilePacks(
 	config: MasProfilePacksOptions | undefined,
 	getMas: () => Mas | undefined,
 ) {
+	validateMasProfileTelegraph(config?.telegraphByProfile, config?.profiles ?? {});
 	const profiles = Object.fromEntries(
 		Object.entries(config?.profiles ?? {}).map(([id, grants]) => [id, [...grants]]),
 	);
@@ -78,6 +96,7 @@ export function createMasProfilePacks(
 					id,
 					createMasDevPack({
 						operationTimeoutMs: config?.operationTimeoutMs,
+						telegraph: config?.telegraphByProfile?.[id],
 						resolve: async (scope) => {
 							const mas = getMas();
 							if (!mas) throw new Error("DevPack service not initialized");

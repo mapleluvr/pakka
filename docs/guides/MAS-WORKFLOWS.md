@@ -79,6 +79,10 @@ node examples/workflow.mjs '<the-same-original-input>'
 
 宿主批准 profile，并通过 `createMasProfilePacks()` 给 Agent 提供带真实调用身份的工具。`mas_send` 表达需要具体新产物或决定的 request；`mas_inform` 保存无需对方答复的被动贡献，不唤醒收件者，只在其之后的自然请求中提供有界来源标注上下文；`mas_reply` 关联一个真实根请求回执，不能续答 response。inform context source 需由宿主显式注册到 Runtime，并保持 pending/at-least-once，因为公开 runtime 没有证明确切 GenerationTask 完成的接口。自定义工具的角色来自宿主装配；示例在提交前用 `catalog.checkInvocation()` 核对实际 invocation。模型参数用于表达业务内容。
 
+需要紧凑内部表达时，宿主在 `createMasProfilePacks()` 中为所选角色设置 `telegraphByProfile: { A: { reasoning: true, communication: true } }`（示例键须对应真实 profile ID）。两个开关可分别启用，默认关闭；公共 API 和独立 Skill 的显式 Pi 加载方式见 [MAS Telegraph](../reference/MAS-DEVPack-API.md#可选-mas-telegraph)。紧凑表达保留分析、验证、权限、证据和 unknown；A 交给 B、最终供人阅读的正文仍保持可读，外围协作说明可简写。
+
+消息按有用新信息、具体请求、实质结果或阻塞组织；同一资料的新发现仍可贡献。重复出现的 pending inform 不要求回复或另建身份重发；`mas_reply` 的一次机会用于真正结果。新澄清请求应说明缺少的事实和被阻塞的决定，不能换 requestId 延续确认循环。风格提示不代替产物保存与完成条件，也不改变工具语法或原生 placement。
+
 流程主体并行投递输入，随后由 Agent 交流并调用工具：
 
 ```js

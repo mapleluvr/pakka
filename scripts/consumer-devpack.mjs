@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { createServer } from "node:http";
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createRuntime } from "@pakka/agent";
@@ -18,7 +18,22 @@ function decode(value) {
 	}
 }
 let actor, peer;
-const pack = createMasDevPack({ resolve: () => actor });
+const skill = (
+	await readFile(new URL(import.meta.resolve("@pakka/mas-devpack/skills/mas-telegraph/SKILL.md")), "utf8")
+).replace(/\r\n/g, "\n");
+assert.match(skill, /^name: mas-telegraph$/m);
+assert.match(skill, /^disable-model-invocation: true$/m);
+const pack = createMasDevPack({ resolve: () => actor, telegraph: { reasoning: true, communication: true } });
+for (const heading of [
+	"Reason compactly",
+	"Communicate compactly",
+	"Preserve semantic anchors",
+	"Choose the final audience",
+]) {
+	const section = skill.split(/^## /m).find((value) => value.startsWith(heading + "\n"));
+	assert.ok(section);
+	assert.ok(pack.instructions.includes("## " + section.trim()));
+}
 const server = createServer((req, res) => {
 	void (async () => {
 		let raw = "";
@@ -115,14 +130,15 @@ try {
 	await admin.wait(first.id);
 	await runtime.waitForIdle();
 	assert.equal(requests.length, 3);
-	assert.equal(
-		requests.filter((body) =>
-			JSON.stringify(body.messages.filter((message) => message.role === "user")).includes(
-				"INSTALLED-PEER-INPUT",
-			),
-		).length,
-		1,
+	assert.match(JSON.stringify(requests[0].messages), /## Reason compactly/);
+	assert.match(JSON.stringify(requests[0].messages), /## Communicate compactly/);
+	const peerRequests = requests.filter((body) =>
+		JSON.stringify(body.messages.filter((message) => message.role === "user")).includes(
+			"INSTALLED-PEER-INPUT",
+		),
 	);
+	assert.equal(peerRequests.length, 1);
+	assert.doesNotMatch(JSON.stringify(peerRequests[0].messages), /MAS Telegraph/);
 	assert.ok(
 		(await runtime.conversation(peer))
 			.view()
@@ -156,7 +172,10 @@ try {
 			profiles: [{ id: "pack", systemPrompt: "WORKER-PACK" }],
 		},
 		catalog: { namespace: "worker-members", maxDeliveries: 8, maxPending: 2 },
-		devpack: { profiles: { pack: ["spawn", "observe"] } },
+		devpack: {
+			profiles: { pack: ["spawn", "observe"] },
+			telegraphByProfile: { pack: { communication: true } },
+		},
 	};
 	manager = createWorkerManager({
 		placements: { one: preset },
@@ -198,6 +217,8 @@ try {
 	);
 	assert.notEqual(manager.view()[0].pid, process.pid);
 	assert.equal(requests.length, 8);
+	assert.match(JSON.stringify(requests.at(-1).messages), /## Communicate compactly/);
+	assert.doesNotMatch(JSON.stringify(requests.at(-1).messages), /## Reason compactly/);
 	assert.deepEqual(errors, []);
 	await writeFile(
 		join(root, "devpack-evidence.json"),
@@ -213,7 +234,9 @@ try {
 			2,
 		),
 	);
-	console.log("installed DevPack smoke passed: native tools/revocation/temporary worker, 8 HTTP requests");
+	console.log(
+		"installed DevPack smoke passed: public Telegraph Skill/selected prompts/native tools/revocation/temporary worker, 8 HTTP requests",
+	);
 } finally {
 	await manager?.close();
 	await runtime?.close();

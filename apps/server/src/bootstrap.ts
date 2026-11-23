@@ -4,6 +4,7 @@ import { createMas } from "@pakka/mas";
 import type { Mas, MasGrant } from "@pakka/mas";
 import { profileDevPacks, retainedProductRoots } from "./profile-devpack.ts";
 import type { ProfileDevPackConfig } from "./profile-devpack.ts";
+import { validateMasProfileTelegraph } from "@pakka/mas-devpack/agent";
 import { productDynamite, validProductDynamite } from "./product-dynamite.ts";
 import type { ProductDynamiteConfig } from "./product-dynamite.ts";
 import { identity } from "@pakka/protocol";
@@ -196,7 +197,7 @@ export function decodeBootstrap(value: unknown): BootstrapConfig {
 			...(value.runtime.profiles ?? []).map((profile) => profile.id),
 		]);
 		if (
-			!shape(pack, ["profiles"], ["operationTimeoutMs"]) ||
+			!shape(pack, ["profiles"], ["operationTimeoutMs", "telegraphByProfile"]) ||
 			!record(pack.profiles) ||
 			Object.keys(pack.profiles).length === 0 ||
 			Object.keys(pack.profiles).length > 128 ||
@@ -211,6 +212,7 @@ export function decodeBootstrap(value: unknown): BootstrapConfig {
 				(!positive(pack.operationTimeoutMs) || Number(pack.operationTimeoutMs) > 60000))
 		)
 			throw new Error("Invalid approved product DevPack configuration");
+		validateMasProfileTelegraph(pack.telegraphByProfile, pack.profiles);
 		// Remote profile selection cannot mint a model's root authority in this mode.
 		if (
 			value.roles.some((role) =>

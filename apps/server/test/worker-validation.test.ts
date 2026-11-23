@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { fixture } from "../../../packages/agent/test/fixture.ts";
 import { createWorkerManager } from "../src/worker-manager.ts";
 import { configuration } from "../src/worker-ipc.ts";
+import { decodeBootstrap } from "../src/bootstrap.ts";
 
 test("worker catalog accepts pending protection without a lifetime quota", async () => {
 	const f = await fixture();
@@ -24,6 +25,91 @@ test("worker catalog accepts pending protection without a lifetime quota", async
 		assert.equal(f.requests.length, 0);
 	} finally {
 		await f.close();
+	}
+});
+
+test("Telegraph presets: worker and product JSON retain switches and refuse invalid selections", () => {
+	const runtime = {
+		cwd: "/unused",
+		dataDir: "/unused-data",
+		endpoint: "http://127.0.0.1:1/v1",
+		model: "local-model",
+		apiKey: "local-only",
+		systemPrompt: "Preset validation only",
+		reservedSessionId: "91383703-b5ca-441c-81de-72b487a3e2b8",
+		limits: { maxConversations: 4, maxPrimaryAttempts: 8, maxAuxiliaryAttempts: 2 },
+		profiles: [{ id: "plain", systemPrompt: "Plain" }],
+	};
+	const catalog = { namespace: "members", maxPending: 2 };
+	const validate = (telegraphByProfile: unknown) => {
+		const devpack = { profiles: { default: ["discover"] }, telegraphByProfile };
+		const worker: unknown = JSON.parse(JSON.stringify({ runtime, catalog, devpack }));
+		configuration(worker);
+		const product = decodeBootstrap(
+			JSON.parse(
+				JSON.stringify({
+					schema: "pakka.server.v1",
+					runtime,
+					mas: catalog,
+					devpack,
+					members: [{ key: "root", owner: "operator" }],
+					roles: [
+						{
+							token: "local-telegraph-aaaaaaaaaaaaaaaaaaaaaaaaaa",
+							principal: "operator",
+							sourceKey: null,
+							grants: ["send"],
+						},
+					],
+				}),
+			),
+		);
+		assert.deepEqual(worker.devpack, product.devpack);
+		assert.deepEqual(product.devpack?.telegraphByProfile, telegraphByProfile);
+	};
+	for (const selected of [
+		undefined,
+		{},
+		{ default: {} },
+		{ default: { reasoning: true } },
+		{ default: { communication: true } },
+		{ default: { reasoning: true, communication: true } },
+		{ default: { reasoning: false, communication: false } },
+	])
+		validate(selected);
+	for (const selected of [
+		null,
+		[],
+		true,
+		{ default: null },
+		{ default: [] },
+		{ default: { reasoning: "true" } },
+		{ default: { communication: 1 } },
+		{ default: { communications: true } },
+		{ plain: { reasoning: true } },
+		{ missing: { communication: true } },
+	]) {
+		const devpack = { profiles: { default: ["discover"] }, telegraphByProfile: selected };
+		assert.throws(() => configuration({ runtime, catalog, devpack }), /Telegraph/);
+		assert.throws(
+			() =>
+				decodeBootstrap({
+					schema: "pakka.server.v1",
+					runtime,
+					mas: catalog,
+					devpack,
+					members: [{ key: "root", owner: "operator" }],
+					roles: [
+						{
+							token: "local-telegraph-aaaaaaaaaaaaaaaaaaaaaaaaaa",
+							principal: "operator",
+							sourceKey: null,
+							grants: ["send"],
+						},
+					],
+				}),
+			/Telegraph/,
+		);
 	}
 });
 
