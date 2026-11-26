@@ -18,7 +18,7 @@ flowchart LR
 
 ## 安装与入口
 
-选择 [History Book state](../state/history-book.md) 对应的固定归档组合，安装 Agent 与 Dynamite 即可使用独立 Book。完整 API 和独立示例在 Dynamite 包的 `docs/HISTORY-BOOK.md` 与 `examples/history-book.mjs`。该示例只创建一次性存储、编辑、补注、读旧版本并重开，不需要 Memo 或模型服务。
+选择[已验证的固定归档组合](../verification/HISTORY-BOOK-MEMO-PAIR.md)，安装 Agent 与 Dynamite 即可使用独立 Book。完整 API 和独立示例在 Dynamite 包的 `docs/HISTORY-BOOK.md` 与 `examples/history-book.mjs`。该示例只创建一次性存储、编辑、补注、读旧版本并重开，不需要 Memo 或模型服务。
 
 宿主提供两条不同的读取能力：
 
