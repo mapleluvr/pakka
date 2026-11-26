@@ -85,3 +85,9 @@ Original source files/tests and stale generated output are preserved locally; st
 ## Boundaries
 
 UI and helper delegation remain separate Issue #9 slices. No automatic dev/main merge. Dynamite has no origin/dev at kickoff; local dev was initialized at fetched main e074c14, without remote mutation.
+
+## 2026-11-26 integration scenario follow-up
+
+- [x] Wire the producer-provided Book to an explicit fixed-target policy and recheck the actual model material at each initial/repair dispatch. Preserve the original plan, host and native work identity; document migration from the uniform-only assembly. Source implementation and policy tests belong to Dynamite.
+- [x] Adapt Book search titles at `@pakka/memo/dynamite`, keep the fixed entity reference, and opt the installed fixture into uniform-source authorization. The existing heavy installed-source case exercises real MemoClient pagination, a multibyte title and a fixed-version full read. Keep it in `smoke:history`, not daily core; no new runner selection or dependency.
+- [ ] Review and identify the final changed archives; run the independent clean installation combination before delivery. Historical verification remains scoped to its original pair.

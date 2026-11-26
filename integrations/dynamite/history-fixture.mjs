@@ -179,6 +179,7 @@ export async function historyFixture(root, { tools = [], reply = () => ({ text: 
 			namespace: "history-books",
 			actor: { id: "historian", check() {} },
 			check() {},
+			checkEvidence: "source-read",
 			modelKey: "history",
 			maxCalls: 2,
 			maxAttempts: 8,

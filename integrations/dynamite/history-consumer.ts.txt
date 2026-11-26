@@ -21,6 +21,8 @@ export async function consume(runtime: Runtime, session: HistorianSession) {
     namespace: "books",
     actor: { id: "owner", check() {} },
     check() {},
+    // Explicit uniform deployment; spread is also accepted by the older uniform-only declarations.
+    ...{ checkEvidence: "source-read" as const },
     modelKey: "history",
     maxCalls: 2,
     maxAttempts: 10,

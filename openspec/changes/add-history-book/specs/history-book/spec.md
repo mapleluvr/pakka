@@ -63,6 +63,12 @@ Historian SHALL fix its input, base, authority and allowance before execution, p
 - **WHEN** the original native result is sealed but the business receipt is missing
 - **THEN** recovery checks the original result and completes local publication without another model call.
 
+#### Scenario: Current authority at each model request
+
+- **WHEN** the fixed job is about to send an initial or corrective model request
+- **THEN** current execution and read authority cover the Book and the fixed artifact bodies in its request
+- **AND** a citation in Book content is not a request to read the cited body.
+
 #### Scenario: Agent edit precedes background publication
 
 - **WHEN** an Agent commits an edit before a candidate based on an older Book version is published
@@ -93,6 +99,11 @@ Historian SHALL establish cancellation before its first asynchronous state read 
 ### Requirement: Separate Memo knowledge
 
 Memo SHALL own its adaptation of Dynamite public capabilities, including library identity, sharing, source format and final consumption checks; Patchouli may publish derived knowledge into Memo DB with fixed citations. Dynamite SHALL NOT own a Memo-specific source adapter. Memo knowledge SHALL retain independent library authority.
+
+#### Scenario: A Book search title exceeds the Memo byte budget
+
+- **WHEN** a valid Book title is too long for a Memo search entry
+- **THEN** the adapter provides a valid Unicode preview within the Memo byte limit and preserves the fixed reference for reading the full entry.
 
 #### Scenario: Independent research publication
 
