@@ -18,6 +18,10 @@ Pakka 将 Pi Durable 的 Conversation、权限、持久化与 MAS 协作能力�
 
 [PR #8](https://github.com/mapleluvr/pakka/pull/8) 已合入 dev；长期投递、本机维护和懒观察的关键结果保留在各自 [verification](verification/README.md)。原始验证证据只在本地归档，Git 仅记录关键结果和整体 hash。
 
+当前采用[默认 Dynamite 上下文策略](changes/default-dynamite-context.md)，[所属 tasks](../openspec/changes/adopt-default-dynamite-context/tasks.md)区分已完成的预期调整与尚未开始的产品接入。后续设计需落实模型/预算默认值、Conversation 生命周期和安装消费。
+
+[Git 协作与项目元数据](changes/git-workflow-and-project-metadata.md)已由 [PR #2](https://github.com/mapleluvr/pakka/pull/2) 合入 `dev`。独立实现按[贡献指南](../CONTRIBUTING.md)从最新 `origin/dev` 建立工作分支。
+
 本地执行安排在已忽略的 `docs/.temp/active-plan.md`；文件缺失时从所属 tasks 接续。
 
 ## 产品后续入口

@@ -13,6 +13,7 @@
 - [长期投递记录](long-lived-deliveries.md)：原请求独立存储、按未完成工作接纳、累计历史持续保留及旧格式原子迁移。
 - [MAS Telegraph](mas-telegraph.md)：版本化显式 Skill、按 profile 独立选择的 reasoning/communication 提示与清晰的人类产物边界。
 - [MAS A2A 意图分离](mas-a2a-intent.md)：区分不唤醒的 inform、请求和单一 root 关联 response；公开 context source 不证明消费，inform 保持 pending/at-least-once。
+- [默认 Dynamite 上下文](default-dynamite-context.md)：普通产品默认策略的采用、与独立 SDK/headless 装配的边界，以及尚未完成的启动器与生命周期接入。
 - [Git 协作与项目元数据](git-workflow-and-project-metadata.md)：工作分支 → dev → main 的授权、PR 与验证条件，以及贡献入口和 state-evo 文档接续。
 - [可演进 Runtime 与默认入口](product-runtime-and-launcher.md)：Pi 原生模型/认证、配置与预算演进、Session 隔离、默认执行与 `pakka → WebUI`。
 - [ExecutionEnv 接入](execution-environment.md)：1.4.0 基线的公开执行环境接缝、原生工具、合作工具能力与真实本地消费。
