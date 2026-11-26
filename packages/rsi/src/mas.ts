@@ -1,4 +1,8 @@
 import type { AgentRef as ConversationRef, MasClient } from "@pakka/mas";
+import type { Runtime } from "@pakka/agent";
+import type { TicketClient } from "./types.ts";
+import { createReportNotifier } from "./report-notifier.ts";
+export type { ReportNotification, ReportNotificationInput } from "./report-notifier.ts";
 import { TicketError, type TicketDispatcher, type TicketRoute } from "./types.ts";
 import { frozen, identity } from "./validation.ts";
 
@@ -74,4 +78,18 @@ export function createMasTicketDispatcher(options: {
 			return frozen({ id: receipt.id, state: receipt.status });
 		},
 	} satisfies TicketDispatcher);
+}
+
+/** Passive outbox construction. notify() explicitly sends an already-saved report reference. */
+export function createMasReportNotifier(options: {
+	readonly runtime: Runtime;
+	readonly namespace: string;
+	readonly tickets: TicketClient;
+	readonly routes: readonly MasTicketRoute[];
+	readonly check: () => void;
+}) {
+	return createReportNotifier({
+		...options,
+		dispatcher: createMasTicketDispatcher({ routes: options.routes }),
+	});
 }

@@ -80,18 +80,21 @@ export async function readStorageText(file: string): Promise<string> {
 	}
 }
 
-/** Snapshot of main-session state. Only the five audited auxiliary document
- * families are separated; every other native/domain record remains comparable. */
+/** Snapshot of main-session state. Only the six audited auxiliary Session document
+ * families are separated; every native-scope/domain record remains comparable. */
 export async function readMainStorageText(file: string): Promise<string> {
 	const snapshot = JSON.parse(await readStorageText(file));
 	const auxiliary = new Set([
 		"pakka.strategy-journals",
+		"pakka.strategy-head",
 		"pakka.strategy-receipt",
 		"pakka.strategy-batch",
 		"pakka.source-work",
 		"pakka.source-work-index",
 	]);
-	snapshot.documents = snapshot.documents.filter((row: StoredDocument) => !auxiliary.has(row.record.kind));
+	snapshot.documents = snapshot.documents.filter(
+		(row: StoredDocument) => row.record.scope.kind !== "session" || !auxiliary.has(row.record.kind),
+	);
 	return JSON.stringify(snapshot);
 }
 

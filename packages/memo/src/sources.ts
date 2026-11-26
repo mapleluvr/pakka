@@ -5,7 +5,9 @@ import {
 	type SourceCheck,
 	type Content,
 	type MemoRef,
+	type SourceProvider,
 } from "./contracts.ts";
+import { checkPublication } from "./publication.ts";
 import type { Store } from "./store.ts";
 import { reference, references, string, integer, hash, data } from "./validation.ts";
 type SourceRow = Record<string, string | number | null>;
@@ -87,12 +89,22 @@ export class Sources {
 			})
 			.map((r) => structuredClone(r));
 	}
+	publication(provider: SourceProvider, result: unknown): () => void {
+		if (provider.publicationCheck === undefined) return () => {};
+		if (typeof provider.publicationCheck !== "function")
+			throw new MemoError("unavailable", "Invalid source publication capability");
+		const verify = provider.publicationCheck(result);
+		if (typeof verify !== "function")
+			throw new MemoError("unavailable", "Invalid source publication verifier");
+		return () => checkPublication(verify);
+	}
 	async read(
 		target: SourceRef,
 		actorId: string,
 		offset: number,
 		limit: number,
 		authorize: () => void,
+		publication: (verify: () => void) => void,
 	): Promise<Content> {
 		authorize();
 		const current = this.store.get(
@@ -126,22 +138,30 @@ export class Sources {
 			}
 		};
 		const { provider, input } = resolve();
-		let result;
+		let result, verifyResult: () => void;
 		try {
-			result = data(await provider.read(data({ ...input, offset, limit })));
+			const original = await provider.read(data({ ...input, offset, limit }));
+			verifyResult = this.publication(provider, original);
+			result = data(original);
 		} catch (error) {
 			if (error instanceof MemoError) throw error;
 			throw new MemoError("unavailable", "Source read failed");
 		}
-		authorize();
-		const latest = this.store.get(
-			"SELECT catalog_version FROM sources WHERE library_id=? AND id=?",
-			target.libraryId,
-			target.sourceId,
-		);
-		if (!latest || latest.catalog_version !== current.catalog_version)
-			throw new MemoError("conflict", "Source catalog changed during read");
-		resolve();
+		const verify = () => {
+			authorize();
+			const latest = this.store.get(
+				"SELECT catalog_version FROM sources WHERE library_id=? AND id=?",
+				target.libraryId,
+				target.sourceId,
+			);
+			if (!latest || latest.catalog_version !== current.catalog_version)
+				throw new MemoError("conflict", "Source catalog changed during read");
+			resolve();
+			verifyResult();
+			authorize();
+		};
+		verify();
+		publication(verify);
 		try {
 			reference(result.ref);
 			if (hash(result.ref) !== hash(target)) throw Error("Identity mismatch");

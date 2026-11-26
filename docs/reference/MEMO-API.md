@@ -40,13 +40,25 @@
 
 ## 来源 provider
 
-`providers` 是可信宿主注入的具名端口集合。管理 `registerSource` 提供 sourceId、provider、address、版本、标题/摘要和 baseVersion。首次 baseVersion=0，更新必须核对来源目录版本。固定版本的 provider/address 保留，来源目录指向新版本后旧引用仍可读取；无固定快照用 version=null 表示当前内容。
+`providers` 是可信宿主注入的具名端口集合。Memo 作为下游负责业务/格式/装配适配；上游只提供通用能力。Book 接入使用 `@pakka/memo/dynamite` 的 `createDynamiteSourceProvider({book,check})`，其结构端口由安装消费对照 Dynamite 的真实公开类型校验。核心入口不强制安装 Dynamite/MAS，适配器不访问上游私有字段或数据库。管理 `registerSource` 提供 sourceId、provider、address、版本、标题/摘要和 baseVersion。首次 baseVersion=0，更新必须核对来源目录版本。固定版本的 provider/address 保留，来源目录指向新版本后旧引用仍可读取；无固定快照用 version=null 表示当前内容。
 
-`check({actorId,action,libraryId,address,ref})` 同步确认原资料权限。share 必须包含向目标书库分享的授权；read 检查具体版本/章节。`read` 接收相同身份与 offset/limit，返回同一 ref、text、nextOffset 和可选 sources。可选 `search` 接收 query、limit 和 provider 私有 cursor，返回有界 Entry 页；每项引用仍须属于该 sourceId/书库/版本，可携带章节 locator。provider 内部字段不会发布到客户端。
+`check({actorId,action,libraryId,address,ref})` 同步确认实际来源对象权限；已发表 Book 的自身内容不是其引用目标正文，不能只因保存引用就自动继承目标读权。share 必须包含向目标书库分享的授权；read 检查具体版本/章节。`read` 接收相同身份与 offset/limit，返回同一 ref、text、nextOffset 和可选 sources。可选 `search` 接收 query、limit 和 provider 私有 cursor，返回有界 Entry 页；每项引用仍须属于该 sourceId/书库/版本，可携带章节 locator。provider 内部字段不会发布到客户端。
+
+如果实际对象权限只能在 read/search 解析后确定，provider 提供 `publicationCheck(originalResult): () => void`；Memo 在 DTO 转换前取得该同步校验。包装 provider 时须保留原响应身份及此能力，不能只转发 read/check 后丢弃结果授权；只有输入 check 已完整覆盖实际对象时才可省略。校验只保留身份、权限和有界读集，不保留正文或建立持久授权，返回 Promise 或非 undefined 值明确拒绝。
 
 异步返回后，服务检查当前书库/来源授权、目录版本、返回 ref 和范围。目录在等待期间更新会产生 conflict；来源无权限时列表与检索不显示其元数据。Wiki 正文及历史附带的 refs 也按当前权限过滤，过滤后重新核对整体身份和原页面的发布权限。provider 收到独立冻结的请求 DTO，不能改变服务保留的原引用校验基准。
 
-注册本身不抓取 URL 或文件，不复制业务 Session 正文。provider 的网络、文件和一致性策略由实际宿主实现；原始资料指令只是资料内容，不能改变宿主授予的权限。
+`client.publicationCheck(originalResult)` 只接受该 Client 原始 read/search 结果，返回同步 verifier。Memo 公共返回、Patchouli 的筛选 DTO 和原生工具最终序列化前都会复查。复制、重建、其他 Client 或不支持的结果返回 invalid；检查不提供新的读取权。若宿主还要 await 加工结果，在原结果仍可识别时取得 verifier，并在最后一次 await 后、输出字节前调用：
+
+```js
+const result = await client.read(ref);
+const verify = client.publicationCheck(result);
+const rendered = await render(result);
+verify(); // No further await between this check and publication.
+return rendered;
+```
+
+独立 Wiki 正文继续按自身书库授权；来源引用撤权可使引用被过滤，但不自动撤销已发表知识。注册本身不抓取 URL 或文件，不复制业务 Session 正文。provider 的网络、文件和一致性策略由实际宿主实现；原始资料指令只是资料内容，不能改变宿主授予的权限。
 
 ## Markdown 与原生工具
 

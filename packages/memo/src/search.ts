@@ -10,7 +10,9 @@ export async function search(
 	authorize: (libraryId: string) => unknown,
 	current: () => void,
 	query: SearchQuery,
+	publication: (verify: () => void) => void,
 ): Promise<Page<Entry>> {
+	publication(current);
 	current();
 	if (query.libraryId !== undefined) {
 		id(query.libraryId);
@@ -79,27 +81,33 @@ export async function search(
 		}
 		// Worst-case escaped strings and reference metadata fit in 192 KiB for four entries.
 		const sourceLimit = Math.min(limit, 4);
-		let page;
+		let page, verifyResult: () => void;
 		try {
-			page = data(
-				await provider.search({
-					...input,
-					query: query.query,
-					limit: sourceLimit,
-					...(continuation === undefined ? {} : { cursor: continuation }),
-				}),
-			);
+			const original = await provider.search({
+				...input,
+				query: query.query,
+				limit: sourceLimit,
+				...(continuation === undefined ? {} : { cursor: continuation }),
+			});
+			verifyResult = sources.publication(provider, original);
+			page = data(original);
 		} catch (error) {
 			if (error instanceof MemoError) throw error;
 			throw new MemoError("unavailable", "Source search failed");
 		}
-		authorize(String(row.library_id));
-		sources.check(row, actorId, "read");
-		if (
-			store.get("SELECT catalog_version FROM sources WHERE library_id=? AND id=?", row.library_id, row.id)
-				?.catalog_version !== row.catalog_version
-		)
-			throw new MemoError("conflict", "Source changed during search");
+		const verify = () => {
+			authorize(String(row.library_id));
+			sources.check(row, actorId, "read");
+			verifyResult();
+			if (
+				store.get("SELECT catalog_version FROM sources WHERE library_id=? AND id=?", row.library_id, row.id)
+					?.catalog_version !== row.catalog_version
+			)
+				throw new MemoError("conflict", "Source changed during search");
+			current();
+		};
+		verify();
+		publication(verify);
 		try {
 			if (!Array.isArray(page.items) || page.items.length > sourceLimit) throw Error("Oversized source page");
 			if (page.cursor !== null) {

@@ -107,7 +107,11 @@ export async function reconcileTicketWrite(
 			if (error.status !== "unknown") return { status: "rejected", message: error.message };
 		}
 	}
-	if (!receipt) receipt = await ticketCall(service, "lookup", { requestId: operation.id }, { signal });
+	if (!receipt) {
+		const found = await ticketCall(service, "lookup", { requestId: operation.id }, { signal });
+		if (found && "kind" in found) throw new Error("回执类型与原工单写入不符，请保留原请求。");
+		receipt = found;
+	}
 	if (!receipt) throw new Error("原请求仍未确认；没有重新提交。");
 	return { status: "saved", receipt: checkTicketReceipt(original, operation, receipt) };
 }

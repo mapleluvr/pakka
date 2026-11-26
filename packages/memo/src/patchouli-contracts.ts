@@ -79,5 +79,8 @@ export interface PatchouliService {
 	connect(actor: MemoActor): PatchouliClient;
 	knowledgeForInvocation(scope: ToolInvocationScope): MemoClient;
 	finish(scope: ToolInvocationScope, input: { readonly runId: string }): Promise<ResearchRun>;
+	/** Same-service, exact completion result. Recheck synchronously after a consumer awaits it;
+	 * lost publication authority does not undo the completed run. */
+	publicationCheck(result: ResearchRun): () => void;
 	close(): void;
 }

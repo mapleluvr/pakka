@@ -1,0 +1,44 @@
+import type { Runtime, HistorianSession } from "@pakka/agent";
+import type { SourceProvider, MemoClient } from "@pakka/memo";
+import { createDynamiteSourceProvider } from "@pakka/memo/dynamite";
+import {
+  createHistorian,
+  createHistoryTools,
+  bindHistoryInvocation,
+} from "@pakka/dynamite";
+export async function readMemo(client: MemoClient) {
+  const result = await client.search({ query: "history" });
+  const verify = client.publicationCheck(result);
+  verify();
+  return result;
+}
+export async function consume(runtime: Runtime, session: HistorianSession) {
+  const source = runtime.view().conversations[0];
+  const historian = createHistorian({
+    runtime,
+    source,
+    strategyId: "source",
+    namespace: "books",
+    actor: { id: "owner", check() {} },
+    check() {},
+    modelKey: "history",
+    maxCalls: 2,
+    maxAttempts: 10,
+    openSession: async () => session,
+  });
+  const provider: SourceProvider = createDynamiteSourceProvider({ book: historian.book, check() {} });
+  const tools = createHistoryTools({
+    resolve: (scope) =>
+      bindHistoryInvocation(
+        { runtime, source, service: historian.book, actor: { id: "owner", check() {} } },
+        scope,
+      ),
+  });
+  const client = historian.book.connect({ id: "owner", check() {} });
+  const page = await client.related({ ref: { artifactId: "fixed", version: 1 }, limit: 4 });
+  await client.source({ ref: { artifactId: "fixed", version: 1 }, limit: 128 });
+  client.checkPublication(page);
+  tools.revoke();
+  await historian.close();
+  return { page, provider };
+}

@@ -5,7 +5,12 @@ import {
 	type TicketReceipt,
 	type TicketView,
 	type TicketHistoryPage,
+	type TicketRequestReceipt,
+	type TicketReport,
+	type TicketReportPage,
+	type TicketWorkClient,
 } from "./types.ts";
+import { conversationReference } from "./work-repository.ts";
 import { shape, identity, content, integer, links, state, text, resultReferences } from "./validation.ts";
 export type TicketAction =
 	| "submit"
@@ -17,6 +22,13 @@ export type TicketAction =
 	| "lookup"
 	| "assign"
 	| "report"
+	| "set-state"
+	| "register-work"
+	| "set-work-contribution"
+	| "get-work"
+	| "revise-report"
+	| "read-report"
+	| "reports"
 	| "dispatch"
 	| "recover"
 	| "refresh"
@@ -25,6 +37,10 @@ export type TicketActionValue =
 	| TicketPage
 	| TicketView
 	| TicketReceipt
+	| TicketRequestReceipt
+	| TicketReport
+	| TicketReportPage
+	| Awaited<ReturnType<TicketWorkClient["getWork"]>>
 	| TicketHistoryPage
 	| { readonly revision: string }
 	| ReturnType<TicketClient["capabilities"]>
@@ -117,24 +133,109 @@ export async function executeTicketAction(
 				handlerId: value.handlerId,
 			});
 		case "report":
-			shape(value, ["requestId", "id", "expectedVersion", "state", "text", "links"], ["runId", "results"]);
-			if (value.runId !== undefined) identity(value.runId);
+			shape(value, ["requestId", "id", "workId", "text", "links"], ["results"]);
+			identity(value.requestId);
+			identity(value.id);
+			identity(value.workId);
+			text(value.text, 12000, true);
+			links(value.links);
 			if (value.results !== undefined) resultReferences(value.results);
+			return client.report({
+				requestId: value.requestId,
+				id: value.id,
+				workId: value.workId,
+				text: value.text,
+				links: value.links,
+				...(value.results !== undefined ? { results: value.results } : {}),
+			});
+		case "set-state":
+			shape(value, ["requestId", "id", "expectedVersion", "state", "text", "links"]);
 			identity(value.requestId);
 			identity(value.id);
 			integer(value.expectedVersion);
 			state(value.state);
 			text(value.text, 12000, true);
 			links(value.links);
-			return client.report({
+			return client.setState({
 				requestId: value.requestId,
 				id: value.id,
 				expectedVersion: value.expectedVersion,
 				state: value.state,
 				text: value.text,
 				links: value.links,
-				...(value.runId !== undefined ? { runId: value.runId } : {}),
+			});
+		case "register-work":
+			shape(value, ["requestId", "id", "expectedVersion", "handlerId", "contentRevision", "conversation"]);
+			identity(value.requestId);
+			identity(value.id);
+			integer(value.expectedVersion);
+			identity(value.handlerId);
+			integer(value.contentRevision);
+			conversationReference(value.conversation);
+			return client.registerWork({
+				requestId: value.requestId,
+				id: value.id,
+				expectedVersion: value.expectedVersion,
+				handlerId: value.handlerId,
+				contentRevision: value.contentRevision,
+				conversation: value.conversation,
+			});
+		case "set-work-contribution":
+			shape(value, ["requestId", "id", "workId", "expectedVersion", "allowed"]);
+			identity(value.requestId);
+			identity(value.id);
+			identity(value.workId);
+			integer(value.expectedVersion);
+			if (typeof value.allowed !== "boolean") throw new TicketError("invalid", "Invalid contribution state");
+			return client.setWorkContribution({
+				requestId: value.requestId,
+				id: value.id,
+				workId: value.workId,
+				expectedVersion: value.expectedVersion,
+				allowed: value.allowed,
+			});
+		case "get-work":
+			shape(value, ["id", "workId"]);
+			identity(value.id);
+			identity(value.workId);
+			return client.getWork({ id: value.id, workId: value.workId });
+		case "revise-report":
+			shape(value, ["requestId", "id", "reportId", "expectedVersion", "text", "links"], ["results"]);
+			identity(value.requestId);
+			identity(value.id);
+			identity(value.reportId);
+			integer(value.expectedVersion);
+			text(value.text, 12000, true);
+			links(value.links);
+			if (value.results !== undefined) resultReferences(value.results);
+			return client.reviseReport({
+				requestId: value.requestId,
+				id: value.id,
+				reportId: value.reportId,
+				expectedVersion: value.expectedVersion,
+				text: value.text,
+				links: value.links,
 				...(value.results !== undefined ? { results: value.results } : {}),
+			});
+		case "read-report":
+			shape(value, ["id", "reportId"], ["version"]);
+			identity(value.id);
+			identity(value.reportId);
+			if (value.version !== undefined) integer(value.version);
+			return client.readReport({
+				id: value.id,
+				reportId: value.reportId,
+				...(value.version !== undefined ? { version: value.version } : {}),
+			});
+		case "reports":
+			shape(value, ["id"], ["cursor", "limit"]);
+			identity(value.id);
+			if (value.cursor !== undefined) text(value.cursor, 2048, true);
+			if (value.limit !== undefined) integer(value.limit, 1, 32);
+			return client.reports({
+				id: value.id,
+				...(value.cursor !== undefined ? { cursor: value.cursor } : {}),
+				...(value.limit !== undefined ? { limit: value.limit } : {}),
 			});
 		case "dispatch":
 			shape(value, ["requestId", "id", "expectedVersion"]);

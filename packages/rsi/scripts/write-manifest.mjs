@@ -45,7 +45,7 @@ if (
 )
 	throw new Error("RSI UI bundled an execution dependency or a second shared renderer");
 await copyFile(new URL("../src/browser/tickets.css", import.meta.url), new URL("tickets.css", publicRoot));
-await writeFile(new URL("../dist/manifest.json", import.meta.url), JSON.stringify(manifest, null, 2) + "\n");
+await writeFile(new URL("../dist/manifest.json", import.meta.url), JSON.stringify(manifest) + "\n");
 const evidence = new URL("../artifacts/", import.meta.url);
 await mkdir(evidence, { recursive: true });
 await writeFile(

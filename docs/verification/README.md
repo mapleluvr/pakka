@@ -10,6 +10,7 @@
 | 独立 WebUI 阶段 3 交付          | [固定归档、两候选与启动前兼容拒绝](INDEPENDENT-WEBUI-PHASE-3.md)                                             |
 | 独立 WebUI 阶段 2 应用          | [真实模型请求、RSI 两层回执、原历史与固定制品](INDEPENDENT-WEBUI-PHASE-2.md)                                 |
 | 独立 WebUI 阶段 1 接缝          | [独立安装、模型配置/回执与共享浏览器 runtime](INDEPENDENT-WEBUI-PHASE-1.md)                                  |
+| 按对象授权的审查整改            | [Book、Memo、HTTP、RSI、历史读取与本地证据](REVIEWED-PUBLICATION.md)                                         |
 | Memo 知识服务与持久 Patchouli   | [权限、版本、持久研究、取消与独立安装消费](MEMO-KNOWLEDGE.md)                                                |
 | 测试反馈成本                    | [核心集合、维护去重与有限并行](TEST-FEEDBACK-COST.md)                                                        |
 | RSI 长期工单持久化              | [分页、原请求恢复、独立复审与安装消费](RSI-PERSISTENCE.md)                                                   |

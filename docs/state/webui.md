@@ -10,6 +10,10 @@ pakka-webui 是独立维护、构建和发布的前端。前端宿主拥有共�
 
 完整前端静态归档及受支持组合固定于 [integrations/webui](../../integrations/webui/README.md)，UI SDK 归档独立供插件构建消费。部署方从获准记录取得归档与 manifest 摘要并在解包前核对归档；可信 Node 装配在 Session 打开前核对 manifest、资产格式、服务版本、HTML 入口与文件字节。切换前端保持原 Session 的正常停止和显式重开语义；前端回退不还原数据库、不取消工作、不抹去 unknown。
 
+RSI、MAS、Memo 的可视化、业务控制及管线由各自插件按[开发契约](../development/WEBUI-DEVELOPMENT.md)实现，不进入 WebUI 核心领域模型。宿主负责通用页面/容器、资源导航、连接、受控命令/操作观察和插件生命周期；所属服务保留对象、授权及持久效果。插件系统按公开能力满足这些需求，真正的通用缺口须先由消费路径证明，不为某个领域新增私有核心接缝。
+
+采用与任务见[独立插件规划](../../openspec/changes/plan-independent-webui-plugins/proposal.md)；远端需求见[通用插件能力](../requirements/WEBUI-PLUGIN-CAPABILITIES.md)。
+
 ## 默认启动与停止
 
 `pakka` 无参数启动前台 WebUI；`--connection` 保留协议客户端。默认本地产品无需宿主 JSON 或已选模型，模型配置来自 Pi agent directory。PAKKA_HOME 保存已选启动来源、工作区、原控制 Session 和数据；首次启动绑定当前目录，之后重开该已记录工作区，不因 shell 当前目录改变而替换存储。高级 JSON 或可信模块仍可显式选用。

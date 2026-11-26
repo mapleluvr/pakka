@@ -27,7 +27,7 @@ flowchart TD
 
 自定义 `ResearchDriver.cancel(requestId, check)` 必须在效果前调用当前授权检查，并在同一实时 Runtime 中按原 requestId 合并并发取消直至原操作结束。拒绝或异常返回不得遗留会绕过授权检查的延迟效果。内置 MAS driver 在同一 Runtime 对象的多个服务句柄间共享原取消；Runtime 重开后，仅持有原执行槽位的显式恢复可以重试取消。取消未确认标记保存在 Memo，不能用进程内 promise 代替持久恢复状态。
 
-主模型 generation 完成不会结束研究。`research_finish({runId})` 不要求额外报告；`publications` 只包含该 run 前缀下实际持久的 Wiki 回执。待处理请求数量和单 run 发表数有明确预算，完成的历史不占待处理额度。运行与请求记录独立增长。
+主模型 generation 完成不会结束研究。`research_finish({runId})` 不要求额外报告；工具在最后一次 await 后复查当前 contribution、lease、invocation 与原完成结果权限。服务提供 `publicationCheck(originalResult)` 给需要再次异步处理完成结果的消费者，复制或其他服务的结果不被接受；调用 verifier 后到发布之间不能再次 await。完成已提交后失权返回 unknown，原 run 仍为 completed，可按原 runId 查询，不撤销或重复完成；`publications` 只包含该 run 前缀下实际持久的 Wiki 回执。待处理请求数量和单 run 发表数有明确预算，完成的历史不占待处理额度。运行与请求记录独立增长。
 
 每个绑定的 scope 和原始 route 在重开时必须完全一致；不同研究范围使用独立上下文。宿主 `authorize(actorId, action)` 约束整个研究的 request/read/control，实际工具还检查 enabled、active run、native invocation、书库角色和来源授权。已有私有上下文的发表约束由可信装配保持，不能只检查最终 citations。首版 scope 不支持原地扩权/缩权后复用旧私有上下文。
 
@@ -53,4 +53,4 @@ node node_modules/@pakka/memo/examples/patchouli.mjs D:/private/research read-1 
 
 示例最多两个 Conversation、八次 primary attempts，不授予 shell/网络工具；重复运行使用同一 Runtime 预算。输出 token 限制由宿主原生 Models 配置负责，公开 HostOptions 没有通用 maxOutputTokens 字段，真实模型试验须另行落实并核验该上限。自动检查通过本地确定性 HTTP 执行；经批准的真实模型研究质量试验单独记录，不能由这些测试代替。
 
-History Book/Historian 的生产接口在当前 Dynamite 基线尚不存在；当前来源 provider 可读固定引用和章节，不宣称完成了真实史书接入。来源、运行、调用边界详见 [Memo API](../reference/MEMO-API.md)。
+History Book 是独立 Dynamite 产物，其图书馆格式适配通过可选 `@pakka/memo/dynamite` 装配；Book 编辑和 Memo 知识发表分别授权、分别确认。组合与固定版本使用见 [History Book 与图书馆](HISTORY-LIBRARY.md)，来源、运行、调用边界详见 [Memo API](../reference/MEMO-API.md)。

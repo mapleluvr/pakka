@@ -3,6 +3,7 @@ import { Store } from "./store.ts";
 import { Sources } from "./sources.ts";
 import { browse } from "./browse.ts";
 import { search } from "./search.ts";
+import { readPublications } from "./publication.ts";
 import {
 	MemoError,
 	type MemoOptions,
@@ -66,7 +67,18 @@ export function openMemo(options: MemoOptions): MemoService {
 		id(actor.id);
 		if (typeof actor.check !== "function") invalid("A trusted actor check is required");
 		const actorId = actor.id,
-			actorCheck = actor.check;
+			actorCheck = actor.check,
+			publications = readPublications();
+		function readCheck(refs: readonly MemoRef[], verify: () => void): () => void {
+			const fixed = data(refs);
+			return () => {
+				verify();
+				if (sources.filter(fixed, actorId, authorize).length !== fixed.length)
+					throw new MemoError("denied", "Read references are no longer authorized");
+				for (const ref of fixed) authorize(ref.libraryId);
+				current();
+			};
+		}
 		function current() {
 			store.check();
 			try {
@@ -261,7 +273,29 @@ export function openMemo(options: MemoOptions): MemoService {
 				input = data(input);
 				shape(input, ["query", "libraryId", "cursor", "limit"]);
 				string(input.query, 512);
-				return search(store, sources, actorId, authorize, current, structuredClone(input));
+				let verify: (() => void) | undefined;
+				const value = await search(
+					store,
+					sources,
+					actorId,
+					authorize,
+					current,
+					structuredClone(input),
+					(check) => {
+						verify = check;
+					},
+				);
+				if (!verify) throw new MemoError("unavailable", "Search publication verifier missing");
+				return publications.bind(
+					value,
+					readCheck(
+						value.items.map((item) => item.ref),
+						verify,
+					),
+				);
+			},
+			publicationCheck(result) {
+				return publications.capture(result);
 			},
 			async read(raw, options = {}) {
 				raw = data(raw);
@@ -274,10 +308,20 @@ export function openMemo(options: MemoOptions): MemoService {
 				integer(offset);
 				integer(limit, 1, 16384);
 				if (target.kind === "source") {
-					const value = await sources.read(target, actorId, offset, limit, () => authorize(target.libraryId));
+					let verify: (() => void) | undefined;
+					const value = await sources.read(
+						target,
+						actorId,
+						offset,
+						limit,
+						() => authorize(target.libraryId),
+						(check) => {
+							verify = check;
+						},
+					);
 					const refs = sources.filter(value.sources, actorId, authorize);
-					authorize(target.libraryId);
-					return frozen({ ...value, sources: refs });
+					if (!verify) throw new MemoError("unavailable", "Source publication verifier missing");
+					return publications.bind(frozen({ ...value, sources: refs }), readCheck([target, ...refs], verify));
 				}
 				page(target.libraryId, target.pageId);
 				const r = store.get(
@@ -292,15 +336,20 @@ export function openMemo(options: MemoOptions): MemoService {
 				const next = offset + Array.from(String(r.text)).length;
 				const refs = sources.filter(persisted<MemoRef[]>(String(r.sources)), actorId, authorize);
 				page(target.libraryId, target.pageId);
-				return frozen({
-					ref: target,
-					title: String(r.title),
-					path: String(r.path),
-					text: String(r.text),
-					sources: refs,
-					offset,
-					nextOffset: next < Number(r.length) ? next : null,
-				});
+				return publications.bind(
+					frozen({
+						ref: target,
+						title: String(r.title),
+						path: String(r.path),
+						text: String(r.text),
+						sources: refs,
+						offset,
+						nextOffset: next < Number(r.length) ? next : null,
+					}),
+					readCheck([target, ...refs], () => {
+						page(target.libraryId, target.pageId);
+					}),
+				);
 			},
 			async history(input) {
 				input = data(input);

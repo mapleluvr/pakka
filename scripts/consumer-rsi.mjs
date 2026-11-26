@@ -58,8 +58,7 @@ const provider = createServer((request, response) => {
 				args: {
 					requestId: "worker-result",
 					id: view.ticket.id,
-					expectedVersion: view.ticket.version,
-					state: "closed",
+					workId: view.ticket.runs[0].workId,
 					text: "Installed worker recorded the result.",
 					links: ["https://example.org/result"],
 				},
@@ -134,22 +133,33 @@ try {
 	});
 	await app.runtime.waitForIdle();
 	await call("refresh", "refresh", { id: created.id, runId: dispatched.runId });
-	const finished = await call("get", "read-result", { id: created.id });
+	const afterReport = await call("get", "after-report", { id: created.id });
+	assert.equal(afterReport.ticket.state, "active");
+	assert.equal(afterReport.ticket.runs[0].state, "done");
+	const reports = await call("reports", "list-reports", { id: created.id });
+	assert.equal(reports.items.length, 1);
+	const reportRef = { id: created.id, reportId: reports.items[0].id, version: 1 };
+	const report = await call("read-report", "read-result", reportRef);
+	assert.equal(report.actorId, "agent:worker");
+	assert.equal(report.runId, dispatched.runId);
+	assert.equal(report.text, "Installed worker recorded the result.");
+	await call("set-state", "manager-close", {
+		id: created.id,
+		expectedVersion: afterReport.ticket.version,
+		state: "closed",
+		text: "Accepted",
+		links: [],
+	});
+	const finished = await call("get", "after-close", { id: created.id });
 	assert.equal(finished.ticket.state, "closed");
-	assert.ok(
-		finished.ticket.events.some(
-			(row) => row.actorId === "agent:worker" && row.text === "Installed worker recorded the result.",
-		),
-	);
-	assert.equal(finished.ticket.runs[0].state, "done");
 	assert.equal(requests.length, 5);
 	assert.deepEqual(errors, []);
 	const sessionFile = app.runtime.view().sessionFile;
 	await workbench.close();
 	workbench = await startTicketWorkbench({ ...options, reopenSessionFile: sessionFile });
-	const restored = await workbench.tickets
-		.connect({ id: "consumer-manager", role: () => "manager", check() {} })
-		.get(created.id);
+	const reopened = workbench.tickets.connect({ id: "consumer-manager", role: () => "manager", check() {} });
+	const restored = await reopened.get(created.id);
+	assert.deepEqual(await reopened.readReport(reportRef), report);
 	assert.deepEqual(restored.ticket, finished.ticket);
 	assert.equal(requests.length, 5, "reopen never resubmits work");
 	await writeFile(

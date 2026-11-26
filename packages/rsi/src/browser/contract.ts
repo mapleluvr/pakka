@@ -23,8 +23,9 @@ const results = array(
 const handler = object({ id, label: string(120, 1), actorId: id });
 const ref = object({ key: id, sessionId: id, conversationId: id, incarnation: id, profile: id });
 const route = object({ handlerId: id, target: ref, source: nullable(ref), principal: id });
-const run = object({
+const runFields = {
 	id,
+	workId: id,
 	ticketId: id,
 	stage: { enum: ["planned", "dispatching", "accepted", "unknown"] },
 	dispatchRequestId: id,
@@ -37,7 +38,11 @@ const run = object({
 	requestId: id,
 	state: { enum: ["pending", "queued", "placed", "done", "unanswered", "unknown"] },
 	receiptId: nullable(id),
-});
+};
+const run = object(
+	runFields,
+	Object.keys(runFields).filter((key) => key !== "workId"),
+);
 const cursor = string(2048, 1);
 const revision = object({ ...fields, revision: number, actorId: id, at: number });
 const event = object(
@@ -45,7 +50,9 @@ const event = object(
 		version: number,
 		actorId: id,
 		at: number,
-		kind: { enum: ["submitted", "edited", "assigned", "reported", "dispatched", "observed"] },
+		kind: {
+			enum: ["submitted", "edited", "assigned", "reported", "state-changed", "dispatched", "observed"],
+		},
 		state,
 		text: string(12000),
 		links: refs,
@@ -76,12 +83,59 @@ const receipt = object({
 	state,
 	runId: nullable(id),
 });
+const work = object({
+	id,
+	ticketId: id,
+	ticketAuthorId: id,
+	actorId: id,
+	contentRevision: number,
+	conversation: ref,
+	runId: nullable(id),
+	createdAt: number,
+	version: number,
+	allowed: { type: "boolean" },
+});
+const workReceipt = object({
+	kind: { enum: ["work"] },
+	requestId: id,
+	id,
+	workId: id,
+	workVersion: number,
+	contentRevision: number,
+});
+const reportReceipt = object({
+	kind: { enum: ["report"] },
+	requestId: id,
+	id,
+	workId: id,
+	reportId: id,
+	reportVersion: number,
+	contentRevision: number,
+});
+const reportFields = {
+	id,
+	ticketId: id,
+	workId: id,
+	actorId: id,
+	revisionActorId: id,
+	contentRevision: number,
+	conversation: ref,
+	runId: nullable(id),
+	version: number,
+	createdAt: number,
+	updatedAt: number,
+};
+
+const report = object({ ...reportFields, text: string(12000), links: refs, results });
+
+const reportPage = object({ items: array(object(reportFields), 32), cursor: nullable(cursor) });
+const requestReceipt: Schema = { anyOf: [receipt, workReceipt, reportReceipt] };
 const view = object({
 	ticket,
 	cursors: object({ revisions: nullable(cursor), events: nullable(cursor), runs: nullable(cursor) }),
 	permissions: object({
 		edit: { type: "boolean" },
-		report: { type: "boolean" },
+		setState: { type: "boolean" },
 		assign: { type: "boolean" },
 		dispatch: { type: "boolean" },
 	}),
@@ -128,13 +182,32 @@ export const inputs: Readonly<Record<TicketAction, Schema>> = {
 	lookup: object({ requestId: id }),
 	capabilities: object({}),
 	assign: object({ ...mutation, handlerId: nullable(id) }),
-	report: object({ ...mutation, state, text: string(12000, 1), links: refs, runId: id, results }, [
+	report: object({ id, workId: id, text: string(12000), links: refs, results }, [
 		"id",
-		"expectedVersion",
-		"state",
+		"workId",
 		"text",
 		"links",
 	]),
+
+	"set-state": object({ ...mutation, state, text: string(12000), links: refs }),
+
+	"register-work": object({ ...mutation, handlerId: id, contentRevision: number, conversation: ref }),
+
+	"set-work-contribution": object({ ...mutation, workId: id, allowed: { type: "boolean" } }),
+
+	"get-work": object({ id, workId: id }),
+
+	"revise-report": object({ ...mutation, reportId: id, text: string(12000), links: refs, results }, [
+		"id",
+		"reportId",
+		"expectedVersion",
+		"text",
+		"links",
+	]),
+
+	"read-report": object({ id, reportId: id, version: number }, ["id", "reportId"]),
+
+	reports: object({ id, cursor, limit: { type: "integer", minimum: 1, maximum: 32 } }, ["id"]),
 	dispatch: object(mutation),
 	recover: object({ ...mutation, runId: id }),
 	refresh: object({ id, runId: id }),
@@ -152,10 +225,23 @@ const outputs: Readonly<Record<TicketAction, Schema>> = {
 		],
 	},
 	list: page,
-	lookup: nullable(receipt),
+	lookup: nullable(requestReceipt),
 	capabilities,
 	assign: receipt,
-	report: receipt,
+	report: reportReceipt,
+	"set-state": receipt,
+
+	"register-work": workReceipt,
+
+	"set-work-contribution": workReceipt,
+
+	"get-work": object({ work, content: revision }),
+
+	"revise-report": reportReceipt,
+
+	"read-report": report,
+
+	reports: reportPage,
 	dispatch: receipt,
 	recover: receipt,
 	refresh: view,
@@ -172,6 +258,14 @@ export const writeActions: readonly TicketAction[] = [
 	"edit",
 	"assign",
 	"report",
+	"set-state",
+
+	"register-work",
+
+	"set-work-contribution",
+
+	"revise-report",
+
 	"dispatch",
 	"recover",
 ];

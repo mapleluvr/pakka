@@ -1,5 +1,6 @@
 import { createHash, randomUUID } from "node:crypto";
 import type { Runtime, ConversationRef, ToolInvocationScope } from "@pakka/agent";
+import { createWorkClient } from "./work-client.ts";
 import { ticketRepository, dispatchText, payloadHash, type Row, type Draft } from "./repository.ts";
 import {
 	TicketError,
@@ -17,7 +18,6 @@ import {
 } from "./types.ts";
 import {
 	content,
-	resultReferences,
 	frozen,
 	handler,
 	identity,
@@ -112,13 +112,12 @@ export async function createTicketService(options: TicketServiceOptions): Promis
 				own = row.authorId === actorId;
 			return {
 				edit: manage || (own && value !== "reader"),
-				report: manage || (value === "handler" && row.handler?.actorId === actorId),
+				setState: manage || (value === "handler" && row.handler?.actorId === actorId),
 				assign: manage,
 				dispatch: manage && !!dispatcher,
 			};
 		};
-		const visible = (row: Pick<Ticket, "authorId" | "handler">) => {
-			const value = current();
+		const visible = (row: Pick<Ticket, "authorId" | "handler">, value = current()) => {
 			return (
 				value === "manager" ||
 				row.authorId === actorId ||
@@ -147,7 +146,7 @@ export async function createTicketService(options: TicketServiceOptions): Promis
 			});
 		}
 		function mutate(
-			op: "submit" | "recover" | keyof TicketView["permissions"],
+			op: "submit" | "recover" | "setState" | keyof TicketView["permissions"],
 			input: { requestId: string; id?: string; runId?: string },
 			change: (data: Store) => Row,
 		): Promise<TicketReceipt> {
@@ -158,9 +157,11 @@ export async function createTicketService(options: TicketServiceOptions): Promis
 			const result = tail.then(async () => {
 				current();
 				const prior = await repository.lookup(actorId, original.requestId);
+				if (prior && (prior.fingerprint !== hash || "kind" in prior.receipt))
+					throw new TicketError("conflict", "Ticket request payload conflicts with the original");
 				const saved = await repository.draft(prior?.receipt.id ?? original.id, original.runId);
 				current();
-				if (prior) {
+				if (prior && !("kind" in prior.receipt)) {
 					find(saved.data, prior.receipt.id);
 					if (prior.fingerprint !== hash)
 						throw new TicketError("conflict", "Ticket request payload conflicts with the original");
@@ -187,7 +188,7 @@ export async function createTicketService(options: TicketServiceOptions): Promis
 					} else authorize(row, op === "recover" ? "dispatch" : op);
 				});
 				if (existing) {
-					if (existing.fingerprint !== hash)
+					if (existing.fingerprint !== hash || "kind" in existing.receipt)
 						throw new TicketError("conflict", "Ticket request payload conflicts with the original");
 					const retained = await repository.draft(existing.receipt.id);
 					find(retained.data, existing.receipt.id);
@@ -197,6 +198,44 @@ export async function createTicketService(options: TicketServiceOptions): Promis
 			});
 			tail = result.catch(() => {});
 			return result;
+		}
+		const publicationError = () =>
+			new TicketError(
+				"unknown",
+				"Ticket mutation committed but cannot be published; look up the original request",
+			);
+		// Called only after mutate has returned its durable receipt. Continuation failures
+		// cannot turn that committed business request into a definite refusal.
+		async function prepareReceipt(receipt: TicketReceipt, continueRun?: () => Promise<unknown>) {
+			try {
+				if (continueRun) await continueRun();
+				const assignment = repository.publication(receipt.id);
+				try {
+					const head = await repository.head(receipt.id);
+					return { receipt, row: head.value, assignment };
+				} catch (error) {
+					assignment.release();
+					throw error;
+				}
+			} catch {
+				throw publicationError();
+			}
+		}
+		// Each public mutation invokes this synchronously after its final await.
+		// Publication requires the concrete ticket read right, not its former write role.
+		function publishReceipt(publication: Awaited<ReturnType<typeof prepareReceipt>>): TicketReceipt {
+			try {
+				const value = current(),
+					row = publication.row;
+				if (!row || !visible(row, value)) throw publicationError();
+				// Only a non-author handler depends on the mutable assignment snapshot.
+				if (value !== "manager" && row.authorId !== actorId) publication.assignment.check();
+				return publication.receipt;
+			} catch {
+				throw publicationError();
+			} finally {
+				publication.assignment.release();
+			}
 		}
 		const version = (row: Ticket, expected: number) => {
 			integer(expected);
@@ -272,35 +311,49 @@ export async function createTicketService(options: TicketServiceOptions): Promis
 			}
 			return updateRun(id, runId, delivery);
 		}
+		const workClient = createWorkClient({
+			repository,
+			runtime,
+			namespace,
+			actorId,
+			current,
+			fingerprint,
+			handlers,
+		});
 		const client: TicketClient = {
+			...workClient.client,
 			actorId,
 			async submit(raw) {
 				shape(raw, ["requestId", "title", "body", "sources"]);
 				content(raw);
 				identity(raw.requestId);
 				const input = structuredClone(raw);
-				return mutate("submit", input, (data) => {
-					if (current() === "reader") throw new TicketError("denied", "Ticket submission denied");
-					const at = Date.now(),
-						value = { title: input.title, body: input.body, sources: [...input.sources] };
-					const row: Row = {
-						...value,
-						id: randomUUID(),
-						authorId: actorId,
-						version: 0,
-						contentRevision: 1,
-						state: "open",
-						handler: null,
-						createdAt: at,
-						updatedAt: at,
-						revisions: [{ ...value, revision: 1, actorId, at }],
-						events: [],
-						runs: [],
-					};
-					event(row, "submitted", "Ticket submitted");
-					data.tickets.push(row);
-					return row;
-				});
+				return publishReceipt(
+					await prepareReceipt(
+						await mutate("submit", input, (data) => {
+							if (current() === "reader") throw new TicketError("denied", "Ticket submission denied");
+							const at = Date.now(),
+								value = { title: input.title, body: input.body, sources: [...input.sources] };
+							const row: Row = {
+								...value,
+								id: randomUUID(),
+								authorId: actorId,
+								version: 0,
+								contentRevision: 1,
+								state: "open",
+								handler: null,
+								createdAt: at,
+								updatedAt: at,
+								revisions: [{ ...value, revision: 1, actorId, at }],
+								events: [],
+								runs: [],
+							};
+							event(row, "submitted", "Ticket submitted");
+							data.tickets.push(row);
+							return row;
+						}),
+					),
+				);
 			},
 			async edit(raw) {
 				shape(raw, ["requestId", "id", "expectedVersion", "title", "body", "sources"]);
@@ -308,25 +361,29 @@ export async function createTicketService(options: TicketServiceOptions): Promis
 				identity(raw.id);
 				integer(raw.expectedVersion);
 				const input = structuredClone(raw);
-				return mutate("edit", input, (data) => {
-					const row = find(data, input.id);
-					authorize(row, "edit");
-					version(row, input.expectedVersion);
-					row.title = input.title;
-					row.body = input.body;
-					row.sources = [...input.sources];
-					row.contentRevision++;
-					row.revisions.push({
-						title: row.title,
-						body: row.body,
-						sources: [...row.sources],
-						revision: row.contentRevision,
-						actorId,
-						at: Date.now(),
-					});
-					event(row, "edited", "Ticket content updated");
-					return row;
-				});
+				return publishReceipt(
+					await prepareReceipt(
+						await mutate("edit", input, (data) => {
+							const row = find(data, input.id);
+							authorize(row, "edit");
+							version(row, input.expectedVersion);
+							row.title = input.title;
+							row.body = input.body;
+							row.sources = [...input.sources];
+							row.contentRevision++;
+							row.revisions.push({
+								title: row.title,
+								body: row.body,
+								sources: [...row.sources],
+								revision: row.contentRevision,
+								actorId,
+								at: Date.now(),
+							});
+							event(row, "edited", "Ticket content updated");
+							return row;
+						}),
+					),
+				);
 			},
 			async observe() {
 				const role = current();
@@ -454,6 +511,7 @@ export async function createTicketService(options: TicketServiceOptions): Promis
 					current();
 					return null;
 				}
+				if ("kind" in request.receipt) return frozen(await workClient.readReceipt(request.receipt));
 				const saved = await repository.head(request.receipt.id);
 				if (!saved.value || !visible(saved.value)) throw new TicketError("denied", "Ticket access denied");
 				return frozen(structuredClone(request.receipt));
@@ -464,43 +522,42 @@ export async function createTicketService(options: TicketServiceOptions): Promis
 				integer(raw.expectedVersion);
 				if (raw.handlerId !== null) identity(raw.handlerId);
 				const input = structuredClone(raw);
-				return mutate("assign", input, (data) => {
-					const row = find(data, input.id);
-					authorize(row, "assign");
-					version(row, input.expectedVersion);
-					const selected = input.handlerId === null ? null : handlers.find((r) => r.id === input.handlerId);
-					if (selected === undefined) throw new TicketError("invalid", "Unknown ticket handler");
-					row.handler = selected === null ? null : structuredClone(selected);
-					event(row, "assigned", selected ? `Assigned to ${selected.label}` : "Handler removed");
-					return row;
-				});
+				return publishReceipt(
+					await prepareReceipt(
+						await mutate("assign", input, (data) => {
+							const row = find(data, input.id);
+							authorize(row, "assign");
+							version(row, input.expectedVersion);
+							const selected =
+								input.handlerId === null ? null : handlers.find((r) => r.id === input.handlerId);
+							if (selected === undefined) throw new TicketError("invalid", "Unknown ticket handler");
+							row.handler = selected === null ? null : structuredClone(selected);
+							event(row, "assigned", selected ? `Assigned to ${selected.label}` : "Handler removed");
+							return row;
+						}),
+					),
+				);
 			},
-			async report(raw) {
-				shape(raw, ["requestId", "id", "expectedVersion", "state", "text", "links"], ["runId", "results"]);
-				if (raw.runId !== undefined) identity(raw.runId);
-				if (raw.results !== undefined) resultReferences(raw.results);
-				identity(raw.id);
-				integer(raw.expectedVersion);
-				state(raw.state);
-				text(raw.text, 12000, true);
-				links(raw.links);
+			async setState(raw) {
 				const input = structuredClone(raw);
-				return mutate("report", input, (data) => {
-					const row = find(data, input.id);
-					authorize(row, "report");
-					version(row, input.expectedVersion);
-					row.state = input.state;
-					if (input.runId && !row.runs.some((run) => run.id === input.runId))
-						throw new TicketError("denied", "Run not found for this ticket");
-					event(row, "reported", input.text, input.links);
-					const last = row.events.pop()!;
-					row.events.push({
-						...last,
-						...(input.runId ? { runId: input.runId } : {}),
-						...(input.results ? { results: structuredClone(input.results) } : {}),
-					});
-					return row;
-				});
+				shape(input, ["requestId", "id", "expectedVersion", "state", "text", "links"]);
+				identity(input.id);
+				integer(input.expectedVersion);
+				state(input.state);
+				text(input.text, 12000, true);
+				links(input.links);
+				return publishReceipt(
+					await prepareReceipt(
+						await mutate("setState", input, (data) => {
+							const row = find(data, input.id);
+							authorize(row, "setState");
+							version(row, input.expectedVersion);
+							row.state = input.state;
+							event(row, "state-changed", input.text, input.links);
+							return row;
+						}),
+					),
+				);
 			},
 			async dispatch(raw) {
 				shape(raw, ["requestId", "id", "expectedVersion"]);
@@ -528,9 +585,10 @@ export async function createTicketService(options: TicketServiceOptions): Promis
 						body: row.body,
 						sources: row.sources,
 					};
-					const dispatchInput = { requestId: "ticket-" + id, text: dispatchText(row.id, revision) };
+					const dispatchInput = { requestId: "ticket-" + id, text: dispatchText(row.id, revision, id) };
 					dispatcher.validate(address, dispatchInput);
 					row.runs.push({
+						workId: id,
 						id,
 						ticketId: row.id,
 						stage: "planned",
@@ -550,10 +608,10 @@ export async function createTicketService(options: TicketServiceOptions): Promis
 					created = true;
 					return row;
 				});
-				if (!created) return result;
-				if (!result.runId) throw new TicketError("unknown", "Dispatch plan identity missing");
-				await executeRun(result.id, result.runId);
-				return result;
+				if (!created) return publishReceipt(await prepareReceipt(result));
+				const runId = result.runId;
+				if (!runId) throw new TicketError("unknown", "Dispatch plan identity missing");
+				return publishReceipt(await prepareReceipt(result, () => executeRun(result.id, runId)));
 			},
 			async recover(raw) {
 				shape(raw, ["id", "runId", "requestId", "expectedVersion"]);
@@ -573,8 +631,9 @@ export async function createTicketService(options: TicketServiceOptions): Promis
 					created = true;
 					return row;
 				});
-				if (created) await executeRun(raw.id, raw.runId);
-				return result;
+				return publishReceipt(
+					await prepareReceipt(result, created ? () => executeRun(raw.id, raw.runId) : undefined),
+				);
 			},
 			async refresh(raw) {
 				shape(raw, ["id", "runId"]);

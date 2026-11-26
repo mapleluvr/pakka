@@ -96,13 +96,25 @@ test("MAS tickets: explicit dispatch captures a revision; native completion rema
 		assert.equal(view.ticket.contentRevision, 2);
 		assert.equal(m.f.requests.length, 1);
 		const worker = service.connect(actor("worker", "handler"));
-		await worker.report({
+		const reported = await worker.report({
 			requestId: "complete",
+			id: created.id,
+			workId: run.runId!,
+			text: "Measured result",
+			links: ["https://example.org/result"],
+		});
+		assert.equal(
+			(await worker.readReport({ id: created.id, reportId: reported.reportId })).contentRevision,
+			1,
+		);
+		assert.equal((await author.get(created.id)).ticket.state, "active");
+		await worker.setState({
+			requestId: "close",
 			id: created.id,
 			expectedVersion: view.ticket.version,
 			state: "closed",
-			text: "Measured result",
-			links: ["https://example.org/result"],
+			text: "Current handler accepts the result",
+			links: [],
 		});
 		assert.equal((await author.get(created.id)).ticket.state, "closed");
 	} finally {

@@ -314,9 +314,13 @@ export async function createMasServer(options: MasServerOptions): Promise<MasSer
 			)
 				client.authorize("steer");
 			check();
-			attempted = true;
+			// Read-only dispatches cannot create a new effect requiring reconciliation.
+			attempted = !["hello", "snapshot", "receipt", "wait", "inspect"].includes(op);
 			const result = await dispatch(client, request.command, entry.config, check, controller.signal);
-			// A confirmed native outcome is not reclassified as non-delivery if authority expired afterwards.
+			// The HTTP return is another asynchronous boundary. Never publish a protected
+			// native result under an expired issuer; effects already attempted remain unknown.
+			check();
+			if (grant) client.authorize(grant);
 			write(res, id, result);
 		} catch (error) {
 			const known = !attempted || error instanceof MasRequestDenied;

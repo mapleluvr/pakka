@@ -2,6 +2,8 @@
 
 本文件维护 WebUI 的服务、扩展、配置与验证方法细则。浏览器应用和 React/Astryx UI SDK 由独立 pakka-webui 维护；Pakka 保留服务协议、Backend SDK 和 Node 装配。显式单-provider 装配与原生模型配置装配各有自己的公开入口。新服务命名空间、模型作用域、插件与清理边界以 [WebUI state](../state/webui.md)和[分仓设计](../../openspec/changes/plan-independent-webui/design.md)为准；权限、持久化和原请求要求继续有效。查文件、职责和 public exports 先读[架构说明](WEBUI-ARCHITECTURE.md)；可维护性、开放组合与重构初期少测试政策见[前端规范](FRONTEND-GUIDELINES.md)。整体预期见 [WebUI state](../state/webui.md)，页面结构与交互由[前端声明](../state/frontend.md)维护；当前工作见[工作入口](../OVERVIEW.md)和所指 OpenSpec tasks。公共 API 通过明确 exports 和独立消费者核对，实际实现较窄不自动缩减目标。
 
+前端、服务与领域插件按公开版本和 exports 独立安装，消费边界见[通用插件能力](../requirements/WEBUI-PLUGIN-CAPABILITIES.md)。
+
 ## 1. 产品核心与扩展的分工
 
 | 产品宿主拥有                                  | 扩展贡献                                   |

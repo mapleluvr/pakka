@@ -88,7 +88,9 @@ for (const boundary of ["before-checkpoint", "after-checkpoint"] as const)
 			let view = await after.get(created.id);
 			const run = view.ticket.runs[0]!;
 			assert.equal(run.stage, boundary === "before-checkpoint" ? "planned" : "dispatching");
-			assert.equal((await after.lookup("dispatch"))?.runId, run.id);
+			const original = await after.lookup("dispatch");
+			assert.ok(original && "runId" in original);
+			assert.equal(original.runId, run.id);
 			await after.list();
 			await after.refresh({ id: created.id, runId: run.id });
 			assert.equal(m.f.requests.length, 0, "reopen, query and refresh never send");

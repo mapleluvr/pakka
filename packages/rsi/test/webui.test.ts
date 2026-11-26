@@ -196,6 +196,30 @@ test(
 				{ requestId: edit.requestId },
 			);
 			assert.equal(timed.state, "unknown");
+			// A different ledger receipt cannot confirm a pending edit, even with matching IDs.
+			const wrongKind = {
+				...binding,
+				async call(...args: Parameters<typeof binding.call>) {
+					assert.equal(args[0], "lookup");
+					const lookup = await binding.call(...args);
+					return {
+						...lookup,
+						value: {
+							status: "ok",
+							value: {
+								kind: "report",
+								requestId: timed.id,
+								id: first.id,
+								workId: "work",
+								contentRevision: 1,
+								reportId: "report",
+								reportVersion: 1,
+							},
+						},
+					};
+				},
+			};
+			await assert.rejects(reconcileTicketWrite(wrongKind, edit, signal), /回执类型/);
 			const recovered = await reconcileTicketWrite(binding, edit, signal);
 			assert.equal(recovered.status, "saved");
 			if (recovered.status !== "saved") throw new Error("Inner receipt was not confirmed");
@@ -203,7 +227,7 @@ test(
 			assert.equal(calls.filter((action) => action === "edit").length, 1);
 			assert.equal((await manager.get(first.id)).ticket.revisions.length, 2);
 			releaseEdit();
-			const closed = await ticketCall(binding, "report", {
+			const closed = await ticketCall(binding, "set-state", {
 				id: first.id,
 				expectedVersion: recovered.receipt.version,
 				state: "closed",
@@ -324,7 +348,7 @@ test("tickets Backend: refreshing a native run remains readable for a ticket wit
 		});
 		await app.runtime.waitForIdle();
 		const ticket = (await manager.get(created.id)).ticket;
-		await manager.report({
+		await manager.setState({
 			requestId: "large-report",
 			id: created.id,
 			expectedVersion: ticket.version,

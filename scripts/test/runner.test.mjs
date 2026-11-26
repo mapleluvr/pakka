@@ -27,7 +27,7 @@ function fixture(t) {
 	};
 	file(
 		"packages/protocol/test/codec.test.ts",
-		`import test from 'node:test';import assert from 'node:assert/strict';import {writeFileSync} from 'node:fs';import {tmpdir} from 'node:os';import {join} from 'node:path';test('isolated',()=>{assert.equal(process.env.USER_SECRET,undefined);assert.equal(process.env.HOME,process.env.USERPROFILE);assert.ok(tmpdir().startsWith(process.env.HOME));writeFileSync(join(process.env.PAKKA_TEST_ARTIFACTS,'environment.json'),JSON.stringify({home:process.env.HOME,temp:tmpdir(),pi:process.env.PI_CODING_AGENT_DIR}));});`,
+		`import test from 'node:test';import assert from 'node:assert/strict';import {writeFileSync} from 'node:fs';import {tmpdir} from 'node:os';import {join,basename} from 'node:path';test('isolated',()=>{assert.equal(process.env.USER_SECRET,undefined);assert.equal(process.env.HOME,process.env.USERPROFILE);assert.match(basename(process.env.HOME),/^pakka-test-profile-/);assert.equal(process.env.PI_CODING_AGENT_DIR,process.env.HOME);assert.ok(tmpdir().startsWith(process.env.HOME));writeFileSync(join(process.env.PAKKA_TEST_ARTIFACTS,'environment.json'),JSON.stringify({home:process.env.HOME,temp:tmpdir(),pi:process.env.PI_CODING_AGENT_DIR}));});`,
 	);
 	file("packages/agent/test/permissions.test.ts", `import test from 'node:test';test('permissions',()=>{});`);
 	file(
@@ -68,6 +68,14 @@ test("default selects core, explicit files do not append all tests, unknown sele
 		"packages/protocol/test/new-heavy.test.ts",
 		"import test from 'node:test';test('new dependency',()=>{});",
 	);
+	f.file(
+		"packages/agent/test/native-storage.test.ts",
+		"import test from 'node:test';test('main storage oracle',()=>{});",
+	);
+	const history = f.run("--suite", "affected", "--scope", "history", "--list");
+	assert.equal(history.status, 0, history.stderr);
+	assert.ok(JSON.parse(history.stdout).selected.includes("packages/agent/test/native-storage.test.ts"));
+	assert.ok(JSON.parse(history.stdout).heavy.includes("packages/agent/test/native-storage.test.ts"));
 	const release = f.run("--suite", "release", "--list");
 	assert.ok(JSON.parse(release.stdout).selected.includes("apps/cli/test/maintenance.test.ts"));
 	assert.ok(
@@ -91,9 +99,10 @@ test("real selected subprocesses isolate each run, retain old outputs and propag
 	const results = [];
 	for (let n = 0; n < 2; n++) {
 		const r = f.run("--files", "packages/protocol/test/codec.test.ts");
-		assert.equal(r.status, 0, r.stdout + r.stderr);
 		const folder = r.stdout.match(/run=(.+)/)?.[1].trim();
 		assert.ok(folder);
+		const output = readFileSync(join(folder, "workers", "0001", "output.tap"), "utf8");
+		assert.equal(r.status, 0, r.stdout + r.stderr + output);
 		const summary = JSON.parse(readFileSync(join(folder, "summary.json"), "utf8"));
 		assert.equal(summary.status, "passed");
 		assert.equal(summary.files.length, 1);

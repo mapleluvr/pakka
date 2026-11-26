@@ -6,11 +6,17 @@ Pakka 将 Pi Durable 的 Conversation、权限、持久化与 MAS 协作能力�
 
 [独立 WebUI 与通用插件](changes/independent-webui.md)已完成阶段 0–5 的所选范围：独立 React/Astryx 前端与公开 SDK、原 Session 只读历史、独立 facets、完整工作台/所选业务插件，以及默认固定产物装配。Node 24 最终归档安装、headless 隔离、默认 CLI、PC/390px、TLS 代理及兼容前端 A → B → A 已通过；旧 UI/SDK/重复构建按[覆盖记录](verification/WEBUI-COVERAGE-TRANSITION.md)退出。release 274 文件全部完成，三文件经修正/短目录复验收口；平台跳过、Windows 深目录 ACL、真实录音授权跳过和旧 worker 迟到正文未覆盖分支见[阶段 5 验证](verification/INDEPENDENT-WEBUI-PHASE-5.md)。[任务](../openspec/changes/plan-independent-webui/tasks.md)与[阶段 5](../openspec/changes/plan-independent-webui/phase-5.md)维护交付；两仓工作分支 PR、集成、公共发布与 OpenSpec 归档分别记录。Provider `/login` 继续延期。
 
-[MAS Telegraph](changes/mas-telegraph.md)提供版本化、显式加载的 Skill，以及按批准 profile 独立开启的紧凑 reasoning/communication 提示。实现与验证记录见[任务](../openspec/changes/add-mas-telegraph/tasks.md)；父会话已完成直接审阅，本轮未另行运行独立 subagent review。[PR #18](https://github.com/mapleluvr/pakka/pull/18) 已提交到 `dev`，集成与 OpenSpec 归档待后续。
+[MAS Telegraph](changes/mas-telegraph.md)提供版本化、显式加载的 Skill，以及按批准 profile 独立开启的紧凑 reasoning/communication 提示。实现与验证见[任务](../openspec/changes/add-mas-telegraph/tasks.md)，集成来源为 [PR #18](https://github.com/mapleluvr/pakka/pull/18)。
 
 [MAS A2A 意图分离](changes/mas-a2a-intent.md)实现被动 inform、具体请求和单根关联 response 的分界；inform 通过公开 RuntimeRecords 持久化，仅在精确目标的自然请求中提供上下文，并因缺乏确切 GenerationTask completion callback 而维持 pending/at-least-once。实现和聚焦验证任务见[OpenSpec tasks](../openspec/changes/distinguish-mas-a2a-intent/tasks.md)。
 
-[Memo 知识服务与持久 Patchouli](changes/memo-knowledge.md)已完成实现、安装消费与独立复审：Wiki、版本、来源、书库权限、综合检索及按需读取可独立使用，馆员按显式请求与原 MAS 身份推进。当前预期见 [Memo](state/memo.md)，固定结果见[验证摘要](verification/MEMO-KNOWLEDGE.md)。Issue #9 的 History Book 生产接入、小恶魔和 GUI 尚未完成，后续见 [tasks](../openspec/changes/add-memo-knowledge/tasks.md)。
+[History Book 与 opt-in Historian](changes/history-book.md) 已形成 Dynamite 独立 Book/Agent、异步记史、原结果恢复与真实 Patchouli→Memo DB 的 headless 候选，完成多轮运行验证及限定审查整改，整包收口仍接续 [tasks](../openspec/changes/add-history-book/tasks.md)。当前契约见 [state](state/history-book.md)，本阶段保存的开发分支及其参考性质见[候选记录](changes/history-reference-branches.md)。
+
+[独立 WebUI 与插件需求](requirements/WEBUI-PLUGIN-CAPABILITIES.md)：pakka-webui 由独立仓库交付，RSI/MAS/Memo 通过各自插件实现可视化、控制与管线；规划与接续见[任务](../openspec/changes/plan-independent-webui-plugins/tasks.md)。
+
+[RSI 原工作与独立报告](changes/rsi-work-reports.md)通过 [PR #14](https://github.com/mapleluvr/pakka/pull/14) 引入 headless 服务：可信原工作、报告自身修订、独立状态操作及保存后可选 MAS 通知，选定的源码与仓库外消费验证已完成。当前契约见 [RSI](state/rsi.md)，固定结果与限制见[验证摘要](verification/RSI-WORK-REPORTS.md)，本地接续见[任务](../openspec/changes/separate-rsi-work-reports/tasks.md)。新报告 GUI、交接展示和跨 Session 过程浏览由 RSI 插件接续，不进入宿主核心。
+
+[Memo 知识服务与持久 Patchouli](changes/memo-knowledge.md)已完成实现、安装消费与独立复审：Wiki、版本、来源、书库权限、综合检索及按需读取可独立使用，馆员按显式请求与原 MAS 身份推进。当前预期见 [Memo](state/memo.md)，固定结果见[验证摘要](verification/MEMO-KNOWLEDGE.md)。本分支已有 History Book 真实生产/消费候选；Issue #9 的小恶魔和 GUI 仍未完成，后续见 [tasks](../openspec/changes/add-memo-knowledge/tasks.md)。
 
 [测试反馈成本](changes/test-feedback.md)已完成第一批：默认核心/影响域/发布集合、维护测试合并与下沉、隔离运行和有限并行。固定结果见[验证摘要](verification/TEST-FEEDBACK-COST.md)，已通过 [PR #11](https://github.com/mapleluvr/pakka/pull/11) 合入 dev；交付记录见 [tasks](../openspec/changes/reduce-test-feedback-cost/tasks.md)。
 

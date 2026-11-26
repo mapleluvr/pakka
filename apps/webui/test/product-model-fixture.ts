@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { mkdir, writeFile } from "node:fs/promises";
-import { dirname, isAbsolute, join } from "node:path";
+import { basename, dirname, isAbsolute, join } from "node:path";
 import { fixture } from "../../../packages/agent/test/fixture.ts";
 
 export async function isolated(reply?: Parameters<typeof fixture>[1]) {
@@ -9,10 +9,13 @@ export async function isolated(reply?: Parameters<typeof fixture>[1]) {
 	assert.equal(process.env.PI_OFFLINE, "1", "Run through scripts/test.mjs");
 	const artifacts = process.env.PAKKA_TEST_ARTIFACTS;
 	assert.ok(artifacts && isAbsolute(artifacts), "Run through scripts/test.mjs");
-	const home = join(dirname(artifacts), "home");
+	const worker = dirname(artifacts);
+	const slot = basename(worker);
+	assert.match(slot, /^\d{4,}$/);
+	const home = join(worker, `pakka-test-profile-${Number(slot)}`);
 	assert.equal(process.env.HOME, home);
 	assert.equal(process.env.USERPROFILE, home);
-	assert.equal(process.env.PI_CODING_AGENT_DIR, join(home, "pi"));
+	assert.equal(process.env.PI_CODING_AGENT_DIR, home);
 	const f = await fixture({}, reply);
 	const agentDir = join(f.root, "pi-agent");
 	await mkdir(agentDir);

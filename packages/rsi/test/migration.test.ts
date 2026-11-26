@@ -48,12 +48,12 @@ for (const interrupt of [false, true])
 					{
 						id: "ticket-legacy",
 						authorId: "author",
-						version: 2,
+						version: 3,
 						contentRevision: 2,
 						state: "active" as const,
 						handler: { id: "worker", label: "Worker", actorId: "worker" },
 						createdAt: at,
-						updatedAt: at + 3,
+						updatedAt: at + 4,
 						title: "Legacy 2",
 						body: "body 2",
 						sources: [],
@@ -75,6 +75,15 @@ for (const interrupt of [false, true])
 								kind: "dispatched" as const,
 								state: "active" as const,
 								text: "Dispatched",
+								links: [],
+							},
+							{
+								version: 3,
+								actorId: "worker",
+								at: at + 4,
+								kind: "reported" as const,
+								state: "active" as const,
+								text: "Preserved old report observation",
 								links: [],
 							},
 						],
@@ -146,9 +155,13 @@ for (const interrupt of [false, true])
 				[1, 2],
 			);
 			assert.equal(view.ticket.runs[0]?.state, "unknown");
+			assert.deepEqual(view.ticket.events, legacy.tickets[0]!.events);
+			assert.equal((await author.reports({ id: "ticket-legacy" })).items.length, 0);
+			await assert.rejects(author.getWork({ id: "ticket-legacy", workId: "run-legacy" }), { code: "denied" });
 			assert.deepEqual(await author.lookup("dispatch"), legacy.requests[0]!.receipt);
 			const retry = await author.lookup("dispatch");
-			assert.equal(retry?.runId, "run-legacy");
+			assert.ok(retry && "runId" in retry);
+			assert.equal(retry.runId, "run-legacy");
 			assert.deepEqual((await store.snapshot()).data, legacy);
 			const coldRuntime = {
 				...m.runtime,

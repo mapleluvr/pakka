@@ -1,6 +1,13 @@
 import { strict as assert } from "node:assert";
 import { join } from "node:path";
 import { openMemo } from "@pakka/memo";
+import { createDynamiteSourceProvider } from "@pakka/memo/dynamite";
+
+// A capability relationship does not force unused runtime packages into the core install.
+for (const name of ["@pakka/dynamite", "@pakka/mas", "@pakka/agent", "@pakka/rsi", "@pakka/ei"]) {
+	await assert.rejects(import(name), { code: "ERR_MODULE_NOT_FOUND" });
+}
+assert.equal(typeof createDynamiteSourceProvider, "function");
 
 const directory = process.argv[2];
 if (!directory) throw Error("Private consumer directory required");
@@ -66,6 +73,7 @@ try {
 	await assert.rejects(reader.write({ ...input, requestId: "refused" }), { code: "denied" });
 	const result = await reader.search({ query: "跨安装" });
 	assert.ok(result.items.length > 0);
+	reader.publicationCheck(result)();
 	const exported = await client.exportMarkdown({ libraryId: "work", pageId: first.pageId });
 	assert.ok(exported.includes(input.markdown));
 	console.log(
