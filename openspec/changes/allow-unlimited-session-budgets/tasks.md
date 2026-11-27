@@ -12,4 +12,4 @@
 
 ## 3. Delivery scope
 
-The operator authorized paired PR preparation and one independent reviewer using zzz-codex/gpt-6-astra:xhigh. Local 8854 deployment uses the verified pair; existing Session budgets were explicitly set to zero with counts retained. Key results and the local evidence-bundle identity are in [verification](../../../docs/verification/SESSION-BUDGET-UNLIMITED.md). PR review remains pending. Merge, registry publication and OpenSpec archival are separate.
+The operator authorized paired PR preparation and one independent reviewer using zzz-codex/gpt-6-astra:xhigh. Local 8854 deployment uses the verified pair; existing Session budgets were explicitly set to zero with counts retained. Key results and the local evidence-bundle identity are in [verification](../../../docs/verification/SESSION-BUDGET-UNLIMITED.md). The single reviewer completed the full paired review with PASS at WebUI 38b9306 and Pakka 7ab5025. Only review/verification records were added afterward; product sources and paired artifacts remain unchanged. Both PRs can proceed to normal review. Merge, registry publication and OpenSpec archival are separate.
