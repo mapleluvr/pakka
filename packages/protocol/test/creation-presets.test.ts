@@ -1,12 +1,12 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { decodePocketResponse } from "../src/pocket.ts";
+import { POCKET_VERSION, decodePocketResponse } from "../src/pocket.ts";
 
 // A model directory is not an execution-preset allowlist; old responses still decode.
 test("creation defaults carry a bounded distinct preset list independently of model choices", () => {
 	const defaults = { profile: "default", model: "", cwd: "/workspace", choices: [] };
 	const response = (value: object) => ({
-		version: 2,
+		version: POCKET_VERSION,
 		requestId: "defaults",
 		serverId: "server-a",
 		result: { kind: "sessions", sessions: [], canCreate: true, defaults: value },

@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { decodePocketResponse } from "@pakka/protocol/pocket";
+import { POCKET_VERSION, decodePocketResponse } from "@pakka/protocol/pocket";
 import { decodeExtensionResponse } from "@pakka/protocol/extension-rpc";
 import { WEBUI_SERVICE_API, decodeWebUiResponse } from "@pakka/protocol/webui";
 
@@ -43,10 +43,10 @@ export async function connectHttp(origin, cookies) {
 		return { result: decoded.result, serverId: decoded.serverId };
 	}
 	const rpc = async (command) =>
-		(await request("/pakka-webui/rpc", { version: 2, command }, decodePocketResponse)).result;
+		(await request("/pakka-webui/rpc", { version: POCKET_VERSION, command }, decodePocketResponse)).result;
 	const hello = await request(
 		"/pakka-webui/rpc",
-		{ version: 2, command: { op: "hello" } },
+		{ version: POCKET_VERSION, command: { op: "hello" } },
 		decodePocketResponse,
 	);
 	assert.equal(hello.result.kind, "hello");

@@ -8,7 +8,7 @@ import type {
 	PocketWorkspace,
 	PocketCollaboration,
 } from "@pakka/server/pocket";
-import { decodePocketEvent, type PocketSnapshot } from "@pakka/protocol/pocket";
+import { POCKET_VERSION, decodePocketEvent, type PocketSnapshot } from "@pakka/protocol/pocket";
 import { createPocketSnapshotPatch } from "./conversation-patch.ts";
 
 export interface PocketObservationStreamOptions {
@@ -70,7 +70,7 @@ export async function streamPocketObservation(options: PocketObservationStreamOp
 		check();
 		const current = sequence + 1;
 		const value = decodePocketEvent({
-			version: 2,
+			version: POCKET_VERSION,
 			serverId: options.serverId,
 			streamId,
 			sequence: current,
@@ -102,7 +102,7 @@ export async function streamPocketObservation(options: PocketObservationStreamOp
 					check();
 					// Crossing the native-to-wire boundary validates parts, payload budgets and ownership before caching/diffing.
 					const projected = decodePocketEvent({
-						version: 2,
+						version: POCKET_VERSION,
 						serverId: options.serverId,
 						streamId,
 						sequence: sequence + 1,

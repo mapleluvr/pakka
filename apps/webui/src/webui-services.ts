@@ -1,3 +1,4 @@
+import { POCKET_VERSION } from "@pakka/protocol/pocket";
 import type { Runtime } from "@pakka/agent";
 import {
 	PocketInputLookupUnsupported,
@@ -179,7 +180,7 @@ export async function createWebUiServices(options: {
 						kind: "capabilities",
 						capabilities: {
 							services: WEBUI_SERVICE_API,
-							workbench: 2,
+							workbench: POCKET_VERSION,
 							extensions: EXTENSION_VERSION,
 							features: [
 								...(options.collaboration ? ["collaboration"] : []),

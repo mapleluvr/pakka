@@ -41,7 +41,9 @@ try {
 
 `Runtime` 是 bootstrap 控制对象；`Host` 是一个 Conversation 的控制对象。每个 Host 分别连接 principal、激活 strategy 和绑定工具 invocation。调用方只获得冻结的 DTO 与身份绑定的命令 closure。Pi 的 Harness、Session、Conversation、Registry、Models 和 Tx 不通过公开接口返回。
 
-bootstrap 必须给出三项正的有限整数初始配额。额外 profile 接受允许的 `id`、instructions、配置的工具，以及可选的 `model`、`thinkingLevel`、批准 `cwd` 与 `execution`。省略模型时沿用宿主默认；原生 Models 模式支持跨 provider 的完整模型引用，兼容模式使用显式装配的单 provider 模型 ID。profile 不接管 credentials 或 storage path。创建相同 key/profile 返回已有 resource；同 key 的不同 profile 被拒绝。
+Conversation 数量、主要推理尝试和辅助推理尝试是三个独立的 Session 上限。每项为非负安全整数；0 表示该项不限制，不是剩余量为 0。即便没有上限，创建和尝试仍照常计数。它不放宽策略、单个 job、模型、队列、资源容量或权限。省略 `runtime.limits` 时，新 Session 三项均为 0；重开原 Session 时保留其持久政策，不将新默认覆盖旧配置。显式给出时必须给齐三项；改变显式 bootstrap 值仍按原规则产生审计，未改变的值不覆盖管理修改。
+
+额外 profile 接受允许的 `id`、instructions、配置的工具，以及可选的 `model`、`thinkingLevel`、批准 `cwd` 与 `execution`。省略模型时沿用宿主默认；原生 Models 模式支持跨 provider 的完整模型引用，兼容模式使用显式装配的单 provider 模型 ID。profile 不接管 credentials 或 storage path。创建相同 key/profile 返回已有 resource；同 key 的不同 profile 被拒绝。
 
 整组 profile 配置在同一 native commit 更新相关模型、instructions 和 tools，原 incarnation 作废。人类的 profile ceiling 约束整组工具/指令预设；独立模型选择按原生目录与 Conversation 配置权限校验，不要求为每个模型新增 profile。新增批准 profile 可登记到原 Session，已登记执行定义仍按持久指纹核对。设置、模型刷新与认证见 [WebUI 使用指南](../guides/WEBUI-GUIDE.md)。
 
@@ -99,7 +101,7 @@ pakka-webui 保留宿主已有 resolver 作为初始来源，仅全局管理员�
 - `changeBudget({ actorId, requestId, expectedVersion, limits, reason }, check)` 在一个原生事务内提交政策、审计和原请求索引；相同请求及内容返回原回执，旧版本新请求或内容冲突拒绝。
 - `budgetReceipt({ actorId, requestId }, check)` 核对原请求；`budgetHistory(query, check)` 按版本分页。宿主绑定实际 actor，浏览器不能自行授予该控制权。
 - 提交前明确拒绝可由公开 `BudgetChangeRefusedError` 区分；存储未知或写后授权失效仍按所属失败域处理，不被解释为无效果。
-- 提高或降低额度均保留累计消费。降至消费以下只阻止新预留；原 bootstrap 重开保留管理调整，明确变更 bootstrap limits 才形成新政策。
+- 提高或降低额度均保留累计消费。设为低于已用量的正数只阻止新预留；设为 0 不限制该项；原 bootstrap 重开保留管理调整，明确变更 bootstrap limits 才形成新政策。
 
 ## 取消与重开
 

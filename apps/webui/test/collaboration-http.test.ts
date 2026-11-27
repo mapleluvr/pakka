@@ -3,7 +3,7 @@ import { strict as assert } from "node:assert";
 import { join } from "node:path";
 import { runtimeFixture } from "../../../packages/agent/test/runtime-fixture.ts";
 import { startPocket } from "../src/bootstrap.ts";
-import { decodePocketResponse } from "@pakka/protocol/pocket";
+import { POCKET_VERSION, decodePocketResponse } from "@pakka/protocol/pocket";
 import { stream } from "./events.ts";
 import { decodeWebUiResponse, WEBUI_SERVICE_API, type WebUiCommand } from "@pakka/protocol/webui";
 import { executeCollaboration } from "../src/collaboration-service.ts";
@@ -55,7 +55,7 @@ test(
 							"X-Pakka-CSRF": auth.csrf,
 							"Content-Type": "application/json",
 						},
-						body: JSON.stringify({ version: 2, requestId: id, command }),
+						body: JSON.stringify({ version: POCKET_VERSION, requestId: id, command }),
 					});
 				return { status: response.status, value: decodePocketResponse(await response.json(), id) };
 			}

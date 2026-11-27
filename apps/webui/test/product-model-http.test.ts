@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
-import { decodePocketResponse } from "@pakka/protocol/pocket";
+import { POCKET_VERSION, decodePocketResponse } from "@pakka/protocol/pocket";
 import { startPocket } from "../src/bootstrap.ts";
 import { openProductModels } from "../src/product-models.ts";
 import { isolated, configuration } from "./product-model-fixture.ts";
@@ -58,7 +58,11 @@ async function product(configured = true) {
 						"X-Pakka-CSRF": options.csrf ?? csrf,
 						"Content-Type": "application/json",
 					},
-					body: JSON.stringify({ version: 2, requestId, command }),
+					body: JSON.stringify({
+						version: options.path === "/pocket/rpc" ? POCKET_VERSION : 2,
+						requestId,
+						command,
+					}),
 				});
 				return {
 					status: response.status,
@@ -179,8 +183,8 @@ test("Product model HTTP: budget changes bind the actual owner, require live per
 			op: "budget.change",
 			sessionId,
 			expectedVersion: before.version,
-			limits: { ...before.limits, maxPrimaryAttempts: 101 },
-			reason: "Owner top-up",
+			limits: { ...before.limits, maxPrimaryAttempts: 0 },
+			reason: "Remove primary ceiling",
 		};
 		assert.equal((await p.owner.rpc({ ...change, actorId: "forged" })).status, 400);
 		const result = await p.owner.rpc(change);
@@ -193,13 +197,13 @@ test("Product model HTTP: budget changes bind the actual owner, require live per
 		});
 		assert.deepEqual(receipt.value.result.receipt, result.value.result.receipt);
 		assert.equal((await p.owner.rpc(change, { requestId: result.requestId })).status, 200);
-		assert.equal(p.app.runtime.view().limits.maxPrimaryAttempts, 101);
+		assert.equal(p.app.runtime.view().limits.maxPrimaryAttempts, 0);
 		assert.equal((await p.app.runtime.budgetHistory({}, () => {})).items.length, 1);
 		const stale = await p.owner.rpc(change);
 		assert.equal(stale.status, 409, "a new request with an old policy version is a definite refusal");
 		assert.equal(stale.value.error.code, "CONFLICT");
 		assert.equal(stale.value.error.outcome, "denied");
-		assert.equal(p.app.runtime.view().limits.maxPrimaryAttempts, 101);
+		assert.equal(p.app.runtime.view().limits.maxPrimaryAttempts, 0);
 		assert.equal((await p.app.runtime.budgetHistory({}, () => {})).items.length, 1);
 		const invited = await p.app.people.invite(p.owner.actor, {
 			requestId: "collaborator",

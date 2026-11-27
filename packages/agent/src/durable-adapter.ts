@@ -2412,8 +2412,12 @@ function validBudgetLimits(value: unknown): value is RuntimeLimits {
 		typeof value === "object" &&
 		!Array.isArray(value) &&
 		Object.keys(value).sort().join(",") === "maxAuxiliaryAttempts,maxConversations,maxPrimaryAttempts" &&
-		Object.values(value).every((limit) => Number.isSafeInteger(limit) && limit > 0)
+		Object.values(value).every((limit) => Number.isSafeInteger(limit) && limit >= 0)
 	);
+}
+/** All admissions count, even when this particular ceiling is disabled. */
+function exceedsSessionLimit(used: number, limit: number, additional = 1) {
+	return !Number.isSafeInteger(used + additional) || (limit !== 0 && additional > limit - used);
 }
 function budgetHead(
 	state: Readonly<RuntimeRecord>,
@@ -3418,13 +3422,8 @@ export class DurableAdapter {
 		const profiles = new Map<string, HostOptions>([["default", profileOptions(options)]]);
 		options = profiles.get("default")!;
 		if (managedOptions) {
-			const limits = managedOptions.limits;
-			if (
-				!limits ||
-				Object.values(limits).length !== 3 ||
-				Object.values(limits).some((limit) => !Number.isSafeInteger(limit) || limit <= 0)
-			)
-				throw new Error("Invalid finite runtime limits");
+			if (managedOptions.limits !== undefined && !validBudgetLimits(managedOptions.limits))
+				throw new Error("Invalid Session budget limits");
 			for (const profile of managedOptions.profiles ?? []) {
 				if (!/^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(profile.id) || profiles.has(profile.id))
 					throw new Error("Invalid/duplicate runtime profile");
@@ -3661,10 +3660,10 @@ export class DurableAdapter {
 							init: async (tx: Parameters<Parameters<Harness["commit"]>[0]>[0], created: ConversationId) => {
 								const state = await tx.doc(RuntimeDoc);
 								state.sessionId = sessionId;
-								state.limits = { ...managedOptions.limits };
+								if (managedOptions.limits !== undefined) state.limits = { ...managedOptions.limits };
 								state.policyVersion = 0;
 								const policy = await tx.doc(BudgetPolicyDoc);
-								policy.bootstrapLimits = { ...managedOptions.limits };
+								policy.bootstrapLimits = { ...state.limits };
 								state.profiles = { ...approvedHashes };
 								state.conversationCount = 1;
 								state.resources.root = {
@@ -3696,14 +3695,17 @@ export class DurableAdapter {
 					throw new Error("Managed runtime profile mismatch; explicit migration required");
 				}
 				const priorPolicy = await harness.snapshot(BudgetPolicyDoc, BACKGROUND_CONTEXT);
+				if (!validBudgetLimits(savedRuntime.limits)) throw new Error("Invalid stored Session budget limits");
 				if (savedRuntime.policyVersion === null) {
 					if (priorPolicy) throw new Error("Legacy budget policy identity conflict");
 				} else budgetHead(savedRuntime, priorPolicy);
 				const addedProfiles = Object.keys(expected).filter(
 					(id) => !Object.hasOwn(savedRuntime!.profiles, id),
 				);
+				const explicitLimits = managedOptions.limits;
 				const bootstrapChanged =
-					hash(priorPolicy?.bootstrapLimits ?? savedRuntime.limits) !== hash(managedOptions.limits);
+					explicitLimits !== undefined &&
+					hash(priorPolicy?.bootstrapLimits ?? savedRuntime.limits) !== hash(explicitLimits);
 				if (!priorPolicy || addedProfiles.length || bootstrapChanged) {
 					await harness.commit(async (tx) => {
 						const state = await tx.doc(RuntimeDoc),
@@ -3719,11 +3721,11 @@ export class DurableAdapter {
 								requestId: `bootstrap-${policy.version + 1}`,
 								reason: "Trusted bootstrap configuration changed",
 								addedProfiles,
-								limits: bootstrapChanged ? managedOptions.limits : state.limits,
+								limits: bootstrapChanged ? explicitLimits : state.limits,
 							});
 							state.profiles = { ...expected };
 						}
-						policy.bootstrapLimits = { ...managedOptions.limits };
+						if (bootstrapChanged) policy.bootstrapLimits = { ...explicitLimits };
 					}, BACKGROUND_CONTEXT);
 					savedRuntime = await harness.snapshot(RuntimeDoc, BACKGROUND_CONTEXT);
 					if (!savedRuntime) throw new Error("Runtime policy initialization unavailable");
@@ -4483,7 +4485,7 @@ export class DurableAdapter {
 							throw new MutationDenied("Conversation profile conflict");
 						return;
 					}
-					if (state.conversationCount >= state.limits.maxConversations)
+					if (exceedsSessionLimit(state.conversationCount, state.limits.maxConversations))
 						throw new MutationDenied("Session Conversation limit exhausted");
 					const created = await tx.createConversation({ ownership: { kind: "ownerless" } });
 					const extension = this.#registry!.snapshot().extension(
@@ -6099,7 +6101,7 @@ export class DurableAdapter {
 					optionsMatch(state);
 					if (specs.some((s) => Object.hasOwn(state.members, s.key)))
 						throw new MutationDenied("Member already exists");
-					if (runtime.conversationCount + specs.length > runtime.limits.maxConversations)
+					if (exceedsSessionLimit(runtime.conversationCount, runtime.limits.maxConversations, specs.length))
 						throw new MutationDenied("Session Conversation limit exhausted");
 					for (const spec of specs) if (spec.source) validateRef(spec.source);
 
@@ -6664,7 +6666,7 @@ export class DurableAdapter {
 				const field = kind === "primary" ? "primaryAttempts" : "auxiliaryAttempts";
 				const limit =
 					kind === "primary" ? state.limits.maxPrimaryAttempts : state.limits.maxAuxiliaryAttempts;
-				if (state.budget[field] >= limit) return false;
+				if (exceedsSessionLimit(state.budget[field], limit)) return false;
 				if (strategy) {
 					const key = hash(strategy.strategyId),
 						spent = state.strategyAttempts[key] ?? 0;
@@ -7718,7 +7720,7 @@ export class DurableAdapter {
 		if (!targetEntry) throw new Error("Unknown branch target");
 		if (this.#managed) {
 			const managed = this.#managedReady();
-			if (managed.state.conversationCount >= managed.state.limits.maxConversations)
+			if (exceedsSessionLimit(managed.state.conversationCount, managed.state.limits.maxConversations))
 				throw new Error("Session Conversation limit exhausted");
 		}
 		const cutoffIndex = this.#allEntries.findIndex((e) => String(e.id) === id);
@@ -7749,7 +7751,7 @@ export class DurableAdapter {
 										const state = await tx.doc(RuntimeDoc);
 										if (state.resources[resource.key]?.conversationId !== source)
 											throw new Error("Managed fork source changed");
-										if (state.conversationCount >= state.limits.maxConversations)
+										if (exceedsSessionLimit(state.conversationCount, state.limits.maxConversations))
 											throw new MutationDenied("Session Conversation limit exhausted");
 										state.conversationCount++;
 										state.resources[resource.key] = {

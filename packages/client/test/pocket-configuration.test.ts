@@ -1,3 +1,4 @@
+import { POCKET_VERSION } from "@pakka/protocol/pocket";
 import { test } from "node:test";
 import { strict as assert } from "node:assert";
 import { createServer } from "node:http";
@@ -16,7 +17,7 @@ test("WebUI settings client: real HTTP metadata keeps exact resource/profile/inc
 			res.setHeader("Content-Type", "application/json");
 			res.end(
 				JSON.stringify({
-					version: 2,
+					version: POCKET_VERSION,
 					requestId: request.requestId,
 					serverId: "server",
 					result: {

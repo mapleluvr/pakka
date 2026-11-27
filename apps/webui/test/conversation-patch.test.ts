@@ -1,3 +1,4 @@
+import { POCKET_VERSION } from "@pakka/protocol/pocket";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import type { PocketSnapshot } from "@pakka/protocol/pocket";
@@ -50,7 +51,7 @@ test("WebUI patch projection: unchanged completed outputs do not recur in a live
 	assert.equal(JSON.stringify(patch).includes("COMPLETED-CANARY"), false);
 	const expected = { serverId: "server", target: ref };
 	const initial = {
-		version: 2,
+		version: POCKET_VERSION,
 		serverId: "server",
 		streamId: "stream",
 		sequence: 1,
@@ -61,7 +62,14 @@ test("WebUI patch projection: unchanged completed outputs do not recur in a live
 	assert.ok(prior);
 	const next = applyPocketObservation(
 		prior,
-		{ version: 2, serverId: "server", streamId: "stream", sequence: 2, kind: "conversation.patch", patch },
+		{
+			version: POCKET_VERSION,
+			serverId: "server",
+			streamId: "stream",
+			sequence: 2,
+			kind: "conversation.patch",
+			patch,
+		},
 		expected,
 	);
 	assert.deepEqual(next?.snapshot, after);

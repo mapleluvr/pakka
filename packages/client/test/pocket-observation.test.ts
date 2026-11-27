@@ -1,3 +1,4 @@
+import { POCKET_VERSION } from "@pakka/protocol/pocket";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { applyPocketObservation } from "../src/pocket.ts";
@@ -25,7 +26,7 @@ const snapshot = {
 	usage,
 };
 const initial = {
-	version: 2 as const,
+	version: POCKET_VERSION,
 	serverId: "server",
 	streamId: "stream",
 	sequence: 4,
@@ -49,7 +50,7 @@ test("WebUI observation client: only an exact original base can reconstruct the 
 		usage: { ...usage, output: 20, totalTokens: 20 },
 	};
 	const update = {
-		version: 2 as const,
+		version: POCKET_VERSION,
 		serverId: "server",
 		streamId: "stream",
 		sequence: 6,
@@ -75,7 +76,7 @@ test("WebUI observation client: lost bases, another server/stream/resource and m
 	const previous = applyPocketObservation(undefined, initial, expected);
 	assert.ok(previous);
 	const event = {
-		version: 2 as const,
+		version: POCKET_VERSION,
 		serverId: "server",
 		streamId: "stream",
 		sequence: 6,

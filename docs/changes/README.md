@@ -2,6 +2,7 @@
 
 完整的形成条件、选择、设计、任务与场景由 [OpenSpec](../../openspec/changes/)维护；本目录只提供摘要和完整引用，不复制第二套变更正文。当前预期见 [state](../state/README.md)，实际差距见[工作入口与领域任务](../OVERVIEW.md)。
 
+- [Session 预算默认不限制](session-budget.md)：三个独立上限、持久政策与协议配对。
 - [独立 WebUI 与通用插件规划](independent-webui.md)：采用分仓、模型作用域、清理旧实现与通用插件/跨 Session 浏览边界；阶段 0 完成，阶段 1 已形成独立消费、模型与资产接缝；未加载原历史及分 facet 控制仍缺，完整应用与后续产品阶段未完成。
 - [WebUI 设计系统与开发原则](webui-design-principles.md)：同类开源系统调研、重构初期少测试政策、职责／目录／公共接口说明；不实施换栈。
 - [History 候选与独立插件重构参考](history-reference-branches.md)：保存工作分支、不创建 PR；通用宿主能力与 RSI 下游报告设计分别交接。

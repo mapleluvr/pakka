@@ -1,8 +1,8 @@
-/** WebUI v2 is an explicit, browser-safe product protocol. Headless v1 stays in index.ts. */
+/** The WebUI workbench wire is an explicit, browser-safe product protocol. Headless v1 stays in index.ts. */
 import { identity } from "./index.ts";
 import type { AgentRef } from "./index.ts";
 export type { AgentRef } from "./index.ts";
-export const POCKET_VERSION = 2 as const;
+export const POCKET_VERSION = 3 as const;
 export const POCKET_MAX_BYTES = 2 * 1024 * 1024;
 export interface PocketManagedSession {
 	readonly id: string;
@@ -462,7 +462,7 @@ export type PocketCommand =
 			readonly resources: PocketResources;
 	  };
 export interface PocketRequest {
-	readonly version: 2;
+	readonly version: typeof POCKET_VERSION;
 	readonly requestId: string;
 	readonly command: PocketCommand;
 }
@@ -484,7 +484,7 @@ export type PocketResult =
 	  }
 	| {
 			readonly kind: "hello";
-			readonly versions: readonly [2];
+			readonly versions: readonly [typeof POCKET_VERSION];
 			readonly person: PocketPerson;
 			readonly sessionId: string;
 			readonly nativeModels?: boolean;
@@ -558,12 +558,12 @@ export interface PocketFailure {
 	readonly message: string;
 }
 export type PocketResponse = {
-	readonly version: 2;
+	readonly version: typeof POCKET_VERSION;
 	readonly requestId: string;
 	readonly serverId: string;
 } & ({ readonly result: PocketResult } | { readonly error: PocketFailure });
 export type PocketEvent = {
-	readonly version: 2;
+	readonly version: typeof POCKET_VERSION;
 	readonly serverId: string;
 	readonly streamId: string;
 	readonly sequence: number;
@@ -885,7 +885,7 @@ function configuration(v: unknown): v is PocketConfiguration {
 	return (
 		shape(v.session, ["limits", "budget"]) &&
 		shape(v.session.limits, ["maxConversations", "maxPrimaryAttempts", "maxAuxiliaryAttempts"]) &&
-		Object.values(v.session.limits).every((n) => integer(n, 1)) &&
+		Object.values(v.session.limits).every((n) => integer(n)) &&
 		shape(v.session.budget, ["primaryAttempts", "auxiliaryAttempts"]) &&
 		Object.values(v.session.budget).every((n) => integer(n))
 	);
@@ -1451,7 +1451,7 @@ function result(v: unknown): v is PocketResult {
 				(v.nativeModels === undefined || typeof v.nativeModels === "boolean") &&
 				Array.isArray(v.versions) &&
 				v.versions.length === 1 &&
-				v.versions[0] === 2 &&
+				v.versions[0] === POCKET_VERSION &&
 				person(v.person) &&
 				identity(v.sessionId)
 			);
@@ -1627,7 +1627,7 @@ export function decodePocketRequest(value: unknown): PocketRequest {
 		value,
 		(v): v is PocketRequest =>
 			shape(v, ["version", "requestId", "command"]) &&
-			v.version === 2 &&
+			v.version === POCKET_VERSION &&
 			identity(v.requestId) &&
 			command(v.command),
 	);
@@ -1637,13 +1637,13 @@ export function decodePocketResponse(value: unknown, expectedRequestId: string):
 		value,
 		(v): v is PocketResponse =>
 			(shape(v, ["version", "requestId", "serverId", "result"]) &&
-				v.version === 2 &&
+				v.version === POCKET_VERSION &&
 				v.requestId === expectedRequestId &&
 				identity(v.requestId) &&
 				identity(v.serverId) &&
 				result(v.result)) ||
 			(shape(v, ["version", "requestId", "serverId", "error"]) &&
-				v.version === 2 &&
+				v.version === POCKET_VERSION &&
 				v.requestId === expectedRequestId &&
 				identity(v.requestId) &&
 				identity(v.serverId) &&
@@ -1655,7 +1655,7 @@ export function decodePocketEvent(value: unknown): PocketEvent {
 		value,
 		(v): v is PocketEvent =>
 			shape(v, ["version", "serverId", "streamId", "sequence", "kind"], ["snapshot", "patch"]) &&
-			v.version === 2 &&
+			v.version === POCKET_VERSION &&
 			identity(v.serverId) &&
 			identity(v.streamId) &&
 			integer(v.sequence) &&

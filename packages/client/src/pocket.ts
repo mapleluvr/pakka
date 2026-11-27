@@ -1,4 +1,5 @@
 import {
+	POCKET_VERSION,
 	decodePocketRequest,
 	decodePocketResponse,
 	decodePocketEvent,
@@ -114,7 +115,7 @@ export function applyPocketObservation(
 	}
 	// Validate the derived hot page with the same snapshot contract and detach/freeze it.
 	const checked = decodePocketEvent({
-		version: 2,
+		version: POCKET_VERSION,
 		serverId: event.serverId,
 		streamId: event.streamId,
 		sequence: event.sequence,
@@ -382,7 +383,7 @@ export function createPocketClient(options: PocketClientOptions): PocketClient {
 	): Promise<PocketClientResult> {
 		const requestId = input.requestId ?? globalThis.crypto.randomUUID();
 		if (!identity(requestId)) throw new Error("Invalid WebUI request identity");
-		const encoded = decodePocketRequest({ version: 2, requestId, command });
+		const encoded = decodePocketRequest({ version: POCKET_VERSION, requestId, command });
 		const generation = command.op === "hello" ? ++bindingGeneration : bindingGeneration;
 		if (input.signal?.aborted || (independent && command.op !== "hello" && (!personId || !serverId)))
 			throw new PocketRemoteError("FORBIDDEN", "denied", requestId);

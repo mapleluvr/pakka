@@ -1,3 +1,4 @@
+import { POCKET_VERSION } from "@pakka/protocol/pocket";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { join } from "node:path";
@@ -18,7 +19,7 @@ async function rpcFor(app: Product, auth: { cookies: string }) {
 		const response = await fetch(app.http.origin + "/pakka-webui/rpc", {
 			method: "POST",
 			headers: session.headers,
-			body: JSON.stringify({ version: 2, requestId, command }),
+			body: JSON.stringify({ version: POCKET_VERSION, requestId, command }),
 		});
 		const body = await response.json();
 		assert.equal(response.status, 200, JSON.stringify(body));

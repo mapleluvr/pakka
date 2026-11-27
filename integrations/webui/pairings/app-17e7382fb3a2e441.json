@@ -1,0 +1,99 @@
+{
+	"schema": 1,
+	"frontend": {
+		"repository": "https://github.com/mapleluvr/pakka-webui",
+		"sourceBaseline": "ce276a9c46f06f569c471e5afe6f7900f8369cd2",
+		"workingTreeInputsSha256": "f8e0c9fd617bcb4f9d3237d3612fd6b672179d74b33224f0cf73cfd40d7400ba",
+		"schema": 1,
+		"application": {
+			"name": "@pakka/webui-app",
+			"version": "0.1.0"
+		},
+		"archive": {
+			"file": "../app/pakka-webui-app-0.1.0-17e7382fb3a2e441.tgz",
+			"sha256": "17e7382fb3a2e4418920e2ebb76594223f93ed2bc4d184a9c95621dc9c3d9279",
+			"bytes": 1335419
+		},
+		"manifestSha256": "289bf27ec8f04c69485685f7bfe973ee98aec95478e188d6125abbfec4e099f1",
+		"assetSchema": 2,
+		"requires": {
+			"services": 5,
+			"workbench": 3,
+			"extensions": 3
+		},
+		"runtime": {
+			"id": "react19-astryx0.7.15",
+			"sdk": "0.1.0",
+			"packages": {
+				"react": "19.3.1",
+				"react-dom": "19.3.1",
+				"@astryxdesign/core": "0.7.15",
+				"@astryxdesign/theme-neutral": "0.7.15",
+				"@stylexjs/stylex": "0.19.2",
+				"lucide-react": "1.73.0"
+			}
+		},
+		"entry": "/",
+		"files": 713
+	},
+	"backend": {
+		"source": "containing-change",
+		"nodeMajor": 24,
+		"packages": [
+			{
+				"name": "@pakka/agent",
+				"version": "0.7.0",
+				"sha256": "933999afa436fc0622763906911907543b6459f6fbbbe90cac613ef2b1e9d725",
+				"bytes": 14803324
+			},
+			{
+				"name": "@pakka/mas",
+				"version": "0.4.0",
+				"sha256": "37602f8cc618b23168722530d24b56ad3c7e863fcbfdefb2e18ec0688e85e2f9",
+				"bytes": 21201
+			},
+			{
+				"name": "@pakka/mas-devpack",
+				"version": "0.2.0",
+				"sha256": "1fa77e95ae78dcf512530a6ae60001329a2e8eb0dcfb2200b55de0efc78726d0",
+				"bytes": 56236
+			},
+			{
+				"name": "@pakka/protocol",
+				"version": "0.1.0",
+				"sha256": "af43f2e9e3cde3dfb6a0ee3550c353d8c21e7c26f6eb1a29eede9b222a04aeba",
+				"bytes": 36309
+			},
+			{
+				"name": "@pakka/client",
+				"version": "0.1.0",
+				"sha256": "63d811926effaaea6403ff660c974b7ab4bd8e3b8f68c6347bfd01c27f11a08d",
+				"bytes": 11578
+			},
+			{
+				"name": "@pakka/cli",
+				"version": "0.1.0",
+				"sha256": "a86c0ac1c38c2438f045971d16a86315451bacef0249d70c11c9ab4b74d30329",
+				"bytes": 1528
+			},
+			{
+				"name": "@pakka/server",
+				"version": "0.5.0",
+				"sha256": "cafd992de19615a40a5e32f3d3374880d762b2131b789ac7fa150743c56e99e4",
+				"bytes": 92116
+			},
+			{
+				"name": "@pakka/webui",
+				"version": "0.1.0",
+				"sha256": "a5aefc5580d14db759b91ac068ffd6cfad9863cb37e5bdf94ffe46b843bf0db0",
+				"bytes": 1561865
+			}
+		],
+		"sourceBaseline": "7a329040efc3fc49bb11ad6e7280e28338765924"
+	},
+	"sdk": {
+		"file": "../sdk/pakka-webui-sdk-c1f99cd939aa0ffc.tgz",
+		"sha256": "c1f99cd939aa0ffc88400939bf5639fe42c36929d523e45f1197eedd3901dca7"
+	},
+	"mode": "default-fixed-frontend"
+}

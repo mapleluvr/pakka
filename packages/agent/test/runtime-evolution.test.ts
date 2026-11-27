@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createRuntime, type Runtime } from "../src/index.ts";
+import { inferencePolicy, target } from "./strategy-fixture.ts";
 import { runtimeFixture, runtimeLimits } from "./runtime-fixture.ts";
 import { BACKGROUND_CONTEXT } from "@earendil-works/chord/context";
 import { openNodeSqliteStorage } from "@earendil-works/pi-durable/storage/sqlite/node";
@@ -188,6 +189,18 @@ test("Runtime budget: owner top-up preserves spending, exact receipts and the sa
 		assert.deepEqual(await reopened.changeBudget(request, allow), receipt);
 		assert.equal(m.f.requests.length, 2, "reopening and receipt lookup must not replay generation");
 		await reopened.close();
+		reopened = await createRuntime({ ...m.config, limits: undefined, reopenSessionFile: file });
+		assert.deepEqual(
+			await reopened.budgetPolicy(allow),
+			{
+				version: 1,
+				limits: request.limits,
+				budget: { primaryAttempts: 2, auxiliaryAttempts: 0 },
+				conversationCount: 1,
+			},
+			"omitting the former finite bootstrap must not replace a managed limit on upgrade",
+		);
+		await reopened.close();
 		reopened = await createRuntime({
 			...m.config,
 			limits: { ...initial, maxPrimaryAttempts: 3 },
@@ -260,7 +273,7 @@ test("Runtime budget: lower ceilings block only new reservations, and stale or u
 			}),
 			/denied|revoked/i,
 		);
-		for (const limit of [0, -1, 1.5, Number.MAX_SAFE_INTEGER + 1])
+		for (const limit of [-1, 1.5, Number.MAX_SAFE_INTEGER + 1])
 			await assert.rejects(
 				runtime.changeBudget(
 					{
@@ -306,6 +319,65 @@ test("Runtime budget: unknown SQLite writes seal the Session and leave neither a
 		assert.equal(m.f.requests.length, 0);
 	} finally {
 		release?.();
+		await reopened?.close();
+		await m.close();
+	}
+});
+
+test("Runtime budget: zero admits primary, auxiliary and peer creation without resetting durable spending", async () => {
+	const zero = { maxConversations: 0, maxPrimaryAttempts: 0, maxAuxiliaryAttempts: 0 };
+	const m = await runtimeFixture(inferencePolicy, zero);
+	let reopened: Runtime | undefined;
+	try {
+		const r = m.runtime;
+		const ref = await r.createConversation({ key: "peer" });
+		const h = await r.conversation(ref);
+		await h.connect("user", ["input.submit"]).submit({ key: "primary", text: "LOCAL PRIMARY" });
+		await h.waitForIdle();
+		const owner = h.connect("owner", ["context_artifacts.write", "model.infer"]);
+		owner.activateStrategy({ id: "strategy", hooks: ["context_artifacts.write"] });
+		const binding = owner.bindStrategy("strategy"),
+			frame = binding.readFrame();
+		const job = binding.createJob(frame.basis, {
+			planId: "zero-budget",
+			targetEntryIds: [target(frame)],
+			maxCalls: 1,
+		});
+		assert.equal(
+			(await job.infer({ modelKey: "summary", prompt: "LOCAL AUX", maxOutputTokens: 64 })).status,
+			"completed",
+		);
+		assert.deepEqual(
+			m.f.requests.map((x) => x.model),
+			["local-model", "summary-model"],
+		);
+		const file = r.view().sessionFile;
+		await r.close();
+		reopened = await createRuntime({ ...m.config, limits: undefined, reopenSessionFile: file });
+		assert.deepEqual(await reopened.budgetPolicy(allow), {
+			version: 0,
+			limits: zero,
+			budget: { primaryAttempts: 1, auxiliaryAttempts: 1 },
+			conversationCount: 2,
+		});
+		const change = {
+			actorId: "owner",
+			requestId: "finite",
+			expectedVersion: 0,
+			limits: { ...zero, maxConversations: 2 },
+			reason: "Cap peers",
+		};
+		const receipt = await reopened.changeBudget(change, allow);
+		await reopened.close();
+		reopened = await createRuntime({ ...m.config, limits: undefined, reopenSessionFile: file });
+		assert.deepEqual(
+			await reopened.budgetReceipt({ actorId: change.actorId, requestId: change.requestId }, allow),
+			receipt,
+		);
+		assert.deepEqual(reopened.view().limits, change.limits);
+		await assert.rejects(reopened.createConversation({ key: "blocked" }), /limit|budget/i);
+		assert.equal(m.f.requests.length, 2);
+	} finally {
 		await reopened?.close();
 		await m.close();
 	}

@@ -22,7 +22,10 @@ test(
 				file,
 				JSON.stringify({
 					schema: "pakka.server.v1",
-					runtime: m.config,
+					runtime: {
+						...m.config,
+						limits: { maxConversations: 0, maxPrimaryAttempts: 0, maxAuxiliaryAttempts: 0 },
+					},
 					mas: { namespace: "app", maxPending: 2 },
 					members: [{ key: "peer", owner: "operator" }],
 					roles: [{ token, principal: "operator", sourceKey: null, grants: ["discover", "send", "observe"] }],

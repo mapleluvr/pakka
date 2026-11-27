@@ -1,7 +1,7 @@
 import { createHash, randomUUID } from "node:crypto";
 import type { Runtime, JsonObject } from "@pakka/agent";
 import type { PocketAuthority, PocketPeople, PocketWorkspace } from "@pakka/server/pocket";
-import { decodePocketRequest, decodePocketResponse } from "@pakka/protocol/pocket";
+import { POCKET_VERSION, decodePocketRequest, decodePocketResponse } from "@pakka/protocol/pocket";
 import type {
 	PocketNavigationReceipt,
 	PocketNavigationUpdate,
@@ -40,7 +40,7 @@ const fingerprint = (input: PocketNavigationUpdate) => {
 };
 function envelope(result: unknown) {
 	const response = decodePocketResponse(
-		{ version: 2, serverId: "navigation-store", requestId: "navigation-store", result },
+		{ version: POCKET_VERSION, serverId: "navigation-store", requestId: "navigation-store", result },
 		"navigation-store",
 	);
 	if (!("result" in response)) throw Error("Invalid navigation result");
@@ -49,7 +49,7 @@ function envelope(result: unknown) {
 function validated(input: PocketNavigationUpdate) {
 	try {
 		decodePocketRequest({
-			version: 2,
+			version: POCKET_VERSION,
 			requestId: "navigation-input",
 			command: { op: "navigation.update", input },
 		});

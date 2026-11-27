@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFile, writeFile, unlink } from "node:fs/promises";
 import { join } from "node:path";
-import { decodePocketResponse } from "@pakka/protocol/pocket";
+import { POCKET_VERSION, decodePocketResponse } from "@pakka/protocol/pocket";
 import { startPocket } from "../src/bootstrap.ts";
 import { runtimeFixture } from "../../../packages/agent/test/runtime-fixture.ts";
 import { loginHttpSession } from "./fixtures/http-session.ts";
@@ -45,7 +45,7 @@ test("Session recovery HTTP uses the original identity, safe diagnostics and cur
 				const response = await fetch(origin + "/pakka-webui/rpc", {
 					method: "POST",
 					headers: session.headers,
-					body: JSON.stringify({ version: 2, requestId, command }),
+					body: JSON.stringify({ version: POCKET_VERSION, requestId, command }),
 				});
 				const body = await response.json();
 				if (response.ok) decodePocketResponse(body, requestId);

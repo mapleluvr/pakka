@@ -2,7 +2,12 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { decodePocketResponse, type PocketCommand, type PocketResult } from "@pakka/protocol/pocket";
+import {
+	POCKET_VERSION,
+	decodePocketResponse,
+	type PocketCommand,
+	type PocketResult,
+} from "@pakka/protocol/pocket";
 import {
 	WEBUI_SERVICE_API,
 	decodeWebUiResponse,
@@ -107,7 +112,7 @@ async function product() {
 					"X-Pakka-Person": personId,
 					"X-Pakka-Server": app.http.serverId,
 				},
-				body: JSON.stringify({ version: 2, requestId, command }),
+				body: JSON.stringify({ version: POCKET_VERSION, requestId, command }),
 			});
 			const value = decodePocketResponse(await response.json(), requestId);
 			assert.equal(response.status, 200);
@@ -296,7 +301,7 @@ test("WebUI services: Session budgets use native receipts, exact original intent
 		const change = {
 			requestId: "budget-original",
 			expectedVersion: initial.version,
-			limits: { ...initial.limits, maxPrimaryAttempts: initial.limits.maxPrimaryAttempts + 3 },
+			limits: { maxPrimaryAttempts: 0, maxAuxiliaryAttempts: 0, maxConversations: 0 },
 			reason: "Capacity review",
 		};
 		assert.equal(

@@ -108,12 +108,21 @@ function runtimeConfig(value: unknown): value is RuntimeOptions {
 	return (
 		shape(
 			value,
-			["cwd", "dataDir", "endpoint", "model", "apiKey", "systemPrompt", "limits"],
-			["reopenSessionFile", "reservedSessionId", "maxOutputTokens", "profiles", "inference", "cwdRoots"],
+			["cwd", "dataDir", "endpoint", "model", "apiKey", "systemPrompt"],
+			[
+				"limits",
+				"reopenSessionFile",
+				"reservedSessionId",
+				"maxOutputTokens",
+				"profiles",
+				"inference",
+				"cwdRoots",
+			],
 		) &&
 		["cwd", "dataDir", "endpoint", "model", "apiKey", "systemPrompt"].every((key) => text(value[key])) &&
-		shape(value.limits, ["maxConversations", "maxPrimaryAttempts", "maxAuxiliaryAttempts"]) &&
-		Object.values(value.limits).every(positive) &&
+		(value.limits === undefined ||
+			(shape(value.limits, ["maxConversations", "maxPrimaryAttempts", "maxAuxiliaryAttempts"]) &&
+				Object.values(value.limits).every((limit) => limit === 0 || positive(limit)))) &&
 		(value.reopenSessionFile === undefined || text(value.reopenSessionFile)) &&
 		(value.reservedSessionId === undefined || identity(value.reservedSessionId)) &&
 		(value.maxOutputTokens === undefined || positive(value.maxOutputTokens)) &&

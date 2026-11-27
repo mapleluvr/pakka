@@ -128,7 +128,7 @@ function command(value: unknown): value is ProductModelCommand {
 				integer(v.expectedVersion) &&
 				text(v.reason, 512) &&
 				shape(v.limits, ["maxConversations", "maxPrimaryAttempts", "maxAuxiliaryAttempts"]) &&
-				Object.values(v.limits).every((value) => integer(value, 1))
+				Object.values(v.limits).every((value) => integer(value))
 			);
 		default:
 			return false;

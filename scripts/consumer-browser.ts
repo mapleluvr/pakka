@@ -15,7 +15,7 @@ export function publicTicketsBrowser({ ui, bindings }: UiViewProps<ExtensionServ
 }
 import * as masBrowser from "@pakka/mas-devpack/client";
 import { createPocketClient, type PocketCommand, type PocketSnapshot } from "@pakka/client/pocket";
-import { decodePocketRequest, decodePocketResponse } from "@pakka/protocol/pocket";
+import { POCKET_VERSION, decodePocketRequest, decodePocketResponse } from "@pakka/protocol/pocket";
 import { createClient, type ClientResult, type ClientOptions, RemoteError } from "@pakka/client";
 import { decodeRequest, decodeResponse, type AgentRef, type Command } from "@pakka/protocol";
 export function publicMasBrowser(value: unknown) {
@@ -61,7 +61,7 @@ export { decodeManifest };
 export function pocketBrowserOnly(endpoint: string, csrf: () => string | null, ref: AgentRef) {
 	const client = createPocketClient({ endpoint, csrf });
 	const command: PocketCommand = { op: "read", target: ref, page: { limit: 8 } };
-	const decoded = decodePocketRequest({ version: 2, requestId: "read", command });
+	const decoded = decodePocketRequest({ version: POCKET_VERSION, requestId: "read", command });
 	// @ts-expect-error A browser cannot choose another actor/principal for a command.
 	client.request({ ...command, actorId: "forged" });
 	// @ts-expect-error Model credentials are not browser client configuration.
