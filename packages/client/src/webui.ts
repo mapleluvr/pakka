@@ -32,6 +32,7 @@ const kinds: { readonly [K in keyof WebUiResults]: WebUiResults[K]["kind"] } = {
 	"conversation-configuration.read": "conversation-configuration",
 	"conversation-configuration.write": "conversation-configuration-receipt",
 	"conversation-configuration.lookup": "conversation-configuration-operation",
+	"people.settings": "people-settings",
 	"people.write": "people-receipt",
 	"people.lookup": "people-operation",
 	"people.invite.lookup": "people-invitation",

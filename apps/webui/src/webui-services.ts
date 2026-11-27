@@ -118,6 +118,7 @@ export async function createWebUiServices(options: {
 						command,
 					);
 					break;
+				case "people.settings":
 				case "people.write":
 				case "people.lookup":
 				case "people.invite.lookup":

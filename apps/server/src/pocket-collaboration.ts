@@ -135,8 +135,8 @@ type Proof = {
 	at: number;
 	result: CollaborationOutcome;
 };
-type Resource = LegacyResource & { requests: Proof[] };
-type State = { schema: 2; sessionId: string; resources: Resource[] };
+type Resource = LegacyResource & { requests: Proof[]; driverGeneration?: number };
+type State = { schema: 3; sessionId: string; resources: Resource[] };
 type Effect =
 	| { kind: "post"; message: PocketChatMessage }
 	| { kind: "note"; note: PocketNote }
@@ -255,7 +255,8 @@ function proof(value: unknown): value is Proof {
 }
 function storedResource(value: unknown): value is Resource {
 	if (
-		!closed(value, ["id", "version", "messages", "note", "driver", "requests"]) ||
+		!closed(value, ["id", "version", "messages", "note", "driver", "requests", "driverGeneration"]) ||
+		(value.driverGeneration !== undefined && !count(value.driverGeneration)) ||
 		!resource({
 			id: value.id,
 			version: value.version,
@@ -279,7 +280,7 @@ function storedResource(value: unknown): value is Resource {
 }
 function decode(raw: unknown, sessionId: string, version: number): State {
 	if (version === 0 && isRecord(raw) && Object.keys(raw).length === 0)
-		return { schema: 2, sessionId, resources: [] };
+		return { schema: 3, sessionId, resources: [] };
 	if (
 		!closed(raw, ["schema", "sessionId", "resources"]) ||
 		raw.sessionId !== sessionId ||
@@ -292,13 +293,14 @@ function decode(raw: unknown, sessionId: string, version: number): State {
 		raw.resources.every(resource) &&
 		new Set(raw.resources.map((row) => row.id)).size === raw.resources.length
 	)
-		return { schema: 2, sessionId, resources: raw.resources.map((row) => ({ ...row, requests: [] })) };
+		return { schema: 3, sessionId, resources: raw.resources.map((row) => ({ ...row, requests: [], driverGeneration: 0 })) };
 	if (
-		raw.schema === 2 &&
+		(raw.schema === 2 || raw.schema === 3) &&
 		raw.resources.every(storedResource) &&
+		(raw.schema !== 3 || raw.resources.every(row => count(row.driverGeneration))) &&
 		new Set(raw.resources.map((row) => row.id)).size === raw.resources.length
 	)
-		return { schema: 2, sessionId, resources: raw.resources };
+		return { schema: 3, sessionId, resources: raw.resources.map(row => ({ ...row, driverGeneration: row.driverGeneration ?? 0 })) };
 	throw new Error("WebUI collaboration storage unconfirmed");
 }
 /** Explicit finite JSON projection; public interface types are not asserted to be indexed metadata. */
@@ -311,6 +313,7 @@ function metadata(state: State): Parameters<RuntimeStore["compareAndSet"]>[1] {
 			version: row.version,
 			note: { ...row.note },
 			driver: { ...row.driver },
+			driverGeneration: row.driverGeneration ?? 0,
 			messages: row.messages.map((message) => ({
 				...message,
 				mentions: [...message.mentions],
@@ -365,7 +368,7 @@ async function open(
 ): Promise<PocketCollaboration> {
 	const store = runtime.store({ namespace, maxBytes: MAX_BYTES }),
 		sessionId = runtime.view().sessionId;
-	let state: State = { schema: 2, sessionId, resources: [] },
+	let state: State = { schema: 3, sessionId, resources: [] },
 		version = 0,
 		available = true,
 		tail: Promise<unknown> = Promise.resolve();
@@ -421,6 +424,7 @@ async function open(
 				version: 0,
 				messages: [],
 				requests: [],
+				driverGeneration: people.mode().generation,
 				note: { version: 0, text: "", authorId: null, updatedAt: null },
 				driver: { version: 0, personId: null, expiresAt: null },
 			};
@@ -577,6 +581,10 @@ async function open(
 				return { kind: "pin" };
 			}
 			case "driver": {
+				if (people.mode().personal) throw new PocketCollaborationRefusal("FORBIDDEN", "Personal mode has no human driver lease");
+				const current = currentDriver(row);
+				row.driver = current;
+				row.driverGeneration = people.mode().generation;
 				if (row.driver.version !== action.expectedVersion)
 					throw new PocketCollaborationConflict("Driver version conflict");
 				if (action.action === "release") {
@@ -669,9 +677,16 @@ async function open(
 			throw new PocketCollaborationConflict("Original collaboration request conflict");
 		return receipt(request, found);
 	}
+	function currentDriver(row: Resource): PocketDriver {
+		const mode = people.mode();
+		return mode.personal || (row.driverGeneration ?? 0) !== mode.generation
+			? { version: row.driver.version, personId: null, expiresAt: null } : row.driver;
+	}
 	const checkDriver = (actorId: string, ref: ConversationRef) => {
+		if (people.mode().personal) return;
 		if (pendingDriver.has(people.resourceId(ref))) throw new Error("Driver transition pending");
-		const d = existing(ref)?.driver;
+		const resource = existing(ref);
+		const d = resource && currentDriver(resource);
 		if (d?.personId) {
 			people.authorizePerson(d.personId, "steer", people.resourceId(ref));
 			if (d.personId !== actorId || d.expiresAt === null || d.expiresAt <= time())
@@ -693,7 +708,7 @@ async function open(
 						),
 					)
 			)
-				throw Error("WebUI collaboration stale resource denied");
+				throw new Error("WebUI collaboration stale resource denied");
 			checkDriver(actorId, ref);
 		},
 		bind(actor: PocketAuthority): PocketCollaborationClient {
@@ -703,7 +718,7 @@ async function open(
 					const saved = structuredClone(ref);
 					read(actor, saved);
 					await refresh();
-					const found = existing(saved) ?? row({ schema: 2, sessionId, resources: [] }, saved),
+					const found = existing(saved) ?? row({ schema: 3, sessionId, resources: [] }, saved),
 						presence: PocketPresence[] = [];
 					for (const [id, entry] of live.get(people.resourceId(saved)) ?? []) {
 						try {
@@ -721,7 +736,7 @@ async function open(
 						version: found.version,
 						messages: found.messages.map(viewMessage),
 						note: found.note,
-						driver: found.driver,
+						driver: currentDriver(found),
 						presence,
 					});
 				},

@@ -862,14 +862,14 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 						typeof v.token !== "string" ||
 						!secret(v.token) ||
 						!["session", "invite"].includes(v.kind as string) ||
-						(v.kind === "invite" && (typeof v.name !== "string" || !v.name.trim() || v.name.length > 80))
+						(v.name !== undefined && (typeof v.name !== "string" || v.name.length > 80))
 					)
 						throw new Refusal(400, "INVALID_REQUEST");
 					let session: PocketSession;
 					try {
 						if (v.kind === "invite") {
 							dispatched = true;
-							session = await people.redeem(v.token, v.name as string);
+							session = await people.redeem(v.token, v.name as string | undefined);
 						} else {
 							const a = await people.authenticate(v.token);
 							dispatched = true;

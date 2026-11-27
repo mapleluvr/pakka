@@ -51,7 +51,7 @@ function shape(
 const count = (value: unknown, minimum = 0): value is number =>
 	typeof value === "number" && Number.isSafeInteger(value) && value >= minimum;
 const reason = (value: unknown): value is string =>
-	typeof value === "string" && !!value.trim() && value.length <= 512 && !/[\x00-\x1f\x7f]/.test(value);
+	typeof value === "string" && value.length <= 512 && !/[\x00-\x1f\x7f]/.test(value);
 function limits(value: unknown) {
 	shape(value, ["maxConversations", "maxPrimaryAttempts", "maxAuxiliaryAttempts"]);
 	if (!Object.values(value).every((item) => count(item))) throw new Error("Invalid Session budget limits");

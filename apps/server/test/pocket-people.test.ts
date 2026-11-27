@@ -205,7 +205,7 @@ test("WebUI people: version-one state reads without migration and authority rece
 		};
 		const store = m.runtime.store({ namespace: "test-people", maxBytes: 262144 });
 		const modern = await store.snapshot();
-		const { changes: _changes, ...legacy } = modern.data;
+		const { changes: _changes, personalOwnerId: _personalOwnerId, modeGeneration: _modeGeneration, ...legacy } = modern.data;
 		await store.compareAndSet(modern.version, { ...legacy, schema: 1 }, () => {
 			people.current(admin);
 		});
@@ -220,7 +220,7 @@ test("WebUI people: version-one state reads without migration and authority rece
 		const receipt = await people.change(admin, change);
 		const committed = await store.snapshot();
 		assert.equal(committed.version, before.version + 1, "authority and receipt share one CAS");
-		assert.equal(committed.data.schema, 2);
+		assert.equal(committed.data.schema, 3);
 		assert.deepEqual(committed.data.changes, [receipt]);
 		assert.throws(() => oldAuthority.check("read", root.conversationId), /denied/i);
 		assert.deepEqual(await people.lookupChange(admin, change), receipt);

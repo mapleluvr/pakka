@@ -34,6 +34,16 @@ pakka-webui 的人类身份与权限由服务端绑定，浏览器请求按该�
 
 人类协作按原 Session/Conversation 处理 side chat、notes、pins/reactions 和 driver 的 scope、授权及版本冲突。修改效果与原请求回执在协作协调存储的同一次 CAS 中提交；纯查询匹配原发起人、完整原请求和旧绑定，并核对当前所需授权。历史回执与当前共享状态分别读取。presence 为短期状态，所属观察结束时停止其心跳与事件读取；SSE 重连以当前身份和 snapshot 恢复。模型输入由明确发送动作提交，原生准入核对当前 driver 与期限。
 
+## 个人模式与设备
+
+宿主在 People 存储域保存 personal/collaboration 模式。已有实例按 collaboration 读取；当前唯一活跃 Person 为全局管理员时，可按版本和稳定请求号启用 personal。仍有其他活跃成员时拒绝切换，保留其原权限和历史作者。切换为 personal 时撤销未兑换的新成员邀请；后续设备连接必须指向本人，以独立登录凭据复用同一 Person。
+
+「设备与访问」显示当前使用模式与本人有效登录，支持单独撤销其他设备。当前设备通过退出登录结束凭据。设备清单只含公开登录标识、有效期和是否当前设备，不包含秘密。模式切换、撤销效果与回执在同一次 People CAS 中提交；版本冲突保留草稿，响应未知按完整原请求查询。
+
+个人模式的各设备拥有一致的人类操作权限，默认模型、Thinking、文件夹与排序沿同一 Person 共享。登录姓名可省略，已有身份沿用原姓名；通知、麦克风、输入草稿和布局仍有各自的设备作用域。Agent 的工具权限、审批与模型策略继续独立核验。
+
+个人模式跳过人类 driver 领取、续期与接管，并在模式切换后使旧 driver 租约失效；原生输入队列、Steering/Follow-up、并发版本检查与原请求恢复继续生效。界面默认隐藏聊天、提及、reaction、在场与 driver 管理，保留可展开的笔记与置顶；协作模式可恢复完整人类协作入口。
+
 ## Session 管理与个人导航
 
 一个 WebUI 身份可管理多个真实 Durable Session；每项各有独立 storage、writer、Runtime 和原生预算，服务按完整 Session/Conversation 地址路由。New Session 复用现有创建权限，稳定原请求登记与 native ready 确认分别核对；unknown 不自动初始化、解锁或重放。已有单 Session 的资源 grant 不向另一个 Session 的同号 Conversation 扩权。
