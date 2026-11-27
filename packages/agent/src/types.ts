@@ -442,6 +442,7 @@ export interface InferencePolicy {
 	readonly maxOutputTokens: number;
 	readonly timeoutMs: number;
 }
+/** Each ceiling is a non-negative safe integer; zero leaves that Session dimension unlimited. */
 export interface RuntimeLimits {
 	readonly maxConversations: number;
 	/** Conservative, durable reservations; cancelled/unknown attempts are not refunded. */
@@ -526,8 +527,8 @@ export interface RuntimeOptions extends HostOptions {
 	readonly observation?: "lazy" | "eager";
 	/** Explicit server directory roots; defaults to the approved profiles' cwd trees. Not an OS sandbox. */
 	readonly cwdRoots?: readonly string[];
-	/** Initial policy. A changed bootstrap value is audited; unchanged values preserve later management adjustments. */
-	readonly limits: RuntimeLimits;
+	/** Omit to start without Session ceilings or to reopen with the persisted policy. A changed explicit bootstrap policy is audited. */
+	readonly limits?: RuntimeLimits;
 	/** Trusted UUID for create-once storage placement; an existing directory requires explicit reopen. */
 	readonly reservedSessionId?: string;
 	/** Additional bootstrap-approved profiles; default inherits HostOptions. */

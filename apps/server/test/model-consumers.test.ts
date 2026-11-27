@@ -60,6 +60,7 @@ test(
 		const m = await runtimeFixture();
 		let manager: ReturnType<typeof createWorkerManager> | undefined;
 		try {
+			const { limits: _finiteFixtureLimits, ...defaultBudgetRuntime } = m.config;
 			manager = createWorkerManager({
 				maxWorkers: 1,
 				startupTimeoutMs: 10000,
@@ -67,7 +68,7 @@ test(
 				placements: {
 					one: {
 						runtime: {
-							...m.config,
+							...defaultBudgetRuntime,
 							dataDir: join(m.f.root, "worker-model"),
 							reservedSessionId: "88888888-8888-4888-8888-888888888888",
 							profiles: [

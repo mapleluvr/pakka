@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import { strict as assert } from "node:assert";
-import { decodePocketRequest, decodePocketResponse } from "../src/pocket.ts";
+import { POCKET_VERSION, decodePocketRequest, decodePocketResponse } from "../src/pocket.ts";
 import {
 	decodeWebUiCommand,
 	decodeWebUiResult,
@@ -82,7 +82,10 @@ test("WebUI notification protocol: finite device controls cannot select a person
 		{ op: "notification.unsubscribe", target, input: { requestId: "off", deviceId: "device" } },
 		{ op: "notification.preferences", target, input: { requestId: "prefs", preferences: { chat: false } } },
 	])
-		assert.deepEqual(decodePocketRequest({ version: 2, requestId: "rpc", command }).command, command);
+		assert.deepEqual(
+			decodePocketRequest({ version: POCKET_VERSION, requestId: "rpc", command }).command,
+			command,
+		);
 	for (const input of [
 		{ requestId: "register", subscription, actorId: "forged" },
 		{ requestId: "register", subscription: { ...subscription, endpoint: "http://127.0.0.1/private" } },
@@ -94,13 +97,13 @@ test("WebUI notification protocol: finite device controls cannot select a person
 	])
 		assert.throws(() =>
 			decodePocketRequest({
-				version: 2,
+				version: POCKET_VERSION,
 				requestId: "rpc",
 				command: { op: "notification.subscribe", target, input },
 			}),
 		);
 	const response = {
-		version: 2,
+		version: POCKET_VERSION,
 		requestId: "rpc",
 		serverId: "server",
 		result: {
@@ -125,7 +128,7 @@ test("WebUI notification protocol: finite device controls cannot select a person
 	);
 	assert.throws(() =>
 		decodePocketRequest({
-			version: 2,
+			version: POCKET_VERSION,
 			requestId: "rpc",
 			command: {
 				op: "notification.preferences",

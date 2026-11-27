@@ -129,7 +129,7 @@ export type {
 } from "./webui-notifications.ts";
 
 /** Service API, not the UI SDK/renderer version or an artifact identity. */
-export const WEBUI_SERVICE_API = 4;
+export const WEBUI_SERVICE_API = 5;
 export const WEBUI_SERVICE_PATH = "/pakka-webui/services";
 /** GET with one request query: an API-bound resource.content envelope; the server streams the complete original. */
 export const WEBUI_CONTENT_DOWNLOAD_PATH = "/pakka-webui/resources/content/download";

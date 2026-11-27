@@ -1,7 +1,7 @@
 import { identity } from "./index.ts";
 import { frozen, isRecord } from "./extensions.ts";
 
-/** Session admission limits. These are durable attempt counts, not token or currency quotas. */
+/** Session admission limits. Zero means unlimited per dimension. These are durable attempt counts, not token or currency quotas. */
 export interface SessionBudgetLimits {
 	readonly maxConversations: number;
 	readonly maxPrimaryAttempts: number;
@@ -54,7 +54,7 @@ const reason = (value: unknown): value is string =>
 	typeof value === "string" && !!value.trim() && value.length <= 512 && !/[\x00-\x1f\x7f]/.test(value);
 function limits(value: unknown) {
 	shape(value, ["maxConversations", "maxPrimaryAttempts", "maxAuxiliaryAttempts"]);
-	if (!Object.values(value).every((item) => count(item, 1))) throw new Error("Invalid Session budget limits");
+	if (!Object.values(value).every((item) => count(item))) throw new Error("Invalid Session budget limits");
 }
 function consumed(value: unknown) {
 	shape(value, ["primaryAttempts", "auxiliaryAttempts"]);

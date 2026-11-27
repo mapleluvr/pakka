@@ -53,7 +53,10 @@ export function decodePocketProduct(value: unknown): PocketProductOptions {
 			"profiles",
 			"cwdRoots",
 		]),
-		limits = object(runtime.limits, ["maxConversations", "maxPrimaryAttempts", "maxAuxiliaryAttempts"]);
+		limits =
+			runtime.limits === undefined
+				? undefined
+				: object(runtime.limits, ["maxConversations", "maxPrimaryAttempts", "maxAuxiliaryAttempts"]);
 	const profiles =
 		runtime.profiles === undefined
 			? undefined
@@ -187,11 +190,13 @@ export function decodePocketProduct(value: unknown): PocketProductOptions {
 				? {}
 				: { reopenSessionFile: text(runtime.reopenSessionFile) }),
 			...(profiles ? { profiles } : {}),
-			limits: {
-				maxConversations: integer(limits.maxConversations, 1, 1024),
-				maxPrimaryAttempts: integer(limits.maxPrimaryAttempts, 1, 1000000),
-				maxAuxiliaryAttempts: integer(limits.maxAuxiliaryAttempts, 1, 1000000),
-			},
+			...(limits && {
+				limits: {
+					maxConversations: integer(limits.maxConversations, 0, 1024),
+					maxPrimaryAttempts: integer(limits.maxPrimaryAttempts, 0, 1000000),
+					maxAuxiliaryAttempts: integer(limits.maxAuxiliaryAttempts, 0, 1000000),
+				},
+			}),
 		},
 	};
 }

@@ -1,0 +1,7 @@
+## Context and decisions
+
+The budget is a policy on each Session, not a limit on a MAS job. Keep a complete non-negative triplet in the existing document. Zero bypasses only that comparison on creation, batch enroll/fork, navigation fork, and primary or auxiliary attempt reservation. Debit counters in their existing transactions even when unlimited; an exact count must remain representable. Strategy and job limits continue independently.
+
+Do not substitute a large number, increase a catalog capacity or translate zero at display time. New documents use zero; unlike an explicit changed bootstrap triplet, omitted startup policy does not request an audited replacement. Preserve the recorded bootstrap baseline, actual policy and counters on reopen (including during profile additions and older document upgrades). Existing management CAS, audit and original-request deduplication stay authoritative.
+
+Both protocol surfaces carry these limits: services budget read/write/receipt/history, and Pocket Conversation configuration. The old closed decoders reject zero, and an optional feature cannot protect an unchanged client. Bump only services and workbench wire majors; exact asset requirements reject either mixed pairing. Require upgrade of external Pocket consumers such as TUI; do not change headless v1, extension wire, assets, UI SDK, storage or policy versions. After a zero is persisted, do not downgrade the backend or assume an old backup includes newer work.

@@ -1,3 +1,4 @@
+import { POCKET_VERSION } from "@pakka/protocol/pocket";
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import { createServer } from "node:http";
@@ -203,7 +204,7 @@ try {
 	const stranger = await fetch(info.origin + "/pakka-webui/rpc", {
 		method: "POST",
 		headers: { Origin: info.origin, "Content-Type": "application/json" },
-		body: JSON.stringify({ version: 2, requestId: "stranger", command: { op: "read", target } }),
+		body: JSON.stringify({ version: POCKET_VERSION, requestId: "stranger", command: { op: "read", target } }),
 	});
 	assert.equal(stranger.status, 401);
 	assert.ok(!(await stranger.text()).includes("INSTALLED-POCKET-ANSWER"));

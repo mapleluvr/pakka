@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { setTimeout as delay } from "node:timers/promises";
-import { decodePocketEvent, type PocketEvent } from "@pakka/protocol/pocket";
+import { POCKET_VERSION, decodePocketEvent, type PocketEvent } from "@pakka/protocol/pocket";
 import { applyPocketObservation } from "@pakka/client/pocket";
 import { fixture } from "./fixture.ts";
 
@@ -134,7 +134,11 @@ test(
 					"X-Pakka-CSRF": m.admin.csrf,
 					"Content-Type": "application/json",
 				},
-				body: JSON.stringify({ version: 2, requestId: "control-probe", command: { op: "list" } }),
+				body: JSON.stringify({
+					version: POCKET_VERSION,
+					requestId: "control-probe",
+					command: { op: "list" },
+				}),
 			});
 			const body = await result.text();
 			assert.equal(

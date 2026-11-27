@@ -1,5 +1,5 @@
 import { identity } from "./index.ts";
-import { decodePocketRequest } from "./pocket.ts";
+import { POCKET_VERSION, decodePocketRequest } from "./pocket.ts";
 import type { AgentRef, PocketFailure } from "./pocket.ts";
 import { decodeManifest, frozen, isRecord, extensionId } from "./extensions.ts";
 import type {
@@ -73,7 +73,7 @@ export function decodeJson(value: unknown, depth = 0): ExtensionJson {
 }
 export function decodeTarget(target: unknown): AgentRef {
 	const request = decodePocketRequest({
-		version: 2,
+		version: POCKET_VERSION,
 		requestId: "extension-target",
 		command: { op: "read", target },
 	});

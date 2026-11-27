@@ -9,7 +9,12 @@ import type {
 	PocketSession,
 	PocketWorkspace,
 } from "@pakka/server/pocket";
-import { decodePocketRequest, decodePocketResponse, POCKET_MAX_BYTES } from "@pakka/protocol/pocket";
+import {
+	POCKET_VERSION,
+	decodePocketRequest,
+	decodePocketResponse,
+	POCKET_MAX_BYTES,
+} from "@pakka/protocol/pocket";
 import { identity } from "@pakka/protocol";
 import { WEBUI_NOTIFICATION_EVENT_PATH, decodeNotificationEvent } from "@pakka/protocol/webui";
 import { decodeWebUiInlineStyleHashes } from "@pakka/protocol/webui-assets";
@@ -463,7 +468,7 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 			case "hello":
 				return {
 					kind: "hello",
-					versions: [2],
+					versions: [POCKET_VERSION],
 					person: people.current(a),
 					sessionId: runtime.view().sessionId,
 					...(options.modelConfiguration ? { nativeModels: true } : {}),
@@ -791,7 +796,8 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 		let requestId = "invalid",
 			dispatched = false,
 			serviceRequest = false,
-			extensionRequest = false;
+			extensionRequest = false,
+			legacyModelRequest = false;
 		void (async () => {
 			if (closed) throw new Refusal(503, "CAPACITY");
 			boundary(req, false);
@@ -805,6 +811,7 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 			const independent = url.pathname.startsWith("/pakka-webui/");
 			// Shared handlers keep one authorization path; the legacy model transport is not exposed here.
 			const routePath = independent ? "/pocket/" + url.pathname.slice("/pakka-webui/".length) : url.pathname;
+			legacyModelRequest = !independent && routePath === "/pocket/models/rpc";
 			extensionRequest = routePath === "/pocket/extensions/rpc";
 			const observing = req.method === "GET" && routePath === "/pocket/events";
 			if (observing) {
@@ -873,7 +880,7 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 						throw new Refusal(401, "UNAUTHORIZED");
 					}
 					cookies(res, session);
-					send(res, 200, { version: 2, person: session.person, expiresAt: session.expiresAt });
+					send(res, 200, { version: POCKET_VERSION, person: session.person, expiresAt: session.expiresAt });
 					return;
 				}
 				if (req.method === "POST" && serviceRequest && !url.search && !url.hash) {
@@ -970,7 +977,7 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 						guard(() => people.current(a));
 						if (Buffer.byteLength(JSON.stringify(result), "utf8") > POCKET_MAX_BYTES)
 							throw new Error("Configuration response exceeds transport capacity");
-						send(res, 200, { version: 2, requestId, serverId, result });
+						send(res, 200, { version: parsed.version, requestId, serverId, result });
 					} catch (error) {
 						if (error instanceof ProductModelRequestError) {
 							const status = { FORBIDDEN: 403, INVALID_REQUEST: 400, CONFLICT: 409 }[error.code];
@@ -1164,7 +1171,7 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 					let parsed;
 					try {
 						parsed = decodePocketRequest({
-							version: 2,
+							version: POCKET_VERSION,
 							requestId: "original-download",
 							command: {
 								op: "content.read",
@@ -1196,6 +1203,8 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 					const raw = await json(req);
 					if (raw && typeof raw === "object" && "requestId" in raw && identity(raw.requestId))
 						requestId = raw.requestId;
+					if (raw && typeof raw === "object" && "version" in raw && raw.version !== POCKET_VERSION)
+						throw new Refusal(400, "VERSION_MISMATCH", true);
 					let parsed;
 					try {
 						parsed = decodePocketRequest(raw);
@@ -1217,7 +1226,10 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 					const result = await execute(a, parsed.command, res, controller.signal);
 					if (!["session.rotate", "session.logout"].includes(parsed.command.op))
 						guard(() => people.current(a));
-					const response = decodePocketResponse({ version: 2, serverId, requestId, result }, requestId);
+					const response = decodePocketResponse(
+						{ version: POCKET_VERSION, serverId, requestId, result },
+						requestId,
+					);
 					send(res, 200, response);
 					return;
 				}
@@ -1384,7 +1396,7 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 			send(res, status, {
 				...(serviceRequest
 					? { api: WEBUI_SERVICE_API }
-					: { version: extensionRequest ? EXTENSION_VERSION : 2 }),
+					: { version: extensionRequest ? EXTENSION_VERSION : legacyModelRequest ? 2 : POCKET_VERSION }),
 				requestId,
 				serverId,
 				error: {

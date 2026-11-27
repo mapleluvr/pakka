@@ -1,3 +1,4 @@
+import { POCKET_VERSION } from "@pakka/protocol/pocket";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { join } from "node:path";
@@ -31,7 +32,7 @@ async function connection(app: Product, credential: string | { cookie: string; c
 				"X-Pakka-CSRF": auth.csrf,
 				"Content-Type": "application/json",
 			},
-			body: JSON.stringify({ version: 2, requestId: crypto.randomUUID(), command }),
+			body: JSON.stringify({ version: POCKET_VERSION, requestId: crypto.randomUUID(), command }),
 		});
 		return { status: response.status, body: await response.json() };
 	}

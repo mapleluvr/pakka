@@ -1,10 +1,10 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { decodePocketRequest, decodePocketResponse } from "../src/pocket.ts";
+import { POCKET_VERSION, decodePocketRequest, decodePocketResponse } from "../src/pocket.ts";
 
 test("Session reopen protocol names only an existing identity, never a replacement store or recovery override", () => {
 	const request = {
-		version: 2,
+		version: POCKET_VERSION,
 		requestId: "open-original",
 		command: { op: "session.reopen", sessionId: "original-session" },
 	};
@@ -27,7 +27,7 @@ test("Session recovery diagnostics are finite DTOs, not error bodies or promises
 		problem: { kind: "open-failed", canReopen: true },
 	};
 	const response = {
-		version: 2,
+		version: POCKET_VERSION,
 		requestId: "open-original",
 		serverId: "server",
 		result: { kind: "session.state", session },

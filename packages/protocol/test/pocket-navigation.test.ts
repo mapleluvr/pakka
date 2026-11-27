@@ -1,6 +1,11 @@
 import { test } from "node:test";
 import { strict as assert } from "node:assert";
-import { decodePocketRequest, decodePocketResponse, decodePocketEvent } from "../src/pocket.ts";
+import {
+	POCKET_VERSION,
+	decodePocketRequest,
+	decodePocketResponse,
+	decodePocketEvent,
+} from "../src/pocket.ts";
 const ref = {
 	key: "root",
 	sessionId: "session",
@@ -8,7 +13,7 @@ const ref = {
 	incarnation: "current",
 	profile: "default",
 };
-const envelope = { version: 2, requestId: "rpc", serverId: "server" };
+const envelope = { version: POCKET_VERSION, requestId: "rpc", serverId: "server" };
 
 test("WebUI navigation protocol: finite metadata command/result and scoped list states reject authority/foreign fields", () => {
 	const command = {
@@ -16,7 +21,10 @@ test("WebUI navigation protocol: finite metadata command/result and scoped list 
 		target: ref,
 		input: { requestId: "rename", expectedVersion: 0, name: "Title", archived: true },
 	};
-	assert.deepEqual(decodePocketRequest({ version: 2, requestId: "rpc", command }).command, command);
+	assert.deepEqual(
+		decodePocketRequest({ version: POCKET_VERSION, requestId: "rpc", command }).command,
+		command,
+	);
 	for (const input of [
 		{ ...command.input, name: "bad\nname" },
 		{ ...command.input, expectedVersion: -1 },
@@ -24,7 +32,7 @@ test("WebUI navigation protocol: finite metadata command/result and scoped list 
 		{ ...command.input, actorId: "forged" },
 	])
 		assert.throws(() =>
-			decodePocketRequest({ version: 2, requestId: "rpc", command: { ...command, input } }),
+			decodePocketRequest({ version: POCKET_VERSION, requestId: "rpc", command: { ...command, input } }),
 		);
 	const list = {
 		kind: "list",
@@ -76,7 +84,7 @@ test("WebUI fork transcript: current scope and explicit inherited attribution ar
 	assert.deepEqual(decodePocketResponse({ ...envelope, result }, "rpc"), { ...envelope, result });
 	assert.ok(
 		decodePocketEvent({
-			version: 2,
+			version: POCKET_VERSION,
 			serverId: "server",
 			streamId: "stream",
 			sequence: 1,

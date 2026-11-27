@@ -1,3 +1,4 @@
+import { POCKET_VERSION } from "@pakka/protocol/pocket";
 import { test } from "node:test";
 import { strict as assert } from "node:assert";
 import { join } from "node:path";
@@ -51,7 +52,7 @@ test(
 							Cookie: auth.cookies,
 							"X-Pakka-CSRF": auth.csrf,
 						},
-						body: JSON.stringify({ version: 2, requestId, command }),
+						body: JSON.stringify({ version: POCKET_VERSION, requestId, command }),
 					});
 				const text = await response.text();
 				assert.doesNotMatch(

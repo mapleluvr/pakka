@@ -1,10 +1,11 @@
+import { POCKET_VERSION } from "@pakka/protocol/pocket";
 import { test } from "node:test";
 import { strict as assert } from "node:assert";
 import { fixture } from "./fixture.ts";
 
 // This would fail if WebUI cookie auth were translated into unscoped v1 privileges or display became model input.
 test(
-	"WebUI HTTP: real cookie workbench negotiates v2, records human card, admits native work and recovers its receipt",
+	"WebUI HTTP: real cookie workbench negotiates its wire version, records human card, admits native work and recovers its receipt",
 	{ timeout: 15000 },
 	async () => {
 		const m = await fixture();
@@ -65,7 +66,7 @@ test(
 					method: "POST",
 					headers: { ...headers, "Content-Type": "application/json" },
 					body: JSON.stringify({
-						version: 2,
+						version: POCKET_VERSION,
 						requestId: "bad",
 						command: {
 							op: "submit",
@@ -85,7 +86,7 @@ test(
 					"Content-Type": "application/json",
 				},
 				body: JSON.stringify({
-					version: 2,
+					version: POCKET_VERSION,
 					requestId: "bad",
 					command: { op: "list", actorId: m.actor.person.id },
 				}),
@@ -101,7 +102,7 @@ test(
 					"X-Forwarded-Proto": "https",
 					"Content-Type": "application/json",
 				},
-				body: JSON.stringify({ version: 2, requestId: "bad", command: { op: "list" } }),
+				body: JSON.stringify({ version: POCKET_VERSION, requestId: "bad", command: { op: "list" } }),
 			});
 			assert.equal(forwarded.status, 403);
 			assert.equal(m.f.requests.length, 0);

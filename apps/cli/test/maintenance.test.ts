@@ -1,3 +1,4 @@
+import { POCKET_VERSION } from "@pakka/protocol/pocket";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
@@ -209,7 +210,7 @@ async function childSession(f: Awaited<ReturnType<typeof setup>>) {
 		method: "POST",
 		headers: { Origin: origin, Cookie: cookie, "X-Pakka-CSRF": csrf, "Content-Type": "application/json" },
 		body: JSON.stringify({
-			version: 2,
+			version: POCKET_VERSION,
 			requestId: randomUUID(),
 			command: { op: "session.create", requestId: randomUUID(), name: "Backup child", cwd: f.root },
 		}),

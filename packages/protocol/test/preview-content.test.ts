@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import { strict as assert } from "node:assert";
-import { decodePocketRequest, decodePocketResponse } from "../src/pocket.ts";
+import { POCKET_VERSION, decodePocketRequest, decodePocketResponse } from "../src/pocket.ts";
 
 const target = {
 	key: "root",
@@ -44,19 +44,25 @@ const page = {
 
 test("WebUI content protocol: preview pages and content ranges stay finite, original-bound, and free of native objects", () => {
 	const command = { op: "preview", target, page: { limit: 64, maxBytes: 256 * 1024 } };
-	assert.deepEqual(decodePocketRequest({ version: 2, requestId: "preview", command }).command, command);
+	assert.deepEqual(
+		decodePocketRequest({ version: POCKET_VERSION, requestId: "preview", command }).command,
+		command,
+	);
 	const response = {
-		version: 2,
+		version: POCKET_VERSION,
 		requestId: "preview",
 		serverId: "server",
 		result: { kind: "conversation", snapshot: page },
 	};
 	assert.deepEqual(decodePocketResponse(response, "preview"), response);
 	const read = { op: "content.read", target, reference, range: { offset: 0, length: 65536 } };
-	assert.deepEqual(decodePocketRequest({ version: 2, requestId: "content", command: read }).command, read);
+	assert.deepEqual(
+		decodePocketRequest({ version: POCKET_VERSION, requestId: "content", command: read }).command,
+		read,
+	);
 	const chunk = { reference, offset: 0, nextOffset: 65530, complete: false, text: "original fragment" };
 	const content = {
-		version: 2,
+		version: POCKET_VERSION,
 		requestId: "content",
 		serverId: "server",
 		result: { kind: "content", target, chunk },
@@ -81,7 +87,7 @@ test("WebUI content protocol: image payloads can be absent while the complete or
 		],
 	};
 	const result = {
-		version: 2,
+		version: POCKET_VERSION,
 		requestId: "image",
 		serverId: "server",
 		result: { kind: "conversation", snapshot },
@@ -99,11 +105,16 @@ test("WebUI content protocol: unbounded ranges, forged native fields and inconsi
 		{ ...valid, reference: { ...reference, path: "not-a-pointer" } },
 		{ op: "preview", target, page: { limit: 64, maxBytes: 512 * 1024 } },
 	])
-		assert.throws(() => decodePocketRequest({ version: 2, requestId: "invalid", command }));
+		assert.throws(() => decodePocketRequest({ version: POCKET_VERSION, requestId: "invalid", command }));
 	const chunk = { reference, offset: 0, nextOffset: 65536, complete: true, text: "fragment" };
 	assert.throws(() =>
 		decodePocketResponse(
-			{ version: 2, requestId: "invalid", serverId: "server", result: { kind: "content", target, chunk } },
+			{
+				version: POCKET_VERSION,
+				requestId: "invalid",
+				serverId: "server",
+				result: { kind: "content", target, chunk },
+			},
 			"invalid",
 		),
 	);

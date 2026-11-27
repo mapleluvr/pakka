@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import { strict as assert } from "node:assert";
-import { decodePocketRequest, decodePocketResponse } from "../src/pocket.ts";
+import { POCKET_VERSION, decodePocketRequest, decodePocketResponse } from "../src/pocket.ts";
 test("WebUI private configuration protocol: dedicated replace/clear/status never accepts an identity or returns a saved value", () => {
 	const input = { requestId: "replacement", expectedVersion: 0, secret: "SYNTHETIC-KEY" };
 	for (const command of [
@@ -8,9 +8,12 @@ test("WebUI private configuration protocol: dedicated replace/clear/status never
 		{ op: "credential.replace", input },
 		{ op: "credential.clear", input: { requestId: "clear", expectedVersion: 1 } },
 	])
-		assert.deepEqual(decodePocketRequest({ version: 2, requestId: "rpc", command }).command, command);
+		assert.deepEqual(
+			decodePocketRequest({ version: POCKET_VERSION, requestId: "rpc", command }).command,
+			command,
+		);
 	const response = {
-		version: 2,
+		version: POCKET_VERSION,
 		requestId: "rpc",
 		serverId: "server",
 		result: { kind: "credential", status: { version: 1, configured: true } },
@@ -25,13 +28,17 @@ test("WebUI private configuration protocol: dedicated replace/clear/status never
 	])
 		assert.throws(() =>
 			decodePocketRequest({
-				version: 2,
+				version: POCKET_VERSION,
 				requestId: "rpc",
 				command: { op: "credential.replace", input: changed },
 			}),
 		);
 	assert.throws(() =>
-		decodePocketRequest({ version: 2, requestId: "rpc", command: { op: "credential.clear", input } }),
+		decodePocketRequest({
+			version: POCKET_VERSION,
+			requestId: "rpc",
+			command: { op: "credential.clear", input },
+		}),
 	);
 	assert.throws(() =>
 		decodePocketResponse(

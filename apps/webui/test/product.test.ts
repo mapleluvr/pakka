@@ -1,3 +1,4 @@
+import { POCKET_VERSION } from "@pakka/protocol/pocket";
 import { test } from "node:test";
 import { strict as assert } from "node:assert";
 import { runtimeFixture } from "../../../packages/agent/test/runtime-fixture.ts";
@@ -60,7 +61,7 @@ test(
 						"X-Pakka-Server": app!.http.serverId,
 						"Content-Type": "application/json",
 					},
-					body: JSON.stringify({ version: 2, requestId: crypto.randomUUID(), command }),
+					body: JSON.stringify({ version: POCKET_VERSION, requestId: crypto.randomUUID(), command }),
 				});
 				assert.equal(response.status, 200, await response.clone().text());
 				return response.json();

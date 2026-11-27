@@ -248,7 +248,7 @@ test("M1: native tool invocation authority is routed by asking Conversation, not
 });
 
 test("M1: fork publishes a new resource reference and leaves peer identity/capabilities intact", async () => {
-	const m = await managed();
+	const m = await managed({}, { ...limits, maxConversations: 0 });
 	try {
 		const a = m.runtime.root(),
 			old = m.runtime.view().conversations.find((ref) => ref.key === "root")!;

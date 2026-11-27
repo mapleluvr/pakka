@@ -1,3 +1,4 @@
+import { POCKET_VERSION } from "@pakka/protocol/pocket";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createServer } from "node:http";
@@ -14,7 +15,7 @@ test("Session recovery client accepts only the requested native identity without
 			response.setHeader("Content-Type", "application/json");
 			response.end(
 				JSON.stringify({
-					version: 2,
+					version: POCKET_VERSION,
 					requestId: "open-original",
 					serverId: "server",
 					result: {

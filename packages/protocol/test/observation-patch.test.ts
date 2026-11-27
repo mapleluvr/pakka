@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { decodePocketEvent } from "../src/pocket.ts";
+import { POCKET_VERSION, decodePocketEvent } from "../src/pocket.ts";
 
 const ref = {
 	key: "root",
@@ -15,7 +15,7 @@ const patch = {
 	live: { busy: true, tools: [{ callId: "7", name: "command", status: "running", output: "bounded tail" }] },
 };
 const event = {
-	version: 2,
+	version: POCKET_VERSION,
 	serverId: "server",
 	streamId: "stream",
 	sequence: 6,

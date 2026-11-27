@@ -16,7 +16,7 @@ RSI、MAS、Memo 的可视化、业务控制及管线由各自插件按[开发�
 
 ## 默认启动与停止
 
-`pakka` 无参数启动前台 WebUI；`--connection` 保留协议客户端。默认本地产品无需宿主 JSON 或已选模型，模型配置来自 Pi agent directory。PAKKA_HOME 保存已选启动来源、工作区、原控制 Session 和数据；首次启动绑定当前目录，之后重开该已记录工作区，不因 shell 当前目录改变而替换存储。高级 JSON 或可信模块仍可显式选用。
+`pakka` 无参数启动前台 WebUI；`--connection` 保留协议客户端。Session 预算默认为三个独立的 0（不限制），控制和新建子 Session 使用同一启动规则；已有有限政策及消耗不会因升级自动清空。默认本地产品无需宿主 JSON 或已选模型，模型配置来自 Pi agent directory。PAKKA_HOME 保存已选启动来源、工作区、原控制 Session 和数据；首次启动绑定当前目录，之后重开该已记录工作区，不因 shell 当前目录改变而替换存储。高级 JSON 或可信模块仍可显式选用。
 
 初始 owner 登录链接只写入新私密文件并用于登录 fragment，不打印密钥。正常停止关闭 owned 资源后释放 writer；关闭网页不停止工作。`--no-open` 不调用 OS 浏览器。未确认启动要求显式 `--recover` 或同一 reopenSessionFile；恢复核对原定位，不猜测缺失状态、不清 writer 锁、不创建替代库或重放输入。启动和重开不提交模型工作。
 

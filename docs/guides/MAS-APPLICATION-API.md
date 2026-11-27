@@ -52,6 +52,8 @@ Server config 的结构示例（全部值均为占位符，不是可用凭据）
 }
 ```
 
+省略 `runtime.limits` 时，新 Session 三项均为 0；重开原 Session 时保留其持久政策，不将新默认覆盖旧配置。显式给出时必须给齐三项；改变显式 bootstrap 值仍按原规则产生审计，未改变的值不覆盖管理修改。MAS 的 `maxPending`、inference policy 的 `maxCalls` / `maxJobCalls` 等仍独立校验。
+
 `runtime` 的 JSON bootstrap 接受以上基础字段、`reopenSessionFile`、`reservedSessionId`，以及 `profiles: [{id, systemPrompt}]`。可选 inference 装配接受闭合的 `runtime.inference: {models, policies}`，模型/凭据/endpoint 和有限预算仅由宿主配置；选择方式和限制见 Dynamite 产品 API。profile 默认为 gate 的 `default`；未批准 profile 会由 gate 拒绝。可选 `devpack` 的批准配置、RPC profile-management 组合拒绝和正常恢复范围见 [产品支持矩阵](MAS-PRODUCT-SUPPORT.md)。functions、额外 tools/extensions/config 均不属于该 JSON bootstrap；更复杂的程序化配置仍由可信 composition root 使用 `createMasServer()`，不能从 RPC 传入。
 
 ```powershell

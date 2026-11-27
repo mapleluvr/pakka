@@ -1,7 +1,7 @@
 import { strict as assert } from "node:assert";
 import { runtimeFixture } from "../../../packages/agent/test/runtime-fixture.ts";
 import { createPocketPeople, createPocketWorkspace } from "@pakka/server/pocket";
-import { decodePocketResponse } from "@pakka/protocol/pocket";
+import { POCKET_VERSION, decodePocketResponse } from "@pakka/protocol/pocket";
 import { createPocketHttp } from "../src/http.ts";
 
 export async function fixture(transport: { readonly maxConnections?: number } = {}) {
@@ -42,7 +42,7 @@ export async function fixture(transport: { readonly maxConnections?: number } = 
 				"X-Pakka-CSRF": auth.csrf,
 				"Content-Type": "application/json",
 			},
-			body: JSON.stringify({ version: 2, requestId, command }),
+			body: JSON.stringify({ version: POCKET_VERSION, requestId, command }),
 		});
 		const decoded = decodePocketResponse(await response.json(), requestId);
 		return { response, decoded };

@@ -7,7 +7,7 @@ import { readFile } from "node:fs/promises";
 import { fixture } from "./fixture.ts";
 import { createPocketHttp } from "../src/http.ts";
 import { createWebUiServices } from "../src/webui-services.ts";
-import { decodePocketResponse } from "@pakka/protocol/pocket";
+import { POCKET_VERSION, decodePocketResponse } from "@pakka/protocol/pocket";
 import { WEBUI_SERVICE_API, decodeWebUiResponse } from "@pakka/protocol/webui";
 
 // Public test-only TLS material generated for localhost; never used as a deployment certificate or credential.
@@ -124,7 +124,7 @@ test(
 				input: { requestId: "tls-input", mode: "prompt", text: "REAL-TLS" },
 			};
 			const body = {
-				version: 2,
+				version: POCKET_VERSION,
 				requestId: "remote-request",
 				command: { op: "submit", ...original },
 			};
@@ -135,7 +135,7 @@ test(
 			const receiptId = receipt.result.receipt.id;
 			const waited = await request(
 				"/pakka-webui/rpc",
-				{ version: 2, requestId: "remote-wait", command: { op: "wait", id: receiptId } },
+				{ version: POCKET_VERSION, requestId: "remote-wait", command: { op: "wait", id: receiptId } },
 				cookie,
 				csrf,
 			);

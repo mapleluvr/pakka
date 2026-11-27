@@ -1,3 +1,4 @@
+import { POCKET_VERSION } from "@pakka/protocol/pocket";
 import { test } from "node:test";
 import { strict as assert } from "node:assert";
 import { createECDH, randomBytes } from "node:crypto";
@@ -97,7 +98,7 @@ test(
 							"X-Pakka-Person": auth.personId,
 							"X-Pakka-Server": app!.http.serverId,
 						},
-						body: JSON.stringify({ version: 2, requestId, command }),
+						body: JSON.stringify({ version: POCKET_VERSION, requestId, command }),
 					});
 				return { response, value: decodePocketResponse(await response.json(), requestId) };
 			}

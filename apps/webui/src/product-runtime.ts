@@ -87,7 +87,6 @@ export async function createLocalProduct(options: {
 			execution: localExecution(false),
 			profiles: [{ id: "read-only", execution: localExecution(true) }],
 			contextSources: [localResources(agentDir)],
-			limits: { maxConversations: 64, maxPrimaryAttempts: 1000, maxAuxiliaryAttempts: 1000 },
 		},
 	};
 }

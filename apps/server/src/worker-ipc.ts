@@ -93,7 +93,7 @@ export function configuration(value: unknown): asserts value is WorkerConfigurat
 			runtime.apiKey,
 			runtime.reservedSessionId,
 		].every((field) => typeof field === "string" && field.length > 0) ||
-		!object(runtime.limits) ||
+		(runtime.limits !== undefined && !object(runtime.limits)) ||
 		(runtime.cwdRoots !== undefined &&
 			(!Array.isArray(runtime.cwdRoots) ||
 				!runtime.cwdRoots.length ||

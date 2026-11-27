@@ -6,7 +6,7 @@
 
 | 入口                                          | 用途                                      | 安装依赖                     |
 | --------------------------------------------- | ----------------------------------------- | ---------------------------- |
-| `@pakka/protocol/pocket`                      | 工作台 v2 DTO 和 decoder                  | 无运行时依赖                 |
+| `@pakka/protocol/pocket`                      | 工作台 v3 DTO 和 decoder                  | 无运行时依赖                 |
 | `@pakka/protocol/webui`                       | 新服务命令、结果、原请求及运行时 decoder  | 无运行时依赖                 |
 | `@pakka/protocol/webui-assets`                | 静态前端 manifest 类型和校验              | 无运行时依赖                 |
 | `@pakka/protocol/extensions`、`extension-rpc` | 通用 extension manifest、资源和 wire 定义 | 无运行时依赖                 |
@@ -24,13 +24,13 @@
 
 ## 2. 同源服务与身份
 
-工作台使用 `/pakka-webui/rpc` 和 `/pakka-webui/events`，延用已声明的 v2 DTO；新服务使用 `/pakka-webui/services` 的 `api: 4`。extension 客户端可使用 `/pakka-webui/extensions/rpc`。人类身份交换、资产、下载、通知和 worker 沿各自已有安全处理接缝接入新 namespace；旧 `/pocket/models/rpc` 不映射成新模型接口。
+工作台使用 `/pakka-webui/rpc` 和 `/pakka-webui/events`，延用已声明的 v3 DTO；新服务使用 `/pakka-webui/services` 的 `api: 5`。extension 客户端可使用 `/pakka-webui/extensions/rpc`。人类身份交换、资产、下载、通知和 worker 沿各自已有安全处理接缝接入新 namespace；旧 `/pocket/models/rpc` 不映射成新模型接口。
 
 浏览器使用同源 Cookie 与 `X-Pakka-CSRF`，endpoint 不接受认证信息、query/hash 或跨 origin；前端开发用同源代理。服务 request 在发送前固定工作台 hello 得到的 `personId/serverId`；后端从 Cookie 获取真正 actor，核对预期身份后才执行命令。客户端在响应、身份切换和异步返回时再次核对 request、server、Person 与结果种类。
 
-服务的 `capabilities` 返回实际可用 features。当前开发组合是 services 4、workbench 2、extensions 3；其中 extension wire 不等于 `ExtensionManifest.api: 1`，UI SDK/runtime 又是另一项组合。capabilities 中的协议版本是有界声明值，由对应消费者判断是否支持；不能因为服务能力响应可解码就认定所有协议都兼容。服务 API、renderer 描述和文件 hash 各自检查，不通过给 closed hello 偷加字段协商。
+服务的 `capabilities` 返回实际可用 features。当前开发组合是 services 5、workbench 3、extensions 3；其中 extension wire 不等于 `ExtensionManifest.api: 1`，UI SDK/runtime 又是另一项组合。capabilities 中的协议版本是有界声明值，由对应消费者判断是否支持；不能因为服务能力响应可解码就认定所有协议都兼容。服务 API、renderer 描述和文件 hash 各自检查，不通过给 closed hello 偷加字段协商。
 
-阶段 2/3 的已验收固定应用声明 services 3；阶段 4 新开发候选、协议/client 归档与 manifest 需求同步声明 services 4。旧候选不自动降级或复用新服务组合，固定消费仍核对其实际版本与内容身份。
+阶段 2/3 的已验收固定应用声明 services 3；阶段 4 候选、协议/client 归档与 manifest 需求同步声明 services 4。旧候选不自动降级或复用新服务组合，固定消费仍核对其实际版本与内容身份。
 
 Node 的 `publicOrigin`、trusted proxy 和 TLS 约束保持原实现：带 forwarding/trusted-peer 元数据的代理模式需要显式 HTTPS public origin；本地 HTTP origin 模式不靠伪造这些头部绕过要求。客户端、HTTP boundary 和受权服务缺一不可。
 
@@ -70,13 +70,15 @@ Node 的 `publicOrigin`、trusted proxy 和 TLS 约束保持原实现：带 forw
 | `model-defaults.write`              | 当前 Person 的持久默认值及原请求回执                          |
 | `model-defaults.lookup`             | 该 Person 原请求的默认值回执                                  |
 
+Conversation 数量、主要推理尝试和辅助推理尝试是三个独立的 Session 上限。每项为非负安全整数；0 表示该项不限制，不是剩余量为 0。即便没有上限，创建和尝试仍照常计数。它不放宽策略、单个 job、模型、队列、资源容量或权限。预算提交及核对仍绑定版本、发起人和完整原请求。旧客户端不能解析 0，TUI 等外部 Pocket 消费者需升级到 v3；未配对的前端在加载前拒绝。
+
 当前 Conversation 的模型/Thinking/目录/preset 经受权来源接到同一原生配置事务与回执；插件来源显式声明自己的读取、写入和恢复能力。配置效果与回执同时提交，查询保留完整旧绑定和原参数，再单独读取当前配置。slash、悬浮搜索与点击/触控属于前端人类入口，执行继续由 Pakka/Durable 承担。Session 预算、Person 默认与实例连接定义分别持久化；Provider `/login` 按既有 roadmap 延期。
 
 另一个登录更改模型后，`input.lookup` 按当前 Person 的读取权限解析原 catalog 成员，再匹配持久投递中的完整旧绑定。原 target 仍可用于查询这次受理结果。新提交须使用当前运行绑定。
 
 `input.lookup` 不进入原生投递：原 target/text/mode/requestId 与发起人必须一致，null/unknown 只表示尚未确认，保持原请求并阻止重发。`input.history` 只返回调用人的直接输入；来源缺少查询能力时明确拒绝，不伪造空结果。邀请首次创建沿工作台入口，`people.invite.lookup` 复用原记录且不返回密钥。
 
-通知状态和修改沿工作台 v2 的 `notification.status/subscribe/unsubscribe/preferences`。偏好归调用 Person；登记关联获准 Conversation，设备停用影响其全部已登记资源，本地浏览器订阅独立管理。services 4 的 `notification.lookup` 接收完整原 `NotificationRequest`，返回 `notification-operation` 与可空 status；查询保留完整旧 target/input、匹配原请求和发起人，再核对当前读取权限。旧结果和当前设置分开读取，空值/unknown 不证明操作未生效。
+通知状态和修改沿工作台 v3 的 `notification.status/subscribe/unsubscribe/preferences`。偏好归调用 Person；登记关联获准 Conversation，设备停用影响其全部已登记资源，本地浏览器订阅独立管理。services 5 的 `notification.lookup` 接收完整原 `NotificationRequest`，返回 `notification-operation` 与可空 status；查询保留完整旧 target/input、匹配原请求和发起人，再核对当前读取权限。旧结果和当前设置分开读取，空值/unknown 不证明操作未生效。
 
 通知 worker 的 wake 只携带 eventId/deviceId；同源 `GET /pakka-webui/notifications/event?eventId=…&deviceId=…` 重新授权后返回内容，点击再次授权。公共地址 `/pakka-webui/service-worker.js` 映射固定应用文件 `notification-worker.js`，HTTP 提供 `Service-Worker-Allowed: /`。原生权限由用户选择；浏览器订阅的端点必须匹配服务 `notifications.endpointOrigins` 中的精确 HTTPS origin。服务发送回执与操作系统实际显示分别验证；`unknown` 不是未送达的证明。
 
@@ -112,7 +114,7 @@ extension 原请求链路仍是 `operationByRequest(browserRequestId)` → 外�
 
 `resource.content` 接收同一 reference、页面取得的 content 与 offset/length，单次最多 64 KiB。客户端核对原 Session/Conversation、完整内容定位及返回范围；按 nextOffset 继续，不用字符数推算字节位置。入口只读取既有公开投影中的正文，不能改 path 读取原生 data/configuration。分叉自身可见内容与来源身份的披露权限分开，不能凭继承内容取得源 Conversation 权限。
 
-完整原文下载使用 `/pakka-webui/resources/content/download`，传入绑定 API 4 身份的 `resource.content` 请求 envelope。服务按稳定已登记资源流式输出已存原文，每段核对原 Session/Conversation、引用版本和当前权限；存档 JSON 字节范围与下载的解码正文大小分别使用，浏览器不据字符数换算存档偏移。
+完整原文下载使用 `/pakka-webui/resources/content/download`，传入绑定 API 5 身份的 `resource.content` 请求 envelope。服务按稳定已登记资源流式输出已存原文，每段核对原 Session/Conversation、引用版本和当前权限；存档 JSON 字节范围与下载的解码正文大小分别使用，浏览器不据字符数换算存档偏移。
 
 未加载路径经 `@pakka/agent` 的受信任 `readStoredConversation` 接到 Durable .4 的公开 SQLite reader，不创建 Runtime、不取得 writer 或恢复任务。Pakka 先验证已确认登记、原 Session/Conversation、来源与 read grant，返回前再次核对；执行、发送及管理仍要求已加载绑定。Node 定位、原生对象与数据库路径不进入浏览器协议。具体 SDK 边界见[只读 SDK](../../patches/pi-durable/1.4.0-pakka.4/README.md)。
 
@@ -157,7 +159,7 @@ const app = await startPocket({
 
 `runtime` 是受信任装配参数，不从浏览器接收。先核对 manifest digest、closed schema、受支持服务组合、有限文件及其内容 hash，再打开 Session；拒绝路径逃逸、符号链接、重复 URL、服务路由遮蔽、未声明 import/CSS/worker 与内容篡改。完整前端必须有已声明的 HTML entry；共享 runtime 的 entry:null 不能作为完整应用启动。
 
-当前资产 schema 为 `2`，必填 `inlineStyleHashes` 是至多 16 个唯一、小写 SHA-256 hex，可为空。它只许可受信任构建已核对的固定运行时样式文本；Node 转为 CSP hash source，不接受任意 policy、外部 origin、`unsafe-inline` 或 `unsafe-hashes`。前端负责将摘要绑定实际依赖版本并验证字节；修改摘要属于修改固定制品，须重新批准 manifest digest。资产 schema 1 明确拒绝，不能把其中缺失的许可静默当成已支持。该格式版本独立于 services 4 / extensions 3 / workbench 2。
+当前资产 schema 为 `2`，必填 `inlineStyleHashes` 是至多 16 个唯一、小写 SHA-256 hex，可为空。它只许可受信任构建已核对的固定运行时样式文本；Node 转为 CSP hash source，不接受任意 policy、外部 origin、`unsafe-inline` 或 `unsafe-hashes`。前端负责将摘要绑定实际依赖版本并验证字节；修改摘要属于修改固定制品，须重新批准 manifest digest。资产 schema 1 明确拒绝，不能把其中缺失的许可静默当成已支持。该格式版本独立于 services 5 / extensions 3 / workbench 3。
 
 加载后 HTTP 提供已核对的内存字节，生产者后来改磁盘文件不改变正在提供的版本。无下载、运行时构建、npm latest 或失败后替换成另一份 UI。manifest 只描述 renderer 兼容，不让 Node 了解 Button、theme provider 或插件组件树。
 

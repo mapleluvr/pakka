@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { decodePocketResponse, type PocketCommand } from "@pakka/protocol/pocket";
+import { POCKET_VERSION, decodePocketResponse, type PocketCommand } from "@pakka/protocol/pocket";
 import { decodeExtensionResponse, type ExtensionCommandEnvelope } from "@pakka/protocol/extension-rpc";
 
 /** Actual public HTTP login and hello, also usable with a child executable that exposes no in-process objects. */
@@ -31,7 +31,7 @@ export async function connectHttpSession(origin: string, cookies: string) {
 		const response = await fetch(origin + "/pakka-webui/rpc", {
 			method: "POST",
 			headers,
-			body: JSON.stringify({ version: 2, requestId, command }),
+			body: JSON.stringify({ version: POCKET_VERSION, requestId, command }),
 		});
 		return { response, decoded: decodePocketResponse(await response.json(), requestId) };
 	}
