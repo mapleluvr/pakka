@@ -33,7 +33,7 @@ artifacts/
 # Fixed browser SDK needed to build the independently owned RSI UI facet.
 !integrations/webui/sdk/pakka-webui-sdk-c1f99cd939aa0ffc.tgz
 # Fixed static application selected by the default product.
-!integrations/webui/app/pakka-webui-app-0.1.0-4c5779bdd179bf65.tgz
+!integrations/webui/app/pakka-webui-app-0.1.0-6076b13bc181c9f6.tgz
 
 # --- Pakka runtime state -----------------------------------------------------
 .pakka/

@@ -2,11 +2,11 @@ import { fileURLToPath } from "node:url";
 import type { WebUiArtifactSource } from "./assets.ts";
 
 /** Product-selected static artifact; source and pairing are recorded in integrations/webui. */
-export const DEFAULT_WEBUI_ARCHIVE = "pakka-webui-app-0.1.0-4c5779bdd179bf65.tgz";
+export const DEFAULT_WEBUI_ARCHIVE = "pakka-webui-app-0.1.0-6076b13bc181c9f6.tgz";
 export const DEFAULT_WEBUI_ARCHIVE_SHA256 =
-	"4c5779bdd179bf653253f1024b053201ecbff48d956faf1c3c5fe46a25f55b78";
+	"6076b13bc181c9f6dc8648a21a207f55e1ece1652ab86bc1321994e56d1bb69e";
 export const DEFAULT_WEBUI_MANIFEST_SHA256 =
-	"eb6a70dafe3bda25a3bc75ffe76bd02de5ef8ab04d8d8143456b6f74554273e2";
+	"28242cb569f25b227ec40e3bb93e192cb70f00868c192d2e2067cdf62ec0b360";
 
 export function defaultWebUiArtifact(): WebUiArtifactSource {
 	return {

@@ -10,6 +10,8 @@ People schema 3 保存个人 owner 与模式代际；旧 schema 读取为协作�
 
 完整[提案](../../openspec/changes/add-personal-mode/proposal.md)、[任务](../../openspec/changes/add-personal-mode/tasks.md)和[增量规范](../../openspec/changes/add-personal-mode/specs/personal-mode/spec.md)维护范围与验证分类。
 
+组件实验室按用户要求退出默认应用：移除演示页、导航与欢迎页入口，重新固定前端归档并更新 8854。共享通知、Dialog 和插件 SDK 仍服务正式功能。该次变更选用两仓类型检查、前端构建、静态产物与桌面/390px 浏览器验证，不增加布局测试；结果见[移除实验室验证](../verification/REMOVE-COMPONENT-LAB.md)。
+
 ## 任务
 
 - [x] 宿主模式、同身份设备连接、单设备撤销与原请求恢复。

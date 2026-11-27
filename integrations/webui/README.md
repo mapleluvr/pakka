@@ -2,15 +2,15 @@
 
 ## 默认完整应用
 
-默认 `pakka` 启动消费 `app/pakka-webui-app-0.1.0-4c5779bdd179bf65.tgz`。完整 SHA-256：
+默认 `pakka` 启动消费 `app/pakka-webui-app-0.1.0-6076b13bc181c9f6.tgz`。完整 SHA-256：
 
-`4c5779bdd179bf653253f1024b053201ecbff48d956faf1c3c5fe46a25f55b78`
+`6076b13bc181c9f6dc8648a21a207f55e1ece1652ab86bc1321994e56d1bb69e`
 
-归档为 1,337,251 字节，manifest SHA-256：
+归档为 1,336,285 字节，manifest SHA-256：
 
-`eb6a70dafe3bda25a3bc75ffe76bd02de5ef8ab04d8d8143456b6f74554273e2`
+`28242cb569f25b227ec40e3bb93e192cb70f00868c192d2e2067cdf62ec0b360`
 
-它包含 713 项声明资产及 npm/manifest 元数据，要求 services 6 / workbench 3 / extensions 3、资产 schema 2 和 `react19-astryx0.7.15` runtime。应用源码与安装后端的固定包身份见 [配对记录](pairings/app-4c5779bdd179bf65.json)。版本名 `0.1.0` 之外，实际交付以归档与 manifest 摘要定位。
+它包含 713 项声明资产及 npm/manifest 元数据，要求 services 6 / workbench 3 / extensions 3、资产 schema 2 和 `react19-astryx0.7.15` runtime。应用源码与安装后端的固定包身份见 [配对记录](pairings/app-6076b13bc181c9f6.json)。版本名 `0.1.0` 之外，实际交付以归档与 manifest 摘要定位。
 
 Pakka 构建先核对固定归档摘要、完整成员及每项资产，再把已验证字节放入 `@pakka/webui/dist/frontend`。包的安装和启动无需独立前端源码、前端编译或额外下载。`startPocket` 未指定 `frontend` 时使用随包产物，并在打开 Session 前重新验证资产与服务兼容性。选择常量由 `apps/webui/src/default-frontend.ts` 维护。
 
@@ -19,8 +19,8 @@ Pakka 构建先核对固定归档摘要、完整成员及每项资产，再把�
 从受信配对记录取得预期摘要，核对完整归档后解包到新的空目录。例如在本目录执行：
 
 ```powershell
-$archive = 'app/pakka-webui-app-0.1.0-4c5779bdd179bf65.tgz'
-$expected = '4c5779bdd179bf653253f1024b053201ecbff48d956faf1c3c5fe46a25f55b78'
+$archive = 'app/pakka-webui-app-0.1.0-6076b13bc181c9f6.tgz'
+$expected = '6076b13bc181c9f6dc8648a21a207f55e1ece1652ab86bc1321994e56d1bb69e'
 if ((Get-FileHash $archive -Algorithm SHA256).Hash.ToLowerInvariant() -ne $expected) {
     throw 'Frontend archive identity mismatch'
 }
