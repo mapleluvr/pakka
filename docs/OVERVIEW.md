@@ -4,6 +4,8 @@ Pakka 将 Pi Durable 的 Conversation、权限、持久化与 MAS 协作能力�
 
 ## 当前工作
 
+[品牌、配色与悬浮输入](changes/independent-webui.md#品牌配色与悬浮输入交付)：默认前端固定到包含首页、四组主题、运行时原位停止与独立阅读宽度的产物；服务协议保持 services 6 / workbench 3 / extensions 3。[验证](verification/FLOATING-COMPOSER.md)记录安装与原 Session 保全。
+
 [个人模式与设备](changes/personal-mode.md)：宿主持久模式、同身份设备登录与独立撤销、可选预算备注；客户端配对为 services 6 / workbench 3。
 
 [Session 预算](changes/session-budget.md)：默认不限制，升级重开保留既有政策；前后端与外部工作台客户端的配对要求见[服务契约](reference/WEBUI-SERVICES.md)。

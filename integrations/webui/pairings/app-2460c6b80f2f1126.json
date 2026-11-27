@@ -1,0 +1,46 @@
+{
+  "schema": 1,
+  "frontend": {
+    "schema": 1,
+    "application": {
+      "name": "@pakka/webui-app",
+      "version": "0.1.0"
+    },
+    "archive": {
+      "file": "../app/pakka-webui-app-0.1.0-2460c6b80f2f1126.tgz",
+      "sha256": "2460c6b80f2f112662efb596501af7293e2f03abc2311ff3662f1de4f305e7ab",
+      "bytes": 1345005
+    },
+    "manifestSha256": "4942093ef2ca0269cad2d1bc0a8bb31270d7d7c528bd16c40410459a071cc0eb",
+    "assetSchema": 2,
+    "requires": {
+      "services": 6,
+      "workbench": 3,
+      "extensions": 3
+    },
+    "runtime": {
+      "id": "react19-astryx0.7.15",
+      "sdk": "0.1.0",
+      "packages": {
+        "react": "19.3.1",
+        "react-dom": "19.3.1",
+        "@astryxdesign/core": "0.7.15",
+        "@astryxdesign/theme-neutral": "0.7.15",
+        "@stylexjs/stylex": "0.19.2",
+        "lucide-react": "1.73.0"
+      }
+    },
+    "entry": "/",
+    "files": 715,
+    "repository": "https://github.com/mapleluvr/pakka-webui",
+    "sourceBase": "e88a7279995712db697759f2f961cd7b2f8a88b9",
+    "workingTreeInputsSha256": "35cb848053f7fc291579ce64a507f7d0163c41483db50aeea5f94d49afe5d9c3"
+  },
+  "backend": {
+    "sourceBase": "40b0b5b9dd5d0de3265ffab0e8e18f3942f57d19",
+    "source": "same services; selected frontend includes floating composer and reading width",
+    "nodeMajor": 24
+  },
+  "mode": "default-fixed-frontend",
+  "verification": "../../../docs/verification/FLOATING-COMPOSER.md"
+}
