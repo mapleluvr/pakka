@@ -42,3 +42,7 @@
 ## 2026-11-26：集成场景复审修正
 
 来源检索的展示标题由 Memo 按 UTF-8 字节适配，继续使用原 Book 版本和实体位置。组合夹具显式选择来源同权；这不改变 Agent、MAS 或 Memo 独立安装。Dynamite 的目标授权、首次与修正请求检查由上游实现；新旧归档范围见[消费指南](../guides/HISTORY-LIBRARY.md)。
+
+## 2026-11-28：dev 集成复审
+
+[Pakka #19](https://github.com/mapleluvr/pakka/pull/19) 与 [Dynamite #1](https://github.com/mapleluvr/pakka-dynamite/pull/1) 的独立复审核对了实际 `dev` 合并树。用含 #21 的 Agent 新归档验证了固定版本标题和整个 headless 图书馆链路；Dynamite 开发锁中的原 Agent 另验，不互相替代。候选、对照、范围与证据包身份见[本轮验证](../verification/HISTORY-BOOK-DEV-INTEGRATION.md)。
