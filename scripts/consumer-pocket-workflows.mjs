@@ -158,13 +158,25 @@ try {
 		target: ref,
 		input: { requestId: "chat", text: "INSTALLED-HUMAN-CHAT-CANARY" },
 	});
-	await owner.rpc({
-		op: "collaboration.note",
-		target: ref,
-		input: { expectedVersion: 0, text: "INSTALLED-HUMAN-NOTE-CANARY" },
+	await owner.services({
+		op: "notebook.write",
+		change: {
+			requestId: "installed-note-save",
+			target: ref,
+			action: {
+				kind: "save",
+				id: "installed-note",
+				expectedVersion: 0,
+				title: "Installed note",
+				body: "INSTALLED-HUMAN-NOTE-CANARY",
+				sources: [],
+			},
+		},
 	});
+	const note = (await owner.services({ op: "notebook.note", target: ref, id: "installed-note" })).note;
+	assert.equal(note.version, 1);
+	assert.equal(note.body, "INSTALLED-HUMAN-NOTE-CANARY");
 	const shared = (await owner.rpc({ op: "collaboration.read", target: ref })).snapshot;
-	assert.equal(shared.note.version, 1);
 	assert.equal(shared.messages.length, 1);
 	assert.equal(shared.messages[0].authorName, "Owner");
 	const invited = await owner.rpc({
@@ -218,7 +230,9 @@ try {
 	owner = await connectHttp(info.origin, owner.cookies);
 	viewer = await connectHttp(info.origin, viewer.cookies);
 	const retained = (await owner.rpc({ op: "collaboration.read", target: ref })).snapshot;
-	assert.equal(retained.note.text, "INSTALLED-HUMAN-NOTE-CANARY");
+	const retainedNote = (await owner.services({ op: "notebook.note", target: ref, id: "installed-note" }))
+		.note;
+	assert.deepEqual(retainedNote, note);
 	assert.equal(retained.messages[0].text, "INSTALLED-HUMAN-CHAT-CANARY");
 	assert.deepEqual((await owner.rpc({ op: "list" })).conversations, refs);
 	assert.equal((await owner.rpc({ op: "receipt", id: result.receipt.id })).receipt.status, "done");
