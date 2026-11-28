@@ -5,7 +5,7 @@ import { runtimeFixture } from "../../../packages/agent/test/runtime-fixture.ts"
 import { startPocket } from "../src/bootstrap.ts";
 import type { PocketServiceContext } from "../src/backend.ts";
 import type { RuntimeOptions } from "@pakka/agent";
-import { decodePocketResponse } from "@pakka/protocol/pocket";
+import { POCKET_VERSION, decodePocketResponse } from "@pakka/protocol/pocket";
 import { decodePocketProduct } from "../src/main.ts";
 
 async function setup(profiles?: RuntimeOptions["profiles"]) {
@@ -105,7 +105,7 @@ test("Model catalogue: the maximum JSON configuration publishes all 65 unique mo
 			method: "POST",
 			headers: { Origin: origin, Cookie: cookies, "X-Pakka-CSRF": csrf, "Content-Type": "application/json" },
 			body: JSON.stringify({
-				version: 2,
+				version: POCKET_VERSION,
 				requestId: "catalog-capacity",
 				command: { op: "configuration", target: p.ref },
 			}),

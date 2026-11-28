@@ -1,21 +1,73 @@
 {
 	"api": 1,
 	"id": "workspace-schedules",
-	"version": "1.0.0",
-	"title": "Scheduled Inputs",
+	"version": "2.1.0",
+	"title": "定时输入",
 	"facets": {
 		"backend": "backend.mjs",
 		"client": "client.js",
 		"webui": {
 			"entry": "index.js",
-			"publicDir": "web"
+			"publicDir": "dist/web",
+			"api": 1,
+			"runtime": "react19-astryx0.7.15",
+			"styles": ["schedules.css"]
 		}
 	},
 	"services": ["schedules"],
 	"actions": [
 		{
-			"id": "list",
+			"id": "deliveries",
 			"version": 1,
+			"scope": "conversation",
+			"permission": "read",
+			"effect": "read",
+			"timeoutMs": 5000,
+			"input": {
+				"type": "object",
+				"properties": {
+					"id": {
+						"type": "string",
+						"maxLength": 160
+					}
+				},
+				"required": ["id"]
+			},
+			"output": {
+				"type": "object",
+				"properties": {
+					"originalBinding": {
+						"type": "boolean"
+					},
+					"items": {
+						"type": "array",
+						"maxItems": 32,
+						"items": {
+							"type": "object",
+							"properties": {
+								"id": {
+									"type": "string",
+									"maxLength": 160
+								},
+								"run": {
+									"type": "integer",
+									"minimum": 1,
+									"maximum": 32
+								},
+								"status": {
+									"enum": ["queued", "placed", "done", "unanswered", "unknown"]
+								}
+							},
+							"required": ["id", "run", "status"]
+						}
+					}
+				},
+				"required": ["originalBinding", "items"]
+			}
+		},
+		{
+			"id": "list",
+			"version": 2,
 			"scope": "conversation",
 			"permission": "read",
 			"effect": "read",
@@ -28,6 +80,9 @@
 			"output": {
 				"type": "object",
 				"properties": {
+					"canWrite": {
+						"type": "boolean"
+					},
 					"schedules": {
 						"type": "array",
 						"maxItems": 128,
@@ -101,6 +156,9 @@
 								"deliveryId": {
 									"type": "string",
 									"maxLength": 160
+								},
+								"cancellationRequested": {
+									"type": "boolean"
 								}
 							},
 							"required": [
@@ -114,17 +172,18 @@
 								"maxRuns",
 								"completed",
 								"state",
-								"jobId"
+								"jobId",
+								"cancellationRequested"
 							]
 						}
 					}
 				},
-				"required": ["schedules"]
+				"required": ["schedules", "canWrite"]
 			}
 		},
 		{
 			"id": "add",
-			"version": 1,
+			"version": 2,
 			"scope": "conversation",
 			"permission": "steer",
 			"effect": "model",
@@ -224,6 +283,9 @@
 					"deliveryId": {
 						"type": "string",
 						"maxLength": 160
+					},
+					"cancellationRequested": {
+						"type": "boolean"
 					}
 				},
 				"required": [
@@ -237,13 +299,14 @@
 					"maxRuns",
 					"completed",
 					"state",
-					"jobId"
+					"jobId",
+					"cancellationRequested"
 				]
 			}
 		},
 		{
 			"id": "cancel",
-			"version": 1,
+			"version": 2,
 			"scope": "conversation",
 			"permission": "steer",
 			"effect": "write",
@@ -328,6 +391,9 @@
 					"deliveryId": {
 						"type": "string",
 						"maxLength": 160
+					},
+					"cancellationRequested": {
+						"type": "boolean"
 					}
 				},
 				"required": [
@@ -341,7 +407,8 @@
 					"maxRuns",
 					"completed",
 					"state",
-					"jobId"
+					"jobId",
+					"cancellationRequested"
 				]
 			}
 		}
@@ -349,7 +416,7 @@
 	"commands": [
 		{
 			"id": "schedules",
-			"title": "Open Scheduled Inputs",
+			"title": "打开定时输入",
 			"slash": "schedule",
 			"interface": "schedules"
 		}
@@ -357,7 +424,7 @@
 	"interfaces": [
 		{
 			"id": "schedules",
-			"title": "Scheduled Inputs",
+			"title": "定时输入",
 			"slot": "page",
 			"scope": "conversation",
 			"export": "Schedules",

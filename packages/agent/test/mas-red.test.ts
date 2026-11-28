@@ -3,7 +3,7 @@ import { test } from "node:test";
 import { readFile } from "node:fs/promises";
 import { readStorageText } from "./native-storage.ts";
 import { createRuntime } from "../src/index.ts";
-import { runtimeFixture } from "./runtime-fixture.ts";
+import { runtimeFixture, runtimeLimits } from "./runtime-fixture.ts";
 
 async function catalog(runtime: Awaited<ReturnType<typeof createRuntime>>) {
 	assert.equal(
@@ -30,7 +30,7 @@ function walCommitCount(wal: Buffer): number {
 }
 
 test("M2: configuration and membership are atomic; rejected batch has no partial members", async () => {
-	const m = await runtimeFixture();
+	const m = await runtimeFixture({}, { ...runtimeLimits, maxConversations: 0 });
 	try {
 		const c = await catalog(m.runtime);
 		await assert.rejects(

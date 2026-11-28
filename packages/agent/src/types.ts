@@ -1,5 +1,46 @@
+import type { Models, ModelThinkingLevel, Model, Api } from "@earendil-works/pi-ai";
+
 export type Hook = "real_context.write" | "context_artifacts.write";
 export type Grant = Hook | "input.submit" | "branch.control" | "model.infer";
+export interface StorageMaintenanceWork {
+	readonly pendingTasks: number;
+	readonly queuedInputs: number;
+	readonly pendingRecords: number;
+	readonly fingerprint: string;
+	readonly sample: readonly {
+		readonly kind: "task" | "input" | "record";
+		readonly id: string;
+		readonly conversationId: string;
+		readonly state: string;
+		readonly definition?: string;
+	}[];
+	readonly sampleTruncated: boolean;
+}
+/** Trusted offline access. Does not construct a Harness, scheduler, model or tool. */
+export interface StorageMaintenanceOptions {
+	readonly storageDir: string;
+	readonly expectedSessionId?: string;
+	readonly stores: readonly RuntimeStoreOptions[];
+}
+export interface StorageMaintenance {
+	readonly identity: {
+		readonly sessionId: string;
+		readonly storageDir: string;
+		readonly cwd?: string;
+		readonly kind: "runtime" | "compresser";
+	};
+	snapshot(namespace: string): Promise<RuntimeStoreSnapshot>;
+	work(): Promise<StorageMaintenanceWork>;
+	commit(
+		changes: readonly {
+			readonly namespace: string;
+			readonly expectedVersion: number;
+			readonly data: JsonObject;
+		}[],
+	): Promise<void>;
+	backup(destination: string): Promise<{ readonly sessionId: string; readonly file: string }>;
+	close(): Promise<void>;
+}
 export interface WriterRecoveryOptions {
 	readonly storageDir: string;
 	readonly expectedClaim: { readonly pid: number; readonly nonce: string };
@@ -31,7 +72,7 @@ export interface Receipt {
 	readonly entryId?: string;
 	readonly reason?: string;
 	/** Generation outcome is independent of whether this input was persisted. */
-	readonly generation?: { readonly status: "blocked"; readonly reason: string };
+	readonly generation?: { readonly status: "blocked" | "failed"; readonly reason: string };
 }
 export interface View {
 	/** Storage/provenance identity; sessionId keeps its legacy meaning. */
@@ -47,6 +88,8 @@ export interface View {
 	readonly epoch: number;
 	readonly generation: number;
 	readonly leafId: string | null;
+	/** False for a cold metadata view: entries/context are not a complete execution frame and leafId is unknown. */
+	readonly historyLoaded?: boolean;
 	readonly entries: readonly { id: string; type: string; role?: string; text?: string }[];
 	readonly context: readonly { role: string; text: string }[];
 	readonly autoCompaction: boolean;
@@ -117,9 +160,13 @@ export interface ProjectedEntryDTO {
 }
 export interface ModelDTO {
 	readonly key: string;
+	readonly provider?: string;
+	readonly input?: readonly ("text" | "image")[];
+	readonly cost?: Readonly<Model<Api>["cost"]>;
 	readonly model: string;
 	readonly name: string;
 	readonly reasoning: boolean;
+	readonly thinkingLevels?: readonly ModelThinkingLevel[];
 	readonly contextWindow: number;
 	readonly maxOutputTokens: number;
 	readonly available: boolean;
@@ -395,18 +442,55 @@ export interface InferencePolicy {
 	readonly maxOutputTokens: number;
 	readonly timeoutMs: number;
 }
+/** Each ceiling is a non-negative safe integer; zero leaves that Session dimension unlimited. */
 export interface RuntimeLimits {
 	readonly maxConversations: number;
 	/** Conservative, durable reservations; cancelled/unknown attempts are not refunded. */
 	readonly maxPrimaryAttempts: number;
 	readonly maxAuxiliaryAttempts: number;
 }
+export interface RuntimeBudgetSnapshot {
+	readonly version: number;
+	readonly limits: RuntimeLimits;
+	readonly budget: { readonly primaryAttempts: number; readonly auxiliaryAttempts: number };
+	readonly conversationCount: number;
+}
+export interface RuntimeBudgetChange {
+	readonly actorId: string;
+	readonly requestId: string;
+	readonly expectedVersion: number;
+	readonly limits: RuntimeLimits;
+	readonly reason: string;
+}
+export interface RuntimeBudgetReceipt {
+	readonly version: number;
+	readonly source: "bootstrap" | "management";
+	readonly actorId: string;
+	readonly requestId: string;
+	readonly reason: string;
+	readonly at: number;
+	readonly before: RuntimeLimits;
+	readonly after: RuntimeLimits;
+	readonly budget: RuntimeBudgetSnapshot["budget"];
+	readonly conversationCount: number;
+	readonly addedProfiles: readonly string[];
+}
+export interface RuntimeBudgetQuery {
+	readonly beforeVersion?: number;
+	readonly limit?: number;
+}
+export interface RuntimeBudgetPage {
+	readonly items: readonly RuntimeBudgetReceipt[];
+	readonly nextBeforeVersion?: number;
+}
 export interface ConversationProfile {
 	readonly id: string;
+	readonly execution?: import("./execution-types.ts").ExecutionConfiguration;
 	/** Bootstrap-approved project directory; inherits HostOptions.cwd when omitted. */
 	readonly cwd?: string;
-	/** Bootstrap-approved ID on the Runtime provider; inherits the default when omitted. */
+	/** Native provider/model key (or legacy provider model ID); inherits the default when omitted. */
 	readonly model?: string;
+	readonly thinkingLevel?: ModelThinkingLevel;
 	readonly systemPrompt?: string;
 	readonly tools?: HostOptions["tools"];
 }
@@ -422,18 +506,29 @@ export interface RuntimeContextSource {
 	/** Explicit approved profile selection; no implicit activation by a WebUI facet. */
 	readonly profiles: readonly string[];
 	render(
-		input: Readonly<{ target: ConversationRef; signal: AbortSignal | undefined }>,
+		/** Current approved native Conversation cwd, including later directory changes. */
+		input: Readonly<{ target: ConversationRef; cwd: string; signal: AbortSignal | undefined }>,
 	): RuntimeContextValue | Promise<RuntimeContextValue>;
 }
 export interface ConversationConfiguration {
 	readonly model: string;
 	readonly cwd: string;
+	readonly thinkingLevel?: ModelThinkingLevel;
 }
-export type ConversationConfigurationChange = { readonly model?: string; readonly cwd?: string };
+export type ConversationConfigurationChange = {
+	readonly model?: string;
+	readonly cwd?: string;
+	readonly thinkingLevel?: ModelThinkingLevel;
+};
 export interface RuntimeOptions extends HostOptions {
+	/** Fixed, trusted Agent contributions; each explicitly selects its allowed profiles and starts disabled. */
+	readonly agentFacets?: readonly import("./agent-facet.ts").AgentFacet[];
+	/** Product cold browsing is opt-in; independent SDK hosts keep the existing eager frame behavior. */
+	readonly observation?: "lazy" | "eager";
 	/** Explicit server directory roots; defaults to the approved profiles' cwd trees. Not an OS sandbox. */
 	readonly cwdRoots?: readonly string[];
-	readonly limits: RuntimeLimits;
+	/** Omit to start without Session ceilings or to reopen with the persisted policy. A changed explicit bootstrap policy is audited. */
+	readonly limits?: RuntimeLimits;
 	/** Trusted UUID for create-once storage placement; an existing directory requires explicit reopen. */
 	readonly reservedSessionId?: string;
 	/** Additional bootstrap-approved profiles; default inherits HostOptions. */
@@ -507,15 +602,47 @@ export interface DisplayReceipt {
 	readonly requestId: string;
 	readonly entryId: string;
 }
+/** A source-bound display content reference; it grants no read authority. Offsets use source-encoded bytes. */
+export type ConversationContentReference = JsonObject & {
+	readonly id: string;
+	readonly source: "entry" | "live";
+	/** Required for committed entry content; absent for a current live value. */
+	readonly entryId?: string;
+	/** Attribution only. The product may omit an inherited owner that is outside the reader's resource scope. */
+	readonly sourceConversationId?: string;
+	readonly taskId?: string;
+	readonly callId?: string;
+	readonly revision: string;
+	readonly path: string;
+	readonly encoding: "text" | "json" | "base64";
+	readonly byteLength: number;
+	/** True only when the inline projection retains the complete semantic value. */
+	readonly previewComplete: boolean;
+};
+export interface ConversationContentRange {
+	readonly offset: number;
+	readonly length: number;
+}
+export interface ConversationContentChunk {
+	readonly reference: ConversationContentReference;
+	readonly text: string;
+	readonly offset: number;
+	readonly nextOffset: number;
+	readonly complete: boolean;
+}
 export interface TranscriptMessage {
 	readonly role: "user" | "assistant" | "toolResult";
-	readonly content: string | readonly JsonObject[];
+	readonly content:
+		| string
+		| readonly (JsonObject & { readonly contentReference?: ConversationContentReference })[];
+	readonly contentReference?: ConversationContentReference;
 	readonly toolCallId?: string;
 	readonly toolName?: string;
 	readonly isError?: boolean;
 	readonly stopReason?: string;
 	/** Provider-reported error, retained verbatim rather than inferred from reply text. */
 	readonly errorMessage?: string;
+	readonly errorReference?: ConversationContentReference;
 }
 export interface ConversationReadOptions {
 	readonly limit?: number;
@@ -534,7 +661,7 @@ export interface ConversationSnapshot {
 		readonly kind: string;
 		readonly taskId?: string;
 		readonly messages: readonly TranscriptMessage[];
-		readonly display?: DisplayWrite;
+		readonly display?: DisplayWrite & { readonly contentReference?: ConversationContentReference };
 	}[];
 	readonly entriesTruncated: boolean;
 	/** Present only when earlier entries remain; use as the next page's exclusive boundary. */
@@ -548,9 +675,57 @@ export interface ConversationSnapshot {
 			readonly status: "pending" | "running" | "done";
 			readonly taskId?: string;
 			readonly output?: string;
+			readonly contentReference?: ConversationContentReference;
+			/** Native capture omissions, independent of display-preview clipping. */
+			readonly droppedBytes?: number;
+			readonly droppedLines?: number;
 		}[];
 	};
 	readonly usage: UsageDTO;
+}
+export interface ConversationPreviewOptions extends ConversationReadOptions {
+	/** At most 256 KiB; the reader stops at an entry boundary and supplies the next cursor. */
+	readonly maxBytes?: number;
+}
+/** Stable persisted identity, without a current execution binding. */
+export interface ConversationHistoryAddress {
+	readonly sessionId: string;
+	readonly conversationId: string;
+}
+export interface ConversationHistoryPage {
+	readonly reference: ConversationHistoryAddress;
+	/** Last committed native sequence visible in this page's short read snapshot. */
+	readonly sequence: string;
+	readonly entries: ConversationSnapshot["entries"];
+	readonly entriesTruncated: boolean;
+	readonly olderBeforeId?: string;
+	/** Last saved presentation; does not assert that any task is currently running. */
+	readonly saved: ConversationSnapshot["live"];
+	readonly usage: UsageDTO;
+}
+export type StoredConversationQuery =
+	| { readonly kind: "source" }
+	| { readonly kind: "page"; readonly options?: ConversationPreviewOptions }
+	| {
+			readonly kind: "content";
+			readonly content: ConversationContentReference;
+			readonly range: ConversationContentRange;
+	  };
+export type StoredConversationResult =
+	| { readonly kind: "source"; readonly reference: ConversationHistoryAddress; readonly sequence: string }
+	| { readonly kind: "page"; readonly page: ConversationHistoryPage }
+	| {
+			readonly kind: "content";
+			readonly reference: ConversationHistoryAddress;
+			readonly chunk: ConversationContentChunk;
+	  };
+export interface StoredConversationOptions {
+	/** Trusted server-selected existing Pakka source; never accept this path from a browser. */
+	readonly sessionFile: string;
+	readonly reference: ConversationHistoryAddress;
+	/** Synchronous current read-authority check, repeated after asynchronous work and cleanup. */
+	readonly check: () => void;
+	readonly signal?: AbortSignal;
 }
 export interface ConversationSpec {
 	readonly key: string;
@@ -568,7 +743,9 @@ export interface RuntimeView {
 /** Bootstrap-owned catalog. Data never grants authority and commands never expose native handles. */
 export interface CatalogOptions {
 	readonly namespace: string;
-	readonly maxDeliveries: number;
+	/** @deprecated Ignored compatibility input. Retained deliveries have no cumulative count limit. */
+	readonly maxDeliveries?: number;
+	/** Maximum queued/placed deliveries per recipient, independent of retained history. */
 	readonly maxPending: number;
 }
 export type MemberLifetime = "persistent" | "temporary" | "task-bound" | "background";
@@ -645,6 +822,23 @@ export interface DeliveryReceipt {
 	readonly entryId?: string;
 	readonly reason?: string;
 }
+export type CatalogConfigurationSelection =
+	| { readonly kind: "agent"; readonly change: ConversationConfigurationChange }
+	| { readonly kind: "profile"; readonly profile: string };
+export interface CatalogConfigurationIdentity {
+	readonly requestId: string;
+	readonly principal: string;
+}
+export interface CatalogConfigurationRequest extends CatalogConfigurationIdentity {
+	readonly target: ConversationRef;
+	readonly selection: CatalogConfigurationSelection;
+}
+export interface CatalogConfigurationReceipt {
+	readonly original: CatalogConfigurationRequest;
+	/** Historical resulting binding, not a promise that it is still the current binding. */
+	readonly ref: ConversationRef;
+	readonly at: number;
+}
 export interface RuntimeCatalog {
 	/** Read-only observation. The trusted synchronous predicate is evaluated before body/status publication. */
 	history(
@@ -654,6 +848,8 @@ export interface RuntimeCatalog {
 	): Promise<CatalogHistoryPage>;
 	/** Missing originals are returned as null; this never enters admission. */
 	lookupReceipt(id: string, check: () => void): Promise<DeliveryReceipt | null>;
+	/** Pure exact-request observation; no admission hook, input placement or execution. */
+	lookupRequest(spec: CatalogDeliverySpec, check: () => void): Promise<DeliveryReceipt | null>;
 	/** Recipient-only delivery metadata; no peer transcript or payload body. */
 	received(ref: ConversationRef, check: () => void): Promise<readonly DeliveryReceipt[]>;
 	checkInvocation(ref: ConversationRef, scope: ToolInvocationScope): void;
@@ -665,12 +861,24 @@ export interface RuntimeCatalog {
 		expectedVersion: number,
 		check: () => void,
 	): Promise<CatalogSnapshot>;
-	configure(ref: ConversationRef, profile: string, check: () => void): Promise<CatalogMember>;
+	/** Optional request identity retains a receipt atomically with native configuration. Never retry to recover. */
+	configure(
+		ref: ConversationRef,
+		profile: string,
+		check: () => void,
+		request?: CatalogConfigurationIdentity,
+	): Promise<CatalogMember>;
 	configureAgent(
 		ref: ConversationRef,
 		change: ConversationConfigurationChange,
 		check: () => void,
+		request?: CatalogConfigurationIdentity,
 	): Promise<CatalogMember>;
+	/** Exact original read; accepts its historical binding and never applies a configuration. */
+	configurationReceipt(
+		original: CatalogConfigurationRequest,
+		check: () => void,
+	): Promise<CatalogConfigurationReceipt | null>;
 	deliver(spec: CatalogDeliverySpec, check: () => void): Promise<DeliveryReceipt>;
 	receipt(id: string, check: () => void): Promise<DeliveryReceipt>;
 	wait(id: string, check: () => void, signal?: AbortSignal): Promise<DeliveryReceipt>;
@@ -693,17 +901,129 @@ export interface RuntimeStore {
 	snapshot(): Promise<RuntimeStoreSnapshot>;
 	compareAndSet(expectedVersion: number, data: JsonObject, check: () => void): Promise<RuntimeStoreSnapshot>;
 }
+/** Namespace-scoped bootstrap storage. Each operation revalidates current host authority. */
+export interface RuntimeRecordsOptions {
+	readonly namespace: string;
+}
+export interface RuntimeRecord {
+	readonly key: string;
+	readonly version: number;
+	readonly data: JsonObject | null;
+}
+export interface RuntimeRecordsCommit {
+	readonly requestId: string;
+	readonly reads: readonly { readonly key: string; readonly version: number }[];
+	readonly writes: readonly { readonly key: string; readonly data: JsonObject }[];
+	readonly append: readonly { readonly stream: string; readonly data: JsonObject }[];
+	/** Active responsibilities, updated atomically with their exact-key writes. null retires one. */
+	readonly work?: readonly { readonly key: string; readonly state: string | null }[];
+	/** Permanently freeze this namespace’s legacy RuntimeStore at the exact version for migration. */
+	readonly freezeLegacy?: { readonly expectedVersion: number; readonly maxBytes: number };
+}
+export interface RuntimeRecordsReceipt {
+	readonly requestId: string;
+	readonly sequence: number;
+	readonly fingerprint: string;
+}
+export interface RuntimeRecordsQuery {
+	readonly stream: string;
+	readonly cursor?: string;
+	readonly limit?: number;
+	readonly maxBytes?: number;
+}
+export interface RuntimeRecordsPage {
+	/** Cursor before the first item, for projections whose decoded byte budget is smaller. */
+	readonly startCursor: string | null;
+	readonly items: readonly { readonly position: number; readonly data: JsonObject }[];
+	readonly cursor: string | null;
+}
+/** Finite multi-record transactions and append-only streams in the owning Session. */
+export interface RuntimeRecords {
+	get(key: string, check: () => void): Promise<RuntimeRecord>;
+	receipt(requestId: string, check: () => void): Promise<RuntimeRecordsReceipt | null>;
+	commit(input: RuntimeRecordsCommit, check: () => void): Promise<RuntimeRecordsReceipt>;
+	page(query: RuntimeRecordsQuery, check: () => void): Promise<RuntimeRecordsPage>;
+	/** Small stream revision; no item bodies are materialized. */
+	revision(stream: string, check: () => void): Promise<number>;
+}
 /** Trusted bootstrap/control plane, not an agent-facing permission grant. */
+export interface ArtifactHistoryReference {
+	readonly sessionId: string;
+	readonly conversationId: string;
+	readonly strategyId: string;
+	readonly version: number;
+	readonly ordinal: number;
+	readonly digest: string;
+}
+export interface ArtifactHistoryItem {
+	readonly ref: ArtifactHistoryReference;
+	readonly kind: string;
+	readonly bytes: number;
+}
+export interface ArtifactHistoryQuery {
+	readonly afterVersion?: number;
+	readonly through?: number;
+	readonly cursor?: string;
+	readonly limit?: number;
+	readonly maxBytes?: number;
+}
+export interface ArtifactHistoryPage {
+	readonly through: number;
+	readonly items: readonly ArtifactHistoryItem[];
+	readonly startCursor: string | null;
+	readonly cursor: string | null;
+}
+export interface ArtifactHistory {
+	head(): Promise<number>;
+	page(query?: ArtifactHistoryQuery): Promise<ArtifactHistoryPage>;
+	read(reference: ArtifactHistoryReference, maxBytes?: number): Promise<JsonValue>;
+}
+export interface HistoricalEntryInput {
+	readonly entryId: string;
+	readonly contentVersion: string;
+	readonly offset?: number;
+	readonly limit?: number;
+}
+export interface HistoricalEntryContent {
+	readonly entryId: string;
+	readonly contentVersion: string;
+	readonly text: string;
+	readonly offset: number;
+	readonly nextOffset: number | null;
+}
 export interface Runtime {
 	root(): Host;
+	/** Exact archived messages, independent of current projection. Unrecoverable effective versions are refused. */
+	readHistoricalEntry(
+		ref: ConversationRef,
+		input: HistoricalEntryInput,
+		check: () => void,
+	): Promise<HistoricalEntryContent>;
+	historicalWork(
+		options: import("./historical-types.ts").HistoricalWorkOptions,
+	): import("./historical-types.ts").HistoricalWork;
+	/** Passive exact-version access to one strategy's committed Conversation artifacts. */
+	artifactHistory(ref: ConversationRef, strategyId: string, check: () => void): ArtifactHistory;
 	view(): RuntimeView;
+	budgetPolicy(check: () => void): Promise<RuntimeBudgetSnapshot>;
+	changeBudget(input: RuntimeBudgetChange, check: () => void): Promise<RuntimeBudgetReceipt>;
+	budgetReceipt(
+		identity: Pick<RuntimeBudgetChange, "actorId" | "requestId">,
+		check: () => void,
+	): Promise<RuntimeBudgetReceipt | null>;
+	budgetHistory(query: RuntimeBudgetQuery, check: () => void): Promise<RuntimeBudgetPage>;
 	/** Host-only public metadata; contains no credentials, instructions or tool code. */
 	profileChoices(): readonly { readonly id: string; readonly model: string; readonly cwd: string }[];
+	/** Detached native catalog; never credentials, endpoints or mutable Models. */
+	modelChoices(): Promise<readonly ModelDTO[]>;
+	/** Current catalog membership only; this does not grant access or resolve credentials. */
+	modelAllowed(selection: string): boolean;
 	configuration(ref: ConversationRef): Promise<ConversationConfiguration>;
 	directoryRoots(profiles?: readonly string[]): readonly string[];
 	createConversation(spec: ConversationSpec): Promise<ConversationRef>;
 	catalog(options: CatalogOptions): RuntimeCatalog;
 	store(options: RuntimeStoreOptions): RuntimeStore;
+	records(options: RuntimeRecordsOptions): RuntimeRecords;
 	jobs(options: RuntimeJobOptions): RuntimeJobs;
 	/** Passive scoped snapshot. The check runs before native acquisition and again before publishing. */
 	readConversation(
@@ -711,6 +1031,23 @@ export interface Runtime {
 		check: () => void,
 		options?: ConversationReadOptions,
 	): Promise<ConversationSnapshot>;
+	/** Cheap process-local change marker; never a durable entry version or an authorization. */
+	observationRevision(ref: ConversationRef, check: () => void): number;
+	/** Materialize a read-only complete execution frame when explicitly needed; never resumes tasks by itself. */
+	prepareExecution(ref: ConversationRef, check: () => void): Promise<void>;
+	/** Bounded passive display projection, independent of the execution frame and complete archive. */
+	previewConversation(
+		ref: ConversationRef,
+		check: () => void,
+		options?: ConversationPreviewOptions,
+	): Promise<ConversationSnapshot>;
+	/** Read the original published content range, under current authority and exact source revision. */
+	readContent(
+		ref: ConversationRef,
+		reference: ConversationContentReference,
+		range: ConversationContentRange,
+		check: () => void,
+	): Promise<ConversationContentChunk>;
 	/** Durable display-only record, never a model input; retries require an identical actor/request/payload. */
 	writeDisplay(ref: ConversationRef, input: DisplayWrite, check: () => void): Promise<DisplayReceipt>;
 	conversation(ref: ConversationRef): Promise<Host>;
@@ -718,12 +1055,19 @@ export interface Runtime {
 	close(): Promise<void>;
 }
 export interface HostOptions {
+	/** Explicit environment ownership and native tool selection; omitted means no ambient execution fallback. */
+	execution?: import("./execution-types.ts").ExecutionConfiguration;
 	backend?: "durable";
 	cwd: string;
 	dataDir: string;
-	endpoint: string;
+	/** Trusted native Models/configuration source. Read again for each use, as in Durable. */
+	models?: Models | (() => Models);
+	/** Legacy compatibility only; not required when native Models are supplied. */
+	endpoint?: string;
+	/** Native provider/model key, or an empty string for an unselected native model. */
 	model: string;
-	apiKey: string;
+	apiKey?: string;
+	thinkingLevel?: ModelThinkingLevel;
 	/** Optional trusted host source. Called for each future primary credential resolution; no ambient credential discovery. */
 	resolveApiKey?: () => string | Promise<string>;
 	systemPrompt?: string;

@@ -34,7 +34,7 @@ Server config 的结构示例（全部值均为占位符，不是可用凭据）
 			"maxAuxiliaryAttempts": 8
 		}
 	},
-	"mas": { "namespace": "product", "maxDeliveries": 128, "maxPending": 8 },
+	"mas": { "namespace": "product", "maxPending": 8 },
 	"members": [
 		{ "key": "root", "owner": "operator" },
 		{ "key": "peer", "owner": "peer" }
@@ -51,6 +51,8 @@ Server config 的结构示例（全部值均为占位符，不是可用凭据）
 	"http": { "port": 0, "origins": [], "maxPending": 32 }
 }
 ```
+
+省略 `runtime.limits` 时，新 Session 三项均为 0；重开原 Session 时保留其持久政策，不将新默认覆盖旧配置。显式给出时必须给齐三项；改变显式 bootstrap 值仍按原规则产生审计，未改变的值不覆盖管理修改。MAS 的 `maxPending`、inference policy 的 `maxCalls` / `maxJobCalls` 等仍独立校验。
 
 `runtime` 的 JSON bootstrap 接受以上基础字段、`reopenSessionFile`、`reservedSessionId`，以及 `profiles: [{id, systemPrompt}]`。可选 inference 装配接受闭合的 `runtime.inference: {models, policies}`，模型/凭据/endpoint 和有限预算仅由宿主配置；选择方式和限制见 Dynamite 产品 API。profile 默认为 gate 的 `default`；未批准 profile 会由 gate 拒绝。可选 `devpack` 的批准配置、RPC profile-management 组合拒绝和正常恢复范围见 [产品支持矩阵](MAS-PRODUCT-SUPPORT.md)。functions、额外 tools/extensions/config 均不属于该 JSON bootstrap；更复杂的程序化配置仍由可信 composition root 使用 `createMasServer()`，不能从 RPC 传入。
 
@@ -91,7 +93,7 @@ HTTP `POST /rpc`，Content-Type `application/json`，Authorization `Bearer <dedi
 
 命令：`hello`、`snapshot`、`spawn`、`send`、`reply`、`receipt`、`wait`、`withdraw`、`inspect`、`abort`、`retire`、`configure`、`fork`、`revoke`。`spawn` 只创建当前 Session 的 persistent 成员，owner 由 server principal 确定；本版 RPC 不开放跨 Session template 申请或 task-bound lifetime。
 
-- `send`：`{op, target: AgentRef, input: {requestId, text, mode?}}`。mode 为 `prompt|steer|followUp`，后两者另需 `steer` grant，保留原生 placement timing。slash command 不属于普通 send。
+- `send`：`{op, target: AgentRef, input: {requestId, text, mode?}}`。mode 为 `prompt|steer|followUp`，后两者另需 `steer` grant，保留原生 placement timing。此端口不分发 WebUI 命令；斜杠开头的字面文本仍可发送。
 - `reply`：`{op, receiptId, input}`，目标/来源从原始持久回执推导，不由调用者声明。
 - `receipt|wait|withdraw`：`{op, id}`；复制另一身份的 receipt 不会取得访问权。
 - `spawn`：`{op, key, profile?}`；`configure` 只选择已批准 profile，`fork` 需要合法 entryId/owner。

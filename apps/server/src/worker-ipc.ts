@@ -1,5 +1,6 @@
 import type { RuntimeOptions, CatalogOptions } from "@pakka/agent";
-import type { RelayEnvelope, MasGrant } from "@pakka/mas";
+import type { RelayEnvelope } from "@pakka/mas";
+import { validateMasProfileTelegraph, type MasProfilePacksOptions } from "@pakka/mas-devpack/agent";
 export type WorkerCommand =
 	| "init"
 	| "view"
@@ -29,10 +30,7 @@ export interface WorkerConfiguration {
 	readonly runtime: RuntimeOptions & { readonly reservedSessionId: string };
 	readonly catalog: CatalogOptions;
 	/** Trusted named contributions; no function bodies, endpoints or arbitrary code cross IPC. */
-	readonly devpack?: {
-		readonly profiles: Readonly<Record<string, readonly MasGrant[]>>;
-		readonly operationTimeoutMs?: number;
-	};
+	readonly devpack?: MasProfilePacksOptions;
 }
 export function object(value: unknown): value is Record<string, unknown> {
 	return !!value && typeof value === "object" && !Array.isArray(value);
@@ -95,7 +93,7 @@ export function configuration(value: unknown): asserts value is WorkerConfigurat
 			runtime.apiKey,
 			runtime.reservedSessionId,
 		].every((field) => typeof field === "string" && field.length > 0) ||
-		!object(runtime.limits) ||
+		(runtime.limits !== undefined && !object(runtime.limits)) ||
 		(runtime.cwdRoots !== undefined &&
 			(!Array.isArray(runtime.cwdRoots) ||
 				!runtime.cwdRoots.length ||
@@ -126,7 +124,7 @@ export function configuration(value: unknown): asserts value is WorkerConfigurat
 		const pack = value.devpack;
 		if (!object(pack) || !object(pack.profiles) || !Object.keys(pack.profiles).length)
 			throw new Error("Invalid worker DevPack preset");
-		keys(pack, ["profiles", "operationTimeoutMs"]);
+		keys(pack, ["profiles", "operationTimeoutMs", "telegraphByProfile"]);
 		const profiles = new Set([
 			"default",
 			...(Array.isArray(runtime.profiles)
@@ -155,6 +153,7 @@ export function configuration(value: unknown): asserts value is WorkerConfigurat
 				list.some((grant) => typeof grant !== "string" || !grants.includes(grant))
 			)
 				throw new Error("Unapproved worker DevPack profile/grant");
+		validateMasProfileTelegraph(pack.telegraphByProfile, pack.profiles);
 		if (
 			pack.operationTimeoutMs !== undefined &&
 			(!Number.isSafeInteger(pack.operationTimeoutMs) ||
@@ -167,7 +166,7 @@ export function configuration(value: unknown): asserts value is WorkerConfigurat
 	keys(catalog, ["namespace", "maxDeliveries", "maxPending"]);
 	if (
 		!identity(catalog.namespace) ||
-		![catalog.maxDeliveries, catalog.maxPending].every(
+		![catalog.maxPending, ...(catalog.maxDeliveries === undefined ? [] : [catalog.maxDeliveries])].every(
 			(field) => typeof field === "number" && Number.isSafeInteger(field) && field > 0,
 		)
 	)

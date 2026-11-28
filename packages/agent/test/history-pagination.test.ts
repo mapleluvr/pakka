@@ -13,8 +13,15 @@ test(
 			let host = await f.start();
 			const user = host.connect("user", ["input.submit"]);
 			for (let i = 0; i < 130; i++) {
-				await user.submit({ key: "history-" + i, text: "HISTORY-INPUT-" + i + ":END" });
+				const receipt = await user.submit({ key: "history-" + i, text: "HISTORY-INPUT-" + i + ":END" });
 				await host.waitForIdle();
+				assert.equal(f.requests.length, i + 1, "each history seed must reach the real local provider");
+				assert.equal(user.receipt(receipt.id)?.state, "committed");
+				assert.equal(
+					user.receipt(receipt.id)?.generation,
+					undefined,
+					"history seeds must complete without a failed generation",
+				);
 			}
 			let reader = 0;
 			const frame = () => {

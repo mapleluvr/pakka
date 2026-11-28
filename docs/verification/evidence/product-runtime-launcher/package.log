@@ -1,0 +1,85 @@
+
+> pakka-workspace@0.1.0 smoke:package
+> npm run build && node scripts/pack-smoke.mjs
+
+
+> pakka-workspace@0.1.0 build
+> npm run build --workspaces && npm run build:webui --workspace=@pakka/mas-devpack
+
+
+> @pakka/protocol@0.1.0 build
+> tsc -p tsconfig.json
+
+
+> @pakka/agent@0.7.0 build
+> node ../../scripts/verify-durable-patch.mjs && node -e "require('node:fs').rmSync('dist', { recursive: true, force: true })" && tsc -p tsconfig.json
+
+Verified pi-durable 1.4.0-pakka.2 (12d21b230d40706618db4ac83747b9189b7d9070f023c2705bc5c8b521d90ecd)
+
+> @pakka/mas@0.4.0 build
+> tsc -p tsconfig.json
+
+
+> @pakka/mas-devpack@0.2.0 build
+> tsc -p tsconfig.json
+
+
+> @pakka/client@0.1.0 build
+> tsc -p tsconfig.json
+
+
+> @pakka/server@0.5.0 build
+> tsc -p tsconfig.json
+
+
+> @pakka/webui@0.1.0 build
+> tsc -p tsconfig.json
+
+
+> @pakka/cli@0.1.0 build
+> tsc -p tsconfig.json
+
+
+> @pakka/mas-devpack@0.2.0 build:webui
+> tsc -p tsconfig.webui.json && node scripts/write-manifest.mjs
+
+Headless DevPack public Agent/workbench imports passed with no WebUI, Preact or Coding Agent installed or resolvable; no model dispatch.
+
+{"status":"passed","consumer":"C:\\Users\\mapleland\\AppData\\Local\\Temp\\pakka-packed-consumer-JEAiTE","entry":"file:///C:/Users/mapleland/AppData/Local/Temp/pakka-packed-consumer-JEAiTE/node_modules/@pakka/agent/dist/index.js","versions":{"pi-ai":"1.4.0","chord":"1.4.0","pi-durable":"1.4.0-pakka.2","pi-telemetry":"1.4.0"},"httpRequests":7,"privateSubpath":"rejected","auxiliaryWireCaps":[64,128],"projectorAfterReload":"verified","rangeOmission":"verified","generationBlock":"verified","sdkCodingAgentDependency":"absent","webuiConfigurationDependency":"approved","artifactVersion":1}
+
+{"status":"passed","consumer":"C:\\Users\\mapleland\\AppData\\Local\\Temp\\pakka-packed-consumer-JEAiTE","httpRequests":3,"session":"shared","contexts":"independent","journals":"independent","quotas":"persistent","reopen":"zero-dispatch","profileModel":"exact-approved-id-persisted","observation":"scoped-frozen-passive","display":"reopen-dedup-zero-model-contribution"}
+
+{"consumer":"execution","requests":5,"nativeFile":"NEW","argvFile":"ARGV","cleaned":1,"root":"C:\\Users\\mapleland\\AppData\\Local\\Temp\\pakka-execution-consumer-2EMuxs"}
+
+{"status":"passed","consumer":"C:\\Users\\mapleland\\AppData\\Local\\Temp\\pakka-packed-consumer-JEAiTE","httpRequests":3,"activation":"single-commit","delivery":"native-persistent","contexts":"independent","owner":"checked","reopen":"zero-dispatch"}
+
+Installed multi-Session broker/real worker smoke passed (3 local HTTP requests; lost admission reconciled after all processes reopened, 0 extra requests).
+
+installed DevPack smoke passed: native tools/revocation/temporary worker, 8 HTTP requests
+
+Pakka installed server/client/CLI smoke passed: 2 local HTTP requests; fresh reconnect and repeated admission produced no extra dispatch.
+
+{"installedShellLauncher":"passed","shell":"pwsh","configRequired":false,"nativeModelSettings":true,"sameSessionReopened":true}
+
+Pakka installed product smoke passed: 18 local HTTP requests, 7 native tool calls; dynamic reopen, native lifetimes, approved A2A/reply and spent quota verified without hidden replay.
+
+Installed WebUI services passed: 1 local HTTP; identity, resource scope, passive read/display, finite v2 exports, native jobs and original admission preserved on reopen.
+
+Installed WebUI product passed: real executable/assets/public GUI-only and backend settings extensions, desktop/mobile isolated Chrome, invitation/viewer/revocation, exact approved model selection, private provider replace/clear and scoped usage across normal reopen; 1 local HTTP, 3 charged attempts and no fallback or duplicate model work.
+
+Installed MAS Board passed: actual executable, public Agent/Backend/Client/WebUI exports, native spawn/send/reply, filtered mobile viewer, facet removal/normal reopen, original native receipt/history and 8 retained primary attempts; 8 local HTTP.
+
+{"pocketWorkflows":"ok","httpRequests":2,"cli":true,"sharedAttribution":true,"scopedViewer":true,"realFileAndDiff":true,"normalReopen":true,"originalOperationNoReplay":true,"spentAttempts":2}
+
+Installed controlled workflows verified: 4 model HTTP, real allow/deny, 2 page clicks with visible original-result reconciliation, retry/reopen dedup, mobile viewer and owned cleanup
+
+{"installedNotifications":true,"modelHttp":2,"tlsPushes":3,"nativeWorkerDisplay":true,"unknownNeverReplayed":true,"spentAttempts":2,"evidence":"C:\\Users\\mapleland\\AppData\\Local\\Temp\\pakka-packed-consumer-JEAiTE\\notification-run-3649ec90-5715-486c-a436-cebf1c3b201b"}
+
+{"installedSchedules":true,"modelHttp":2,"spentAttempts":2,"lostResponseNeverReplayed":true,"nativeJobsPreserved":true,"webuiRemovalPreservesWork":true,"evidence":"C:\\Users\\mapleland\\AppData\\Local\\Temp\\pakka-packed-consumer-JEAiTE\\schedules-run-4ccb7495-d3e4-4e12-9b67-5fd9058a83df"}
+
+{"installedMemory":true,"modelHttp":5,"spentAttempts":5,"nativeToolResults":1,"lostResponseNeverReplayed":true,"approvedMemoryOnly":true,"webuiRemovalPreservesRecords":true,"evidence":"C:\\Users\\mapleland\\AppData\\Local\\Temp\\pakka-packed-consumer-JEAiTE\\memory-run-9b43e2dc-51e3-4213-830d-337330569192"}
+
+{"installedHooks":true,"modelHttp":3,"spentAttempts":3,"lostCreationNeverReplayed":true,"unsignedHeaderCannotReplay":true,"keyRotation":true,"webuiRemovalPreservesIngress":true,"viewerPrivateSetupDenied":true,"evidence":"C:\\Users\\mapleland\\AppData\\Local\\Temp\\pakka-packed-consumer-JEAiTE\\hooks-run-1e06b38d-cefe-4bed-9ebb-b93d0ab01c41"}
+
+{"installed":true,"modelHttp":1,"persisted":true,"viewerReadOnly":true}
+

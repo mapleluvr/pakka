@@ -62,8 +62,16 @@ test("WebUI people: concurrent one-time redemption grants exactly one session an
 			resources: [root.conversationId],
 			ttlMs: 60_000,
 		};
+		const store = m.runtime.store({ namespace: "test-people", maxBytes: 262144 });
+		const before = await store.snapshot();
+		assert.equal(await people.lookupInvite(admin, input), null);
+		assert.deepEqual(await store.snapshot(), before, "an absent lookup must not create an invitation");
 		const link = await people.invite(admin, input);
 		assert.ok(link.token);
+		const created = await store.snapshot();
+		assert.deepEqual(await people.lookupInvite(admin, input), link.invite);
+		await assert.rejects(people.lookupInvite(admin, { ...input, ttlMs: 60_001 }), /conflict/i);
+		assert.deepEqual(await store.snapshot(), created, "lookup must not write or retain a replayable secret");
 		const repeat = await people.invite(admin, input);
 		assert.equal(repeat.invite.id, link.invite.id);
 		assert.equal(repeat.token, null, "a previously returned secret is not kept for replay");
@@ -77,6 +85,7 @@ test("WebUI people: concurrent one-time redemption grants exactly one session an
 		const issued = race.find((r) => r.status === "fulfilled");
 		assert.ok(issued?.status === "fulfilled");
 		const auth = await people.authenticate(issued.value.token);
+		await assert.rejects(people.lookupInvite(auth, input), /denied/i);
 		auth.check("send", root.conversationId);
 		assert.throws(() => auth.check("steer", root.conversationId), /denied/i);
 		assert.equal((await people.list(admin)).people.length, 2);
@@ -95,12 +104,13 @@ test("WebUI people: normal writer reopen preserves identity and revocation while
 		const owner = await people.initializeOwner("Owner");
 		let admin = await people.authenticate(owner.token);
 		const root = m.runtime.view().conversations[0]!;
-		const invite = await people.invite(admin, {
+		const original = {
 			requestId: "reopen",
-			role: "driver",
+			role: "driver" as const,
 			resources: [root.conversationId],
 			ttlMs: 60_000,
-		});
+		};
+		const invite = await people.invite(admin, original);
 		assert.ok(invite.token);
 		const user = await people.redeem(invite.token, "Driver");
 		const file = m.runtime.view().sessionFile;
@@ -108,6 +118,7 @@ test("WebUI people: normal writer reopen preserves identity and revocation while
 		reopened = await createRuntime({ ...m.config, reopenSessionFile: file });
 		people = await createPocketPeople({ runtime: reopened, namespace: "test-people" });
 		admin = await people.authenticate(owner.token);
+		assert.deepEqual(await people.lookupInvite(admin, original), { ...invite.invite, status: "redeemed" });
 		const beforeRevoke = await people.authenticate(user.token);
 		beforeRevoke.check("steer", root.conversationId);
 		await assert.rejects(people.initializeOwner("Replacement"), /initialized|exists/i);
@@ -162,6 +173,92 @@ test("WebUI people: expired authority and revoked invitations cannot regain scop
 		await assert.rejects(people.authenticate(owner.token), /denied/i);
 		assert.equal(m.f.requests.length, 0);
 	} finally {
+		await m.close();
+	}
+});
+
+// Receipts must survive writer reopen, share the authority CAS, and never repeat a revocation on replay.
+test("WebUI people: version-one state reads without migration and authority receipts recover exact intent", async () => {
+	const m = await runtimeFixture();
+	let reopened: Awaited<ReturnType<typeof createRuntime>> | undefined;
+	try {
+		let people = await createPocketPeople({ runtime: m.runtime, namespace: "test-people" });
+		const owner = await people.initializeOwner("Owner");
+		let admin = await people.authenticate(owner.token);
+		const invite = await people.invite(admin, {
+			requestId: "receipt-person",
+			role: "viewer",
+			resources: "*",
+			ttlMs: 60000,
+		});
+		assert.ok(invite.token);
+		const reader = await people.redeem(invite.token, "Reader");
+		const root = m.runtime.view().conversations[0]!;
+		const change = {
+			requestId: "authority-original",
+			action: {
+				op: "person.set" as const,
+				personId: reader.person.id,
+				role: "sender" as const,
+				resources: "*" as const,
+			},
+		};
+		const store = m.runtime.store({ namespace: "test-people", maxBytes: 262144 });
+		const modern = await store.snapshot();
+		const { changes: _changes, personalOwnerId: _personalOwnerId, modeGeneration: _modeGeneration, ...legacy } = modern.data;
+		await store.compareAndSet(modern.version, { ...legacy, schema: 1 }, () => {
+			people.current(admin);
+		});
+		const before = await store.snapshot();
+		assert.equal(await people.lookupChange(admin, change), null);
+		assert.deepEqual(
+			await store.snapshot(),
+			before,
+			"reading old schema must not migrate or create a receipt",
+		);
+		const oldAuthority = await people.authenticate(reader.token);
+		const receipt = await people.change(admin, change);
+		const committed = await store.snapshot();
+		assert.equal(committed.version, before.version + 1, "authority and receipt share one CAS");
+		assert.equal(committed.data.schema, 3);
+		assert.deepEqual(committed.data.changes, [receipt]);
+		assert.throws(() => oldAuthority.check("read", root.conversationId), /denied/i);
+		assert.deepEqual(await people.lookupChange(admin, change), receipt);
+		assert.deepEqual(await store.snapshot(), committed);
+		const freshLink = await people.invite(admin, {
+			requestId: "new-device",
+			personId: reader.person.id,
+			role: "sender",
+			resources: "*",
+			ttlMs: 60000,
+		});
+		assert.ok(freshLink.token);
+		const fresh = await people.redeem(freshLink.token, "Reader");
+		const freshAuthority = await people.authenticate(fresh.token);
+		const beforeReplay = await store.snapshot();
+		assert.deepEqual(await people.change(admin, change), receipt);
+		freshAuthority.check("send", root.conversationId);
+		await assert.rejects(
+			people.change(admin, { ...change, action: { ...change.action, role: "viewer" } }),
+			/conflict/i,
+		);
+		assert.deepEqual(await store.snapshot(), beforeReplay, "a replay must not revoke a later login");
+		const file = m.runtime.view().sessionFile;
+		await m.runtime.close();
+		reopened = await createRuntime({ ...m.config, reopenSessionFile: file });
+		people = await createPocketPeople({ runtime: reopened, namespace: "test-people" });
+		admin = await people.authenticate(owner.token);
+		assert.deepEqual(await people.lookupChange(admin, change), receipt);
+		const revoke = {
+			requestId: "original-revoke",
+			action: { op: "person.revoke" as const, id: reader.person.id },
+		};
+		const revoked = await people.change(admin, revoke);
+		assert.deepEqual(await people.lookupChange(admin, revoke), revoked);
+		await assert.rejects(people.authenticate(fresh.token), /denied/i);
+		assert.equal(m.f.requests.length, 0);
+	} finally {
+		await reopened?.close();
 		await m.close();
 	}
 });

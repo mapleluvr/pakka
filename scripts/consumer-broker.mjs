@@ -60,7 +60,7 @@ async function preset(key, reservedSessionId) {
 			reservedSessionId,
 			limits: { maxConversations: 4, maxPrimaryAttempts: 4, maxAuxiliaryAttempts: 1 },
 		},
-		catalog: { namespace: "crew", maxDeliveries: 8, maxPending: 2 },
+		catalog: { namespace: "crew", maxPending: 2 },
 	};
 }
 const one = await preset("one", "63078548-dcc0-430b-b572-787bff5e2358"),

@@ -1,11 +1,29 @@
 import { createHash } from "node:crypto";
 import type { ConversationRef, Runtime, RuntimeStore } from "@pakka/agent";
 import type { PocketAuthority, PocketPeople } from "./pocket-people.js";
+import { decodeTarget } from "@pakka/protocol/extension-rpc";
+import {
+	decodeCollaborationRequest,
+	decodeCollaborationReceipt,
+	decodeCollaborationOutcome,
+	collaborationIntent,
+	type CollaborationRequest,
+	type CollaborationReceipt,
+	type CollaborationOutcome,
+} from "@pakka/protocol/webui";
 
-/** Raised only by a local pre-write CAS guard; never used for storage or opaque callback failures. */
-export class PocketCollaborationConflict extends Error {
-	constructor() {
-		super("Shared note version conflict");
+/** Definite pre-write refusal only; storage and post-commit failures remain opaque. */
+export class PocketCollaborationRefusal extends Error {
+	readonly code: "CONFLICT" | "CAPACITY" | "FORBIDDEN" | "INVALID_REQUEST";
+	constructor(code: PocketCollaborationRefusal["code"], message: string) {
+		super(message);
+		this.code = code;
+		this.name = "PocketCollaborationRefusal";
+	}
+}
+export class PocketCollaborationConflict extends PocketCollaborationRefusal {
+	constructor(message = "Shared note version conflict") {
+		super("CONFLICT", message);
 		this.name = "PocketCollaborationConflict";
 	}
 }
@@ -63,6 +81,10 @@ export interface PocketDriverInput {
 	readonly ttlMs?: number;
 }
 export interface PocketCollaborationClient {
+	write(original: CollaborationRequest): Promise<CollaborationReceipt>;
+	/** Current read authority and exact original request; never re-executes an effect. */
+	lookup(original: CollaborationRequest): Promise<CollaborationReceipt | null>;
+	legacyNote(ref: ConversationRef): Promise<PocketNote>;
 	snapshot(ref: ConversationRef): Promise<PocketCollaborationView>;
 	post(ref: ConversationRef, input: PocketChatInput): Promise<PocketChatMessage>;
 	editNote(
@@ -98,10 +120,33 @@ type Message = Omit<
 	{ -readonly [K in keyof PocketChatMessage]: PocketChatMessage[K] },
 	"mentions" | "reactions"
 > & { mentions: string[]; reactions: { emoji: string; people: string[] }[]; fingerprint: string };
-type Resource = { id: string; version: number; messages: Message[]; note: PocketNote; driver: PocketDriver };
-type State = { schema: 1; sessionId: string; resources: Resource[] };
+type LegacyResource = {
+	id: string;
+	version: number;
+	messages: Message[];
+	note: PocketNote;
+	driver: PocketDriver;
+};
+type Proof = {
+	actorId: string;
+	requestId: string;
+	target: CollaborationRequest["target"];
+	fingerprint: string;
+	version: number;
+	at: number;
+	result: CollaborationOutcome;
+};
+type Resource = LegacyResource & { requests: Proof[]; driverGeneration?: number };
+type State = { schema: 3; sessionId: string; resources: Resource[] };
+type Effect =
+	| { kind: "post"; message: PocketChatMessage }
+	| { kind: "note"; note: PocketNote }
+	| { kind: "react" }
+	| { kind: "pin" }
+	| { kind: "driver"; driver: PocketDriver };
 const MAX_BYTES = 1024 * 1024,
-	MAX_MESSAGES = 256;
+	MAX_MESSAGES = 256,
+	MAX_REQUESTS = 2048;
 const isRecord = (v: unknown): v is Record<string, unknown> =>
 	!!v && typeof v === "object" && !Array.isArray(v);
 const closed = (v: unknown, keys: readonly string[]): v is Record<string, unknown> =>
@@ -168,7 +213,7 @@ function message(v: unknown): v is Message {
 		new Set(v.reactions.map((r) => r.emoji)).size === v.reactions.length
 	);
 }
-function resource(v: unknown): v is Resource {
+function resource(v: unknown): v is LegacyResource {
 	if (
 		!closed(v, ["id", "version", "messages", "note", "driver"]) ||
 		!id(v.id) ||
@@ -189,20 +234,113 @@ function resource(v: unknown): v is Resource {
 		)
 	);
 }
+function proof(value: unknown): value is Proof {
+	if (
+		!closed(value, ["actorId", "requestId", "target", "fingerprint", "version", "at", "result"]) ||
+		!id(value.actorId) ||
+		!id(value.requestId) ||
+		!count(value.version) ||
+		value.version < 1 ||
+		!count(value.at) ||
+		typeof value.fingerprint !== "string" ||
+		!/^[a-f0-9]{64}$/.test(value.fingerprint)
+	)
+		return false;
+	try {
+		decodeTarget(value.target);
+		decodeCollaborationOutcome(value.result);
+		return true;
+	} catch {
+		return false;
+	}
+}
+function storedResource(value: unknown): value is Resource {
+	if (
+		!closed(value, ["id", "version", "messages", "note", "driver", "requests", "driverGeneration"]) ||
+		(value.driverGeneration !== undefined && !count(value.driverGeneration)) ||
+		!resource({
+			id: value.id,
+			version: value.version,
+			messages: value.messages,
+			note: value.note,
+			driver: value.driver,
+		}) ||
+		!Array.isArray(value.requests) ||
+		value.requests.length > MAX_REQUESTS ||
+		!value.requests.every(proof)
+	)
+		return false;
+	const requests = value.requests,
+		version = value.version;
+	return (
+		count(version) &&
+		requests.every((entry) => entry.version <= version) &&
+		new Set(requests.map((entry) => JSON.stringify([entry.actorId, entry.requestId]))).size ===
+			requests.length
+	);
+}
 function decode(raw: unknown, sessionId: string, version: number): State {
 	if (version === 0 && isRecord(raw) && Object.keys(raw).length === 0)
-		return { schema: 1, sessionId, resources: [] };
+		return { schema: 3, sessionId, resources: [] };
 	if (
 		!closed(raw, ["schema", "sessionId", "resources"]) ||
-		raw.schema !== 1 ||
 		raw.sessionId !== sessionId ||
 		!Array.isArray(raw.resources) ||
-		raw.resources.length > 1024 ||
-		!raw.resources.every(resource) ||
-		new Set(raw.resources.map((r) => r.id)).size !== raw.resources.length
+		raw.resources.length > 1024
 	)
 		throw new Error("WebUI collaboration storage unconfirmed");
-	return { schema: 1, sessionId, resources: raw.resources };
+	if (
+		raw.schema === 1 &&
+		raw.resources.every(resource) &&
+		new Set(raw.resources.map((row) => row.id)).size === raw.resources.length
+	)
+		return {
+			schema: 3,
+			sessionId,
+			resources: raw.resources.map((row) => ({ ...row, requests: [], driverGeneration: 0 })),
+		};
+	if (
+		(raw.schema === 2 || raw.schema === 3) &&
+		raw.resources.every(storedResource) &&
+		(raw.schema !== 3 || raw.resources.every((row) => count(row.driverGeneration))) &&
+		new Set(raw.resources.map((row) => row.id)).size === raw.resources.length
+	)
+		return {
+			schema: 3,
+			sessionId,
+			resources: raw.resources.map((row) => ({ ...row, driverGeneration: row.driverGeneration ?? 0 })),
+		};
+	throw new Error("WebUI collaboration storage unconfirmed");
+}
+/** Explicit finite JSON projection; public interface types are not asserted to be indexed metadata. */
+function metadata(state: State): Parameters<RuntimeStore["compareAndSet"]>[1] {
+	return {
+		schema: state.schema,
+		sessionId: state.sessionId,
+		resources: state.resources.map((row) => ({
+			id: row.id,
+			version: row.version,
+			note: { ...row.note },
+			driver: { ...row.driver },
+			driverGeneration: row.driverGeneration ?? 0,
+			messages: row.messages.map((message) => ({
+				...message,
+				mentions: [...message.mentions],
+				reactions: message.reactions.map((reaction) => ({
+					emoji: reaction.emoji,
+					people: [...reaction.people],
+				})),
+			})),
+			requests: row.requests.map((entry) => ({
+				...entry,
+				target: { ...entry.target },
+				result:
+					entry.result.kind === "driver"
+						? { kind: "driver", driver: { ...entry.result.driver } }
+						: { ...entry.result },
+			})),
+		})),
+	};
 }
 const fingerprint = (v: unknown) => createHash("sha256").update(JSON.stringify(v)).digest("hex");
 function frozen<T>(v: T): T {
@@ -239,7 +377,7 @@ async function open(
 ): Promise<PocketCollaboration> {
 	const store = runtime.store({ namespace, maxBytes: MAX_BYTES }),
 		sessionId = runtime.view().sessionId;
-	let state: State = { schema: 1, sessionId, resources: [] },
+	let state: State = { schema: 3, sessionId, resources: [] },
 		version = 0,
 		available = true,
 		tail: Promise<unknown> = Promise.resolve();
@@ -247,6 +385,10 @@ async function open(
 		pendingDriver = new Map<string, number>();
 	const ready = () => {
 		if (!available || runtime.view().phase !== "ready") throw new Error("WebUI collaboration unavailable");
+	};
+	const chat = () => {
+		if (people.mode().personal)
+			throw new PocketCollaborationRefusal("FORBIDDEN", "Personal mode has no human collaboration");
 	};
 	const time = () => {
 		const value = now();
@@ -294,6 +436,8 @@ async function open(
 				id: people.resourceId(ref),
 				version: 0,
 				messages: [],
+				requests: [],
+				driverGeneration: people.mode().generation,
 				note: { version: 0, text: "", authorId: null, updatedAt: null },
 				driver: { version: 0, personId: null, expiresAt: null },
 			};
@@ -310,8 +454,16 @@ async function open(
 	): Promise<T> {
 		const saved = structuredClone(ref);
 		read(actor, saved, permission);
+		chat();
+		const generation = people.mode().generation;
+		const checkChat = () => {
+			chat();
+			if (generation !== people.mode().generation)
+				throw new PocketCollaborationRefusal("FORBIDDEN", "Mode changed");
+		};
 		const operation = tail.then(async () => {
 			await refresh();
+			checkChat();
 			read(actor, saved, permission);
 			const draft = structuredClone(state),
 				resource = row(draft, saved),
@@ -321,11 +473,11 @@ async function open(
 				resource.version++;
 				decode(draft, sessionId, version + 1);
 				if (Buffer.byteLength(JSON.stringify(draft)) > MAX_BYTES)
-					throw new Error("Collaboration capacity exceeded");
-				// SAFETY: decode validates every finite JSON field above; State contains no function, native handle or undefined member.
-				const data = draft as unknown as Parameters<RuntimeStore["compareAndSet"]>[1];
+					throw new PocketCollaborationRefusal("CAPACITY", "Collaboration capacity exceeded");
+				const data = metadata(draft);
 				try {
 					const committed = await store.compareAndSet(version, data, () => {
+						checkChat();
 						read(actor, saved, permission);
 					});
 					state = decode(committed.data, sessionId, committed.version);
@@ -348,9 +500,210 @@ async function open(
 		const { fingerprint: _, ...publicMessage } = m;
 		return publicMessage;
 	};
+
+	const requestFingerprint = (request: CollaborationRequest) =>
+		createHash("sha256").update(collaborationIntent(request)).digest("hex");
+	const receipt = (request: CollaborationRequest, saved: Proof) =>
+		decodeCollaborationReceipt({
+			actorId: saved.actorId,
+			original: request,
+			version: saved.version,
+			at: saved.at,
+			result: saved.result,
+		});
+	const outcome = (effect: Effect): CollaborationOutcome => {
+		switch (effect.kind) {
+			case "post":
+				return { kind: "post", messageId: effect.message.id };
+			case "note":
+				return { kind: "note", version: effect.note.version };
+			case "driver":
+				return { kind: "driver", driver: effect.driver };
+			case "react":
+				return { kind: "react" };
+			case "pin":
+				return { kind: "pin" };
+		}
+	};
+	function apply(actor: PocketAuthority, request: CollaborationRequest, row: Resource): Effect {
+		const { target, action } = request,
+			person = people.current(actor);
+		switch (action.kind) {
+			case "post": {
+				const saved = {
+					requestId: request.requestId,
+					text: action.text.trim(),
+					quoteId: action.quoteId ?? null,
+					mentions: [...(action.mentions ?? [])].sort(),
+				};
+				const digest = fingerprint(saved);
+				const previous = row.messages.find(
+					(message) => message.authorId === person.id && message.requestId === saved.requestId,
+				);
+				if (previous) {
+					if (previous.fingerprint !== digest)
+						throw new PocketCollaborationConflict("Human chat request conflict");
+					return { kind: "post", message: viewMessage(previous) };
+				}
+				if (row.messages.length >= MAX_MESSAGES)
+					throw new PocketCollaborationRefusal("CAPACITY", "Human chat capacity exceeded");
+				if (saved.quoteId && !row.messages.some((message) => message.id === saved.quoteId))
+					throw new PocketCollaborationRefusal("INVALID_REQUEST", "Unknown quote in this resource");
+				for (const mention of saved.mentions) {
+					try {
+						people.authorizePerson(mention, "read", people.resourceId(target));
+					} catch {
+						throw new PocketCollaborationRefusal("FORBIDDEN", "Human mention resource denied");
+					}
+				}
+				const message: Message = {
+					...saved,
+					id: "chat-" + fingerprint([people.resourceId(target), person.id, saved.requestId]).slice(0, 40),
+					authorId: person.id,
+					authorName: person.name,
+					createdAt: time(),
+					pinned: false,
+					reactions: [],
+					fingerprint: digest,
+				};
+				row.messages.push(message);
+				return { kind: "post", message: viewMessage(message) };
+			}
+			case "note":
+				throw new PocketCollaborationRefusal("INVALID_REQUEST", "Singleton notes are read-only");
+			case "react": {
+				const message = row.messages.find((message) => message.id === action.messageId);
+				if (!message)
+					throw new PocketCollaborationRefusal("INVALID_REQUEST", "Unknown message in this resource");
+				let reaction = message.reactions.find((reaction) => reaction.emoji === action.emoji);
+				if (!reaction && action.active) {
+					reaction = { emoji: action.emoji, people: [] };
+					message.reactions.push(reaction);
+				}
+				if (reaction) {
+					reaction.people = action.active
+						? [...new Set([...reaction.people, person.id])].sort()
+						: reaction.people.filter((id) => id !== person.id);
+					message.reactions = message.reactions.filter((reaction) => reaction.people.length > 0);
+				}
+				return { kind: "react" };
+			}
+			case "pin": {
+				const message = row.messages.find((message) => message.id === action.messageId);
+				if (!message)
+					throw new PocketCollaborationRefusal("INVALID_REQUEST", "Unknown message in this resource");
+				message.pinned = action.pinned;
+				return { kind: "pin" };
+			}
+			case "driver": {
+				if (people.mode().personal)
+					throw new PocketCollaborationRefusal("FORBIDDEN", "Personal mode has no human driver lease");
+				const current = currentDriver(row);
+				row.driver = current;
+				row.driverGeneration = people.mode().generation;
+				if (row.driver.version !== action.expectedVersion)
+					throw new PocketCollaborationConflict("Driver version conflict");
+				if (action.action === "release") {
+					if (row.driver.personId !== person.id) read(actor, target, "manage");
+					row.driver = { version: row.driver.version + 1, personId: null, expiresAt: null };
+				} else {
+					if (action.action === "take") read(actor, target, "manage");
+					else if (
+						row.driver.personId &&
+						row.driver.personId !== person.id &&
+						row.driver.expiresAt !== null &&
+						row.driver.expiresAt > time()
+					)
+						throw new PocketCollaborationConflict("Another driver holds the lease");
+					if (action.ttlMs === undefined)
+						throw new PocketCollaborationRefusal("INVALID_REQUEST", "Missing finite driver lease");
+					row.driver = {
+						version: row.driver.version + 1,
+						personId: person.id,
+						expiresAt: time() + action.ttlMs,
+					};
+				}
+				return { kind: "driver", driver: row.driver };
+			}
+		}
+	}
+	async function runAction<T>(
+		actor: PocketAuthority,
+		request: CollaborationRequest,
+		effect: (row: Resource) => T,
+	): Promise<T> {
+		const permission =
+			request.action.kind === "driver"
+				? "steer"
+				: ["note", "pin"].includes(request.action.kind)
+					? "send"
+					: "read";
+		read(actor, request.target, permission);
+		if (request.action.kind === "driver" && request.action.action === "take")
+			read(actor, request.target, "manage");
+		const key = people.resourceId(request.target),
+			controlsDriver = request.action.kind === "driver";
+		if (controlsDriver) pendingDriver.set(key, (pendingDriver.get(key) ?? 0) + 1);
+		try {
+			return await mutate(actor, request.target, permission, effect);
+		} finally {
+			if (controlsDriver) {
+				const remaining = (pendingDriver.get(key) ?? 1) - 1;
+				if (remaining) pendingDriver.set(key, remaining);
+				else pendingDriver.delete(key);
+			}
+		}
+	}
+	const legacy = (
+		actor: PocketAuthority,
+		target: ConversationRef,
+		action: CollaborationRequest["action"],
+		requestId = "native-collaboration",
+	) => {
+		const request = decodeCollaborationRequest({ requestId, target, action });
+		return runAction(actor, request, (row) => apply(actor, request, row));
+	};
+	async function lookup(
+		actor: PocketAuthority,
+		original: CollaborationRequest,
+	): Promise<CollaborationReceipt | null> {
+		const request = decodeCollaborationRequest(original);
+		const currentRef = () => {
+			const ref = runtimeFor(request.target)
+				.view()
+				.conversations.find(
+					(ref) =>
+						ref.key === request.target.key &&
+						ref.sessionId === request.target.sessionId &&
+						ref.conversationId === request.target.conversationId,
+				);
+			if (!ref) throw new Error("Original collaboration resource unavailable");
+			read(actor, ref);
+			return ref;
+		};
+		currentRef();
+		await refresh();
+		const person = people.current(actor),
+			ref = currentRef();
+		const found = existing(ref)?.requests.find(
+			(entry) => entry.actorId === person.id && entry.requestId === request.requestId,
+		);
+		if (!found) return null;
+		if (found.fingerprint !== requestFingerprint(request))
+			throw new PocketCollaborationConflict("Original collaboration request conflict");
+		return receipt(request, found);
+	}
+	function currentDriver(row: Resource): PocketDriver {
+		const mode = people.mode();
+		return mode.personal || (row.driverGeneration ?? 0) !== mode.generation
+			? { version: row.driver.version, personId: null, expiresAt: null }
+			: row.driver;
+	}
 	const checkDriver = (actorId: string, ref: ConversationRef) => {
+		if (people.mode().personal) return;
 		if (pendingDriver.has(people.resourceId(ref))) throw new Error("Driver transition pending");
-		const d = existing(ref)?.driver;
+		const resource = existing(ref);
+		const d = resource && currentDriver(resource);
 		if (d?.personId) {
 			people.authorizePerson(d.personId, "steer", people.resourceId(ref));
 			if (d.personId !== actorId || d.expiresAt === null || d.expiresAt <= time())
@@ -372,17 +725,29 @@ async function open(
 						),
 					)
 			)
-				throw Error("WebUI collaboration stale resource denied");
+				throw new Error("WebUI collaboration stale resource denied");
 			checkDriver(actorId, ref);
 		},
 		bind(actor: PocketAuthority): PocketCollaborationClient {
 			people.current(actor);
 			return Object.freeze({
-				snapshot: async (ref: ConversationRef) => {
+				legacyNote: async (ref: ConversationRef) => {
 					const saved = structuredClone(ref);
 					read(actor, saved);
 					await refresh();
-					const found = existing(saved) ?? row({ schema: 1, sessionId, resources: [] }, saved),
+					read(actor, saved);
+					return frozen(
+						structuredClone(
+							existing(saved)?.note ?? { text: "", version: 0, authorId: null, updatedAt: null },
+						),
+					);
+				},
+				snapshot: async (ref: ConversationRef) => {
+					chat();
+					const saved = structuredClone(ref);
+					read(actor, saved);
+					await refresh();
+					const found = existing(saved) ?? row({ schema: 3, sessionId, resources: [] }, saved),
 						presence: PocketPresence[] = [];
 					for (const [id, entry] of live.get(people.resourceId(saved)) ?? []) {
 						try {
@@ -394,169 +759,92 @@ async function open(
 						}
 					}
 					read(actor, saved);
+					chat();
 					return frozen({
 						conversationId: saved.conversationId,
 						...(saved.sessionId === sessionId ? {} : { sessionId: saved.sessionId }),
 						version: found.version,
 						messages: found.messages.map(viewMessage),
 						note: found.note,
-						driver: found.driver,
+						driver: currentDriver(found),
 						presence,
 					});
 				},
-				post: async (ref: ConversationRef, input: PocketChatInput) => {
-					const person = read(actor, ref);
-					if (
-						!closed(input, ["requestId", "text", "quoteId", "mentions"]) ||
-						!id(input.requestId) ||
-						!text(input.text, 8192) ||
-						!input.text.trim() ||
-						(input.quoteId !== undefined && !id(input.quoteId)) ||
-						(input.mentions !== undefined && !unique(input.mentions, 16))
-					)
-						throw new Error("Invalid finite human chat");
-					const saved = {
-							requestId: input.requestId,
-							text: input.text.trim(),
-							quoteId: input.quoteId ?? null,
-							mentions: [...(input.mentions ?? [])].sort(),
-						},
-						digest = fingerprint(saved),
-						key = "chat-" + fingerprint([people.resourceId(ref), person.id, saved.requestId]).slice(0, 40);
-					const result = await mutate(actor, ref, "read", (r) => {
-						const prior = r.messages.find((m) => m.authorId === person.id && m.requestId === saved.requestId);
+				write: async (original: CollaborationRequest) => {
+					const request = decodeCollaborationRequest(original);
+					return runAction(actor, request, (row) => {
+						const person = people.current(actor),
+							digest = requestFingerprint(request);
+						const prior = row.requests.find(
+							(entry) => entry.actorId === person.id && entry.requestId === request.requestId,
+						);
 						if (prior) {
-							if (prior.fingerprint !== digest) throw new Error("Human chat request conflict");
-							return prior;
+							if (prior.fingerprint !== digest)
+								throw new PocketCollaborationConflict("Original collaboration request conflict");
+							return receipt(request, prior);
 						}
-						if (r.messages.length >= MAX_MESSAGES) throw new Error("Human chat capacity exceeded");
-						if (saved.quoteId && !r.messages.some((m) => m.id === saved.quoteId))
-							throw new Error("Unknown quote in this resource");
-						for (const mention of saved.mentions)
-							people.authorizePerson(mention, "read", people.resourceId(ref));
-						const message: Message = {
-							...saved,
-							id: key,
-							authorId: person.id,
-							authorName: person.name,
-							createdAt: time(),
-							pinned: false,
-							reactions: [],
+						if (row.requests.length >= MAX_REQUESTS)
+							throw new PocketCollaborationRefusal("CAPACITY", "Collaboration request capacity exceeded");
+						const effect = apply(actor, request, row);
+						const saved: Proof = {
+							actorId: person.id,
+							requestId: request.requestId,
+							target: request.target,
 							fingerprint: digest,
+							version: row.version + 1,
+							at: time(),
+							result: outcome(effect),
 						};
-						r.messages.push(message);
-						return message;
+						const confirmed = receipt(request, saved);
+						row.requests.push(saved);
+						return confirmed;
 					});
-					return frozen(viewMessage(result));
 				},
-				editNote: (
+				lookup: (original: CollaborationRequest) => lookup(actor, original),
+				post: async (ref: ConversationRef, input: PocketChatInput) => {
+					if (!closed(input, ["requestId", "text", "quoteId", "mentions"]))
+						throw new Error("Invalid finite human chat");
+					const { requestId, ...action } = input;
+					const result = await legacy(actor, ref, { kind: "post", ...action }, requestId);
+					if (result.kind !== "post") throw new Error("Invalid human chat result");
+					return result.message;
+				},
+				editNote: async (
 					ref: ConversationRef,
 					input: { readonly expectedVersion: number; readonly text: string },
 				) => {
-					if (
-						!closed(input, ["expectedVersion", "text"]) ||
-						!count(input.expectedVersion) ||
-						!text(input.text, 32768)
-					)
-						return Promise.reject(new Error("Invalid versioned note"));
-					const saved = { ...input };
-					return mutate(actor, ref, "send", (r) => {
-						if (r.note.version !== saved.expectedVersion) throw new PocketCollaborationConflict();
-						r.note = {
-							version: r.note.version + 1,
-							text: saved.text,
-							authorId: people.current(actor).id,
-							updatedAt: time(),
-						};
-						return r.note;
-					});
+					if (!closed(input, ["expectedVersion", "text"])) throw new Error("Invalid versioned note");
+					const result = await legacy(actor, ref, { kind: "note", ...input });
+					if (result.kind !== "note") throw new Error("Invalid note result");
+					return result.note;
 				},
-				react: (
+				react: async (
 					ref: ConversationRef,
 					input: { readonly messageId: string; readonly emoji: string; readonly active: boolean },
 				) => {
-					if (
-						!closed(input, ["messageId", "emoji", "active"]) ||
-						!id(input.messageId) ||
-						!emoji(input.emoji) ||
-						typeof input.active !== "boolean"
-					)
-						return Promise.reject(new Error("Invalid human reaction"));
-					const saved = { ...input };
-					return mutate(actor, ref, "read", (r) => {
-						const message = r.messages.find((m) => m.id === saved.messageId);
-						if (!message) throw new Error("Unknown message in this resource");
-						const who = people.current(actor).id;
-						let reaction = message.reactions.find((r) => r.emoji === saved.emoji);
-						if (!reaction && saved.active) {
-							reaction = { emoji: saved.emoji, people: [] };
-							message.reactions.push(reaction);
-						}
-						if (reaction) {
-							reaction.people = saved.active
-								? [...new Set([...reaction.people, who])].sort()
-								: reaction.people.filter((p) => p !== who);
-							message.reactions = message.reactions.filter((r) => r.people.length > 0);
-						}
-					});
+					if (!closed(input, ["messageId", "emoji", "active"])) throw new Error("Invalid human reaction");
+					await legacy(actor, ref, { kind: "react", ...input });
 				},
-				pin: (ref: ConversationRef, input: { readonly messageId: string; readonly pinned: boolean }) => {
-					if (
-						!closed(input, ["messageId", "pinned"]) ||
-						!id(input.messageId) ||
-						typeof input.pinned !== "boolean"
-					)
-						return Promise.reject(new Error("Invalid shared pin"));
-					const saved = { ...input };
-					return mutate(actor, ref, "send", (r) => {
-						const message = r.messages.find((m) => m.id === saved.messageId);
-						if (!message) throw new Error("Unknown message in this resource");
-						message.pinned = saved.pinned;
-					});
+				pin: async (
+					ref: ConversationRef,
+					input: { readonly messageId: string; readonly pinned: boolean },
+				) => {
+					if (!closed(input, ["messageId", "pinned"])) throw new Error("Invalid shared pin");
+					await legacy(actor, ref, { kind: "pin", ...input });
 				},
 				setDriver: async (ref: ConversationRef, input: PocketDriverInput) => {
-					if (
-						!closed(input, ["expectedVersion", "action", "ttlMs"]) ||
-						!count(input.expectedVersion) ||
-						!["claim", "release", "take"].includes(String(input.action)) ||
-						(input.action !== "release" &&
-							(!count(input.ttlMs) || input.ttlMs < 1000 || input.ttlMs > 300000)) ||
-						(input.action === "release" && input.ttlMs !== undefined)
-					)
-						return Promise.reject(new Error("Invalid finite driver lease"));
-					const saved = { ...input };
-					read(actor, ref, "steer");
-					if (saved.action === "take") read(actor, ref, "manage");
-					const key = people.resourceId(ref);
-					pendingDriver.set(key, (pendingDriver.get(key) ?? 0) + 1);
-					return mutate(actor, ref, "steer", (r) => {
-						const who = people.current(actor).id;
-						if (r.driver.version !== saved.expectedVersion) throw new Error("Driver version conflict");
-						if (saved.action === "release") {
-							if (r.driver.personId !== who) read(actor, ref, "manage");
-							r.driver = { version: r.driver.version + 1, personId: null, expiresAt: null };
-						} else {
-							if (saved.action === "take") read(actor, ref, "manage");
-							else if (
-								r.driver.personId &&
-								r.driver.personId !== who &&
-								r.driver.expiresAt !== null &&
-								r.driver.expiresAt > time()
-							)
-								throw new Error("Another driver holds the lease");
-							r.driver = { version: r.driver.version + 1, personId: who, expiresAt: time() + saved.ttlMs! };
-						}
-						return r.driver;
-					}).finally(() => {
-						const remaining = (pendingDriver.get(key) ?? 1) - 1;
-						if (remaining) pendingDriver.set(key, remaining);
-						else pendingDriver.delete(key);
-					});
+					if (!closed(input, ["expectedVersion", "action", "ttlMs"]))
+						throw new Error("Invalid finite driver lease");
+					const result = await legacy(actor, ref, { kind: "driver", ...input });
+					if (result.kind !== "driver") throw new Error("Invalid driver result");
+					return result.driver;
 				},
 				presence: async (
 					ref: ConversationRef,
 					input: { readonly state: "here" | "typing" | "away" | "leave" },
 				) => {
+					chat();
+					const generation = people.mode().generation;
 					const person = read(actor, ref);
 					if (
 						!closed(input, ["state"]) ||
@@ -581,6 +869,8 @@ async function open(
 								expiresAt: time() + 30000,
 							},
 							check: () => {
+								chat();
+								if (generation !== people.mode().generation) throw Error("Mode changed");
 								read(actor, saved);
 							},
 						});

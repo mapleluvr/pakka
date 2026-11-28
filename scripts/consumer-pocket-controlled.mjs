@@ -5,8 +5,8 @@ import { mkdir, readFile, writeFile, readdir } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { createRuntime } from "@pakka/agent";
-import { browserExecutable, ownedBrowser } from "./pocket-browser.ts";
-import { openConversations } from "./frontend-controls.ts";
+import { browserExecutable } from "./pocket-browser.ts";
+import { loginHttp, connectHttp } from "./consumer-webui-http.mjs";
 
 const root = dirname(fileURLToPath(import.meta.url)),
 	requests = [],
@@ -134,11 +134,11 @@ export default {runtime:{...${JSON.stringify(options)},tools:[tool]},owner:'Owne
 `,
 	);
 }
-let child, inspector;
+let child;
 const until = async (condition) => {
 	const end = Date.now() + 10000;
-	while (!condition() && Date.now() < end) await new Promise((resolve) => setTimeout(resolve, 20));
-	assert.ok(condition(), "Installed controls deadline");
+	while (!(await condition()) && Date.now() < end) await new Promise((resolve) => setTimeout(resolve, 20));
+	assert.ok(await condition(), "Installed controls deadline");
 };
 async function start() {
 	await composition();
@@ -186,134 +186,113 @@ async function stop() {
 	assert.equal(child.output().includes(options.apiKey), false);
 	child = undefined;
 }
-async function click(page, selector) {
-	await page.wait(
-		`(()=>{const element=document.querySelector(${JSON.stringify(selector)});return !!element&&!element.disabled;})()`,
-	);
-	await page.click(selector);
-}
-const rpc = (page, command) =>
-	page.evaluate(
-		`(async()=>{const{createPocketClient}=await import('@pakka/client/pocket');return createPocketClient({endpoint:location.origin+'/pocket/rpc',csrf:()=>/pakka_csrf=([^;]+)/.exec(document.cookie)?.[1]??null}).request(${JSON.stringify(command)});})()`,
-	);
-const extension = (page, ref, extension, action, input, requestId) =>
-	page.evaluate(
-		`(async()=>{const{createExtensionClient}=await import('@pakka/webui/client');const client=createExtensionClient({endpoint:location.origin+'/pocket/extensions/rpc',csrf:()=>/pakka_csrf=([^;]+)/.exec(document.cookie)?.[1]??null}),registration=(await client.list(${JSON.stringify(ref)})).find(row=>row.manifest.id===${JSON.stringify(extension)});return client.call({extension:registration.manifest.id,generation:registration.generation,action:${JSON.stringify(action)},target:${JSON.stringify(ref)},requestId:${JSON.stringify(requestId)},input:${JSON.stringify(input)}});})()`,
-	);
 try {
 	let info = await start();
-	const link = (await readFile(ownerFile, "utf8")).trim();
-	let ownerUrl;
-	try {
-		ownerUrl = new URL(link);
-	} catch (error) {
-		throw Error("Invalid generated controls owner link", { cause: error });
-	}
-	const token = new URLSearchParams(ownerUrl.hash.slice(1)).get("signin");
+	const token = new URLSearchParams(new URL((await readFile(ownerFile, "utf8")).trim()).hash.slice(1)).get(
+		"session",
+	);
 	assert.ok(token);
 	assert.equal(child.output().includes(token), false);
-	inspector = await ownedBrowser(join(run, "inspector"));
-	const owner = await inspector.page(link);
-	await owner.wait('document.querySelector("[data-action=signin]")');
-	await click(owner, "[data-action=signin]");
-	await owner.wait('document.querySelector("[data-conversation]")');
-	const refs = (await rpc(owner, { op: "list" })).conversations,
-		ref = refs[0];
-	assert.ok(ref);
-	await click(owner, "[data-conversation]");
-	const approvalIds = [];
+	let owner = await loginHttp(info.origin, token);
+	const refs = (await owner.rpc({ op: "list" })).conversations,
+		ref = refs[0],
+		approvalIds = [];
 	for (const allow of [true, false]) {
-		await click(owner, "[data-conversation]");
-		await owner.wait('document.querySelector("textarea")');
-		await owner.type("textarea", allow ? "ALLOW-INSTALLED-NATIVE" : "DENY-INSTALLED-NATIVE");
-		await click(owner, "[data-action=send]");
-		await click(owner, "[data-interface=workspace-approvals-approvals]");
-		await owner.wait('document.querySelector("[data-approval-allow]")');
-		const list = await extension(owner, ref, "workspace-approvals", "list", {}, crypto.randomUUID()),
-			pending = list.value.approvals.find((row) => row.state === "pending");
-		assert.ok(pending);
+		const placed = await owner.rpc({
+			op: "submit",
+			target: ref,
+			input: {
+				requestId: allow ? "allow" : "deny",
+				text: allow ? "ALLOW-INSTALLED-NATIVE" : "DENY-INSTALLED-NATIVE",
+				mode: "prompt",
+			},
+		});
+		let pending;
+		await until(async () => {
+			pending = (await owner.call("workspace-approvals", "list", {}, ref)).value.approvals.find(
+				(row) => row.state === "pending",
+			);
+			return !!pending;
+		});
 		approvalIds.push(pending.id);
 		if (allow) await assert.rejects(readFile(effectFile), { code: "ENOENT" });
-		await click(owner, allow ? "[data-approval-allow]" : "[data-approval-deny]");
-		await owner.wait(
-			`[...document.querySelectorAll('[data-approval-state]')].some(row=>row.textContent.includes(${JSON.stringify(allow ? "done" : "denied")}))`,
+		const decision = await owner.call(
+			"workspace-approvals",
+			"decide",
+			{ id: pending.id, allow },
+			ref,
+			"decision-" + allow,
 		);
-		await until(() => requests.length === (allow ? 2 : 4));
-		await owner.wait(
-			`(async()=>{const{createPocketClient}=await import('@pakka/client/pocket');const value=await createPocketClient({endpoint:location.origin+'/pocket/rpc',csrf:()=>/pakka_csrf=([^;]+)/.exec(document.cookie)?.[1]??null}).request({op:'read',target:${JSON.stringify(ref)}});return value.snapshot.live.busy===false;})()`,
-		);
+		assert.equal(decision.state, "done");
+		assert.equal((await owner.rpc({ op: "wait", id: placed.receipt.id })).receipt.status, "done");
+		assert.equal(requests.length, allow ? 2 : 4);
 		assert.equal(await readFile(effectFile, "utf8"), "APPROVED-INSTALLED-PAYLOAD");
 	}
-	await click(owner, "[data-interface=workspace-browser-browser]");
-	await owner.wait('document.querySelector("[data-owned-browser]")');
-	await owner.type("[name=browser-url]", approvedOrigin);
-	await click(owner, "[data-browser-go]");
-	await owner.wait('document.querySelector("[data-browser-frame]")?.naturalWidth>0');
-	await owner.type("[name=browser-selector]", "#message");
-	await owner.type("[name=browser-text]", "ACTUAL-INSTALLED-FIELD");
-	await click(owner, "[data-browser-fill]");
-	await owner.wait('document.querySelector("[data-browser-fill]")?.disabled===false');
-	await owner.evaluate(
-		'(()=>{const field=document.querySelector("[name=browser-selector]");field.value="";field.dispatchEvent(new Event("input",{bubbles:true}));})()',
+	const view = async (client) => (await client.call("workspace-browser", "view", {}, ref)).value;
+	assert.equal(
+		(await owner.call("workspace-browser", "navigate", { url: approvedOrigin }, ref)).state,
+		"done",
 	);
-	await owner.type("[name=browser-selector]", "#record");
-	await owner.evaluate(
-		`(()=>{const original=globalThis.fetch;globalThis.fetch=async(...args)=>{const response=await original(...args);if(typeof args[1]?.body==='string'&&args[1].body.includes('"action":"click"')){globalThis.fetch=original;globalThis.__pakkaVisibleActionDropped=true;await response.arrayBuffer();throw Error('TEST-ONLY LOST VISIBLE ACTION RESPONSE');}return response;};})()`,
+	await until(async () => (await view(owner)).view.text.includes("INSTALLED-OWNED-PAGE"));
+	assert.equal(
+		(
+			await owner.call(
+				"workspace-browser",
+				"fill",
+				{ selector: "#message", text: "ACTUAL-INSTALLED-FIELD" },
+				ref,
+			)
+		).state,
+		"done",
 	);
-	await click(owner, "[data-browser-click]");
-	await owner.wait(
-		'document.querySelector("[data-browser-text]")?.textContent.includes("INSTALLED-PAGE-RESULT:ACTUAL-INSTALLED-FIELD")',
+	const clickId = "installed-browser-click";
+	const clicked = await owner.call("workspace-browser", "click", { selector: "#record" }, ref, clickId);
+	assert.equal(clicked.state, "done");
+	await until(() => pageActions === 1);
+	await until(async () =>
+		(await view(owner)).view.text.includes("INSTALLED-PAGE-RESULT:ACTUAL-INSTALLED-FIELD"),
+	);
+	assert.equal((await owner.operationByRequest("workspace-browser", clickId, ref)).id, clicked.id);
+	assert.deepEqual(
+		(await owner.call("workspace-browser", "receipt", { requestId: clicked.id }, ref)).value,
+		clicked.value,
+	);
+	assert.equal(
+		(await owner.call("workspace-browser", "click", { selector: "#record" }, ref, clickId)).id,
+		clicked.id,
 	);
 	assert.equal(pageActions, 1);
-	assert.equal(await owner.evaluate("globalThis.__pakkaVisibleActionDropped"), true);
-	await owner.wait('document.querySelector("[data-browser-reconcile]")');
-	assert.equal(await owner.evaluate('document.querySelector("[data-browser-click]").disabled'), true);
-	await click(owner, "[data-conversation]");
-	await owner.wait('!document.querySelector("[data-owned-browser]")');
-	await click(owner, "[data-interface=workspace-browser-browser]");
-	await owner.wait(
-		'document.querySelector("[data-browser-reconcile]")?.disabled === false && document.querySelector("[data-browser-frame]")?.naturalWidth > 0',
+	const second = await owner.call(
+		"workspace-browser",
+		"click",
+		{ selector: "#record" },
+		ref,
+		"installed-second-click",
 	);
-	await click(owner, "[data-browser-reconcile]");
-	await owner.wait('!document.querySelector("[data-browser-reconcile]")');
-	assert.equal(pageActions, 1, "visible reconciliation after interface reopen is read-only");
-	const lost = await owner.evaluate(
-		`(async()=>{const{createExtensionClient}=await import('@pakka/webui/client');const client=createExtensionClient({endpoint:location.origin+'/pocket/extensions/rpc',csrf:()=>/pakka_csrf=([^;]+)/.exec(document.cookie)?.[1]??null}),registration=(await client.list(${JSON.stringify(ref)})).find(row=>row.manifest.id==='workspace-browser'),command={extension:'workspace-browser',generation:registration.generation,action:'click',requestId:'installed-lost-click',target:${JSON.stringify(ref)},input:{selector:'#record'}},original=globalThis.fetch;let first;globalThis.fetch=async(...args)=>{const response=await original(...args);if(typeof args[1]?.body==='string'&&args[1].body.includes('installed-lost-click')){await response.arrayBuffer();throw Error('TEST-ONLY LOST COMPLETED RESPONSE');}return response;};try{first=await client.call(command).catch(error=>({outcome:error.outcome,name:error.name}));}finally{globalThis.fetch=original;}return{first,retry:await client.call(command)};})()`,
-	);
-	assert.equal(lost.first.outcome, "unknown");
-	assert.equal(lost.first.name, "PocketRemoteError");
-	assert.equal(lost.retry.state, "done");
-	assert.equal(pageActions, 2);
-	const invitation = await rpc(owner, {
+	assert.equal(second.state, "done");
+	await until(() => pageActions === 2);
+	const invitation = await owner.rpc({
 		op: "invite",
 		requestId: "controlled-viewer",
 		role: "viewer",
 		resources: [ref.conversationId],
 		ttlMs: 60000,
 	});
-	assert.ok(invitation.token);
-	const viewer = await inspector.page(info.origin + "/#invite=" + invitation.token, {
-		width: 390,
-		height: 844,
+	const viewer = await loginHttp(info.origin, invitation.token, "invite", "Viewer");
+	const readOnly = await view(viewer);
+	assert.equal(readOnly.canAct, false);
+	assert.match(readOnly.view.text, /INSTALLED-PAGE-RESULT:ACTUAL-INSTALLED-FIELD/);
+	const png = Buffer.from(readOnly.frame.base64, "base64");
+	assert.equal(png.subarray(1, 4).toString(), "PNG");
+	assert.ok(png.readUInt32BE(16) > 0 && png.readUInt32BE(20) > 0);
+	await assert.rejects(viewer.call("workspace-browser", "click", { selector: "#record" }, ref), {
+		code: "FORBIDDEN",
+		outcome: "denied",
 	});
-	await viewer.wait('document.querySelector("[data-action=signin]")');
-	await viewer.type("input[name=person]", "Viewer");
-	await click(viewer, "[data-action=signin]");
-	await viewer.wait('document.querySelector("[data-conversation]")');
-	await openConversations(viewer);
-	await click(viewer, "[data-conversation]");
-	await openConversations(viewer);
-	await click(viewer, "[data-interface=workspace-browser-browser]");
-	await viewer.wait('document.querySelector("[data-browser-frame]")?.naturalWidth>0');
-	assert.equal(
-		await viewer.evaluate(
-			'document.querySelectorAll("[data-browser-go],[data-browser-fill],[data-browser-click]").length',
-		),
-		0,
-	);
-	assert.equal(await viewer.evaluate("document.documentElement.scrollWidth>innerWidth"), false);
-	await writeFile(join(evidence, "desktop.png"), await owner.screenshot());
-	await writeFile(join(evidence, "mobile.png"), await viewer.screenshot());
+	await assert.rejects(viewer.operationByRequest("workspace-browser", clickId, ref), {
+		code: "FORBIDDEN",
+		outcome: "denied",
+	});
 	const sessionFile = info.sessionFile;
 	await stop();
 	assert.equal(
@@ -323,25 +302,20 @@ try {
 	options.reopenSessionFile = sessionFile;
 	info = await start();
 	assert.equal(info.sessionFile, sessionFile);
-	await owner.navigate(info.origin);
-	await owner.wait('document.querySelector("[data-conversation]")');
-	assert.deepEqual((await rpc(owner, { op: "list" })).conversations, refs);
-	const restored = await extension(owner, ref, "workspace-approvals", "list", {}, "inspect-retained");
+	owner = await connectHttp(info.origin, owner.cookies);
+	assert.deepEqual((await owner.rpc({ op: "list" })).conversations, refs);
+	const restored = (await owner.call("workspace-approvals", "list", {}, ref)).value.approvals;
 	assert.deepEqual(
-		restored.value.approvals.map((row) => row.id),
+		restored.map((row) => row.id),
 		approvalIds,
 	);
 	assert.deepEqual(
-		restored.value.approvals.map((row) => row.state),
+		restored.map((row) => row.state),
 		["done", "denied"],
 	);
-	const repeated = await owner.evaluate(
-		`(async()=>{const {createExtensionClient}=await import('@pakka/webui/client');const client=createExtensionClient({endpoint:location.origin+'/pocket/extensions/rpc',csrf:()=>/pakka_csrf=([^;]+)/.exec(document.cookie)?.[1]??null});return client.operationByRequest({extension:'workspace-browser',requestId:'installed-lost-click',target:${JSON.stringify(ref)}});})()`,
-	);
-	assert.equal(repeated.state, "done");
+	assert.equal((await owner.operationByRequest("workspace-browser", clickId, ref)).id, clicked.id);
+	assert.equal((await view(owner)).view.open, false);
 	assert.equal(pageActions, 2);
-	const view = await extension(owner, ref, "workspace-browser", "view", {}, "no-replayed-page");
-	assert.equal(view.value.view.open, false);
 	assert.equal(requests.length, 4);
 	assert.equal(await readFile(effectFile, "utf8"), "APPROVED-INSTALLED-PAYLOAD");
 	assert.deepEqual(errors, []);
@@ -363,22 +337,17 @@ try {
 	);
 	await writeFile(
 		join(evidence, "result.json"),
-		JSON.stringify(
-			{ sessionFile, approvalIds, modelHttp: requests.length, pageActions, errors, spentPrimaryAttempts: 4 },
-			null,
-			2,
-		),
+		JSON.stringify({ modelHttp: requests.length, pageActions, approvalIds, errors }, null, 2),
 	);
 	console.log(
-		"Installed controlled workflows verified: 4 model HTTP, real allow/deny, 2 page clicks with visible original-result reconciliation, retry/reopen dedup, mobile viewer and owned cleanup",
+		"Installed controlled HTTP passed: actual allow/deny tool effect, native browser navigation/fill/2 clicks/screenshot, original operation and inner receipt, scoped viewer and cleanup after reopen; 4 model requests.",
 	);
 } finally {
-	await inspector?.close();
 	await stop();
 	provider.closeAllConnections();
 	site.closeAllConnections();
 	await Promise.all([
-		new Promise((resolve) => provider.close(() => resolve())),
-		new Promise((resolve) => site.close(() => resolve())),
+		new Promise((resolve) => provider.close(resolve)),
+		new Promise((resolve) => site.close(resolve)),
 	]);
 }

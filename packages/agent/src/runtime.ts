@@ -2,16 +2,23 @@ import { DurableAdapter, type ManagedAdapterPort } from "./durable-adapter.ts";
 import { createHostWithAdapter } from "./host.ts";
 import type {
 	CatalogOptions,
+	CatalogConfigurationIdentity,
 	ConversationConfigurationChange,
 	CatalogEnroll,
 	RuntimeCatalog,
 	ConversationRef,
 	ConversationSpec,
 	ConversationReadOptions,
+	ConversationPreviewOptions,
+	ConversationContentReference,
+	ConversationContentRange,
 	Host,
 	Runtime,
 	RuntimeOptions,
+	RuntimeBudgetChange,
+	RuntimeBudgetQuery,
 	RuntimeStoreOptions,
+	RuntimeRecordsOptions,
 	RuntimeJobOptions,
 	DisplayWrite,
 } from "./types.ts";
@@ -19,6 +26,8 @@ import type {
 /** Composition only: all Pi/storage mutable objects remain in DurableAdapter. */
 export async function createRuntime(options: RuntimeOptions): Promise<Runtime> {
 	if (Object.hasOwn(options, "migrateLegacy")) throw new Error("Unsupported runtime option: migrateLegacy");
+	if (options.observation !== undefined && options.observation !== "lazy" && options.observation !== "eager")
+		throw new Error("Unsupported runtime observation mode");
 	if (options.backend !== undefined && options.backend !== "durable")
 		throw new Error("Unsupported production backend");
 	let port!: ManagedAdapterPort;
@@ -71,14 +80,41 @@ export async function createRuntime(options: RuntimeOptions): Promise<Runtime> {
 	return Object.freeze({
 		root: () => root,
 		view: () => port.view(),
+		budgetPolicy: (check: () => void) => port.budgetPolicy(check),
+		changeBudget: (input: RuntimeBudgetChange, check: () => void) => port.changeBudget(input, check),
+		budgetReceipt: (identity: Pick<RuntimeBudgetChange, "actorId" | "requestId">, check: () => void) =>
+			port.budgetReceipt(identity, check),
+		budgetHistory: (query: RuntimeBudgetQuery, check: () => void) => port.budgetHistory(query, check),
 		profileChoices: () => port.profileChoices(),
+		modelChoices: () => port.modelChoices(),
+		modelAllowed: (selection: string) => port.modelAllowed(selection),
 		configuration: (ref: ConversationRef) => port.configuration(ref),
 		directoryRoots: (profiles?: readonly string[]) => port.directoryRoots(profiles),
 		conversation: attach,
 		store: (options: RuntimeStoreOptions) => port.store(options),
+		records: (options: RuntimeRecordsOptions) => port.records(options),
+		artifactHistory: (ref: ConversationRef, strategyId: string, check: () => void) =>
+			port.artifactHistory(ref, strategyId, check),
+		historicalWork: (options: import("./historical-types.ts").HistoricalWorkOptions) =>
+			port.historicalWork(options),
+		readHistoricalEntry: (
+			ref: ConversationRef,
+			input: import("./types.ts").HistoricalEntryInput,
+			check: () => void,
+		) => port.readHistoricalEntry(ref, input, check),
 		jobs: (options: RuntimeJobOptions) => port.jobs(options),
 		readConversation: (ref: ConversationRef, check: () => void, options?: ConversationReadOptions) =>
 			port.readConversation(ref, check, options),
+		observationRevision: (ref: ConversationRef, check: () => void) => port.observationRevision(ref, check),
+		prepareExecution: (ref: ConversationRef, check: () => void) => port.prepareExecution(ref, check),
+		previewConversation: (ref: ConversationRef, check: () => void, options?: ConversationPreviewOptions) =>
+			port.previewConversation(ref, check, options),
+		readContent: (
+			ref: ConversationRef,
+			reference: ConversationContentReference,
+			range: ConversationContentRange,
+			check: () => void,
+		) => port.readContent(ref, reference, range, check),
 		writeDisplay: (ref: ConversationRef, input: DisplayWrite, check: () => void) =>
 			port.writeDisplay(ref, input, check),
 		createConversation: async (spec: ConversationSpec) => {
@@ -94,13 +130,19 @@ export async function createRuntime(options: RuntimeOptions): Promise<Runtime> {
 					ref: ConversationRef,
 					change: ConversationConfigurationChange,
 					check: () => void,
+					request?: CatalogConfigurationIdentity,
 				) => {
-					const member = await catalog.configureAgent(ref, change, check);
+					const member = await catalog.configureAgent(ref, change, check, request);
 					await attach(member.ref);
 					return member;
 				},
-				configure: async (ref: ConversationRef, profile: string, check: () => void) => {
-					const member = await catalog.configure(ref, profile, check);
+				configure: async (
+					ref: ConversationRef,
+					profile: string,
+					check: () => void,
+					request?: CatalogConfigurationIdentity,
+				) => {
+					const member = await catalog.configure(ref, profile, check, request);
 					await attach(member.ref);
 					return member;
 				},

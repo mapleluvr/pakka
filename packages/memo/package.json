@@ -1,0 +1,52 @@
+{
+	"name": "@pakka/memo",
+	"version": "0.1.0",
+	"private": true,
+	"type": "module",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.js"
+		},
+		"./dynamite": {
+			"types": "./dist/dynamite.d.ts",
+			"import": "./dist/dynamite.js"
+		},
+		"./agent": {
+			"types": "./dist/agent.d.ts",
+			"import": "./dist/agent.js"
+		},
+		"./patchouli": {
+			"types": "./dist/patchouli.d.ts",
+			"import": "./dist/patchouli.js"
+		},
+		"./patchouli/mas": {
+			"types": "./dist/patchouli-mas.d.ts",
+			"import": "./dist/patchouli-mas.js"
+		}
+	},
+	"files": [
+		"dist",
+		"README.md",
+		"examples"
+	],
+	"scripts": {
+		"build": "tsc -p tsconfig.json"
+	},
+	"peerDependencies": {
+		"@pakka/dynamite": "0.5.0",
+		"@pakka/agent": "0.7.0",
+		"@pakka/mas": "0.4.0"
+	},
+	"peerDependenciesMeta": {
+		"@pakka/dynamite": {
+			"optional": true
+		},
+		"@pakka/agent": {
+			"optional": true
+		},
+		"@pakka/mas": {
+			"optional": true
+		}
+	}
+}

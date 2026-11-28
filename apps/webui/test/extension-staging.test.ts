@@ -1,11 +1,12 @@
 import { test } from "node:test";
+import { controlFacet } from "./fixtures/extension-control.ts";
 import { strict as assert } from "node:assert";
 import { mkdir, writeFile, access, symlink } from "node:fs/promises";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { fixture } from "./fixture.ts";
 import { createExtensionHost } from "../src/extension-host.ts";
-import { decodeExtensionResponse } from "../src/extension-rpc.ts";
+import { decodeExtensionResponse } from "@pakka/protocol/extension-rpc";
 
 const manifest = {
 	api: 1,
@@ -76,7 +77,7 @@ test(
 				}),
 				registration = host.list(m.actor)[0]!;
 			await writeFile(join(approved.root, "backend.mjs"), 'throw new Error("unconfirmed module effect");');
-			await assert.rejects(host.reload(m.actor, "staging"));
+			assert.equal((await controlFacet(host, m.actor, "staging", "backend", "reload")).state, "unknown");
 			assert.equal(host.list(m.actor)[0]!.phase, "unknown");
 			await assert.rejects(
 				host.call(m.actor, {
@@ -87,11 +88,11 @@ test(
 					input: {},
 				}),
 			);
-			await host.setEnabled(m.actor, "staging", false);
-			await assert.rejects(host.setEnabled(m.actor, "staging", true));
+			await controlFacet(host, m.actor, "staging", "backend", "disable");
+			await assert.rejects(controlFacet(host, m.actor, "staging", "backend", "enable"));
 			await writeFile(join(approved.root, "backend.mjs"), backend + "\n// confirmed revision");
-			await host.reload(m.actor, "staging");
-			await host.setEnabled(m.actor, "staging", true);
+			await controlFacet(host, m.actor, "staging", "backend", "reload");
+			await controlFacet(host, m.actor, "staging", "backend", "enable");
 			const restored = host.list(m.actor)[0]!;
 			assert.equal(restored.phase, "ready");
 			assert.equal(
@@ -126,13 +127,13 @@ test(
 				sources: [approved],
 			});
 			for (let index = 0; index < 8; index++) {
-				await host.setEnabled(m.actor, "staging", false);
-				await host.setEnabled(m.actor, "staging", true);
+				await controlFacet(host, m.actor, "staging", "backend", "disable");
+				await controlFacet(host, m.actor, "staging", "backend", "enable");
 			}
 			assert.doesNotThrow(() =>
 				decodeExtensionResponse(
 					{
-						version: 2,
+						version: 3,
 						serverId: "server",
 						requestId: "list",
 						result: { kind: "registrations", registrations: host.list(m.actor) },
@@ -144,7 +145,7 @@ test(
 			await mkdir(privateDir);
 			await writeFile(join(privateDir, "private.js"), "PRIVATE-CANARY");
 			await symlink(privateDir, join(approved.root, "web", "junction"), "junction");
-			await assert.rejects(host.reload(m.actor, "staging"));
+			await assert.rejects(controlFacet(host, m.actor, "staging", "webui", "reload"));
 			assert.equal(host.list(m.actor)[0]!.phase, "ready");
 		} finally {
 			await m.close();
@@ -171,9 +172,9 @@ test(
 					sources: [approved],
 				}),
 				registration = host.list(m.actor)[0]!;
-			const asset = await host.asset(m.actor, "staging", registration.generation, "client.js");
+			const asset = await host.asset(m.actor, "staging", "client", registration.generation, "client.js");
 			assert.match(new TextDecoder().decode(asset.body), /export const bind/);
-			assert.deepEqual(registration.facets, ["client"]);
+			assert.equal(registration.facet, "client");
 			assert.equal(m.f.requests.length, 0);
 		} finally {
 			await m.close();
@@ -190,11 +191,11 @@ test(
 			const approved = await source(join(m.f.root, "disabled"), backend),
 				options = { runtime: m.runtime, people: m.people, workspace: m.workspace, sources: [approved] };
 			const host = await createExtensionHost(options);
-			await host.setEnabled(m.actor, "staging", false);
+			await controlFacet(host, m.actor, "staging", "backend", "disable");
 			await writeFile(join(approved.root, "backend.mjs"), 'throw new Error("backend must remain unloaded");');
 			const next = await createExtensionHost(options);
 			assert.equal(next.list(m.actor)[0]!.phase, "disabled");
-			await assert.rejects(next.setEnabled(m.actor, "staging", true));
+			assert.equal((await controlFacet(next, m.actor, "staging", "backend", "enable")).state, "unknown");
 			assert.equal(next.list(m.actor)[0]!.phase, "unknown");
 		} finally {
 			await m.close();

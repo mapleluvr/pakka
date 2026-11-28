@@ -1,0 +1,20 @@
+{
+  "markdownFiles": 22,
+  "newMissingLinks": [],
+  "historicalMissingLinks": [
+    {
+      "file": "docs/PI-DURABLE-COMPATIBILITY.md",
+      "link": "MIGRATION-M3-ACCEPTANCE.md"
+    },
+    {
+      "file": "docs/PI-DURABLE-COMPATIBILITY.md",
+      "link": "MIGRATION-M4-ACCEPTANCE.md"
+    },
+    {
+      "file": "docs/PI-DURABLE-COMPATIBILITY.md",
+      "link": "MIGRATION-M5-ACCEPTANCE.md"
+    }
+  ],
+  "ledgerAppendOnly": true,
+  "oldPatchUnchanged": true
+}

@@ -12,6 +12,10 @@
 
 配对中的版本、完整 commit、归档 SHA-256 与构建时 workingTree 身份共同描述输入。后续保存的实现提交由源码关联记录承接，不能反写为旧归档的构建身份。选择不同入口时使用各自的配置与归档，不将一个组合的结果推广到另一组合。
 
+## History Book 消费者
+
+固定归档的独立 Book 和可选 Memo 组合由 `npm run smoke:history -- --agent <agent.tgz> --dynamite <dynamite.tgz>` 验证。先安装 Agent＋Dynamite，再安装 Memo＋MAS；完整调用链、完成条件和存储关系见 [Book 与图书馆协作](../../docs/guides/HISTORY-LIBRARY.md)。配对通过原归档 hash 和后续源码关联分别记录，历史 SQLite/server 配对继续保持原身份。
+
 ## 程序化 SQLite 消费者
 
 从相应 Dynamite checkout 运行，参数为要构建的 Pakka checkout：

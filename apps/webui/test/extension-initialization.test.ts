@@ -1,4 +1,5 @@
 import { test } from "node:test";
+import { controlFacet } from "./fixtures/extension-control.ts";
 import { strict as assert } from "node:assert";
 import { createServer, type ServerResponse } from "node:http";
 import { mkdir, writeFile, access } from "node:fs/promises";
@@ -68,7 +69,7 @@ test(
 				actor = await services.people.authenticate(session.token);
 			const host = await createExtensionHost({ runtime: m.runtime, ...services, sources: [approved] });
 			await writeFile(join(root, "backend.mjs"), 'throw new Error("unconfirmed module initialization");');
-			await assert.rejects(host.reload(actor, "initialization"));
+			assert.equal((await controlFacet(host, actor, "initialization", "backend", "reload")).state, "unknown");
 			await writeFile(
 				join(root, "backend.mjs"),
 				`import {writeFileSync} from "node:fs";writeFileSync(new URL(${JSON.stringify(pathToFileURL(marker).href)}),"entered");export const actions={};`,
@@ -81,7 +82,7 @@ test(
 				next = await createExtensionHost({ runtime: reopened, ...nextServices, sources: [approved] });
 			assert.equal(next.list(nextActor)[0]!.phase, "unknown");
 			await assert.rejects(access(marker), { code: "ENOENT" });
-			await next.reload(nextActor, "initialization");
+			await controlFacet(next, nextActor, "initialization", "backend", "reload");
 			assert.equal(next.list(nextActor)[0]!.phase, "ready");
 			await access(marker);
 			assert.equal(m.f.requests.length, 0);

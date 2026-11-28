@@ -1,6 +1,11 @@
 import { test } from "node:test";
 import { strict as assert } from "node:assert";
-import { decodePocketRequest, decodePocketResponse, decodePocketEvent } from "../src/pocket.ts";
+import {
+	POCKET_VERSION,
+	decodePocketRequest,
+	decodePocketResponse,
+	decodePocketEvent,
+} from "../src/pocket.ts";
 const target = {
 	key: "main",
 	sessionId: "store",
@@ -45,7 +50,10 @@ test("WebUI collaboration protocol: human operations reject serialized authority
 		{ op: "collaboration.presence", target, input: { state: "typing" } },
 	];
 	for (const command of commands)
-		assert.deepEqual(decodePocketRequest({ version: 2, requestId: "rpc", command }).command, command);
+		assert.deepEqual(
+			decodePocketRequest({ version: POCKET_VERSION, requestId: "rpc", command }).command,
+			command,
+		);
 	for (const input of [
 		{ requestId: "p", text: "x", authorId: "forged" },
 		{ requestId: "p", text: "x", mentions: ["peer", "peer"] },
@@ -53,7 +61,7 @@ test("WebUI collaboration protocol: human operations reject serialized authority
 	])
 		assert.throws(() =>
 			decodePocketRequest({
-				version: 2,
+				version: POCKET_VERSION,
 				requestId: "rpc",
 				command: { op: "collaboration.post", target, input },
 			}),
@@ -66,7 +74,7 @@ test("WebUI collaboration protocol: human operations reject serialized authority
 	])
 		assert.throws(() =>
 			decodePocketRequest({
-				version: 2,
+				version: POCKET_VERSION,
 				requestId: "rpc",
 				command: { op: "collaboration.driver", target, input },
 			}),
@@ -75,14 +83,14 @@ test("WebUI collaboration protocol: human operations reject serialized authority
 // Client-visible snapshots/events have their own finite decode; source DTO typing cannot sanitize wire bytes.
 test("WebUI collaboration protocol: bounded attributed snapshots and scoped events reject malformed state", () => {
 	const response = {
-		version: 2,
+		version: POCKET_VERSION,
 		requestId: "rpc",
 		serverId: "server-one",
 		result: { kind: "collaboration", snapshot },
 	};
 	assert.deepEqual(decodePocketResponse(response, "rpc"), response);
 	const event = {
-		version: 2,
+		version: POCKET_VERSION,
 		serverId: "server-one",
 		streamId: "stream-one",
 		sequence: 1,

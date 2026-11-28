@@ -1,0 +1,302 @@
+{
+  "schema": 1,
+  "recordedAt": "2026-11-05T07:58:07.657Z",
+  "baseCommit": "547c4968b9414ecff774edb7071687539895e8e8",
+  "node": "v24.15.0",
+  "platform": "win32",
+  "architecture": "x64",
+  "durable": {
+    "filename": "earendil-works-pi-durable-1.4.0-pakka.1.tgz",
+    "sha256": "7fd9f3310dfa003a9077139a25faf93567922a065461fa3767dd5a1066efa891",
+    "upstreamCommit": "4a080252f06caf63a525d7873c5d94d3c23887e0",
+    "upstreamVersion": "1.4.0",
+    "patchedVersion": "1.4.0-pakka.1",
+    "sourcePatchSha256": "128df5c9618c3f92cb8dcb43c1eb71d069b7927d32e1688067e1ccb5cf2a1f66",
+    "buildLockSha256": "e0cac343fe8bb39fe303f97175dc5c88f466f61a2c584058727f0bb8d47bbc3b"
+  },
+  "package": {
+    "name": "@pakka/agent",
+    "version": "0.7.0",
+    "artifact": "C:\\Users\\mapleland\\AppData\\Local\\Temp\\pakka-env-consumer-install-b8Lh3u\\pakka-agent-0.7.0.tgz",
+    "sha256": "54c6a25ac4ab4488b6a06eba2f54e06a99459dd3feba9d3a29581772a5a968e3",
+    "installedAdapterMatchesBuild": true
+  },
+  "focused": {
+    "tests": 24,
+    "pass": 24,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0
+  },
+  "adjacent": {
+    "tests": 31,
+    "pass": 31,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0
+  },
+  "consumer": {
+    "consumer": "execution",
+    "requests": 5,
+    "nativeFile": "NEW",
+    "argvFile": "ARGV",
+    "cleaned": 1,
+    "root": "C:\\Users\\mapleland\\AppData\\Local\\Temp\\pakka-execution-consumer-woEJGT"
+  },
+  "comparison": {
+    "samePattern": true,
+    "baseline": {
+      "root": "D:/Projects/kappa/migration-worktrees/pakka-execution-env-control-1.4.0",
+      "profile": "C:\\Users\\mapleland\\AppData\\Local\\Temp\\pakka-built-compare-cphiy2",
+      "summary": [
+        {
+          "file": "apps/server/test/pocket-directories.test.ts",
+          "status": 1,
+          "error": null,
+          "passed": 0,
+          "failed": 1
+        },
+        {
+          "file": "apps/server/test/pocket-hooks-boundaries.test.ts",
+          "status": 0,
+          "error": null,
+          "passed": 3,
+          "failed": 0
+        },
+        {
+          "file": "apps/server/test/pocket-people-boundaries.test.ts",
+          "status": 1,
+          "error": null,
+          "passed": 0,
+          "failed": 1
+        },
+        {
+          "file": "apps/webui/test/transcript-parts-browser.test.ts",
+          "status": 1,
+          "error": null,
+          "passed": 0,
+          "failed": 2
+        },
+        {
+          "file": "packages/agent/test/strategy-omission.test.ts",
+          "status": 0,
+          "error": null,
+          "passed": 1,
+          "failed": 0
+        },
+        {
+          "file": "packages/mas/test/mas.test.ts",
+          "status": 1,
+          "error": null,
+          "passed": 1,
+          "failed": 1
+        },
+        {
+          "file": "packages/mas/test/unknown.test.ts",
+          "status": null,
+          "error": "ETIMEDOUT",
+          "passed": 0,
+          "failed": 2
+        },
+        {
+          "file": "apps/webui/test/extension-client.test.ts",
+          "status": 0,
+          "error": null,
+          "passed": 2,
+          "failed": 0
+        },
+        {
+          "file": "apps/webui/test/browser-input.test.ts",
+          "status": 1,
+          "error": null,
+          "passed": 0,
+          "failed": 1
+        },
+        {
+          "file": "apps/webui/test/browser-launch.test.ts",
+          "status": 1,
+          "error": null,
+          "passed": 0,
+          "failed": 2
+        },
+        {
+          "file": "apps/webui/test/browser-contribution.test.ts",
+          "status": null,
+          "error": "ETIMEDOUT",
+          "passed": 0,
+          "failed": 1
+        },
+        {
+          "file": "apps/server/test/pocket-browser.test.ts",
+          "status": null,
+          "error": "ETIMEDOUT",
+          "passed": 0,
+          "failed": 1
+        }
+      ]
+    },
+    "candidate": {
+      "root": "D:/Projects/kappa/migration-worktrees/pakka-execution-env-1.4.0",
+      "profile": "C:\\Users\\mapleland\\AppData\\Local\\Temp\\pakka-built-compare-toVFnb",
+      "summary": [
+        {
+          "file": "apps/server/test/pocket-directories.test.ts",
+          "status": 1,
+          "error": null,
+          "passed": 0,
+          "failed": 1
+        },
+        {
+          "file": "apps/server/test/pocket-hooks-boundaries.test.ts",
+          "status": 0,
+          "error": null,
+          "passed": 3,
+          "failed": 0
+        },
+        {
+          "file": "apps/server/test/pocket-people-boundaries.test.ts",
+          "status": 1,
+          "error": null,
+          "passed": 0,
+          "failed": 1
+        },
+        {
+          "file": "apps/webui/test/transcript-parts-browser.test.ts",
+          "status": 1,
+          "error": null,
+          "passed": 0,
+          "failed": 2
+        },
+        {
+          "file": "packages/agent/test/strategy-omission.test.ts",
+          "status": 0,
+          "error": null,
+          "passed": 1,
+          "failed": 0
+        },
+        {
+          "file": "packages/mas/test/mas.test.ts",
+          "status": 1,
+          "error": null,
+          "passed": 1,
+          "failed": 1
+        },
+        {
+          "file": "packages/mas/test/unknown.test.ts",
+          "status": null,
+          "error": "ETIMEDOUT",
+          "passed": 0,
+          "failed": 2
+        },
+        {
+          "file": "apps/webui/test/extension-client.test.ts",
+          "status": 0,
+          "error": null,
+          "passed": 2,
+          "failed": 0
+        },
+        {
+          "file": "apps/webui/test/browser-input.test.ts",
+          "status": 1,
+          "error": null,
+          "passed": 0,
+          "failed": 1
+        },
+        {
+          "file": "apps/webui/test/browser-launch.test.ts",
+          "status": 1,
+          "error": null,
+          "passed": 0,
+          "failed": 2
+        },
+        {
+          "file": "apps/webui/test/browser-contribution.test.ts",
+          "status": null,
+          "error": "ETIMEDOUT",
+          "passed": 0,
+          "failed": 1
+        },
+        {
+          "file": "apps/server/test/pocket-browser.test.ts",
+          "status": null,
+          "error": "ETIMEDOUT",
+          "passed": 0,
+          "failed": 1
+        }
+      ]
+    },
+    "perFileTimeoutMs": 45000,
+    "fullSuitePassed": false
+  },
+  "codeHashes": {
+    "packages/agent/src/durable-adapter.ts": "113cbcaeeaff136767efb60ffe02632f18551b6492c326ac8b5b37e5c17cb4d5",
+    "packages/agent/src/execution-types.ts": "68d2842c85f617e98062dff00fd43f53070269bba29739d75c6cf325df5a9a53",
+    "packages/agent/src/types.ts": "38202ce5d90dd5389c571f8f3c2e80e3c14f8d7009465c99a3a68d73174a849a",
+    "packages/agent/src/index.ts": "304d0c7b4776ea5b2b843aa55b1983c8d5fc3d2e3f5765af8a5ba34308657822",
+    "scripts/consumer-execution.mjs": "8c83e1838faba7ec214160f783ea75b3f8a0a6e66e7d5acdde3077479530ab9e",
+    "scripts/pack-smoke.mjs": "56b8bfc7ad4f02c4b4c29a4d957a62730d063f0b92288b8ae964d4a6007dd62b",
+    "packages/agent/test/execution-disposal.test.ts": "cd4bbb04139e4999b764b1c4437d784219bacacbdec21713cd510505265e9905",
+    "packages/agent/test/execution-environment.test.ts": "ab19693240682e691775213247c424aa4932c7757ebe1761b744e4b1e7876153",
+    "packages/agent/test/execution-guards.test.ts": "33394bfcfd7a4f7ccee7384b16d612ec90b4abc0e8cb756d1d0b4da6c0bfbd41",
+    "packages/agent/test/execution-lifecycle.test.ts": "f6d16aae7322edfb93b58277b4325cc51d38114a22b3bfd99ad966810218d8ff",
+    "packages/agent/test/execution-native-revocation.test.ts": "2632e88086971a2853030ecfd55ca2df0a8222d39b1ae24364c5c905d8fa92af",
+    "packages/agent/test/execution-reader-failure.test.ts": "acee65b9e4ea30f5944569e93e44c638c65a366b8eb34aa99cec874770177dec",
+    "packages/agent/test/execution-runtime.test.ts": "52248b80ffb2b73bf10b324045396ffa52db7a53f7a6b086e1cb4d37f6a58c93",
+    "packages/agent/test/execution-shell.test.ts": "be6ad5d9efce91e93427e401d1311fe7a327857fc63d52307301ecbc00c0b306"
+  },
+  "localLogHashes": {
+    "docs/.temp/execution-final.log": "5ed5c099de2e8c833e08ed34f2368a6510291377dcabc5062d54bea8c546fcfc",
+    "docs/.temp/execution-adjacent-final.log": "f978bac2152720dfa29eb11c2e2bea69d72da5c4c8bff7882da810e47a2d0c18",
+    "docs/.temp/execution-consumer-final.log": "0b8452d512e291685723b815c72bc1e5b1403845cb13680d4dee5786be777e32",
+    "docs/.temp/execution-check-final.log": "46fd6177c4e91b62c1602b3ec14c90c976e4c02d913f127990da2db2bbe13df7",
+    "docs/.temp/execution-format-final.log": "80fed425899650a98f00f03e08668cc1d0f9005f724084891609657a3ca54592",
+    "docs/.temp/execution-format-changed.log": "f20510a9da4717c51c4cffee6d0dd88d6c9a723d0a83711d01216f5b48961283",
+    "docs/.temp/execution-patch-verify.log": "e1957fe23e36d5e54e1520681a305d962485ee863bfefcf32ebde3f78c32162e",
+    "docs/.temp/execution-baseline-matrix.log": "204cb8c1e6f6d37ed97201d58e0245870c1e9073854ad4bc257b8b1adcfc6e5a",
+    "docs/.temp/execution-candidate-matrix.log": "ebb0b87d0794964e8abb5e12fb58f0e8718594fe2237dd503a2cc60f91b3e069"
+  },
+  "limitations": [
+    "No MXC or untrusted-plugin runner implemented",
+    "Only deterministic loopback OpenAI-completions provider",
+    "Broad suite is not green; comparison scope is the recorded 12 files",
+    "Full formatting has 17 pre-existing warnings; changed production/test/script formatting passes",
+    "LSP confirmed three production files clean; the 5397-line adapter exceeds the 5000-line cap and is covered by compiler checks"
+  ],
+  "diagnostics": {
+    "lsp": {
+      "checked": 4,
+      "confirmedClean": 3,
+      "tooLarge": 1,
+      "adapterLines": 5397,
+      "lineLimit": 5000
+    },
+    "format": {
+      "candidateWarnings": 17,
+      "baselineWarnings": 18,
+      "changedCodePassed": true
+    }
+  },
+  "evidenceHashes": {
+    "baseline-format.txt": "9ea51684bfe473e3f6c3a854f4a634177cc4ac4ff75d67969a244a04380d4692",
+    "compare-built.mjs": "993735f971fdc258b0bda3ee3bab596502de8ac49d4cf2d59876b3a669af43df",
+    "delivery-check.txt": "b0ff84029263768ecbf68fc9aa9b461b279e0f9dc46f0dbc938d1af9503cfa30",
+    "execution-adjacent-final.txt": "f978bac2152720dfa29eb11c2e2bea69d72da5c4c8bff7882da810e47a2d0c18",
+    "execution-baseline-matrix.txt": "204cb8c1e6f6d37ed97201d58e0245870c1e9073854ad4bc257b8b1adcfc6e5a",
+    "execution-candidate-matrix.txt": "ebb0b87d0794964e8abb5e12fb58f0e8718594fe2237dd503a2cc60f91b3e069",
+    "execution-check-final.txt": "46fd6177c4e91b62c1602b3ec14c90c976e4c02d913f127990da2db2bbe13df7",
+    "execution-consumer-final.txt": "0b8452d512e291685723b815c72bc1e5b1403845cb13680d4dee5786be777e32",
+    "execution-final.txt": "5ed5c099de2e8c833e08ed34f2368a6510291377dcabc5062d54bea8c546fcfc",
+    "execution-format-changed.txt": "f20510a9da4717c51c4cffee6d0dd88d6c9a723d0a83711d01216f5b48961283",
+    "execution-format-final.txt": "80fed425899650a98f00f03e08668cc1d0f9005f724084891609657a3ca54592",
+    "execution-invalid-error-red.txt": "e5ff1a8b869f1f79b6ef5e3b9e5f9acac59543e0fb82f5b2c68f8af98b5613f2",
+    "execution-lifecycle-red.txt": "889611ed51dd355d1aac6626e4e4fcfc9707103c9e296218656ea2c1b00cacf6",
+    "execution-native-revocation.txt": "b1a89d2b94eba4825ec7e7da5e47a1db37a481fb9f3b33672bbca3a8fe6d8618",
+    "execution-patch-verify.txt": "e1957fe23e36d5e54e1520681a305d962485ee863bfefcf32ebde3f78c32162e",
+    "execution-reader-red.txt": "ea8ede61f2c79a46eaf246154e763c35c221d660fef4fbbcd5a05433425f957e",
+    "execution-red.txt": "ab5067f153c45c97eaa862f69d62b70f3823daa3f413f5347a5af273e9082926",
+    "execution-runtime-red.txt": "10e3d2e9aafc7c8984545aacf499af1b2cb0e3f4bd2848de2e4aac5e40829f72",
+    "openspec-check.txt": "142a61627f0c827be4fd727fc0c02f355066c7d16d1dea73f090d64b268fddf9",
+    "pack-consumer.mjs": "9019e8106b906485d817cae03c10d4079d722d87cb0495f5c2734d48fa868eb0",
+    "run-tests.mjs": "5a1f4739969deb716f4f38dab6a26f5c26e2402ef06c3b0a54b00f059d299865"
+  }
+}

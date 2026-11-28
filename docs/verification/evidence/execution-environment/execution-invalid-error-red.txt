@@ -1,0 +1,34 @@
+✔ execution: invalid empty identity is rejected before use (16.981ms)
+✔ execution: invalid missing factory is rejected before use (3.7765ms)
+✔ execution: invalid duplicate native tool is rejected before use (2.6347ms)
+✔ execution: invalid unknown native tool is rejected before use (12.1477ms)
+✔ execution: native/custom tool name collisions are rejected (3.7868ms)
+✔ execution: a unknown result after a real effect fails closed even when the tool catches it (92.977ms)
+✖ execution: a foreign result after a real effect fails closed even when the tool catches it (63.2381ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 6
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1229.939
+
+✖ failing tests:
+
+test at packages\agent\test\execution-guards.test.ts:76:1
+✖ execution: a foreign result after a real effect fails closed even when the tool catches it (63.2381ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  'ready' !== 'failed'
+  
+      at TestContext.<anonymous> (file:///D:/Projects/kappa/migration-worktrees/pakka-execution-env-1.4.0/packages/agent/test/execution-guards.test.ts:119:10)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'ready',
+    expected: 'failed',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

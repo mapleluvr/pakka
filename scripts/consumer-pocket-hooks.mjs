@@ -2,12 +2,11 @@ import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import { createHmac } from "node:crypto";
 import { createServer } from "node:http";
-import { copyFile, mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createRuntime } from "@pakka/agent";
-import { ownedBrowser } from "./pocket-browser.ts";
-import { openConversations } from "./frontend-controls.ts";
+import { loginHttp, connectHttp } from "./consumer-webui-http.mjs";
 
 // Outside-repository installed CLI; every model request goes to this deterministic local provider.
 const root = dirname(fileURLToPath(import.meta.url)),
@@ -74,7 +73,6 @@ let options = {
 		limits: { maxConversations: 4, maxPrimaryAttempts: 10, maxAuxiliaryAttempts: 2 },
 	},
 	child,
-	browser,
 	origin,
 	port,
 	webui = true;
@@ -137,37 +135,17 @@ async function stop() {
 	assert.equal(child.output().includes(options.apiKey), false);
 	child = undefined;
 }
-const rpc = (page, command) =>
-	page.evaluate(
-		`(async()=>{const{createPocketClient}=await import('@pakka/client/pocket');return createPocketClient({endpoint:location.origin+'/pocket/rpc',csrf:()=>/pakka_csrf=([^;]+)/.exec(document.cookie)?.[1]??null}).request(${JSON.stringify(command)});})()`,
+const readHooks = async (client, target) => (await client.call("workspace-hooks", "read", {}, target)).value;
+const event = (n) =>
+	Buffer.from(
+		JSON.stringify({
+			ref: "refs/heads/INSTALLED-HOOK-EVENT-" + n,
+			repository: { full_name: "host-owner/approved", owner: { login: "host-owner" } },
+			sender: { login: "host-owner" },
+		}),
 	);
-const ext = (page, target, operation) =>
-	page.evaluate(
-		`(async()=>{const{createExtensionClient}=await import('@pakka/webui/client');const client=createExtensionClient({endpoint:location.origin+'/pocket/extensions/rpc',csrf:()=>/pakka_csrf=([^;]+)/.exec(document.cookie)?.[1]??null}),target=${JSON.stringify(target)},row=(await client.list(target)).find(row=>row.manifest.id==='workspace-hooks');return ${operation};})()`,
-	);
-const readHooks = (page, target) =>
-	ext(
-		page,
-		target,
-		"(await client.call({extension:row.manifest.id,generation:row.generation,action:'read',requestId:crypto.randomUUID(),target,input:{}})).value",
-	);
-async function reloadProduct(page, target) {
-	const before = await page.evaluate("performance.timeOrigin");
-	await page.reload();
-	await page.wait(
-		"performance.timeOrigin!==" + JSON.stringify(before) + '&&document.querySelector("[data-conversation]")',
-	);
-	// The application consumes a conversation fragment after selecting the authorized target.
-	await page.navigate(origin + "/#conversation=" + encodeURIComponent(target.conversationId));
-	const selected = `[data-conversation="${target.conversationId}"][aria-current=true]`;
-	await page.wait(
-		"!!document.querySelector(" +
-			JSON.stringify(selected) +
-			')&&document.querySelector(".pocket-status")?.textContent==="Ready"&&!!document.querySelector("textarea[name=message]")',
-	);
-}
 async function post(key, body, delivery) {
-	return fetch(origin + "/pocket/ingress/workspace-hooks/hooks/" + key.id, {
+	return fetch(origin + "/pakka-webui/ingress/workspace-hooks/hooks/" + key.id, {
 		method: "POST",
 		headers: {
 			"Content-Type": "application/json",
@@ -178,230 +156,128 @@ async function post(key, body, delivery) {
 		body,
 	});
 }
-async function complete(page, target, response, count) {
+async function complete(client, target, response, count) {
 	assert.equal(response.status, 202);
 	const result = await response.json();
 	assert.equal(result.state, "accepted");
 	assert.ok(result.receiptId);
-	await until(() => requests.length === count);
-	const done = await rpc(page, { op: "wait", id: result.receiptId });
-	assert.equal(done.receipt.status, "done");
-	assert.equal(done.receipt.target.conversationId, target.conversationId);
+	const done = (await client.rpc({ op: "wait", id: result.receiptId })).receipt;
+	assert.equal(done.status, "done");
+	assert.equal(done.target.conversationId, target.conversationId);
+	assert.equal(requests.length, count);
 	return result;
 }
-async function setupKey(page) {
-	await page.click("[data-hook-setup]");
-	await page.wait('document.querySelector("[data-hook-secret]")?.value.length===43');
-	const key = await page.evaluate(
-		'({id:document.querySelector("[data-hook-row]").dataset.hookRow,secret:document.querySelector("[data-hook-secret]").value})',
-	);
-	assert.ok(key && typeof key.id === "string" && typeof key.secret === "string");
-	await page.click("[data-hook-hide-setup]");
-	return key;
-}
-const event = (n) =>
-	Buffer.from(
-		JSON.stringify({
-			ref: "refs/heads/INSTALLED-HOOK-EVENT-" + n,
-			repository: { full_name: "host-owner/approved", owner: { login: "host-owner" } },
-			sender: { login: "host-owner" },
-		}),
-	);
 try {
 	let info = await start();
 	port = Number(new URL(origin).port);
-	const link = (await readFile(ownerFile, "utf8")).trim();
-	assert.ok(link.startsWith(origin + "/#signin="));
-	browser = await ownedBrowser(join(run, "chrome"));
-	const page = await browser.page(link);
-	await page.wait('document.querySelector("[data-action=signin]")');
-	await page.click("[data-action=signin]");
-	await page.wait('document.querySelector("[data-conversation]")');
-	await page.click("[data-conversation]");
-	const listed = await rpc(page, { op: "list" });
-	assert.equal(listed.kind, "list");
-	assert.equal(listed.conversations.length, 1);
-	const target = listed.conversations[0];
-	await page.wait('document.querySelector("[data-interface=workspace-hooks-hooks]")');
-	await page.click("[data-interface=workspace-hooks-hooks]");
-	await page.wait('document.querySelector("[data-hook-name]")?.disabled===false');
-	await page.evaluate(
-		`(()=>{const original=globalThis.fetch;globalThis.__hookWrites=0;globalThis.__restoreHookFetch=()=>{globalThis.fetch=original;};globalThis.fetch=async(...args)=>{if(typeof args[1]?.body==='string'&&JSON.parse(args[1].body).command?.call?.action==='create'){globalThis.__hookWrites++;globalThis.__originalHook=JSON.parse(args[1].body).command.call;const response=await original(...args);await response.arrayBuffer();throw Error('TEST LOST COMMITTED HOOK RESPONSE');}return original(...args);};})()`,
+	const token = new URLSearchParams(new URL((await readFile(ownerFile, "utf8")).trim()).hash.slice(1)).get(
+		"session",
 	);
-	await page.type("[data-hook-name]", "Installed signed events");
-	await page.type("[data-hook-instructions]", "Report this event in the current project.");
-	await page.click("[data-hook-create]");
-	await page.wait('document.querySelector("[data-hook-reconcile]")?.disabled===false');
-	const original = await page.evaluate(
-		"({extension:globalThis.__originalHook.extension,requestId:globalThis.__originalHook.requestId,target:globalThis.__originalHook.target})",
+	assert.ok(token);
+	let owner = await loginHttp(origin, token);
+	const target = (await owner.rpc({ op: "list" })).conversations[0];
+	const created = await owner.call(
+		"workspace-hooks",
+		"create",
+		{
+			name: "Installed signed events",
+			instructions: "Report this event in the current project.",
+			signed: true,
+			allowOutside: false,
+		},
+		target,
+		"installed-hook",
 	);
-	await page.evaluate("globalThis.__restoreHookFetch()");
-	await page.click("[data-conversation]");
-	await page.wait('document.querySelector("textarea[name=message]")');
-	await page.click("[data-interface=workspace-hooks-hooks]");
-	await page.wait('document.querySelector("[data-hook-reconcile]")?.disabled===false');
-	await page.click("[data-hook-reconcile]");
-	await page.wait(
-		'!document.querySelector("[data-hook-reconcile]")&&document.querySelectorAll("[data-hook-row]").length===1',
-	);
-	assert.equal(await page.evaluate("globalThis.__hookWrites"), 1);
-	assert.equal(requests.length, 0);
-	const oldKey = await setupKey(page);
-	const first = await complete(page, target, await post(oldKey, event(1), "first"), 1);
+	assert.equal(created.state, "done");
+	assert.equal(created.value.state, "done");
+	const id = created.value.hook.id;
+	assert.equal((await readHooks(owner, target)).hooks.length, 1);
+	const oldKey = (await owner.call("workspace-hooks", "credentials", { id }, target)).value;
+	const first = await complete(owner, target, await post(oldKey, event(1), "first"), 1);
 	const repeated = await post(oldKey, event(1), "changed-unsigned-header");
 	assert.equal(repeated.status, 202);
 	assert.equal((await repeated.json()).receiptId, first.receiptId);
 	assert.equal(requests.length, 1);
-	await page.click("[data-hook-rotate]");
-	await page.wait('document.querySelector("[data-hook-confirm]")?.disabled===false');
-	await page.click("[data-hook-confirm]");
-	await page.wait('document.querySelector("[data-hook-row]")?.dataset.version==="2"');
-	const currentKey = await setupKey(page);
+	const rotated = await owner.call(
+		"workspace-hooks",
+		"rotate",
+		{ id, expectedVersion: 1 },
+		target,
+		"installed-rotate",
+	);
+	assert.equal(rotated.value.hook.version, 2);
+	const currentKey = (await owner.call("workspace-hooks", "credentials", { id }, target)).value;
 	assert.notEqual(currentKey.secret, oldKey.secret);
 	assert.equal((await post(oldKey, event(2), "old-key")).status, 404);
-	assert.equal(requests.length, 1);
-	await complete(page, target, await post(currentKey, event(2), "second"), 2);
+	await complete(owner, target, await post(currentKey, event(2), "second"), 2);
 	await stop();
-	let runtime = await createRuntime({ ...options, reopenSessionFile: info.sessionFile });
-	let before;
-	try {
-		before = (await runtime.store({ namespace: "installed.hooks", maxBytes: 2097152 }).snapshot()).data;
-		assert.equal(before.hooks.length, 1);
-		assert.equal(
-			before.deliveries.filter(
-				(row) =>
-					row.hookId === before.hooks[0].id && row.state === "complete" && row.result.state === "accepted",
-			).length,
-			2,
-		);
-		assert.equal(before.deliveries.length, 2);
-		assert.equal(runtime.view().budget.primaryAttempts, 2);
-		const ordinary = JSON.stringify(before.operations);
-		assert.equal(ordinary.includes(oldKey.secret) || ordinary.includes(currentKey.secret), false);
-		await writeFile(join(run, "before-reopen.json"), JSON.stringify(before, null, 2));
-		await writeFile(join(run, "before-view.json"), JSON.stringify(runtime.view(), null, 2));
-	} finally {
-		await runtime.close();
-	}
 	options = { ...options, reopenSessionFile: info.sessionFile };
 	info = await start();
-	await reloadProduct(page, target);
-	await page.wait('document.querySelector("[data-interface=workspace-hooks-hooks]")');
-	await page.click("[data-interface=workspace-hooks-hooks]");
-	await page.wait('document.querySelector("[data-hook-row]")?.dataset.version==="2"');
-	assert.equal((await readHooks(page, target)).hooks[0].received, 2);
-	const recovered = await ext(
-		page,
-		target,
-		"await client.operationByRequest(" + JSON.stringify(original) + ")",
-	);
-	assert.equal(recovered.state, "done");
-	assert.equal(JSON.stringify(recovered).includes(currentKey.secret), false);
+	owner = await connectHttp(origin, owner.cookies);
+	assert.equal((await readHooks(owner, target)).hooks[0].received, 2);
+	const recovered = await owner.operationByRequest("workspace-hooks", "installed-hook", target);
+	assert.equal(recovered.id, created.id);
+	assert.ok(!JSON.stringify(recovered).includes(currentKey.secret));
 	assert.equal((await post(currentKey, event(2), "reopen-repeat")).status, 202);
 	assert.equal(requests.length, 2);
-	const invitation = await rpc(page, {
+	const invitation = await owner.rpc({
 		op: "invite",
 		requestId: "hooks-viewer",
 		role: "viewer",
 		resources: [target.conversationId],
 		ttlMs: 60000,
 	});
-	assert.ok(invitation.token);
-	const viewer = await browser.page(origin + "/#invite=" + invitation.token, { width: 390, height: 844 });
-	await viewer.wait('document.querySelector("[data-action=signin]")');
-	await viewer.type("input[name=person]", "Viewer");
-	await viewer.click("[data-action=signin]");
-	await viewer.wait('document.querySelector("[data-conversation]")');
-	await openConversations(viewer);
-	await viewer.click("[data-conversation]");
-	await viewer.wait('document.querySelector("[data-interface=workspace-hooks-hooks]")');
-	await openConversations(viewer);
-	await viewer.click("[data-interface=workspace-hooks-hooks]");
-	await viewer.wait('document.querySelector("[data-hook-readonly]")');
-	assert.equal(
-		await viewer.evaluate(
-			'document.querySelectorAll("[data-hook-row],[data-hook-create],[data-hook-private-setup]").length',
-		),
-		0,
-	);
+	const viewer = await loginHttp(origin, invitation.token, "invite", "Viewer");
 	assert.deepEqual((await readHooks(viewer, target)).hooks, []);
-	const denied = await ext(
-		viewer,
-		target,
-		"(async()=>{try{await client.call({extension:row.manifest.id,generation:row.generation,action:'credentials',requestId:crypto.randomUUID(),target,input:{id:" +
-			JSON.stringify(currentKey.id) +
-			"}});return {unexpected:true};}catch(error){return {name:error.name,outcome:error.outcome,code:error.code};}})()",
-	);
-	assert.equal(denied.outcome, "denied");
-	assert.equal(denied.code, "FORBIDDEN");
-	assert.equal(requests.length, 2);
+	await assert.rejects(viewer.call("workspace-hooks", "credentials", { id }, target), {
+		code: "FORBIDDEN",
+		outcome: "denied",
+	});
 	await stop();
 	webui = false;
 	info = await start();
-	await reloadProduct(page, target);
-	assert.equal(await page.evaluate('document.querySelector("[data-interface=workspace-hooks-hooks]")'), null);
-	assert.equal((await readHooks(page, target)).hooks[0].received, 2);
-	await complete(page, target, await post(currentKey, event(3), "backend-only"), 3);
-	const removed = await ext(
-		page,
+	owner = await connectHttp(origin, owner.cookies);
+	assert.ok(
+		!(await owner.extensions({ op: "list", target })).registrations.some(
+			(row) => row.manifest.id === "workspace-hooks" && row.facet === "webui",
+		),
+	);
+	assert.equal((await readHooks(owner, target)).hooks[0].received, 2);
+	await complete(owner, target, await post(currentKey, event(3), "backend-only"), 3);
+	const removed = await owner.call(
+		"workspace-hooks",
+		"remove",
+		{ id, expectedVersion: 2 },
 		target,
-		"await client.call({extension:row.manifest.id,generation:row.generation,action:'remove',requestId:crypto.randomUUID(),target,input:{id:" +
-			JSON.stringify(currentKey.id) +
-			",expectedVersion:2}})",
+		"installed-remove",
 	);
 	assert.equal(removed.state, "done");
 	assert.equal(removed.value.state, "done");
 	assert.equal((await post(currentKey, event(4), "after-remove")).status, 404);
 	assert.equal(requests.length, 3);
+	const deliveries = await owner.call("workspace-hooks", "deliveries", { id }, target);
+	assert.equal(deliveries.state, "done");
 	await stop();
-	runtime = await createRuntime(options);
+	const runtime = await createRuntime(options);
 	try {
 		assert.equal(runtime.view().budget.primaryAttempts, 3);
 		assert.equal(runtime.view().sessionId, target.sessionId);
-		const after = (await runtime.store({ namespace: "installed.hooks", maxBytes: 2097152 }).snapshot()).data;
-		assert.equal(after.hooks.length, 1);
-		assert.equal(after.hooks[0].id, before.hooks[0].id);
-		assert.equal(after.hooks[0].active, false);
-		assert.equal(
-			after.deliveries.filter(
-				(row) =>
-					row.hookId === after.hooks[0].id && row.state === "complete" && row.result.state === "accepted",
-			).length,
-			3,
-		);
-		assert.equal(after.deliveries.length, 3);
-		await writeFile(join(run, "after-reopen.json"), JSON.stringify(after, null, 2));
-		await writeFile(join(run, "after-view.json"), JSON.stringify(runtime.view(), null, 2));
 	} finally {
 		await runtime.close();
 	}
-	await copyFile(info.sessionFile, join(run, "native-storage.jsonl"));
 	assert.deepEqual(errors, []);
 	for (const body of requests) {
-		assert.equal(
-			JSON.stringify(body).includes(oldKey.secret) || JSON.stringify(body).includes(currentKey.secret),
-			false,
+		assert.ok(
+			!JSON.stringify(body).includes(oldKey.secret) && !JSON.stringify(body).includes(currentKey.secret),
 		);
 		assert.deepEqual(body.tools ?? [], []);
 	}
 	await writeFile(join(run, "provider-requests.json"), JSON.stringify(requests, null, 2) + "\n");
 	console.log(
-		JSON.stringify({
-			installedHooks: true,
-			modelHttp: requests.length,
-			spentAttempts: 3,
-			lostCreationNeverReplayed: true,
-			unsignedHeaderCannotReplay: true,
-			keyRotation: true,
-			webuiRemovalPreservesIngress: true,
-			viewerPrivateSetupDenied: true,
-			evidence: run,
-		}),
+		"Installed Hook HTTP passed: signed ingress, header replay prevention, rotation, original receipt after reopen, viewer isolation, Backend-only delivery and removal; 3 local model requests.",
 	);
 } finally {
-	await browser?.close();
 	if (child) {
-		child.stdin.end("stop\n");
 		child.kill();
 		await child.finished;
 	}

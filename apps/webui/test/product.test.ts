@@ -1,3 +1,4 @@
+import { POCKET_VERSION } from "@pakka/protocol/pocket";
 import { test } from "node:test";
 import { strict as assert } from "node:assert";
 import { runtimeFixture } from "../../../packages/agent/test/runtime-fixture.ts";
@@ -22,11 +23,21 @@ test(
 			assert.ok(token);
 			const html = await fetch(origin + "/");
 			assert.equal(html.status, 200);
-			assert.match(await html.text(), /pakka-webui/);
-			const script = await fetch(origin + "/app.js");
+			const source = await html.text();
+			assert.match(source, /@pakka\/webui-sdk/);
+			const entry = /<script type="module" src="([^"]+)"/.exec(source)?.[1];
+			assert.ok(
+				entry?.startsWith("/pakka-webui/assets/"),
+				"Default product must serve its fixed independent frontend",
+			);
+			const script = await fetch(origin + entry);
 			assert.equal(script.status, 200);
 			assert.match(script.headers.get("content-type") ?? "", /javascript/);
-			const signed = await fetch(origin + "/pocket/exchange", {
+			const worker = await fetch(origin + "/pakka-webui/service-worker.js");
+			assert.equal(worker.status, 200);
+			assert.equal(worker.headers.get("service-worker-allowed"), "/");
+			assert.equal((await fetch(origin + "/app.js")).status, 404);
+			const signed = await fetch(origin + "/pakka-webui/exchange", {
 				method: "POST",
 				headers: { Origin: origin, "Content-Type": "application/json" },
 				body: JSON.stringify({ kind: "session", token }),
@@ -37,16 +48,20 @@ test(
 					.map((c) => c.split(";")[0]!)
 					.join("; "),
 				csrf = /pakka_csrf=([^;]+)/.exec(cookies)![1]!;
+			const session = await app.people.authenticate(/pakka_pocket=([^;]+)/.exec(cookies)![1]!);
+			const personId = app.people.current(session).id;
 			async function rpc(command: object) {
-				const response = await fetch(origin + "/pocket/rpc", {
+				const response = await fetch(origin + "/pakka-webui/rpc", {
 					method: "POST",
 					headers: {
 						Cookie: cookies,
 						Origin: origin,
 						"X-Pakka-CSRF": csrf,
+						"X-Pakka-Person": personId,
+						"X-Pakka-Server": app!.http.serverId,
 						"Content-Type": "application/json",
 					},
-					body: JSON.stringify({ version: 2, requestId: crypto.randomUUID(), command }),
+					body: JSON.stringify({ version: POCKET_VERSION, requestId: crypto.randomUUID(), command }),
 				});
 				assert.equal(response.status, 200, await response.clone().text());
 				return response.json();

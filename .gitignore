@@ -13,6 +13,10 @@ dist/
 # absolute machine paths, raw provider request/response payloads, host
 # snapshots and session JSONL copies.
 artifacts/
+# Verification tracks summaries and whole-bundle hashes, never raw evidence.
+/docs/verification/evidence/
+/docs/verification/**/*.tap
+/docs/verification/**/*.zip
 # Local desktop observations may include unrelated windows; never publish.
 .cu/
 # Local visual analysis runs, screenshots, annotations and generated verdicts.
@@ -24,6 +28,12 @@ artifacts/
 # Audited downstream Durable dependency, paired with patches/pi-durable metadata.
 !packages/agent/vendor/earendil-works-pi-durable-1.0.3-pakka.1.tgz
 !packages/agent/vendor/earendil-works-pi-durable-1.4.0-pakka.1.tgz
+!packages/agent/vendor/earendil-works-pi-durable-1.4.0-pakka.3.tgz
+!packages/agent/vendor/earendil-works-pi-durable-1.4.0-pakka.4.tgz
+# Fixed browser SDK needed to build the independently owned RSI UI facet.
+!integrations/webui/sdk/pakka-webui-sdk-c1f99cd939aa0ffc.tgz
+# Fixed static application selected by the default product.
+!integrations/webui/app/pakka-webui-app-0.1.0-2460c6b80f2f1126.tgz
 
 # --- Pakka runtime state -----------------------------------------------------
 .pakka/
@@ -72,3 +82,7 @@ tmp/
 *.tmp
 # Local plans, drafts and experiments; durable decisions/evidence live outside.
 /docs/.temp/
+
+# Fixed app and public UI SDK required by the notebook-capable default build.
+!integrations/webui/app/pakka-webui-app-0.1.0-65f598476697a145.tgz
+!integrations/webui/sdk/pakka-webui-sdk-3f669b8af0d7af4c.tgz

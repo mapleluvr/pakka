@@ -8,6 +8,18 @@ MAS 将同 Session 的 Conversation 注册为成员，并通过当前绑定身�
 
 相同 principal/source/request 与相同 payload/mode 核对原投递；冲突拒绝。queued、placed、generation 终态、应用回复和 unknown 分别表达投递阶段及确认情况。跨 Session broker 使用固定批准 endpoint、enrollment/outbox 和目标原生接纳，跨端传递冻结数据、逻辑引用与受控命令。输入投递按原身份去重和核对；provider、工具与文件系统效果由各自的效果域单独确认。
 
+同 Session 投递按[长期持久化契约](runtime.md#长期历史与投递)保存原身份，接纳使用每个收件人的未完成额度；保留历史与模型上下文分别管理。
+
+### A2A 意图
+
+MAS 区分三类协作语义：`inform` 是无需对方答复的被动信息贡献；`send`/`mas_send` 是要求具体新产物或决定的原生请求；`reply`/`mas_reply` 必须关联真实根请求回执。`mas_ask` 仍仅等待 Generation receipt，不等待业务回答。
+
+`inform` 使用独立 `inform` grant、精确 source/principal/requestId 身份、受限目标 profile、recipient admission 和有限持久容量。记录经公开 RuntimeRecords 提交，不写入目标 transcript、不创建原生 input 或 GenerationTask、不唤醒、不隐式确认。宿主必须显式把 `createMasInformContext().source` 注册为 Runtime `contextSources`，并把同一 context 传给 `createMas`。它只会在精确目标的后续自然请求中作为有界来源标注、不可信上下文贡献；默认最多保留 256 条，最多投影 32 条和 65,536 UTF-16 code units。`maxContextCharacters` 可显式设为 512 至 65,536 之间的较小预算；首尾 framing 标记计入该预算。Runtime 对所有 context sources 合计限制 65,536 code units，没有独立的 per-source 字符上限。投影本身不是消费确认。
+
+公开 `RuntimeContextSource` 只有 `render()` 返回的 text 和同步 dispatch check，没有绑定确切 GenerationTask 的成功结束 callback。因此 inform receipt 只报告 `pending`，语义是持久保留和 at-least-once 投影；成功生成、失败、取消、超时和 unknown 均不声称模型已理解/消费，记录不会因投影或 `mas_ask` 自动清除。宿主未注册 context source 的既有 Runtime 不受影响。
+
+每个实际根请求仅允许一个显式 `reply`。首次目标明确 inactive/not-ready 时不创建 response reservation。首次 admission 明确返回 `false` 时，服务使用同一个 ready Runtime 的 session-bound RuntimeRecords，以 root ID、reservation fingerprint 和 ledger versions CAS 清理 provisional reservation；即使等待期间撤销发起 client，也释放本次 active capacity，但随后仍重验 client grant 并拒绝原调用，不恢复其 authority 或 dispatch。admission 抛错/unknown、明确通过后撤权、reservation commit unknown 或 native delivery unknown 时保持原 response identity/payload 绑定；已批准/unknown 的响应在后续重试被拒绝仍保留绑定。相同 response identity/payload 重试重新校验 recipient admission 并复用原 native request；更改 payload/目标或以新 requestId 延长同一 root 拒绝，response 不能再次成为 root。MAS namespace 下 admission/已批准的活动 response reservation 最多 256 条，首次明确拒绝不消耗该容量。`send`、`reply` 的公开签名和原生 prompt/steer/followUp placement 保持；response 的单根有限约束是为保证 association 与有限续行的行为收紧。
+
 ## 关系与活动观测
 
 - 节点对应绑定数据源中的真实 Conversation；身份使用完整的 source/Session/Conversation 组合。
@@ -29,6 +41,10 @@ MAS 将同 Session 的 Conversation 注册为成员，并通过当前绑定身�
 ## 可选贡献
 
 Team 通过 MAS DevPack 的 Backend/WebUI/Client facets 提供，与其他扩展使用同一公共接口。宿主分别选择界面贡献和 Agent tools/instructions。移除界面清理其导航和订阅；成员、历史和已接纳工作继续由 MAS/Runtime 管理。页面结构见[前端交互](frontend.md#team)。
+
+宿主可通过 DevPack 的 `telegraph` 或按 profile 的 `telegraphByProfile` 独立选择紧凑 reasoning 与 inter-agent communication，默认均关闭。选择只增加 prompt guidance；工具、权限、admission、投递身份、持久化和预算保持所属服务契约。共同规则保留语义锚点、证据与 unknown，面向人的产物按最终读者保持可读。内部交流按有用增量、具体请求和单根实质回复推进，不以重复 inform 投影、同一 URL 或新 requestId 制造确认循环；真正阻塞的新问题可提出有具体目的的澄清请求。
+
+版本化 `mas-telegraph/SKILL.md` 随 DevPack 归档交付，具有公开文件 export 和显式加载语义；Pi 自动模型选择被关闭。选项、安装与移除条件见 [DevPack API](../reference/MAS-DEVPack-API.md#可选-mas-telegraph)。提示不构成模型遵守、无损或 token/成本降低的保证。
 
 ## 契约定位
 

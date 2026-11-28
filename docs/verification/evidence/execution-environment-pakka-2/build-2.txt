@@ -1,0 +1,31 @@
+{"profile":"D:\\Projects\\kappa\\migration-worktrees\\pakka-execution-env-1.4.0\\docs\\.temp\\release-1.4.0-pakka.2\\profile","args":["run","build:durable-patch","--","D:/Projects/kappa/migration-worktrees/pakka-durable-1.4.0/docs/.temp/pi-v1.4.0","1.4.0-pakka.2"]}
+
+> pakka-workspace@0.1.0 build:durable-patch
+> node scripts/build-durable-patch.mjs D:/Projects/kappa/migration-worktrees/pakka-durable-1.4.0/docs/.temp/pi-v1.4.0 1.4.0-pakka.2
+
+4a080252f06caf63a525d7873c5d94d3c23887e0
+
+added 198 packages in 8s
+
+ RUN  v4.1.11 C:/Users/mapleland/AppData/Local/Temp/pakka-durable-build-N6m9ie/packages/durable
+
+
+ Test Files  5 passed (5)
+      Tests  113 passed (113)
+   Start at  16:19:53
+   Duration  3.50s (transform 2.35s, setup 1.90s, import 2.51s, tests 5.23s, environment 1ms)
+
+added 137 packages in 28s
+
+ RUN  v4.1.11 C:/Users/mapleland/AppData/Local/Temp/pakka-durable-consumer-bbNObD
+
+ ✓ pakka-generation-http.test.ts > Pakka generation policy with real loopback HTTP > explicit block retains native receipts and idle; allowing a later input really reaches HTTP 146ms
+ ✓ pakka-generation-http.test.ts > Pakka generation policy with real loopback HTTP > revocation after an awaited provider payload transform blocks before HTTP 9ms
+ ✓ pakka-generation-http.test.ts > Pakka generation policy with real loopback HTTP > ordinary hook exceptions still report and continue to actual HTTP 12ms
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  16:20:25
+   Duration  677ms (transform 39ms, setup 0ms, import 341ms, tests 168ms, environment 0ms)
+{"consumer":"C:\\Users\\mapleland\\AppData\\Local\\Temp\\pakka-durable-consumer-bbNObD","installedVersion":"1.4.0-pakka.2"}
+{"stage":"C:\\Users\\mapleland\\AppData\\Local\\Temp\\pakka-durable-build-N6m9ie","destination":"D:\\Projects\\kappa\\migration-worktrees\\pakka-execution-env-1.4.0\\packages\\agent\\vendor\\earendil-works-pi-durable-1.4.0-pakka.2.tgz","sha256":"12d21b230d40706618db4ac83747b9189b7d9070f023c2705bc5c8b521d90ecd"}

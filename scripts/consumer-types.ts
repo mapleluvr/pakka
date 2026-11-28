@@ -1,3 +1,64 @@
+import { createTicketService, type TicketActor } from "@pakka/rsi";
+import { createTicketTools } from "@pakka/rsi/agent";
+import { createMasTicketDispatcher } from "@pakka/rsi/mas";
+import { ticketExtensionService, rsiExtensionRoot } from "@pakka/rsi/backend";
+import "@pakka/memo";
+
+export async function publicTicketService(
+	runtime: Runtime,
+	scope: ToolInvocationScope,
+	source: ConversationRef,
+	context: PocketServiceContext,
+	masClient: MasClient,
+) {
+	const actor: TicketActor = { id: "im-bot", role: () => "submitter", check() {} };
+	const service = await createTicketService({
+		runtime,
+		namespace: "tickets",
+		handlers: [{ id: "worker", label: "Worker", actorId: "worker" }],
+		dispatcher: createMasTicketDispatcher({
+			routes: [{ handlerId: "worker", target: source, client: masClient }],
+		}),
+	});
+	const bound = service.forInvocation({ actor, source }, scope);
+	await bound.observe();
+	const detail = await bound.get("ticket");
+	if (detail.cursors.events)
+		await bound.history({ id: detail.ticket.id, kind: "events", cursor: detail.cursors.events });
+	await bound.recover({ requestId: "recover", id: "ticket", runId: "run", expectedVersion: 1 });
+	await masClient.lookup(source, { requestId: "original-dispatch", text: "fixed" });
+	const records = runtime.records({ namespace: "consumer" });
+	await records.commit(
+		{
+			requestId: "record",
+			reads: [{ key: "head", version: 0 }],
+			writes: [{ key: "head", data: { status: "pending" } }],
+			append: [],
+			work: [{ key: "head", state: "pending" }],
+		},
+		() => {},
+	);
+	await records.page({ stream: "history", maxBytes: 4096 }, () => {});
+	await bound.submit({ requestId: "original", title: "Idea", body: "Evidence", sources: [] });
+	await bound.submit({
+		requestId: "forged",
+		title: "Idea",
+		body: "Evidence",
+		sources: [],
+		// @ts-expect-error Business arguments cannot declare their author.
+		authorId: "owner",
+	});
+	// @ts-expect-error Edits always require the version the caller actually observed.
+	await bound.edit({ requestId: "stale", id: "ticket", title: "Idea", body: "Evidence", sources: [] });
+	return {
+		root: rsiExtensionRoot,
+		service: ticketExtensionService(context, service),
+		tools: createTicketTools({
+			resolve: (invocation) => service.forInvocation({ actor, source }, invocation),
+		}),
+	};
+}
+
 import {
 	defineBackend,
 	type BackendContext,
@@ -172,6 +233,7 @@ export async function pocketServiceContract(
 export function productContract(config: BootstrapConfig) {
 	const contribution: NonNullable<BootstrapConfig["devpack"]> = {
 		profiles: { default: ["spawn", "observe"] },
+		telegraphByProfile: { default: { reasoning: true, communication: false } },
 	};
 	// @ts-expect-error strategy inference is not an agent MAS creation grant.
 	const _invalid: NonNullable<BootstrapConfig["devpack"]> = { profiles: { default: ["model.infer"] } };
@@ -187,6 +249,7 @@ export function devpackContract(client: MasClient, sessions: ApprovedSessions) {
 		resolve: () => client,
 		sessions: () => sessions,
 		operationTimeoutMs: 1000,
+		telegraph: { reasoning: true, communication: true },
 	};
 	const pack = createMasDevPack(options);
 	const tools: HostOptions["tools"] = pack.tools;
@@ -339,8 +402,13 @@ export async function publicMemory(
 	await client.add({ requestId: "explicit-lesson", scope: "project", text: "Approved commands" });
 	// @ts-expect-error The host binds the author; callers cannot forge a human or Agent identity.
 	await client.add({ requestId: "forged", scope: "global", text: "forged", actorId: "another-person" });
-	// @ts-expect-error A source gets an exact reference and signal, never a provider credential.
-	void prepared.source.render({ target: ref, signal: new AbortController().signal, apiKey: "forged" });
+	void prepared.source.render({
+		target: ref,
+		cwd: "/approved",
+		signal: new AbortController().signal,
+		// @ts-expect-error A source gets an exact reference and signal, never a provider credential.
+		apiKey: "forged",
+	});
 	// @ts-expect-error Memory read DTOs are readonly; edits must carry their expectedVersion.
 	view.lessons[0]!.text = "rewrite";
 	return { root: workspaceMemoryExtensionRoot, source: prepared.source, tools: prepared.tools };
@@ -352,7 +420,7 @@ export async function managed(runtime: Runtime, options: RuntimeOptions, ref: Co
 	return { limits: options.limits, budget: runtime.view().budget, identity };
 }
 
-export function install(binding: StrategyBinding, invocation?: ToolInvocationScope) {
+export async function install(binding: StrategyBinding, invocation?: ToolInvocationScope) {
 	const frame: ContextFrame = binding.readFrame(invocation);
 	const basis: FrameBasis = frame.basis;
 	const models: readonly ModelDTO[] = binding.models();
@@ -368,7 +436,7 @@ export function install(binding: StrategyBinding, invocation?: ToolInvocationSco
 	const job: SourceJob = binding.createJob(basis, spec);
 	const scope: JobScope = job.scope;
 	const artifactScope: ArtifactScope = scope;
-	const receipt: ArtifactReceipt = binding.artifacts.append(artifactScope, {
+	const receipt: ArtifactReceipt = await binding.artifacts.append(artifactScope, {
 		expectedVersion: frame.artifacts.version,
 		records: [{ kind: "plan" }],
 	});

@@ -4,7 +4,7 @@ import { runtimeFixture } from "../../agent/test/runtime-fixture.ts";
 import { createRuntime } from "../../agent/src/index.ts";
 import { createMas } from "../src/index.ts";
 import type { Mas } from "../src/types.ts";
-import { readFile } from "node:fs/promises";
+import { markNativeCommit, readNativeDocument } from "../../agent/test/native-storage.ts";
 import { text, deferred } from "../../agent/test/fixture.ts";
 
 async function boot(runtime: Awaited<ReturnType<typeof runtimeFixture>>["runtime"]) {
@@ -21,8 +21,12 @@ test("M2 MAS: readiness barrier activates the entire roster on one durable commi
 		]);
 		const before = await mas.view();
 		assert.equal(before.phase, "ready");
-		const offset = (await readFile(m.runtime.view().sessionFile, "utf8")).length;
+		const file = m.runtime.view().sessionFile;
+		const nativeBefore = await readNativeDocument(file, "pakka.catalog", "crew");
+		const beforeSeq = await markNativeCommit(file);
 		const activated = await mas.activate();
+		const afterSeq = await markNativeCommit(file);
+		assert.equal(afterSeq - beforeSeq, 2, "one activation commit plus the closing test marker");
 		assert.equal(
 			activated.version,
 			before.version + 1,
@@ -32,16 +36,13 @@ test("M2 MAS: readiness barrier activates the entire roster on one durable commi
 			activated.members.map((entry) => entry.phase),
 			["active", "active"],
 		);
-		const commits = (await readFile(m.runtime.view().sessionFile, "utf8"))
-			.slice(offset)
-			.trim()
-			.split("\n")
-			.filter(Boolean)
-			.map((line) => JSON.parse(line));
-		assert.equal(commits.length, 1);
-		assert.equal(
-			commits[0].writes.filter((write: { type: string }) => write.type === "document.change").length,
-			1,
+		const nativeAfter = await readNativeDocument(file, "pakka.catalog", "crew");
+		assert.equal(nativeAfter.record.id, nativeBefore.record.id);
+		assert.equal(nativeAfter.value.version, Number(nativeBefore.value.version) + 1);
+		const stored = nativeAfter.value as { members: Record<string, { data: { phase: string } }> };
+		assert.deepEqual(
+			Object.values(stored.members).map((member) => member.data.phase),
+			["active", "active"],
 		);
 		assert.equal(m.f.requests.length, 0);
 	} finally {

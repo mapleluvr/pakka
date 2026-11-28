@@ -1,0 +1,11 @@
+{
+  "sourceSha256": "804c7ff7e3a03a72b9244d51246e2afe8b50a69597b9a64e1cba5f07c2026d95",
+  "command": "npm test -- --test-reporter=spec --test-reporter-destination=stdout --test-reporter=tap --test-reporter-destination=docs/.temp/launcher-confirmed-full.tap",
+  "tests": 805,
+  "pass": 803,
+  "fail": 0,
+  "cancelled": 0,
+  "skipped": 2,
+  "todo": 0,
+  "duration_ms": 1785311.7544
+}

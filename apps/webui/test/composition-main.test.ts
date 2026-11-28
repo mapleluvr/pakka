@@ -5,13 +5,17 @@ import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { runtimeFixture } from "../../../packages/agent/test/runtime-fixture.ts";
-import { ownedBrowser } from "./browser.ts";
+import { decodeTarget } from "@pakka/protocol/extension-rpc";
+import { isRecord, type ExtensionJson } from "@pakka/protocol/extensions";
+import type { AgentRef } from "@pakka/protocol/pocket";
+import { loginHttpSession } from "./fixtures/http-session.ts";
+import { defaultWebUiArtifact } from "../src/default-frontend.ts";
 
 // The generic executable consumes an operator-owned ESM composition through public exports; it contains no MAS route/import.
 test(
 	"WebUI executable: trusted ESM root composes the real optional Agent and WebUI facets",
 	{ timeout: 30000 },
-	async () => {
+	async (t) => {
 		const m = await runtimeFixture({}, undefined, (payload) =>
 			payload.messages.at(-1)?.role === "tool"
 				? { text: "CLI-NATIVE-DONE" }
@@ -20,7 +24,7 @@ test(
 		await m.runtime.close();
 		const config = join(m.f.root, "pocket-config.mjs"),
 			owner = join(m.f.root, "owner.txt");
-		const source = `import {createMas} from ${JSON.stringify(import.meta.resolve("@pakka/mas"))};\nimport {createMasProfilePacks} from ${JSON.stringify(import.meta.resolve("@pakka/mas-devpack/agent"))};\nimport {masExtensionRoot,masWorkbenchService} from ${JSON.stringify(import.meta.resolve("@pakka/mas-devpack/backend"))};\nlet mas;const pack=createMasProfilePacks({profiles:{team:["spawn"]}},()=>mas).get("team");\nexport default {runtime:{...${JSON.stringify({ ...m.config, dataDir: join(m.f.root, "cli-board-data") })},profiles:[{id:"team",tools:pack.tools,systemPrompt:pack.instructions},{id:"plain",tools:[]}]},owner:"Owner",profiles:["plain"],initial:[{name:"Ordinary",profile:"plain"}],extensions:[{root:masExtensionRoot}],extensionServices:async context=>{mas=await createMas({runtime:context.runtime,namespace:"cli.board",maxDeliveries:16,maxPending:4});await mas.bootstrap([{key:"coordinator",owner:context.ownerId,profile:"team"}]);await mas.activate();return{mas:masWorkbenchService({...context,mas})};}};\n`;
+		const source = `import {openProductModels} from ${JSON.stringify(import.meta.resolve("@pakka/webui"))};\nconst modelConfiguration=await openProductModels(${JSON.stringify({ cwd: m.f.cwd, agentDir: join(m.f.root, "empty-pi") })});\nimport {createMas} from ${JSON.stringify(import.meta.resolve("@pakka/mas"))};\nimport {createMasProfilePacks} from ${JSON.stringify(import.meta.resolve("@pakka/mas-devpack/agent"))};\nimport {masExtensionRoot,masWorkbenchService} from ${JSON.stringify(import.meta.resolve("@pakka/mas-devpack/backend"))};\nlet mas;const pack=createMasProfilePacks({profiles:{team:["spawn"]}},()=>mas).get("team");\nexport default {modelConfiguration,frontend:${JSON.stringify(defaultWebUiArtifact())},runtime:{...${JSON.stringify({ ...m.config, dataDir: join(m.f.root, "cli-board-data") })},profiles:[{id:"team",tools:pack.tools,systemPrompt:pack.instructions},{id:"plain",tools:[]}]},owner:"Owner",profiles:["plain"],initial:[{name:"Ordinary",profile:"plain"}],extensions:[{root:masExtensionRoot}],extensionServices:async context=>{mas=await createMas({runtime:context.runtime,namespace:"cli.board",maxDeliveries:16,maxPending:4});await mas.bootstrap([{key:"coordinator",owner:context.ownerId,profile:"team"}]);await mas.activate();return{mas:masWorkbenchService({...context,mas})};}};\n`;
 		await writeFile(config, source);
 		const child = spawn(
 			process.execPath,
@@ -46,7 +50,6 @@ test(
 			child.once("exit", resolve);
 			child.once("error", reject);
 		});
-		let browser: Awaited<ReturnType<typeof ownedBrowser>> | undefined;
 		try {
 			const deadline = Date.now() + 10000;
 			while (!stdout.includes("\n") && child.exitCode === null && Date.now() < deadline)
@@ -68,38 +71,63 @@ test(
 			assert.equal(origin.origin, address.origin);
 			const link = (await readFile(owner, "utf8")).trim();
 			assert.equal(new URL(link).origin, origin.origin);
-			browser = await ownedBrowser(join(m.f.root, "cli-board-browser"));
-			const page = await browser.page(link);
-			await page.wait('document.querySelector("[data-action=signin]")');
-			await page.click("[data-action=signin]");
-			await page.wait('document.querySelector("[data-interface=mas-devpack-board]")');
-			await page.click("[data-interface=mas-devpack-board]");
-			await page.wait('document.querySelector("[data-member=coordinator]")');
-			await page.click("[data-member=coordinator]");
-			await page.click("[data-agent-details]");
-			await page.click("[data-agent-controls=coordinator]");
-			await page.wait('document.querySelector("textarea[name=masMessage]")');
-			await page.type("textarea[name=masMessage]", "CREATE-CLI-CHILD");
-			await page.click("[data-mas-send]");
-			await page.wait('/done/.test(document.querySelector("[data-mas-receipt]")?.textContent)');
-			await page.click('[aria-label="Close Agent controls"]');
-			await page.wait('!document.querySelector("textarea[name=masMessage]")');
-			await page.wait('document.querySelector("[data-member=cli-child]")');
+			const token = new URLSearchParams(new URL(link).hash.slice(1)).get("session");
+			assert.ok(token);
+			const client = await loginHttpSession(origin.origin, token);
+			const listed = (await client.extensions({ op: "list" })).decoded;
+			assert.ok("result" in listed && listed.result.kind === "registrations");
+			const backend = listed.result.registrations.find(
+				(row) => row.manifest.id === "mas-devpack" && row.facet === "backend",
+			);
+			const ui = listed.result.registrations.find(
+				(row) => row.manifest.id === "mas-devpack" && row.facet === "webui",
+			);
+			assert.ok(backend && ui);
+			assert.equal(ui.manifest.facets.webui?.runtime, "react19-astryx0.7.15");
+			async function call(action: string, input: ExtensionJson, target?: AgentRef) {
+				const reply = (
+					await client.extensions({
+						op: "call",
+						call: {
+							extension: "mas-devpack",
+							generation: backend!.generation,
+							action,
+							input,
+							target,
+							requestId: crypto.randomUUID(),
+						},
+					})
+				).decoded;
+				assert.ok("result" in reply && reply.result.kind === "operation");
+				assert.equal(reply.result.operation.state, "done");
+				assert.ok(isRecord(reply.result.operation.value));
+				return reply.result.operation.value;
+			}
+			const board = await call("view", {});
+			assert.ok(Array.isArray(board.members));
+			const coordinator = board.members.find((row) => isRecord(row) && row.key === "coordinator");
+			assert.ok(isRecord(coordinator));
+			const ref = decodeTarget(coordinator.ref);
+			const sent = await call("send", { text: "CREATE-CLI-CHILD" }, ref);
+			assert.equal(typeof sent.id, "string");
+			await t.waitFor(
+				async () => assert.equal((await call("receipt", { id: sent.id }, ref)).status, "done"),
+				{ timeout: 10000, interval: 20 },
+			);
+			const after = await call("view", {});
+			assert.ok(
+				Array.isArray(after.members) && after.members.some((row) => isRecord(row) && row.key === "cli-child"),
+			);
 			assert.equal(m.f.requests.length, 2);
 			assert.match(JSON.stringify(m.f.requests[1]!), /cli-child/);
 			assert.equal(stdout.includes(m.config.apiKey), false);
 			assert.equal(stderr.includes(m.config.apiKey), false);
-			const token = new URLSearchParams(new URL(link).hash.slice(1)).get("signin");
-			assert.ok(token);
 			assert.equal(stdout.includes(token), false);
 			assert.equal(stderr.includes(token), false);
-			await browser.close();
-			browser = undefined;
 			child.stdin.end("stop\n");
 			assert.equal(await exited, 0, stderr);
 			assert.deepEqual(m.f.errors, []);
 		} finally {
-			await browser?.close();
 			child.kill();
 			await exited;
 			await m.f.close();

@@ -33,7 +33,7 @@ async function workerFixture() {
 							reservedSessionId: ids[key],
 							limits: { maxConversations: 4, maxPrimaryAttempts: 8, maxAuxiliaryAttempts: 2 },
 						},
-						catalog: { namespace: "members", maxDeliveries: 8, maxPending: 2 },
+						catalog: { namespace: "members", maxPending: 2 },
 					},
 				];
 			}),

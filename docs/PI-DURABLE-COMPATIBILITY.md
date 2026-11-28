@@ -754,3 +754,122 @@ SDK 与生产 cohort 沿用条目 10–12：Durable 1.4.0-pakka.1，归档 SHA-2
 Windows / Node 24.18.0、独立 profile、真实 localhost provider：宿主 605 passed / 0 failed / 2 原有跳过，聚焦 31/31；Dynamite 381/381，原生生产 12/12；最终归档外部安装 68/68、436 HTTP、0 非预期 fixture 异常。公开声明、类型/构建与相关 OpenSpec strict 通过。真实进程中断后保持旧 writer claim；可信恢复后仅隔离未确认 child，不重放其请求，新的独立授权工作可运行。没有付费模型、用户凭据或 adversarial review。
 
 [当前 state](state/compressor-session.md)、[完整形成记录](changes/compressor-repair-session.md)、[验证与原始证据](verification/COMPRESSOR-CONVERSATION-ISOLATION.md)和[机器配对](../integrations/dynamite/compresser-conversation-pairing.json)承接本条。额外 P2/P3 merge 算法、语义质量、分层衰减/检索、历史 GC/迁移、跨 store 崩溃原子性及新 pair 默认/optional server/worker 激活仍未接受。旧错误计数、共享存储、请求/回执协议或来源授权边界改变时重跑精确归档矩阵并追加记录。
+
+## 条目 DURABLE-2026-11-05-14：公开 ExecutionEnv 接入
+
+用户选择保留 1.4.0 基线及现有补丁范围，先形成执行环境接口并验证，再考虑 MXC。Pakka 在 main `547c496` 的独立工作树中接出 Host/Runtime/profile 执行配置、显式原生 read/write/edit/bash/powershell、合作工具的 invocation 能力及资源收尾。Pi 可变 env/reader 留在 adapter。
+
+使用公开 HarnessOptions.env、NodeExecutionEnv 与 /tools；配置的环境取得失败通过已有 block/check/settlement 在零 HTTP 下结算。作用域撤销与驱动未知效果分开，未知结果/reader 错误和 cleanup 失败继续失败关闭。Durable source.patch、build-lock 和 vendor 归档未改，继续使用 `1.4.0-pakka.1` / SHA-256 `7fd9f3310dfa003a9077139a25faf93567922a065461fa3767dd5a1066efa891`，没有重新构建不同的 SDK。
+
+Windows x64 / Node 24.15.0、私有 profile、本地确定性 provider：新增 24/24、相邻 31/31；build/check 和补丁身份校验通过。候选 agent 0.7.0 归档 SHA-256 `54c6a25ac4ab4488b6a06eba2f54e06a99459dd3feba9d3a29581772a5a968e3` 在仓库外离线安装后通过 5 次 HTTP 的原生文件、argv 效果、清理与重开链路；未发布新版本。广泛回归没有全量通过结论，固定构建后的 12 文件对照与未修改基线有相同结果模式；完整范围与原始输出见[验证记录](verification/EXECUTION-ENVIRONMENT.md)。
+
+本条只覆盖上述宿主执行环境切片；本地驱动具有宿主权限。MXC、恶意插件承载、辅助 Compresser/WebUI 环境装配未在本次实现或验证，也未更新外部 Dynamite 配对。采用关系见[执行环境声明](state/execution-environment.md)、[变更摘要](changes/execution-environment.md)及其完整 OpenSpec 记录。环境协议、授权/撤销时序、恢复身份或 Pi cohort 改变时重跑相关矩阵并追加记录。
+
+## 条目 DURABLE-2026-11-05-15：ExecutionEnv 1.4.0-pakka.2 交付身份
+
+用户要求将接入以 `1.4.0-pakka.2` 命名提交。上游仍为 1.4.0 / `4a080252f06caf63a525d7873c5d94d3c23887e0`，`.2` source.patch 与 `.1` 相同，构建锁仅改变 Durable workspace 身份。Pakka 的公开环境接口和适配代码留在 adapter；根与 agent 依赖/lock 选择 `.2`，build/check 通过生产选择器校验归档，旧版本产物保留。
+
+两次独立构建各通过 SDK 113/113 及安装 HTTP 3/3，归档 SHA-256 均为 `12d21b230d40706618db4ac83747b9189b7d9070f023c2705bc5c8b521d90ecd`。Windows 首轮误选 WSL Bash 的失败，经单变量 PATH 对照后以 Git Bash 复跑，没有跳过用例或修改 SDK 源逻辑。
+
+Pakka 在实际安装的 `.2` 上通过 ExecutionEnv 24/24、相邻与版本选择 36/36、build/check。agent 0.7.0 归档 SHA-256 `f169cb32f9e2b7a5bf4c7596083c0ab2a89e816d3ecbb72ec271c2abbefe46f7` 的仓库外消费者通过执行环境 5 次与核心门禁 7 次 loopback HTTP；确认包内 cohort、blocked settlement、辅助预算、reload 和原生存储读取。核心包装器补齐已有 helper 所需的 Node parent-URL resolver flag 后通过；原错误保留。全部范围、原始输出、哈希和复跑命令见[.2 交付检查](verification/EXECUTION-ENVIRONMENT-PAKKA-2.md)。MXC 与独立 pakka-ei 设计另行推进，未在这份 SDK 归档中实现。
+
+## 条目 DURABLE-2026-11-09-16：公开字节档案与冷观察接入
+
+- ID: DURABLE-2026-11-09-16
+- 状态: verified within the recorded source/installed-consumer scope
+- 升级范围: 生产 `1.4.0-pakka.2` → `1.4.0-pakka.3`；上游 Pi 仍为 `1.4.0` / `4a080252f06caf63a525d7873c5d94d3c23887e0`。
+- 关联条目: related `DURABLE-2026-11-05-15`；generation block/check/settlement 和公开 ExecutionEnv 语义继续复验，旧版本证据保留原身份。
+- 固定输入: [.3 baseline](../patches/pi-durable/1.4.0-pakka.3/baseline.json)、[source patch](../patches/pi-durable/1.4.0-pakka.3/source.patch)、[build lock](../patches/pi-durable/1.4.0-pakka.3/build-lock.json)、[artifact](../patches/pi-durable/1.4.0-pakka.3/artifact.json)。
+- 归档 SHA-256: `fc1268481542417fd1ada943854c5972cd2b42c9456a6f60cc78a68ba70c2761`；source patch `792ca4e9834388d554191a7447b7375f5b3edd64daff9188ec03b2444c3fb0f1`；build lock `ca3268301b14f94ae04e5898968ddac98c9b7d26ba949416c39010adcf5f1d87`。
+- 根锁选择: resolved `file:packages/agent/vendor/earendil-works-pi-durable-1.4.0-pakka.3.tgz`，integrity `sha512-xE1R1SHAbxVppNi+t2bjgg7E33BiuAiiLdIhHest2xsHLKDzpJFOe+hqcqLyBJUvnx5fFNs/VV/qkk6Jmwtx5Q==`。Pi AI/Chord/Telemetry/pi-codemode cohort 为 `1.4.0`。
+- 环境: Windows x64、Node `24.15.0`，隔离构建与本地确定性 HTTP；没有手工修改已安装 SDK，没有付费模型或用户凭据读取。
+
+### 变化与前后代码
+
+原 SQLite `entry`/`scanEntries` 先返回完整记录并解析 JSON。Pakka 的 aa83eed adapter 在观察与冷打开中积累完整档案；单条约 2.6 MB 的图片记录也超过 2 MiB wire 观察预算。分页 DTO 条数不能约束这些底层读取。
+
+变更前 `packages/agent/package.json` 的实际选择：
+
+```json
+"@earendil-works/pi-durable": "file:vendor/earendil-works-pi-durable-1.4.0-pakka.2.tgz"
+```
+
+变更后同一位置选择：
+
+```json
+"@earendil-works/pi-durable": "file:vendor/earendil-works-pi-durable-1.4.0-pakka.3.tgz"
+```
+
+新增公开声明来自 `.3 source.patch` 的 `storage/types.ts`，旧 `Storage` 没有 `entryArchive`：
+
+```ts
+export interface EntryArchive {
+	header(conversationId: ConversationId, id: EntryId, context: Context): Promise<EntryHeader | undefined>;
+	scan(
+		query: EntryQuery,
+		limit: number,
+		cursor: Cursor | undefined,
+		context: Context,
+	): Promise<Page<EntryHeader, Cursor>>;
+	read(
+		conversationId: ConversationId,
+		id: EntryId,
+		range: EntryArchiveRange,
+		context: Context,
+	): Promise<EntryArchiveChunk | undefined>;
+}
+```
+
+`Storage` 的可选 `readonly entryArchive?: EntryArchive` 是可信后端能力；header/scan 返回原 Entry、分叉来源、不可变提交身份和编码大小，read 最多返回 64 KiB 连续 UTF-8 档案字节。原 `entry`、完整 context、生成和持久回执 API 保持各自语义；不具备该能力的后端仍使用原完整接口。Pakka 按原 Session/Conversation/来源/版本检查 ACL，并在异步读取后重新授权，原生分叉范围不替代应用权限。
+
+SQLite 使用最多 32 MiB 编码 LRU，加一个串行取得的行及有界 header 缓存；大于窗口的记录继续范围读取。缓存减少对同一大记录的重复编码/查询，但单条后端临时工作仍可能随记录大小增长，不宣称所有工作只占 64 KiB。范围坐标是持久 JSON 编码字节，不把解码后正文的字符位置用于下一块偏移。
+
+### 固定验证
+
+补丁构建入口仍为 `npm run build:durable-patch -- <固定上游 checkout> 1.4.0-pakka.3`，并以 `node scripts/verify-durable-patch.mjs` 核对全部输入/归档。最终独立 staging 运行 baseline 所列 8 文件、183 项通过；独立 npm project 安装该归档后，以公开 exports/compiled dist 运行 2 文件、6 项通过。原输出在[固定结果与本地证据包](verification/BOUNDED-LAZY-OBSERVATION.md)定位；证据位置按已采用的本地保全规范整理，原输出与结果身份保持。
+
+此矩阵覆盖原生 generation block、awaited payload 后撤权、普通 hook 异常、恢复/队列/工具/SQLite，以及新增大记录 header/range、Unicode 重建、分叉可见范围、版本拒绝、并发字节缓存和失效处理。Pakka 对原生接缝的权限、cold frame、预览与完整内容映射也进入最终源码回归：887 项中 885 pass、0 fail、2 既有平台 skip；类型、构建和八归档 34 步仓库外安装消费通过。安装包的 blocked 结算、原请求核对、真实 worker、取消/授权、完整 SDK 读取和原 Session 重开保持原断言。
+
+详细方法、最终 599 文件源码哈希、各包身份与 ego 原长历史复测见[交付检查](verification/BOUNDED-LAZY-OBSERVATION.md)。两份大 Session 冷打开约 27.59 MB heap；显式准备其中一条 Conversation 的完整 execution frame 后约 717.55 MB heap，模型请求为 0。这区分浏览路径与执行上下文，不表示全局 OOM 或活跃 Runtime 字节预算已经解决。
+
+### 失效与接续
+
+SDK commit/version/integrity、Storage/header/range/commitSeq/分叉语义、SQLite 编码缓存、generation hook/receipt 或 Pakka 权限边界变化时，重跑受影响源码和独立安装矩阵并追加账本。只有等价的上游公开档案读取、已有 generation 门禁、Unicode/分叉/缓存/恢复与安装消费者都通过时，才切换相应源补丁；不将旧配对哈希倒写为新版本。本条不更新外部 Dynamite 固定配对，也不把浏览优化当作 worker 进程隔离或 OOM 恢复。
+
+## 条目 DURABLE-2026-11-15-17：只读原历史 SDK 与受权接入
+
+- ID: DURABLE-2026-11-15-17；related `DURABLE-2026-11-09-16`，保留此前条目。
+- 基线/升级：Pakka `b357276` 的 `1.4.0-pakka.3` → 工作分支 `1.4.0-pakka.4`；Pi `1.4.0` / `4a080252f06caf63a525d7873c5d94d3c23887e0`，主 Chord、pi-ai、pi-codemode、pi-telemetry cohort 仍为 `1.4.0`。
+- 状态：verified within the stated reader/installation scope；未合入上游、未发布 npm、未切换完整前端。
+- 影响面：Chord SQLite 只读连接/事务/关闭，Durable `SqliteReader` 与共享原生查询，Pakka 已知来源的受权历史投影，WebUI services API 2。
+- 归档：[1.4.0-pakka.4](../packages/agent/vendor/earendil-works-pi-durable-1.4.0-pakka.4.tgz)，SHA-256 `40aabe654b9531d9d98328dcc9c94687f723471bf3f57b967977841031308dec`，lock integrity `sha512-SDNd+QjK0nITmlclQ3RLIScyxhuWZQ4pI+baA0MJOAhjVe4O7EI+2nuNFd51VJNycdl6Voh80JGYyXS8vaTKgw==`。源差异、构建锁和 SQLite companion 身份见 [artifact](../patches/pi-durable/1.4.0-pakka.4/artifact.json)。
+- 环境：Windows x64、Node `24.18.0`、npm `11.16.0`、TypeScript `7.0.2`；隔离配置和本地确定性 provider。
+
+### 变化与实际代码
+
+原 `openNodeSqliteStorage` 是执行型存储初始化：即使 schema 已是当前版本，也需要写能力；`Harness.open()` 另有持久恢复。只读探针在版本表的 `INSERT OR IGNORE` 失败，但正常重开不一定改变历史字节。因此保留 writer 的初始化/迁移、事务和恢复，而不是删掉这些动作或把它们冒充只读。
+
+`packages/agent/package.json` 中该依赖字段的实际变化：
+
+```diff
+-"@earendil-works/pi-durable": "file:vendor/earendil-works-pi-durable-1.4.0-pakka.3.tgz",
++"@earendil-works/pi-durable": "file:vendor/earendil-works-pi-durable-1.4.0-pakka.4.tgz",
+```
+
+新公开 `openNodeSqliteReader` 使用只读连接，只验证既存 schema；`snapshot` 借出有限原生读视图，读取同一提交下的 Conversation、EntryArchive 和 document record/base/delta。没有构造 pi-durable Harness/Session 或恢复 Task。打开、关闭及视图失效采用读方生命周期；关闭仍完成已接纳读取的清理。接口正文来自 [.4 源补丁及 README](../patches/pi-durable/1.4.0-pakka.4/README.md)。
+
+新增 Chord 源能力只编译 Context 无关的 SQLite `database/node` 模块、声明/映射与许可证，随 Durable 交付；没有嵌套第二份完整 Chord。公开 API 探针证实跨完整 Chord 副本传递 Context 会丢失取消信号；最终安装按 ESM import 条件核对，adapter 与 reader 使用同一 Context 模块。
+
+Pakka `readStoredConversation` 在 adapter 内持有原生对象，核对确认登记、原 provenance/Runtime 身份、原 Conversation 及当前 read grant，返回前再次核对。未加载结果只有保存状态和稳定地址；已加载结果来自现有 owner。原文沿用有界投影、不可变 Entry/commitSeq 和来源信息授权；源码中复用同一投影规则，没有为 UI 伪造可执行绑定。
+
+### 固定检查与保留限制
+
+重建命令为 `npm run build:durable-patch -- <固定上游 checkout> 1.4.0-pakka.4`。Chord 3 项、Durable 11 文件/197 项、独立安装 SDK 3 文件/10 项通过；安装 reader 的严格声明检查通过。Pakka check/build、仓库外 browser SDK/client 及安装产品的真实历史 HTTP/固定资产检查通过。相同 Conversation ID、fork 来源、撤权、保存 Task 状态、真实 WAL 并存、范围/版本拒绝和取消/关闭均留证；只读浏览没有额外模型请求，也未取得发送权限。
+
+扩大 Pakka 回归初轮 240 文件/612 项为 601 pass、9 fail、2 原有平台 skip，保留 failed 原结果。两条旧浏览器安全测试更新四处已删除 facade 的导入后通过；七项维护失败定位为未改的 Windows PowerShell 5 ACL helper 长路径限制，同两文件在短隔离目录复测 13/13 通过，未降低 ACL。完整 Node 产品的严格 NodeNext 依赖声明有 43 条上游错误，已用完全不加载 Pakka 的 ModelRuntime 消费者等量复现；新 Agent reader 公共消费同样严格检查为 0 错误。完整依赖检查不改写为通过。
+
+详细执行、故障边界、LSP 与本地证据包身份见 [READONLY-SQLITE-HISTORY](verification/READONLY-SQLITE-HISTORY.md)。只读连接仍可能参与 WAL 辅助 I/O；短读快照不是跨翻页租约，64 KiB 返回上限不是全进程预算。独立 facet 控制、历史浏览 UI、默认前端切换与外部 Dynamite 固定组合未由本次认定完成。
+
+### 失效与接续
+
+SDK/cohort/hash、只读连接/事务/关闭、schema/分叉/EntryArchive/document 物化或 Pakka 来源/权限/版本关联变化时，重跑受影响原生与安装路径并追加条目。上游提供等价公开 reader 且保留既有 generation/EntryArchive 契约、同一组实际消费检查通过后，才替换此源补丁；不手改已安装依赖，不把这些结果外推到不同版本或部署组合。

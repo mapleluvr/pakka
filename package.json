@@ -9,18 +9,27 @@
 		"packages/mas",
 		"packages/mas-devpack",
 		"packages/client",
-		"apps/*"
+		"packages/rsi",
+		"packages/memo",
+		"apps/server",
+		"apps/webui",
+		"apps/cli"
 	],
 	"engines": {
 		"node": ">=24.0.0"
 	},
 	"scripts": {
-		"build": "npm run build --workspaces && npm run build:webui --workspace=@pakka/mas-devpack",
+		"build": "npm run build --workspaces && npm run build:webui --workspace=@pakka/mas-devpack && npm run build:webui --workspace=@pakka/rsi",
 		"build:durable-patch": "node scripts/build-durable-patch.mjs",
-		"check": "node scripts/verify-durable-patch.mjs 1.4.0-pakka.1 && tsc --noEmit -p tsconfig.test.json",
+		"check": "node scripts/verify-durable-patch.mjs && tsc --noEmit -p tsconfig.test.json",
 		"test": "node scripts/test.mjs",
+		"test:affected": "node scripts/test.mjs --suite affected",
+		"test:release": "node scripts/test.mjs --suite release",
 		"pack:agent": "npm run build && node scripts/pack-agent.mjs",
+		"pack:release": "npm run build && node scripts/pack-release.mjs",
 		"smoke:package": "npm run build && node scripts/pack-smoke.mjs",
+		"smoke:history": "node scripts/pack-history-smoke.mjs",
+		"smoke:memo": "npm run build --workspace=@pakka/memo && node scripts/pack-memo-smoke.mjs",
 		"test:dynamite": "node integrations/dynamite/run.mjs",
 		"test:dynamite:product": "npm run build && node integrations/dynamite/product-run.mjs",
 		"format:check": "prettier --check packages apps scripts integrations *.json"
@@ -36,11 +45,16 @@
 		"@earendil-works/pi-telemetry": "1.4.0"
 	},
 	"dependencies": {
-		"@earendil-works/pi-durable": "file:packages/agent/vendor/earendil-works-pi-durable-1.4.0-pakka.1.tgz"
+		"@earendil-works/pi-durable": "file:packages/agent/vendor/earendil-works-pi-durable-1.4.0-pakka.4.tgz"
 	},
 	"devDependencies": {
+		"@astryxdesign/core": "0.7.15",
+		"@pakka/webui-sdk": "file:integrations/webui/sdk/pakka-webui-sdk-3f669b8af0d7af4c.tgz",
 		"@types/node": "26.6.4",
+		"@types/react": "19.3.0",
+		"esbuild": "0.28.2",
 		"prettier": "3.6.2",
+		"react": "19.3.1",
 		"typescript": "7.0.2"
 	}
 }

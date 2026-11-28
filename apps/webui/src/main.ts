@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { readFile, writeFile, lstat, realpath } from "node:fs/promises";
-import { resolve, isAbsolute } from "node:path";
-import type { ExtensionFacet } from "./extension.ts";
+import { isAbsolute } from "node:path";
+import type { ExtensionFacet } from "@pakka/protocol/extensions";
 import { pathToFileURL } from "node:url";
 import { startPocket, type PocketProductOptions } from "./bootstrap.ts";
 
@@ -53,7 +53,10 @@ export function decodePocketProduct(value: unknown): PocketProductOptions {
 			"profiles",
 			"cwdRoots",
 		]),
-		limits = object(runtime.limits, ["maxConversations", "maxPrimaryAttempts", "maxAuxiliaryAttempts"]);
+		limits =
+			runtime.limits === undefined
+				? undefined
+				: object(runtime.limits, ["maxConversations", "maxPrimaryAttempts", "maxAuxiliaryAttempts"]);
 	const profiles =
 		runtime.profiles === undefined
 			? undefined
@@ -187,16 +190,20 @@ export function decodePocketProduct(value: unknown): PocketProductOptions {
 				? {}
 				: { reopenSessionFile: text(runtime.reopenSessionFile) }),
 			...(profiles ? { profiles } : {}),
-			limits: {
-				maxConversations: integer(limits.maxConversations, 1, 1024),
-				maxPrimaryAttempts: integer(limits.maxPrimaryAttempts, 1, 1000000),
-				maxAuxiliaryAttempts: integer(limits.maxAuxiliaryAttempts, 1, 1000000),
-			},
+			...(limits && {
+				limits: {
+					maxConversations: integer(limits.maxConversations, 0, 1024),
+					maxPrimaryAttempts: integer(limits.maxPrimaryAttempts, 0, 1000000),
+					maxAuxiliaryAttempts: integer(limits.maxAuxiliaryAttempts, 0, 1000000),
+				},
+			}),
 		},
 	};
 }
 const productKeys = [
 	"runtime",
+	"modelConfiguration",
+	"frontend",
 	"owner",
 	"initial",
 	"profiles",
@@ -206,7 +213,7 @@ const productKeys = [
 	"notifications",
 ] as const;
 /** Explicit local host code, not a manifest action, browser request, or untrusted configuration decoder. */
-async function loadPocketModule(path: string): Promise<PocketProductOptions> {
+export async function loadPocketModule(path: string): Promise<PocketProductOptions> {
 	if (!isAbsolute(path) || !path.endsWith(".mjs"))
 		throw new Error("Explicit absolute ESM configuration required");
 	const stat = await lstat(path);
@@ -258,7 +265,7 @@ export async function runPocket(args: readonly string[]): Promise<number> {
 		}
 		app = await startPocket(options);
 		if (app.initialOwner)
-			await writeFile(args[3], `${app.http.origin}/#signin=${app.initialOwner.token}\n`, {
+			await writeFile(args[3], `${app.http.origin}/#session=${app.initialOwner.token}\n`, {
 				flag: "wx",
 				mode: 0o600,
 			});

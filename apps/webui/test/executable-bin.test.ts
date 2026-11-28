@@ -63,7 +63,7 @@ test(
 			assert.equal(new URL(info.origin).hostname, "127.0.0.1");
 			assert.equal((await fetch(info.origin)).status, 200);
 			const link = new URL((await readFile(owner, "utf8")).trim()),
-				token = new URLSearchParams(link.hash.slice(1)).get("signin");
+				token = new URLSearchParams(link.hash.slice(1)).get("session");
 			assert.equal(link.origin, info.origin);
 			assert.ok(token);
 			assert.equal(stdout.includes(token), false);

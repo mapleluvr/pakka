@@ -1,0 +1,32 @@
+✔ execution: disposal awaits an admitted operation that does not honor abort (631.2379ms)
+✔ execution: native write/edit/read use the bound environment and retain real tool results (192.9804ms)
+✔ execution: unavailable required environment blocks before HTTP and preserves settlement (72.7262ms)
+✔ execution: cooperating tools run argv commands and retained access cannot cause late effects (193.7312ms)
+✔ execution: invalid empty identity is rejected before use (19.7116ms)
+✔ execution: invalid missing factory is rejected before use (4.1163ms)
+✔ execution: invalid duplicate native tool is rejected before use (2.6998ms)
+✔ execution: invalid unknown native tool is rejected before use (2.3966ms)
+✔ execution: native/custom tool name collisions are rejected (3.4415ms)
+✔ execution: a unknown result after a real effect fails closed even when the tool catches it (112.9629ms)
+✔ execution: a foreign result after a real effect fails closed even when the tool catches it (59.2328ms)
+✔ execution: binary handles survive path replacement and expire with the tool invocation (139.0215ms)
+✔ execution: a caller abort terminates its real argv process without destroying the environment (984.6225ms)
+✔ execution: already-started operations finish before tool settlement even if its author omits await (165.1689ms)
+✔ execution: unknown cleanup keeps the writer claimed (36.0951ms)
+✔ execution: native edit cannot write after reload starts while its read was pending (163.4818ms)
+✔ execution: reader unknown result is checked like other environment operations (119.2093ms)
+✔ execution: reader foreign result is checked like other environment operations (65.4302ms)
+✔ execution: concurrent Conversations use their own approved profile driver and cwd (184.0049ms)
+✔ execution: reopen checks policy, native tool selection and presence before dispatch (58.3939ms)
+✔ execution: changing approved cwd binds a fresh environment and retains the selected model (104.0548ms)
+✔ execution: a mismatched driver blocks HTTP and still owns cleanup (34.9177ms)
+✔ execution: native bash produces a real file and returns its output (196.0188ms)
+✔ execution: native powershell produces a real file and returns its output (620.4123ms)
+ℹ tests 24
+ℹ suites 0
+ℹ pass 24
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 13489.6807

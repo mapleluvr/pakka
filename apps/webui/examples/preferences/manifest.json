@@ -1,15 +1,10 @@
 {
 	"api": 1,
 	"id": "preferences",
-	"version": "1.0.0",
+	"version": "2.0.0",
 	"title": "Example preferences",
 	"facets": {
-		"backend": "backend.mjs",
-		"client": "client.js",
-		"webui": {
-			"entry": "index.js",
-			"publicDir": "web"
-		}
+		"backend": "backend.mjs"
 	},
 	"actions": [
 		{
@@ -106,22 +101,5 @@
 			"action": "card"
 		}
 	],
-	"interfaces": [
-		{
-			"id": "settings",
-			"title": "Example preferences",
-			"slot": "settings",
-			"scope": "app",
-			"export": "Settings",
-			"navigation": true
-		},
-		{
-			"id": "panel",
-			"title": "Example preference panel",
-			"slot": "panel",
-			"scope": "conversation",
-			"export": "Settings",
-			"navigation": false
-		}
-	]
+	"interfaces": []
 }

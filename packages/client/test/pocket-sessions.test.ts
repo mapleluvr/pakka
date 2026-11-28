@@ -1,3 +1,4 @@
+import { POCKET_VERSION } from "@pakka/protocol/pocket";
 import { test } from "node:test";
 import { strict as assert } from "node:assert";
 import { createServer } from "node:http";
@@ -24,7 +25,7 @@ test("WebUI Session correlation: a same-ID receipt or team snapshot from another
 				parsed.command.op === "hello"
 					? {
 							kind: "hello",
-							versions: [2],
+							versions: [POCKET_VERSION],
 							sessionId: "control",
 							person: { id: "human", name: "Owner", role: "admin", resources: "*", active: true },
 						}
@@ -52,7 +53,9 @@ test("WebUI Session correlation: a same-ID receipt or team snapshot from another
 								},
 							};
 			response.setHeader("Content-Type", "application/json");
-			response.end(JSON.stringify({ version: 2, serverId: "server", requestId: parsed.requestId, result }));
+			response.end(
+				JSON.stringify({ version: POCKET_VERSION, serverId: "server", requestId: parsed.requestId, result }),
+			);
 		});
 	});
 	server.listen(0, "127.0.0.1");

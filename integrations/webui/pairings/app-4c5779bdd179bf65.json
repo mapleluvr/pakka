@@ -1,0 +1,104 @@
+{
+  "schema": 1,
+  "frontend": {
+    "schema": 1,
+    "application": {
+      "name": "@pakka/webui-app",
+      "version": "0.1.0"
+    },
+    "archive": {
+      "file": "../app/pakka-webui-app-0.1.0-4c5779bdd179bf65.tgz",
+      "sha256": "4c5779bdd179bf653253f1024b053201ecbff48d956faf1c3c5fe46a25f55b78",
+      "bytes": 1337251
+    },
+    "manifestSha256": "eb6a70dafe3bda25a3bc75ffe76bd02de5ef8ab04d8d8143456b6f74554273e2",
+    "assetSchema": 2,
+    "requires": {
+      "services": 6,
+      "workbench": 3,
+      "extensions": 3
+    },
+    "runtime": {
+      "id": "react19-astryx0.7.15",
+      "sdk": "0.1.0",
+      "packages": {
+        "react": "19.3.1",
+        "react-dom": "19.3.1",
+        "@astryxdesign/core": "0.7.15",
+        "@astryxdesign/theme-neutral": "0.7.15",
+        "@stylexjs/stylex": "0.19.2",
+        "lucide-react": "1.73.0"
+      }
+    },
+    "entry": "/",
+    "files": 713,
+    "repository": "https://github.com/mapleluvr/pakka-webui",
+    "sourceBase": "2f62b84c5f0ea8ac307f73083dc433b1fe088745",
+    "workingTreeInputsSha256": "305984573e03fde05ed2354136269a6991bb4df33192da66dcd2658d8e43bbed"
+  },
+  "backend": {
+    "sourceBase": "db5c34bf0e0e0a6dc0dac915e42fc8f1376a0383",
+    "source": "working-tree personal-mode",
+    "nodeMajor": 24,
+    "packages": [
+      {
+        "name": "@pakka/agent",
+        "version": "0.7.0",
+        "file": "pakka-agent-0.7.0.tgz",
+        "sha256": "9365521aca572898a939179fc23e597c5c07b0ce527520a84f00ed87b48583ec",
+        "size": 14803288
+      },
+      {
+        "name": "@pakka/mas",
+        "version": "0.4.0",
+        "file": "pakka-mas-0.4.0.tgz",
+        "sha256": "37602f8cc618b23168722530d24b56ad3c7e863fcbfdefb2e18ec0688e85e2f9",
+        "size": 21201
+      },
+      {
+        "name": "@pakka/mas-devpack",
+        "version": "0.2.0",
+        "file": "pakka-mas-devpack-0.2.0.tgz",
+        "sha256": "1fa77e95ae78dcf512530a6ae60001329a2e8eb0dcfb2200b55de0efc78726d0",
+        "size": 56236
+      },
+      {
+        "name": "@pakka/protocol",
+        "version": "0.1.0",
+        "file": "pakka-protocol-0.1.0.tgz",
+        "sha256": "855d380de36315be02196b1193166337c40030eb674708adadefdcfa37130291",
+        "size": 36938
+      },
+      {
+        "name": "@pakka/client",
+        "version": "0.1.0",
+        "file": "pakka-client-0.1.0.tgz",
+        "sha256": "e953a39e8c1794a8516f85e08560ed32d3908c6af39c7b80ec6d46d97168e5dc",
+        "size": 11587
+      },
+      {
+        "name": "@pakka/cli",
+        "version": "0.1.0",
+        "file": "pakka-cli-0.1.0.tgz",
+        "sha256": "a86c0ac1c38c2438f045971d16a86315451bacef0249d70c11c9ab4b74d30329",
+        "size": 1528
+      },
+      {
+        "name": "@pakka/server",
+        "version": "0.5.0",
+        "file": "pakka-server-0.5.0.tgz",
+        "sha256": "bb5388c4eb93413514cc4d7333b3deb3192539b148d4d848ff8b22aaa77ace65",
+        "size": 93024
+      },
+      {
+        "name": "@pakka/webui",
+        "version": "0.1.0",
+        "file": "pakka-webui-0.1.0.tgz",
+        "sha256": "965c9f964af229deaf5461b4c740e84c98707bd677d8ef9067ecbe0713142e14",
+        "size": 1563624
+      }
+    ]
+  },
+  "mode": "default-fixed-frontend",
+  "verification": "../../../docs/verification/PERSONAL-MODE.md"
+}

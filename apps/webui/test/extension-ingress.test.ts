@@ -1,4 +1,5 @@
 import { test } from "node:test";
+import { controlFacet } from "./fixtures/extension-control.ts";
 import { strict as assert } from "node:assert";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
@@ -167,7 +168,7 @@ test(
 		try {
 			response = m.post(Buffer.from("late-effect"));
 			await t.waitFor(() => assert.equal(m.calls(), 1), { timeout: 2000 });
-			await m.extensions.setEnabled(m.actor, "incoming-example", false);
+			await controlFacet(m.extensions, m.actor, "incoming-example", "backend", "disable");
 			m.release.resolve();
 			assert.equal((await response).status, 500);
 			await assert.rejects(readFile(m.effect), { code: "ENOENT" });

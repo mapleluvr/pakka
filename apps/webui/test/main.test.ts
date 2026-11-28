@@ -1,3 +1,4 @@
+import { POCKET_VERSION } from "@pakka/protocol/pocket";
 import { test } from "node:test";
 import { strict as assert } from "node:assert";
 import { spawn, spawnSync } from "node:child_process";
@@ -17,7 +18,11 @@ test(
 		await writeFile(
 			config,
 			JSON.stringify({
-				runtime: { ...m.config, dataDir: m.f.dataDir + "/executable" },
+				runtime: {
+					...m.config,
+					limits: { maxConversations: 0, maxPrimaryAttempts: 0, maxAuxiliaryAttempts: 0 },
+					dataDir: m.f.dataDir + "/executable",
+				},
 				owner: "Operator",
 				initial: [{ name: "CLI project", profile: "default" }],
 				notifications: {
@@ -67,14 +72,14 @@ test(
 			assert.equal(allowed.origin, endpoint.origin);
 			const link = new URL((await readFile(owner, "utf8")).trim());
 			assert.equal(link.origin, endpoint.origin);
-			const token = new URLSearchParams(link.hash.slice(1)).get("signin");
+			const token = new URLSearchParams(link.hash.slice(1)).get("session");
 			assert.ok(token);
 			assert.equal(stdout.includes(token), false);
 			assert.equal(stderr.includes(token), false);
 			assert.equal(stdout.includes(m.config.apiKey), false);
 			const page = await fetch(allowed);
 			assert.equal(page.status, 200);
-			assert.match(await page.text(), /pakka-webui/);
+			assert.match(await page.text(), /@pakka\/webui-sdk/);
 			const login = await fetch(endpoint.origin + "/pocket/exchange", {
 				method: "POST",
 				headers: { Origin: endpoint.origin, "Content-Type": "application/json" },
@@ -94,7 +99,7 @@ test(
 					Cookie: cookies,
 					"X-Pakka-CSRF": /pakka_csrf=([^;]+)/.exec(cookies)![1]!,
 				},
-				body: JSON.stringify({ version: 2, requestId, command: { op: "list" } }),
+				body: JSON.stringify({ version: POCKET_VERSION, requestId, command: { op: "list" } }),
 			});
 			assert.equal(devices.status, 200);
 			child.stdin.end("stop\n");

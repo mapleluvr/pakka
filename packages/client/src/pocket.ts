@@ -1,9 +1,23 @@
-import { decodePocketRequest, decodePocketResponse, POCKET_MAX_BYTES } from "@pakka/protocol/pocket";
+import {
+	POCKET_VERSION,
+	decodePocketRequest,
+	decodePocketResponse,
+	decodePocketEvent,
+	POCKET_MAX_BYTES,
+} from "@pakka/protocol/pocket";
 import { identity } from "@pakka/protocol";
-import type { AgentRef, PocketCommand, PocketResult, PocketErrorCode } from "@pakka/protocol/pocket";
+import type {
+	AgentRef,
+	PocketCommand,
+	PocketResult,
+	PocketErrorCode,
+	PocketSnapshot,
+} from "@pakka/protocol/pocket";
 export type * from "@pakka/protocol/pocket";
 export interface PocketClientOptions {
 	readonly endpoint: string;
+	/** Instance-local transport, e.g. a terminal's cookie jar bound to this origin. */
+	readonly fetch?: typeof fetch;
 	/** Supplied by the product's cookie binding; never discovers credentials or reads browser state at import. */
 	readonly csrf?: () => string | null;
 	readonly timeoutMs?: number;
@@ -36,6 +50,86 @@ const sameRef = (a: AgentRef, b: AgentRef): boolean =>
 	a.conversationId === b.conversationId &&
 	a.incarnation === b.incarnation &&
 	a.profile === b.profile;
+export interface PocketObservedSnapshot {
+	readonly serverId: string;
+	readonly streamId: string;
+	/** Last Conversation frame, not the sequence of unrelated team/resource events. */
+	readonly sequence: number;
+	readonly snapshot: PocketSnapshot;
+}
+export class PocketObservationGap extends Error {
+	constructor() {
+		super("WebUI observation requires a fresh scoped snapshot");
+		this.name = "PocketObservationGap";
+	}
+}
+/** Pure bounded reconstruction. Missing bases/rows never become invented empty text or another resource. */
+export function applyPocketObservation(
+	previous: PocketObservedSnapshot | undefined,
+	raw: unknown,
+	expected: { readonly serverId: string; readonly target: AgentRef },
+): PocketObservedSnapshot | undefined {
+	const event = decodePocketEvent(raw);
+	const gap = (): never => {
+		throw new PocketObservationGap();
+	};
+	if (event.serverId !== expected.serverId) return gap();
+	if (event.kind !== "conversation" && event.kind !== "conversation.patch") {
+		if (event.kind === "collaboration") return previous;
+		return gap();
+	}
+	const target = event.kind === "conversation" ? event.snapshot.ref : event.patch.ref;
+	if (!sameRef(target, expected.target)) return gap();
+	let snapshot: PocketSnapshot;
+	if (event.kind === "conversation") {
+		if (previous?.streamId === event.streamId && event.sequence <= previous.sequence) return gap();
+		snapshot = event.snapshot;
+	} else {
+		if (
+			!previous ||
+			previous.serverId !== event.serverId ||
+			previous.streamId !== event.streamId ||
+			previous.sequence !== event.patch.baseSequence ||
+			!sameRef(previous.snapshot.ref, target)
+		)
+			return gap();
+		const patch = event.patch;
+		const rows = new Map(previous.snapshot.entries.map((entry) => [entry.id, entry]));
+		for (const entry of patch.entries ?? []) {
+			if (patch.entryIds === undefined && !rows.has(entry.id)) return gap();
+			rows.set(entry.id, entry);
+		}
+		const ids = patch.entryIds ?? previous.snapshot.entries.map((entry) => entry.id);
+		const entries = ids.map((id) => rows.get(id) ?? gap());
+		const { olderBeforeId: oldBoundary, ...prior } = previous.snapshot;
+		const truncated = patch.entriesTruncated ?? prior.entriesTruncated;
+		const boundary = patch.olderBeforeId === undefined ? oldBoundary : patch.olderBeforeId;
+		snapshot = {
+			...prior,
+			entries,
+			entriesTruncated: truncated,
+			...(truncated && boundary !== null && boundary !== undefined ? { olderBeforeId: boundary } : {}),
+			...(patch.live === undefined ? {} : { live: patch.live }),
+			...(patch.usage === undefined ? {} : { usage: patch.usage }),
+		};
+	}
+	// Validate the derived hot page with the same snapshot contract and detach/freeze it.
+	const checked = decodePocketEvent({
+		version: POCKET_VERSION,
+		serverId: event.serverId,
+		streamId: event.streamId,
+		sequence: event.sequence,
+		kind: "conversation",
+		snapshot,
+	});
+	if (checked.kind !== "conversation") return gap();
+	return Object.freeze({
+		serverId: event.serverId,
+		streamId: event.streamId,
+		sequence: event.sequence,
+		snapshot: checked.snapshot,
+	});
+}
 function correlated(command: PocketCommand, result: PocketResult, personId?: string): boolean {
 	switch (command.op) {
 		case "hello":
@@ -57,6 +151,8 @@ function correlated(command: PocketCommand, result: PocketResult, personId?: str
 			);
 		case "session.list":
 			return result.kind === "sessions";
+		case "session.reopen":
+			return result.kind === "session.state" && result.session.id === command.sessionId;
 		case "session.create":
 			return (
 				result.kind === "managed.session" &&
@@ -158,6 +254,33 @@ function correlated(command: PocketCommand, result: PocketResult, personId?: str
 			);
 		case "read":
 			return result.kind === "conversation" && sameRef(command.target, result.snapshot.ref);
+		case "preview":
+			return (
+				result.kind === "conversation" &&
+				sameRef(command.target, result.snapshot.ref) &&
+				new TextEncoder().encode(JSON.stringify(result.snapshot)).byteLength <=
+					(command.page?.maxBytes ?? 256 * 1024)
+			);
+		case "content.read":
+			return (
+				result.kind === "content" &&
+				sameRef(command.target, result.target) &&
+				[
+					"id",
+					"source",
+					"entryId",
+					"sourceConversationId",
+					"taskId",
+					"callId",
+					"revision",
+					"path",
+					"encoding",
+					"byteLength",
+					"previewComplete",
+				].every((key) => command.reference[key] === result.chunk.reference[key]) &&
+				result.chunk.offset === command.range.offset &&
+				result.chunk.nextOffset <= command.range.offset + command.range.length
+			);
 		case "collaboration.read":
 		case "collaboration.post":
 		case "collaboration.note":
@@ -239,7 +362,7 @@ export function createPocketClient(options: PocketClientOptions): PocketClient {
 	}
 	if (
 		!["http:", "https:"].includes(endpoint.protocol) ||
-		endpoint.pathname !== "/pocket/rpc" ||
+		!["/pocket/rpc", "/pakka-webui/rpc"].includes(endpoint.pathname) ||
 		endpoint.username ||
 		endpoint.password ||
 		endpoint.search ||
@@ -251,15 +374,19 @@ export function createPocketClient(options: PocketClientOptions): PocketClient {
 	if (!Number.isSafeInteger(timeoutMs) || timeoutMs < 1 || timeoutMs > 60000)
 		throw new Error("Invalid finite WebUI deadline");
 	const url = endpoint.href;
+	const independent = endpoint.pathname === "/pakka-webui/rpc";
 	let serverId: string | undefined, personId: string | undefined;
+	let bindingGeneration = 0;
 	async function request(
 		command: PocketCommand,
 		input: PocketRequestOptions = {},
 	): Promise<PocketClientResult> {
 		const requestId = input.requestId ?? globalThis.crypto.randomUUID();
 		if (!identity(requestId)) throw new Error("Invalid WebUI request identity");
-		const encoded = decodePocketRequest({ version: 2, requestId, command });
-		if (input.signal?.aborted) throw new PocketRemoteError("FORBIDDEN", "denied", requestId);
+		const encoded = decodePocketRequest({ version: POCKET_VERSION, requestId, command });
+		const generation = command.op === "hello" ? ++bindingGeneration : bindingGeneration;
+		if (input.signal?.aborted || (independent && command.op !== "hello" && (!personId || !serverId)))
+			throw new PocketRemoteError("FORBIDDEN", "denied", requestId);
 		const controller = new AbortController(),
 			abort = () => controller.abort();
 		input.signal?.addEventListener("abort", abort, { once: true });
@@ -267,9 +394,15 @@ export function createPocketClient(options: PocketClientOptions): PocketClient {
 		try {
 			const csrf = options.csrf?.() ?? null;
 			if (csrf !== null && !/^[A-Za-z0-9_-]{43}$/.test(csrf)) throw new Error("Invalid CSRF binding");
-			const response = await fetch(url, {
+			const response = await (options.fetch ?? fetch)(url, {
 				method: "POST",
-				headers: { "Content-Type": "application/json", ...(csrf ? { "X-Pakka-CSRF": csrf } : {}) },
+				headers: {
+					"Content-Type": "application/json",
+					...(csrf ? { "X-Pakka-CSRF": csrf } : {}),
+					...(independent && command.op !== "hello"
+						? { "X-Pakka-Person": personId!, "X-Pakka-Server": serverId! }
+						: {}),
+				},
 				body: JSON.stringify(encoded),
 				signal: controller.signal,
 				redirect: "error",
@@ -283,6 +416,8 @@ export function createPocketClient(options: PocketClientOptions): PocketClient {
 				throw new PocketRemoteError("UNKNOWN", "unknown", requestId);
 			}
 			const decoded = decodePocketResponse(raw, requestId);
+			if (independent && generation !== bindingGeneration)
+				throw new PocketRemoteError("UNKNOWN", "unknown", requestId);
 			if (command.op !== "hello" && serverId && decoded.serverId !== serverId)
 				throw new PocketRemoteError("UNKNOWN", "unknown", requestId);
 			if ("error" in decoded)
@@ -312,7 +447,8 @@ export function createPocketClient(options: PocketClientOptions): PocketClient {
 			if (
 				list.kind !== "list" ||
 				list.serverId !== hello.serverId ||
-				list.conversations.some((ref) => ref.sessionId !== hello.sessionId)
+				new Set(list.conversations.map((ref) => JSON.stringify([ref.sessionId, ref.conversationId]))).size !==
+					list.conversations.length
 			)
 				throw new PocketRemoteError("UNKNOWN", "unknown", options.requestId ?? "reconnect");
 			return list;

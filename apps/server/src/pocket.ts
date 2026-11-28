@@ -34,6 +34,7 @@ export type {
 	PocketScheduleClient,
 	PocketSchedules,
 	PocketSchedulesPreparation,
+	ScheduleDeliveries,
 	PocketScheduleContext,
 } from "./pocket-schedules.js";
 export { createPocketNotifications } from "./pocket-notifications.js";
@@ -41,6 +42,7 @@ export type {
 	PocketNotifications,
 	PocketNotificationsOptions,
 	PocketNotificationClient,
+	PocketNotificationOriginal,
 	PocketNotificationStatus,
 	PocketNotificationPreferences,
 	PocketNotificationEvent,
@@ -80,7 +82,11 @@ export type {
 	PocketGitBranch,
 	PocketGitWorktree,
 } from "./pocket-files.js";
-export { createPocketCollaboration, PocketCollaborationConflict } from "./pocket-collaboration.js";
+export {
+	createPocketCollaboration,
+	PocketCollaborationConflict,
+	PocketCollaborationRefusal,
+} from "./pocket-collaboration.js";
 export type {
 	PocketCollaboration,
 	PocketCollaborationOptions,
@@ -93,13 +99,21 @@ export type {
 	PocketDriverInput,
 	PocketPresence,
 } from "./pocket-collaboration.js";
-export { createPocketPeople } from "./pocket-people.js";
+export {
+	createPocketPeople,
+	PocketPeopleChangeRefused,
+	inspectPocketOwner,
+	recoverPocketOwner,
+	revokeRestoredPocketAccess,
+} from "./pocket-people.js";
+export type { PocketOwnerRecovery } from "./pocket-people.js";
 export type {
 	PocketPeople,
 	PocketPeopleOptions,
 	PocketPerson,
 	PocketSession,
 	PocketAuthority,
+	PocketAuthorityLease,
 	PocketPermission,
 	PocketInvite,
 	PocketRole,
@@ -114,7 +128,13 @@ export type {
 } from "./pocket-credentials.js";
 export { resolveDirectory, listDirectories } from "./pocket-directories.js";
 export type { PocketDirectories } from "./pocket-directories.js";
-export { createPocketWorkspace, PocketMetadataConflict } from "./pocket-workspace.js";
+export {
+	createPocketWorkspace,
+	PocketMetadataConflict,
+	PocketInputLookupUnsupported,
+	PocketConfigurationRefused,
+} from "./pocket-workspace.js";
+export { scopeContentReference, scopeConversationEntries } from "./pocket-history.js";
 export type {
 	PocketWorkspace,
 	PocketWorkspaceOptions,
@@ -127,4 +147,5 @@ export type {
 	PocketFork,
 	PocketInput,
 	PocketInputReceipt,
+	PocketInputHistory,
 } from "./pocket-workspace.js";

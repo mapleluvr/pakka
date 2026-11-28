@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 import { createRuntime } from "@pakka/agent";
 import { readStorageText } from "./consumer-native-storage.mjs";
 import { createPocketPeople, createPocketWorkspace } from "@pakka/server/pocket";
-import { decodePocketRequest, decodePocketResponse } from "@pakka/protocol/pocket";
+import { POCKET_VERSION, decodePocketRequest, decodePocketResponse } from "@pakka/protocol/pocket";
 import { createPocketClient } from "@pakka/client/pocket";
 
 const root = dirname(fileURLToPath(import.meta.url)),
@@ -103,14 +103,14 @@ try {
 	assert.equal(requests.length, 0);
 	decodePocketResponse(
 		{
-			version: 2,
+			version: POCKET_VERSION,
 			requestId: "read",
 			serverId: "installed",
 			result: { kind: "conversation", snapshot: read },
 		},
 		"read",
 	);
-	decodePocketRequest({ version: 2, requestId: "list", command: { op: "list" } });
+	decodePocketRequest({ version: POCKET_VERSION, requestId: "list", command: { op: "list" } });
 	assert.ok(createPocketClient({ endpoint: "http://127.0.0.1:1/pocket/rpc" }));
 	assert.equal(requests.length, 0);
 	await assert.rejects(
@@ -146,7 +146,7 @@ try {
 	assert.equal(requests.length, 1);
 	assert.deepEqual(errors, []);
 	console.log(
-		"Installed WebUI services passed: 1 local HTTP; identity, resource scope, passive read/display, finite v2 exports, native jobs and original admission preserved on reopen.",
+		"Installed WebUI services passed: 1 local HTTP; identity, resource scope, passive read/display, bounded Pocket exports, native jobs and original admission preserved on reopen.",
 	);
 } finally {
 	await runtime?.close();

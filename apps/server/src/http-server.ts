@@ -1,4 +1,5 @@
 import { createServer } from "node:http";
+import { listenHttp } from "./http-listener.ts";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { createHash, randomUUID } from "node:crypto";
 import type { Mas, MasClient, MasGrant } from "@pakka/mas";
@@ -313,9 +314,13 @@ export async function createMasServer(options: MasServerOptions): Promise<MasSer
 			)
 				client.authorize("steer");
 			check();
-			attempted = true;
+			// Read-only dispatches cannot create a new effect requiring reconciliation.
+			attempted = !["hello", "snapshot", "receipt", "wait", "inspect"].includes(op);
 			const result = await dispatch(client, request.command, entry.config, check, controller.signal);
-			// A confirmed native outcome is not reclassified as non-delivery if authority expired afterwards.
+			// The HTTP return is another asynchronous boundary. Never publish a protected
+			// native result under an expired issuer; effects already attempted remain unknown.
+			check();
+			if (grant) client.authorize(grant);
 			write(res, id, result);
 		} catch (error) {
 			const known = !attempted || error instanceof MasRequestDenied;
@@ -352,15 +357,7 @@ export async function createMasServer(options: MasServerOptions): Promise<MasSer
 		},
 	);
 	try {
-		await new Promise<void>((resolve, reject) => {
-			server.once("error", reject);
-			server.listen(port, "127.0.0.1", () => {
-				server.off("error", reject);
-				resolve();
-			});
-		});
-		const address = server.address();
-		if (!address || typeof address === "string") throw new Error("Loopback address unavailable");
+		const address = await listenHttp(server, { host: "127.0.0.1", port });
 		host = "127.0.0.1:" + address.port;
 	} catch (error) {
 		server.close();

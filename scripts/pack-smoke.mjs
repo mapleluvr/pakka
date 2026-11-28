@@ -1,26 +1,44 @@
 import { spawnSync } from "node:child_process";
+import { writeReleaseManifest } from "./pack-release.mjs";
 import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
 const consumer = realpathSync.native(mkdtempSync(join(tmpdir(), "pakka-packed-consumer-")));
+let workspace;
+try {
+	workspace = JSON.parse(readFileSync(join(root, "package.json"), "utf8"));
+} catch (cause) {
+	throw new Error("Invalid workspace package metadata", { cause });
+}
+const sdkArchive = workspace.devDependencies["@pakka/webui-sdk"];
+if (!sdkArchive.startsWith("file:integrations/webui/sdk/"))
+	throw new Error("Expected fixed WebUI SDK archive");
+copyFileSync(join(root, sdkArchive.slice(5)), join(consumer, "pakka-webui-sdk.tgz"));
 const versions = Object.fromEntries(
-	["agent", "mas", "mas-devpack", "protocol", "client", "cli", "server", "webui"].map((name) => {
-		try {
-			return [
-				name,
-				JSON.parse(
-					readFileSync(
-						join(root, ["server", "cli", "webui"].includes(name) ? "apps" : "packages", name, "package.json"),
-						"utf8",
-					),
-				).version,
-			];
-		} catch (error) {
-			throw new Error("Invalid " + name + " package metadata", { cause: error });
-		}
-	}),
+	["agent", "mas", "mas-devpack", "protocol", "client", "cli", "server", "webui", "rsi", "memo"].map(
+		(name) => {
+			try {
+				return [
+					name,
+					JSON.parse(
+						readFileSync(
+							join(
+								root,
+								["server", "cli", "webui"].includes(name) ? "apps" : "packages",
+								name,
+								"package.json",
+							),
+							"utf8",
+						),
+					).version,
+				];
+			} catch (error) {
+				throw new Error("Invalid " + name + " package metadata", { cause: error });
+			}
+		},
+	),
 );
 const artifacts = join(root, "artifacts", "package-smoke");
 mkdirSync(artifacts, { recursive: true });
@@ -39,18 +57,37 @@ Object.assign(env, {
 	npm_execpath: npmCli,
 });
 function run(name, args, cwd) {
+	const startedAt = Date.now();
 	const r = spawnSync(process.execPath, ["--experimental-import-meta-resolve", ...args], {
 		cwd,
 		env,
 		encoding: "utf8",
-		timeout: 180000,
+		// Cold installs of the bundled native cohort can exceed three minutes on Windows.
+		// Keep functional consumers bounded separately; do not retry a failed operation.
+		timeout: name.startsWith("install") || name === "maintenance" ? 600000 : 180000,
 		maxBuffer: 4 * 1024 * 1024,
 	});
 	writeFileSync(
 		join(artifacts, name + ".log"),
-		"cwd=" + cwd + "\n" + (r.stdout ?? "") + (r.stderr ?? "") + "\nexit=" + r.status + "\n",
+		"cwd=" +
+			cwd +
+			"\n" +
+			(r.stdout ?? "") +
+			(r.stderr ?? "") +
+			"\nexit=" +
+			r.status +
+			"\nsignal=" +
+			r.signal +
+			"\nerror=" +
+			r.error?.code +
+			"\nelapsedMs=" +
+			(Date.now() - startedAt) +
+			"\n",
 	);
-	if (r.status !== 0) throw new Error(name + " failed: " + r.stdout + "\n" + r.stderr);
+	if (r.status !== 0)
+		throw new Error(
+			name + " failed (" + (r.error?.code ?? r.signal ?? r.status) + "): " + r.stdout + "\n" + r.stderr,
+		);
 	return r.stdout;
 }
 run("pack", [join(root, "scripts", "pack-agent.mjs"), consumer], root);
@@ -64,12 +101,13 @@ run(
 	[npmCli, "pack", "--ignore-scripts", "--pack-destination", consumer],
 	join(root, "packages", "mas-devpack"),
 );
-for (const name of ["protocol", "client", "cli", "server", "webui"])
+for (const name of ["protocol", "client", "cli", "server", "webui", "rsi", "memo"])
 	run(
 		"pack-" + name,
 		[npmCli, "pack", "--ignore-scripts", "--pack-destination", consumer],
 		join(root, ["cli", "server", "webui"].includes(name) ? "apps" : "packages", name),
 	);
+await writeReleaseManifest(consumer);
 writeFileSync(
 	join(consumer, "package.json"),
 	JSON.stringify(
@@ -86,8 +124,17 @@ writeFileSync(
 				"@pakka/client": `file:./pakka-client-${versions.client}.tgz`,
 				"@pakka/cli": `file:./pakka-cli-${versions.cli}.tgz`,
 				"@pakka/webui": `file:./pakka-webui-${versions.webui}.tgz`,
+				"@pakka/rsi": `file:./pakka-rsi-${versions.rsi}.tgz`,
+				"@pakka/memo": `file:./pakka-memo-${versions.memo}.tgz`,
 			},
-			devDependencies: { typescript: "7.0.2", "@types/node": "26.6.4" },
+			devDependencies: {
+				typescript: "7.0.2",
+				"@types/node": "26.6.4",
+				"@types/react": workspace.devDependencies["@types/react"],
+				"@pakka/webui-sdk": "file:./pakka-webui-sdk.tgz",
+				react: workspace.devDependencies.react,
+				"@astryxdesign/core": workspace.devDependencies["@astryxdesign/core"],
+			},
 		},
 		null,
 		2,
@@ -99,11 +146,16 @@ copyFileSync(
 	join(consumer, "consumer-native-storage.mjs"),
 );
 copyFileSync(join(root, "scripts", "consumer-types.ts"), join(consumer, "consumer-types.ts"));
+copyFileSync(join(root, "scripts", "consumer-rsi.mjs"), join(consumer, "rsi.mjs"));
+copyFileSync(join(root, "packages", "rsi", "examples", "workbench.mjs"), join(consumer, "rsi-workbench.mjs"));
 copyFileSync(join(root, "scripts", "consumer-runtime.mjs"), join(consumer, "runtime.mjs"));
+copyFileSync(join(root, "scripts", "consumer-execution.mjs"), join(consumer, "execution.mjs"));
 copyFileSync(join(root, "scripts", "consumer-mas.mjs"), join(consumer, "mas.mjs"));
 copyFileSync(join(root, "scripts", "consumer-broker.mjs"), join(consumer, "broker.mjs"));
 copyFileSync(join(root, "scripts", "consumer-devpack.mjs"), join(consumer, "devpack.mjs"));
 copyFileSync(join(root, "scripts", "consumer-apps.mjs"), join(consumer, "apps.mjs"));
+copyFileSync(join(root, "scripts", "consumer-launcher.mjs"), join(consumer, "launcher.mjs"));
+copyFileSync(join(root, "scripts", "consumer-maintenance.mjs"), join(consumer, "maintenance.mjs"));
 copyFileSync(join(root, "scripts", "consumer-product.mjs"), join(consumer, "product.mjs"));
 copyFileSync(join(root, "scripts", "consumer-pocket-services.mjs"), join(consumer, "pocket-services.mjs"));
 copyFileSync(join(root, "scripts", "consumer-mas-board.mjs"), join(consumer, "mas-board.mjs"));
@@ -112,11 +164,11 @@ copyFileSync(
 	join(root, "scripts", "consumer-pocket-controlled.mjs"),
 	join(consumer, "pocket-controlled.mjs"),
 );
+copyFileSync(join(root, "scripts", "consumer-webui-http.mjs"), join(consumer, "consumer-webui-http.mjs"));
 copyFileSync(join(root, "scripts", "consumer-pocket-product.mjs"), join(consumer, "pocket-product.mjs"));
 copyFileSync(join(root, "scripts", "consumer-pocket-schedules.mjs"), join(consumer, "pocket-schedules.mjs"));
 copyFileSync(join(root, "scripts", "consumer-pocket-memory.mjs"), join(consumer, "pocket-memory.mjs"));
 copyFileSync(join(root, "scripts", "consumer-pocket-hooks.mjs"), join(consumer, "pocket-hooks.mjs"));
-copyFileSync(join(root, "scripts", "consumer-pocket-voice.mjs"), join(consumer, "pocket-voice.mjs"));
 copyFileSync(
 	join(root, "scripts", "consumer-pocket-notifications.mjs"),
 	join(consumer, "pocket-notifications.mjs"),
@@ -125,9 +177,6 @@ mkdirSync(join(consumer, "tls"));
 for (const asset of ["key.pem", "cert.pem"])
 	copyFileSync(join(root, "apps", "webui", "test", "tls", asset), join(consumer, "tls", asset));
 copyFileSync(join(root, "apps/webui/test/browser.ts"), join(consumer, "pocket-browser.ts"));
-// Reuse the source regression entry points: native clicks through reference menus,
-// never a hidden old toolbar or a backend shortcut. Its browser import is type-only.
-copyFileSync(join(root, "apps/webui/test/frontend-controls.ts"), join(consumer, "frontend-controls.ts"));
 copyFileSync(join(root, "scripts", "consumer-browser.ts"), join(consumer, "consumer-browser.ts"));
 writeFileSync(
 	join(consumer, "tsconfig.browser.json"),
@@ -152,7 +201,7 @@ run(
 // A separate sibling install must not resolve optional browser peers from this full consumer's node_modules.
 const headless = realpathSync.native(mkdtempSync(join(tmpdir(), "pakka-headless-consumer-")));
 const headlessDependencies = {};
-for (const name of ["agent", "mas", "mas-devpack"]) {
+for (const name of ["agent", "mas", "mas-devpack", "rsi", "memo", "protocol"]) {
 	const archive = `pakka-${name}-${versions[name]}.tgz`;
 	copyFileSync(join(consumer, archive), join(headless, archive));
 	headlessDependencies["@pakka/" + name] = "file:./" + archive;
@@ -205,12 +254,16 @@ writeFileSync(
 	join(consumer, "dependency-tree.json"),
 	run("dependency-tree", [npmCli, "ls", "--all", "--json"], consumer),
 );
+console.log(run("rsi", [join(consumer, "rsi.mjs")], consumer));
 console.log(run("smoke", [join(consumer, "smoke.mjs")], consumer));
 console.log(run("runtime", [join(consumer, "runtime.mjs")], consumer));
+console.log(run("execution", [join(consumer, "execution.mjs")], consumer));
 console.log(run("mas", [join(consumer, "mas.mjs")], consumer));
 console.log(run("broker", [join(consumer, "broker.mjs")], consumer));
 console.log(run("devpack", [join(consumer, "devpack.mjs")], consumer));
 console.log(run("apps", [join(consumer, "apps.mjs")], consumer));
+console.log(run("launcher", [join(consumer, "launcher.mjs")], consumer));
+console.log(run("maintenance", [join(consumer, "maintenance.mjs")], consumer));
 console.log(run("product", [join(consumer, "product.mjs")], consumer));
 console.log(run("pocket-services", [join(consumer, "pocket-services.mjs")], consumer));
 console.log(run("pocket-product", [join(consumer, "pocket-product.mjs")], consumer));
@@ -221,5 +274,4 @@ console.log(run("pocket-notifications", [join(consumer, "pocket-notifications.mj
 console.log(run("pocket-schedules", [join(consumer, "pocket-schedules.mjs")], consumer));
 console.log(run("pocket-memory", [join(consumer, "pocket-memory.mjs")], consumer));
 console.log(run("pocket-hooks", [join(consumer, "pocket-hooks.mjs")], consumer));
-console.log(run("pocket-voice", [join(consumer, "pocket-voice.mjs")], consumer));
 writeFileSync(join(artifacts, "consumer-path.txt"), consumer + "\n");

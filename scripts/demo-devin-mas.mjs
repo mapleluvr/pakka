@@ -187,7 +187,7 @@ try {
 	});
 	if (!app.initialOwner) throw Error("Fresh isolated owner missing");
 	const origin = app.http.origin,
-		link = origin + "/#signin=" + encodeURIComponent(app.initialOwner.token);
+		link = origin + "/#session=" + encodeURIComponent(app.initialOwner.token);
 	await writeFile(join(base, "owner-link.txt"), link + "\n");
 	const ready = {
 		origin,

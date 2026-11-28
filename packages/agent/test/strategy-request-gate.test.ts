@@ -11,7 +11,10 @@ test("main provider failure cannot trigger hidden HTTP transport retries", { tim
 		await user.submit({ key: "failed", text: "ONE-CALL" });
 		await host.waitForIdle();
 		assert.equal(f.requests.length, 1);
-		assert.equal(host.view().phase, "failed");
+		assert.equal(host.view().phase, "ready");
+		await user.submit({ key: "explicit-retry", text: "SECOND-CALL" });
+		await host.waitForIdle();
+		assert.equal(f.requests.length, 2);
 	} finally {
 		await f.close();
 	}

@@ -125,7 +125,7 @@ A range replacement names a contiguous ordered visible source range, never a sys
 
 If a projector appends its own trigger records, re-read the frame before returning: `const current = binding.readFrame(); return {status: "apply", basis: current.basis, ...};`. The fresh basis is tied to the same live request. Returning the old basis is rejected, not silently rebased. A no-change projector returns `{status: "disabled", basis: frame.basis}` explicitly. Throwing, malformed plans, copied/stale bases, wrong owners, invalid protocol and unknown active storage fail closed before HTTP. A synchronous returned plan is snapshotted before later caller mutation.
 
-An intentional policy refusal returns `{ status: "blocked", basis: frame.basis, reason: "policy denied" }` with no patch/replacement fields. The exact live basis is still required. The version-pinned downstream Durable build settles generation as blocked without an assistant error entry or task fault. After `waitForIdle()`, the input receipt remains `state: "committed"` and gains `generation: { status: "blocked", reason }`; provider calls stay zero and the Host remains ready. Returning block does not undo an admitted input or replay its key. Invalid protocol is still a host failure. This contract is provided by [the downstream source patch](../../patches/pi-durable/1.4.0-pakka.1/README.md), not unmodified upstream 1.4.0.
+An intentional policy refusal returns `{ status: "blocked", basis: frame.basis, reason: "policy denied" }` with no patch/replacement fields. The exact live basis is still required. The version-pinned downstream Durable build settles generation as blocked without an assistant error entry or task fault. After `waitForIdle()`, the input receipt remains `state: "committed"` and gains `generation: { status: "blocked", reason }`; provider calls stay zero and the Host remains ready. Returning block does not undo an admitted input or replay its key. Invalid protocol is still a host failure. This contract is provided by [the downstream source patch](../../patches/pi-durable/1.4.0-pakka.2/README.md), not unmodified upstream 1.4.0.
 
 ## Tools And Lifecycle
 
@@ -161,16 +161,16 @@ Lifecycle transitions revoke new work first. They allow only settlement/quaranti
 
 ## Trusted Writer Maintenance
 
-`recoverStorageWriter({ storageDir, expectedClaim: { pid, nonce } })` is a bootstrap-only command for a closed/killed writer. It acquires an exclusive maintenance gate, checks database identity read-only, refuses a live or unconfirmable process, and rechecks the exact claim before releasing it. It returns a frozen `WriterRecoveryReceipt`; it does not open a model or alter database/WAL content. Normal opens still refuse residual claims. A failed or unknown close retains its claim.
+`recoverStorageWriter({ storageDir, expectedClaim: { pid, nonce } })` is a bootstrap-only command for a closed/killed writer. It acquires an exclusive maintenance gate, checks database identity read-only, refuses a live or unconfirmable process, and rechecks the exact claim before releasing it. It returns a frozen `WriterRecoveryReceipt`; it does not open a model or alter database/WAL content. Normal opens still refuse residual claims. A failed or unknown close retains its claim. Product operators use `pakka recover writer`; no-Harness coordinator inspection and snapshots use [offline maintenance](RUNTIME-API.md#离线存储维护). Restoring a verified backup may preserve a damaged original and its confirmed-dead claim as raw evidence without invoking writer release or claiming database health.
 
 ## Exported Declaration Sources
 
 The authoritative declarations are exported by [the package root](../../packages/agent/src/index.ts) from [types.ts](../../packages/agent/src/types.ts). Installed declaration checks are available through `npm run smoke:package`.
 
-| Surface                                      | Declaration                                                                                                  |
-| -------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| Frames and projection authority              | `ContextFrame`, `FrameBasis`, `JobScope`, `ToolInvocationScope`, `ProjectionPlan`                            |
-| Durable artifact submission and confirmation | `ArtifactSnapshot`, `ArtifactReceipt`, `StrategyArtifacts`, `SourceWorkCheckpoint`                           |
-| Planned work, inference and recovery         | `SourceJobSpec`, `SourceJob`, `SourceWorkSnapshot`, `InferenceRequest`, `InferenceResult`, `StrategyBinding` |
-| Native Compresser facade and diagnostics     | `CompresserSession`, `CompresserSnapshot`, `InferenceCallValidator`                                          |
-| Trusted lifecycle and storage maintenance    | `HostOptions`, `RuntimeOptions`, `WriterRecoveryOptions`, `WriterRecoveryReceipt`                            |
+| Surface                                      | Declaration                                                                                                                                                    |
+| -------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Frames and projection authority              | `ContextFrame`, `FrameBasis`, `JobScope`, `ToolInvocationScope`, `ProjectionPlan`                                                                              |
+| Durable artifact submission and confirmation | `ArtifactSnapshot`, `ArtifactReceipt`, `StrategyArtifacts`, `SourceWorkCheckpoint`                                                                             |
+| Planned work, inference and recovery         | `SourceJobSpec`, `SourceJob`, `SourceWorkSnapshot`, `InferenceRequest`, `InferenceResult`, `StrategyBinding`                                                   |
+| Native Compresser facade and diagnostics     | `CompresserSession`, `CompresserSnapshot`, `InferenceCallValidator`                                                                                            |
+| Trusted lifecycle and storage maintenance    | `HostOptions`, `RuntimeOptions`, `WriterRecoveryOptions`, `WriterRecoveryReceipt`, `StorageMaintenanceOptions`, `StorageMaintenance`, `StorageMaintenanceWork` |

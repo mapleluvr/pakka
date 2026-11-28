@@ -1,0 +1,58 @@
+{
+  "sourceSha256": "804c7ff7e3a03a72b9244d51246e2afe8b50a69597b9a64e1cba5f07c2026d95",
+  "originalConsumer": "C:\\Users\\mapleland\\AppData\\Local\\Temp\\pakka-packed-consumer-JEAiTE",
+  "localRetainedDirectory": "artifacts/product-runtime-launcher/archives",
+  "inGit": false,
+  "files": [
+    {
+      "name": "package-lock.json",
+      "bytes": 157195,
+      "sha256": "5e5ca8e81a3f9332e6b25259a66372476b64b2b7a3504fe84d065143a42cb817"
+    },
+    {
+      "name": "package.json",
+      "bytes": 612,
+      "sha256": "2e0104a90efa5bc19a7db1c5d645ce07294f15b329bd8877e9e874bbb13227e4"
+    },
+    {
+      "name": "pakka-agent-0.7.0.tgz",
+      "bytes": 14727737,
+      "sha256": "ee132e51d46f8ba54fb57426a87d512f5d505294a577f7de523414e7f28e3254"
+    },
+    {
+      "name": "pakka-cli-0.1.0.tgz",
+      "bytes": 1528,
+      "sha256": "a86c0ac1c38c2438f045971d16a86315451bacef0249d70c11c9ab4b74d30329"
+    },
+    {
+      "name": "pakka-client-0.1.0.tgz",
+      "bytes": 4493,
+      "sha256": "f69638bd5756110bdb87b9a41974a23d10106f2a8aa50e197d78416b8138e89d"
+    },
+    {
+      "name": "pakka-mas-0.4.0.tgz",
+      "bytes": 13570,
+      "sha256": "8d467427927cdd29424a09e2827777e01002bb006f480101bd5f74ed0660b56d"
+    },
+    {
+      "name": "pakka-mas-devpack-0.2.0.tgz",
+      "bytes": 42962,
+      "sha256": "f3e461ae02aa769725183f1cab13468769ab8ffb96650434279f39de481b5b80"
+    },
+    {
+      "name": "pakka-protocol-0.1.0.tgz",
+      "bytes": 13110,
+      "sha256": "82c8f76f22a6879a71c2c15680e742dbc775aad1e515f915cbe46b761355580e"
+    },
+    {
+      "name": "pakka-server-0.5.0.tgz",
+      "bytes": 83645,
+      "sha256": "36f0c14b0261529ceac55a6c1a1a66edad5b39971763b0b408593dd881774c6f"
+    },
+    {
+      "name": "pakka-webui-0.1.0.tgz",
+      "bytes": 685111,
+      "sha256": "8411ebcf6e1fd987b68686dd693ce34869f4c57f55b601715d1f0d10cbf2da8b"
+    }
+  ]
+}

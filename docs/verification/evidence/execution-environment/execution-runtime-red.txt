@@ -1,0 +1,78 @@
+✖ execution: concurrent Conversations use their own approved profile driver and cwd (201.1826ms)
+✖ execution: reopen checks policy, native tool selection and presence before dispatch (88.9986ms)
+✖ execution: changing approved cwd binds a fresh environment and retains the selected model (119.0695ms)
+✖ execution: a mismatched driver blocks HTTP and still owns cleanup (54.9151ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 0
+ℹ fail 4
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1498.2946
+
+✖ failing tests:
+
+test at packages\agent\test\execution-runtime.test.ts:10:1
+✖ execution: concurrent Conversations use their own approved profile driver and cwd (201.1826ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'alpha-v1:WORK'
+  - 'beta-v1:WORK'
+  
+      at TestContext.<anonymous> (file:///D:/Projects/kappa/migration-worktrees/pakka-execution-env-1.4.0/packages/agent/test/execution-runtime.test.ts:38:10)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'alpha-v1:WORK',
+    expected: 'beta-v1:WORK',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at packages\agent\test\execution-runtime.test.ts:49:1
+✖ execution: reopen checks policy, native tool selection and presence before dispatch (88.9986ms)
+  AssertionError [ERR_ASSERTION]: Missing expected rejection.
+      at async TestContext.<anonymous> (file:///D:/Projects/kappa/migration-worktrees/pakka-execution-env-1.4.0/packages/agent/test/execution-runtime.test.ts:60:4)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /profile|configuration|execution/i,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at packages\agent\test\execution-runtime.test.ts:72:1
+✖ execution: changing approved cwd binds a fresh environment and retains the selected model (119.0695ms)
+  Error: ENOENT: no such file or directory, open 'C:\Users\mapleland\AppData\Local\Temp\pakka-integration-6b1SO9\other\cwd.txt'
+      at async open (node:internal/fs/promises:640:25)
+      at async readFile (node:internal/fs/promises:1287:14)
+      at async TestContext.<anonymous> (file:///D:/Projects/kappa/migration-worktrees/pakka-execution-env-1.4.0/packages/agent/test/execution-runtime.test.ts:98:16)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    errno: -4058,
+    code: 'ENOENT',
+    syscall: 'open',
+    path: 'C:\\Users\\mapleland\\AppData\\Local\\Temp\\pakka-integration-6b1SO9\\other\\cwd.txt'
+  }
+
+test at packages\agent\test\execution-runtime.test.ts:109:1
+✖ execution: a mismatched driver blocks HTTP and still owns cleanup (54.9151ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  0 !== 1
+  
+      at TestContext.<anonymous> (file:///D:/Projects/kappa/migration-worktrees/pakka-execution-env-1.4.0/packages/agent/test/execution-runtime.test.ts:123:10)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

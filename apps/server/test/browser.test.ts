@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import { strict as assert } from "node:assert";
 import { spawn } from "node:child_process";
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { createServer } from "node:http";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
@@ -9,6 +9,7 @@ import { createMas } from "@pakka/mas";
 import { createMasServer } from "../src/http-server.ts";
 import { runtimeFixture } from "../../../packages/agent/test/runtime-fixture.ts";
 import { browserExecutable } from "../../webui/test/browser.ts";
+import { cleanupBrowserProfile } from "../src/browser-profile-cleanup.ts";
 
 type CdpResult = Record<string, unknown>;
 const record = (value: unknown): value is CdpResult =>
@@ -235,7 +236,7 @@ test(
 			web.closeAllConnections();
 			await new Promise<void>((resolve) => web.close(() => resolve()));
 			await m.close();
-			if (!process.env.PAKKA_TEST_ARTIFACTS) await rm(dir, { recursive: true, force: true });
+			if (!process.env.PAKKA_TEST_ARTIFACTS) await cleanupBrowserProfile(dir);
 		}
 	},
 );

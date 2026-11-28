@@ -1,6 +1,18 @@
 import { createHash, randomUUID } from "node:crypto";
-import type { Runtime, JsonObject, ConversationRef } from "@pakka/agent";
-import type { PocketCreationDefaults, PocketDirectoryView } from "@pakka/protocol/pocket";
+import {
+	StoredHistoryReadRefusal,
+	type Runtime,
+	type JsonObject,
+	type ConversationRef,
+	type ConversationHistoryAddress,
+	type StoredConversationQuery,
+	type StoredConversationResult,
+} from "@pakka/agent";
+import type {
+	PocketCreationDefaults,
+	PocketDirectoryView,
+	PocketManagedSession,
+} from "@pakka/protocol/pocket";
 import type {
 	PocketAuthority,
 	PocketPeople,
@@ -9,12 +21,7 @@ import type {
 } from "@pakka/server/pocket";
 import { resolveDirectory, listDirectories } from "@pakka/server/pocket";
 
-export interface ManagedSession {
-	readonly id: string;
-	readonly name: string;
-	readonly cwd?: string;
-	readonly status: "ready" | "unknown" | "unavailable";
-}
+export type ManagedSession = PocketManagedSession;
 export interface SessionCreation {
 	readonly requestId: string;
 	readonly name: string;
@@ -31,6 +38,13 @@ export interface ManagedSessions {
 	/** Trusted composition only. References remain native; this is not a combined Runtime. */
 	runtimeFor(ref: Pick<ConversationRef, "sessionId">): Runtime;
 	runtimes(): readonly Runtime[];
+	/** Confirmed original registration only; returns saved history, never an execution binding. */
+	readStored(
+		actor: PocketAuthority,
+		reference: ConversationHistoryAddress,
+		query: StoredConversationQuery,
+		signal?: AbortSignal,
+	): Promise<StoredConversationResult>;
 	list(actor: PocketAuthority): Promise<readonly ManagedSession[]>;
 	defaults(actor: PocketAuthority): Promise<PocketCreationDefaults>;
 	directories(
@@ -39,10 +53,13 @@ export interface ManagedSessions {
 	): Promise<PocketDirectoryView>;
 	create(actor: PocketAuthority, input: SessionCreation): Promise<ManagedSession>;
 	lookup(actor: PocketAuthority, input: SessionCreation): Promise<ManagedSession | null>;
+	/** Explicitly reopen the original confirmed storage; never initialize or replace it. */
+	reopen(actor: PocketAuthority, sessionId: string, signal?: AbortSignal): Promise<ManagedSession>;
 	close(): Promise<void>;
 }
 export class SessionCreationConflict extends Error {}
 export class SessionCreationRefused extends Error {}
+export class SessionReopenRefused extends Error {}
 const digest = (value: unknown) => createHash("sha256").update(JSON.stringify(value)).digest("hex");
 const id = (value: unknown): value is string =>
 	typeof value === "string" &&
@@ -125,6 +142,13 @@ export async function createManagedSessions(options: {
 		readonly reopen: boolean;
 	}) => Promise<Runtime>;
 	readonly workspaceFor: (runtime: Runtime) => PocketWorkspace;
+	/** Trusted source locator/reader; the Session directory validates registration and grant first. */
+	readonly readStored?: (
+		reference: ConversationHistoryAddress,
+		query: StoredConversationQuery,
+		check: () => void,
+		signal?: AbortSignal,
+	) => Promise<StoredConversationResult>;
 }): Promise<ManagedSessions> {
 	const { runtime, people } = options;
 	const rootId = runtime.view().sessionId;
@@ -132,7 +156,19 @@ export async function createManagedSessions(options: {
 	const entries = new Map<string, { runtime: Runtime; workspace: PocketWorkspace; published: boolean }>([
 		[rootId, { runtime, workspace: options.workspace, published: true }],
 	]);
+	// Failed cleanup retains ownership and cannot be converted into a second open.
+	const quarantined = new Map<string, Runtime>();
+	const closeUnpublished = async (sessionId: string, opened: Runtime): Promise<boolean> => {
+		try {
+			await opened.close();
+			return true;
+		} catch {
+			quarantined.set(sessionId, opened);
+			return false;
+		}
+	};
 	let tail: Promise<unknown> = Promise.resolve();
+	let historyClosed = false;
 	const serial = <T>(operation: () => Promise<T>): Promise<T> => {
 		const running = tail.then(operation);
 		tail = running.then(
@@ -143,7 +179,9 @@ export async function createManagedSessions(options: {
 	};
 	const currentRows = async () => {
 		const saved = await store.snapshot();
-		return { version: saved.version, rows: decode(saved.data, saved.version) };
+		const rows = decode(saved.data, saved.version);
+		if (rows.some((row) => row.id === rootId)) throw Error("Managed Session registry aliases its controller");
+		return { version: saved.version, rows };
 	};
 	const remember = (row: Registration, opened: Runtime) => {
 		if (opened.view().sessionId !== row.id || opened.view().phase !== "ready" || entries.has(row.id))
@@ -154,26 +192,22 @@ export async function createManagedSessions(options: {
 			published: row.status === "ready",
 		});
 	};
-	try {
-		for (const row of (await currentRows()).rows) {
-			// Unconfirmed initialization never re-enters native creation or clears a writer lock.
-			if (row.status === "ready") {
-				const opened = await options.open({ id: row.id, cwd: row.cwd, reopen: true });
-				try {
-					remember(row, opened);
-				} catch (error) {
-					await opened.close();
-					throw error;
-				}
-			}
+	const openConfirmed = async (row: Registration, check: () => void) => {
+		check();
+		let opened: Runtime | undefined;
+		try {
+			opened = await options.open({ id: row.id, cwd: row.cwd, reopen: true });
+			check();
+			remember(row, opened);
+		} catch {
+			if (opened) await closeUnpublished(row.id, opened);
+			// A storage failure is local, but lost authority must not publish a result.
+			check();
 		}
-	} catch (error) {
-		await Promise.allSettled(
-			[...entries.values()]
-				.filter((entry) => entry.runtime !== runtime)
-				.map((entry) => entry.runtime.close()),
-		);
-		throw error;
+	};
+	for (const row of (await currentRows()).rows) {
+		// Unconfirmed initialization never re-enters native creation or clears a writer lock.
+		if (row.status === "ready") await openConfirmed(row, () => {});
 	}
 	const entry = (ref: Pick<ConversationRef, "sessionId">) => {
 		const found = entries.get(ref.sessionId);
@@ -182,17 +216,31 @@ export async function createManagedSessions(options: {
 	};
 	const clientFor = (actor: PocketAuthority, ref: Pick<ConversationRef, "sessionId">) =>
 		entry(ref).workspace.bind(actor);
-	const publicRow = (row: Registration): ManagedSession =>
-		Object.freeze({
+	const publicRow = (row: Registration): ManagedSession => {
+		const retained = entries.get(row.id);
+		const status =
+			row.status === "ready" && (!retained?.published || retained.runtime.view().phase !== "ready")
+				? "unavailable"
+				: row.status;
+		const problem: ManagedSession["problem"] =
+			status === "unavailable"
+				? Object.freeze({
+						kind: quarantined.has(row.id)
+							? "cleanup-unconfirmed"
+							: retained
+								? "runtime-unavailable"
+								: "open-failed",
+						canReopen: !retained && !quarantined.has(row.id),
+					})
+				: undefined;
+		return Object.freeze({
 			id: row.id,
 			name: row.name,
 			cwd: row.cwd,
-			status:
-				row.status === "ready" &&
-				(!entries.get(row.id)?.published || entries.get(row.id)?.runtime.view().phase !== "ready")
-					? "unavailable"
-					: row.status,
+			status,
+			...(problem ? { problem } : {}),
 		});
+	};
 	const validInput = (raw: SessionCreation): SessionCreation => {
 		if (
 			!raw ||
@@ -251,6 +299,11 @@ export async function createManagedSessions(options: {
 				list: async () => Object.freeze((await navigation()).map((row) => row.ref)),
 				navigation,
 				configuration: (ref) => clientFor(actor, ref).configuration(ref),
+				configurationOptions: (ref) => clientFor(actor, ref).configurationOptions(ref),
+				changeConfiguration: (original, check) =>
+					clientFor(actor, original.target).changeConfiguration(original, check),
+				configurationReceipt: (original, check) =>
+					clientFor(actor, original.target).configurationReceipt(original, check),
 				setMetadata: async (ref, input) =>
 					Object.freeze({
 						...(await clientFor(actor, ref).setMetadata(ref, input)),
@@ -268,8 +321,15 @@ export async function createManagedSessions(options: {
 				directories: (ref, input) => clientFor(actor, ref).directories(ref, input),
 				fork: (ref, input) => clientFor(actor, ref).fork(ref, input),
 				read: (ref, page) => clientFor(actor, ref).read(ref, page),
+				preview: (ref, page, check) => clientFor(actor, ref).preview(ref, page, check),
+				observationRevision: (ref) => clientFor(actor, ref).observationRevision(ref),
+				readContent: (ref, reference, range, check) =>
+					clientFor(actor, ref).readContent(ref, reference, range, check),
 				display: (ref, input) => clientFor(actor, ref).display(ref, input),
 				submit: (ref, input) => clientFor(actor, ref).submit(ref, input),
+				// The existing Session owner performs this observation; lookup never reopens a writer.
+				inputReceipt: (ref, input) => clientFor(actor, ref).inputReceipt(ref, input),
+				inputHistory: (ref, cursor) => clientFor(actor, ref).inputHistory(ref, cursor),
 				receipt: (nativeId, sessionId) => routeReceipt(actor, nativeId, "receipt", sessionId),
 				wait: (nativeId, signal, sessionId) => routeReceipt(actor, nativeId, "wait", sessionId, signal),
 				withdraw: (nativeId, sessionId) => routeReceipt(actor, nativeId, "withdraw", sessionId),
@@ -287,15 +347,46 @@ export async function createManagedSessions(options: {
 		checkCreate(actor);
 		const models = new Map<string, { readonly id: string; readonly model: string }>();
 		for (const row of runtime.profileChoices())
-			if (!models.has(row.model)) models.set(row.model, Object.freeze({ id: row.id, model: row.model }));
+			if (row.model && !models.has(row.model))
+				models.set(row.model, Object.freeze({ id: row.id, model: row.model }));
 		const choices = Object.freeze([...models.values()]);
-		return Object.freeze({ profile, model: template.model, cwd: template.cwd, choices });
+		return Object.freeze({
+			profile,
+			presets: Object.freeze([...options.profiles]),
+			model: template.model,
+			cwd: template.cwd,
+			choices,
+		});
 	};
 	return Object.freeze<ManagedSessions>({
 		workspace,
 		runtimeFor: (ref) => entry(ref).runtime,
 		runtimes: () =>
 			Object.freeze([...entries.values()].filter((value) => value.published).map((value) => value.runtime)),
+		readStored: async (actor, reference, query, signal) => {
+			const check = () => {
+				if (signal?.aborted) throw new StoredHistoryReadRefusal("cancelled");
+				try {
+					people.checkReadGrant(actor, reference);
+				} catch {
+					throw new StoredHistoryReadRefusal("denied");
+				}
+				if (historyClosed || entries.has(reference.sessionId) || quarantined.has(reference.sessionId))
+					throw new StoredHistoryReadRefusal("unavailable");
+			};
+			check();
+			if (!options.readStored || !uuid(reference.sessionId))
+				throw new StoredHistoryReadRefusal("unavailable");
+			const row = (await currentRows()).rows.find((item) => item.id === reference.sessionId);
+			check();
+			if (row?.status !== "ready") throw new StoredHistoryReadRefusal("unavailable");
+			const result = await options.readStored(reference, query, check, signal);
+			const after = (await currentRows()).rows.find((item) => item.id === reference.sessionId);
+			check();
+			if (JSON.stringify(after) !== JSON.stringify(row))
+				throw new StoredHistoryReadRefusal("identity-mismatch");
+			return result;
+		},
 		list: async (actor) => {
 			const person = people.current(actor);
 			const rows: ManagedSession[] = [];
@@ -377,7 +468,7 @@ export async function createManagedSessions(options: {
 				try {
 					remember(row, opened);
 				} catch (error) {
-					await opened.close();
+					if (!(await closeUnpublished(row.id, opened))) throw Error("Managed Session cleanup unconfirmed");
 					throw error;
 				}
 				checkCreate(actor);
@@ -402,13 +493,43 @@ export async function createManagedSessions(options: {
 			const prior = findOriginal(saved.rows, actorId, input);
 			return prior ? publicRow(prior) : null;
 		},
+		reopen: (actor, sessionId, signal) =>
+			serial(async () => {
+				const scope = people.lease(actor, "create", { ttlMs: 60000 });
+				const active = signal ? AbortSignal.any([scope.signal, signal]) : scope.signal;
+				const check = () => {
+					active.throwIfAborted();
+					scope.check();
+				};
+				try {
+					check();
+					if (!uuid(sessionId)) throw new SessionReopenRefused("Session reopening refused");
+					const row = (await currentRows()).rows.find((item) => item.id === sessionId);
+					check();
+					if (!row || row.status !== "ready")
+						throw new SessionReopenRefused("Unconfirmed Session reopening refused");
+					const retained = entries.get(sessionId);
+					if (
+						quarantined.has(sessionId) ||
+						(retained && (!retained.published || retained.runtime.view().phase !== "ready"))
+					)
+						throw new SessionReopenRefused("Retained Session requires explicit recovery; reopening refused");
+					if (!retained) await openConfirmed(row, check);
+					check();
+					return publicRow(row);
+				} finally {
+					scope.close();
+				}
+			}),
 		close: async () => {
+			historyClosed = true;
 			await tail;
-			const closed = await Promise.allSettled(
-				[...entries.values()]
-					.filter((value) => value.runtime !== runtime)
-					.map((value) => value.runtime.close()),
+			const owned = new Set(
+				[...entries.values()].map((value) => value.runtime).concat([...quarantined.values()]),
 			);
+			owned.delete(runtime);
+			const closed = await Promise.allSettled([...owned].map((value) => value.close()));
+			if (quarantined.size) throw Error("Managed Session cleanup remains unconfirmed");
 			const failure = closed.find((value) => value.status === "rejected");
 			if (failure?.status === "rejected") throw failure.reason;
 		},

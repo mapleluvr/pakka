@@ -1,0 +1,51 @@
+file:///D:/Projects/kappa/migration-worktrees/pakka-execution-env-1.4.0/docs/verification/evidence/execution-environment-pakka-2/consume-core.mjs:35
+		throw new Error(`Exit ${result.status}: ${result.stdout}\n${result.stderr}`);
+		      ^
+
+Error: Exit 1: 
+node:internal/modules/package_json_reader:301
+
+  throw new ERR_MODULE_NOT_FOUND(packageName, fileURLToPath(base), null);
+
+        ^
+
+
+
+Error [ERR_MODULE_NOT_FOUND]: Cannot find package '@earendil-works/pi-durable' imported from C:\Users\mapleland\AppData\Local\Temp\pakka-env-consumer-install-iAumjs\consumer-native-storage.mjs
+
+    at Object.getPackageJSONURL (node:internal/modules/package_json_reader:301:9)
+
+    at packageResolve (node:internal/modules/esm/resolve:764:81)
+
+    at moduleResolve (node:internal/modules/esm/resolve:855:18)
+
+    at defaultResolve (node:internal/modules/esm/resolve:988:11)
+
+    at #cachedDefaultResolve (node:internal/modules/esm/loader:697:20)
+
+    at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:714:38)
+
+    at ModuleLoader.resolveSync (node:internal/modules/esm/loader:746:52)
+
+    at Object.resolve (node:internal/modules/esm/initialize_import_meta:37:25)
+
+    at file:///C:/Users/mapleland/AppData/Local/Temp/pakka-env-consumer-install-iAumjs/consumer-native-storage.mjs:9:14
+
+    at ModuleJob.run (node:internal/modules/esm/module_job:437:25) {
+
+  code: 'ERR_MODULE_NOT_FOUND'
+
+}
+
+
+
+Node.js v24.15.0
+
+
+    at run (file:///D:/Projects/kappa/migration-worktrees/pakka-execution-env-1.4.0/docs/verification/evidence/execution-environment-pakka-2/consume-core.mjs:35:9)
+    at file:///D:/Projects/kappa/migration-worktrees/pakka-execution-env-1.4.0/docs/verification/evidence/execution-environment-pakka-2/consume-core.mjs:42:13
+    at ModuleJob.run (node:internal/modules/esm/module_job:437:25)
+    at async node:internal/modules/esm/loader:639:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)
+
+Node.js v24.15.0

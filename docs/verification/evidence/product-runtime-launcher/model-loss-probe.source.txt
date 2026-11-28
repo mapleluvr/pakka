@@ -1,0 +1,35 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
+import { isolated, configuration } from '../../apps/webui/test/product-model-fixture.ts';
+import { startPocket } from '../../apps/webui/src/bootstrap.ts';
+import { createLocalProduct } from '../../apps/webui/src/product-runtime.ts';
+
+for (const mode of ['fresh', 'reopen']) test(`malformed model file retains manageable ${mode} product`, async () => {
+  const p = await isolated();
+  let options: Awaited<ReturnType<typeof createLocalProduct>> | undefined;
+  let app: Awaited<ReturnType<typeof startPocket>> | undefined;
+  try {
+    await configuration(p.agentDir, p.f.endpoint);
+    let sessionFile: string | undefined;
+    if (mode === 'reopen') {
+      options = await createLocalProduct({cwd:p.f.cwd, dataDir:p.f.dataDir, agentDir:p.agentDir});
+      app = await startPocket(options);
+      sessionFile = app.runtime.view().sessionFile;
+      await app.close(); app = undefined;
+      await options.modelConfiguration?.close();
+    }
+    await writeFile(join(p.agentDir, 'models.json'), '{');
+    options = await createLocalProduct({cwd:p.f.cwd, dataDir:p.f.dataDir, agentDir:p.agentDir});
+    app = await startPocket({...options, runtime:{...options.runtime, ...(sessionFile ? {reopenSessionFile:sessionFile} : {})}});
+    assert.equal((await fetch(app.http.origin)).status, 200);
+    if(sessionFile) assert.equal(app.runtime.view().sessionFile, sessionFile);
+    assert.ok(options.modelConfiguration!.bind({id:'test-owner',check:()=>{}}).status().issues.length);
+    assert.equal(p.f.requests.length, 0);
+  } finally {
+    await app?.close();
+    await options?.modelConfiguration?.close();
+    await p.f.close();
+  }
+});

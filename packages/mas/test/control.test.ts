@@ -4,6 +4,99 @@ import { createMas } from "../src/index.ts";
 import type { MasClient, Member } from "../src/index.ts";
 import { runtimeFixture } from "../../agent/test/runtime-fixture.ts";
 import { text } from "../../agent/test/fixture.ts";
+import { createRuntime } from "../../agent/src/index.ts";
+
+// Configuration observation must preserve the original actor while enforcing the current owner lease.
+test("MAS configuration receipts: exact original survives binding changes and reopen under current authority", async () => {
+	const m = await runtimeFixture({ profiles: [{ id: "quiet", model: "alternate-model", tools: [] }] });
+	let runtime = m.runtime;
+	try {
+		const options = { namespace: "mas-configuration-receipt", maxPending: 4 };
+		let mas = await createMas({ runtime, ...options });
+		await mas.bootstrap([{ key: "child", owner: "parent-agent" }]);
+		await mas.activate();
+		const target = (await mas.view()).members[0]!.ref;
+		const bind = (id: string) =>
+			mas.connect({
+				principal: "parent-agent",
+				source: null,
+				grants: ["configure"],
+				initiator: { kind: "human", id },
+			});
+		let client = bind("operator");
+		const original = {
+			requestId: "model-choice",
+			target,
+			selection: { kind: "agent" as const, change: { model: "alternate-model" } },
+		};
+		assert.equal(
+			typeof client.configurationReceipt,
+			"function",
+			"MAS must expose pure configuration observation",
+		);
+		assert.equal(await client.configurationReceipt(original), null);
+		const changed = await client.configureAgent(target, original.selection.change, original.requestId);
+		const receipt = await client.configurationReceipt(original);
+		assert.deepEqual(receipt?.ref, changed.ref);
+		assert.equal(receipt?.original.principal, "operator");
+		assert.equal(await bind("another").configurationReceipt(original), null);
+		const otherIdentity = { kind: "human" as const, id: "another" };
+		const other = mas.connect({
+			principal: "parent-agent",
+			source: null,
+			grants: ["configure"],
+			initiator: otherIdentity,
+		});
+		otherIdentity.id = "operator";
+		assert.equal(
+			await other.withAuthority(() => {}).configurationReceipt(original),
+			null,
+			"Narrowing a lease keeps its original initiator",
+		);
+		const later = await client.configure(changed.ref, "quiet", "preset-choice");
+		assert.notEqual(later.ref.incarnation, changed.ref.incarnation);
+		assert.deepEqual(await client.configurationReceipt(original), receipt);
+		await assert.rejects(
+			client.configurationReceipt({
+				...original,
+				selection: { kind: "agent", change: { model: "local-model" } },
+			}),
+			/conflict/i,
+		);
+		await assert.rejects(
+			mas
+				.connect({
+					principal: "outsider",
+					source: null,
+					grants: ["configure"],
+					initiator: { kind: "human", id: "operator" },
+				})
+				.configurationReceipt(original),
+			/owner/i,
+		);
+		await assert.rejects(
+			client
+				.withAuthority(() => {
+					throw Error("authority ended");
+				})
+				.configurationReceipt(original),
+			/authority ended/,
+		);
+		mas.revoke("parent-agent");
+		await assert.rejects(client.configurationReceipt(original), /revoked/);
+		const sessionFile = runtime.view().sessionFile;
+		await runtime.close();
+		runtime = await createRuntime({ ...m.config, reopenSessionFile: sessionFile });
+		mas = await createMas({ runtime, ...options });
+		client = bind("operator");
+		assert.deepEqual(await client.configurationReceipt(original), receipt);
+		assert.deepEqual((await mas.view()).members[0]!.ref, later.ref);
+		assert.equal(m.f.requests.length, 0);
+	} finally {
+		await runtime.close();
+		await m.f.close();
+	}
+});
 
 // Removing the owner checks or native atomic ref/config updates would fail these real HTTP cases.
 test("M2 MAS: configure selects approved profile, revokes old ref and forks retain bounded history", async () => {

@@ -28,6 +28,53 @@ const profile = { id: "researcher", tools: pack.tools, systemPrompt: pack.instru
 
 每次 execute 都重新获取批准 client，组合 contribution/cancellation/timeout 检查，再绑定真实当前 `ToolInvocationScope`。复制、序列化、peer scope 和结束的 invocation 不构成 authority。resolver 是受信任 composition root：多成员宿主必须为来源选择既有批准 lease，不能根据模型参数重新授予权限。
 
+## 可选 MAS Telegraph
+
+宿主可为一个 contribution 设置 `telegraph: { reasoning: true, communication: true }`。两个布尔字段独立选择，省略、空对象或 `false` 均不增加相应提示；默认指令和工具 schema 保持原值。`MasTelegraphOptions` 从包根入口导出。
+
+```ts
+const pack = createMasDevPack({
+	resolve: () => client,
+	telegraph: { reasoning: true, communication: true },
+});
+```
+
+`reasoning` 请求模型以熟悉的多语言片段、短句和清楚符号紧凑思考，保留解决问题、比较方案、核对约束和验证效果所需的分析；不要求展示私有推理过程。`communication` 请求内部协作用同类紧凑表达，并按有效增量决定是否发消息。两者都保留准确标识、证据、数值与单位、审批、义务和 unknown；面向人的回答、报告、文档，以及交给另一个 Agent 转交人类的草稿，都使用最终读者能理解的文字。显式要求的代码、schema 和精确格式优先。这些是 prompt guidance，不保证模型遵守、无损压缩或 token/费用下降，也不添加二次压缩调用或固定长度/轮数限制。
+
+公开 `@pakka/mas-devpack/agent` 的 `createMasProfilePacks()` 使用 `telegraphByProfile` 显式选择 profile，保留既有 `profiles` grant 列表：
+
+```ts
+import { createMasProfilePacks } from "@pakka/mas-devpack/agent";
+
+const packs = createMasProfilePacks(
+	{
+		profiles: { researcher: ["discover", "send", "reply"], reviewer: ["discover"] },
+		telegraphByProfile: { researcher: { reasoning: true, communication: true } },
+	},
+	() => mas, // 宿主创建的 Mas，保持真实 invocation 和祖先 grant ceiling。
+);
+const researcher = packs.get("researcher")!;
+// 将 researcher.tools / researcher.instructions 装入对应的批准 Runtime profile。
+```
+
+只有 `researcher` 收到 Telegraph 提示。`BootstrapConfig.devpack` 与 `WorkerConfiguration.devpack` 接受同一 `telegraphByProfile` JSON 字段，经过序列化后仍按 profile 装配。未知选项、非布尔值或未在 `devpack.profiles` 中选择的目标会被拒绝；公开 `validateMasProfileTelegraph()` 是这些边界共用的校验入口。可使用 `{ reasoning: true }`、`{ communication: true }` 或二者组合。换至无贡献的批准 profile 后，下一请求的当前 prompt 和工具选择随之更新；原生历史 system updates 仍保留。
+
+### 独立 Skill 加载
+
+归档包含版本化的 `skills/mas-telegraph/SKILL.md`，其公开 export 为 `@pakka/mas-devpack/skills/mas-telegraph/SKILL.md`。Skill 是提示正文的唯一来源，DevPack 只读取所选节及共同的语义/最终读者规则。无需安装 Coding Agent 才能使用 DevPack。安装包不修改全局 Pi 配置，也不自动启用 Skill。
+
+从已安装包取得路径并显式交给本机 Pi：
+
+```js
+import { fileURLToPath } from "node:url";
+import { spawnSync } from "node:child_process";
+
+const skillPath = fileURLToPath(import.meta.resolve("@pakka/mas-devpack/skills/mas-telegraph/SKILL.md"));
+spawnSync("pi", ["--skill", skillPath], { stdio: "inherit" });
+```
+
+Skill 设置 `disable-model-invocation: true`；Pi 加载时不会把它加入模型自动选择的 Skill 列表。操作员通过 `/skill:mas-telegraph` 显式启用全 Skill（两项均开启），或附加请求指定只用 reasoning/communication。其他兼容宿主也可加载该目录，但须遵守 Skill 声明的显式选择语义。MAS prompt 开关由宿主直接注入所选节，不依赖模型自行发现 Skill。
+
 ## Wire tools
 
 逻辑名称 `mas.*` 使用 completions 兼容的 `mas_*` function names；所有 mode 都走原生 admission，不模拟成串行 prompt。
@@ -38,14 +85,17 @@ const profile = { id: "researcher", tools: pack.tools, systemPrompt: pack.instru
 | `mas_inspect`             | target → 当前生命周期 metadata                                   | observe，不提供 raw Session/Conversation                                   |
 | `mas_inbox`               | 自己收到的 receipt metadata                                      | reply；无 payload/full transcript，提供真实 reply ID                       |
 | `mas_send`                | target、requestId、text、mode                                    | send；steer 另需 steer grant；followUp 原生排队                            |
+| `mas_inform`              | target、requestId、text                                          | inform；持久且被动，不向目标排 input、不要求答复                           |
 | `mas_ask`                 | 与 send 相同，等待 generation receipt                            | 不是应用层回答，不证明外部效果完成                                         |
-| `mas_reply`               | receiptId、requestId、text                                       | reply；真实 incoming source/target proof，不允许指定 sender                |
+| `mas_reply`               | receiptId、requestId、text                                       | reply；真实 incoming source/target proof，一个 root 仅一个显式 response    |
 | `mas_spawn`               | current key/profile/lifetime，或批准 template/requestId/location | spawn，不允许 endpoint、path、credential、owner、task、budget 或 tool code |
 | `mas_abort`、`mas_retire` | target                                                           | grant + owner；retire 是 tombstone，不是物理删除                           |
 | `mas_configure`           | target、批准 profile                                             | grant + owner；不能修改任意配置                                            |
 | `mas_fork`                | target、key、entryId                                             | grant + owner，指定原生历史 cutoff                                         |
 
-同 Session 的 mode 为 `prompt | steer | followUp`。reference 只是数据，复制/猜测不赋予权限。工具 schema 不接受凭据或 authority tokens；执行后的结果是 JSON metadata/receipt，不含 native handles。
+同 Session 的 `mas_send` 是要求具体新产物/决定的原生 request，mode 为 `prompt | steer | followUp`。`mas_inform` 则要求 `inform` grant，保存来源标注的被动贡献；目标必须已激活且 profile 在宿主显式批准列表中。宿主将 context source 同时注册到 Runtime `contextSources` 并传给 `createMas`；贡献仅进入精确目标的后续自然请求，保持不可信上下文且不改写 transcript。公开 RuntimeContextSource 不提供确切 GenerationTask 完成 callback，因此工具结果和持久状态只表示 `pending`，不能表述为已理解/消费，失败或不确定后也继续 at-least-once。`mas_reply` 是对一条真实 root receipt 的唯一显式 response，不能用新 requestId 续长、不能回答 response。`mas_ask` 仍只等待 generation receipt。
+
+reference 只是数据，复制/猜测不赋予权限。工具 schema 不接受凭据或 authority tokens；执行后的结果是 JSON metadata/receipt，不含 native handles。
 
 ## 创建与通信
 
@@ -73,7 +123,7 @@ const profile = { id: "researcher", tools: pack.tools, systemPrompt: pack.instru
 
 ## Private worker 可选装配
 
-`WorkerConfiguration.devpack` 可选配置批准 profile 到固定 grant 列表及 deadline。JSON IPC 不传函数、native scope、任意 code 或 resolver。worker 本地组装 public factory，principal 由 storage/Conversation identity 推导，模型成员名不能伪装 operator。
+`WorkerConfiguration.devpack` 可选配置批准 profile 到固定 grant 列表、deadline 和 `telegraphByProfile`。公开类型消费通过 `WorkerManagerOptions["placements"][string]` 取得该 worker preset 类型。JSON IPC 不传函数、native scope、任意 code 或 resolver。worker 本地组装 public factory，principal 由 storage/Conversation identity 推导，模型成员名不能伪装 operator。
 
 root grants 来自宿主 preset；模型创建后代的有效 grants 是自身批准 profile 与完整 capability-owner 祖先链的交集，缺失/循环 ancestry fail closed。选高权限 profile、反复创建或重配 child 不能扩大 root ceiling。原生 task ownership 与此 capability inheritance 仍是两个独立边界。
 
@@ -81,7 +131,7 @@ root grants 来自宿主 preset；模型创建后代的有效 grants 是自身�
 
 ## 验证入口
 
-- `packages/mas-devpack/test/`：真实 model tool call、权限/复制/迟到 scope、撤销、三种 location、own inbox/reply、bounded ask、可选移除。
+- `packages/mas-devpack/test/`：真实 model tool call、权限/复制/迟到 scope、撤销、三种 location、own inbox/reply、bounded ask、passive inform 与可选移除。
 - `packages/mas/test/approved-sessions.test.ts`：真实 storage 准备后丢回执，在原 slot 恢复；`session-contention.test.ts`：distinct slot 的真实 CAS 争用；`composed-authority.test.ts`：组合 check 不恢复撤销 lease。
 - `apps/server/test/devpack-*.test.ts`：真实 PID、native temporary owner、旧输入拒绝、higher-profile grant 不能扩大。
 - `scripts/consumer-devpack.mjs`：隔离真实 tarball 的 native tools、撤销零 peer effect 与 worker 生命周期。

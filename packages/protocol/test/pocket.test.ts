@@ -1,7 +1,12 @@
 import { test } from "node:test";
 import { strict as assert } from "node:assert";
 import { decodeRequest as decodeV1 } from "../src/index.ts";
-import { decodePocketRequest, decodePocketResponse, decodePocketEvent } from "../src/pocket.ts";
+import {
+	POCKET_VERSION,
+	decodePocketRequest,
+	decodePocketResponse,
+	decodePocketEvent,
+} from "../src/pocket.ts";
 
 const ref = {
 	key: "root",
@@ -21,19 +26,19 @@ const page = {
 	usage: { input: 2, output: 3, cacheRead: 0, cacheWrite: 0, totalTokens: 5, cost: null },
 };
 const response = {
-	version: 2,
+	version: POCKET_VERSION,
 	requestId: "read-1",
 	serverId: "server-a",
 	result: { kind: "conversation", snapshot: page },
 };
 
 // Sharing a decoder/default with headless v1 would silently widen the original authenticated API.
-test("WebUI protocol: explicit v2 commands are independent of unchanged headless v1", () => {
+test("WebUI protocol: current Pocket commands are independent of unchanged headless v1", () => {
 	assert.deepEqual(decodeV1({ version: 1, requestId: "old", command: { op: "hello" } }).command, {
 		op: "hello",
 	});
 	const request = {
-		version: 2,
+		version: POCKET_VERSION,
 		requestId: "read-1",
 		command: { op: "read", target: ref, page: { limit: 25, beforeEntryId: "entry-20" } },
 	};
@@ -64,10 +69,10 @@ test("WebUI protocol: complete sanitized Conversation DTOs are bounded and stric
 			decodePocketResponse({ ...response, result: { kind: "conversation", snapshot } }, "read-1"),
 		);
 	const hello = {
-		version: 2,
+		version: POCKET_VERSION,
 		requestId: "hello",
 		serverId: "server-a",
-		result: { kind: "hello", versions: [2], person, sessionId: "storage-a" },
+		result: { kind: "hello", versions: [POCKET_VERSION], person, sessionId: "storage-a" },
 	};
 	assert.deepEqual(decodePocketResponse(hello, "hello"), hello);
 	assert.throws(() =>
@@ -92,7 +97,7 @@ test("WebUI protocol: bounded assistant error history survives both response and
 	};
 	const result = { ...response, result: { kind: "conversation", snapshot } };
 	const event = {
-		version: 2,
+		version: POCKET_VERSION,
 		serverId: "server-a",
 		streamId: "stream-a",
 		sequence: 1,
@@ -121,11 +126,16 @@ test("WebUI protocol: bounded assistant error history survives both response and
 	);
 });
 
-// A slash text cannot bypass the human dispatcher by entering the raw model-input endpoint.
+// Plain text, including slash-prefixed paths, remains distinct from explicit UI commands.
 test("WebUI protocol: human display, explicit model work and person administration use finite separate commands", () => {
 	const commands = [
 		{ op: "display", target: ref, requestId: "card", kind: "card", text: "Not model input" },
 		{ op: "submit", target: ref, input: { requestId: "input", text: "Explicit work", mode: "followUp" } },
+		{
+			op: "submit",
+			target: ref,
+			input: { requestId: "slash", text: "/tmp/project inspect", mode: "prompt" },
+		},
 		{ op: "invite", requestId: "invite", role: "viewer", resources: ["c1"], ttlMs: 60000 },
 		{ op: "person.set", personId: "human-a", role: "sender", resources: ["c1"] },
 		{ op: "session.rotate" },
@@ -133,24 +143,21 @@ test("WebUI protocol: human display, explicit model work and person administrati
 		{ op: "people" },
 	];
 	for (const command of commands)
-		assert.deepEqual(decodePocketRequest({ version: 2, requestId: "request", command }).command, command);
+		assert.deepEqual(
+			decodePocketRequest({ version: POCKET_VERSION, requestId: "request", command }).command,
+			command,
+		);
+
 	assert.throws(() =>
 		decodePocketRequest({
-			version: 2,
-			requestId: "request",
-			command: { op: "submit", target: ref, input: { requestId: "input", text: "/unknown", mode: "prompt" } },
-		}),
-	);
-	assert.throws(() =>
-		decodePocketRequest({
-			version: 2,
+			version: POCKET_VERSION,
 			requestId: "request",
 			command: { op: "invite", requestId: "invite", role: "superuser", resources: "*", ttlMs: 60000 },
 		}),
 	);
 	assert.throws(() =>
 		decodePocketRequest({
-			version: 2,
+			version: POCKET_VERSION,
 			requestId: "request",
 			command: { op: "display", target: ref, requestId: "card", kind: "card", text: "x".repeat(16385) },
 		}),
@@ -165,23 +172,35 @@ test("WebUI protocol: human resource control selects a profile without accepting
 		{ op: "fork", target: ref, requestId: "alternate", name: "Alternative", profile: "safe", entryId: "10" },
 	];
 	for (const command of commands)
-		assert.deepEqual(decodePocketRequest({ version: 2, requestId: "rpc", command }).command, command);
+		assert.deepEqual(
+			decodePocketRequest({ version: POCKET_VERSION, requestId: "rpc", command }).command,
+			command,
+		);
 	for (const extra of [
 		{ grants: ["spawn"] },
 		{ endpoint: "https://forbidden.invalid" },
 		{ actorId: "owner" },
 	])
 		assert.throws(() =>
-			decodePocketRequest({ version: 2, requestId: "rpc", command: { ...commands[0], ...extra } }),
+			decodePocketRequest({
+				version: POCKET_VERSION,
+				requestId: "rpc",
+				command: { ...commands[0], ...extra },
+			}),
 		);
-	const created = { version: 2, requestId: "rpc", serverId: "server-a", result: { kind: "reference", ref } };
+	const created = {
+		version: POCKET_VERSION,
+		requestId: "rpc",
+		serverId: "server-a",
+		result: { kind: "reference", ref },
+	};
 	assert.deepEqual(decodePocketResponse(created, "rpc"), created);
 	assert.throws(() => decodeV1({ version: 1, requestId: "rpc", command: commands[0] }));
 });
 
 test("WebUI protocol: receipt reasons are bounded native data, not browser-inferred state", () => {
 	const response = {
-		version: 2,
+		version: POCKET_VERSION,
 		requestId: "receipt",
 		serverId: "server-a",
 		result: {
@@ -209,7 +228,7 @@ test("WebUI protocol: receipt reasons are bounded native data, not browser-infer
 // Cursors belong to one authorized stream/resource, not a global cross-Session revision or a serialized capability.
 test("WebUI protocol: resource streams validate incarnation and explicit resnapshot signals", () => {
 	const event = {
-		version: 2,
+		version: POCKET_VERSION,
 		serverId: "server-a",
 		streamId: "stream-a",
 		sequence: 1,
@@ -219,7 +238,7 @@ test("WebUI protocol: resource streams validate incarnation and explicit resnaps
 	assert.deepEqual(decodePocketEvent(event), event);
 	assert.deepEqual(
 		decodePocketEvent({
-			version: 2,
+			version: POCKET_VERSION,
 			serverId: "server-a",
 			streamId: "stream-a",
 			sequence: 2,

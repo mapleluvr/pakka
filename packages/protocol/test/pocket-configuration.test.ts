@@ -1,10 +1,10 @@
 import { test } from "node:test";
 import { strict as assert } from "node:assert";
-import { decodePocketRequest, decodePocketResponse } from "../src/pocket.ts";
+import { POCKET_VERSION, decodePocketRequest, decodePocketResponse } from "../src/pocket.ts";
 const ref = { key: "work", sessionId: "s", conversationId: "c", incarnation: "i", profile: "default" };
 
 test("Independent configuration protocol: only explicit model/cwd changes and bounded directory navigation are accepted", () => {
-	const wrap = (command: unknown) => ({ version: 2, requestId: "independent", command });
+	const wrap = (command: unknown) => ({ version: POCKET_VERSION, requestId: "independent", command });
 	for (const command of [
 		{ op: "configure.agent", target: ref, change: { model: "local-model" } },
 		{ op: "configure.agent", target: ref, change: { cwd: "/approved/project" } },
@@ -21,7 +21,7 @@ test("Independent configuration protocol: only explicit model/cwd changes and bo
 	])
 		assert.throws(() => decodePocketRequest(wrap(command)));
 	const response = {
-		version: 2,
+		version: POCKET_VERSION,
 		serverId: "server",
 		requestId: "independent",
 		result: {
@@ -53,7 +53,7 @@ const view = {
 	session: null,
 };
 const envelope = {
-	version: 2,
+	version: POCKET_VERSION,
 	serverId: "server",
 	requestId: "settings",
 	result: { kind: "configuration", configuration: view },
@@ -81,7 +81,11 @@ test("Model catalogue protocol: default plus 64 configured models fits the finit
 });
 
 test("WebUI settings protocol: exact scoped metadata and unknown cost are accepted; secret fields and malformed quotas fail closed", () => {
-	const request = { version: 2, requestId: "settings", command: { op: "configuration", target: ref } };
+	const request = {
+		version: POCKET_VERSION,
+		requestId: "settings",
+		command: { op: "configuration", target: ref },
+	};
 	assert.deepEqual(decodePocketRequest(request), request);
 	assert.deepEqual(decodePocketResponse(envelope, "settings"), envelope);
 	const project = {
@@ -95,6 +99,19 @@ test("WebUI settings protocol: exact scoped metadata and unknown cost are accept
 		},
 	};
 	assert.deepEqual(decodePocketResponse(project, "settings"), project);
+	const unlimited = {
+		...view,
+		session: {
+			limits: { maxConversations: 0, maxPrimaryAttempts: 0, maxAuxiliaryAttempts: 0 },
+			budget: { primaryAttempts: 2, auxiliaryAttempts: 1 },
+		},
+	};
+	assert.doesNotThrow(() =>
+		decodePocketResponse(
+			{ ...envelope, result: { kind: "configuration", configuration: unlimited } },
+			"settings",
+		),
+	);
 	for (const configuration of [
 		{ ...view, apiKey: "PRIVATE" },
 		{ ...view, choices: [{ id: "default", model: "local", endpoint: "http://private" }] },
@@ -108,7 +125,7 @@ test("WebUI settings protocol: exact scoped metadata and unknown cost are accept
 		{
 			...view,
 			session: {
-				limits: { maxConversations: 1, maxPrimaryAttempts: 0, maxAuxiliaryAttempts: 1 },
+				limits: { maxConversations: 1, maxPrimaryAttempts: -1, maxAuxiliaryAttempts: 1 },
 				budget: { primaryAttempts: 0, auxiliaryAttempts: 0 },
 			},
 		},

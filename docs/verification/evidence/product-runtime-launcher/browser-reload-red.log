@@ -1,0 +1,28 @@
+✖ owned browser reload waits for the new document body, not only the command acknowledgement (2681.8191ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 5359.6528
+
+✖ failing tests:
+
+test at apps\webui\test\browser-navigation.test.ts:13:1
+✖ owned browser reload waits for the new document body, not only the command acknowledgement (2681.8191ms)
+  AssertionError [ERR_ASSERTION]: the reload command acknowledgement must not complete navigation
+  
+  true !== false
+  
+      at TestContext.<anonymous> (file:///D:/Projects/pakka-works/pakka-webui-launcher/apps/webui/test/browser-navigation.test.ts:45:10)
+      at async Test.run (node:internal/test_runner/test:1208:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

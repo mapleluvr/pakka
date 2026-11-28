@@ -1,4 +1,5 @@
 import { test } from "node:test";
+import { controlFacet } from "./fixtures/extension-control.ts";
 import { strict as assert } from "node:assert";
 import { readFile, writeFile } from "node:fs/promises";
 import { createHash } from "node:crypto";
@@ -98,7 +99,8 @@ for (const change of ["disable", "abort"] as const) {
 				assert.ok(Array.isArray(intent.data.rows));
 				assert.equal(intent.data.rows.length, 1);
 				assert.equal(await readFile(join(m.f.cwd, "guarded.txt"), "utf8"), "ORIGINAL\n");
-				if (change === "disable") await host.setEnabled(actor, registration.manifest.id, false);
+				if (change === "disable")
+					await controlFacet(host, actor, registration.manifest.id, "backend", "disable");
 				else controller.abort();
 				release.resolve();
 				const result = await pending;
@@ -108,7 +110,8 @@ for (const change of ["disable", "abort"] as const) {
 					"ORIGINAL\n",
 					"revoked generation must be checked before changing target bytes",
 				);
-				if (change === "disable") await host.setEnabled(actor, registration.manifest.id, true);
+				if (change === "disable")
+					await controlFacet(host, actor, registration.manifest.id, "backend", "enable");
 				const current = host.list(actor, target)[0]!;
 				assert.equal((await host.call(actor, { ...call, generation: current.generation })).state, "unknown");
 				assert.equal(await readFile(join(m.f.cwd, "guarded.txt"), "utf8"), "ORIGINAL\n");

@@ -1,9 +1,10 @@
 import { createRuntime } from "@pakka/agent";
-import type { RuntimeOptions } from "@pakka/agent";
+import type { CatalogOptions, RuntimeOptions } from "@pakka/agent";
 import { createMas } from "@pakka/mas";
 import type { Mas, MasGrant } from "@pakka/mas";
 import { profileDevPacks, retainedProductRoots } from "./profile-devpack.ts";
 import type { ProfileDevPackConfig } from "./profile-devpack.ts";
+import { validateMasProfileTelegraph } from "@pakka/mas-devpack/agent";
 import { productDynamite, validProductDynamite } from "./product-dynamite.ts";
 import type { ProductDynamiteConfig } from "./product-dynamite.ts";
 import { identity } from "@pakka/protocol";
@@ -21,7 +22,7 @@ interface RoleConfig {
 export interface BootstrapConfig {
 	readonly schema: "pakka.server.v1";
 	readonly runtime: RuntimeOptions;
-	readonly mas: { readonly namespace: string; readonly maxDeliveries: number; readonly maxPending: number };
+	readonly mas: CatalogOptions;
 	readonly members: readonly { readonly key: string; readonly owner: string; readonly profile?: string }[];
 	readonly roles: readonly RoleConfig[];
 	readonly devpack?: ProfileDevPackConfig;
@@ -107,12 +108,21 @@ function runtimeConfig(value: unknown): value is RuntimeOptions {
 	return (
 		shape(
 			value,
-			["cwd", "dataDir", "endpoint", "model", "apiKey", "systemPrompt", "limits"],
-			["reopenSessionFile", "reservedSessionId", "maxOutputTokens", "profiles", "inference", "cwdRoots"],
+			["cwd", "dataDir", "endpoint", "model", "apiKey", "systemPrompt"],
+			[
+				"limits",
+				"reopenSessionFile",
+				"reservedSessionId",
+				"maxOutputTokens",
+				"profiles",
+				"inference",
+				"cwdRoots",
+			],
 		) &&
 		["cwd", "dataDir", "endpoint", "model", "apiKey", "systemPrompt"].every((key) => text(value[key])) &&
-		shape(value.limits, ["maxConversations", "maxPrimaryAttempts", "maxAuxiliaryAttempts"]) &&
-		Object.values(value.limits).every(positive) &&
+		(value.limits === undefined ||
+			(shape(value.limits, ["maxConversations", "maxPrimaryAttempts", "maxAuxiliaryAttempts"]) &&
+				Object.values(value.limits).every((limit) => limit === 0 || positive(limit)))) &&
 		(value.reopenSessionFile === undefined || text(value.reopenSessionFile)) &&
 		(value.reservedSessionId === undefined || identity(value.reservedSessionId)) &&
 		(value.maxOutputTokens === undefined || positive(value.maxOutputTokens)) &&
@@ -158,9 +168,9 @@ export function decodeBootstrap(value: unknown): BootstrapConfig {
 		!shape(value, ["schema", "runtime", "mas", "members", "roles"], ["http", "devpack", "dynamite"]) ||
 		value.schema !== "pakka.server.v1" ||
 		!runtimeConfig(value.runtime) ||
-		!shape(value.mas, ["namespace", "maxDeliveries", "maxPending"]) ||
+		!shape(value.mas, ["namespace", "maxPending"], ["maxDeliveries"]) ||
 		!identity(value.mas.namespace) ||
-		!positive(value.mas.maxDeliveries) ||
+		(value.mas.maxDeliveries !== undefined && !positive(value.mas.maxDeliveries)) ||
 		!positive(value.mas.maxPending) ||
 		!Array.isArray(value.members) ||
 		value.members.length === 0 ||
@@ -196,7 +206,7 @@ export function decodeBootstrap(value: unknown): BootstrapConfig {
 			...(value.runtime.profiles ?? []).map((profile) => profile.id),
 		]);
 		if (
-			!shape(pack, ["profiles"], ["operationTimeoutMs"]) ||
+			!shape(pack, ["profiles"], ["operationTimeoutMs", "telegraphByProfile"]) ||
 			!record(pack.profiles) ||
 			Object.keys(pack.profiles).length === 0 ||
 			Object.keys(pack.profiles).length > 128 ||
@@ -211,6 +221,7 @@ export function decodeBootstrap(value: unknown): BootstrapConfig {
 				(!positive(pack.operationTimeoutMs) || Number(pack.operationTimeoutMs) > 60000))
 		)
 			throw new Error("Invalid approved product DevPack configuration");
+		validateMasProfileTelegraph(pack.telegraphByProfile, pack.profiles);
 		// Remote profile selection cannot mint a model's root authority in this mode.
 		if (
 			value.roles.some((role) =>

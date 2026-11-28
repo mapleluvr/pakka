@@ -1,7 +1,6 @@
 #!/usr/bin/env node
-import { readFile } from "node:fs/promises";
+import { readFile, realpath } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
-import { resolve } from "node:path";
 import { createClient, RemoteError } from "@pakka/client";
 import type { ClientOptions } from "@pakka/client";
 import { decodeRequest, MAX_WIRE_BYTES } from "@pakka/protocol";
@@ -31,8 +30,17 @@ function connection(value: unknown): ClientOptions {
 		...("timeoutMs" in value && typeof value.timeoutMs === "number" ? { timeoutMs: value.timeoutMs } : {}),
 	};
 }
-/** No bootstrap/MAS policy. Only explicit files, protocol validation, client and output. */
+/** Preserve the explicit protocol client; every other invocation belongs to the product launcher. */
 export async function runCli(args: readonly string[]): Promise<number> {
+	if (args[0] !== "--connection") {
+		const { runLauncher } = await import("@pakka/webui/launcher");
+		return runLauncher(args);
+	}
+	return runProtocolCli(args);
+}
+
+/** No bootstrap/MAS policy in protocol mode. */
+async function runProtocolCli(args: readonly string[]): Promise<number> {
 	try {
 		if (args[0] !== "--connection" || !args[1] || !["hello", "snapshot", "call"].includes(args[2] ?? ""))
 			throw new Error("Invalid arguments");
@@ -62,5 +70,6 @@ export async function runCli(args: readonly string[]): Promise<number> {
 		return 1;
 	}
 }
-if (process.argv[1] && pathToFileURL(resolve(process.argv[1])).href === import.meta.url)
+const invokedFile = process.argv[1] ? await realpath(process.argv[1]).catch(() => undefined) : undefined;
+if (invokedFile && pathToFileURL(invokedFile).href === import.meta.url)
 	process.exitCode = await runCli(process.argv.slice(2));

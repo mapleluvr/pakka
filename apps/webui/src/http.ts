@@ -10,12 +10,15 @@ import type {
 	PocketWorkspace,
 } from "@pakka/server/pocket";
 import {
+	POCKET_VERSION,
 	decodePocketRequest,
 	decodePocketResponse,
-	decodePocketEvent,
 	POCKET_MAX_BYTES,
 } from "@pakka/protocol/pocket";
 import { identity } from "@pakka/protocol";
+import { WEBUI_NOTIFICATION_EVENT_PATH, decodeNotificationEvent } from "@pakka/protocol/webui";
+import { decodeWebUiInlineStyleHashes } from "@pakka/protocol/webui-assets";
+import { listenHttp } from "@pakka/server/http-listener";
 import QRCode from "qrcode";
 import {
 	PocketCollaborationConflict,
@@ -27,11 +30,39 @@ import {
 } from "@pakka/server/pocket";
 import type { PocketCommand, PocketErrorCode } from "@pakka/protocol/pocket";
 import type { ExtensionHost } from "./backend.ts";
-import { SessionCreationConflict, SessionCreationRefused, type ManagedSessions } from "./sessions.ts";
+import {
+	SessionCreationConflict,
+	SessionCreationRefused,
+	SessionReopenRefused,
+	type ManagedSessions,
+} from "./sessions.ts";
 import { ExtensionRefusal } from "./extension-host.ts";
 import { NavigationRefusal, type PersonalNavigation } from "./navigation.ts";
-import { decodeExtensionRequest, decodeExtensionResponse } from "./extension-rpc.ts";
-import { decodeValue, publicPath } from "./extension.ts";
+import {
+	decodeExtensionRequest,
+	decodeExtensionResponse,
+	EXTENSION_VERSION,
+} from "@pakka/protocol/extension-rpc";
+import { decodeValue, publicPath } from "@pakka/protocol/extensions";
+import type { ProductModelSource } from "./product-models.ts";
+import type { WebUiServices } from "./webui-services.ts";
+import { WebUiServiceRefusal } from "./service-refusal.ts";
+import {
+	decodeWebUiRequest,
+	decodeWebUiResponse,
+	WEBUI_SERVICE_PATH,
+	WEBUI_CONTENT_DOWNLOAD_PATH,
+	WEBUI_SERVICE_MAX_BYTES,
+	WEBUI_SERVICE_API,
+} from "@pakka/protocol/webui";
+import { streamPocketObservation } from "./observation-stream.ts";
+import { streamOriginalContent } from "./content-download.ts";
+import { streamResourceDownload } from "./resource-download.ts";
+import {
+	decodeProductModelRequest,
+	executeProductModelRequest,
+	ProductModelRequestError,
+} from "./product-model-rpc.ts";
 
 export interface PocketHttpOptions {
 	readonly runtime: Runtime;
@@ -41,6 +72,8 @@ export interface PocketHttpOptions {
 	readonly navigation?: PersonalNavigation;
 	readonly collaboration?: PocketCollaboration;
 	readonly credentials?: PocketCredentials;
+	readonly modelConfiguration?: ProductModelSource;
+	readonly webuiServices?: WebUiServices;
 	readonly notifications?: PocketNotifications;
 	readonly host?: string;
 	readonly port?: number;
@@ -48,9 +81,15 @@ export interface PocketHttpOptions {
 	readonly allowInsecureRemote?: boolean;
 	readonly trustedProxyPeers?: readonly string[];
 	readonly pollMs?: number;
+	/** Short RPC/configuration/asset requests; observers use a separate pool. */
 	readonly maxConnections?: number;
+	readonly maxObservers?: number;
 	/** Host-approved sources only; browser requests cannot supply modules or paths. */
 	readonly extensions?: ExtensionHost;
+	/** Trusted fixed-artifact hashes only. Never arbitrary policy text or browser input. */
+	readonly inlineStyleHashes?: readonly string[];
+	/** Worker URLs declared by the accepted artifact; only these scripts may claim root scope. */
+	readonly workers?: readonly string[];
 	/** Host-accepted fixed public bytes only, no provider/configuration files. */
 	readonly assets?: ReadonlyMap<string, { readonly type: string; readonly body: string | Uint8Array }>;
 }
@@ -92,7 +131,7 @@ function cookie(req: IncomingMessage, key: string): string {
 	if (!secret(value)) throw new Refusal(401, "UNAUTHORIZED");
 	return value;
 }
-async function json(req: IncomingMessage): Promise<unknown> {
+async function json(req: IncomingMessage, maxBytes = POCKET_MAX_BYTES): Promise<unknown> {
 	if (
 		header(req, "content-type").split(";")[0]?.trim() !== "application/json" ||
 		header(req, "content-encoding")
@@ -104,7 +143,7 @@ async function json(req: IncomingMessage): Promise<unknown> {
 	try {
 		for await (const chunk of req) {
 			bytes += chunk.length;
-			if (bytes > POCKET_MAX_BYTES) throw new Refusal(413, "CAPACITY");
+			if (bytes > maxBytes) throw new Refusal(413, "CAPACITY");
 			text += decoder.decode(chunk, { stream: true });
 		}
 		text += decoder.decode();
@@ -170,15 +209,19 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 			!options.allowInsecureRemote)
 	)
 		throw new Error("Explicit WebUI remote/TLS boundary required");
-	const pollMs = options.pollMs ?? 100,
-		capacity = options.maxConnections ?? 32;
+	const pollMs = options.pollMs ?? 333,
+		capacity = options.maxConnections ?? 16,
+		observerCapacity = options.maxObservers ?? 32;
 	if (
 		!Number.isSafeInteger(pollMs) ||
 		pollMs < 20 ||
 		pollMs > 5000 ||
 		!Number.isSafeInteger(capacity) ||
 		capacity < 1 ||
-		capacity > 128
+		capacity > 128 ||
+		!Number.isSafeInteger(observerCapacity) ||
+		observerCapacity < 1 ||
+		observerCapacity > 128
 	)
 		throw new Error("Invalid finite WebUI transport options");
 	const assets = new Map(
@@ -190,14 +233,29 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 			},
 		]),
 	);
+	const workerUrls = options.workers ?? [];
+	if (
+		!Array.isArray(workerUrls) ||
+		workerUrls.length > 32 ||
+		new Set(workerUrls).size !== workerUrls.length ||
+		workerUrls.some(
+			(path) => typeof path !== "string" || assets.get(path)?.type !== "text/javascript; charset=utf-8",
+		)
+	)
+		throw new Error("Invalid fixed frontend worker declaration");
+	const workers = new Set(workerUrls);
 	const importMap = assets
 		.get("/")
 		?.body.toString()
 		.match(/<script type="importmap">([^<]+)<\/script>/)?.[1];
+	const stylePolicy = decodeWebUiInlineStyleHashes(options.inlineStyleHashes ?? [])
+		.map((hash) => " 'sha256-" + Buffer.from(hash, "hex").toString("base64") + "'")
+		.join("");
 	const mapPolicy = importMap
 		? // HTML parsing normalizes CRLF and CR before CSP hashes the script text.
 			" 'sha256-" + createHash("sha256").update(importMap.replace(/\r\n?/g, "\n")).digest("base64") + "'"
 		: "";
+	const modelLifetime = new AbortController();
 	const serverId = randomUUID(),
 		notificationWork = new Set<Promise<unknown>>(),
 		streams = new Set<ServerResponse>();
@@ -214,6 +272,7 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 		listeningHost = "",
 		publicHost = "",
 		busy = 0,
+		observers = 0,
 		closed = false;
 	function boundary(req: IncomingMessage, requireOrigin: boolean) {
 		const forwarding = ["forwarded", "x-forwarded-host", "x-forwarded-proto", "x-forwarded-for"].some(
@@ -266,6 +325,8 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 		res.end(JSON.stringify(value));
 	}
 	function preflight(a: PocketAuthority, command: PocketCommand) {
+		if (command.op.startsWith("collaboration.") && people.mode().personal)
+			throw new Refusal(403, "FORBIDDEN", true);
 		if (command.op === "conversation.lookup") {
 			preflight(a, command.original);
 			return;
@@ -278,6 +339,8 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 			case "notification.preferences":
 			case "configuration":
 			case "read":
+			case "preview":
+			case "content.read":
 				permission = "read";
 				resource = people.resourceId(command.target);
 				break;
@@ -316,6 +379,7 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 			case "creation.directories":
 			case "session.create":
 			case "session.lookup":
+			case "session.reopen":
 			case "create":
 			case "fork":
 				permission = "create";
@@ -339,6 +403,7 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 			if (command.op === "fork") people.check(a, "manage", people.resourceId(command.target));
 			if (command.op === "submit") options.collaboration?.checkInput(a, command.target);
 		});
+		if (command.op === "collaboration.note") throw new Refusal(400, "INVALID_REQUEST", true);
 	}
 	async function execute(
 		a: PocketAuthority,
@@ -406,9 +471,10 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 			case "hello":
 				return {
 					kind: "hello",
-					versions: [2],
+					versions: [POCKET_VERSION],
 					person: people.current(a),
 					sessionId: runtime.view().sessionId,
+					...(options.modelConfiguration ? { nativeModels: true } : {}),
 				};
 			case "navigation.read":
 			case "navigation.update":
@@ -446,6 +512,17 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 				guard(() => people.current(a));
 				if (canCreate) guard(() => people.check(a, "create"));
 				return { kind: "sessions", sessions, canCreate, ...(defaults ? { defaults } : {}) };
+			}
+			case "session.reopen": {
+				if (!options.sessions) throw new Refusal(404, "UNSUPPORTED", true);
+				try {
+					const session = await options.sessions.reopen(a, command.sessionId, signal);
+					guard(() => people.check(a, "create"));
+					return { kind: "session.state", session };
+				} catch (error) {
+					if (error instanceof SessionReopenRefused) throw new Refusal(409, "CONFLICT", true);
+					throw error;
+				}
 			}
 			case "session.create":
 			case "session.lookup": {
@@ -623,6 +700,23 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 				};
 			case "read":
 				return { kind: "conversation", snapshot: await client.read(command.target, command.page) };
+			case "preview":
+				return {
+					kind: "conversation",
+					snapshot: await client.preview(command.target, command.page, () => {
+						if (signal.aborted) throw new Refusal(403, "FORBIDDEN", true);
+						preflight(a, command);
+					}),
+				};
+			case "content.read":
+				return {
+					kind: "content",
+					target: command.target,
+					chunk: await client.readContent(command.target, command.reference, command.range, () => {
+						if (signal.aborted) throw new Refusal(403, "FORBIDDEN", true);
+						preflight(a, command);
+					}),
+				};
 			case "display":
 				return {
 					kind: "display",
@@ -696,27 +790,45 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 			"Content-Security-Policy",
 			"default-src 'self'; script-src 'self'" +
 				mapPolicy +
-				"; style-src 'self'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; frame-src 'self' blob:; object-src 'none'; base-uri 'none'; frame-ancestors 'none'",
+				"; style-src 'self'" +
+				stylePolicy +
+				"; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; frame-src 'self' blob:; object-src 'none'; base-uri 'none'; frame-ancestors 'none'",
 		);
 		const controller = new AbortController();
 		res.once("close", () => controller.abort());
 		let requestId = "invalid",
-			dispatched = false;
+			dispatched = false,
+			serviceRequest = false,
+			extensionRequest = false,
+			legacyModelRequest = false;
 		void (async () => {
-			if (closed || busy >= capacity) throw new Refusal(503, "CAPACITY");
-			busy++;
+			if (closed) throw new Refusal(503, "CAPACITY");
+			boundary(req, false);
+			let url: URL;
 			try {
-				boundary(req, false);
-				let url: URL;
-				try {
-					url = new URL(req.url ?? "", origin);
-				} catch {
-					throw new Refusal(400, "INVALID_REQUEST");
-				}
-				if (req.method === "POST" && url.pathname.startsWith("/pocket/ingress/")) {
+				url = new URL(req.url ?? "", origin);
+			} catch {
+				throw new Refusal(400, "INVALID_REQUEST");
+			}
+			serviceRequest = url.pathname === WEBUI_SERVICE_PATH;
+			const independent = url.pathname.startsWith("/pakka-webui/");
+			// Shared handlers keep one authorization path; the legacy model transport is not exposed here.
+			const routePath = independent ? "/pocket/" + url.pathname.slice("/pakka-webui/".length) : url.pathname;
+			legacyModelRequest = !independent && routePath === "/pocket/models/rpc";
+			extensionRequest = routePath === "/pocket/extensions/rpc";
+			const observing = req.method === "GET" && routePath === "/pocket/events";
+			if (observing) {
+				if (observers >= observerCapacity) throw new Refusal(503, "CAPACITY");
+				observers++;
+			} else {
+				if (busy >= capacity) throw new Refusal(503, "CAPACITY");
+				busy++;
+			}
+			try {
+				if (req.method === "POST" && routePath.startsWith("/pocket/ingress/")) {
 					if (url.search || url.hash || (req.url ?? "") !== url.pathname || !options.extensions)
 						throw new Refusal(404, "UNSUPPORTED");
-					const [extension, service, ...path] = url.pathname.slice("/pocket/ingress/".length).split("/");
+					const [extension, service, ...path] = routePath.slice("/pocket/ingress/".length).split("/");
 					if (
 						!extension ||
 						!service ||
@@ -743,7 +855,7 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 					return;
 				}
 				if (req.method !== "GET") boundary(req, true);
-				if (req.method === "POST" && url.pathname === "/pocket/exchange" && !url.search) {
+				if (req.method === "POST" && routePath === "/pocket/exchange" && !url.search) {
 					const input = await json(req);
 					if (!input || typeof input !== "object" || Array.isArray(input))
 						throw new Refusal(400, "INVALID_REQUEST");
@@ -753,14 +865,14 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 						typeof v.token !== "string" ||
 						!secret(v.token) ||
 						!["session", "invite"].includes(v.kind as string) ||
-						(v.kind === "invite" && (typeof v.name !== "string" || !v.name.trim() || v.name.length > 80))
+						(v.name !== undefined && (typeof v.name !== "string" || v.name.length > 80))
 					)
 						throw new Refusal(400, "INVALID_REQUEST");
 					let session: PocketSession;
 					try {
 						if (v.kind === "invite") {
 							dispatched = true;
-							session = await people.redeem(v.token, v.name as string);
+							session = await people.redeem(v.token, v.name as string | undefined);
 						} else {
 							const a = await people.authenticate(v.token);
 							dispatched = true;
@@ -771,14 +883,140 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 						throw new Refusal(401, "UNAUTHORIZED");
 					}
 					cookies(res, session);
-					send(res, 200, { version: 2, person: session.person, expiresAt: session.expiresAt });
+					send(res, 200, { version: POCKET_VERSION, person: session.person, expiresAt: session.expiresAt });
 					return;
 				}
-				if (req.method === "POST" && url.pathname === "/pocket/extensions/rpc" && !url.search) {
+				if (req.method === "POST" && serviceRequest && !url.search && !url.hash) {
+					const raw = await json(req, WEBUI_SERVICE_MAX_BYTES);
+					if (raw && typeof raw === "object" && "requestId" in raw && identity(raw.requestId))
+						requestId = raw.requestId;
+					const a = await actor(req);
+					guard(() => a.verifyCsrf(header(req, "x-pakka-csrf")));
+					if (!options.webuiServices) throw new Refusal(404, "UNSUPPORTED");
+					if (raw && typeof raw === "object" && "api" in raw && raw.api !== WEBUI_SERVICE_API)
+						throw new Refusal(400, "VERSION_MISMATCH", true);
+					let parsed;
+					try {
+						parsed = decodeWebUiRequest(raw);
+					} catch {
+						throw new Refusal(400, "INVALID_REQUEST");
+					}
+					if (parsed.binding.serverId !== serverId || parsed.binding.personId !== people.current(a).id)
+						throw new Refusal(403, "FORBIDDEN");
+					try {
+						dispatched = true;
+						const result = await options.webuiServices.execute(a, parsed.command, controller.signal);
+						if (
+							result.kind === "notebook-page" ||
+							result.kind === "notebook-note" ||
+							result.kind === "notebook-receipt" ||
+							result.kind === "notebook-operation"
+						) {
+							try {
+								const target = "original" in result ? result.original.target : result.target;
+								people.check(a, "read", people.resourceId(target));
+							} catch {
+								throw new WebUiServiceRefusal(result.kind === "notebook-receipt" ? "UNKNOWN" : "FORBIDDEN");
+							}
+						}
+						guard(() => people.current(a));
+						if (
+							(parsed.command.op === "collaboration.read" || parsed.command.op === "collaboration.write") &&
+							people.mode().personal
+						)
+							throw new WebUiServiceRefusal(
+								parsed.command.op === "collaboration.write" ? "UNKNOWN" : "FORBIDDEN",
+							);
+						if (
+							parsed.command.op === "collaboration.write" &&
+							parsed.command.change.action.kind === "post" &&
+							result.kind === "collaboration-receipt" &&
+							result.receipt.result.kind === "post"
+						) {
+							const messageId = result.receipt.result.messageId,
+								target = parsed.command.change.target;
+							notifyEvent({
+								requestId: "chat." + messageId,
+								target,
+								kind: "chat",
+								preview: "There is a new message in team chat.",
+							});
+							const mentions = parsed.command.change.action.mentions;
+							if (mentions?.length)
+								notifyEvent({
+									requestId: "mention." + messageId,
+									target,
+									kind: "mention",
+									preview: "You were mentioned in team chat.",
+									recipientIds: mentions,
+								});
+						}
+						send(
+							res,
+							200,
+							decodeWebUiResponse({ api: WEBUI_SERVICE_API, requestId, serverId, result }, requestId),
+						);
+					} catch (error) {
+						if (error instanceof WebUiServiceRefusal) {
+							const statuses: Partial<Record<PocketErrorCode, number>> = {
+								FORBIDDEN: 403,
+								INVALID_REQUEST: 400,
+								CONFLICT: 409,
+								CAPACITY: 413,
+								UNSUPPORTED: 404,
+								UNKNOWN: 500,
+							};
+							throw new Refusal(statuses[error.code] ?? 500, error.code, error.confirmedNoEffect);
+						}
+						throw error;
+					}
+					return;
+				}
+				if (!independent && req.method === "POST" && routePath === "/pocket/models/rpc" && !url.search) {
+					const raw = await json(req);
+					if (raw && typeof raw === "object" && "requestId" in raw && identity(raw.requestId))
+						requestId = raw.requestId;
+					const a = await actor(req);
+					guard(() => a.verifyCsrf(header(req, "x-pakka-csrf")));
+					try {
+						const parsed = decodeProductModelRequest(raw);
+						if (!options.modelConfiguration && !parsed.command.op.startsWith("budget."))
+							throw new Refusal(404, "UNSUPPORTED", true);
+						dispatched = true;
+						const result = await executeProductModelRequest(
+							{
+								source: options.modelConfiguration,
+								people,
+								actor: a,
+								signal: modelLifetime.signal,
+								runtimeFor: (sessionId) => {
+									if (sessionId === runtime.view().sessionId) return runtime;
+									if (!options.sessions) throw new Error("Managed Session unavailable");
+									return options.sessions.runtimeFor({ sessionId });
+								},
+							},
+							parsed,
+						);
+						guard(() => people.current(a));
+						if (Buffer.byteLength(JSON.stringify(result), "utf8") > POCKET_MAX_BYTES)
+							throw new Error("Configuration response exceeds transport capacity");
+						send(res, 200, { version: parsed.version, requestId, serverId, result });
+					} catch (error) {
+						if (error instanceof ProductModelRequestError) {
+							const status = { FORBIDDEN: 403, INVALID_REQUEST: 400, CONFLICT: 409 }[error.code];
+							throw new Refusal(status, error.code, true);
+						}
+						throw error;
+					}
+					return;
+				}
+				if (req.method === "POST" && routePath === "/pocket/extensions/rpc" && !url.search) {
 					if (!options.extensions) throw new Refusal(404, "UNSUPPORTED");
 					const raw = await json(req);
 					if (raw && typeof raw === "object" && "requestId" in raw && identity(raw.requestId))
 						requestId = raw.requestId;
+					if (raw && typeof raw === "object" && "version" in raw && raw.version !== EXTENSION_VERSION)
+						throw new Refusal(400, "VERSION_MISMATCH");
 					let parsed;
 					try {
 						parsed = decodeExtensionRequest(raw);
@@ -787,6 +1025,12 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 					}
 					const a = await actor(req);
 					guard(() => a.verifyCsrf(header(req, "x-pakka-csrf")));
+					if (
+						independent &&
+						(header(req, "x-pakka-person") !== people.current(a).id ||
+							header(req, "x-pakka-server") !== serverId)
+					)
+						throw new Refusal(403, "FORBIDDEN");
 					const command = parsed.command,
 						extensions = options.extensions;
 					let result;
@@ -811,6 +1055,7 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 										.find(
 											(row) =>
 												row.manifest.id === call.extension &&
+												row.facet === "backend" &&
 												row.generation === call.generation &&
 												row.phase === "ready",
 										);
@@ -825,44 +1070,81 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 								result = { kind: "operation", operation: await extensions.call(a, call, controller.signal) };
 								break;
 							}
-							default:
+							case "control":
 								guard(() => people.check(a, "extensions.install"));
 								dispatched = true;
-								if (command.op === "reload") await extensions.reload(a, command.extension);
-								else await extensions.setEnabled(a, command.extension, command.op === "enable");
-								result = { kind: "updated" };
+								result = { kind: "control", receipt: await extensions.control(a, command.change) };
+								break;
+							case "controlByRequest":
+								result = {
+									kind: "control-operation",
+									receipt: await extensions.controlByRequest(a, command.original),
+								};
+								break;
 						}
 					} catch (error) {
-						if (error instanceof ExtensionRefusal && !dispatched)
-							throw new Refusal(error.code === "INVALID_REQUEST" ? 400 : 403, error.code);
+						if (error instanceof ExtensionRefusal)
+							throw new Refusal(
+								error.code === "INVALID_REQUEST" ? 400 : error.code === "CONFLICT" ? 409 : 403,
+								error.code,
+								error.outcome === "denied",
+							);
 						throw error;
 					}
 					guard(() => people.current(a));
-					send(res, 200, decodeExtensionResponse({ version: 2, requestId, serverId, result }, requestId));
+					send(
+						res,
+						200,
+						decodeExtensionResponse({ version: EXTENSION_VERSION, requestId, serverId, result }, requestId),
+					);
 					return;
 				}
-				if (req.method === "GET" && url.pathname.startsWith("/pocket/extensions/assets/")) {
+				if (req.method === "GET" && routePath.startsWith("/pocket/extensions/assets/")) {
 					if (!options.extensions) throw new Refusal(404, "UNSUPPORTED");
 					const a = await actor(req),
-						parts = url.pathname.slice("/pocket/extensions/assets/".length).split("/");
-					const [id, generation, ...path] = parts,
-						resource = url.searchParams.get("conversationId");
+						parts = routePath.slice("/pocket/extensions/assets/".length).split("/");
+					const [id, facet, generation, ...path] = parts;
+					let resource = url.searchParams.get("conversationId"),
+						sessionId = url.searchParams.get("sessionId");
+					if (independent) {
+						// Scope belongs in the directory: sibling JS/CSS imports must not lose it as query parameters do.
+						if (url.search) throw new Refusal(400, "INVALID_REQUEST");
+						const scope = path.shift();
+						if (scope === "conversation") {
+							try {
+								sessionId = decodeURIComponent(path.shift() ?? "");
+								resource = decodeURIComponent(path.shift() ?? "");
+							} catch {
+								throw new Refusal(400, "INVALID_REQUEST");
+							}
+						} else if (scope !== "app") throw new Refusal(400, "INVALID_REQUEST");
+					}
 					if (
 						!id ||
+						(facet !== "webui" && facet !== "client") ||
 						!generation ||
 						!publicPath(path.join("/")) ||
-						[...url.searchParams.keys()].some((key) => key !== "conversationId") ||
-						url.searchParams.getAll("conversationId").length > 1
+						[...url.searchParams.keys()].some((key) => !["conversationId", "sessionId"].includes(key)) ||
+						url.searchParams.getAll("conversationId").length > 1 ||
+						url.searchParams.getAll("sessionId").length > 1 ||
+						(resource !== null && !identity(resource)) ||
+						(sessionId !== null && !identity(sessionId)) ||
+						(sessionId !== null && resource === null) ||
+						(independent && resource !== null && sessionId === null)
 					)
 						throw new Refusal(400, "INVALID_REQUEST");
 					const target = resource
 						? (options.sessions?.runtimes() ?? [runtime])
 								.flatMap((value) => value.view().conversations)
-								.find((ref) => people.resourceId(ref) === resource)
+								.find(
+									(ref) =>
+										ref.sessionId === (sessionId ?? runtime.view().sessionId) &&
+										ref.conversationId === resource,
+								)
 						: undefined;
 					if (resource && !target) throw new Refusal(403, "FORBIDDEN");
 					try {
-						const asset = await options.extensions.asset(a, id, generation, path.join("/"), target);
+						const asset = await options.extensions.asset(a, id, facet, generation, path.join("/"), target);
 						guard(() => people.current(a));
 						res.writeHead(200, { "Content-Type": asset.type });
 						res.end(asset.body);
@@ -872,10 +1154,80 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 					}
 					return;
 				}
-				if (req.method === "POST" && url.pathname === "/pocket/rpc" && !url.search) {
+				if (req.method === "GET" && url.pathname === WEBUI_CONTENT_DOWNLOAD_PATH && !url.hash) {
+					serviceRequest = true;
+					if (!options.webuiServices) throw new Refusal(404, "UNSUPPORTED");
+					const a = await actor(req);
+					try {
+						await streamResourceDownload({
+							query: url.searchParams,
+							actor: a,
+							people,
+							serverId,
+							services: options.webuiServices,
+							response: res,
+							signal: controller.signal,
+						});
+					} catch (error) {
+						if (error instanceof WebUiServiceRefusal) {
+							const statuses: Partial<Record<PocketErrorCode, number>> = {
+								INVALID_REQUEST: 400,
+								FORBIDDEN: 403,
+								UNSUPPORTED: 404,
+								CAPACITY: 413,
+							};
+							throw new Refusal(statuses[error.code] ?? 500, error.code);
+						}
+						throw error;
+					}
+					return;
+				}
+				if (req.method === "GET" && routePath === "/pocket/content/download") {
+					if (
+						url.searchParams.size !== 2 ||
+						url.searchParams.getAll("target").length !== 1 ||
+						url.searchParams.getAll("reference").length !== 1 ||
+						(url.searchParams.get("target")?.length ?? 0) > 2048 ||
+						(url.searchParams.get("reference")?.length ?? 0) > 4096
+					)
+						throw new Refusal(400, "INVALID_REQUEST");
+					let parsed;
+					try {
+						parsed = decodePocketRequest({
+							version: POCKET_VERSION,
+							requestId: "original-download",
+							command: {
+								op: "content.read",
+								target: JSON.parse(url.searchParams.get("target")!),
+								reference: JSON.parse(url.searchParams.get("reference")!),
+								range: { offset: 0, length: 65536 },
+							},
+						});
+					} catch {
+						throw new Refusal(400, "INVALID_REQUEST");
+					}
+					const command = parsed.command;
+					if (command.op !== "content.read") throw new Refusal(400, "INVALID_REQUEST");
+					const a = await actor(req);
+					preflight(a, command);
+					await streamOriginalContent({
+						response: res,
+						signal: controller.signal,
+						read: (offset, check) =>
+							workspace
+								.bind(a)
+								.readContent(command.target, command.reference, { offset, length: 65536 }, check),
+						reference: command.reference,
+						check: () => preflight(a, command),
+					});
+					return;
+				}
+				if (req.method === "POST" && routePath === "/pocket/rpc" && !url.search) {
 					const raw = await json(req);
 					if (raw && typeof raw === "object" && "requestId" in raw && identity(raw.requestId))
 						requestId = raw.requestId;
+					if (raw && typeof raw === "object" && "version" in raw && raw.version !== POCKET_VERSION)
+						throw new Refusal(400, "VERSION_MISMATCH", true);
 					let parsed;
 					try {
 						parsed = decodePocketRequest(raw);
@@ -885,16 +1237,28 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 					const a = await actor(req);
 					guard(() => a.verifyCsrf(header(req, "x-pakka-csrf")));
 					requestId = parsed.requestId;
+					if (
+						independent &&
+						parsed.command.op !== "hello" &&
+						(header(req, "x-pakka-person") !== people.current(a).id ||
+							header(req, "x-pakka-server") !== serverId)
+					)
+						throw new Refusal(403, "FORBIDDEN");
 					preflight(a, parsed.command);
 					dispatched = true;
 					const result = await execute(a, parsed.command, res, controller.signal);
+					if (parsed.command.op.startsWith("collaboration.") && people.mode().personal)
+						throw new Refusal(403, "FORBIDDEN");
 					if (!["session.rotate", "session.logout"].includes(parsed.command.op))
 						guard(() => people.current(a));
-					const response = decodePocketResponse({ version: 2, serverId, requestId, result }, requestId);
+					const response = decodePocketResponse(
+						{ version: POCKET_VERSION, serverId, requestId, result },
+						requestId,
+					);
 					send(res, 200, response);
 					return;
 				}
-				if (req.method === "GET" && url.pathname === "/pocket/notifications/event") {
+				if (req.method === "GET" && url.pathname === WEBUI_NOTIFICATION_EVENT_PATH) {
 					if (!options.notifications) throw new Refusal(404, "UNSUPPORTED");
 					const eventId = url.searchParams.get("eventId"),
 						deviceId = url.searchParams.get("deviceId");
@@ -911,7 +1275,7 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 					const a = await actor(req);
 					let entry;
 					try {
-						entry = await options.notifications.bind(a).event(eventId, deviceId);
+						entry = decodeNotificationEvent(await options.notifications.bind(a).event(eventId, deviceId));
 					} catch {
 						throw new Refusal(403, "FORBIDDEN");
 					}
@@ -919,124 +1283,124 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 					send(res, 200, entry);
 					return;
 				}
-				if (req.method === "GET" && url.pathname === "/pocket/events") {
-					const a = await actor(req),
-						conversationId = url.searchParams.get("conversationId"),
-						sessionId = url.searchParams.get("sessionId") ?? runtime.view().sessionId;
+				if (req.method === "GET" && routePath === "/pocket/events") {
+					const a = await actor(req);
+					const mode = url.searchParams.get("mode");
 					if (
-						!conversationId ||
-						!identity(conversationId) ||
-						!identity(sessionId) ||
-						url.searchParams.getAll("conversationId").length !== 1 ||
-						url.searchParams.getAll("sessionId").length > 1 ||
-						[...url.searchParams.keys()].some((key) => !["conversationId", "sessionId"].includes(key))
+						(mode !== null && mode !== "preview") ||
+						url.searchParams.getAll("mode").length > 1 ||
+						[...url.searchParams.keys()].some(
+							(key) =>
+								![
+									"conversationId",
+									"sessionId",
+									"mode",
+									"targets",
+									"expectedPersonId",
+									"expectedServerId",
+								].includes(key),
+						)
 					)
 						throw new Refusal(400, "INVALID_REQUEST");
-					const ref = (options.sessions?.runtimes() ?? [runtime])
-						.flatMap((value) => value.view().conversations)
-						.find((ref) => ref.sessionId === sessionId && ref.conversationId === conversationId);
-					if (!ref) throw new Refusal(403, "FORBIDDEN");
-					const id = people.resourceId(ref);
-					guard(() => people.check(a, "read", id));
+					for (const key of ["expectedPersonId", "expectedServerId"]) {
+						const value = url.searchParams.get(key);
+						if (url.searchParams.getAll(key).length > 1 || (value !== null && !identity(value)))
+							throw new Refusal(400, "INVALID_REQUEST");
+					}
+					if (
+						(url.searchParams.has("expectedPersonId") &&
+							url.searchParams.get("expectedPersonId") !== people.current(a).id) ||
+						(url.searchParams.has("expectedServerId") &&
+							url.searchParams.get("expectedServerId") !== serverId)
+					)
+						throw new Refusal(403, "FORBIDDEN");
+					const selected: { sessionId: string; conversationId: string }[] = [];
+					const rawTargets = url.searchParams.get("targets");
+					if (rawTargets !== null) {
+						if (
+							mode !== "preview" ||
+							rawTargets.length > 8192 ||
+							url.searchParams.getAll("targets").length !== 1 ||
+							url.searchParams.has("sessionId") ||
+							url.searchParams.has("conversationId")
+						)
+							throw new Refusal(400, "INVALID_REQUEST");
+						let rows: unknown;
+						try {
+							rows = JSON.parse(rawTargets);
+						} catch {
+							throw new Refusal(400, "INVALID_REQUEST");
+						}
+						if (!Array.isArray(rows) || rows.length < 1 || rows.length > 16)
+							throw new Refusal(400, "INVALID_REQUEST");
+						for (const row of rows) {
+							if (
+								!row ||
+								typeof row !== "object" ||
+								Array.isArray(row) ||
+								Object.keys(row).length !== 2 ||
+								Object.keys(row).some((key) => !["sessionId", "conversationId"].includes(key)) ||
+								!("sessionId" in row) ||
+								!("conversationId" in row) ||
+								!identity(row.sessionId) ||
+								!identity(row.conversationId)
+							)
+								throw new Refusal(400, "INVALID_REQUEST");
+							selected.push({ sessionId: row.sessionId, conversationId: row.conversationId });
+						}
+					} else {
+						const conversationId = url.searchParams.get("conversationId"),
+							sessionId = url.searchParams.get("sessionId") ?? runtime.view().sessionId;
+						if (
+							!identity(conversationId) ||
+							!identity(sessionId) ||
+							url.searchParams.getAll("conversationId").length !== 1 ||
+							url.searchParams.getAll("sessionId").length > 1
+						)
+							throw new Refusal(400, "INVALID_REQUEST");
+						selected.push({ sessionId, conversationId });
+					}
+					if (
+						new Set(selected.map((row) => JSON.stringify([row.sessionId, row.conversationId]))).size !==
+						selected.length
+					)
+						throw new Refusal(400, "INVALID_REQUEST");
+					const available = (options.sessions?.runtimes() ?? [runtime]).flatMap(
+						(value) => value.view().conversations,
+					);
+					const refs = selected.map((row) => {
+						const ref = available.find(
+							(ref) => ref.sessionId === row.sessionId && ref.conversationId === row.conversationId,
+						);
+						if (!ref) throw new Refusal(403, "FORBIDDEN");
+						guard(() => people.check(a, "read", people.resourceId(ref)));
+						return ref;
+					});
 					streams.add(res);
 					res.once("close", () => streams.delete(res));
-					res.writeHead(200, {
-						"Content-Type": "text/event-stream; charset=utf-8",
-						Connection: "keep-alive",
-						"X-Accel-Buffering": "no",
-					});
-					res.flushHeaders();
-					const streamId = randomUUID();
-					let sequence = 0,
-						prior = "",
-						priorHuman = "",
-						lastSent = 0;
-					const emit = async (data: Record<string, unknown>) => {
-						people.check(a, "read", id);
-						const value = decodePocketEvent({
-							version: 2,
-							serverId,
-							streamId,
-							sequence: ++sequence,
-							...data,
-						});
-						if (
-							!res.write(
-								"id: " +
-									serverId +
-									":" +
-									streamId +
-									":" +
-									sequence +
-									"\nevent: pocket\ndata: " +
-									JSON.stringify(value) +
-									"\n\n",
-							)
-						) {
-							await new Promise<void>((resolve, reject) => {
-								const finish = (failure?: Error) => {
-									clearTimeout(timer);
-									res.removeListener("drain", drained);
-									controller.signal.removeEventListener("abort", aborted);
-									if (failure) reject(failure);
-									else resolve();
-								};
-								const drained = () => finish(),
-									aborted = () => finish(new Error("WebUI stream closed"));
-								const timer = setTimeout(
-									() => finish(new Error("Slow WebUI reader requires resnapshot")),
-									1000,
-								);
-								res.once("drain", drained);
-								controller.signal.addEventListener("abort", aborted, { once: true });
-								if (controller.signal.aborted || res.destroyed || res.writableEnded) aborted();
-							});
-							people.check(a, "read", id);
-						}
-						lastSent = Date.now();
-					};
 					try {
-						// Every reconnect establishes a fresh scoped snapshot; never replay a mutation.
-						if (header(req, "last-event-id")) await emit({ kind: "resnapshot" });
-						while (!controller.signal.aborted) {
-							const snapshot = await workspace.bind(a).read(ref),
-								bytes = JSON.stringify(snapshot);
-							people.check(a, "read", id);
-							if (bytes !== prior || Date.now() - lastSent >= 5000) {
-								await emit({ kind: "conversation", snapshot });
-								prior = bytes;
-							}
-							if (options.collaboration) {
-								const shared = await options.collaboration.bind(a).snapshot(ref),
-									bytesHuman = JSON.stringify(shared);
-								if (bytesHuman !== priorHuman) {
-									await emit({ kind: "collaboration", snapshot: shared });
-									priorHuman = bytesHuman;
-								}
-							}
-							await new Promise<void>((resolve) => {
-								const finish = () => {
-									clearTimeout(timer);
-									controller.signal.removeEventListener("abort", finish);
-									resolve();
-								};
-								const timer = setTimeout(finish, pollMs);
-								controller.signal.addEventListener("abort", finish, { once: true });
-								if (controller.signal.aborted) finish();
-							});
-						}
-					} catch {
-						if (res.writableNeedDrain)
-							res.destroy(); /* Stale authority or a bounded slow/disconnected reader ends this generation. */
+						await streamPocketObservation({
+							response: res,
+							signal: controller.signal,
+							serverId,
+							people,
+							actor: a,
+							workspace,
+							collaboration: options.collaboration,
+							refs,
+							pollMs,
+							preview: mode === "preview",
+							reconnected: !!header(req, "last-event-id"),
+						});
 					} finally {
 						streams.delete(res);
-						if (!res.destroyed) res.end();
 					}
 					return;
 				}
 				if (req.method === "GET" && !url.search) {
 					const asset = assets.get(url.pathname);
 					if (asset) {
+						if (workers.has(url.pathname)) res.setHeader("Service-Worker-Allowed", "/");
 						res.writeHead(200, { "Content-Type": asset.type });
 						res.end(asset.body);
 						return;
@@ -1044,7 +1408,8 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 				}
 				throw new Refusal(404, "UNSUPPORTED");
 			} finally {
-				busy--;
+				if (observing) observers--;
+				else busy--;
 			}
 		})().catch((error) => {
 			if (res.headersSent) {
@@ -1054,7 +1419,9 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 			const refusal = error instanceof Refusal,
 				status = refusal ? error.status : 500;
 			send(res, status, {
-				version: 2,
+				...(serviceRequest
+					? { api: WEBUI_SERVICE_API }
+					: { version: extensionRequest ? EXTENSION_VERSION : legacyModelRequest ? 2 : POCKET_VERSION }),
 				requestId,
 				serverId,
 				error: {
@@ -1068,18 +1435,7 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 	server.requestTimeout = 15000;
 	server.headersTimeout = 10000;
 	server.keepAliveTimeout = 5000;
-	await new Promise<void>((resolve, reject) => {
-		server.once("error", reject);
-		server.listen(port, host, () => {
-			server.removeListener("error", reject);
-			resolve();
-		});
-	});
-	const address = server.address();
-	if (!address || typeof address === "string") {
-		server.close();
-		throw new Error("WebUI listener missing");
-	}
+	const address = await listenHttp(server, { host, port });
 	listeningHost = `${host.includes(":") ? `[${host}]` : host}:${address.port}`;
 	publicHost = external?.host ?? listeningHost;
 	origin = external?.origin ?? `http://${listeningHost}`;
@@ -1089,6 +1445,7 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 		close: async () => {
 			if (closed) return;
 			closed = true;
+			modelLifetime.abort();
 			for (const stream of streams) stream.end();
 			await new Promise<void>((resolve, reject) => {
 				server.close((error) => (error ? reject(error) : resolve()));

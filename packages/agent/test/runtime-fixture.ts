@@ -14,7 +14,7 @@ export async function runtimeFixture(
 ) {
 	const f = await fixture(typeof options === "function" ? {} : options, respond);
 	try {
-		const config: RuntimeOptions = {
+		const config = {
 			cwd: f.cwd,
 			dataDir: f.dataDir,
 			endpoint: f.endpoint,
@@ -23,7 +23,7 @@ export async function runtimeFixture(
 			systemPrompt: "PAKKA-SYSTEM",
 			...(typeof options === "function" ? options(f.endpoint) : options),
 			limits,
-		};
+		} satisfies RuntimeOptions;
 		const runtime = await createRuntime(config);
 		return {
 			f,

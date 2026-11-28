@@ -1,10 +1,33 @@
 import { createHash } from "node:crypto";
+import { ConfigurationChangeRefusedError } from "@pakka/agent";
+import {
+	decodeConversationConfigurationRequest,
+	decodeConversationConfigurationReceipt,
+	matchesConversationConfigurationReceipt,
+	type ConversationConfigurationRequest,
+	type ConversationConfigurationReceipt,
+	type ConversationConfigurationView,
+} from "@pakka/protocol/webui";
+
+export class PocketConfigurationRefused extends Error {
+	readonly code: "FORBIDDEN" | "UNSUPPORTED" | "CONFLICT";
+	constructor(code: "FORBIDDEN" | "UNSUPPORTED" | "CONFLICT") {
+		super("Conversation configuration " + code);
+		this.code = code;
+		this.name = "PocketConfigurationRefused";
+	}
+}
+import { scopeContentReference, scopeConversationEntries } from "./pocket-history.ts";
 import type {
 	Runtime,
 	RuntimeView,
 	CatalogOptions,
 	ConversationRef,
 	ConversationReadOptions,
+	ConversationPreviewOptions,
+	ConversationContentReference,
+	ConversationContentRange,
+	ConversationContentChunk,
 	ConversationSnapshot,
 	InputMode,
 	DisplayReceipt,
@@ -12,6 +35,7 @@ import type {
 	CatalogMember,
 	JsonObject,
 	ConversationConfigurationChange,
+	ConversationConfiguration,
 } from "@pakka/agent";
 import type { PocketAuthority, PocketPeople, PocketPermission, PocketPerson } from "./pocket-people.ts";
 import {
@@ -57,6 +81,12 @@ export interface PocketInput {
 	readonly text: string;
 	readonly mode: InputMode;
 }
+export class PocketInputLookupUnsupported extends Error {
+	constructor() {
+		super("Conversation source does not support original input lookup");
+		this.name = "PocketInputLookupUnsupported";
+	}
+}
 export interface PocketInputReceipt {
 	readonly id: string;
 	readonly requestId: string;
@@ -66,9 +96,18 @@ export interface PocketInputReceipt {
 	readonly entryId?: string;
 	readonly reason?: string;
 }
+export interface PocketInputHistory {
+	readonly items: readonly {
+		readonly receipt: PocketInputReceipt;
+		readonly mode: InputMode;
+		readonly preview: string;
+		readonly truncated: boolean;
+	}[];
+	readonly nextCursor?: string;
+}
 export interface PocketConfiguration {
 	readonly ref: ConversationRef;
-	readonly current: { readonly model: string; readonly cwd: string };
+	readonly current: ConversationConfiguration;
 	readonly choices: readonly { readonly id: string; readonly model: string; readonly cwd?: string }[];
 	readonly canConfigure: boolean;
 	readonly usage: ConversationSnapshot["usage"];
@@ -77,6 +116,15 @@ export interface PocketConfiguration {
 }
 export interface PocketWorkspaceClient {
 	configuration(ref: ConversationRef): Promise<PocketConfiguration>;
+	configurationOptions(ref: ConversationRef): Promise<ConversationConfigurationView>;
+	changeConfiguration(
+		original: ConversationConfigurationRequest,
+		check?: () => void,
+	): Promise<ConversationConfigurationReceipt>;
+	configurationReceipt(
+		original: ConversationConfigurationRequest,
+		check?: () => void,
+	): Promise<ConversationConfigurationReceipt | null>;
 	list(): Promise<readonly ConversationRef[]>;
 	navigation(): Promise<readonly PocketNavigation[]>;
 	setMetadata(ref: ConversationRef, input: PocketMetadataInput): Promise<PocketNavigation>;
@@ -96,11 +144,28 @@ export interface PocketWorkspaceClient {
 	): Promise<PocketDirectories>;
 	fork(ref: ConversationRef, input: PocketFork): Promise<ConversationRef>;
 	read(ref: ConversationRef, page?: ConversationReadOptions): Promise<ConversationSnapshot>;
+	/** Passive browser projection: complete bodies remain on the authorized content port. */
+	preview(
+		ref: ConversationRef,
+		page?: ConversationPreviewOptions,
+		check?: () => void,
+	): Promise<ConversationSnapshot>;
+	observationRevision(ref: ConversationRef): number;
+	readContent(
+		ref: ConversationRef,
+		reference: ConversationContentReference,
+		range: ConversationContentRange,
+		check?: () => void,
+	): Promise<ConversationContentChunk>;
 	display(
 		ref: ConversationRef,
 		input: { readonly requestId: string; readonly kind: "chat" | "card"; readonly text: string },
 	): Promise<DisplayReceipt>;
 	submit(ref: ConversationRef, input: PocketInput): Promise<PocketInputReceipt>;
+	/** Observe an exact original input; null does not certify that an in-flight admission cannot arrive. */
+	inputReceipt(ref: ConversationRef, input: PocketInput): Promise<PocketInputReceipt | null>;
+	/** Bounded original inputs from this Person only; old runtime bindings remain attached to their receipts. */
+	inputHistory(ref: ConversationRef, cursor?: string): Promise<PocketInputHistory>;
 	receipt(id: string, sessionId?: string): Promise<PocketInputReceipt>;
 	wait(id: string, signal?: AbortSignal, sessionId?: string): Promise<PocketInputReceipt>;
 	withdraw(id: string, sessionId?: string): Promise<PocketInputReceipt>;
@@ -111,6 +176,15 @@ export interface PocketConversationSource {
 	bind(actor: PocketAuthority): {
 		navigation(): Promise<readonly PocketNavigation[]>;
 		canManage(ref: ConversationRef): boolean;
+		/** Explicit opt-in: the owning source commits a receipt with its native configuration. */
+		changeConfiguration?(
+			original: ConversationConfigurationRequest,
+			check: () => void,
+		): Promise<ConversationConfigurationReceipt>;
+		configurationReceipt?(
+			original: ConversationConfigurationRequest,
+			check: () => void,
+		): Promise<ConversationConfigurationReceipt | null>;
 		ownsReceipt(id: string): Promise<boolean>;
 		configure(ref: ConversationRef, profile: string, check: () => void): Promise<ConversationRef>;
 		configureAgent(
@@ -119,6 +193,17 @@ export interface PocketConversationSource {
 			check: () => void,
 		): Promise<ConversationRef>;
 		submit(ref: ConversationRef, input: PocketInput, check: () => void): Promise<PocketInputReceipt>;
+		/** Sources opt in to their own persistent request identity; unsupported is never a false miss. */
+		inputReceipt?(
+			ref: ConversationRef,
+			input: PocketInput,
+			check: () => void,
+		): Promise<PocketInputReceipt | null>;
+		inputHistory?(
+			ref: ConversationRef,
+			cursor: string | undefined,
+			check: () => void,
+		): Promise<PocketInputHistory>;
 		receipt: PocketWorkspaceClient["receipt"];
 		wait: PocketWorkspaceClient["wait"];
 		withdraw: PocketWorkspaceClient["withdraw"];
@@ -144,6 +229,11 @@ export interface PocketWorkspaceOptions {
 	readonly catalog: CatalogOptions;
 	/** Host-owned selection only; the browser never supplies this ceiling. */
 	readonly profileCeiling: (person: PocketPerson) => readonly string[];
+	/** First admission only; missing human defaults never redefine an original create/lookup or a fork. */
+	readonly creationDefaults?: (
+		actor: PocketAuthority,
+		input: PocketCreate,
+	) => Promise<ConversationConfigurationChange | undefined>;
 	/** Host-owned synchronous collaboration/driver check; repeated at native admission, never a wire grant. */
 	readonly beforeInput?: (actor: PocketAuthority, ref: ConversationRef) => void;
 	/** Same current-driver guard for a persisted originating person; required when beforeInput is configured. */
@@ -152,6 +242,8 @@ export interface PocketWorkspaceOptions {
 const key = (v: unknown): v is string =>
 	typeof v === "string" && /^[a-zA-Z0-9][-a-zA-Z0-9._:]{0,159}$/.test(v);
 const hash = (v: unknown) => createHash("sha256").update(JSON.stringify(v)).digest("hex");
+const sameResource = (a: ConversationRef, b: ConversationRef) =>
+	a.sessionId === b.sessionId && a.conversationId === b.conversationId && a.key === b.key;
 const sameRef = (a: ConversationRef, b: ConversationRef) =>
 	["key", "sessionId", "conversationId", "incarnation", "profile"].every(
 		(k) => a[k as keyof ConversationRef] === b[k as keyof ConversationRef],
@@ -281,16 +373,16 @@ export function createPocketWorkspace(options: PocketWorkspaceOptions): PocketWo
 			people.current(actor);
 			const current = () => people.current(actor);
 			const providers = () => [...sources].map((source) => source.bind(actor));
-			const resource = async (ref: ConversationRef, authorize: () => void) => {
+			const resource = async (ref: ConversationRef, authorize: () => void, matches = sameRef) => {
 				authorize();
 				const snapshot = await catalog.snapshot();
 				authorize();
-				if (snapshot.members.some((row) => row.data.kind === "pocket-workspace" && sameRef(row.ref, ref)))
+				if (snapshot.members.some((row) => row.data.kind === "pocket-workspace" && matches(row.ref, ref)))
 					return undefined;
 				for (const provider of providers()) {
 					const rows = await provider.navigation();
 					authorize();
-					if (rows.some((row) => sameRef(row.ref, ref))) return provider;
+					if (rows.some((row) => matches(row.ref, ref))) return provider;
 				}
 				return denied();
 			};
@@ -326,6 +418,24 @@ export function createPocketWorkspace(options: PocketWorkspaceOptions): PocketWo
 				return value;
 			};
 			const roots = () => runtime.directoryRoots(ceiling());
+			const sourceVisible = (ref: ConversationRef, conversationId: string) => {
+				const person = current();
+				return (
+					person.resources === "*" ||
+					person.resources.includes(people.resourceId({ sessionId: ref.sessionId, conversationId }))
+				);
+			};
+			const publicReference = (reference: ConversationContentReference, ref: ConversationRef) =>
+				scopeContentReference(reference, (id) => sourceVisible(ref, id));
+			const publicSnapshot = (
+				snapshot: ConversationSnapshot,
+				authorize: () => void,
+			): ConversationSnapshot => {
+				authorize();
+				const entries = scopeConversationEntries(snapshot.entries, (id) => sourceVisible(snapshot.ref, id));
+				authorize();
+				return frozen({ ...snapshot, entries });
+			};
 			const create = (
 				input: PocketCreate,
 				source?: ConversationRef,
@@ -369,6 +479,7 @@ export function createPocketWorkspace(options: PocketWorkspaceOptions): PocketWo
 					personId = current().id;
 				const fingerprint = hash({ ...saved, source: from ?? null, entryId: entryId ?? null }),
 					id = "human-" + hash([personId, saved.requestId]).slice(0, 40);
+				let effectiveConfiguration = saved.configuration;
 				let inheritedConfiguration: { model: string; cwd: string } | undefined;
 				let initialDirectory: string | undefined;
 				const authorize = () => {
@@ -376,15 +487,15 @@ export function createPocketWorkspace(options: PocketWorkspaceOptions): PocketWo
 					profileCheck(saved.profile);
 					if (initialDirectory !== undefined && !directoryWithin(initialDirectory, roots())) denied();
 					if (
-						saved.configuration?.model !== undefined &&
-						!runtime.profileChoices().some((row) => row.model === saved.configuration!.model)
+						effectiveConfiguration?.model !== undefined &&
+						!runtime.modelAllowed(effectiveConfiguration.model)
 					)
 						denied();
 					if (from) check("manage", from);
 					if (saved.inherit) check("manage", saved.inherit);
 					if (
 						inheritedConfiguration &&
-						(!runtime.profileChoices().some((row) => row.model === inheritedConfiguration!.model) ||
+						((inheritedConfiguration.model !== "" && !runtime.modelAllowed(inheritedConfiguration.model)) ||
 							!directoryWithin(inheritedConfiguration.cwd, roots()))
 					)
 						denied();
@@ -410,18 +521,23 @@ export function createPocketWorkspace(options: PocketWorkspaceOptions): PocketWo
 						return prior.ref;
 					}
 					if (lookupOnly) return null;
+					if (!from && !saved.inherit && options.creationDefaults) {
+						const defaults = await options.creationDefaults(actor, saved);
+						if (defaults) effectiveConfiguration = Object.freeze({ ...defaults, ...saved.configuration });
+						authorize();
+					}
 					const inheritedRef = saved.inherit ?? (from?.profile === saved.profile ? from : undefined);
 					if (inheritedRef) {
 						const provider = await resource(inheritedRef, authorize);
 						if (provider && !provider.canManage(inheritedRef)) denied();
 						const inherited = await runtime.configuration(inheritedRef);
 						inheritedConfiguration = inherited;
-						if (!runtime.profileChoices().some((row) => row.model === inherited.model)) denied();
+						if (inherited.model !== "" && !runtime.modelAllowed(inherited.model)) denied();
 						await resolveDirectory(inherited.cwd, roots());
 						authorize();
 					}
-					if (saved.configuration?.cwd !== undefined)
-						initialDirectory = await resolveDirectory(saved.configuration.cwd, roots());
+					if (effectiveConfiguration?.cwd !== undefined)
+						initialDirectory = await resolveDirectory(effectiveConfiguration.cwd, roots());
 					authorize();
 					const rows = await catalog.enroll(
 						[
@@ -439,7 +555,7 @@ export function createPocketWorkspace(options: PocketWorkspaceOptions): PocketWo
 								},
 								...(from ? { fork: { source: from, entryId: entryId! } } : {}),
 								...(saved.inherit ? { inherit: saved.inherit } : {}),
-								...(saved.configuration ? { configuration: saved.configuration } : {}),
+								...(effectiveConfiguration ? { configuration: effectiveConfiguration } : {}),
 							},
 						],
 						authorize,
@@ -575,7 +691,147 @@ export function createPocketWorkspace(options: PocketWorkspaceOptions): PocketWo
 					return frozen({ ref, ...next });
 				});
 			};
+			const configuration = async (raw: ConversationRef): Promise<PocketConfiguration> => {
+				const ref = structuredClone(raw),
+					authorize = () => check("read", ref);
+				authorize();
+				const provider = await resource(ref, authorize);
+				const snapshot = await runtime.previewConversation(ref, authorize, { limit: 1 });
+				const models = new Map<string, { id: string; model: string }>();
+				for (const { id, model } of runtime.profileChoices())
+					if (model && !models.has(model)) models.set(model, { id, model });
+				const choices = [...models.values()],
+					view = runtime.view();
+				const selected = await runtime.configuration(ref);
+				authorize();
+				const person = current();
+				return frozen({
+					ref,
+					current: selected,
+					choices,
+					canConfigure: person.role === "admin" && (!provider || provider.canManage(ref)),
+					usage: snapshot.usage,
+					session:
+						person.role === "admin" && person.resources === "*"
+							? { limits: view.limits, budget: view.budget }
+							: null,
+				});
+			};
+			const configurationOperation = async (
+				raw: ConversationConfigurationRequest,
+				lookupOnly: boolean,
+				extra?: () => void,
+			): Promise<ConversationConfigurationReceipt | null> => {
+				const original = decodeConversationConfigurationRequest(raw),
+					ref = original.target;
+				const authorize = () => {
+					extra?.();
+					try {
+						check("manage", ref);
+					} catch {
+						throw new PocketConfigurationRefused("FORBIDDEN");
+					}
+				};
+				authorize();
+				const actorId = current().id;
+				const matches = lookupOnly ? sameResource : sameRef;
+				let provider: ReturnType<PocketConversationSource["bind"]> | undefined;
+				const snapshot = await catalog.snapshot();
+				authorize();
+				if (!snapshot.members.some((row) => row.data.kind === "pocket-workspace" && matches(row.ref, ref))) {
+					for (const candidate of providers()) {
+						const rows = await candidate.navigation();
+						authorize();
+						if (rows.some((row) => matches(row.ref, ref))) {
+							provider = candidate;
+							break;
+						}
+					}
+					if (!provider) throw new PocketConfigurationRefused("UNSUPPORTED");
+				}
+				if (provider && (!provider.changeConfiguration || !provider.configurationReceipt))
+					throw new PocketConfigurationRefused("UNSUPPORTED");
+				let entered = false;
+				try {
+					let receipt: ConversationConfigurationReceipt | null;
+					if (!lookupOnly) {
+						const selection = original.selection;
+						let cwd: string | undefined;
+						const admissionCheck = () => {
+							authorize();
+							if (selection.kind === "profile") profileCheck(selection.profile);
+							else {
+								if (selection.change.model !== undefined && !runtime.modelAllowed(selection.change.model))
+									denied();
+								if (cwd !== undefined && !directoryWithin(cwd, roots())) denied();
+							}
+						};
+						admissionCheck();
+						if (selection.kind === "agent" && selection.change.cwd !== undefined)
+							cwd = await resolveDirectory(selection.change.cwd, roots());
+						admissionCheck();
+						entered = true;
+						if (provider) receipt = await provider.changeConfiguration!(original, admissionCheck);
+						else {
+							const identity = { requestId: original.requestId, principal: actorId };
+							if (selection.kind === "profile")
+								await catalog.configure(ref, selection.profile, admissionCheck, identity);
+							else await catalog.configureAgent(ref, selection.change, admissionCheck, identity);
+							const saved = await catalog.configurationReceipt(
+								{ ...original, principal: actorId },
+								authorize,
+							);
+							receipt = saved && { actorId, original, ref: saved.ref, at: saved.at };
+						}
+					} else if (provider) receipt = await provider.configurationReceipt!(original, authorize);
+					else {
+						const saved = await catalog.configurationReceipt({ ...original, principal: actorId }, authorize);
+						receipt = saved && { actorId, original, ref: saved.ref, at: saved.at };
+					}
+					authorize();
+					if (!lookupOnly && !receipt) throw Error("Configuration receipt not confirmed after admission");
+					if (!receipt) return null;
+					const checked = decodeConversationConfigurationReceipt(receipt);
+					if (!matchesConversationConfigurationReceipt(checked, original, actorId))
+						throw Error("Configuration receipt mismatch");
+					return checked;
+				} catch (error) {
+					if (!lookupOnly && error instanceof ConfigurationChangeRefusedError)
+						throw new PocketConfigurationRefused("CONFLICT");
+					if (!lookupOnly && !entered)
+						throw error instanceof PocketConfigurationRefused
+							? error
+							: new PocketConfigurationRefused("FORBIDDEN");
+					if (!lookupOnly)
+						throw new Error("Configuration effect unknown; query the original request", { cause: error });
+					throw error;
+				}
+			};
 			return Object.freeze({
+				configuration,
+				configurationOptions: async (ref: ConversationRef) => {
+					const selected = await configuration(ref),
+						authorize = () => check("read", ref);
+					const provider = await resource(ref, authorize),
+						allowed = ceiling();
+					const presets = selected.canConfigure
+						? runtime.profileChoices().filter((row) => allowed.includes(row.id))
+						: [];
+					authorize();
+					return frozen({
+						configuration: selected,
+						presets,
+						supportsRequests: !provider || !!(provider.changeConfiguration && provider.configurationReceipt),
+					});
+				},
+				changeConfiguration: (original: ConversationConfigurationRequest, extra?: () => void) =>
+					serial(async () => {
+						const receipt = await configurationOperation(original, false, extra);
+						if (!receipt) throw Error("Configuration write unconfirmed");
+						return receipt;
+					}),
+				configurationReceipt: (original: ConversationConfigurationRequest, extra?: () => void) =>
+					configurationOperation(original, true, extra),
 				list: async () => frozen((await navigation()).map((row) => row.ref)),
 				navigation,
 				setMetadata: async (ref: ConversationRef, input: PocketMetadataInput) => {
@@ -585,32 +841,6 @@ export function createPocketWorkspace(options: PocketWorkspaceOptions): PocketWo
 				},
 				metadataReceipt: (ref: ConversationRef, input: PocketMetadataInput) =>
 					changeMetadata(ref, input, true),
-				configuration: async (raw: ConversationRef): Promise<PocketConfiguration> => {
-					const ref = structuredClone(raw),
-						authorize = () => check("read", ref);
-					authorize();
-					const provider = await resource(ref, authorize);
-					const snapshot = await runtime.readConversation(ref, authorize, { limit: 1 });
-					const models = new Map<string, { id: string; model: string }>();
-					for (const { id, model } of runtime.profileChoices())
-						if (!models.has(model)) models.set(model, { id, model });
-					const choices = [...models.values()];
-					const view = runtime.view();
-					const configuration = await runtime.configuration(ref);
-					authorize();
-					const person = current();
-					return frozen({
-						ref,
-						current: configuration,
-						choices,
-						canConfigure: person.role === "admin" && (!provider || provider.canManage(ref)),
-						usage: snapshot.usage,
-						session:
-							person.role === "admin" && person.resources === "*"
-								? { limits: view.limits, budget: view.budget }
-								: null,
-					});
-				},
 				create: async (input: PocketCreate) => {
 					const ref = await create(input);
 					if (!ref) throw Error("Creation admission unconfirmed");
@@ -648,11 +878,7 @@ export function createPocketWorkspace(options: PocketWorkspaceOptions): PocketWo
 							authorize = () => {
 								check("manage", ref);
 								if (validatedCwd !== undefined && !directoryWithin(validatedCwd, roots())) denied();
-								if (
-									change?.model !== undefined &&
-									!runtime.profileChoices().some((row) => row.model === change.model)
-								)
-									denied();
+								if (change?.model !== undefined && !runtime.modelAllowed(change.model)) denied();
 							};
 						authorize();
 						const provider = await resource(ref, authorize);
@@ -681,24 +907,37 @@ export function createPocketWorkspace(options: PocketWorkspaceOptions): PocketWo
 					const saved = structuredClone(ref),
 						authorize = () => check("read", saved);
 					authorize();
-					const snapshot = await runtime.readConversation(saved, authorize, page);
+					return publicSnapshot(await runtime.readConversation(saved, authorize, page), authorize);
+				},
+				preview: async (ref: ConversationRef, page?: ConversationPreviewOptions, extra?: () => void) => {
+					const saved = structuredClone(ref),
+						authorize = () => {
+							check("read", saved);
+							extra?.();
+						};
 					authorize();
-					const person = current();
-					const entries = snapshot.entries.map((entry) => {
-						if (
-							!entry.sourceConversationId ||
-							person.resources === "*" ||
-							person.resources.includes(
-								people.resourceId({ sessionId: saved.sessionId, conversationId: entry.sourceConversationId }),
-							)
-						)
-							return entry;
-						// An explicit native fork copies history, not a read grant to its source resource.
-						const { sourceConversationId: _source, ...scoped } = entry;
-						return scoped;
-					});
+					return publicSnapshot(await runtime.previewConversation(saved, authorize, page), authorize);
+				},
+				observationRevision: (ref: ConversationRef) => {
+					const saved = structuredClone(ref);
+					return runtime.observationRevision(saved, () => check("read", saved));
+				},
+				readContent: async (
+					ref: ConversationRef,
+					reference: ConversationContentReference,
+					range: ConversationContentRange,
+					extra?: () => void,
+				) => {
+					const saved = structuredClone(ref),
+						original = structuredClone(reference);
+					const authorize = () => {
+						check("read", saved);
+						extra?.();
+					};
 					authorize();
-					return frozen({ ...snapshot, entries });
+					const chunk = await runtime.readContent(saved, original, range, authorize);
+					authorize();
+					return frozen({ ...chunk, reference: publicReference(chunk.reference, saved) });
 				},
 				display: async (
 					ref: ConversationRef,
@@ -746,6 +985,75 @@ export function createPocketWorkspace(options: PocketWorkspaceOptions): PocketWo
 							authorize,
 						),
 					);
+				},
+				inputReceipt: async (ref: ConversationRef, input: PocketInput) => {
+					const saved = structuredClone(ref),
+						data = structuredClone(input),
+						authorize = () => check("read", saved);
+					authorize();
+					if (
+						!data ||
+						Object.keys(data).some((name) => !["requestId", "text", "mode"].includes(name)) ||
+						!key(data.requestId) ||
+						typeof data.text !== "string" ||
+						!data.text.trim() ||
+						data.text.length > 65536 ||
+						!["prompt", "steer", "followUp"].includes(data.mode)
+					)
+						throw new Error("Invalid original WebUI input");
+					const provider = await resource(saved, authorize, sameResource);
+					if (provider) {
+						if (!provider.inputReceipt) throw new PocketInputLookupUnsupported();
+						const value = await provider.inputReceipt(saved, data, authorize);
+						authorize();
+						return value;
+					}
+					const value = await catalog.lookupRequest(
+						{
+							requestId: data.requestId,
+							principal: current().id,
+							source: null,
+							target: saved,
+							text: data.text,
+							mode: data.mode,
+						},
+						authorize,
+					);
+					authorize();
+					return value === null ? null : receiptCheck(value);
+				},
+				inputHistory: async (ref: ConversationRef, cursor?: string) => {
+					const saved = structuredClone(ref),
+						authorize = () => check("read", saved);
+					authorize();
+					if (cursor !== undefined && !key(cursor)) throw new Error("Invalid input history cursor");
+					const provider = await resource(saved, authorize);
+					if (provider) {
+						if (!provider.inputHistory) throw new PocketInputLookupUnsupported();
+						const page = await provider.inputHistory(saved, cursor, authorize);
+						authorize();
+						return page;
+					}
+					const actorId = current().id;
+					const page = await catalog.history(
+						{ limit: 16, ...(cursor ? { cursor } : {}) },
+						authorize,
+						(spec) =>
+							spec.principal === actorId &&
+							spec.source === null &&
+							spec.target.sessionId === saved.sessionId &&
+							spec.target.conversationId === saved.conversationId,
+					);
+					authorize();
+					return frozen({
+						items: page.items.map((item) => ({
+							receipt: receiptCheck(item.receipt),
+							mode: item.mode,
+							preview: item.text.slice(0, 1024),
+							truncated: item.text.length > 1024,
+						})),
+						...(page.nextCursor ? { nextCursor: page.nextCursor } : {}),
+					});
 				},
 				receipt: async (id: string, sessionId?: string) => {
 					if (sessionId !== undefined && sessionId !== runtime.view().sessionId) return denied();

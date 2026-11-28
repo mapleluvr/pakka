@@ -1,0 +1,8 @@
+npm notice
+npm notice New major version of npm available! 11.12.1 -> 12.2.2
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.2
+npm notice To update run: npm install -g npm@12.2.2
+npm notice
+
+added 1 package in 1m
+{"consumer":"execution","requests":5,"nativeFile":"NEW","argvFile":"ARGV","cleaned":1,"root":"C:\\Users\\mapleland\\AppData\\Local\\Temp\\pakka-execution-consumer-p7a7kC"}

@@ -204,7 +204,7 @@ test("a single-Conversation store retains its identity when managed open is refu
 				reopenSessionFile: view.sessionFile,
 				limits: { maxConversations: 8, maxPrimaryAttempts: 100, maxAuxiliaryAttempts: 20 },
 			}),
-			/Managed runtime profile.*limits mismatch/,
+			/Managed runtime profile mismatch/,
 		);
 		assert.deepEqual(await readFile(view.sessionFile), before);
 		assert.equal(f.requests.length, 1);

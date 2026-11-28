@@ -1,0 +1,162 @@
+.rsi-view,
+.rsi-editor {
+	font-family: var(--font-family-body);
+	color: var(--color-text-primary);
+	font-size: 1rem;
+	min-width: 0;
+}
+.rsi-stack {
+	display: flex;
+	flex-direction: column;
+	gap: 1.25rem;
+	min-width: 0;
+}
+.rsi-tight {
+	gap: 0.5rem;
+}
+.rsi-heading {
+	display: flex;
+	gap: 1.5rem;
+	justify-content: space-between;
+	align-items: flex-start;
+	flex-wrap: wrap;
+}
+.rsi-eyebrow {
+	color: var(--color-text-accent);
+	font-size: 0.8rem;
+	font-weight: 650;
+	letter-spacing: 0.08em;
+}
+.rsi-view h1,
+.rsi-view h2,
+.rsi-view h3,
+.rsi-editor h2 {
+	margin: 0;
+	line-height: 1.4;
+	text-wrap: balance;
+}
+.rsi-view h1 {
+	font-size: 1.75rem;
+}
+.rsi-view h2,
+.rsi-editor h2 {
+	font-size: 1.25rem;
+}
+.rsi-view h3 {
+	font-size: 1rem;
+}
+.rsi-view p,
+.rsi-editor p {
+	margin: 0;
+	line-height: 1.65;
+	overflow-wrap: anywhere;
+}
+.rsi-muted,
+.rsi-view small {
+	color: var(--color-text-secondary);
+}
+.rsi-view code,
+.rsi-view a {
+	overflow-wrap: anywhere;
+}
+.rsi-view ul {
+	margin: 0;
+	padding-inline-start: 1.25rem;
+}
+.rsi-actions {
+	display: flex;
+	gap: 0.75rem;
+	flex-wrap: wrap;
+	align-items: center;
+}
+.rsi-actions > button,
+.rsi-control,
+.rsi-control input {
+	min-height: 44px;
+}
+.rsi-control,
+.rsi-control input,
+.rsi-control textarea {
+	font-size: 1rem;
+}
+.rsi-control textarea {
+	line-height: 1.65;
+}
+.rsi-columns {
+	display: grid;
+	grid-template-columns: minmax(240px, 1fr) minmax(0, 2fr);
+	gap: 1.5rem;
+	align-items: start;
+}
+.rsi-list,
+.rsi-detail {
+	border: 1px solid var(--color-border);
+	border-radius: 0.75rem;
+	background: var(--color-background-surface);
+	padding: 1.25rem;
+}
+.rsi-row {
+	min-height: 72px;
+	height: auto;
+	white-space: normal;
+	text-align: start;
+	padding: 0.875rem;
+	justify-content: flex-start;
+}
+.rsi-row[aria-pressed="true"] {
+	background: var(--color-background-muted);
+	outline: 1px solid var(--color-border);
+}
+.rsi-row-content {
+	display: grid;
+	gap: 0.3rem;
+	min-width: 0;
+	white-space: normal;
+	text-align: start;
+}
+.rsi-row-content strong {
+	overflow-wrap: anywhere;
+	line-height: 1.55;
+}
+.rsi-row-content small {
+	font-size: 0.75rem;
+}
+.rsi-body {
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+}
+.rsi-events {
+	display: grid;
+	gap: 1.25rem;
+	margin: 0;
+	padding-inline-start: 1.25rem;
+}
+.rsi-events li {
+	min-width: 0;
+	padding-inline-start: 0.25rem;
+}
+.rsi-pending {
+	border: 1px solid var(--color-border);
+	padding: 1rem;
+	border-radius: 0.5rem;
+	background: var(--color-background-muted);
+}
+.rsi-problem {
+	border-inline-start: 3px solid var(--color-text-accent);
+	padding-inline-start: 0.75rem;
+}
+.rsi-editor form {
+	padding-block: 0.25rem;
+}
+@media (max-width: 800px) {
+	.rsi-columns {
+		grid-template-columns: minmax(0, 1fr);
+	}
+	.rsi-list,
+	.rsi-detail {
+		padding: 1rem;
+	}
+	.rsi-heading {
+		gap: 1rem;
+	}
+}

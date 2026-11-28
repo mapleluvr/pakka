@@ -1,14 +1,15 @@
-import { randomUUID } from "node:crypto";
+import { randomUUID, createHash } from "node:crypto";
 import { readFileSync, realpathSync, existsSync, statSync, lstatSync } from "node:fs";
 import { mkdir, writeFile, open, readFile, unlink, mkdtemp, rm } from "node:fs/promises";
 import { DatabaseSync, backup } from "node:sqlite";
 import { tmpdir } from "node:os";
-import { join, resolve, relative, isAbsolute, dirname } from "node:path";
+import { join, resolve, relative, isAbsolute, dirname, basename, toNamespacedPath } from "node:path";
 import { isDeepStrictEqual } from "node:util";
 import { BACKGROUND_CONTEXT, withAbortSignal } from "@earendil-works/chord/context";
 import type { JsonValue as ChordJsonValue, JsonRepresentation } from "@earendil-works/chord";
 import {
 	Harness,
+	createSession,
 	createRegistry,
 	defineTool,
 	defineExtension,
@@ -26,6 +27,7 @@ import {
 	AgentDoc,
 	defineTask,
 	LiveDoc,
+	UsageDoc,
 	configure,
 	ProviderDoc,
 	type Tx,
@@ -38,6 +40,7 @@ import {
 	type Storage,
 	type Cursor,
 	type EntryRecord,
+	type EntryHeader,
 	type EntryDraft,
 	type EntryId,
 	type TaskId,
@@ -48,12 +51,18 @@ import {
 	type LiveState,
 	type UsageState,
 } from "@earendil-works/pi-durable";
-import { SqliteStorage } from "@earendil-works/pi-durable/storage/sqlite";
-import { NodeSqliteDatabase, openNodeSqliteStorage } from "@earendil-works/pi-durable/storage/sqlite/node";
+import { SqliteStorage, SqliteReaderVersionError } from "@earendil-works/pi-durable/storage/sqlite";
+import {
+	NodeSqliteDatabase,
+	openNodeSqliteStorage,
+	openNodeSqliteReader,
+} from "@earendil-works/pi-durable/storage/sqlite/node";
 import {
 	createModels,
 	createProvider,
 	validateToolCall,
+	getSupportedThinkingLevels,
+	type ModelThinkingLevel,
 	type Models,
 	type Model,
 	type Api,
@@ -64,16 +73,31 @@ import {
 } from "@earendil-works/pi-ai";
 import * as oac from "@earendil-works/pi-ai/api/openai-completions";
 import { copy, hash, json } from "./artifact-journal.ts";
+import { createArtifactHistoryReader } from "./artifact-history.ts";
+import type { HistoricalEntryInput, HistoricalEntryContent } from "./types.ts";
+import { createHistoricalWork } from "./historical-work.ts";
+import type { HistoricalPlan, HistoricalWork, HistoricalWorkOptions } from "./historical-types.ts";
 import type { JournalStorage, JournalMutation } from "./native-journal.ts";
 import { sourceWorkPlan, type StoredSourceWork, type SourceWorkMutation } from "./source-work.ts";
 import { planHistoryScan } from "./history-scan.ts";
+import { indexEntryJson } from "./entry-preview.ts";
+import {
+	projectConversationEntry,
+	readPreviewContent,
+	previewLiveArguments,
+	type IndexedConversationEntry,
+} from "./conversation-preview.ts";
+import { legacyModels, primaryModels, modelReference, modelKey, modelDTO } from "./model-access.ts";
 import { LifecycleTransitionRevoked } from "./strategy-control.ts";
 import type {
 	HostOptions,
 	WriterRecoveryOptions,
+	StorageMaintenanceOptions,
+	StorageMaintenance,
 	WriterRecoveryReceipt,
 	ArtifactReceipt,
 	ArtifactSnapshot,
+	ArtifactHistory,
 	JsonValue,
 	Proposal,
 	ContextFrame,
@@ -92,6 +116,12 @@ import type {
 	ConversationConfiguration,
 	ConversationConfigurationChange,
 	RuntimeOptions,
+	RuntimeLimits,
+	RuntimeBudgetChange,
+	RuntimeBudgetSnapshot,
+	RuntimeBudgetReceipt,
+	RuntimeBudgetQuery,
+	RuntimeBudgetPage,
 	RuntimeView,
 	CatalogOptions,
 	CatalogMember,
@@ -99,12 +129,24 @@ import type {
 	RuntimeCatalog,
 	RuntimeStore,
 	RuntimeStoreOptions,
+	RuntimeRecords,
+	RuntimeRecordsOptions,
+	RuntimeRecordsCommit,
+	RuntimeRecordsQuery,
+	RuntimeRecordsReceipt,
 	DeliveryReceipt,
 	CatalogDeliverySpec,
+	CatalogConfigurationIdentity,
+	CatalogConfigurationRequest,
+	CatalogConfigurationReceipt,
 	JsonObject,
 	ConversationProfile,
 	ConversationSnapshot,
 	ConversationReadOptions,
+	ConversationPreviewOptions,
+	ConversationContentReference,
+	ConversationContentRange,
+	ConversationContentChunk,
 	TranscriptMessage,
 	DisplayWrite,
 	DisplayReceipt,
@@ -115,7 +157,398 @@ import type {
 	RuntimeJobDefinition,
 	RuntimeJobs,
 	RuntimeContextSource,
+	StoredConversationOptions,
+	StoredConversationQuery,
+	StoredConversationResult,
+	ConversationHistoryPage,
 } from "./types.ts";
+
+import { NodeExecutionEnv } from "@earendil-works/pi-durable/env/node";
+import {
+	FileError,
+	ExecutionError,
+	type ExecutionEnv,
+	type FileErrorCode,
+	type ExecutionErrorCode,
+} from "@earendil-works/pi-durable/env";
+import {
+	createReadTool,
+	createWriteTool,
+	createEditTool,
+	createBashTool,
+	createPowerShellTool,
+} from "@earendil-works/pi-durable/tools";
+import type {
+	ExecutionAccess,
+	ExecutionConfiguration,
+	ExecutionDriver,
+	ExecutionEnvironment,
+	ExecutionTarget,
+	ExecutionResult,
+	LocalExecutionOptions,
+} from "./execution-types.ts";
+
+import { agentFacetSource, AgentFacetRevoked, type AgentFacet } from "./agent-facet.ts";
+
+// Fixed public filesystem operations. The count is the number of arguments before signal/Context.
+const executionMethods = {
+	absolutePath: 1,
+	joinPath: 1,
+	readTextFile: 1,
+	readTextLines: 2,
+	readBinaryFile: 1,
+	writeFile: 2,
+	appendFile: 2,
+	truncateFile: 2,
+	flushFile: 1,
+	renameFile: 2,
+	fileInfo: 1,
+	listDir: 1,
+	listFiles: 2,
+	canonicalPath: 1,
+	exists: 1,
+	createDir: 2,
+	remove: 2,
+	createTempDir: 1,
+	createTempFile: 1,
+	openBinaryReader: 2,
+	openTextLineReader: 1,
+	openDirReader: 1,
+	watch: 2,
+	exec: 2,
+} as const;
+type ExecutionCalls = Record<string, (...args: any[]) => any>;
+const readerMethods: Record<string, Readonly<Record<string, number>>> = {
+	openBinaryReader: { info: 0, read: 2, scanLines: 1 },
+	openTextLineReader: { readLine: 0 },
+	openDirReader: { next: 1 },
+	watch: {},
+};
+const executionScopes = new WeakMap<object, () => Promise<ExecutionAccess>>();
+class ExecutionAccessRevoked extends Error {}
+
+/** Only a currently executing, authentic Pakka tool invocation can acquire this facade. */
+export async function executionFor(scope: ToolInvocationScope): Promise<ExecutionAccess> {
+	const acquire = scope && executionScopes.get(scope);
+	if (!acquire) throw new Error("Execution invocation is inactive or foreign");
+	return acquire();
+}
+function executionContext(signal?: AbortSignal) {
+	return signal ? withAbortSignal(signal, BACKGROUND_CONTEXT) : BACKGROUND_CONTEXT;
+}
+function missingExecution(method: string): ExecutionResult<never> {
+	return copy({
+		ok: false,
+		error: {
+			code: method === "exec" ? "shell_unavailable" : "not_supported",
+			message: `Execution method unavailable: ${method}`,
+		},
+	});
+}
+function checkedExecutionResult(result: any): asserts result is { ok: boolean; value?: any; error?: any } {
+	if (
+		!result ||
+		typeof result !== "object" ||
+		typeof result.ok !== "boolean" ||
+		(!result.ok &&
+			(!result.error ||
+				!(
+					[
+						"aborted",
+						"not_found",
+						"permission_denied",
+						"not_directory",
+						"is_directory",
+						"invalid",
+						"not_supported",
+						"unknown",
+						"timeout",
+						"shell_unavailable",
+						"spawn_error",
+						"callback_error",
+					] satisfies (FileErrorCode | ExecutionErrorCode)[]
+				).includes(result.error.code) ||
+				typeof result.error.message !== "string"))
+	)
+		throw new Error("Invalid execution result; effects are unconfirmed");
+}
+function executionFailure(error: any) {
+	return copy({
+		code: error.code,
+		message: error.message,
+		...(typeof error.path === "string" ? { path: error.path } : {}),
+		...(typeof error.spillPath === "string" ? { spillPath: error.spillPath } : {}),
+	});
+}
+function nativeExecutionFailure(error: any, command = false) {
+	if (command) {
+		const codes = ["aborted", "timeout", "shell_unavailable", "spawn_error", "callback_error", "unknown"];
+		const result = new ExecutionError(
+			(codes.includes(error.code) ? error.code : "unknown") as ExecutionErrorCode,
+			error.message,
+		);
+		if (error.spillPath !== undefined) result.spillPath = error.spillPath;
+		return result;
+	}
+	const codes = [
+		"aborted",
+		"not_found",
+		"permission_denied",
+		"not_directory",
+		"is_directory",
+		"invalid",
+		"not_supported",
+		"unknown",
+	];
+	return new FileError(
+		(codes.includes(error.code) ? error.code : "unknown") as FileErrorCode,
+		error.message,
+		error.path,
+	);
+}
+
+/** Explicit ambient local execution, not a sandbox. All native objects remain in this module. */
+export function createLocalExecutionEnvironment(options: LocalExecutionOptions): ExecutionEnvironment {
+	const native = new NodeExecutionEnv({
+		cwd: options.cwd,
+		shellPath: options.shellPath,
+		shellEnv: options.shellEnv ? { ...options.shellEnv } : undefined,
+	});
+	const resources = new Set<() => Promise<void>>();
+	const commands = new Set<Promise<unknown>>();
+	let closing: Promise<void> | undefined;
+	const check = () => {
+		if (closing) throw new Error("Execution environment is closed");
+	};
+	const convert = (result: any, method: string): any => {
+		checkedExecutionResult(result);
+		if (!result.ok) return copy({ ok: false, error: executionFailure(result.error) });
+		if (readerMethods[method]) {
+			const reader = result.value as ExecutionCalls;
+			let closed: Promise<void> | undefined;
+			const close = () =>
+				(closed ??= Promise.resolve()
+					.then(() => reader.close(BACKGROUND_CONTEXT))
+					.then(() => {
+						resources.delete(close);
+					}));
+			resources.add(close);
+			const facade: Record<string, unknown> = { close, ...(method === "watch" ? { mode: reader.mode } : {}) };
+			for (const [name, count] of Object.entries(readerMethods[method]!)) {
+				facade[name] = async (...args: any[]) => {
+					check();
+					if (closed) throw new Error("Execution reader is closed");
+					const value = await reader[name]!(...args.slice(0, count), executionContext(args[count]));
+					return convert(value, name === "read" ? "readBinaryFile" : name);
+				};
+			}
+			return Object.freeze({ ok: true, value: Object.freeze(facade) });
+		}
+		return copy({
+			ok: true,
+			value:
+				method === "readBinaryFile" ? { base64: Buffer.from(result.value).toString("base64") } : result.value,
+		});
+	};
+	const result: Record<string, unknown> = { id: native.id, cwd: native.cwd };
+	for (const [method, count] of Object.entries(executionMethods)) {
+		result[method] = async (...raw: any[]) => {
+			check();
+			// SAFETY: method is from the fixed public operation table; the callable is checked and retains its native receiver.
+			const fn = (native as unknown as ExecutionCalls)[method];
+			if (typeof fn !== "function") return missingExecution(method);
+			const args = Array.from({ length: count }, (_, i) => raw[i]);
+			const context = executionContext(raw[count]);
+			if ((method === "writeFile" || method === "appendFile") && typeof args[1] !== "string")
+				args[1] = Buffer.from(args[1].base64, "base64");
+			if (method === "exec" && args[1]) {
+				const { onOutput, ...options } = args[1];
+				args[1] = {
+					...copy(options),
+					...(onOutput
+						? { onOutput: (text: string, _context: unknown, info: unknown) => onOutput(text, copy(info)) }
+						: {}),
+				};
+			}
+			if (method === "watch") {
+				const onChange = args[1];
+				args[1] = (change: any) =>
+					onChange(copy(change.error ? { error: executionFailure(change.error) } : change));
+			}
+			const pending = Promise.resolve(fn.apply(native, [...args, context]));
+			if (method === "exec") commands.add(pending);
+			try {
+				return convert(await pending, method);
+			} finally {
+				commands.delete(pending);
+			}
+		};
+	}
+	result.cleanup = () =>
+		(closing ??= Promise.resolve().then(async () => {
+			await native.cleanup(BACKGROUND_CONTEXT);
+			await Promise.all(commands);
+			await Promise.all([...resources].map((close) => close()));
+		}));
+	// SAFETY: every public method is installed from the fixed operation table, with signal and result/handle conversion.
+	return Object.freeze(result) as unknown as ExecutionEnvironment;
+}
+
+/** A driver is trusted host code, but its data and resource handles never become native Pi objects outside here. */
+function nativeExecutionEnvironment(driver: ExecutionDriver): ExecutionEnv {
+	const result: Record<string, unknown> = { id: driver.id, cwd: driver.cwd, cleanup: () => driver.cleanup() };
+	const convert = (value: any, method: string): any => {
+		checkedExecutionResult(value);
+		if (!value.ok) return { ok: false, error: nativeExecutionFailure(value.error, method === "exec") };
+		if (readerMethods[method]) {
+			const source = value.value as ExecutionCalls;
+			const reader: Record<string, unknown> = {
+				close: () => source.close(),
+				...(method === "watch" ? { mode: source.mode } : {}),
+			};
+			for (const [name, count] of Object.entries(readerMethods[method]!))
+				reader[name] = async (...args: any[]) =>
+					convert(
+						await source[name]!(...args.slice(0, count), args[count]?.abortSignal),
+						name === "read" ? "readBinaryFile" : name,
+					);
+			return { ok: true, value: reader };
+		}
+		return {
+			ok: true,
+			value:
+				method === "readBinaryFile"
+					? Buffer.from(value.value.base64, "base64")
+					: structuredClone(value.value),
+		};
+	};
+	for (const [method, count] of Object.entries(executionMethods)) {
+		result[method] = async (...raw: any[]) => {
+			// SAFETY: only fixed public operation names are selected; absent optional driver methods fail explicitly below.
+			const fn = (driver as unknown as ExecutionCalls)[method];
+			if (typeof fn !== "function") return convert(missingExecution(method), method);
+			const args = Array.from({ length: count }, (_, i) => raw[i]);
+			const context = raw[count];
+			if ((method === "writeFile" || method === "appendFile") && typeof args[1] !== "string")
+				args[1] = { base64: Buffer.from(args[1]).toString("base64") };
+			if (method === "exec" && args[1]) {
+				const { onOutput, ...options } = args[1];
+				args[1] = {
+					...copy(options),
+					...(onOutput ? { onOutput: (text: string, info: unknown) => onOutput(text, context, info) } : {}),
+				};
+			}
+			if (method === "watch") {
+				const onChange = args[1];
+				args[1] = (change: any) =>
+					onChange(change.error ? { error: nativeExecutionFailure(change.error) } : structuredClone(change));
+			}
+			return convert(await fn.apply(driver, [...args, context?.abortSignal]), method);
+		};
+	}
+	// SAFETY: all required native methods are installed, translating Context/results and retaining native handles here.
+	return result as unknown as ExecutionEnv;
+}
+
+function boundExecutionAccess(
+	driver: ExecutionDriver,
+	check: () => void,
+	admit: () => void,
+	track: <T>(work: () => Promise<T>) => Promise<T>,
+	signal: AbortSignal | undefined,
+	resources: Set<() => Promise<void>>,
+): ExecutionAccess {
+	const invoke = <T>(work: () => Promise<T>): Promise<T> => {
+		try {
+			admit();
+			return track(work);
+		} catch (error) {
+			return Promise.reject(error);
+		}
+	};
+	const result: Record<string, unknown> = { id: driver.id, cwd: driver.cwd };
+	const convert = async (value: any, method: string): Promise<any> => {
+		checkedExecutionResult(value);
+		if (!value.ok && ["unknown", "callback_error"].includes(value.error.code))
+			throw new Error(`Execution effects are unconfirmed: ${value.error.message}`);
+		if (!value.ok || !readerMethods[method]) {
+			check();
+			return copy(value);
+		}
+		const source = value.value as ExecutionCalls;
+		let closed: Promise<void> | undefined;
+		const close = () =>
+			(closed ??= Promise.resolve()
+				.then(() => source.close())
+				.then(() => {
+					resources.delete(close);
+				}));
+		resources.add(close);
+		try {
+			check();
+		} catch (error) {
+			await close();
+			throw error;
+		}
+		const reader: Record<string, unknown> = { close, ...(method === "watch" ? { mode: source.mode } : {}) };
+		for (const [name, count] of Object.entries(readerMethods[method]!))
+			reader[name] = (...args: any[]) =>
+				invoke(async () => {
+					check();
+					if (closed) throw new ExecutionAccessRevoked("Execution reader is closed");
+					const callSignal =
+						signal && args[count] ? AbortSignal.any([signal, args[count]]) : (signal ?? args[count]);
+					const data = await source[name]!(...args.slice(0, count).map((value) => copy(value)), callSignal);
+					return convert(data, name);
+				});
+		return Object.freeze({ ok: true, value: Object.freeze(reader) });
+	};
+	for (const [method, count] of Object.entries(executionMethods))
+		result[method] = (...raw: any[]) =>
+			invoke(async () => {
+				check();
+				// SAFETY: method belongs to the fixed public table; optional driver methods are tested before calling.
+				const fn = (driver as unknown as ExecutionCalls)[method];
+				if (typeof fn !== "function") return missingExecution(method);
+				const args = Array.from({ length: count }, (_, i) => raw[i]);
+				if (method === "exec" && args[1]) {
+					const { onOutput, ...options } = args[1];
+					args[1] = {
+						...copy(options),
+						...(onOutput
+							? {
+									onOutput: (text: string, info: unknown) => {
+										try {
+											check();
+										} catch (error) {
+											if (error instanceof ExecutionAccessRevoked) return;
+											throw error;
+										}
+										onOutput(text, copy(info));
+									},
+								}
+							: {}),
+					};
+					args[0] = copy(args[0]);
+				} else if (method === "watch") {
+					const onChange = args[1];
+					args[0] = copy(args[0]);
+					args[1] = (change: unknown) => {
+						try {
+							check();
+						} catch {
+							return;
+						}
+						onChange(copy(change));
+					};
+				} else for (let i = 0; i < count; i++) args[i] = copy(args[i]);
+				const callSignal =
+					signal && raw[count] ? AbortSignal.any([signal, raw[count]]) : (signal ?? raw[count]);
+				return convert(await fn.apply(driver, [...args, callSignal]), method);
+			});
+	// SAFETY: all access methods are installed with invocation checks; cleanup is deliberately absent from this facade.
+	return Object.freeze(result) as unknown as ExecutionAccess;
+}
 
 export type AdapterFrame = Pick<
 	ContextFrame,
@@ -149,6 +582,7 @@ export type Notice =
 	| { type: "consumed"; id: string }
 	| { type: "committed"; id: string; entryId: string }
 	| { type: "blocked"; id: string; reason: string }
+	| { type: "generation_error"; id?: string; reason: string }
 	| { type: "unknown"; id: string; reason: string }
 	| { type: "released"; id: string; reason: string }
 	| { type: "failed"; reason: string; sessionId?: string };
@@ -207,6 +641,61 @@ function usageDTO(usage?: Usage): UsageDTO {
 		cacheWrite: usage?.cacheWrite ?? 0,
 		totalTokens: usage?.totalTokens ?? 0,
 		cost: usage?.cost?.total ? usage.cost.total : null,
+	};
+}
+
+function previewState(
+	live: Readonly<LiveState> | undefined,
+	usage: Readonly<UsageState> | undefined,
+): Pick<ConversationSnapshot, "live" | "usage"> {
+	const total = { ...usageDTO() };
+	for (const item of [...Object.values(usage?.models ?? {}), ...Object.values(usage?.tools ?? {})]) {
+		const value = usageDTO(item);
+		total.input += value.input;
+		total.output += value.output;
+		total.cacheRead += value.cacheRead;
+		total.cacheWrite += value.cacheWrite;
+		total.totalTokens += value.totalTokens;
+		if (value.cost !== null) total.cost = (total.cost ?? 0) + value.cost;
+	}
+	const snippet = (value: string) =>
+		value.length <= 4096
+			? value
+			: value.slice(0, 1024) + "\n… [live display preview] …\n" + value.slice(-1024);
+	const original = live?.generation?.message;
+	let message: TranscriptMessage | undefined;
+	if (original) {
+		const content = original.content.map((part) => {
+			if (part.type === "text") return { ...part, text: snippet(part.text) };
+			if (part.type === "thinking") return { ...part, thinking: snippet(part.thinking) };
+			if (part.type === "toolCall") return { ...part, arguments: previewLiveArguments(part.arguments) };
+			return part;
+		});
+		message = transcriptMessage({
+			...original,
+			content,
+			...(original.errorMessage === undefined ? {} : { errorMessage: snippet(original.errorMessage) }),
+		});
+		if (message?.stopReason === "pending") {
+			const { stopReason: _pending, ...partial } = message;
+			message = partial;
+		}
+	}
+	return {
+		live: {
+			busy: live?.run !== undefined,
+			...(message ? { message } : {}),
+			tools: (live?.tools ?? []).map((tool) => ({
+				callId: tool.callId,
+				name: tool.name,
+				status: tool.status,
+				...(tool.taskId === undefined ? {} : { taskId: String(tool.taskId) }),
+				...(tool.output === undefined ? {} : { output: snippet(tool.output) }),
+				...(tool.droppedBytes === undefined ? {} : { droppedBytes: tool.droppedBytes }),
+				...(tool.droppedLines === undefined ? {} : { droppedLines: tool.droppedLines }),
+			})),
+		},
+		usage: total,
 	};
 }
 
@@ -303,9 +792,64 @@ const CompresserJobDoc = defineDoc<CompresserJobState>({
 	}),
 });
 type AuxiliaryModel = { model: Model<Api>; apiKey: string; headers?: Record<string, string> };
+const CompressorPolicy = CompresserPolicyDoc,
+	CompressorJob = CompresserJobDoc;
+const HistorianPolicyDoc = defineDoc<CompresserPolicy>({
+	kind: "pakka.historian",
+	version: 1,
+	scope: "session",
+	checkpointWhen: () => true,
+	initial: () => ({
+		sessionId: "",
+		status: "open",
+		toolCallingTolerance: 0,
+		unresolvedErrorTolerance: 0,
+		lastError: null,
+		conversations: {},
+	}),
+});
+const HistorianJobDoc = defineDoc<CompresserJobState>({
+	kind: "pakka.historian-job",
+	version: 1,
+	scope: "conversation",
+	history: "latest",
+	fork: "initial",
+	checkpointWhen: () => true,
+	initial: () => ({
+		jobId: "",
+		planId: "",
+		sourceSessionId: "",
+		sourceConversationId: "",
+		fingerprint: "",
+		status: "running",
+		pendingAttempt: null,
+		result: null,
+		sealed: false,
+		toolErrors: 0,
+		unresolvedErrors: 0,
+		lastError: null,
+		incidents: {},
+	}),
+});
+const HistorianDirectoryDoc = defineDocFamily<{ conversationId: string }, null>({
+	kind: "pakka.historian-directory",
+	version: 1,
+	scope: "session",
+	family: true,
+	checkpointWhen: () => true,
+	initial: () => ({ conversationId: "" }),
+});
 const nativeCompresserSessions = new WeakMap<
 	CompresserSession,
 	{
+		kind: "compresser" | "historian";
+		readonly sessionId: string;
+		active(jobId: string): boolean;
+		retired(
+			source: GovernedConversation["source"],
+			request: InferenceRequest,
+			check: () => void,
+		): Promise<void>;
 		check(jobId?: string): void;
 		run(input: GovernedConversation, model: AuxiliaryModel): Promise<InferenceResult>;
 		recover(source: GovernedConversation["source"], request: InferenceRequest): Promise<InferenceResult>;
@@ -318,6 +862,17 @@ const COMPLETE_REWRITE =
 export async function createCompresserSession(
 	original: CompresserSessionOptions,
 ): Promise<CompresserSession> {
+	return createAuxiliarySession(original, "compresser");
+}
+export async function createHistorianSession(original: CompresserSessionOptions): Promise<CompresserSession> {
+	return createAuxiliarySession(original, "historian");
+}
+async function createAuxiliarySession(
+	original: CompresserSessionOptions,
+	purpose: "compresser" | "historian",
+): Promise<CompresserSession> {
+	const CompresserPolicyDoc = purpose === "historian" ? HistorianPolicyDoc : CompressorPolicy;
+	const CompresserJobDoc = purpose === "historian" ? HistorianJobDoc : CompressorJob;
 	const options = { ...original, storageDir: resolve(original.storageDir) };
 	if (
 		!original.storageDir ||
@@ -349,6 +904,7 @@ export async function createCompresserSession(
 				models,
 				registry,
 				settings: {
+					...(purpose === "historian" ? { documentRetentionMs: 0, contextRetentionMs: 0 } : {}),
 					stream: { maxRetries: 0 },
 					retry: { enabled: false, maxRetries: 0 },
 					compaction: { enabled: false },
@@ -452,480 +1008,532 @@ export async function createCompresserSession(
 				throw new Error("Completed Compresser candidate validation changed");
 			return result;
 		}
+		if (purpose === "historian") {
+			const saved = await harness.snapshot(HistorianDirectoryDoc, key, BACKGROUND_CONTEXT);
+			if (saved?.conversationId)
+				throw new MutationDenied("Original Historian job already exists; reconcile its result");
+		}
 		const holder = {
 			fingerprint,
 			operation: undefined! as Promise<InferenceResult>,
 			conversation: undefined as Conversation | undefined,
 		};
-		holder.operation = execute();
+		holder.operation = execute().finally(() => {
+			if (purpose === "historian") active.delete(key);
+		});
 		active.set(key, holder);
 		return holder.operation;
 		async function execute(): Promise<InferenceResult> {
-			const outputTool = input.request.outputTool!;
 			const providerId = "pakka-compresser-" + key;
-			let currentAttempt: string | undefined, answer: AssistantMessage | undefined;
-			let localFault: string | undefined;
-			let latest: InferenceResult | undefined,
-				diagnostic: string | undefined,
-				validCall: InferenceResult["toolCall"];
-			const rounds: InferenceResult[] = [];
-			let child: Conversation;
-			const raw = new Map<number, { id: string; text: string; bytes: number }>();
-			const providerApi = {
-				...oac,
-				streamSimple: (
-					model: Parameters<typeof oac.streamSimple>[0],
-					transcript: Parameters<typeof oac.streamSimple>[1],
-					streamOptions: Parameters<typeof oac.streamSimple>[2],
-				) => {
-					raw.clear();
-					return oac.streamSimple(model, transcript, {
-						...streamOptions,
-						maxRetries: 0,
-						timeoutMs: input.timeoutMs,
-						headers: { ...definition.headers, ...streamOptions?.headers },
-						onProviderStreamEvent: async (event, currentModel) => {
-							await streamOptions?.onProviderStreamEvent?.(event, currentModel);
-							const packet = event as {
-								choices?: {
-									delta?: {
-										tool_calls?: { index: number; id?: string; function?: { arguments?: string } }[];
-									};
-								}[];
-							};
-							for (const choice of packet?.choices ?? [])
-								for (const call of choice.delta?.tool_calls ?? []) {
-									const value = raw.get(call.index) ?? { id: "", text: "", bytes: 0 };
-									if (call.id) value.id = call.id;
-									const delta = call.function?.arguments ?? "";
-									value.bytes += Buffer.byteLength(delta, "utf8");
-									if (value.bytes <= 262144) value.text += delta;
-									raw.set(call.index, value);
-								}
-						},
-					});
-				},
-			};
-			models.setProvider(
-				createProvider({
-					id: providerId,
-					name: providerId,
-					baseUrl: definition.model.baseUrl,
-					auth: {
-						apiKey: {
-							name: "Host-approved auxiliary model",
-							resolve: async () => ({
-								auth: { apiKey: definition.apiKey, baseUrl: definition.model.baseUrl },
-							}),
-						},
-					},
-					api: { "openai-completions": providerApi },
-					models: [
-						{ ...definition.model, api: "openai-completions", provider: providerId, maxTokens: input.cap },
-					],
-				}),
-			);
-			const check = () => {
-				guard(key);
-				input.signal.throwIfAborted();
-				input.check();
-			};
-			async function quarantine(error: unknown) {
-				localFault ??= "Unconfirmed source completion: " + String(error);
-				sealedJobs.add(key);
-				await commit(async (tx) => {
-					const job = await tx.doc(CompresserJobDoc, child.id);
-					job.status = "quarantined";
-					job.sealed = true;
-					job.lastError = {
-						reason: localFault!,
-						incidentId: currentAttempt ?? "source-fault",
-						conversationId: String(child.id),
-						jobId: key,
-					};
-					// The pending attempt is retained: an unknown external audit is not a completion/refund.
-				});
-			}
-			async function record(
-				output: Omit<InferenceResult, "attemptId">,
-			): Promise<InferenceResult | undefined> {
-				if (localFault) return;
-				if (!currentAttempt) throw new Error("Compresser response lacks an exact request reservation");
-				const attempt = currentAttempt;
-				try {
-					latest = await input.complete(attempt, output);
-				} catch (error) {
-					await quarantine(error);
-					return;
+			let extension: ReturnType<typeof defineExtension> | undefined;
+			try {
+				return await executeNative();
+			} finally {
+				if (purpose === "historian") {
+					try {
+						await holder.conversation?.abort(BACKGROUND_CONTEXT);
+						await holder.conversation?.waitForIdle(BACKGROUND_CONTEXT);
+					} catch (error) {
+						fatal ??= "Historian cleanup could not confirm idle: " + String(error);
+						throw error;
+					} finally {
+						try {
+							if (extension) registry.uninstall(extension);
+						} finally {
+							models.deleteProvider(providerId);
+							sealedJobs.delete(key);
+						}
+					}
 				}
-				rounds.push(latest);
-				await commit(async (tx) => {
-					const job = await tx.doc(CompresserJobDoc, child.id);
-					job.pendingAttempt = null;
-					job.result = storedJson<JsonRepresentation<InferenceResult>>(latest!);
-					if (output.status !== "completed" && output.reason !== undefined)
+			}
+			async function executeNative(): Promise<InferenceResult> {
+				const outputTool = input.request.outputTool!;
+				let currentAttempt: string | undefined, answer: AssistantMessage | undefined;
+				let localFault: string | undefined;
+				let latest: InferenceResult | undefined,
+					diagnostic: string | undefined,
+					validCall: InferenceResult["toolCall"];
+				const rounds: InferenceResult[] = [];
+				let child: Conversation;
+				const raw = new Map<number, { id: string; text: string; bytes: number }>();
+				const providerApi = {
+					...oac,
+					streamSimple: (
+						model: Parameters<typeof oac.streamSimple>[0],
+						transcript: Parameters<typeof oac.streamSimple>[1],
+						streamOptions: Parameters<typeof oac.streamSimple>[2],
+					) => {
+						raw.clear();
+						return oac.streamSimple(model, transcript, {
+							...streamOptions,
+							maxRetries: 0,
+							timeoutMs: input.timeoutMs,
+							headers: { ...definition.headers, ...streamOptions?.headers },
+							onProviderStreamEvent: async (event, currentModel) => {
+								await streamOptions?.onProviderStreamEvent?.(event, currentModel);
+								const packet = event as {
+									choices?: {
+										delta?: {
+											tool_calls?: { index: number; id?: string; function?: { arguments?: string } }[];
+										};
+									}[];
+								};
+								for (const choice of packet?.choices ?? [])
+									for (const call of choice.delta?.tool_calls ?? []) {
+										const value = raw.get(call.index) ?? { id: "", text: "", bytes: 0 };
+										if (call.id) value.id = call.id;
+										const delta = call.function?.arguments ?? "";
+										value.bytes += Buffer.byteLength(delta, "utf8");
+										if (value.bytes <= 262144) value.text += delta;
+										raw.set(call.index, value);
+									}
+							},
+						});
+					},
+				};
+				models.setProvider(
+					createProvider({
+						id: providerId,
+						name: providerId,
+						baseUrl: definition.model.baseUrl,
+						auth: {
+							apiKey: {
+								name: "Host-approved auxiliary model",
+								resolve: async () => ({
+									auth: { apiKey: definition.apiKey, baseUrl: definition.model.baseUrl },
+								}),
+							},
+						},
+						api: { "openai-completions": providerApi },
+						models: [
+							{ ...definition.model, api: "openai-completions", provider: providerId, maxTokens: input.cap },
+						],
+					}),
+				);
+				const check = () => {
+					guard(key);
+					input.signal.throwIfAborted();
+					input.check();
+				};
+				async function quarantine(error: unknown) {
+					localFault ??= "Unconfirmed source completion: " + String(error);
+					sealedJobs.add(key);
+					await commit(async (tx) => {
+						const job = await tx.doc(CompresserJobDoc, child.id);
+						job.status = "quarantined";
+						job.sealed = true;
 						job.lastError = {
-							reason: output.reason,
-							incidentId: attempt + ":response",
+							reason: localFault!,
+							incidentId: currentAttempt ?? "source-fault",
 							conversationId: String(child.id),
 							jobId: key,
 						};
-				});
-				currentAttempt = undefined;
-				return latest;
-			}
-			function output(
-				status: InferenceResult["status"],
-				reason?: string,
-			): Omit<InferenceResult, "attemptId"> {
-				const known =
-					answer &&
-					[
-						answer.usage.input,
-						answer.usage.output,
-						answer.usage.cacheRead,
-						answer.usage.cacheWrite,
-						answer.usage.totalTokens,
-					].some((n) => Number.isFinite(n) && n > 0);
-				return {
-					status,
-					modelKey: input.request.modelKey,
-					...(reason ? { reason } : {}),
-					usageStatus: known ? "known" : "unknown",
-					...(known ? { usage: usageDTO(answer!.usage) } : {}),
-				};
-			}
-			async function finish(status: CompresserJobState["status"]) {
-				await commit(async (tx) => {
-					const job = await tx.doc(CompresserJobDoc, child.id);
-					job.status = status;
-				});
-			}
-			async function incident(kind: "toolErrors" | "unresolvedErrors", reason: string, id: string) {
-				const sealed = await commit(async (tx) => {
-					const job = await tx.doc(CompresserJobDoc, child.id);
-					if (!job.sealed && !job.incidents[id]) {
-						job.incidents[id] = true;
-						job[kind]++;
-						job.lastError = { reason, incidentId: id, conversationId: String(child.id), jobId: key };
-						if (
-							job.toolErrors >= options.toolCallingTolerance ||
-							job.unresolvedErrors >= options.unresolvedErrorTolerance
-						) {
-							job.sealed = true;
-							job.status = "failed";
-						}
-					}
-					return job.sealed;
-				});
-				if (sealed) sealedJobs.add(key);
-			}
-			async function steer(reason: string, attemptId: string) {
-				check();
-				await child.submit(
-					{
-						type: "input",
-						whenBusy: "steer",
-						requestId: "repair-" + attemptId,
-						content: reason + "\n" + COMPLETE_REWRITE,
-					},
-					BACKGROUND_CONTEXT,
-				);
-			}
-			const nativeTool = defineTool({
-				...outputTool,
-				parameters: outputTool.parameters as TSchema,
-				replay: "unsafe",
-				execute: async (_args, api, context) => {
+						// The pending attempt is retained: an unknown external audit is not a completion/refund.
+					});
+				}
+				async function record(
+					output: Omit<InferenceResult, "attemptId">,
+				): Promise<InferenceResult | undefined> {
+					if (localFault) return;
+					if (!currentAttempt) throw new Error("Compresser response lacks an exact request reservation");
+					const attempt = currentAttempt;
 					try {
-						check();
+						latest = await input.complete(attempt, output);
 					} catch (error) {
-						return {
-							output: [{ type: "text", text: String(error) }],
-							isError: true,
-							control: { terminate: true },
-						};
+						await quarantine(error);
+						return;
 					}
-					if (!validCall || diagnostic !== undefined)
+					rounds.push(latest);
+					await commit(async (tx) => {
+						const job = await tx.doc(CompresserJobDoc, child.id);
+						job.pendingAttempt = null;
+						job.result = storedJson<JsonRepresentation<InferenceResult>>(latest!);
+						if (output.status !== "completed" && output.reason !== undefined)
+							job.lastError = {
+								reason: output.reason,
+								incidentId: attempt + ":response",
+								conversationId: String(child.id),
+								jobId: key,
+							};
+					});
+					currentAttempt = undefined;
+					return latest;
+				}
+				function output(
+					status: InferenceResult["status"],
+					reason?: string,
+				): Omit<InferenceResult, "attemptId"> {
+					const known =
+						answer &&
+						[
+							answer.usage.input,
+							answer.usage.output,
+							answer.usage.cacheRead,
+							answer.usage.cacheWrite,
+							answer.usage.totalTokens,
+						].some((n) => Number.isFinite(n) && n > 0);
+					return {
+						status,
+						modelKey: input.request.modelKey,
+						...(reason ? { reason } : {}),
+						usageStatus: known ? "known" : "unknown",
+						...(known ? { usage: usageDTO(answer!.usage) } : {}),
+					};
+				}
+				async function finish(status: CompresserJobState["status"]) {
+					await commit(async (tx) => {
+						const job = await tx.doc(CompresserJobDoc, child.id);
+						job.status = status;
+					});
+				}
+				async function incident(kind: "toolErrors" | "unresolvedErrors", reason: string, id: string) {
+					const sealed = await commit(async (tx) => {
+						const job = await tx.doc(CompresserJobDoc, child.id);
+						if (!job.sealed && !job.incidents[id]) {
+							job.incidents[id] = true;
+							job[kind]++;
+							job.lastError = { reason, incidentId: id, conversationId: String(child.id), jobId: key };
+							if (
+								job.toolErrors >= options.toolCallingTolerance ||
+								job.unresolvedErrors >= options.unresolvedErrorTolerance
+							) {
+								job.sealed = true;
+								job.status = "failed";
+							}
+						}
+						return job.sealed;
+					});
+					if (sealed) sealedJobs.add(key);
+				}
+				async function steer(reason: string, attemptId: string) {
+					check();
+					await child.submit(
+						{
+							type: "input",
+							whenBusy: "steer",
+							requestId: "repair-" + attemptId,
+							content: reason + "\n" + COMPLETE_REWRITE,
+						},
+						BACKGROUND_CONTEXT,
+					);
+				}
+				const nativeTool = defineTool({
+					...outputTool,
+					parameters: outputTool.parameters as TSchema,
+					replay: "unsafe",
+					execute: async (_args, api, context) => {
+						try {
+							check();
+						} catch (error) {
+							return {
+								output: [{ type: "text", text: String(error) }],
+								isError: true,
+								control: { terminate: true },
+							};
+						}
+						if (!validCall || diagnostic !== undefined)
+							return {
+								output: [
+									{
+										type: "text",
+										text: (diagnostic ?? "No validated complete submission") + "\n" + COMPLETE_REWRITE,
+									},
+								],
+								isError: true,
+							};
+						const result = await record({ ...output("completed"), toolCall: validCall });
+						if (!result)
+							return {
+								output: [
+									{
+										type: "text",
+										text: "Source completion is unconfirmed; this Conversation is quarantined.",
+									},
+								],
+								isError: true,
+								control: { terminate: true },
+							};
+						check();
+						await api.commit(async (tx) => {
+							checkAuthority(check);
+							const job = await tx.doc(CompresserJobDoc, child.id);
+							job.status = result.status;
+						}, context);
 						return {
 							output: [
 								{
 									type: "text",
-									text: (diagnostic ?? "No validated complete submission") + "\n" + COMPLETE_REWRITE,
+									text: "Complete candidate recorded; host artifact adoption remains separate.",
 								},
 							],
-							isError: true,
-						};
-					const result = await record({ ...output("completed"), toolCall: validCall });
-					if (!result)
-						return {
-							output: [
-								{ type: "text", text: "Source completion is unconfirmed; this Conversation is quarantined." },
-							],
-							isError: true,
+							...(result.status === "completed" ? {} : { isError: true }),
 							control: { terminate: true },
 						};
-					check();
-					await api.commit(async (tx) => {
-						checkAuthority(check);
-						const job = await tx.doc(CompresserJobDoc, child.id);
-						job.status = result.status;
-					}, context);
-					return {
-						output: [
-							{ type: "text", text: "Complete candidate recorded; host artifact adoption remains separate." },
-						],
-						...(result.status === "completed" ? {} : { isError: true }),
-						control: { terminate: true },
-					};
-				},
-			});
-			const extension = defineExtension({
-				name: providerId,
-				tools: [nativeTool],
-				hooks: [
-					hook(ToolTask, {
-						beforeTool: () => {
-							try {
-								check();
-							} catch (error) {
-								return { block: String(error) };
-							}
-							if (diagnostic !== undefined || !validCall)
-								return { block: (diagnostic ?? "No complete output envelope") + "\n" + COMPLETE_REWRITE };
-						},
-					}),
-					hook(GenerationTask, {
-						beforeRequest: async (request) => {
-							try {
-								check();
-								currentAttempt = await input.begin();
-								answer = undefined;
-								diagnostic = undefined;
-								validCall = undefined;
-								await commit(async (tx) => {
-									const job = await tx.doc(CompresserJobDoc, child.id);
-									job.pendingAttempt = currentAttempt!;
-								});
-								if (!(await input.reserve())) throw new Error("Session auxiliary attempt budget exhausted");
-								check();
-								return { messages: request.messages, check };
-							} catch (error) {
-								if (currentAttempt) await record(output("failed", String(error)));
-								await finish(localFault || latest?.status === "quarantined" ? "quarantined" : "failed");
-								return { block: String(error) };
-							}
-						},
-						afterResponse: async (message) => {
-							answer = message;
-							try {
-								check();
-							} catch (error) {
-								await record(output("quarantined", String(error)));
-								await finish("quarantined");
-								return;
-							}
-							if (message.stopReason === "error") {
-								const attempt = currentAttempt!,
-									reason = message.errorMessage ?? "Provider request failed";
-								if (!(await record(output("failed", reason)))) return;
-								await incident("unresolvedErrors", reason, attempt + ":provider");
-								if (!sealedJobs.has(key)) await steer(reason, attempt);
-								return;
-							}
-							const calls = message.content.filter((p) => p.type === "toolCall");
-							if (
-								message.stopReason !== "toolUse" ||
-								calls.length !== 1 ||
-								calls[0].name !== outputTool.name
-							) {
-								diagnostic = "Expected exactly one complete declared submission call";
-								return;
-							}
-							try {
-								const call = calls[0],
-									wire = [...raw.values()].find((value) => value.id === call.id);
-								if (!wire || wire.bytes > 262144 || !isDeepStrictEqual(JSON.parse(wire.text), call.arguments))
-									throw new Error("Incomplete or normalized raw JSON");
-								json(call.arguments);
-								const parameters = { ...outputTool, parameters: outputTool.parameters as TSchema };
-								if (!isDeepStrictEqual(validateToolCall([parameters], structuredClone(call)), call.arguments))
-									throw new Error("Submission requires parameter coercion");
-								const candidate = copy({
-									id: call.id,
-									name: call.name,
-									arguments: call.arguments as JsonObject,
-								});
-								diagnostic = input.validateCall?.(candidate);
-								if (diagnostic !== undefined && typeof diagnostic !== "string")
-									throw new Error("Candidate validation must return a diagnostic string or undefined");
-								if (diagnostic === undefined) validCall = candidate;
-							} catch (error) {
-								diagnostic = String(error);
-							}
-						},
-						onYield: async (message) => {
-							if (!currentAttempt) return;
-							const attempt = currentAttempt,
-								reason = "No complete submission: " + message.stopReason;
-							if (!(await record(output("failed", reason)))) return;
-							await incident("unresolvedErrors", reason, attempt + ":yield");
-							if (!sealedJobs.has(key)) await steer(reason, attempt);
-						},
-						afterTools: async (_assistant, ids) => {
-							if (!currentAttempt || localFault) return;
-							const entries = await commit((tx) =>
-								Promise.all(ids.map((id) => tx.entry(ToolResultEntry, id))),
-							);
-							const errors = entries.filter(
-								(entry) => entry?.model?.[0]?.role === "toolResult" && entry.model[0].isError,
-							);
-							const reason =
-								diagnostic ??
-								(errors.length
-									? messageText(errors.at(-1)!.model?.[0])
-									: "No complete submission was recorded");
-							const attempt = currentAttempt;
-							if (!(await record(output("failed", reason)))) return;
-							for (const entry of errors)
-								await incident("toolErrors", reason, attempt + ":tool:" + entry!.id);
-							if (!errors.length) await incident("unresolvedErrors", reason, attempt + ":empty-tools");
-							if (errors.length)
-								await commit(async (tx) => {
-									for (const entry of errors) {
-										const message = entry!.model![0]!;
-										await tx.appendEntry(child.id, {
-											kind: "pakka.compresser-rewrite",
-											data: { resultEntryId: String(entry!.id) },
-											edits: [
-												{
-													target: entry!.id,
-													action: "replace",
-													messages: [
-														{
-															...message,
-															content: [{ type: "text", text: reason + "\n" + COMPLETE_REWRITE }],
-														},
-													],
-												},
-											],
-										});
-									}
-								});
-						},
-					}),
-				],
-			});
-			registry.install(extension);
-			child = await harness.createConversation(
-				{
-					ownership: { kind: "ownerless" },
-					agent: {
-						model: { provider: providerId, modelId: definition.model.id },
-						extensions: [extension],
-						tools: [nativeTool],
-						thinkingLevel: input.request.thinkingLevel ?? "off",
-						instructions: input.request.systemPrompt ?? "",
 					},
-				},
-				BACKGROUND_CONTEXT,
-			);
-			holder.conversation = child;
-			await commit(async (tx) => {
-				checkAuthority(check);
-				const policy = await tx.doc(CompresserPolicyDoc),
-					job = await tx.doc(CompresserJobDoc, child.id);
-				policy.conversations[key] = String(child.id);
-				Object.assign(job, {
-					jobId: key,
-					planId: input.source.planId,
-					sourceSessionId: input.source.sessionId,
-					sourceConversationId: input.source.conversationId,
-					fingerprint,
 				});
-				cached = storedJson<CompresserPolicy>(policy);
-			});
-			const abort = () => {
-				void child.abort(BACKGROUND_CONTEXT).catch((error) => {
-					fatal ??= "Compresser abort unknown: " + String(error);
+				extension = defineExtension({
+					name: providerId,
+					tools: [nativeTool],
+					hooks: [
+						hook(ToolTask, {
+							beforeTool: () => {
+								try {
+									check();
+								} catch (error) {
+									return { block: String(error) };
+								}
+								if (diagnostic !== undefined || !validCall)
+									return { block: (diagnostic ?? "No complete output envelope") + "\n" + COMPLETE_REWRITE };
+							},
+						}),
+						hook(GenerationTask, {
+							beforeRequest: async (request) => {
+								try {
+									check();
+									currentAttempt = await input.begin();
+									answer = undefined;
+									diagnostic = undefined;
+									validCall = undefined;
+									await commit(async (tx) => {
+										const job = await tx.doc(CompresserJobDoc, child.id);
+										job.pendingAttempt = currentAttempt!;
+									});
+									if (!(await input.reserve())) throw new Error("Session auxiliary attempt budget exhausted");
+									check();
+									return { messages: request.messages, check };
+								} catch (error) {
+									if (currentAttempt) await record(output("failed", String(error)));
+									await finish(localFault || latest?.status === "quarantined" ? "quarantined" : "failed");
+									return { block: String(error) };
+								}
+							},
+							afterResponse: async (message) => {
+								answer = message;
+								try {
+									check();
+								} catch (error) {
+									await record(output("quarantined", String(error)));
+									await finish("quarantined");
+									return;
+								}
+								if (message.stopReason === "error") {
+									const attempt = currentAttempt!,
+										reason = message.errorMessage ?? "Provider request failed";
+									if (!(await record(output("failed", reason)))) return;
+									await incident("unresolvedErrors", reason, attempt + ":provider");
+									if (!sealedJobs.has(key)) await steer(reason, attempt);
+									return;
+								}
+								const calls = message.content.filter((p) => p.type === "toolCall");
+								if (
+									message.stopReason !== "toolUse" ||
+									calls.length !== 1 ||
+									calls[0].name !== outputTool.name
+								) {
+									diagnostic = "Expected exactly one complete declared submission call";
+									return;
+								}
+								try {
+									const call = calls[0],
+										wire = [...raw.values()].find((value) => value.id === call.id);
+									if (
+										!wire ||
+										wire.bytes > 262144 ||
+										!isDeepStrictEqual(JSON.parse(wire.text), call.arguments)
+									)
+										throw new Error("Incomplete or normalized raw JSON");
+									json(call.arguments);
+									const parameters = { ...outputTool, parameters: outputTool.parameters as TSchema };
+									if (
+										!isDeepStrictEqual(validateToolCall([parameters], structuredClone(call)), call.arguments)
+									)
+										throw new Error("Submission requires parameter coercion");
+									const candidate = copy({
+										id: call.id,
+										name: call.name,
+										arguments: call.arguments as JsonObject,
+									});
+									diagnostic = input.validateCall?.(candidate);
+									if (diagnostic !== undefined && typeof diagnostic !== "string")
+										throw new Error("Candidate validation must return a diagnostic string or undefined");
+									if (diagnostic === undefined) validCall = candidate;
+								} catch (error) {
+									diagnostic = String(error);
+								}
+							},
+							onYield: async (message): Promise<undefined> => {
+								if (!currentAttempt) return;
+								const attempt = currentAttempt,
+									reason = "No complete submission: " + message.stopReason;
+								if (!(await record(output("failed", reason)))) return;
+								await incident("unresolvedErrors", reason, attempt + ":yield");
+								if (!sealedJobs.has(key)) await steer(reason, attempt);
+							},
+							afterTools: async (_assistant, ids) => {
+								if (!currentAttempt || localFault) return;
+								const entries = await commit((tx) =>
+									Promise.all(ids.map((id) => tx.entry(ToolResultEntry, id))),
+								);
+								const errors = entries.filter(
+									(entry) => entry?.model?.[0]?.role === "toolResult" && entry.model[0].isError,
+								);
+								const reason =
+									diagnostic ??
+									(errors.length
+										? messageText(errors.at(-1)!.model?.[0])
+										: "No complete submission was recorded");
+								const attempt = currentAttempt;
+								if (!(await record(output("failed", reason)))) return;
+								for (const entry of errors)
+									await incident("toolErrors", reason, attempt + ":tool:" + entry!.id);
+								if (!errors.length) await incident("unresolvedErrors", reason, attempt + ":empty-tools");
+								if (errors.length)
+									await commit(async (tx) => {
+										for (const entry of errors) {
+											const message = entry!.model![0]!;
+											await tx.appendEntry(child.id, {
+												kind: "pakka.compresser-rewrite",
+												data: { resultEntryId: String(entry!.id) },
+												edits: [
+													{
+														target: entry!.id,
+														action: "replace",
+														messages: [
+															{
+																...message,
+																content: [{ type: "text", text: reason + "\n" + COMPLETE_REWRITE }],
+															},
+														],
+													},
+												],
+											});
+										}
+									});
+							},
+						}),
+					],
 				});
-			};
-			input.signal.addEventListener("abort", abort, { once: true });
-			try {
-				check();
-				harness.resume();
-				const submission = await child.submit(
-					{ type: "input", requestId: "source-" + key, content: input.request.prompt, whenBusy: "reject" },
+				registry.install(extension);
+				child = await harness.createConversation(
+					{
+						ownership: { kind: "ownerless" },
+						agent: {
+							model: { provider: providerId, modelId: definition.model.id },
+							extensions: [extension],
+							tools: [nativeTool],
+							thinkingLevel: input.request.thinkingLevel ?? "off",
+							instructions: input.request.systemPrompt ?? "",
+						},
+					},
 					BACKGROUND_CONTEXT,
 				);
-				await submission.wait(BACKGROUND_CONTEXT);
-				await child.waitForIdle(BACKGROUND_CONTEXT);
-				if (localFault) throw new Error(localFault);
-				if (currentAttempt)
-					await record(output("quarantined", "Compresser run ended without a confirmed output"));
-				if (!latest) throw new Error("Compresser ended without an inference reservation");
-				if (latest.status === "completed") {
-					try {
-						check();
-					} catch (error) {
-						latest = { ...latest, status: "quarantined", reason: String(error) };
-					}
-				}
-				const reported = { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, totalTokens: 0 };
-				let cost: number | null = 0;
-				for (const round of rounds) {
-					for (const field of ["input", "output", "cacheRead", "cacheWrite", "totalTokens"] as const)
-						reported[field] += round.usage?.[field] ?? 0;
-					cost = cost !== null && round.usage?.cost != null ? cost + round.usage.cost : null;
-				}
-				latest = copy({
-					...latest,
-					compresser: {
-						sessionId: cached.sessionId,
-						conversationId: String(child.id),
-						attemptIds: rounds.map((round) => round.attemptId),
-						usageStatus: rounds.every((round) => round.usageStatus === "known") ? "known" : "unknown",
-						reportedUsage: { ...reported, cost },
-					},
-				});
+				holder.conversation = child;
 				await commit(async (tx) => {
-					const job = await tx.doc(CompresserJobDoc, child.id);
-					job.status = latest!.status;
-					job.result = storedJson<JsonRepresentation<InferenceResult>>(latest!);
+					checkAuthority(check);
+					const policy = await tx.doc(CompresserPolicyDoc),
+						job = await tx.doc(CompresserJobDoc, child.id);
+					policy.conversations[key] = String(child.id);
+					if (purpose === "historian") {
+						const directory = await tx.doc(HistorianDirectoryDoc, key, null);
+						if (directory.conversationId) throw new MutationDenied("Historian job identity already occupied");
+						directory.conversationId = String(child.id);
+					}
+					Object.assign(job, {
+						jobId: key,
+						planId: input.source.planId,
+						sourceSessionId: input.source.sessionId,
+						sourceConversationId: input.source.conversationId,
+						fingerprint,
+					});
+					cached = storedJson<CompresserPolicy>(policy);
 				});
-				return latest;
-			} catch (error) {
-				if (currentAttempt || fatal) {
-					const reason = localFault ?? "Unconfirmed Compresser completion: " + String(error);
-					sealedJobs.add(key);
-					await commit(async (tx) => {
-						const job = await tx.doc(CompresserJobDoc, child.id),
-							policy = await tx.doc(CompresserPolicyDoc);
-						job.status = "quarantined"; // Keep the pending reservation; uncertainty is not a release.
-						job.sealed = true;
-						job.lastError = {
-							reason,
-							incidentId: currentAttempt ?? "native-fault",
+				const abort = () => {
+					void child.abort(BACKGROUND_CONTEXT).catch((error) => {
+						fatal ??= "Compresser abort unknown: " + String(error);
+					});
+				};
+				input.signal.addEventListener("abort", abort, { once: true });
+				try {
+					check();
+					harness.resume();
+					const submission = await child.submit(
+						{ type: "input", requestId: "source-" + key, content: input.request.prompt, whenBusy: "reject" },
+						BACKGROUND_CONTEXT,
+					);
+					await submission.wait(BACKGROUND_CONTEXT);
+					await child.waitForIdle(BACKGROUND_CONTEXT);
+					if (localFault) throw new Error(localFault);
+					if (currentAttempt)
+						await record(output("quarantined", "Compresser run ended without a confirmed output"));
+					if (!latest) throw new Error("Compresser ended without an inference reservation");
+					if (latest.status === "completed") {
+						try {
+							check();
+						} catch (error) {
+							latest = { ...latest, status: "quarantined", reason: String(error) };
+						}
+					}
+					const reported = { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, totalTokens: 0 };
+					let cost: number | null = 0;
+					for (const round of rounds) {
+						for (const field of ["input", "output", "cacheRead", "cacheWrite", "totalTokens"] as const)
+							reported[field] += round.usage?.[field] ?? 0;
+						cost = cost !== null && round.usage?.cost != null ? cost + round.usage.cost : null;
+					}
+					latest = copy({
+						...latest,
+						compresser: {
+							sessionId: cached.sessionId,
 							conversationId: String(child.id),
-							jobId: key,
-						};
-						if (fatal && policy.status === "open") {
-							policy.status = "sealed";
-							policy.lastError = {
+							attemptIds: rounds.map((round) => round.attemptId),
+							usageStatus: rounds.every((round) => round.usageStatus === "known") ? "known" : "unknown",
+							reportedUsage: { ...reported, cost },
+						},
+					});
+					await commit(async (tx) => {
+						const job = await tx.doc(CompresserJobDoc, child.id);
+						job.status = latest!.status;
+						job.result = storedJson<JsonRepresentation<InferenceResult>>(latest!);
+						if (purpose === "historian" && !job.pendingAttempt && job.status !== "quarantined") {
+							const policy = await tx.doc(CompresserPolicyDoc);
+							delete policy.conversations[key];
+							cached = storedJson<CompresserPolicy>(policy);
+						}
+					});
+					return latest;
+				} catch (error) {
+					if (currentAttempt || fatal) {
+						const reason = localFault ?? "Unconfirmed Compresser completion: " + String(error);
+						sealedJobs.add(key);
+						await commit(async (tx) => {
+							const job = await tx.doc(CompresserJobDoc, child.id),
+								policy = await tx.doc(CompresserPolicyDoc);
+							job.status = "quarantined"; // Keep the pending reservation; uncertainty is not a release.
+							job.sealed = true;
+							job.lastError = {
 								reason,
 								incidentId: currentAttempt ?? "native-fault",
 								conversationId: String(child.id),
 								jobId: key,
 							};
-						}
-						cached = storedJson<CompresserPolicy>(policy);
-					}).catch(() => {
-						/* A failed seal write leaves the fatal latch and pending on-disk work for fail-closed reopen. */
-					});
+							if (fatal && policy.status === "open") {
+								policy.status = "sealed";
+								policy.lastError = {
+									reason,
+									incidentId: currentAttempt ?? "native-fault",
+									conversationId: String(child.id),
+									jobId: key,
+								};
+							}
+							cached = storedJson<CompresserPolicy>(policy);
+						}).catch(() => {
+							/* A failed seal write leaves the fatal latch and pending on-disk work for fail-closed reopen. */
+						});
+					}
+					throw error;
+				} finally {
+					input.signal.removeEventListener("abort", abort);
 				}
-				throw error;
-			} finally {
-				input.signal.removeEventListener("abort", abort);
 			}
 		}
 	}
@@ -978,11 +1586,37 @@ export async function createCompresserSession(
 			})()),
 	});
 	nativeCompresserSessions.set(facade, {
+		kind: purpose,
+		sessionId: cached.sessionId,
+		active: (jobId) => active.has(jobId),
+		async retired(source, request, check) {
+			guard();
+			checkAuthority(check);
+			if (purpose !== "historian" || active.has(source.jobId))
+				throw new MutationDenied("Original Historian execution is still active");
+			await commit(async (tx) => {
+				checkAuthority(check);
+				if (active.has(source.jobId)) throw new MutationDenied("Original Historian execution became active");
+				const directory = await tx.doc(HistorianDirectoryDoc, source.jobId, null);
+				if (!directory.conversationId) return;
+				const job = await tx.doc(CompresserJobDoc, conversationId(directory.conversationId));
+				if (job.jobId !== source.jobId || job.fingerprint !== hash([source, request]))
+					throw new MutationDenied("Historian retirement identity mismatch");
+				const policy = await tx.doc(CompresserPolicyDoc);
+				delete policy.conversations[source.jobId];
+				cached = storedJson<CompresserPolicy>(policy);
+			});
+			sealedJobs.delete(source.jobId);
+			checkAuthority(check);
+		},
 		check: guard,
 		run,
 		async recover(source, request) {
 			guard(source.jobId);
-			const id = cached.conversations[source.jobId];
+			const id =
+				purpose === "historian"
+					? (await harness.snapshot(HistorianDirectoryDoc, source.jobId, BACKGROUND_CONTEXT))?.conversationId
+					: cached.conversations[source.jobId];
 			if (!id) throw new Error("Compresser has no confirmed result for the original source job");
 			const job = await harness.snapshot(CompresserJobDoc, conversationId(id), BACKGROUND_CONTEXT);
 			if (
@@ -1146,6 +1780,259 @@ export async function recoverStorageWriter(options: WriterRecoveryOptions): Prom
 	}
 }
 
+/** Offline kernel only: no registry, scheduler, provider, tool or extension is installed. */
+export async function openStorageMaintenance(
+	options: StorageMaintenanceOptions,
+): Promise<StorageMaintenance> {
+	const storageDir = realpathSync(options.storageDir);
+	if (resolve(options.storageDir) !== storageDir || !lstatSync(storageDir).isDirectory())
+		throw new Error("Maintenance physical storage identity mismatch");
+	const approved = new Map(options.stores.map((value) => [value.namespace, copy(value)]));
+	if (
+		approved.size !== options.stores.length ||
+		options.stores.some(
+			(value) =>
+				!validKey(value.namespace) ||
+				!Number.isSafeInteger(value.maxBytes) ||
+				value.maxBytes < 1 ||
+				value.maxBytes > 16 * 1024 * 1024,
+		)
+	)
+		throw new Error("Invalid approved maintenance namespaces");
+	await probeExistingStorage(storageDir);
+	const release = await claimWriter(storageDir, true);
+	let owner: OwnedSqlite | undefined;
+	let session: ReturnType<typeof createSession> | undefined;
+	let closed = false,
+		inspectionFailed = false;
+	try {
+		const storage = await openPersistentStorage(storageDir, true, (value) => {
+			owner = value;
+		});
+		session = createSession(storage, { documentRetentionMs: 0 });
+		const kernel = session;
+		const runtime = await kernel.snapshot(RuntimeDoc, BACKGROUND_CONTEXT);
+		const compressor = runtime ? undefined : await kernel.snapshot(CompresserPolicyDoc, BACKGROUND_CONTEXT);
+		const sessionId = runtime?.sessionId ?? compressor?.sessionId;
+		if (!sessionId || (options.expectedSessionId !== undefined && options.expectedSessionId !== sessionId))
+			throw new Error("Maintenance Session identity mismatch");
+		let cwd: string | undefined;
+		if (runtime) {
+			const provenance = JSON.parse(
+				await readFile(join(storageDir, "provenance.json"), "utf8"),
+			) as ProvenanceData;
+			if (
+				provenance.sessionId !== sessionId ||
+				typeof provenance.cwd !== "string" ||
+				!isAbsolute(provenance.cwd)
+			)
+				throw new Error("Maintenance provenance identity mismatch");
+			cwd = provenance.cwd;
+		}
+		const ready = () => {
+			if (closed || inspectionFailed) throw new Error("Maintenance is closed/unknown");
+		};
+		const choice = (namespace: string) => {
+			ready();
+			const selected = approved.get(namespace);
+			if (!selected) throw new MutationDenied("Unapproved maintenance namespace");
+			return selected;
+		};
+		const checkOptions = (actual: RuntimeStoreOptions, expected: RuntimeStoreOptions) => {
+			if (hash(actual) !== hash(expected)) throw new MutationDenied("Maintenance store options conflict");
+		};
+		return Object.freeze({
+			identity: Object.freeze({
+				sessionId,
+				storageDir,
+				...(cwd ? { cwd } : {}),
+				kind: runtime ? ("runtime" as const) : ("compresser" as const),
+			}),
+			snapshot: async (namespace: string) => {
+				const selected = choice(namespace);
+				const state = await kernel.snapshot(CoordinatorDoc, namespace, BACKGROUND_CONTEXT);
+				ready();
+				if (!state) return copy({ version: 0, data: {} });
+				checkOptions(state.options, selected);
+				return copy({ version: state.version, data: state.data });
+			},
+			work: async () => {
+				ready();
+				try {
+					return await kernel.commit(async (tx) => {
+						let pendingTasks = 0,
+							queuedInputs = 0;
+						const digest = createHash("sha256"),
+							sample: {
+								kind: "task" | "input" | "record";
+								id: string;
+								conversationId: string;
+								state: string;
+								definition?: string;
+							}[] = [];
+						let cursor: Parameters<typeof storage.scanTasks>[2];
+						do {
+							const page = await tx.scanTasks({ order: "ascending" }, 64, cursor);
+							for (const task of page.items)
+								if (task.state.status !== "terminal") {
+									pendingTasks++;
+									digest.update("task:" + JSON.stringify(task) + "\n");
+									if (sample.length < 128)
+										sample.push({
+											kind: "task",
+											id: String(task.id),
+											conversationId: String(task.conversationId),
+											state: task.state.status,
+											definition: task.kind,
+										});
+								}
+							cursor = page.next;
+						} while (cursor);
+						cursor = undefined;
+						do {
+							const page = await storage.scanSubmissions(
+								{ order: "ascending" },
+								64,
+								cursor,
+								BACKGROUND_CONTEXT,
+							);
+							for (const input of page.items)
+								if (input.status === "queued" || input.status === "placed") {
+									queuedInputs++;
+									digest.update("input:" + JSON.stringify(input) + "\n");
+									if (sample.length < 128)
+										sample.push({
+											kind: "input",
+											id: String(input.id),
+											conversationId: String(input.conversationId),
+											state: input.status,
+										});
+								}
+							cursor = page.next;
+						} while (cursor);
+						const records = await tx.doc(RecordWorkDoc);
+						const entries = Object.entries(records.items).sort(([a], [b]) => a.localeCompare(b));
+						for (const [address, item] of entries) {
+							const current = await tx.doc(RecordCellDoc, address, null);
+							if (
+								!current.data ||
+								hash(current.data) !== item.fingerprint ||
+								address !== hash([item.namespace, "key", item.key])
+							)
+								throw new Error("Record work checkpoint mismatch");
+							digest.update("record:" + JSON.stringify(item) + "\n");
+							if (sample.length < 128)
+								sample.push({
+									kind: "record",
+									id: item.key,
+									conversationId: "",
+									state: item.state,
+									definition: item.namespace,
+								});
+						}
+						ready();
+						return copy({
+							pendingRecords: entries.length,
+							pendingTasks,
+							queuedInputs,
+							fingerprint: digest.digest("hex"),
+							sample,
+							sampleTruncated: pendingTasks + queuedInputs + entries.length > sample.length,
+						});
+					}, BACKGROUND_CONTEXT);
+				} catch (error) {
+					inspectionFailed = true;
+					throw error;
+				}
+			},
+			commit: async (changes: Parameters<StorageMaintenance["commit"]>[0]) => {
+				ready();
+				if (!changes.length || new Set(changes.map((value) => value.namespace)).size !== changes.length)
+					throw new MutationDenied("Invalid maintenance mutation set");
+				const inputs = changes.map((change) => {
+					const selected = choice(change.namespace);
+					if (
+						!Number.isSafeInteger(change.expectedVersion) ||
+						change.expectedVersion < 0 ||
+						change.expectedVersion >= Number.MAX_SAFE_INTEGER
+					)
+						throw new MutationDenied("Invalid maintenance CAS version");
+					json(change.data);
+					if (Buffer.byteLength(JSON.stringify(change.data)) > selected.maxBytes)
+						throw new MutationDenied("Maintenance store capacity exceeded");
+					return { ...change, data: storedJson<JsonRepresentation<JsonObject>>(change.data), selected };
+				});
+				await kernel.commit(async (tx) => {
+					for (const input of inputs) {
+						const state = await tx.doc(CoordinatorDoc, input.namespace, { ...input.selected });
+						checkOptions(state.options, input.selected);
+						if (state.version !== input.expectedVersion) throw new MutationDenied("Maintenance CAS conflict");
+						state.data = input.data;
+						state.version++;
+					}
+				}, BACKGROUND_CONTEXT);
+			},
+			backup: async (destination: string) => {
+				ready();
+				const file = resolve(destination);
+				const reserved = await open(file, "wx", 0o600);
+				await reserved.close();
+				const reader = new DatabaseSync(toNamespacedPath(join(storageDir, SQLITE_DESCRIPTION.file)), {
+					readOnly: true,
+				});
+				try {
+					if (reader.prepare("PRAGMA quick_check").get()?.quick_check !== "ok")
+						throw new Error("Storage integrity check failed");
+					await backup(reader, toNamespacedPath(file));
+				} finally {
+					reader.close();
+				}
+				ready();
+				const snapshot = new DatabaseSync(toNamespacedPath(file), { readOnly: true });
+				try {
+					if (
+						snapshot.prepare("PRAGMA application_id").get()?.application_id !== SQLITE_APPLICATION_ID ||
+						snapshot.prepare("PRAGMA quick_check").get()?.quick_check !== "ok"
+					)
+						throw new Error("Backup identity/integrity mismatch");
+				} finally {
+					snapshot.close();
+				}
+				return copy({ sessionId, file });
+			},
+			close: async () => {
+				if (closed) return;
+				closed = true;
+				await kernel.close(BACKGROUND_CONTEXT);
+				const end = await kernel.closed;
+				await owner?.close();
+				// A failed kernel cannot prove that its last mutation was adopted; keep ownership for explicit recovery.
+				if (end.reason === "failed" || inspectionFailed)
+					throw new Error("Maintenance storage outcome unknown; writer retained");
+				await release();
+			},
+		});
+	} catch (error) {
+		let safe = true;
+		if (session) {
+			try {
+				await session.close(BACKGROUND_CONTEXT);
+				const end = await session.closed;
+				safe = end.reason === "closed";
+			} catch {
+				safe = false;
+			}
+		}
+		try {
+			await owner?.close();
+		} catch {
+			safe = false;
+		}
+		if (safe) await release();
+		throw error;
+	}
+}
+
 /** Public Pi database/storage adapters, with explicit ownership before initialization. */
 async function openPersistentStorage(
 	storageDir: string,
@@ -1204,6 +2091,7 @@ async function openPersistentStorage(
 interface ProvenanceData {
 	sessionId: string;
 	cwd: string;
+	execution?: string;
 }
 
 type RuntimeRecord = {
@@ -1212,6 +2100,8 @@ type RuntimeRecord = {
 	conversationCount: number;
 	budget: { primaryAttempts: number; auxiliaryAttempts: number };
 	strategyAttempts: Record<string, number>;
+	/** null only while upgrading a pre-policy Runtime document. */
+	policyVersion: number | null;
 	profiles: Record<string, string>;
 	resources: Record<
 		string,
@@ -1220,15 +2110,20 @@ type RuntimeRecord = {
 };
 const RuntimeDoc = defineDoc<RuntimeRecord>({
 	kind: "pakka.runtime",
-	version: 2,
+	version: 3,
 	checkpointWhen: () => true,
 	scope: "session",
 	migrate: (value, fromVersion) => {
-		if (fromVersion !== 1 || !value.budget || typeof value.budget !== "object" || Array.isArray(value.budget))
+		if (
+			![1, 2].includes(fromVersion) ||
+			!value.budget ||
+			typeof value.budget !== "object" ||
+			Array.isArray(value.budget)
+		)
 			throw new Error("Unsupported runtime schema");
 		if (!value.strategyAttempts && value.budget.auxiliaryAttempts !== 0)
 			throw new Error("Legacy managed strategy spending unknown; migration refused");
-		return { ...value, strategyAttempts: value.strategyAttempts ?? {} } as RuntimeRecord;
+		return { ...value, strategyAttempts: value.strategyAttempts ?? {}, policyVersion: null } as RuntimeRecord;
 	},
 	initial: () => ({
 		sessionId: "",
@@ -1236,10 +2131,343 @@ const RuntimeDoc = defineDoc<RuntimeRecord>({
 		conversationCount: 0,
 		budget: { primaryAttempts: 0, auxiliaryAttempts: 0 },
 		strategyAttempts: {},
+		policyVersion: null,
 		profiles: {},
 		resources: {},
 	}),
 });
+
+export class StoredHistoryReadRefusal extends Error {
+	readonly reason:
+		| "unavailable"
+		| "identity-mismatch"
+		| "unsupported"
+		| "invalid-source"
+		| "busy"
+		| "denied"
+		| "invalid-request"
+		| "cancelled";
+	constructor(reason: StoredHistoryReadRefusal["reason"]) {
+		super("Stored Conversation history read refused");
+		this.name = "StoredHistoryReadRefusal";
+		this.reason = reason;
+	}
+}
+
+/** Read one trusted original source. The native reader never leaves this adapter or becomes a Runtime. */
+export async function readStoredConversation(
+	options: StoredConversationOptions,
+	rawQuery: StoredConversationQuery,
+): Promise<StoredConversationResult> {
+	const reference = copy(options.reference),
+		query = copy(rawQuery);
+	const uuid = (value: unknown): value is string =>
+		typeof value === "string" && /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/.test(value);
+	const object = (value: unknown): value is Record<string, unknown> =>
+		!!value && typeof value === "object" && !Array.isArray(value);
+	const nativeId = (value: unknown): value is string =>
+		typeof value === "string" && /^[1-9]\d*$/.test(value) && Number.isSafeInteger(Number(value));
+	if (
+		!object(reference) ||
+		Object.keys(reference).sort().join(",") !== "conversationId,sessionId" ||
+		!uuid(reference.sessionId) ||
+		!nativeId(reference.conversationId) ||
+		!object(query) ||
+		!["source", "page", "content"].includes(query.kind)
+	)
+		throw new StoredHistoryReadRefusal("invalid-request");
+	const authorize = () => {
+		if (options.signal?.aborted) throw new StoredHistoryReadRefusal("cancelled");
+		try {
+			checkAuthority(options.check);
+		} catch {
+			throw new StoredHistoryReadRefusal("denied");
+		}
+	};
+	// These are source identity checks, not writer acquisition or recovery checks.
+	const sourceIdentity = () => {
+		authorize();
+		const file = realpathSync(options.sessionFile);
+		const info = statSync(file, { bigint: true });
+		if (!info.isFile() || basename(file) !== "main.sqlite")
+			throw new StoredHistoryReadRefusal("invalid-source");
+		const text = readFileSync(join(dirname(file), "provenance.json"), "utf8");
+		if (text.length > 65536) throw new StoredHistoryReadRefusal("invalid-source");
+		const provenance: unknown = JSON.parse(text);
+		if (!object(provenance) || provenance.sessionId !== reference.sessionId)
+			throw new StoredHistoryReadRefusal("identity-mismatch");
+		return {
+			file,
+			stamp: [file, String(info.dev), String(info.ino), String(info.birthtimeNs), text].join("\0"),
+		};
+	};
+	try {
+		const before = sourceIdentity();
+		const context = executionContext(options.signal);
+		const reader = await openNodeSqliteReader(before.file);
+		let result: StoredConversationResult;
+		try {
+			authorize();
+			result = await reader.snapshot(async (read) => {
+				const id = conversationId(reference.conversationId);
+				const document = async (
+					kind: string,
+					version: number,
+					scope: { kind: "session" } | { kind: "conversation"; conversationId: ConversationId },
+				) => {
+					authorize();
+					const record = await read.findDocument({ kind, scope }, "current", context);
+					authorize();
+					if (!record) return undefined;
+					const saved = await read.document(record.id, "current", context);
+					authorize();
+					if (!saved || saved.version !== version) throw new StoredHistoryReadRefusal("unsupported");
+					return saved.value;
+				};
+				const state = await document(RuntimeDoc.definition.kind, RuntimeDoc.definition.version, {
+					kind: "session",
+				});
+				if (!state || state.sessionId !== reference.sessionId)
+					throw new StoredHistoryReadRefusal("identity-mismatch");
+				if (!object(state.resources) || !object(state.profiles))
+					throw new StoredHistoryReadRefusal("invalid-source");
+				const matches = Object.entries(state.resources).filter(
+					([, row]) => object(row) && row.conversationId === reference.conversationId,
+				);
+				if (matches.length !== 1) throw new StoredHistoryReadRefusal("unavailable");
+				const [key, row] = matches[0]!;
+				if (
+					!object(row) ||
+					row.key !== key ||
+					row.sessionId !== reference.sessionId ||
+					!uuid(row.incarnation) ||
+					typeof row.profile !== "string" ||
+					!Object.hasOwn(state.profiles, row.profile)
+				)
+					throw new StoredHistoryReadRefusal("identity-mismatch");
+				if (!(await read.conversation(id, context))) throw new StoredHistoryReadRefusal("unavailable");
+				authorize();
+				const sequence = String(read.sequence);
+				if (query.kind === "source") return { kind: "source", reference, sequence };
+				const bytes = (header: EntryHeader) => async (offset: number, length: number) => {
+					authorize();
+					const chunk = await read.entryArchive.read(
+						id,
+						header.id,
+						{ offset, length, commitSeq: header.commitSeq },
+						context,
+					);
+					authorize();
+					if (!chunk || chunk.commitSeq !== header.commitSeq || chunk.byteLength !== header.byteLength)
+						throw new StoredHistoryReadRefusal("identity-mismatch");
+					return chunk.bytes;
+				};
+				const indexed = async (header: EntryHeader) => {
+					const index = await indexEntryJson(bytes(header), header.byteLength);
+					authorize();
+					return projectConversationEntry(index, header, reference);
+				};
+				if (query.kind === "content") {
+					const content = query.content;
+					if (!content || content.source !== "entry" || !nativeId(content.entryId))
+						throw new StoredHistoryReadRefusal("invalid-request");
+					const header = await read.entryArchive.header(id, Number(content.entryId) as EntryId, context);
+					authorize();
+					if (
+						!header ||
+						String(header.commitSeq) !== content.revision ||
+						(content.sourceConversationId !== undefined &&
+							String(header.conversationId) !== content.sourceConversationId)
+					)
+						throw new StoredHistoryReadRefusal("identity-mismatch");
+					const chunk = await readPreviewContent(await indexed(header), content, query.range, bytes(header));
+					authorize();
+					return { kind: "content", reference, chunk };
+				}
+				const pageOptions: ConversationPreviewOptions = query.options ?? {};
+				if (
+					!pageOptions ||
+					typeof pageOptions !== "object" ||
+					Array.isArray(pageOptions) ||
+					Object.keys(pageOptions).some((key) => !["limit", "beforeEntryId", "maxBytes"].includes(key)) ||
+					(pageOptions.limit !== undefined &&
+						(!Number.isSafeInteger(pageOptions.limit) || pageOptions.limit < 1 || pageOptions.limit > 256)) ||
+					(pageOptions.maxBytes !== undefined &&
+						(!Number.isSafeInteger(pageOptions.maxBytes) ||
+							pageOptions.maxBytes < 16384 ||
+							pageOptions.maxBytes > 256 * 1024)) ||
+					(pageOptions.beforeEntryId !== undefined && !nativeId(pageOptions.beforeEntryId))
+				)
+					throw new StoredHistoryReadRefusal("invalid-request");
+				if (
+					pageOptions.beforeEntryId !== undefined &&
+					!(await read.entryArchive.header(id, Number(pageOptions.beforeEntryId) as EntryId, context))
+				)
+					throw new StoredHistoryReadRefusal("invalid-request");
+				const headers = await read.entryArchive.scan(
+					{
+						conversationId: id,
+						order: "descending",
+						...(pageOptions.beforeEntryId
+							? { maxEntryId: (Number(pageOptions.beforeEntryId) - 1) as EntryId }
+							: {}),
+					},
+					pageOptions.limit ?? 64,
+					undefined,
+					context,
+				);
+				const [live, usage] = await Promise.all([
+					document(LiveDoc.definition.kind, LiveDoc.definition.version, {
+						kind: "conversation",
+						conversationId: id,
+					}),
+					document(UsageDoc.definition.kind, UsageDoc.definition.version, {
+						kind: "conversation",
+						conversationId: id,
+					}),
+				]);
+				// Stored native JSON was materialized without definition migration/initialization callbacks.
+				const presentation = previewState(live as LiveState | undefined, usage as UsageState | undefined);
+				const page: ConversationHistoryPage = {
+					reference,
+					sequence,
+					entries: [],
+					entriesTruncated: false,
+					saved: presentation.live,
+					usage: presentation.usage,
+				};
+				const maxBytes = pageOptions.maxBytes ?? 256 * 1024;
+				let size = Buffer.byteLength(JSON.stringify(page), "utf8") + 256;
+				const entries: ConversationHistoryPage["entries"][number][] = [];
+				for (const header of headers.items) {
+					const item = await indexed(header);
+					const bytes = Buffer.byteLength(JSON.stringify(item.entry), "utf8") + 1;
+					if (size + bytes > maxBytes) {
+						if (!entries.length) throw new StoredHistoryReadRefusal("unavailable");
+						break;
+					}
+					entries.push(item.entry);
+					size += bytes;
+				}
+				const older = headers.next !== undefined || entries.length < headers.items.length;
+				const first = entries.at(-1);
+				const value: ConversationHistoryPage = {
+					...page,
+					entries: entries.reverse(),
+					entriesTruncated: older,
+					...(older && first ? { olderBeforeId: first.id } : {}),
+				};
+				if (Buffer.byteLength(JSON.stringify(value), "utf8") > maxBytes)
+					throw new StoredHistoryReadRefusal("unavailable");
+				authorize();
+				return { kind: "page", page: value };
+			}, context);
+		} finally {
+			// Cancellation or revoked publication authority must still close the admitted native reader.
+			await reader.close(BACKGROUND_CONTEXT);
+		}
+		if (sourceIdentity().stamp !== before.stamp) throw new StoredHistoryReadRefusal("identity-mismatch");
+		authorize();
+		return copy(result);
+	} catch (error) {
+		if (error instanceof StoredHistoryReadRefusal) throw error;
+		if (error instanceof SqliteReaderVersionError) throw new StoredHistoryReadRefusal("unsupported");
+		if (options.signal?.aborted) throw new StoredHistoryReadRefusal("cancelled");
+		const failure = error as { code?: string; errcode?: number };
+		if (failure?.errcode !== undefined && [5, 6].includes(failure.errcode & 255))
+			throw new StoredHistoryReadRefusal("busy");
+		if (["ENOENT", "EACCES", "EPERM"].includes(failure?.code ?? "") || failure?.errcode === 14)
+			throw new StoredHistoryReadRefusal("unavailable");
+		throw new StoredHistoryReadRefusal("invalid-source");
+	}
+}
+
+type BudgetHead = { version: number; bootstrapLimits: JsonRepresentation<RuntimeLimits> | null };
+const BudgetPolicyDoc = defineDoc<BudgetHead>({
+	kind: "pakka.budget-policy",
+	version: 1,
+	scope: "session",
+	checkpointWhen: () => true,
+	initial: () => ({ version: 0, bootstrapLimits: null }),
+});
+const BudgetHistoryDoc = defineDocFamily<{ receipt: JsonRepresentation<RuntimeBudgetReceipt> | null }, null>({
+	kind: "pakka.budget-history",
+	version: 1,
+	scope: "session",
+	family: true,
+	checkpointWhen: () => true,
+	initial: () => ({ receipt: null }),
+});
+const BudgetRequestDoc = defineDocFamily<{ version: number; fingerprint: string }, null>({
+	kind: "pakka.budget-request",
+	version: 1,
+	scope: "session",
+	family: true,
+	checkpointWhen: () => true,
+	initial: () => ({ version: 0, fingerprint: "" }),
+});
+function validBudgetLimits(value: unknown): value is RuntimeLimits {
+	return (
+		!!value &&
+		typeof value === "object" &&
+		!Array.isArray(value) &&
+		Object.keys(value).sort().join(",") === "maxAuxiliaryAttempts,maxConversations,maxPrimaryAttempts" &&
+		Object.values(value).every((limit) => Number.isSafeInteger(limit) && limit >= 0)
+	);
+}
+/** All admissions count, even when this particular ceiling is disabled. */
+function exceedsSessionLimit(used: number, limit: number, additional = 1) {
+	return !Number.isSafeInteger(used + additional) || (limit !== 0 && additional > limit - used);
+}
+function budgetHead(
+	state: Readonly<RuntimeRecord>,
+	policy: Readonly<BudgetHead> | undefined,
+): asserts policy is Readonly<BudgetHead> {
+	if (
+		!policy ||
+		!Number.isSafeInteger(policy.version) ||
+		policy.version < 0 ||
+		state.policyVersion !== policy.version ||
+		!validBudgetLimits(policy.bootstrapLimits)
+	)
+		throw new Error("Runtime budget policy identity is unavailable");
+}
+async function recordBudgetChange(
+	tx: Tx,
+	state: RuntimeRecord,
+	policy: BudgetHead,
+	input: {
+		source: RuntimeBudgetReceipt["source"];
+		actorId: string;
+		requestId: string;
+		reason: string;
+		limits: RuntimeLimits;
+		addedProfiles: string[];
+	},
+): Promise<RuntimeBudgetReceipt> {
+	budgetHead(state, policy);
+	if (policy.version === Number.MAX_SAFE_INTEGER) throw new MutationDenied("Budget policy version exhausted");
+	const version = policy.version + 1;
+	const row = await tx.doc(BudgetHistoryDoc, String(version), null);
+	if (row.receipt !== null) throw new Error("Budget history identity conflict");
+	const receipt: RuntimeBudgetReceipt = {
+		version,
+		source: input.source,
+		actorId: input.actorId,
+		requestId: input.requestId,
+		reason: input.reason,
+		at: Date.now(),
+		before: { ...state.limits },
+		after: { ...input.limits },
+		budget: { ...state.budget },
+		conversationCount: state.conversationCount,
+		addedProfiles: [...input.addedProfiles],
+	};
+	state.limits = { ...input.limits };
+	state.policyVersion = policy.version = version;
+	row.receipt = storedJson<JsonRepresentation<RuntimeBudgetReceipt>>(receipt);
+	return receipt;
+}
 interface ManagedState {
 	profiles: Map<string, HostOptions>;
 	profileHashes: Record<string, string>;
@@ -1255,7 +2483,16 @@ interface ManagedState {
 /** Internal pure-command seam. Never exports a Harness, Session, registry or Tx. */
 export interface ManagedAdapterPort {
 	view(): RuntimeView;
+	budgetPolicy(check: () => void): Promise<RuntimeBudgetSnapshot>;
+	changeBudget(input: RuntimeBudgetChange, check: () => void): Promise<RuntimeBudgetReceipt>;
+	budgetReceipt(
+		identity: Pick<RuntimeBudgetChange, "actorId" | "requestId">,
+		check: () => void,
+	): Promise<RuntimeBudgetReceipt | null>;
+	budgetHistory(query: RuntimeBudgetQuery, check: () => void): Promise<RuntimeBudgetPage>;
 	profileChoices(): readonly { readonly id: string; readonly model: string; readonly cwd: string }[];
+	modelChoices(): Promise<readonly ModelDTO[]>;
+	modelAllowed(selection: string): boolean;
 	profileOptions(id: string): HostOptions;
 	optionsFor(ref: ConversationRef): Promise<HostOptions>;
 	configuration(ref: ConversationRef): Promise<ConversationConfiguration>;
@@ -1264,12 +2501,33 @@ export interface ManagedAdapterPort {
 	createConversation(spec: ConversationSpec): Promise<ConversationRef>;
 	catalog(options: CatalogOptions): RuntimeCatalog;
 	store(options: RuntimeStoreOptions): RuntimeStore;
+	records(options: RuntimeRecordsOptions): RuntimeRecords;
+	artifactHistory(ref: ConversationRef, strategyId: string, check: () => void): ArtifactHistory;
+	historicalWork(options: HistoricalWorkOptions): HistoricalWork;
+	readHistoricalEntry(
+		ref: ConversationRef,
+		input: HistoricalEntryInput,
+		check: () => void,
+	): Promise<HistoricalEntryContent>;
 	jobs(options: RuntimeJobOptions): RuntimeJobs;
 	readConversation(
 		ref: ConversationRef,
 		check: () => void,
 		options?: ConversationReadOptions,
 	): Promise<ConversationSnapshot>;
+	observationRevision(ref: ConversationRef, check: () => void): number;
+	prepareExecution(ref: ConversationRef, check: () => void): Promise<void>;
+	previewConversation(
+		ref: ConversationRef,
+		check: () => void,
+		options?: ConversationPreviewOptions,
+	): Promise<ConversationSnapshot>;
+	readContent(
+		ref: ConversationRef,
+		reference: ConversationContentReference,
+		range: ConversationContentRange,
+		check: () => void,
+	): Promise<ConversationContentChunk>;
 	writeDisplay(ref: ConversationRef, input: DisplayWrite, check: () => void): Promise<DisplayReceipt>;
 	attach(
 		ref: ConversationRef,
@@ -1278,6 +2536,34 @@ export interface ManagedAdapterPort {
 	): Promise<DurableAdapter>;
 	waitForIdle(): Promise<void>;
 	close(): Promise<void>;
+}
+function prepareAgentFacets(
+	value: readonly AgentFacet[] | undefined,
+	profiles: ReadonlyMap<string, HostOptions>,
+): readonly AgentFacet[] {
+	if (value === undefined) return Object.freeze([]);
+	if (!Array.isArray(value) || value.length > 64) throw Error("Invalid finite Agent facets");
+	const ids = new Set<string>();
+	for (const facet of value) {
+		const { definition } = agentFacetSource(facet);
+		if (ids.has(definition.id) || definition.profiles.some((id) => !profiles.has(id)))
+			throw Error("Duplicate or unapproved Agent facet profile");
+		ids.add(definition.id);
+	}
+	for (const [id, options] of profiles) {
+		const names = new Set<string>(options.execution?.tools ?? []);
+		const tools = [
+			...(options.tools ?? []),
+			...value
+				.filter((facet) => facet.profiles.includes(id))
+				.flatMap((facet) => agentFacetSource(facet).definition.tools),
+		];
+		for (const tool of tools) {
+			if (names.has(tool.name)) throw Error("Approved Agent tool collision");
+			names.add(tool.name);
+		}
+	}
+	return Object.freeze([...value]);
 }
 function prepareContextSources(
 	value: unknown,
@@ -1337,18 +2623,73 @@ function approvedDirectory(value: unknown, roots?: readonly string[]): string {
 		throw new MutationDenied("Unapproved working directory");
 	}
 }
+function prepareExecution(
+	configuration: ExecutionConfiguration | undefined,
+	tools: HostOptions["tools"],
+): ExecutionConfiguration | undefined {
+	if (configuration === undefined) return undefined;
+	if (!configuration || !validKey(configuration.id) || typeof configuration.open !== "function")
+		throw new Error("Invalid execution configuration");
+	const selected = configuration.tools ?? [];
+	if (
+		!Array.isArray(selected) ||
+		selected.some((name) => !["read", "write", "edit", "bash", "powershell"].includes(name)) ||
+		new Set(selected).size !== selected.length ||
+		selected.some((name) => tools?.some((tool) => tool.name === name))
+	)
+		throw new Error("Invalid or duplicate execution native tool selection");
+	const programs = configuration.powershellPrograms;
+	if (
+		programs !== undefined &&
+		(!Array.isArray(programs) ||
+			!programs.length ||
+			programs.some(
+				(program) =>
+					typeof program !== "string" || !program || program.length > 8192 || /[\x00-\x1f\x7f]/.test(program),
+			))
+	)
+		throw new Error("Invalid execution PowerShell programs");
+	return Object.freeze({
+		id: configuration.id,
+		open: configuration.open,
+		tools: Object.freeze([...selected]),
+		...(programs ? { powershellPrograms: Object.freeze([...programs]) } : {}),
+	});
+}
+function executionFingerprint(configuration?: ExecutionConfiguration): string | undefined {
+	return configuration
+		? hash([configuration.id, configuration.tools ?? [], configuration.powershellPrograms ?? null])
+		: undefined;
+}
 function profileHash(
 	options: HostOptions,
 	contextSources: readonly RuntimeContextSource[],
 	profileId: string,
+	agentFacets: readonly AgentFacet[],
 ): string {
 	const selected = contextSources.filter((source) => source.profiles.includes(profileId));
+	const contributions = agentFacets
+		.filter((facet) => facet.profiles.includes(profileId))
+		.map((facet) => {
+			const { definition } = agentFacetSource(facet);
+			return {
+				id: definition.id,
+				version: definition.version,
+				instructions: definition.instructions ?? "",
+				tools: definition.tools.map(({ name, description, parameters }) => ({
+					name,
+					description,
+					parameters,
+				})),
+			};
+		});
 	return hash({
-		endpoint: options.endpoint,
-		model: options.model,
+		...(options.models ? { modelAccess: "native-v1" } : { endpoint: options.endpoint, model: options.model }),
 		cwd: resolve(options.cwd),
 		systemPrompt: options.systemPrompt ?? "",
 		...(selected.length ? { contextSources: selected.map(({ id, version }) => ({ id, version })) } : {}),
+		...(contributions.length ? { agentFacets: contributions } : {}),
+		...(options.execution ? { execution: executionFingerprint(options.execution) } : {}),
 		tools: (options.tools ?? []).map(({ name, description, parameters }) => ({
 			name,
 			description,
@@ -1392,17 +2733,28 @@ function profileOptions(options: HostOptions, profile?: ConversationProfile): Ho
 		...options,
 		cwd,
 		model,
+		thinkingLevel: profile?.thinkingLevel ?? options.thinkingLevel,
+		execution: prepareExecution(profile?.execution ?? options.execution, profile?.tools ?? options.tools),
 		systemPrompt: profile?.systemPrompt ?? options.systemPrompt,
 		tools: (profile?.tools ?? options.tools)?.map((tool) =>
 			Object.freeze({ ...tool, parameters: copy(tool.parameters) }),
 		),
 	});
 }
-async function claimWriter(storageDir: string): Promise<() => Promise<void>> {
+function productStorageHeld(dataDir: string): boolean {
+	return (
+		existsSync(join(dirname(dataDir), basename(dataDir) + ".pakka-maintenance.json")) ||
+		existsSync(join(dataDir, "pakka-product-maintenance.json")) ||
+		existsSync(join(dataDir, "pakka-restored-hold.json"))
+	);
+}
+async function claimWriter(storageDir: string, offline = false): Promise<() => Promise<void>> {
+	const held = () =>
+		existsSync(join(storageDir, "pakka-maintenance.json")) ||
+		(!offline && [storageDir, dirname(storageDir), dirname(dirname(storageDir))].some(productStorageHeld));
 	const path = join(storageDir, "pakka-writer.json"),
 		nonce = randomUUID();
-	if (existsSync(join(storageDir, "pakka-maintenance.json")))
-		throw new Error("Pakka storage maintenance is locked");
+	if (held()) throw new Error("Pakka storage maintenance is locked");
 	let descriptor;
 	try {
 		descriptor = await open(path, "wx");
@@ -1432,13 +2784,45 @@ async function claimWriter(storageDir: string): Promise<() => Promise<void>> {
 	};
 	// Maintenance may start while the exclusive file creation is queued.
 	// Recheck before any database is opened, then release only our own claim.
-	if (existsSync(join(storageDir, "pakka-maintenance.json"))) {
+	if (held()) {
 		await release();
 		throw new Error("Pakka storage maintenance is locked");
 	}
 	return release;
 }
 class MutationDenied extends Error {}
+/** This configuration attempt was refused before commit. Any earlier request retains its own receipt. */
+export class ConfigurationChangeRefusedError extends MutationDenied {
+	constructor(message: string) {
+		super(message);
+		this.name = "ConfigurationChangeRefusedError";
+	}
+}
+/** A records request was rejected without committing effects. */
+export class RecordsRequestRefusedError extends MutationDenied {
+	readonly code: "invalid" | "conflict" | "capacity" | "denied";
+	constructor(code: "invalid" | "conflict" | "capacity" | "denied", message: string) {
+		super(message);
+		this.code = code;
+		this.name = "RecordsRequestRefusedError";
+	}
+}
+/** The commit is durable, but current authority cannot publish its result. Reconcile the original request. */
+export class RecordsPublicationError extends Error {
+	constructor() {
+		super("Records commit is durable but publication authority ended; reconcile original request");
+		this.name = "RecordsPublicationError";
+	}
+}
+/** This budget attempt was rejected before commit; any prior request still has its own receipt. */
+export class BudgetChangeRefusedError extends MutationDenied {
+	readonly code: "INVALID_REQUEST" | "CONFLICT";
+	constructor(code: "INVALID_REQUEST" | "CONFLICT", message: string) {
+		super(message);
+		this.name = "BudgetChangeRefusedError";
+		this.code = code;
+	}
+}
 class JournalConflict extends MutationDenied {
 	readonly version: number;
 	constructor(version: number) {
@@ -1461,6 +2845,14 @@ const JournalIndexDoc = defineDoc<{ heads: Record<string, JournalHead> }>({
 	scope: "session",
 	checkpointWhen: () => true,
 	initial: () => ({ heads: {} }),
+});
+const JournalHeadDoc = defineDocFamily<JournalHead, null>({
+	kind: "pakka.strategy-head",
+	version: 1,
+	scope: "session",
+	family: true,
+	checkpointWhen: () => true,
+	initial: () => ({ version: 0, checksum: "" }),
 });
 const JournalBatchDoc = defineDocFamily<JournalBatch, null>({
 	kind: "pakka.strategy-batch",
@@ -1510,19 +2902,66 @@ type StoredDelivery = {
 	/** Optional on legacy v1 records; observation must not invent a time. */
 	at?: number;
 };
+type CatalogIndex = {
+	order: number;
+	latest: string | null;
+	recipients: Record<string, string>;
+	pending: Record<string, string[]>;
+};
 type CatalogRecord = {
 	version: number;
-	options: { namespace: string; maxDeliveries: number; maxPending: number };
+	options: { namespace: string; maxDeliveries?: number; maxPending: number };
 	members: Record<string, StoredMember>;
-	deliveries: Record<string, StoredDelivery>;
+	/** Present only in v1 data awaiting transactional extraction. */
+	deliveries?: Record<string, StoredDelivery>;
+	index?: CatalogIndex;
 };
 const CatalogDoc = defineDocFamily<CatalogRecord, JsonRepresentation<CatalogOptions>>({
 	kind: "pakka.catalog",
+	version: 2,
+	checkpointWhen: () => true,
+	scope: "session",
+	family: true,
+	initial: (options) => ({
+		version: 0,
+		options: { namespace: options.namespace, maxPending: options.maxPending },
+		members: {},
+		index: { order: 0, latest: null, recipients: {}, pending: {} },
+	}),
+	migrate: (value, fromVersion) => {
+		if (fromVersion !== 1 || !value.deliveries || value.index !== undefined)
+			throw new Error("Invalid legacy catalog layout");
+		return storedJson<CatalogRecord>(value);
+	},
+});
+const CatalogConfigurationDoc = defineDocFamily<
+	{
+		namespace: string;
+		receipt: JsonRepresentation<CatalogConfigurationReceipt> | null;
+	},
+	null
+>({
+	kind: "pakka.catalog-configuration",
 	version: 1,
 	checkpointWhen: () => true,
 	scope: "session",
 	family: true,
-	initial: (options) => ({ version: 0, options: { ...options }, members: {}, deliveries: {} }),
+	initial: () => ({ namespace: "", receipt: null }),
+});
+type CatalogDeliveryRecord = {
+	namespace: string;
+	record: StoredDelivery | null;
+	order: number;
+	previous: string | null;
+	previousTarget: string | null;
+};
+const CatalogDeliveryDoc = defineDocFamily<CatalogDeliveryRecord, null>({
+	kind: "pakka.catalog-delivery",
+	version: 1,
+	checkpointWhen: () => true,
+	scope: "session",
+	family: true,
+	initial: () => ({ namespace: "", record: null, order: 0, previous: null, previousTarget: null }),
 });
 const CoordinatorDoc = defineDocFamily<
 	JsonRepresentation<{ version: number; options: RuntimeStoreOptions; data: JsonObject }>,
@@ -1534,6 +2973,67 @@ const CoordinatorDoc = defineDocFamily<
 	scope: "session",
 	family: true,
 	initial: (options) => ({ version: 0, options: { ...options }, data: {} }),
+});
+const RecordLegacyFenceDoc = defineDocFamily<{ frozen: boolean; version: number }, null>({
+	kind: "pakka.record-legacy-fence",
+	version: 1,
+	checkpointWhen: () => true,
+	scope: "session",
+	family: true,
+	initial: () => ({ frozen: false, version: 0 }),
+});
+const RecordCellDoc = defineDocFamily<{ version: number; data: JsonRepresentation<JsonObject> | null }, null>(
+	{
+		kind: "pakka.record-cell",
+		version: 1,
+		checkpointWhen: () => true,
+		scope: "session",
+		family: true,
+		initial: () => ({ version: 0, data: null }),
+	},
+);
+const RecordWorkDoc = defineDoc<{
+	items: Record<string, { namespace: string; key: string; state: string; fingerprint: string }>;
+}>({
+	kind: "pakka.record-work",
+	version: 1,
+	checkpointWhen: () => true,
+	scope: "session",
+	initial: () => ({ items: {} }),
+});
+const RecordSequenceDoc = defineDocFamily<{ sequence: number }, null>({
+	kind: "pakka.record-sequence",
+	version: 1,
+	checkpointWhen: () => true,
+	scope: "session",
+	family: true,
+	initial: () => ({ sequence: 0 }),
+});
+const RecordReceiptDoc = defineDocFamily<{ receipt: JsonRepresentation<RuntimeRecordsReceipt> | null }, null>(
+	{
+		kind: "pakka.record-receipt",
+		version: 1,
+		checkpointWhen: () => true,
+		scope: "session",
+		family: true,
+		initial: () => ({ receipt: null }),
+	},
+);
+const RecordStreamDoc = defineDocFamily<{ count: number }, null>({
+	kind: "pakka.record-stream",
+	version: 1,
+	checkpointWhen: () => true,
+	scope: "session",
+	family: true,
+	initial: () => ({ count: 0 }),
+});
+const RecordItemDoc = defineDocFamily<{ data: JsonRepresentation<JsonObject> | null }, null>({
+	kind: "pakka.record-item",
+	version: 1,
+	checkpointWhen: () => true,
+	scope: "session",
+	family: true,
+	initial: () => ({ data: null }),
 });
 const DisplayEntry = defineEntry<JsonRepresentation<DisplayWrite>>("pakka.display");
 const DisplayReceipts = defineDocFamily<
@@ -1806,6 +3306,9 @@ function conversationId(value: string): ConversationId {
 }
 
 export class DurableAdapter {
+	#executionPending = new Map<string, Promise<{ driver: ExecutionDriver; native: ExecutionEnv }>>();
+	#executionOwners = new Set<() => Promise<void>>();
+	#executionCleanup: Promise<void> | undefined;
 	#harness: Harness;
 	#conversation: Conversation;
 	#sessionId: string;
@@ -1815,6 +3318,15 @@ export class DurableAdapter {
 	#options: HostOptions;
 	#rawModels: Models;
 	#stream: AgentEventStream | undefined;
+	#lazyObservation = false;
+	#executionCacheLoaded = false;
+	#statusUnsubscribe: (() => void) | undefined;
+	#statusEpoch = 0;
+	#previewEntries = new Map<string, { value: IndexedConversationEntry; bytes: number }>();
+	#previewEntriesBytes = 0;
+	#previewPages = new Map<string, { value: ConversationSnapshot; bytes: number }>();
+	#previewPagesBytes = 0;
+	#previewVersion = 0;
 	#run: Promise<void> | undefined;
 	#primary: string | undefined;
 	#runScope: RunScopeToken | undefined;
@@ -1841,12 +3353,14 @@ export class DurableAdapter {
 	#disposed = false;
 	#providerSessionId: string | undefined;
 	#registry: Registry | undefined;
+	#facetSubscriptions: (() => void)[] = [];
 	#nativeInvocations = new WeakMap<
 		object,
 		{ api: ToolExecutionApi; active: boolean; signal?: AbortSignal }
 	>();
 	#routes = new Map<ConversationId, DurableAdapter>();
 	#managed: ManagedState | undefined;
+	#boundedRecords = false;
 	#releaseWriter: (() => Promise<void>) | undefined;
 	#database: OwnedSqlite | undefined;
 	#storage: SqliteStorage | undefined;
@@ -1895,18 +3409,21 @@ export class DurableAdapter {
 		control: AdapterControl,
 		managedOptions?: Pick<
 			RuntimeOptions,
-			"limits" | "profiles" | "cwdRoots" | "reservedSessionId" | "jobs" | "contextSources"
+			| "limits"
+			| "profiles"
+			| "cwdRoots"
+			| "reservedSessionId"
+			| "jobs"
+			| "contextSources"
+			| "observation"
+			| "agentFacets"
 		>,
 	): Promise<DurableAdapter> {
 		const profiles = new Map<string, HostOptions>([["default", profileOptions(options)]]);
+		options = profiles.get("default")!;
 		if (managedOptions) {
-			const limits = managedOptions.limits;
-			if (
-				!limits ||
-				Object.values(limits).length !== 3 ||
-				Object.values(limits).some((limit) => !Number.isSafeInteger(limit) || limit <= 0)
-			)
-				throw new Error("Invalid finite runtime limits");
+			if (managedOptions.limits !== undefined && !validBudgetLimits(managedOptions.limits))
+				throw new Error("Invalid Session budget limits");
 			for (const profile of managedOptions.profiles ?? []) {
 				if (!/^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(profile.id) || profiles.has(profile.id))
 					throw new Error("Invalid/duplicate runtime profile");
@@ -1914,6 +3431,7 @@ export class DurableAdapter {
 			}
 		}
 		const contextSources = prepareContextSources(managedOptions?.contextSources, profiles);
+		const agentFacets = prepareAgentFacets(managedOptions?.agentFacets, profiles);
 		if (
 			managedOptions?.cwdRoots !== undefined &&
 			(!Array.isArray(managedOptions.cwdRoots) ||
@@ -1930,7 +3448,7 @@ export class DurableAdapter {
 		];
 		for (const profile of profiles.values()) approvedDirectory(profile.cwd, cwdRoots);
 		const approvedHashes = Object.fromEntries(
-			[...profiles].map(([id, profile]) => [id, profileHash(profile, contextSources, id)]),
+			[...profiles].map(([id, profile]) => [id, profileHash(profile, contextSources, id, agentFacets)]),
 		);
 		if (managedOptions?.cwdRoots !== undefined) approvedHashes["@cwdRoots"] = hash(cwdRoots);
 		const modelKeys = new Set<string>();
@@ -1964,6 +3482,8 @@ export class DurableAdapter {
 			!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(reserved)
 		)
 			throw new Error("Invalid reserved Session identity");
+		if (productStorageHeld(options.dataDir))
+			throw new Error("Pakka product maintenance/restored execution is held");
 		const sessionsDir = join(options.dataDir, "sessions");
 		await mkdir(sessionsDir, { recursive: true });
 
@@ -1987,6 +3507,8 @@ export class DurableAdapter {
 					const prov = JSON.parse(readFileSync(provPath, "utf8")) as ProvenanceData;
 					if (resolve(prov.cwd) !== resolve(options.cwd))
 						throw new Error("Reopen must match cwd and session provenance");
+					if (prov.execution !== executionFingerprint(options.execution))
+						throw new Error("Reopen execution configuration mismatch");
 					sessionId = prov.sessionId;
 				} catch (e) {
 					if (e instanceof Error && e.message.startsWith("Reopen")) throw e;
@@ -2008,7 +3530,11 @@ export class DurableAdapter {
 					throw new Error("Reserved storage exists; explicit reopen required");
 				throw error;
 			}
-			const prov: ProvenanceData = { sessionId, cwd: resolve(options.cwd) };
+			const prov: ProvenanceData = {
+				sessionId,
+				cwd: resolve(options.cwd),
+				...(options.execution ? { execution: executionFingerprint(options.execution) } : {}),
+			};
 			await writeFile(join(storageDir, "provenance.json"), JSON.stringify(prov), "utf8");
 			sessionFile = join(storageDir, "main.sqlite");
 		}
@@ -2017,6 +3543,7 @@ export class DurableAdapter {
 		let openedHarness: Harness | undefined;
 		let openedStorage: SqliteStorage | undefined;
 		let openedDatabase: OwnedSqlite | undefined;
+		const facetSubscriptions: (() => void)[] = [];
 		try {
 			const storage = await openPersistentStorage(
 				storageDir,
@@ -2027,52 +3554,7 @@ export class DurableAdapter {
 			);
 			openedStorage = storage;
 
-			const rawModels = createModels();
-			const mainProviderId = "pakka-provider-" + hash(options.endpoint).slice(0, 12);
-			const mainModelId = options.model;
-			const mainApiKey = options.apiKey;
-
-			rawModels.setProvider(
-				createProvider({
-					id: mainProviderId,
-					name: "pakka-main",
-					baseUrl: options.endpoint,
-					auth: {
-						apiKey: {
-							name: "Main API Key",
-							resolve: async () => {
-								try {
-									const apiKey = options.resolveApiKey ? await options.resolveApiKey() : mainApiKey;
-									if (
-										typeof apiKey !== "string" ||
-										!apiKey ||
-										apiKey.length > 4096 ||
-										/[\x00-\x1f\x7f]/.test(apiKey)
-									)
-										throw new Error("Unavailable credential");
-									return { auth: { apiKey, baseUrl: options.endpoint } };
-								} catch {
-									throw new Error("Configured provider credential unavailable");
-								}
-							},
-						},
-					},
-					api: { "openai-completions": oac },
-					models: [...new Set([...profiles.values()].map((profile) => profile.model))].map((modelId) => ({
-						id: modelId,
-						name: modelId,
-						provider: mainProviderId,
-						api: "openai-completions",
-						baseUrl: options.endpoint,
-						reasoning: false,
-						input: ["text"],
-						cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
-						contextWindow: 128000,
-						maxTokens: 4096,
-						compat: { maxTokensField: "max_tokens", supportsMidConvoSystemMessages: true },
-					})),
-				}),
-			);
+			const rawModels = legacyModels(options, profiles);
 
 			let adapterRef: DurableAdapter | undefined;
 
@@ -2113,18 +3595,41 @@ export class DurableAdapter {
 			const routes = new Map<ConversationId, DurableAdapter>();
 			const extensions = new Map<string, ReturnType<typeof defineExtension>>();
 			for (const [id, profile] of profiles) {
-				const extension = DurableAdapter.#extension(profile, routes, id);
+				const extension = DurableAdapter.#extension(profile, routes, id, agentFacets);
 				registry.install(extension);
 				extensions.set(id, extension);
+			}
+			for (const facet of agentFacets) {
+				facetSubscriptions.push(
+					agentFacetSource(facet).subscribe(() => {
+						for (const id of facet.profiles) {
+							const extension = DurableAdapter.#extension(profiles.get(id)!, routes, id, agentFacets);
+							registry.install(extension);
+							extensions.set(id, extension);
+						}
+					}),
+				);
 			}
 			const ext = extensions.get("default")!;
 
 			const harness = await Harness.open(
 				storage,
 				{
-					models: rawModels,
+					models: options.models ?? rawModels,
 					registry,
+					// Preparation may report-and-continue an env error. The generation gate below explicitly blocks it.
+					env: async ({ conversationId }) => {
+						const route = routes.get(conversationId);
+						try {
+							return route ? (await route.#execution())?.native : undefined;
+						} catch {
+							return undefined;
+						}
+					},
 					settings: {
+						get documentRetentionMs() {
+							return adapterRef && adapterRef.#boundedRecords ? 0 : undefined;
+						},
 						steeringMode: options.steeringMode ?? "one-at-a-time",
 						stream: { maxRetries: 0 },
 						compaction: { enabled: false },
@@ -2144,7 +3649,8 @@ export class DurableAdapter {
 				throw new Error("Managed storage requires createRuntime; legacy bypass refused");
 			let conversation = await harness.root(BACKGROUND_CONTEXT, {
 				agent: {
-					model: { provider: mainProviderId, modelId: mainModelId },
+					model: modelReference(options),
+					thinkingLevel: options.thinkingLevel,
 					extensions: [ext],
 					instructions: options.systemPrompt ?? undefined,
 					cwd: options.cwd,
@@ -2154,7 +3660,10 @@ export class DurableAdapter {
 							init: async (tx: Parameters<Parameters<Harness["commit"]>[0]>[0], created: ConversationId) => {
 								const state = await tx.doc(RuntimeDoc);
 								state.sessionId = sessionId;
-								state.limits = { ...managedOptions.limits };
+								if (managedOptions.limits !== undefined) state.limits = { ...managedOptions.limits };
+								state.policyVersion = 0;
+								const policy = await tx.doc(BudgetPolicyDoc);
+								policy.bootstrapLimits = { ...state.limits };
 								state.profiles = { ...approvedHashes };
 								state.conversationCount = 1;
 								state.resources.root = {
@@ -2169,19 +3678,57 @@ export class DurableAdapter {
 					: {}),
 			});
 
-			const savedRuntime = managedOptions
-				? await harness.snapshot(RuntimeDoc, BACKGROUND_CONTEXT)
-				: undefined;
+			let savedRuntime = managedOptions ? await harness.snapshot(RuntimeDoc, BACKGROUND_CONTEXT) : undefined;
 			if (managedOptions) {
 				const expected = { ...approvedHashes };
 				if (
 					!savedRuntime ||
 					savedRuntime.sessionId !== sessionId ||
-					hash(savedRuntime.limits) !== hash(managedOptions.limits) ||
-					hash(savedRuntime.profiles) !== hash(expected)
+					!Object.hasOwn(savedRuntime.profiles, "default") ||
+					(savedRuntime.profiles["@cwdRoots"] ?? null) !== (expected["@cwdRoots"] ?? null) ||
+					Object.entries(savedRuntime.profiles).some(([id, fingerprint]) => expected[id] !== fingerprint) ||
+					Object.values(savedRuntime.resources).some(
+						(ref) => !expected[ref.profile] || savedRuntime!.profiles[ref.profile] !== expected[ref.profile],
+					)
 				) {
 					await harness.close(BACKGROUND_CONTEXT);
-					throw new Error("Managed runtime profile/limits mismatch");
+					throw new Error("Managed runtime profile mismatch; explicit migration required");
+				}
+				const priorPolicy = await harness.snapshot(BudgetPolicyDoc, BACKGROUND_CONTEXT);
+				if (!validBudgetLimits(savedRuntime.limits)) throw new Error("Invalid stored Session budget limits");
+				if (savedRuntime.policyVersion === null) {
+					if (priorPolicy) throw new Error("Legacy budget policy identity conflict");
+				} else budgetHead(savedRuntime, priorPolicy);
+				const addedProfiles = Object.keys(expected).filter(
+					(id) => !Object.hasOwn(savedRuntime!.profiles, id),
+				);
+				const explicitLimits = managedOptions.limits;
+				const bootstrapChanged =
+					explicitLimits !== undefined &&
+					hash(priorPolicy?.bootstrapLimits ?? savedRuntime.limits) !== hash(explicitLimits);
+				if (!priorPolicy || addedProfiles.length || bootstrapChanged) {
+					await harness.commit(async (tx) => {
+						const state = await tx.doc(RuntimeDoc),
+							policy = await tx.doc(BudgetPolicyDoc);
+						if (state.policyVersion === null) {
+							policy.bootstrapLimits = { ...state.limits };
+							state.policyVersion = policy.version = 0;
+						}
+						if (addedProfiles.length || bootstrapChanged) {
+							await recordBudgetChange(tx, state, policy, {
+								source: "bootstrap",
+								actorId: "bootstrap",
+								requestId: `bootstrap-${policy.version + 1}`,
+								reason: "Trusted bootstrap configuration changed",
+								addedProfiles,
+								limits: bootstrapChanged ? explicitLimits : state.limits,
+							});
+							state.profiles = { ...expected };
+						}
+						if (bootstrapChanged) policy.bootstrapLimits = { ...explicitLimits };
+					}, BACKGROUND_CONTEXT);
+					savedRuntime = await harness.snapshot(RuntimeDoc, BACKGROUND_CONTEXT);
+					if (!savedRuntime) throw new Error("Runtime policy initialization unavailable");
 				}
 				const activeRoot = savedRuntime.resources.root;
 				if (!activeRoot) {
@@ -2215,6 +3762,7 @@ export class DurableAdapter {
 			adapter.#storage = storage;
 			adapter.#routes = routes;
 			adapter.#registry = registry;
+			adapter.#facetSubscriptions = facetSubscriptions;
 			routes.set(conversation.id, adapter);
 			if (managedOptions) {
 				const hashes = { ...approvedHashes };
@@ -2229,6 +3777,7 @@ export class DurableAdapter {
 					closed: false,
 				};
 				adapter.#managed.unsubscribe = harness.subscribeCommits((publication) => {
+					adapter.#previewVersion++;
 					for (const change of publication.changes)
 						if (change.type === "document" && change.record.kind === "pakka.runtime" && change.value)
 							adapter.#managed!.state = change.value as RuntimeRecord;
@@ -2277,12 +3826,15 @@ export class DurableAdapter {
 				});
 			}
 
-			if (managedOptions)
+			if (managedOptions) {
 				adapter.#options = await adapter.#conversationOptions(savedRuntime!.resources.root!);
+				adapter.#lazyObservation = managedOptions.observation === "lazy";
+			}
 			await adapter.#initStream();
 			await adapter.refreshCache();
 			return adapter;
 		} catch (error) {
+			for (const unsubscribe of facetSubscriptions) unsubscribe();
 			// A claim is released only after the known writer is closed; cleanup failure retains it.
 			if (openedHarness) await openedHarness.close(BACKGROUND_CONTEXT);
 			else if (openedStorage) await openedStorage.close(BACKGROUND_CONTEXT);
@@ -2292,48 +3844,227 @@ export class DurableAdapter {
 		}
 	}
 
-	static #extension(options: HostOptions, routes: Map<ConversationId, DurableAdapter>, profile: string) {
+	async #execution(): Promise<{ driver: ExecutionDriver; native: ExecutionEnv } | undefined> {
+		const configuration = this.#options.execution;
+		if (!configuration) return undefined;
+		if (this.#disposed || this.#executionCleanup) throw new Error("Execution environment is closed");
+		const ref =
+			this.#managed &&
+			Object.values(this.#managed.state.resources).find(
+				(ref) => ref.conversationId === String(this.#conversation.id),
+			);
+		const target: ExecutionTarget = copy({
+			sessionId: this.#sessionId,
+			conversationId: String(this.#conversation.id),
+			profile: ref?.profile ?? "default",
+			...(ref ? { incarnation: ref.incarnation } : {}),
+			cwd: this.#options.cwd,
+		});
+		const key = hash([configuration.id, target]);
+		let pending = this.#executionPending.get(key);
+		if (!pending) {
+			pending = Promise.resolve().then(async () => {
+				const driver = await configuration.open(target);
+				const cleanup = driver?.cleanup;
+				this.#executionOwners.add(
+					typeof cleanup === "function"
+						? () => cleanup.call(driver)
+						: async () => {
+								throw new Error("Execution driver ownership is unconfirmed: missing cleanup");
+							},
+				);
+				if (
+					!driver ||
+					typeof driver.id !== "string" ||
+					!driver.id ||
+					driver.cwd !== target.cwd ||
+					typeof cleanup !== "function"
+				)
+					throw new Error("Invalid or mismatched execution environment");
+				return { driver, native: nativeExecutionEnvironment(driver) };
+			});
+			this.#executionPending.set(key, pending);
+		}
+		return pending;
+	}
+	async #closeExecution(): Promise<void> {
+		if (!this.#executionCleanup)
+			this.#executionCleanup = Promise.resolve().then(async () => {
+				await Promise.allSettled([...this.#executionPending.values()]);
+				const results = await Promise.allSettled(
+					[...this.#executionOwners].map((close) => Promise.resolve().then(close)),
+				);
+				const failure = results.find((result) => result.status === "rejected");
+				if (failure?.status === "rejected") throw failure.reason;
+			});
+		return this.#executionCleanup;
+	}
+	async #invokeExecutionTool<T>(
+		api: ToolExecutionApi,
+		context: Parameters<ExecutionEnv["exec"]>[2],
+		work: (scope: ToolInvocationScope) => Promise<T>,
+	): Promise<T> {
+		const run = this.activeRunScope ?? this.#control.runScope();
+		return this.#control.invoke(run, async (invocation) => {
+			const current = { api, active: true, signal: context.abortSignal };
+			const resources = new Set<() => Promise<void>>();
+			const pending = new Set<Promise<unknown>>();
+			let accepting = true;
+			let operationFailed = false;
+			const track = <R>(work: () => Promise<R>): Promise<R> => {
+				const operation = Promise.resolve().then(work);
+				pending.add(operation);
+				void operation.then(
+					() => pending.delete(operation),
+					(error) => {
+						if (!(error instanceof ExecutionAccessRevoked)) operationFailed = true;
+						pending.delete(operation);
+					},
+				);
+				return operation;
+			};
+			this.#nativeInvocations.set(invocation, current);
+			const check = () => {
+				if (!current.active || this.#disposed || context.abortSignal?.aborted)
+					throw new ExecutionAccessRevoked("Execution invocation is inactive");
+				try {
+					this.#control.checkInvocation(invocation);
+				} catch {
+					throw new ExecutionAccessRevoked("Execution invocation is stale");
+				}
+			};
+			const admit = () => {
+				check();
+				if (!accepting) throw new Error("Execution invocation is closing");
+			};
+			executionScopes.set(invocation, async () => {
+				admit();
+				const env = await this.#execution();
+				admit();
+				if (!env) throw new Error("Execution environment is not configured");
+				return boundExecutionAccess(env.driver, check, admit, track, context.abortSignal, resources);
+			});
+			try {
+				return await work(invocation);
+			} finally {
+				accepting = false;
+				await Promise.allSettled([...pending]);
+				current.active = false;
+				executionScopes.delete(invocation);
+				const closed = await Promise.allSettled([...resources].map((close) => Promise.resolve().then(close)));
+				const failure = closed.find((result) => result.status === "rejected");
+				if (failure?.status === "rejected") {
+					this.markFailed(new Error("Execution resource closure is unconfirmed"));
+					throw failure.reason;
+				}
+				if (operationFailed) this.markFailed(new Error("Execution effects are unconfirmed"));
+			}
+		});
+	}
+
+	static #extension(
+		options: HostOptions,
+		routes: Map<ConversationId, DurableAdapter>,
+		profile: string,
+		facets: readonly AgentFacet[],
+	) {
+		const active = facets
+			.filter((facet) => facet.profiles.includes(profile) && facet.status().phase === "ready")
+			.map((facet) => {
+				const source = agentFacetSource(facet),
+					generation = facet.status().generation;
+				return { definition: source.definition, check: () => source.check(generation) };
+			});
+		const contributedTools = active.flatMap(({ definition, check }) =>
+			definition.tools.map((tool): NonNullable<HostOptions["tools"]>[number] => ({
+				...tool,
+				execute(args, signal, scope) {
+					check();
+					// Admission is checked once here. Accepted work retains its own service/Runtime lifecycle.
+					return tool.execute(args, signal, scope);
+				},
+			})),
+		);
 		const resolveAdapter = (id: ConversationId) => {
 			const adapter = routes.get(id);
 			if (!adapter || adapter.#disposed) throw new Error("Conversation authority is not bound");
 			return adapter;
 		};
+		const factories = {
+			read: createReadTool,
+			write: createWriteTool,
+			edit: createEditTool,
+			bash: createBashTool,
+			powershell: () =>
+				createPowerShellTool({
+					programs: options.execution?.powershellPrograms
+						? [...options.execution.powershellPrograms]
+						: undefined,
+				}),
+		};
+		const nativeTools = (options.execution?.tools ?? []).map((name) => {
+			const tool = factories[name]();
+			return defineTool<TSchema>({
+				...tool,
+				execute: async (args, api, context) => {
+					const adapter = resolveAdapter(api.conversationId);
+					return adapter.#invokeExecutionTool(api, context, async (invocation) => {
+						const access = await executionFor(invocation);
+						const env = nativeExecutionEnvironment({
+							...access,
+							cleanup: async () => {
+								throw new Error("Execution cleanup belongs to the host");
+							},
+						});
+						return tool.execute(args as never, { ...api, env }, context);
+					});
+				},
+			});
+		});
 		return defineExtension({
 			name: profile === "default" ? "pakka-core-extension" : "pakka-profile-" + profile,
-			tools: (options.tools ?? []).map((tool) =>
-				defineTool({
-					name: tool.name,
-					description: tool.description,
-					// SAFETY: bootstrap tool parameters are JSON Schema; Durable validates arguments before execute.
-					parameters: tool.parameters as unknown as TSchema,
-					execute: async (args, api, context) => {
-						const adapter = resolveAdapter(api.conversationId);
-						const scope = adapter.activeRunScope ?? adapter.#control.runScope();
-						const result = await adapter.#control.invoke(scope, async (invocation) => {
-							const current = { api, active: true, signal: context.abortSignal };
-							adapter.#nativeInvocations.set(invocation, current);
-							try {
-								return await tool.execute(args as Record<string, unknown>, context.abortSignal, invocation);
-							} finally {
-								current.active = false;
-							}
-						});
-						return { output: [{ type: "text", text: result }] };
-					},
-				}),
-			),
-			sections: options.systemPrompt ? [section("system", () => options.systemPrompt, { tag: false })] : [],
+			tools: [
+				...nativeTools,
+				...[...(options.tools ?? []), ...contributedTools].map((tool) =>
+					defineTool({
+						name: tool.name,
+						description: tool.description,
+						// SAFETY: bootstrap tool parameters are JSON Schema; Durable validates arguments before execute.
+						parameters: tool.parameters as unknown as TSchema,
+						execute: async (args, api, context) => {
+							const adapter = resolveAdapter(api.conversationId);
+							const result = await adapter.#invokeExecutionTool(api, context, (invocation) =>
+								tool.execute(args as Record<string, unknown>, context.abortSignal, invocation),
+							);
+							return { output: [{ type: "text", text: result }] };
+						},
+					}),
+				),
+			],
+			sections: [
+				...(options.systemPrompt ? [section("system", () => options.systemPrompt, { tag: false })] : []),
+				...active.flatMap(({ definition }) =>
+					definition.instructions
+						? [section("facet-" + definition.id, () => definition.instructions, { tag: false })]
+						: [],
+				),
+			],
 			hooks: [
 				hook(GenerationTask, {
 					beforeRequest: async (_request, api, context) => {
 						let adapter: DurableAdapter | undefined;
 						try {
 							adapter = resolveAdapter(api.conversationId);
-							await adapter.refreshCache();
+							try {
+								await adapter.#execution();
+							} catch {
+								return { block: "Execution environment unavailable" };
+							}
+							await adapter.refreshCache(true);
 							const permitted = await adapter.#control.project(context.abortSignal);
 							permitted.check();
 							if ("block" in permitted) return { block: permitted.block };
-							const checks: (() => void)[] = [permitted.check];
+							const checks: (() => void)[] = [permitted.check, ...active.map((source) => source.check)];
 							const sections: Record<string, string> = {};
 							let chars = 0;
 							for (const source of adapter.#managed?.contextSources ?? []) {
@@ -2343,15 +4074,19 @@ export class DurableAdapter {
 								);
 								if (!target) throw new Error("Context Conversation is unavailable");
 								const ref = copy(target),
+									cwd = adapter.#options.cwd,
 									currentAdapter = adapter;
 								const check = () => {
 									currentAdapter.#validateReference(ref);
+									if (currentAdapter.#options.cwd !== cwd) throw new Error("Context directory changed");
 									if (context.abortSignal?.aborted) throw new Error("Context preparation aborted");
 								};
 								check();
 								let result: unknown;
 								try {
-									result = await source.render(Object.freeze({ target: ref, signal: context.abortSignal }));
+									result = await source.render(
+										Object.freeze({ target: ref, cwd, signal: context.abortSignal }),
+									);
 								} catch {
 									throw new Error("Context source unavailable");
 								}
@@ -2362,9 +4097,7 @@ export class DurableAdapter {
 									Object.keys(value).some((key) => !["text", "check"].includes(key)) ||
 									typeof value.check !== "function" ||
 									(value.text !== null &&
-										(typeof value.text !== "string" ||
-											value.text.length > 32768 ||
-											/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/.test(value.text)))
+										(typeof value.text !== "string" || /[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/.test(value.text)))
 								)
 									throw new Error("Invalid bounded context source result");
 								const sourceCheck = value.check;
@@ -2403,15 +4136,19 @@ export class DurableAdapter {
 							return { messages, check };
 						} catch (error) {
 							const failure = error instanceof Error ? error : new Error(String(error));
-							if (!(failure instanceof LifecycleTransitionRevoked)) adapter?.markFailed(failure);
+							if (!(failure instanceof LifecycleTransitionRevoked) && !(failure instanceof AgentFacetRevoked))
+								adapter?.markFailed(failure);
 							return { block: failure.message };
 						}
 					},
 					afterResponse: async (message, api) => {
-						if (message.stopReason === "error")
-							routes
-								.get(api.conversationId)
-								?.markFailed(new Error(message.errorMessage ?? "Provider failed"));
+						const adapter = routes.get(api.conversationId);
+						if (message.stopReason === "error" && adapter)
+							adapter.#notify({
+								type: "generation_error",
+								id: adapter.#primary,
+								reason: message.errorMessage ?? "Provider failed",
+							});
 					},
 				}),
 			],
@@ -2449,15 +4186,176 @@ export class DurableAdapter {
 		const agent = await conversation.agent(BACKGROUND_CONTEXT);
 		this.#validateReference(ref);
 		if (
-			!agent.model ||
-			agent.model.provider !== "pakka-provider-" + hash(profile.endpoint).slice(0, 12) ||
-			![...managed.profiles.values()].some((row) => row.model === agent.model!.modelId)
+			!profile.models &&
+			(!agent.model ||
+				agent.model.provider !== "pakka-provider-" + hash(profile.endpoint).slice(0, 12) ||
+				![...managed.profiles.values()].some((row) => row.model === agent.model!.modelId))
 		)
 			throw new Error("Stored model is not approved");
-		return { ...profile, model: agent.model.modelId, cwd: approvedDirectory(agent.cwd, managed.cwdRoots) };
+		const selected = agent.model
+			? profile.models
+				? modelKey({ provider: agent.model.provider, id: agent.model.modelId })
+				: agent.model.modelId
+			: "";
+		return {
+			...profile,
+			model: selected,
+			thinkingLevel: agent.thinkingLevel,
+			cwd: approvedDirectory(agent.cwd, managed.cwdRoots),
+		};
+	}
+	async #budgetRead<T>(check: () => void, read: () => Promise<T>): Promise<T> {
+		this.#managedReady();
+		checkAuthority(check);
+		try {
+			const result = await read();
+			this.#managedReady();
+			checkAuthority(check);
+			return copy(result);
+		} catch (error) {
+			if (!(error instanceof MutationDenied)) this.storageUnknown("Runtime budget read unavailable");
+			throw error;
+		}
+	}
+	#budgetPolicy(check: () => void): Promise<RuntimeBudgetSnapshot> {
+		return this.#budgetRead(check, () =>
+			this.#persist(async (tx) => {
+				const state = await tx.doc(RuntimeDoc),
+					policy = await tx.doc(BudgetPolicyDoc);
+				budgetHead(state, policy);
+				checkAuthority(check);
+				return {
+					version: policy.version,
+					limits: { ...state.limits },
+					budget: { ...state.budget },
+					conversationCount: state.conversationCount,
+				};
+			}),
+		);
+	}
+	async #changeBudget(raw: RuntimeBudgetChange, check: () => void): Promise<RuntimeBudgetReceipt> {
+		this.#managedReady();
+		checkAuthority(check);
+		if (
+			!raw ||
+			Object.keys(raw).sort().join(",") !== "actorId,expectedVersion,limits,reason,requestId" ||
+			!validKey(raw.actorId) ||
+			!validKey(raw.requestId) ||
+			!Number.isSafeInteger(raw.expectedVersion) ||
+			raw.expectedVersion < 0 ||
+			!validBudgetLimits(raw.limits) ||
+			typeof raw.reason !== "string" ||
+			raw.reason.length > 512 ||
+			/[\x00-\x1f\x7f]/.test(raw.reason)
+		)
+			throw new BudgetChangeRefusedError("INVALID_REQUEST", "Invalid budget policy change");
+		const input = copy(raw),
+			key = hash([input.actorId, input.requestId]),
+			fingerprint = hash(input);
+		const receipt = await this.#persist(async (tx) => {
+			this.#managedReady();
+			const state = await tx.doc(RuntimeDoc),
+				policy = await tx.doc(BudgetPolicyDoc);
+			budgetHead(state, policy);
+			const request = await tx.doc(BudgetRequestDoc, key, null);
+			checkAuthority(check);
+			if (request.version > 0) {
+				if (request.fingerprint !== fingerprint)
+					throw new BudgetChangeRefusedError("CONFLICT", "Budget request identity conflict");
+				const row = await tx.doc(BudgetHistoryDoc, String(request.version), null);
+				if (
+					!row.receipt ||
+					row.receipt.version !== request.version ||
+					row.receipt.source !== "management" ||
+					row.receipt.actorId !== input.actorId ||
+					row.receipt.requestId !== input.requestId
+				)
+					throw new Error("Budget receipt identity unavailable");
+				checkAuthority(check);
+				return storedJson<RuntimeBudgetReceipt>(row.receipt);
+			}
+			if (input.expectedVersion !== policy.version)
+				throw new BudgetChangeRefusedError("CONFLICT", "Budget policy version conflict");
+			const result = await recordBudgetChange(tx, state, policy, {
+				...input,
+				source: "management",
+				addedProfiles: [],
+			});
+			request.version = result.version;
+			request.fingerprint = fingerprint;
+			checkAuthority(check);
+			return result;
+		});
+		checkAuthority(check);
+		return copy(receipt);
+	}
+	#budgetReceipt(
+		raw: Pick<RuntimeBudgetChange, "actorId" | "requestId">,
+		check: () => void,
+	): Promise<RuntimeBudgetReceipt | null> {
+		return this.#budgetRead(check, async () => {
+			if (
+				!raw ||
+				Object.keys(raw).sort().join(",") !== "actorId,requestId" ||
+				!validKey(raw.actorId) ||
+				!validKey(raw.requestId)
+			)
+				throw new MutationDenied("Invalid budget receipt identity");
+			const identity = copy(raw);
+			const request = await this.#harness.snapshot(
+				BudgetRequestDoc,
+				hash([identity.actorId, identity.requestId]),
+				BACKGROUND_CONTEXT,
+			);
+			if (!request) return null;
+			if (!Number.isSafeInteger(request.version) || request.version < 1)
+				throw new Error("Budget request identity unavailable");
+			const row = await this.#harness.snapshot(BudgetHistoryDoc, String(request.version), BACKGROUND_CONTEXT);
+			if (
+				!row?.receipt ||
+				row.receipt.version !== request.version ||
+				row.receipt.source !== "management" ||
+				row.receipt.actorId !== identity.actorId ||
+				row.receipt.requestId !== identity.requestId
+			)
+				throw new Error("Budget receipt identity unavailable");
+			return row.receipt;
+		});
+	}
+	#budgetHistory(raw: RuntimeBudgetQuery, check: () => void): Promise<RuntimeBudgetPage> {
+		return this.#budgetRead(check, async () => {
+			if (
+				!raw ||
+				Object.keys(raw).some((key) => !["limit", "beforeVersion"].includes(key)) ||
+				(raw.beforeVersion !== undefined &&
+					(!Number.isSafeInteger(raw.beforeVersion) || raw.beforeVersion < 1))
+			)
+				throw new MutationDenied("Invalid budget history query");
+			const limit = raw.limit ?? 50,
+				before = raw.beforeVersion;
+			if (!Number.isSafeInteger(limit) || limit < 1 || limit > 100)
+				throw new MutationDenied("Invalid budget history limit");
+			const policy = await this.#harness.snapshot(BudgetPolicyDoc, BACKGROUND_CONTEXT);
+			if (!policy || !Number.isSafeInteger(policy.version) || policy.version < 0)
+				throw new Error("Budget history identity unavailable");
+			let version = Math.min(policy.version, before === undefined ? policy.version : before - 1);
+			const items: RuntimeBudgetReceipt[] = [];
+			for (; version > 0 && items.length < limit; version--) {
+				const row = await this.#harness.snapshot(BudgetHistoryDoc, String(version), BACKGROUND_CONTEXT);
+				if (!row?.receipt || row.receipt.version !== version)
+					throw new Error("Budget history row unavailable");
+				items.push(row.receipt);
+			}
+			return { items, ...(version > 0 ? { nextBeforeVersion: version + 1 } : {}) };
+		});
 	}
 	#managedPort(): ManagedAdapterPort {
 		return Object.freeze({
+			budgetPolicy: (check: () => void) => this.#budgetPolicy(check),
+			changeBudget: (input: RuntimeBudgetChange, check: () => void) => this.#changeBudget(input, check),
+			budgetReceipt: (identity: Pick<RuntimeBudgetChange, "actorId" | "requestId">, check: () => void) =>
+				this.#budgetReceipt(identity, check),
+			budgetHistory: (query: RuntimeBudgetQuery, check: () => void) => this.#budgetHistory(query, check),
 			view: () => {
 				const managed = this.#managed!;
 				return copy({
@@ -2482,6 +4380,28 @@ export class DurableAdapter {
 						cwd: resolve(profile.cwd),
 					})),
 				),
+			modelAllowed: (selection: string) => {
+				this.#managedReady();
+				return this.#approvedModel(selection);
+			},
+			modelChoices: async () => {
+				this.#managedReady();
+				const source = primaryModels(this.#options, this.#rawModels);
+				const available = new Set((await source.getAvailable()).map(modelKey));
+				this.#managedReady();
+				const catalog = this.#options.models
+					? source.getModels()
+					: source.getModels(modelReference(this.#options)?.provider);
+				return copy(
+					catalog.map((model) =>
+						modelDTO(
+							model,
+							this.#options.models ? modelKey(model) : model.id,
+							available.has(modelKey(model)),
+						),
+					),
+				);
+			},
 			profileOptions: (id: string) => {
 				const profile = this.#managedReady().profiles.get(id);
 				if (!profile) throw new Error("Unapproved runtime profile");
@@ -2490,7 +4410,11 @@ export class DurableAdapter {
 			optionsFor: (ref: ConversationRef) => this.#conversationOptions(ref),
 			configuration: async (ref: ConversationRef) => {
 				const options = await this.#conversationOptions(ref);
-				return copy({ model: options.model, cwd: options.cwd });
+				return copy({
+					model: options.model,
+					cwd: options.cwd,
+					...(options.models ? { thinkingLevel: options.thinkingLevel } : {}),
+				});
 			},
 			directoryRoots: (ids?: readonly string[]) => {
 				const managed = this.#managedReady();
@@ -2509,9 +4433,42 @@ export class DurableAdapter {
 			validateReference: (ref: ConversationRef) => this.#validateReference(ref),
 			catalog: (options: CatalogOptions) => this.#catalog(options),
 			store: (options: RuntimeStoreOptions) => this.#store(options),
+			records: (options: RuntimeRecordsOptions) => this.#records(options),
+			artifactHistory: (ref: ConversationRef, strategyId: string, check: () => void) =>
+				this.#artifactHistory(ref, strategyId, check),
+			historicalWork: (options: HistoricalWorkOptions) => this.#historicalWork(options),
+			readHistoricalEntry: (ref: ConversationRef, input: HistoricalEntryInput, check: () => void) =>
+				this.#readHistoricalEntry(ref, input, check),
 			jobs: (options: RuntimeJobOptions) => this.#jobs(options),
 			readConversation: (ref: ConversationRef, check: () => void, options?: ConversationReadOptions) =>
 				this.#readConversation(ref, check, options),
+			observationRevision: (ref: ConversationRef, check: () => void) => {
+				checkAuthority(() => {
+					this.#validateReference(ref);
+					check();
+				});
+				return this.#previewVersion;
+			},
+			prepareExecution: async (ref: ConversationRef, check: () => void) => {
+				const authorize = () =>
+					checkAuthority(() => {
+						this.#validateReference(ref);
+						check();
+					});
+				authorize();
+				const route = this.#routes.get(conversationId(ref.conversationId));
+				if (!route || route.#disposed) throw new MutationDenied("Conversation execution frame is not bound");
+				await route.refreshCache(true);
+				authorize();
+			},
+			previewConversation: (ref: ConversationRef, check: () => void, options?: ConversationPreviewOptions) =>
+				this.#previewConversation(ref, check, options),
+			readContent: (
+				ref: ConversationRef,
+				reference: ConversationContentReference,
+				range: ConversationContentRange,
+				check: () => void,
+			) => this.#readContent(ref, reference, range, check),
 			writeDisplay: (ref: ConversationRef, input: DisplayWrite, check: () => void) =>
 				this.#writeDisplay(ref, input, check),
 			createConversation: async (spec: ConversationSpec): Promise<ConversationRef> => {
@@ -2527,19 +4484,17 @@ export class DurableAdapter {
 							throw new MutationDenied("Conversation profile conflict");
 						return;
 					}
-					if (state.conversationCount >= state.limits.maxConversations)
+					if (exceedsSessionLimit(state.conversationCount, state.limits.maxConversations))
 						throw new MutationDenied("Session Conversation limit exhausted");
 					const created = await tx.createConversation({ ownership: { kind: "ownerless" } });
 					const extension = this.#registry!.snapshot().extension(
 						profileId === "default" ? "pakka-core-extension" : "pakka-profile-" + profileId,
 					)!;
 					await configure(tx, created.id, {
-						model: {
-							provider: "pakka-provider-" + hash(profile.endpoint).slice(0, 12),
-							modelId: profile.model,
-						},
+						model: modelReference(profile, profile.model),
 						extensions: [extension],
 						instructions: profile.systemPrompt,
+						thinkingLevel: profile.thinkingLevel,
 						cwd: profile.cwd,
 					});
 					state.conversationCount++;
@@ -2575,6 +4530,7 @@ export class DurableAdapter {
 				adapter.#managed = this.#managed;
 				adapter.#inferenceModels = this.#inferenceModels;
 				adapter.#storage = this.#storage;
+				adapter.#lazyObservation = this.#lazyObservation;
 				this.#routes.set(id, adapter);
 				await adapter.#initStream();
 				await adapter.refreshCache();
@@ -2582,13 +4538,17 @@ export class DurableAdapter {
 			},
 			waitForIdle: async () => {
 				this.#managedReady();
+				// This is an explicit progress-enabling command, unlike cold metadata/history reads.
+				await Promise.all([...this.#routes.values()].map((adapter) => adapter.refreshCache(true)));
 				await this.#harness.waitForIdle(BACKGROUND_CONTEXT);
 				await Promise.all([...this.#routes.values()].map((adapter) => adapter.idle()));
 			},
 			close: async () => {
 				if (this.#managed!.closed) return;
 				this.#managed!.closed = true;
+				for (const unsubscribe of this.#facetSubscriptions.splice(0)) unsubscribe();
 				await this.#harness.close(BACKGROUND_CONTEXT);
+				await Promise.all([...this.#routes.values()].map((route) => route.#closeExecution()));
 				await this.#database?.close();
 				this.#managed!.unsubscribe?.();
 				await this.#releaseWriter?.();
@@ -2696,6 +4656,221 @@ export class DurableAdapter {
 		authorize();
 		return copy(result);
 	}
+	async #indexedEntry(
+		ref: ConversationRef,
+		header: EntryHeader,
+		authorize: () => void,
+	): Promise<IndexedConversationEntry> {
+		const key = JSON.stringify([ref.conversationId, String(header.id), String(header.commitSeq)]);
+		const cached = this.#previewEntries.get(key);
+		if (cached) {
+			this.#previewEntries.delete(key);
+			this.#previewEntries.set(key, cached);
+			authorize();
+			return cached.value;
+		}
+		const archive = this.#storage?.entryArchive;
+		if (!archive) throw new MutationDenied("Bounded archive observation is unavailable");
+		const index = await indexEntryJson(async (offset, length) => {
+			authorize();
+			const chunk = await archive.read(
+				conversationId(ref.conversationId),
+				header.id,
+				{ offset, length, commitSeq: header.commitSeq },
+				BACKGROUND_CONTEXT,
+			);
+			authorize();
+			if (!chunk || chunk.commitSeq !== header.commitSeq || chunk.byteLength !== header.byteLength)
+				throw new MutationDenied("Original entry revision changed or disappeared");
+			return chunk.bytes;
+		}, header.byteLength);
+		const value = projectConversationEntry(index, header, ref);
+		const bytes = Buffer.byteLength(
+			JSON.stringify({ entry: value.entry, contents: [...value.contents.values()] }),
+			"utf8",
+		);
+		if (bytes <= 2 * 1024 * 1024) {
+			for (; this.#previewEntriesBytes + bytes > 2 * 1024 * 1024 && this.#previewEntries.size; ) {
+				const oldest = this.#previewEntries.entries().next().value;
+				if (!oldest) break;
+				this.#previewEntries.delete(oldest[0]);
+				this.#previewEntriesBytes -= oldest[1].bytes;
+			}
+			const previous = this.#previewEntries.get(key);
+			if (previous) this.#previewEntriesBytes -= previous.bytes;
+			this.#previewEntries.set(key, { value, bytes });
+			this.#previewEntriesBytes += bytes;
+		}
+		authorize();
+		return value;
+	}
+	async #previewConversation(
+		rawRef: ConversationRef,
+		check: () => void,
+		rawOptions: ConversationPreviewOptions = {},
+	): Promise<ConversationSnapshot> {
+		const ref = copy(rawRef),
+			options = copy(rawOptions);
+		if (
+			!options ||
+			typeof options !== "object" ||
+			Array.isArray(options) ||
+			Object.keys(options).some((key) => !["limit", "beforeEntryId", "maxBytes"].includes(key)) ||
+			(options.limit !== undefined &&
+				(!Number.isSafeInteger(options.limit) || options.limit < 1 || options.limit > 256)) ||
+			(options.maxBytes !== undefined &&
+				(!Number.isSafeInteger(options.maxBytes) ||
+					options.maxBytes < 16384 ||
+					options.maxBytes > 256 * 1024)) ||
+			(options.beforeEntryId !== undefined &&
+				(!/^[1-9]\d*$/.test(options.beforeEntryId) || !Number.isSafeInteger(Number(options.beforeEntryId))))
+		)
+			throw new MutationDenied("Invalid bounded Conversation preview options");
+		const authorize = () =>
+			checkAuthority(() => {
+				this.#validateReference(ref);
+				check();
+			});
+		authorize();
+		const route = this.#routes.get(conversationId(ref.conversationId));
+		if (!route || route.#disposed) throw new MutationDenied("Conversation observation is not bound");
+		const version = this.#previewVersion;
+		const key = JSON.stringify([ref, options, version]);
+		const cached = this.#previewPages.get(key);
+		if (cached) {
+			this.#previewPages.delete(key);
+			this.#previewPages.set(key, cached);
+			authorize();
+			return copy(cached.value);
+		}
+		const archive = this.#storage?.entryArchive;
+		if (!archive) throw new MutationDenied("Bounded archive observation is unavailable");
+		const id = conversationId(ref.conversationId);
+		if (options.beforeEntryId !== undefined) {
+			const boundary = await archive.header(id, Number(options.beforeEntryId) as EntryId, BACKGROUND_CONTEXT);
+			authorize();
+			if (!boundary) throw new MutationDenied("Unknown Conversation preview boundary");
+		}
+		const headers = await archive.scan(
+			{
+				conversationId: id,
+				order: "descending",
+				...(options.beforeEntryId ? { maxEntryId: (Number(options.beforeEntryId) - 1) as EntryId } : {}),
+			},
+			options.limit ?? 64,
+			undefined,
+			BACKGROUND_CONTEXT,
+		);
+		authorize();
+		const [live, usage] = await Promise.all([
+			this.#harness.snapshot(LiveDoc, id, BACKGROUND_CONTEXT),
+			this.#harness.snapshot(UsageDoc, id, BACKGROUND_CONTEXT),
+		]);
+		authorize();
+		const result: ConversationSnapshot = {
+			ref,
+			entries: [],
+			entriesTruncated: false,
+			...previewState(live, usage),
+		};
+		const entries: ConversationSnapshot["entries"][number][] = [];
+		const maxBytes = options.maxBytes ?? 256 * 1024;
+		let bytes = Buffer.byteLength(JSON.stringify(result), "utf8") + 256;
+		for (const header of headers.items) {
+			const item = await this.#indexedEntry(ref, header, authorize);
+			const size = Buffer.byteLength(JSON.stringify(item.entry), "utf8") + 1;
+			if (bytes + size > maxBytes) {
+				if (!entries.length) throw new MutationDenied("One preview exceeds the selected byte page capacity");
+				break;
+			}
+			entries.push(item.entry);
+			bytes += size;
+		}
+		const older = headers.next !== undefined || entries.length < headers.items.length;
+		const first = entries.at(-1);
+		const page: ConversationSnapshot = {
+			...result,
+			entries: entries.reverse(),
+			entriesTruncated: older,
+			...(older && first ? { olderBeforeId: first.id } : {}),
+		};
+		const measured = Buffer.byteLength(JSON.stringify(page), "utf8");
+		if (measured > maxBytes) throw new MutationDenied("Conversation preview byte capacity exceeded");
+		if (version === this.#previewVersion && measured <= 2 * 1024 * 1024) {
+			for (; this.#previewPagesBytes + measured > 2 * 1024 * 1024 && this.#previewPages.size; ) {
+				const oldest = this.#previewPages.entries().next().value;
+				if (!oldest) break;
+				this.#previewPages.delete(oldest[0]);
+				this.#previewPagesBytes -= oldest[1].bytes;
+			}
+			const previous = this.#previewPages.get(key);
+			if (previous) this.#previewPagesBytes -= previous.bytes;
+			this.#previewPages.set(key, { value: page, bytes: measured });
+			this.#previewPagesBytes += measured;
+		}
+		authorize();
+		return copy(page);
+	}
+	async #readContent(
+		rawRef: ConversationRef,
+		rawReference: ConversationContentReference,
+		rawRange: ConversationContentRange,
+		check: () => void,
+	): Promise<ConversationContentChunk> {
+		const ref = copy(rawRef),
+			reference = copy(rawReference),
+			range = copy(rawRange);
+		const authorize = () =>
+			checkAuthority(() => {
+				this.#validateReference(ref);
+				check();
+			});
+		authorize();
+		if (
+			!reference ||
+			reference.source !== "entry" ||
+			typeof reference.entryId !== "string" ||
+			!/^[1-9]\d*$/.test(reference.entryId) ||
+			!Number.isSafeInteger(Number(reference.entryId)) ||
+			!range ||
+			Object.keys(range).some((key) => !["offset", "length"].includes(key)) ||
+			!Number.isSafeInteger(range.offset) ||
+			range.offset < 0 ||
+			!Number.isSafeInteger(range.length) ||
+			range.length < 8 ||
+			range.length > 65536
+		)
+			throw new MutationDenied("Invalid original content reference/range");
+		const archive = this.#storage?.entryArchive;
+		if (!archive) throw new MutationDenied("Bounded archive observation is unavailable");
+		const id = conversationId(ref.conversationId),
+			entry = Number(reference.entryId) as EntryId;
+		const header = await archive.header(id, entry, BACKGROUND_CONTEXT);
+		authorize();
+		if (
+			!header ||
+			String(header.commitSeq) !== reference.revision ||
+			(reference.sourceConversationId !== undefined &&
+				String(header.conversationId) !== reference.sourceConversationId)
+		)
+			throw new MutationDenied("Original content source revision/visibility changed");
+		const indexed = await this.#indexedEntry(ref, header, authorize);
+		const result = await readPreviewContent(indexed, reference, range, async (offset, length) => {
+			authorize();
+			const chunk = await archive.read(
+				id,
+				entry,
+				{ offset, length, commitSeq: header.commitSeq },
+				BACKGROUND_CONTEXT,
+			);
+			authorize();
+			if (!chunk || chunk.commitSeq !== header.commitSeq || chunk.byteLength !== header.byteLength)
+				throw new MutationDenied("Original content source changed");
+			return chunk.bytes;
+		});
+		authorize();
+		return copy(result);
+	}
 	async #writeDisplay(
 		rawRef: ConversationRef,
 		rawInput: DisplayWrite,
@@ -2747,6 +4922,504 @@ export class DurableAdapter {
 			actorId: input.actorId,
 			requestId: input.requestId,
 			entryId,
+		});
+	}
+	async #readHistoricalEntry(
+		rawRef: ConversationRef,
+		rawInput: HistoricalEntryInput,
+		check: () => void,
+	): Promise<HistoricalEntryContent> {
+		const ref = copy(rawRef),
+			input = copy(rawInput),
+			offset = input.offset ?? 0,
+			limit = input.limit ?? 4096;
+		const authorize = () =>
+			checkAuthority(() => {
+				this.#validateReference(ref);
+				check();
+			});
+		authorize();
+		if (
+			!/^[1-9][0-9]*$/u.test(input.entryId) ||
+			!Number.isSafeInteger(Number(input.entryId)) ||
+			!/^[a-f0-9]{64}$/u.test(input.contentVersion) ||
+			!Number.isSafeInteger(offset) ||
+			offset < 0 ||
+			!Number.isSafeInteger(limit) ||
+			limit < 1 ||
+			limit > 16384
+		)
+			throw new MutationDenied("Invalid historical entry identity or range");
+		const storage = this.#storage,
+			archive = storage?.entryArchive;
+		if (!storage || !archive) throw new MutationDenied("Historical entry archive unavailable");
+		const id = Number(input.entryId) as EntryId,
+			conversation = conversationId(ref.conversationId);
+		const header = await archive.header(conversation, id, BACKGROUND_CONTEXT);
+		authorize();
+		if (!header || header.byteLength > 1024 * 1024)
+			throw new MutationDenied("Historical entry version unavailable within the bounded read budget");
+		const record = await storage.entry(conversation, id, BACKGROUND_CONTEXT);
+		authorize();
+		if (
+			!record ||
+			record.commitSeq !== header.commitSeq ||
+			hash([record.entry, record.entry.model ?? []]) !== input.contentVersion
+		)
+			throw new MutationDenied("Historical entry content version unavailable");
+		const points = Array.from(JSON.stringify(record.entry.model ?? []));
+		if (offset > points.length) throw new MutationDenied("Historical entry offset beyond content");
+		authorize();
+		return copy({
+			entryId: input.entryId,
+			contentVersion: input.contentVersion,
+			text: points.slice(offset, offset + limit).join(""),
+			offset,
+			nextOffset: offset + limit < points.length ? offset + limit : null,
+		});
+	}
+	#historicalWork(options: HistoricalWorkOptions): HistoricalWork {
+		const native = nativeCompresserSessions.get(options.session);
+		if (!native || native.kind !== "historian")
+			throw new MutationDenied("Explicit original Historian Session required");
+		const { namespace, maxPending, maxAttempts } = copy({
+			namespace: options.namespace,
+			maxPending: options.maxPending,
+			maxAttempts: options.maxAttempts,
+		});
+		const policy = (plan: HistoricalPlan) => {
+			const selected = this.#options.inference?.policies.find((p) => p.strategyId === plan.strategyId);
+			if (
+				!selected ||
+				!selected.modelKeys.includes(plan.request.modelKey) ||
+				plan.maxCalls > selected.maxJobCalls ||
+				!plan.request.outputTool
+			)
+				throw new MutationDenied("Historical model policy refused");
+			if (
+				plan.request.maxOutputTokens !== undefined &&
+				(!Number.isSafeInteger(plan.request.maxOutputTokens) || plan.request.maxOutputTokens < 0)
+			)
+				throw new MutationDenied("Invalid historical output limit");
+			return selected;
+		};
+		const source = (plan: HistoricalPlan): GovernedConversation["source"] => ({
+			jobId: hash([namespace, plan.source, plan.id]),
+			planId: plan.id,
+			sessionId: plan.source.sessionId,
+			conversationId: plan.source.conversationId,
+		});
+		return createHistoricalWork(
+			this.#records({ namespace }),
+			{
+				identity: async () => {
+					native.check();
+					return native.sessionId;
+				},
+				validate: async (plan, check) => {
+					policy(plan);
+					const history = this.#artifactHistory(plan.source, plan.strategyId, check);
+					for (const ref of plan.artifacts) await history.read(ref);
+					check();
+				},
+				run: async (plan, callbacks, validateCall, signal) => {
+					const approved = policy(plan),
+						definition = this.#inferenceModels.get(plan.request.modelKey);
+					if (!definition) throw new MutationDenied("Historical model unavailable");
+					const controller = new AbortController(),
+						abort = () => controller.abort(signal?.reason);
+					if (signal?.aborted) abort();
+					else signal?.addEventListener("abort", abort, { once: true });
+					const timeout = setTimeout(
+						() => controller.abort(new Error("Historian deadline reached")),
+						approved.timeoutMs,
+					);
+					timeout.unref();
+					try {
+						return await native.run(
+							{
+								source: source(plan),
+								request: plan.request,
+								cap: Math.min(
+									approved.maxOutputTokens,
+									definition.model.maxTokens,
+									plan.request.maxOutputTokens || Infinity,
+								),
+								timeoutMs: approved.timeoutMs,
+								signal: controller.signal,
+								validateCall,
+								check: () => {
+									this.#validateReference(plan.source);
+									callbacks.check();
+								},
+								begin: callbacks.begin,
+								complete: callbacks.complete,
+								reserve: async () => true,
+							},
+							definition,
+						);
+					} finally {
+						clearTimeout(timeout);
+						signal?.removeEventListener("abort", abort);
+					}
+				},
+				recover: (plan) => native.recover(source(plan), plan.request),
+				active: (plan) => native.active(source(plan).jobId),
+				retired: (plan, check) => native.retired(source(plan), plan.request, check),
+			},
+			{ maxPending, maxAttempts },
+		);
+	}
+	#artifactHistory(rawRef: ConversationRef, strategyId: string, check: () => void): ArtifactHistory {
+		const ref = copy(rawRef);
+		if (typeof strategyId !== "string" || !strategyId || strategyId.length > 256)
+			throw new MutationDenied("Invalid artifact strategy identity");
+		const authorize = () =>
+			checkAuthority(() => {
+				this.#validateReference(ref);
+				check();
+			});
+		authorize();
+		this.#boundedRecords = true;
+		const namespace = JSON.stringify([
+			"pakka.conversation-journal.v2",
+			ref.conversationId,
+			strategyId,
+			"records",
+		]);
+		const key = hash(JSON.stringify([ref.sessionId, namespace]));
+		const load = async <T>(read: () => Promise<T>): Promise<T> => {
+			try {
+				return await read();
+			} catch (error) {
+				this.storageUnknown("Artifact history storage unavailable");
+				throw error;
+			}
+		};
+		return createArtifactHistoryReader({
+			ref,
+			strategyId,
+			check: authorize,
+			head: () =>
+				load(async () => {
+					const direct = await this.#harness.snapshot(JournalHeadDoc, key, BACKGROUND_CONTEXT);
+					if (direct) return direct.version;
+					// Legacy batches remain readable; all new commits write a keyed head atomically.
+					const index = await this.#harness.snapshot(JournalIndexDoc, BACKGROUND_CONTEXT);
+					return index?.heads[key]?.version ?? 0;
+				}),
+			batch: (version) =>
+				load(async () => {
+					const batch = await this.#harness.snapshot(
+						JournalBatchDoc,
+						key + "." + version,
+						BACKGROUND_CONTEXT,
+					);
+					if (
+						!batch ||
+						batch.key !== key ||
+						batch.version !== version ||
+						!Array.isArray(batch.records) ||
+						!batch.records.length
+					)
+						throw Error("Missing artifact batch");
+					const { checksum, ...payload } = batch;
+					if (hash(payload) !== checksum) throw Error("Artifact batch digest mismatch");
+					return { records: storedJson<JsonValue[]>(batch.records), digest: checksum };
+				}),
+		});
+	}
+	#records(raw: RuntimeRecordsOptions): RuntimeRecords {
+		this.#managedReady();
+		this.#boundedRecords = true;
+		if (!raw || !validKey(raw.namespace))
+			throw new RecordsRequestRefusedError("invalid", "Invalid records namespace");
+		const namespace = raw.namespace;
+		const address = (kind: string, key: string) => hash([namespace, kind, key]);
+		const name = (value: unknown): value is string =>
+			typeof value === "string" && value.length > 0 && value.length <= 256 && !/[\u0000-\u001f]/u.test(value);
+		const authority = (check: () => void) =>
+			checkAuthority(() => {
+				this.#managedReady();
+				check();
+			});
+		const read = async <T>(check: () => void, load: () => Promise<T>): Promise<T> => {
+			authority(check);
+			let value: T;
+			try {
+				value = await load();
+			} catch (error) {
+				if (!(error instanceof MutationDenied)) this.storageUnknown("Records read unknown: " + String(error));
+				throw error;
+			}
+			authority(check);
+			return copy(value);
+		};
+		const object = (value: JsonObject) => {
+			try {
+				json(value);
+			} catch {
+				throw new RecordsRequestRefusedError("invalid", "Invalid record JSON");
+			}
+			if (
+				!value ||
+				typeof value !== "object" ||
+				Array.isArray(value) ||
+				Buffer.byteLength(JSON.stringify(value)) > 384 * 1024
+			)
+				throw new RecordsRequestRefusedError("capacity", "Record byte capacity exceeded");
+		};
+		return Object.freeze({
+			revision: async (stream: string, check: () => void) => {
+				if (!name(stream)) throw new RecordsRequestRefusedError("invalid", "Invalid stream identity");
+				return read(
+					check,
+					async () =>
+						(await this.#harness.snapshot(RecordStreamDoc, address("stream", stream), BACKGROUND_CONTEXT))
+							?.count ?? 0,
+				);
+			},
+			get: async (key: string, check: () => void) => {
+				if (!name(key)) throw new RecordsRequestRefusedError("invalid", "Invalid record key");
+				return read(check, async () => {
+					const state = await this.#harness.snapshot(RecordCellDoc, address("key", key), BACKGROUND_CONTEXT);
+					return { key, version: state?.version ?? 0, data: state?.data ?? null };
+				});
+			},
+			receipt: async (requestId: string, check: () => void) => {
+				if (!name(requestId))
+					throw new RecordsRequestRefusedError("invalid", "Invalid records request identity");
+				return read(
+					check,
+					async () =>
+						(
+							await this.#harness.snapshot(
+								RecordReceiptDoc,
+								address("receipt", requestId),
+								BACKGROUND_CONTEXT,
+							)
+						)?.receipt ?? null,
+				);
+			},
+			commit: async (rawInput: RuntimeRecordsCommit, check: () => void) => {
+				const beforeCommit = () => {
+					try {
+						authority(check);
+					} catch {
+						throw new RecordsRequestRefusedError("denied", "Records authority refused before commit");
+					}
+				};
+				beforeCommit();
+				if (
+					!rawInput ||
+					!name(rawInput.requestId) ||
+					!Array.isArray(rawInput.reads) ||
+					!Array.isArray(rawInput.writes) ||
+					!Array.isArray(rawInput.append) ||
+					rawInput.reads.length > 128 ||
+					rawInput.writes.length > 64 ||
+					rawInput.append.length > 64
+				)
+					throw new RecordsRequestRefusedError("invalid", "Invalid bounded records transaction");
+				for (const value of rawInput.reads)
+					if (
+						!value ||
+						!name(value.key) ||
+						!Number.isSafeInteger(value.version) ||
+						value.version < 0 ||
+						value.version >= Number.MAX_SAFE_INTEGER
+					)
+						throw new RecordsRequestRefusedError("invalid", "Invalid record version");
+				if (
+					rawInput.freezeLegacy &&
+					(!Number.isSafeInteger(rawInput.freezeLegacy.expectedVersion) ||
+						rawInput.freezeLegacy.expectedVersion < 0 ||
+						!Number.isSafeInteger(rawInput.freezeLegacy.maxBytes) ||
+						rawInput.freezeLegacy.maxBytes < 1 ||
+						rawInput.freezeLegacy.maxBytes > 16 * 1024 * 1024)
+				)
+					throw new RecordsRequestRefusedError("invalid", "Invalid legacy migration boundary");
+				const expectations = new Map(rawInput.reads.map((r) => [r.key, r.version]));
+				if (
+					expectations.size !== rawInput.reads.length ||
+					new Set(rawInput.writes.map((w) => w.key)).size !== rawInput.writes.length
+				)
+					throw new RecordsRequestRefusedError("invalid", "Duplicate record key");
+				for (const value of rawInput.writes) {
+					if (!value || !name(value.key) || !expectations.has(value.key))
+						throw new RecordsRequestRefusedError("invalid", "Every write requires a read version");
+					object(value.data);
+				}
+				for (const value of rawInput.append) {
+					if (!value || !name(value.stream))
+						throw new RecordsRequestRefusedError("invalid", "Invalid stream identity");
+					object(value.data);
+				}
+				if (rawInput.work !== undefined && (!Array.isArray(rawInput.work) || rawInput.work.length > 64))
+					throw new RecordsRequestRefusedError("invalid", "Invalid active work set");
+				for (const item of rawInput.work ?? [])
+					if (
+						!item ||
+						!name(item.key) ||
+						(item.state !== null && (!name(item.state) || item.state.length > 64)) ||
+						!rawInput.writes.some((row) => row.key === item.key)
+					)
+						throw new RecordsRequestRefusedError("invalid", "Work requires an exact record write");
+				if (new Set((rawInput.work ?? []).map((item) => item.key)).size !== (rawInput.work?.length ?? 0))
+					throw new RecordsRequestRefusedError("invalid", "Duplicate work key");
+				if (Buffer.byteLength(JSON.stringify(rawInput)) > 1024 * 1024)
+					throw new RecordsRequestRefusedError("capacity", "Transaction byte capacity exceeded");
+				const input = copy(rawInput),
+					fingerprint = hash(input);
+				const result = await this.#persist(async (tx) => {
+					beforeCommit();
+					const saved = await tx.doc(RecordReceiptDoc, address("receipt", input.requestId), null);
+					if (saved.receipt) {
+						if (saved.receipt.fingerprint !== fingerprint)
+							throw new RecordsRequestRefusedError("conflict", "Records request identity conflict");
+						beforeCommit();
+						return storedJson<RuntimeRecordsReceipt>(saved.receipt);
+					}
+					if (input.freezeLegacy) {
+						const fence = await tx.doc(RecordLegacyFenceDoc, namespace, null);
+						const old = await tx.doc(CoordinatorDoc, namespace, {
+							namespace,
+							maxBytes: input.freezeLegacy.maxBytes,
+						});
+						if (
+							old.version !== input.freezeLegacy.expectedVersion ||
+							old.options.maxBytes !== input.freezeLegacy.maxBytes ||
+							fence.frozen
+						)
+							throw new RecordsRequestRefusedError("conflict", "Legacy migration snapshot conflict");
+						fence.frozen = true;
+						fence.version = old.version;
+					}
+					for (const item of input.reads) {
+						const state = await tx.doc(RecordCellDoc, address("key", item.key), null);
+						if (state.version !== item.version)
+							throw new RecordsRequestRefusedError("conflict", "Record version conflict: " + item.key);
+					}
+					for (const item of input.writes) {
+						const state = await tx.doc(RecordCellDoc, address("key", item.key), null);
+						state.data = storedJson<JsonRepresentation<JsonObject>>(item.data);
+						state.version++;
+					}
+					for (const item of input.append) {
+						const streamKey = address("stream", item.stream);
+						const head = await tx.doc(RecordStreamDoc, streamKey, null);
+						if (!Number.isSafeInteger(head.count) || head.count >= Number.MAX_SAFE_INTEGER)
+							throw new RecordsRequestRefusedError("capacity", "Stream sequence exhausted");
+						head.count++;
+						const row = await tx.doc(RecordItemDoc, streamKey + "." + head.count, null);
+						if (row.data !== null) throw new Error("Record stream item already exists");
+						row.data = storedJson<JsonRepresentation<JsonObject>>(item.data);
+					}
+					const work = await tx.doc(RecordWorkDoc);
+					for (const item of input.writes) {
+						const id = address("key", item.key);
+						if (work.items[id]) work.items[id]!.fingerprint = hash(item.data);
+					}
+					for (const item of input.work ?? []) {
+						const id = address("key", item.key);
+						if (item.state === null) delete work.items[id];
+						else
+							work.items[id] = {
+								namespace,
+								key: item.key,
+								state: item.state,
+								fingerprint: hash(input.writes.find((row) => row.key === item.key)!.data),
+							};
+					}
+					if (Object.keys(work.items).length > 1024 || Buffer.byteLength(JSON.stringify(work)) > 1024 * 1024)
+						throw new RecordsRequestRefusedError("capacity", "Active record work capacity exceeded");
+					const head = await tx.doc(RecordSequenceDoc, namespace, null);
+					if (!Number.isSafeInteger(head.sequence) || head.sequence >= Number.MAX_SAFE_INTEGER)
+						throw new RecordsRequestRefusedError("capacity", "Records sequence exhausted");
+					head.sequence++;
+					saved.receipt = { requestId: input.requestId, sequence: head.sequence, fingerprint };
+					beforeCommit();
+					return storedJson<RuntimeRecordsReceipt>(saved.receipt);
+				});
+				try {
+					authority(check);
+				} catch {
+					throw new RecordsPublicationError();
+				}
+				return copy(result);
+			},
+			page: async (rawQuery: RuntimeRecordsQuery, check: () => void) => {
+				if (!rawQuery || !name(rawQuery.stream))
+					throw new RecordsRequestRefusedError("invalid", "Invalid stream query");
+				const query = copy(rawQuery),
+					limit = query.limit ?? 32,
+					maxBytes = query.maxBytes ?? 256 * 1024;
+				if (
+					!Number.isSafeInteger(limit) ||
+					limit < 1 ||
+					limit > 128 ||
+					!Number.isSafeInteger(maxBytes) ||
+					maxBytes < 1024 ||
+					maxBytes > 1024 * 1024
+				)
+					throw new RecordsRequestRefusedError("capacity", "Invalid stream page budget");
+				const streamKey = address("stream", query.stream),
+					binding = hash([this.#sessionId, namespace, query.stream]);
+				let position: number | undefined;
+				if (query.cursor !== undefined) {
+					try {
+						if (typeof query.cursor !== "string" || query.cursor.length > 1024) throw Error();
+						const cursor = JSON.parse(Buffer.from(query.cursor, "base64url").toString("utf8"));
+						if (
+							!cursor ||
+							cursor.binding !== binding ||
+							!Number.isSafeInteger(cursor.position) ||
+							cursor.position < 1
+						)
+							throw Error();
+						position = cursor.position;
+					} catch {
+						throw new RecordsRequestRefusedError("invalid", "Invalid stream cursor");
+					}
+				}
+				return read(check, async () => {
+					const head = await this.#harness.snapshot(RecordStreamDoc, streamKey, BACKGROUND_CONTEXT);
+					if (position === undefined) position = head?.count ?? 0;
+					if (position > (head?.count ?? 0))
+						throw new RecordsRequestRefusedError("invalid", "Stream cursor beyond history");
+					const startCursor = position
+						? Buffer.from(JSON.stringify({ binding, position })).toString("base64url")
+						: null;
+					const items: { position: number; data: JsonObject }[] = [];
+					let bytes = 768;
+					while (position > 0 && items.length < limit) {
+						authority(check);
+						const item = await this.#harness.snapshot(
+							RecordItemDoc,
+							streamKey + "." + position,
+							BACKGROUND_CONTEXT,
+						);
+						if (!item?.data) throw new Error("Record stream has a missing item");
+						const row = { position, data: item.data },
+							size = Buffer.byteLength(JSON.stringify(row)) + 1;
+						if (bytes + size > maxBytes) {
+							if (!items.length)
+								throw new RecordsRequestRefusedError("capacity", "Stream item exceeds page byte budget");
+							break;
+						}
+						items.push(row);
+						bytes += size;
+						position--;
+					}
+					return {
+						items,
+						startCursor,
+						cursor: position
+							? Buffer.from(JSON.stringify({ binding, position })).toString("base64url")
+							: null,
+					};
+				});
+			},
 		});
 	}
 	#store(rawOptions: RuntimeStoreOptions): RuntimeStore {
@@ -2801,6 +5474,8 @@ export class DurableAdapter {
 				};
 				authority();
 				const result = await this.#persist(async (tx) => {
+					const fence = await tx.doc(RecordLegacyFenceDoc, options.namespace, null);
+					if (fence.frozen) throw new MutationDenied("Legacy coordinator is frozen for records migration");
 					const state = await tx.doc(CoordinatorDoc, options.namespace, options);
 					optionsMatch(state);
 					if (state.version !== expectedVersion) throw new MutationDenied("Coordinator CAS conflict");
@@ -2949,20 +5624,86 @@ export class DurableAdapter {
 		this.#managedReady();
 		if (
 			!validKey(rawOptions.namespace) ||
-			[rawOptions.maxDeliveries, rawOptions.maxPending].some((n) => !Number.isSafeInteger(n) || n <= 0) ||
-			rawOptions.maxPending > rawOptions.maxDeliveries
+			!Number.isSafeInteger(rawOptions.maxPending) ||
+			rawOptions.maxPending <= 0
 		)
 			throw new Error("Invalid finite catalog options");
-		const options = copy({
-			namespace: rawOptions.namespace,
-			maxDeliveries: rawOptions.maxDeliveries,
-			maxPending: rawOptions.maxPending,
-		});
+		const options = copy({ namespace: rawOptions.namespace, maxPending: rawOptions.maxPending });
 		const seed = { ...options };
+		const optionsMatch = (state: Readonly<CatalogRecord>) => {
+			if (state.options.namespace !== options.namespace || state.options.maxPending !== options.maxPending)
+				throw new MutationDenied("Catalog options conflict");
+			if ((!state.index && !state.deliveries) || (state.index && state.deliveries))
+				throw new Error("Invalid catalog layout");
+		};
+		const deliveryId = (spec: CatalogDeliverySpec) =>
+			"catalog-" +
+			hash([options.namespace, spec.principal, spec.source?.incarnation ?? null, spec.requestId]);
+		const validateDelivery = (id: string, record: StoredDelivery) => {
+			if (record.id !== id || deliveryId(record.spec) !== id || record.fingerprint !== hash(record.spec))
+				throw new Error("Invalid retained delivery fingerprint/identity");
+			return record;
+		};
 		const read = async () => {
 			this.#managedReady();
 			const state = await this.#harness.snapshot(CatalogDoc, options.namespace, BACKGROUND_CONTEXT);
-			if (state && hash(state.options) !== hash(options)) throw new Error("Catalog options conflict");
+			if (state) optionsMatch(state);
+			return state;
+		};
+		const readDelivery = async (id: string, state: Readonly<CatalogRecord> | undefined) => {
+			const legacy = state?.deliveries?.[id];
+			if (legacy)
+				return {
+					namespace: options.namespace,
+					record: validateDelivery(id, legacy),
+					order: 0,
+					previous: null,
+					previousTarget: null,
+				};
+			if (!state?.index) return undefined;
+			const doc = await this.#harness.snapshot(CatalogDeliveryDoc, id, BACKGROUND_CONTEXT);
+			if (!doc?.record || doc.namespace !== options.namespace) return undefined;
+			validateDelivery(id, doc.record);
+			if (!Number.isSafeInteger(doc.order) || doc.order < 1 || doc.order > state.index.order)
+				throw new Error("Invalid delivery order");
+			return doc;
+		};
+		const appendDelivery = async (tx: Tx, index: CatalogIndex, record: StoredDelivery) => {
+			const doc = await tx.doc(CatalogDeliveryDoc, record.id, null);
+			if (doc.record) throw new Error("Delivery storage identity already exists");
+			const to = record.spec.target.conversationId;
+			doc.namespace = options.namespace;
+			doc.record = storedJson<StoredDelivery>(record);
+			doc.order = ++index.order;
+			doc.previous = index.latest;
+			doc.previousTarget = index.recipients[to] ?? null;
+			index.latest = record.id;
+			index.recipients[to] = record.id;
+		};
+		const mutableState = async (tx: Tx, check: () => void) => {
+			checkAuthority(check);
+			const state = await tx.doc(CatalogDoc, options.namespace, seed);
+			optionsMatch(state);
+			if (!state.index) {
+				const index: CatalogIndex = { order: 0, latest: null, recipients: {}, pending: {} };
+				for (const [id, record] of Object.entries(state.deliveries!)) {
+					checkAuthority(check);
+					validateDelivery(id, record);
+					const native = await tx.submissionByRequest(
+						conversationId(record.spec.target.conversationId),
+						"pakka.catalog." + id,
+					);
+					if (!native || native.id !== record.submissionId)
+						throw new Error("Legacy catalog admission provenance missing");
+					await appendDelivery(tx, index, record);
+					if (native.status === "queued" || native.status === "placed")
+						(index.pending[record.spec.target.conversationId] ??= []).push(id);
+				}
+				state.index = index;
+				delete state.deliveries;
+				delete state.options.maxDeliveries;
+			}
+			checkAuthority(check);
 			return state;
 		};
 		const view = async () => {
@@ -2985,8 +5726,81 @@ export class DurableAdapter {
 			if (!member) throw new MutationDenied("Foreign catalog member reference");
 			return member;
 		};
-		const optionsMatch = (state: CatalogRecord) => {
-			if (hash(state.options) !== hash(options)) throw new MutationDenied("Catalog options conflict");
+		const configurationOriginal = (raw: CatalogConfigurationRequest): CatalogConfigurationRequest => {
+			const original = storedJson<CatalogConfigurationRequest>(raw);
+			const ref = original?.target,
+				selection = original?.selection;
+			if (
+				!original ||
+				Object.keys(original).sort().join(",") !== "principal,requestId,selection,target" ||
+				!validKey(original.requestId) ||
+				!validKey(original.principal) ||
+				!ref ||
+				Object.keys(ref).sort().join(",") !== "conversationId,incarnation,key,profile,sessionId" ||
+				ref.sessionId !== this.#sessionId ||
+				![ref.sessionId, ref.key, ref.incarnation, ref.profile].every(validKey) ||
+				!selection ||
+				!["agent", "profile"].includes(selection.kind)
+			)
+				throw new MutationDenied("Invalid original configuration identity");
+			try {
+				conversationId(ref.conversationId);
+			} catch {
+				throw new MutationDenied("Invalid original Conversation identity");
+			}
+			if (selection.kind === "profile") {
+				if (Object.keys(selection).sort().join(",") !== "kind,profile" || !validKey(selection.profile))
+					throw new MutationDenied("Invalid original profile selection");
+			} else {
+				const change = selection.change;
+				if (
+					Object.keys(selection).sort().join(",") !== "change,kind" ||
+					!change ||
+					typeof change !== "object" ||
+					Array.isArray(change) ||
+					!Object.keys(change).length ||
+					Object.keys(change).some((key) => !["model", "cwd", "thinkingLevel"].includes(key)) ||
+					(change.model !== undefined &&
+						(typeof change.model !== "string" || !change.model || change.model.length > 1024)) ||
+					(change.cwd !== undefined &&
+						(typeof change.cwd !== "string" || !change.cwd || change.cwd.length > 8192)) ||
+					(change.thinkingLevel !== undefined &&
+						!["off", "minimal", "low", "medium", "high", "xhigh", "max"].includes(change.thinkingLevel))
+				)
+					throw new MutationDenied("Invalid original configuration selection");
+			}
+			return copy(original);
+		};
+		const configurationKey = (original: CatalogConfigurationRequest) =>
+			hash([options.namespace, original.principal, original.requestId]);
+		const retainConfiguration = async (
+			tx: Tx,
+			original: CatalogConfigurationRequest | undefined,
+			ref: ConversationRef,
+		) => {
+			if (!original) return;
+			const doc = await tx.doc(CatalogConfigurationDoc, configurationKey(original), null);
+			if (doc.receipt)
+				throw new MutationDenied("Configuration request identity conflict; query the original");
+			doc.namespace = options.namespace;
+			doc.receipt = storedJson<CatalogConfigurationReceipt>({ original, ref, at: Date.now() });
+		};
+		const configurationReceipt = async (raw: CatalogConfigurationRequest, check: () => void) => {
+			this.#managedReady();
+			checkAuthority(check);
+			const original = configurationOriginal(raw);
+			const doc = await this.#harness.snapshot(
+				CatalogConfigurationDoc,
+				configurationKey(original),
+				BACKGROUND_CONTEXT,
+			);
+			checkAuthority(check);
+			if (!doc) return null;
+			if (doc.namespace !== options.namespace || !doc.receipt)
+				throw new Error("Configuration receipt unavailable");
+			if (!isDeepStrictEqual(doc.receipt.original, original))
+				throw new MutationDenied("Original configuration conflict");
+			return copy(doc.receipt);
 		};
 		const status = async (stored: StoredDelivery): Promise<DeliveryReceipt> => {
 			const native = await this.#harness.submission(stored.submissionId as SubmissionId, BACKGROUND_CONTEXT);
@@ -3008,7 +5822,8 @@ export class DurableAdapter {
 		};
 		const find = async (id: string, check: () => void) => {
 			checkAuthority(check);
-			const stored = (await read())?.deliveries[id];
+			if (!validKey(id)) throw new MutationDenied("Invalid delivery receipt identity");
+			const stored = (await readDelivery(id, await read()))?.record;
 			if (!stored) throw new Error("Unknown delivery receipt");
 			checkAuthority(check);
 			return stored;
@@ -3022,7 +5837,7 @@ export class DurableAdapter {
 				return { key, data: storedJson<StoredMember["data"]>(data) };
 			});
 			await this.#persist(async (tx) => {
-				const state = await tx.doc(CatalogDoc, options.namespace, seed);
+				const state = await mutableState(tx, check);
 				optionsMatch(state);
 				if (state.version !== expectedVersion) throw new MutationDenied("Catalog revision conflict");
 				for (const change of batch) {
@@ -3030,6 +5845,7 @@ export class DurableAdapter {
 					if (!member) throw new MutationDenied("Member missing");
 					if (change.data.phase === "active") {
 						validateRef(member.ref);
+
 						const route = this.#routes.get(conversationId(member.ref.conversationId));
 						if (!route || route.#disposed || route.#failedReason)
 							throw new MutationDenied("Member not ready");
@@ -3048,11 +5864,56 @@ export class DurableAdapter {
 			return view();
 		};
 		return Object.freeze({
+			configurationReceipt,
 			snapshot: view,
+			lookupRequest: async (original: CatalogDeliverySpec, check: () => void) => {
+				checkAuthority(check);
+				if (
+					!original ||
+					!validKey(original.requestId) ||
+					!validKey(original.principal) ||
+					typeof original.text !== "string" ||
+					!original.text.trim() ||
+					original.text.length > 65536 ||
+					!["prompt", "steer", "followUp"].includes(original.mode)
+				)
+					throw new MutationDenied("Invalid original request");
+				const spec = copy(original),
+					state = await read();
+				if (!state) throw new MutationDenied("Original catalog missing");
+				// A retained delivery keeps its original target. Authorize the current member,
+				// then compare the full original route to the stored request below.
+				const current = Object.values(state.members).find(
+					({ ref }) =>
+						ref.key === spec.target.key &&
+						ref.sessionId === spec.target.sessionId &&
+						ref.conversationId === spec.target.conversationId,
+				)?.ref;
+				if (!current) throw new MutationDenied("Foreign catalog member reference");
+				requireMember(state, current);
+				if (spec.source) requireMember(state, spec.source);
+				const stored = (await readDelivery(deliveryId(spec), state))?.record;
+				checkAuthority(check);
+				if (!stored) return null;
+				const identity = (value: CatalogDeliverySpec) => ({
+					requestId: value.requestId,
+					principal: value.principal,
+					source: value.source,
+					target: value.target,
+					text: value.text,
+					mode: value.mode,
+					replyTo: value.replyTo ?? null,
+				});
+				if (hash(identity(stored.spec)) !== hash(identity(spec)))
+					throw new MutationDenied("Original delivery payload/route identity conflict");
+				const value = await status(stored);
+				checkAuthority(check);
+				return value;
+			},
 			lookupReceipt: async (id: string, check: () => void) => {
 				checkAuthority(check);
 				if (!validKey(id)) throw new MutationDenied("Invalid delivery receipt identity");
-				const stored = (await read())?.deliveries[id];
+				const stored = (await readDelivery(id, await read()))?.record;
 				checkAuthority(check);
 				if (!stored) return null;
 				const value = await status(stored);
@@ -3076,20 +5937,43 @@ export class DurableAdapter {
 					throw new MutationDenied("Invalid bounded history query/limit");
 				const state = await read();
 				checkAuthority(check);
-				const rows = Object.values(state?.deliveries ?? {})
-					.reverse()
-					.filter((row) => {
+				const allowed = (row: StoredDelivery) => {
+					checkAuthority(check);
+					const result = accepts ? accepts(copy(row.spec)) : true;
+					if (typeof result !== "boolean") throw new MutationDenied("History scope must be synchronous");
+					return result;
+				};
+				const limit = query.limit ?? 32;
+				let rows: StoredDelivery[] = [];
+				if (!state?.index) {
+					rows = Object.values(state?.deliveries ?? {})
+						.reverse()
+						.filter(allowed);
+					const boundary = query.cursor === undefined ? -1 : rows.findIndex((row) => row.id === query.cursor);
+					if (query.cursor !== undefined && boundary < 0)
+						throw new MutationDenied("Invalid history cursor for current scope");
+					rows = rows.slice(boundary + 1, boundary + limit + 2);
+				} else {
+					let next = state.index.latest,
+						order = state.index.order + 1;
+					if (query.cursor !== undefined) {
+						const cursor = await readDelivery(query.cursor, state);
+						if (!cursor?.record || !allowed(cursor.record))
+							throw new MutationDenied("Invalid history cursor for current scope");
+						next = cursor.previous;
+						order = cursor.order;
+					}
+					while (next && rows.length <= limit) {
 						checkAuthority(check);
-						if (!accepts) return true;
-						const allowed = accepts(copy(row.spec));
-						if (typeof allowed !== "boolean") throw new MutationDenied("History scope must be synchronous");
-						return allowed;
-					});
-				const boundary = query.cursor === undefined ? -1 : rows.findIndex((row) => row.id === query.cursor);
-				if (query.cursor !== undefined && boundary < 0)
-					throw new MutationDenied("Invalid history cursor for current scope");
-				const limit = query.limit ?? 32,
-					selected = rows.slice(boundary + 1, boundary + 1 + limit);
+						const doc = await readDelivery(next, state);
+						if (!doc?.record || doc.order >= order)
+							throw new Error("Catalog history index missing or invalid");
+						if (allowed(doc.record)) rows.push(doc.record);
+						next = doc.previous;
+						order = doc.order;
+					}
+				}
+				const selected = rows.slice(0, limit);
 				const items: import("./types.ts").CatalogDeliveryObservation[] = [];
 				for (const row of selected) {
 					checkAuthority(check);
@@ -3109,9 +5993,7 @@ export class DurableAdapter {
 				checkAuthority(check);
 				return copy({
 					items,
-					...(rows.length > boundary + 1 + limit && selected.length
-						? { nextCursor: selected.at(-1)!.id }
-						: {}),
+					...(rows.length > limit && selected.length ? { nextCursor: selected.at(-1)!.id } : {}),
 				});
 			},
 			received: async (ref: ConversationRef, check: () => void) => {
@@ -3120,10 +6002,29 @@ export class DurableAdapter {
 				if (!state) throw new MutationDenied("Catalog member missing");
 				requireMember(state, ref);
 				const incoming: DeliveryReceipt[] = [];
-				for (const stored of Object.values(state.deliveries)) {
-					if (hash(stored.spec.target) !== hash(ref)) continue;
-					checkAuthority(check);
-					incoming.push(await status(stored));
+				if (!state.index) {
+					for (const stored of Object.values(state.deliveries!)) {
+						if (hash(stored.spec.target) !== hash(ref)) continue;
+						checkAuthority(check);
+						incoming.push(await status(stored));
+					}
+				} else {
+					let next: string | null = state.index.recipients[ref.conversationId] ?? null,
+						order = state.index.order + 1;
+					while (next) {
+						checkAuthority(check);
+						const doc = await readDelivery(next, state);
+						if (
+							!doc?.record ||
+							doc.order >= order ||
+							doc.record.spec.target.conversationId !== ref.conversationId
+						)
+							throw new Error("Catalog recipient index missing or invalid");
+						if (hash(doc.record.spec.target) === hash(ref)) incoming.push(await status(doc.record));
+						next = doc.previousTarget;
+						order = doc.order;
+					}
+					incoming.reverse();
 				}
 				checkAuthority(check);
 				return copy(incoming);
@@ -3143,7 +6044,8 @@ export class DurableAdapter {
 				const specs = rawSpecs.map((s) => {
 					if (!validKey(s.key)) throw new Error("Invalid member key");
 					const profile = s.profile ?? "default";
-					if (!this.#managedReady().profiles.has(profile)) throw new Error("Unapproved runtime profile");
+					const configuredProfile = this.#managedReady().profiles.get(profile);
+					if (!configuredProfile) throw new Error("Unapproved runtime profile");
 					const lifetime = s.lifetime ?? "persistent";
 					if (!["persistent", "temporary", "task-bound", "background"].includes(lifetime))
 						throw new Error("Invalid member lifetime");
@@ -3163,16 +6065,21 @@ export class DurableAdapter {
 							typeof configuration !== "object" ||
 							Array.isArray(configuration) ||
 							!Object.keys(configuration).length ||
-							Object.keys(configuration).some((key) => !["model", "cwd"].includes(key))
+							Object.keys(configuration).some((key) => !["model", "cwd", "thinkingLevel"].includes(key))
 						)
 							throw new Error("Invalid initial configuration");
-						if (
-							configuration.model !== undefined &&
-							![...this.#managedReady().profiles.values()].some((row) => row.model === configuration.model)
-						)
+						if (configuration.model !== undefined && !this.#approvedModel(configuration.model))
 							throw new Error("Unconfigured initial model");
 						if (configuration.cwd !== undefined)
 							approvedDirectory(configuration.cwd, this.#managedReady().cwdRoots);
+						if (
+							configuration.thinkingLevel !== undefined &&
+							!this.#approvedThinking(
+								configuration.model ?? configuredProfile.model,
+								configuration.thinkingLevel,
+							)
+						)
+							throw new Error("Unsupported initial thinking level");
 					}
 					return {
 						key: s.key,
@@ -3188,14 +6095,15 @@ export class DurableAdapter {
 					};
 				});
 				const committed = await this.#persist(async (tx) => {
-					const state = await tx.doc(CatalogDoc, options.namespace, seed),
+					const state = await mutableState(tx, check),
 						runtime = await tx.doc(RuntimeDoc);
 					optionsMatch(state);
 					if (specs.some((s) => Object.hasOwn(state.members, s.key)))
 						throw new MutationDenied("Member already exists");
-					if (runtime.conversationCount + specs.length > runtime.limits.maxConversations)
+					if (exceedsSessionLimit(runtime.conversationCount, runtime.limits.maxConversations, specs.length))
 						throw new MutationDenied("Session Conversation limit exhausted");
 					for (const spec of specs) if (spec.source) validateRef(spec.source);
+
 					for (const spec of specs)
 						if (spec.taskId !== undefined) {
 							const native = await tx.task(spec.taskId);
@@ -3206,7 +6114,11 @@ export class DurableAdapter {
 						}
 					const inherited = new Map<
 						string,
-						{ model?: { provider: string; modelId: string }; cwd?: string }
+						{
+							model?: { provider: string; modelId: string };
+							cwd?: string;
+							thinkingLevel?: ModelThinkingLevel;
+						}
 					>();
 					for (const spec of specs) {
 						const inheritedRef =
@@ -3217,16 +6129,19 @@ export class DurableAdapter {
 							const source = requireMember(state, inheritedRef);
 							if (source.data.phase !== "active") throw new MutationDenied("Inheritance source inactive");
 							const agent = await tx.doc(AgentDoc, conversationId(inheritedRef.conversationId));
-							if (
-								!agent.model ||
-								![...this.#managedReady().profiles.values()].some(
-									(profile) => profile.model === agent.model!.modelId,
-								)
-							)
+							const selection = agent.model
+								? this.#options.models
+									? modelKey({ provider: agent.model.provider, id: agent.model.modelId })
+									: agent.model.modelId
+								: "";
+							if (agent.model ? !this.#approvedModel(selection) : !this.#options.models)
 								throw new MutationDenied("Unapproved inherited model");
 							inherited.set(spec.key, {
-								model: { provider: agent.model.provider, modelId: agent.model.modelId },
+								model: agent.model
+									? { provider: agent.model.provider, modelId: agent.model.modelId }
+									: undefined,
 								cwd: approvedDirectory(agent.cwd, this.#managedReady().cwdRoots),
+								thinkingLevel: agent.thinkingLevel,
 							});
 						}
 					}
@@ -3284,22 +6199,20 @@ export class DurableAdapter {
 							spec.profile === "default" ? "pakka-core-extension" : "pakka-profile-" + spec.profile,
 						)!;
 						await configure(tx, created.id, {
-							model: {
-								provider: "pakka-provider-" + hash(profile.endpoint).slice(0, 12),
-								modelId: profile.model,
-							},
+							model: modelReference(profile, profile.model),
 							extensions: [extension],
 							instructions: profile.systemPrompt,
+							thinkingLevel: profile.thinkingLevel,
 							cwd: profile.cwd,
 							...(inherited.get(spec.key) ?? {}),
 							...(spec.configuration?.model === undefined
 								? {}
 								: {
-										model: {
-											provider: "pakka-provider-" + hash(profile.endpoint).slice(0, 12),
-											modelId: spec.configuration.model,
-										},
+										model: modelReference(profile, spec.configuration.model),
 									}),
+							...(spec.configuration?.thinkingLevel === undefined
+								? {}
+								: { thinkingLevel: spec.configuration.thinkingLevel }),
 							...(spec.configuration?.cwd === undefined
 								? {}
 								: { cwd: approvedDirectory(spec.configuration.cwd, this.#managedReady().cwdRoots) }),
@@ -3341,112 +6254,154 @@ export class DurableAdapter {
 				ref: ConversationRef,
 				raw: ConversationConfigurationChange,
 				check: () => void,
+				request?: CatalogConfigurationIdentity,
 			) => {
-				checkAuthority(check);
-				validateRef(ref);
-				const change = copy(raw),
-					managed = this.#managedReady();
-				if (
-					!change ||
-					typeof change !== "object" ||
-					Array.isArray(change) ||
-					!Object.keys(change).length ||
-					Object.keys(change).some((key) => !["model", "cwd"].includes(key)) ||
-					(Object.hasOwn(change, "model") &&
-						(typeof change.model !== "string" ||
-							![...managed.profiles.values()].some((profile) => profile.model === change.model)))
-				)
-					throw new MutationDenied("Unapproved configuration change");
-				const cwd = Object.hasOwn(change, "cwd")
-					? approvedDirectory(change.cwd, managed.cwdRoots)
-					: undefined;
-				const route = this.#routes.get(conversationId(ref.conversationId));
-				if (!route || route.#disposed || route.#failedReason) throw new MutationDenied("Member not ready");
-				const configured = await this.#persist(async (tx) => {
-					const state = await tx.doc(CatalogDoc, options.namespace, seed),
-						runtime = await tx.doc(RuntimeDoc);
-					optionsMatch(state);
-					const found = requireMember(state, ref),
-						to = conversationId(ref.conversationId);
-					if (
-						found.data.phase !== "active" ||
-						(await tx.doc(LiveDoc, to)).run ||
-						(await tx.doc(InboxDoc, to)).items.length
-					)
-						throw new MutationDenied("Configure requires active idle member");
+				let committed = false;
+				try {
+					const original =
+						request &&
+						configurationOriginal({
+							requestId: request.requestId,
+							principal: request.principal,
+							target: ref,
+							selection: { kind: "agent", change: raw },
+						});
 					checkAuthority(check);
-					if (cwd !== undefined && approvedDirectory(cwd, managed.cwdRoots) !== cwd)
-						throw new MutationDenied("Directory changed");
-					await configure(tx, to, {
-						...(change.model !== undefined
-							? {
-									model: {
-										provider: "pakka-provider-" + hash(route.#options.endpoint).slice(0, 12),
-										modelId: change.model,
-									},
-								}
-							: {}),
+					validateRef(ref);
+					const change = copy(raw),
+						managed = this.#managedReady();
+					const route = this.#routes.get(conversationId(ref.conversationId));
+					if (!route || route.#disposed || route.#failedReason) throw new MutationDenied("Member not ready");
+					if (
+						!change ||
+						typeof change !== "object" ||
+						Array.isArray(change) ||
+						!Object.keys(change).length ||
+						Object.keys(change).some((key) => !["model", "cwd", "thinkingLevel"].includes(key)) ||
+						(Object.hasOwn(change, "thinkingLevel") &&
+							!this.#approvedThinking(change.model ?? route.#options.model, change.thinkingLevel)) ||
+						(Object.hasOwn(change, "model") &&
+							(typeof change.model !== "string" || !this.#approvedModel(change.model)))
+					)
+						throw new MutationDenied("Unapproved configuration change");
+					const cwd = Object.hasOwn(change, "cwd")
+						? approvedDirectory(change.cwd, managed.cwdRoots)
+						: undefined;
+					const configured = await this.#persist(async (tx) => {
+						const state = await mutableState(tx, check),
+							runtime = await tx.doc(RuntimeDoc);
+						optionsMatch(state);
+
+						const found = requireMember(state, ref),
+							to = conversationId(ref.conversationId);
+						if (
+							found.data.phase !== "active" ||
+							(await tx.doc(LiveDoc, to)).run ||
+							(await tx.doc(InboxDoc, to)).items.length
+						)
+							throw new MutationDenied("Configure requires active idle member");
+						checkAuthority(check);
+						if (cwd !== undefined && approvedDirectory(cwd, managed.cwdRoots) !== cwd)
+							throw new MutationDenied("Directory changed");
+						await configure(tx, to, {
+							...(change.model !== undefined
+								? {
+										model: modelReference(route.#options, change.model),
+									}
+								: {}),
+							...(cwd !== undefined ? { cwd } : {}),
+							...(change.thinkingLevel !== undefined ? { thinkingLevel: change.thinkingLevel } : {}),
+						});
+						checkAuthority(check);
+						const next = { ...ref, incarnation: randomUUID() };
+						await retainConfiguration(tx, original, next);
+						checkAuthority(check);
+						runtime.resources[ref.key] = next;
+						state.members[found.key]!.ref = next;
+						state.version++;
+						return storedJson<StoredMember>(state.members[found.key]);
+					});
+					committed = true;
+					route.#options = {
+						...route.#options,
+						...(change.model !== undefined ? { model: change.model } : {}),
 						...(cwd !== undefined ? { cwd } : {}),
-					});
-					checkAuthority(check);
-					const next = { ...ref, incarnation: randomUUID() };
-					runtime.resources[ref.key] = next;
-					state.members[found.key]!.ref = next;
-					state.version++;
-					return storedJson<StoredMember>(state.members[found.key]);
-				});
-				route.#options = {
-					...route.#options,
-					...(change.model !== undefined ? { model: change.model } : {}),
-					...(cwd !== undefined ? { cwd } : {}),
-				};
-				route.#control.configurationChanged();
-				await route.refreshCache();
-				return configured;
+						...(change.thinkingLevel !== undefined ? { thinkingLevel: change.thinkingLevel } : {}),
+					};
+					route.#control.configurationChanged();
+					await route.refreshCache();
+					return configured;
+				} catch (error) {
+					if (!committed && error instanceof MutationDenied)
+						throw new ConfigurationChangeRefusedError(error.message);
+					throw error;
+				}
 			},
-			configure: async (ref: ConversationRef, profileId: string, check: () => void) => {
-				checkAuthority(check);
-				validateRef(ref);
-				const profile = this.#managedReady().profiles.get(profileId);
-				if (!profile) throw new MutationDenied("Unapproved runtime profile");
-				const route = this.#routes.get(conversationId(ref.conversationId));
-				if (!route || route.#disposed || route.#failedReason) throw new MutationDenied("Member not ready");
-				const configured = await this.#persist(async (tx) => {
-					const state = await tx.doc(CatalogDoc, options.namespace, seed),
-						runtime = await tx.doc(RuntimeDoc);
-					optionsMatch(state);
-					const found = requireMember(state, ref),
-						to = conversationId(ref.conversationId);
-					if (
-						found.data.phase !== "active" ||
-						(await tx.doc(LiveDoc, to)).run ||
-						(await tx.doc(InboxDoc, to)).items.length
-					)
-						throw new MutationDenied("Configure requires active idle member");
+			configure: async (
+				ref: ConversationRef,
+				profileId: string,
+				check: () => void,
+				request?: CatalogConfigurationIdentity,
+			) => {
+				let committed = false;
+				try {
+					const original =
+						request &&
+						configurationOriginal({
+							requestId: request.requestId,
+							principal: request.principal,
+							target: ref,
+							selection: { kind: "profile", profile: profileId },
+						});
 					checkAuthority(check);
-					const extension = this.#registry!.snapshot().extension(
-						profileId === "default" ? "pakka-core-extension" : "pakka-profile-" + profileId,
-					)!;
-					await configure(tx, to, {
-						model: {
-							provider: "pakka-provider-" + hash(profile.endpoint).slice(0, 12),
-							modelId: profile.model,
-						},
-						extensions: [extension],
-						instructions: profile.systemPrompt,
-						cwd: profile.cwd,
+					validateRef(ref);
+					const profile = this.#managedReady().profiles.get(profileId);
+					if (!profile) throw new MutationDenied("Unapproved runtime profile");
+					const route = this.#routes.get(conversationId(ref.conversationId));
+					if (!route || route.#disposed || route.#failedReason) throw new MutationDenied("Member not ready");
+					const configured = await this.#persist(async (tx) => {
+						const state = await mutableState(tx, check),
+							runtime = await tx.doc(RuntimeDoc);
+						optionsMatch(state);
+
+						const found = requireMember(state, ref),
+							to = conversationId(ref.conversationId);
+						if (
+							found.data.phase !== "active" ||
+							(await tx.doc(LiveDoc, to)).run ||
+							(await tx.doc(InboxDoc, to)).items.length
+						)
+							throw new MutationDenied("Configure requires active idle member");
+						checkAuthority(check);
+						const extension = this.#registry!.snapshot().extension(
+							profileId === "default" ? "pakka-core-extension" : "pakka-profile-" + profileId,
+						)!;
+						await configure(tx, to, {
+							model: modelReference(profile, profile.model),
+							extensions: [extension],
+							instructions: profile.systemPrompt,
+							thinkingLevel: profile.thinkingLevel,
+							cwd: profile.cwd,
+						});
+						checkAuthority(check);
+						const next = { ...ref, incarnation: randomUUID(), profile: profileId };
+						await retainConfiguration(tx, original, next);
+						checkAuthority(check);
+						runtime.resources[ref.key] = next;
+						state.members[found.key]!.ref = next;
+						state.version++;
+						return storedJson<StoredMember>(state.members[found.key]);
 					});
-					checkAuthority(check);
-					const next = { ...ref, incarnation: randomUUID(), profile: profileId };
-					runtime.resources[ref.key] = next;
-					state.members[found.key]!.ref = next;
-					state.version++;
-					return storedJson<StoredMember>(state.members[found.key]);
-				});
-				route.#options = profile;
-				route.#control.configurationChanged();
-				await route.refreshCache();
-				return configured;
+					committed = true;
+					route.#options = profile;
+					route.#control.configurationChanged();
+					await route.refreshCache();
+					return configured;
+				} catch (error) {
+					if (!committed && error instanceof MutationDenied)
+						throw new ConfigurationChangeRefusedError(error.message);
+					throw error;
+				}
 			},
 			deliver: async (original: CatalogDeliverySpec, check: () => void) => {
 				checkAuthority(check);
@@ -3462,7 +6417,6 @@ export class DurableAdapter {
 					typeof original.text !== "string" ||
 					!original.text.trim() ||
 					original.text.length > 65536 ||
-					original.text.startsWith("/") ||
 					!["prompt", "steer", "followUp"].includes(original.mode)
 				)
 					throw new Error("Invalid delivery input");
@@ -3475,7 +6429,7 @@ export class DurableAdapter {
 				let committed: StoredDelivery;
 				try {
 					committed = await this.#persist(async (tx) => {
-						const state = await tx.doc(CatalogDoc, options.namespace, seed);
+						const state = await mutableState(tx, check);
 						optionsMatch(state);
 						const target = requireMember(state, spec.target);
 						if (spec.source) {
@@ -3483,6 +6437,7 @@ export class DurableAdapter {
 							if (source.data.phase !== "active") throw new MutationDenied("Source admission inactive");
 							if (source.ownerTaskId !== undefined) {
 								const owner = await tx.task(Number(source.ownerTaskId) as TaskId);
+
 								if (!owner || owner.abortRequested || owner.state.status === "terminal")
 									throw new MutationDenied("Source owner task ended");
 							}
@@ -3490,10 +6445,10 @@ export class DurableAdapter {
 							if (!from || from.#disposed || from.#failedReason)
 								throw new MutationDenied("Source Conversation not ready");
 						}
-						const old = state.deliveries[id];
+						const saved = await tx.doc(CatalogDeliveryDoc, id, null);
+						const old = saved.namespace === options.namespace ? saved.record : null;
 						if (old) {
-							if (old.fingerprint !== hash(old.spec))
-								throw new Error("Invalid retained delivery fingerprint");
+							validateDelivery(id, old);
 							const admission = (value: CatalogDeliverySpec) => {
 								const payload = { ...value };
 								delete payload.initiator;
@@ -3506,7 +6461,11 @@ export class DurableAdapter {
 							return storedJson<StoredDelivery>(old);
 						}
 						if (spec.replyTo) {
-							const original = state.deliveries[spec.replyTo]?.spec;
+							const reply = await tx.doc(CatalogDeliveryDoc, spec.replyTo, null);
+							const original =
+								reply.namespace === options.namespace && reply.record
+									? validateDelivery(spec.replyTo, reply.record).spec
+									: undefined;
 							const logical = (a: ConversationRef, b: ConversationRef) =>
 								a.sessionId === b.sessionId && a.conversationId === b.conversationId;
 							if (
@@ -3528,8 +6487,6 @@ export class DurableAdapter {
 							)
 								throw new MutationDenied("Recipient owner task ended");
 						}
-						if (Object.keys(state.deliveries).length >= options.maxDeliveries)
-							throw new MutationDenied("Catalog delivery retention capacity exhausted");
 						const to = conversationId(target.ref.conversationId),
 							live = await tx.doc(LiveDoc, to),
 							inbox = await tx.doc(InboxDoc, to);
@@ -3537,16 +6494,14 @@ export class DurableAdapter {
 							throw new MutationDenied("Recipient busy; explicit steer/followUp required");
 						if (!live.run && inbox.items.length)
 							throw new MutationDenied("Recipient has unresolved inbox boundary");
-						const pending = Object.values(state.deliveries).filter(
-							(d) => d.spec.target.conversationId === String(to),
-						);
-						let unsettled = 0;
-						for (const record of pending) {
-							const existing = await tx.submissionByRequest(to, "pakka.catalog." + record.id);
+						const pending: string[] = [];
+						for (const retainedId of state.index!.pending[String(to)] ?? []) {
+							checkAuthority(check);
+							const existing = await tx.submissionByRequest(to, "pakka.catalog." + retainedId);
 							if (!existing) throw new Error("Catalog admission provenance missing");
-							if (existing.status === "placed" || existing.status === "queued") unsettled++;
+							if (existing.status === "placed" || existing.status === "queued") pending.push(retainedId);
 						}
-						if (unsettled >= options.maxPending)
+						if (pending.length >= options.maxPending)
 							throw new MutationDenied("Recipient pending delivery limit exhausted");
 						const existing = await tx.submissionByRequest(to, requestId);
 						if (existing) throw new Error("Native admission exists without catalog fingerprint");
@@ -3589,7 +6544,8 @@ export class DurableAdapter {
 						}
 						checkAuthority(check);
 						const record: StoredDelivery = { id, spec, fingerprint, submissionId, at: Date.now() };
-						state.deliveries[id] = record;
+						await appendDelivery(tx, state.index!, record);
+						state.index!.pending[String(to)] = [...pending, id];
 						state.version++;
 						return copy(record);
 					});
@@ -3709,7 +6665,7 @@ export class DurableAdapter {
 				const field = kind === "primary" ? "primaryAttempts" : "auxiliaryAttempts";
 				const limit =
 					kind === "primary" ? state.limits.maxPrimaryAttempts : state.limits.maxAuxiliaryAttempts;
-				if (state.budget[field] >= limit) return false;
+				if (exceedsSessionLimit(state.budget[field], limit)) return false;
 				if (strategy) {
 					const key = hash(strategy.strategyId),
 						spent = state.strategyAttempts[key] ?? 0;
@@ -3742,15 +6698,54 @@ export class DurableAdapter {
 	}
 
 	async #initStream(): Promise<void> {
+		this.#statusUnsubscribe?.();
+		this.#statusUnsubscribe = undefined;
+		const epoch = ++this.#statusEpoch;
 		if (this.#stream) {
 			await this.#stream.stop().catch(() => {});
 			this.#stream = undefined;
 		}
+		if (this.#lazyObservation) {
+			// Subscribe first, then acquire only pi.live. A later committed live revision wins the seed race.
+			// No watchEvents/viewState mount: those intentionally hydrate the full active transcript.
+			const id = this.#conversation.id;
+			let liveRevision = 0;
+			this.#statusUnsubscribe = this.#harness.subscribeCommits((publication) => {
+				if (this.#disposed || epoch !== this.#statusEpoch) return;
+				let changed = false;
+				for (const change of publication.changes) {
+					if (
+						change.type === "document" &&
+						change.conversationId === id &&
+						change.record.kind === "pi.live"
+					) {
+						liveRevision++;
+						const live = change.value as LiveState | null;
+						this.#activeRuns = live?.run === undefined ? 0 : 1;
+					} else if (change.type === "entry" && change.value.conversationId === id) changed = true;
+					else if (change.type === "submission" && change.value.conversationId === id)
+						this.#observeSubmission(change.value);
+					else if (
+						change.type === "task" &&
+						change.value.conversationId === id &&
+						change.value.state.status === "terminal"
+					) {
+						const outcome = change.value.state.outcome;
+						if (outcome.status === "faulted") this.markFailed(new Error(outcome.error.message));
+						else if (outcome.status === "orphaned") this.markFailed(new Error(outcome.reason));
+					}
+				}
+				if (changed) this.#notify({ type: "changed" });
+			});
+			const revision = liveRevision;
+			const live = await this.#harness.snapshot(LiveDoc, id, BACKGROUND_CONTEXT);
+			if (epoch === this.#statusEpoch && liveRevision === revision)
+				this.#activeRuns = live?.run === undefined ? 0 : 1;
+			return;
+		}
 		this.#stream = await watchEvents(this.#harness, this.#conversation.id, BACKGROUND_CONTEXT);
 		this.#stream.start(async (batch) => {
-			for (const event of batch) {
-				this.#handleEvent(event);
-			}
+			for (const event of batch) this.#handleEvent(event);
 		});
 	}
 
@@ -4108,6 +7103,8 @@ export class DurableAdapter {
 					if (batch.version !== 0) throw new MutationDenied("Native journal address already occupied");
 					Object.assign(batch, payload, { checksum: hash(payload) });
 					index.heads[row.key] = { version, checksum: hash(payload) };
+					const directHead = await tx.doc(JournalHeadDoc, row.key, null);
+					Object.assign(directHead, index.heads[row.key]);
 					Object.assign(receipts[i]!.receipt, { version, fingerprint: receipts[i]!.fingerprint });
 					for (const mutation of row.work ?? []) await this.#updateSourceWork(tx, row.key, mutation);
 				}
@@ -4141,19 +7138,26 @@ export class DurableAdapter {
 		}
 	}
 
-	refreshCache(): Promise<void> {
-		const operation = this.#cacheRefresh.then(() => this.#refreshCacheOnce());
+	refreshCache(execution = false): Promise<void> {
+		const operation = this.#cacheRefresh.then(() =>
+			this.#refreshCacheOnce(execution || !this.#lazyObservation),
+		);
 		this.#cacheRefresh = operation.then(
 			() => {},
 			() => {},
 		);
 		return operation;
 	}
-	async #refreshCacheOnce(): Promise<void> {
+	async #refreshCacheOnce(execution: boolean): Promise<void> {
 		if (this.#failedReason) return;
 		try {
 			const conversation = this.#conversation;
 			await this.#refreshJournals();
+			if (!execution) {
+				const provider = await this.#harness.snapshot(ProviderDoc, conversation.id, BACKGROUND_CONTEXT);
+				if (conversation === this.#conversation) this.#providerSessionId = provider?.sessionId;
+				return;
+			}
 			const ctx = await conversation.context(BACKGROUND_CONTEXT);
 			const provider = await this.#harness.snapshot(ProviderDoc, conversation.id, BACKGROUND_CONTEXT);
 			const conversationId = String(conversation.id),
@@ -4186,6 +7190,7 @@ export class DurableAdapter {
 			if (plan.reset) this.#allEntries = additions;
 			else this.#allEntries.push(...additions);
 			this.#historyConversationId = conversationId;
+			this.#executionCacheLoaded = true;
 		} catch (e) {
 			const reason = e instanceof Error ? e.message : String(e);
 			this.markFailed(new Error(reason));
@@ -4209,7 +7214,11 @@ export class DurableAdapter {
 			conversationId: String(this.#conversation.id),
 			providerSessionId: this.#providerSessionId,
 			sessionFile: this.#sessionFile,
-			leafId: this.#activeEntries.length > 0 ? String(this.#activeEntries.at(-1)!.id) : null,
+			historyLoaded: this.#executionCacheLoaded,
+			leafId:
+				this.#executionCacheLoaded && this.#activeEntries.length > 0
+					? String(this.#activeEntries.at(-1)!.id)
+					: null,
 			entries: this.#allEntries.map((e) => ({
 				id: String(e.id),
 				type: e.kind,
@@ -4227,7 +7236,48 @@ export class DurableAdapter {
 		};
 	}
 
-	frame(): AdapterFrame {
+	#approvedModel(selection: string): boolean {
+		if (!this.#options.models)
+			return [...this.#managedReady().profiles.values()].some((profile) => profile.model === selection);
+		try {
+			const ref = modelReference(this.#options, selection);
+			return !!ref && !!primaryModels(this.#options, this.#rawModels).getModel(ref.provider, ref.modelId);
+		} catch {
+			return false;
+		}
+	}
+
+	#approvedThinking(selection: string, value: unknown): boolean {
+		try {
+			const ref = modelReference(this.#options, selection);
+			const model = ref
+				? primaryModels(this.#options, this.#rawModels).getModel(ref.provider, ref.modelId)
+				: undefined;
+			return model ? getSupportedThinkingLevels(model).some((level) => level === value) : value === "off";
+		} catch {
+			return false;
+		}
+	}
+
+	#primaryModelDTO(): ModelDTO {
+		const ref = modelReference(this.#options);
+		const model = ref
+			? primaryModels(this.#options, this.#rawModels).getModel(ref.provider, ref.modelId)
+			: undefined;
+		const key = this.#options.models ? this.#options.model : "main";
+		if (model) return modelDTO(model, key, true);
+		return {
+			key,
+			model: this.#options.model,
+			name: this.#options.model,
+			reasoning: false,
+			contextWindow: 0,
+			maxOutputTokens: 0,
+			available: false,
+		};
+	}
+
+	#frameUsage(): UsageDTO {
 		const total: { -readonly [K in keyof UsageDTO]: UsageDTO[K] } = {
 			input: 0,
 			output: 0,
@@ -4248,6 +7298,13 @@ export class DurableAdapter {
 				}
 			}
 		}
+
+		return total;
+	}
+
+	frame(): AdapterFrame {
+		if (this.#lazyObservation && !this.#executionCacheLoaded)
+			throw new MutationDenied("Cold execution frame is not loaded; prepareExecution is required");
 
 		return copy({
 			sessionId: this.#sessionId,
@@ -4280,16 +7337,8 @@ export class DurableAdapter {
 					fingerprint: hash([entry, msgs]),
 				};
 			}),
-			model: {
-				key: "main",
-				model: this.#options.model,
-				name: this.#options.model,
-				reasoning: false,
-				contextWindow: 128000,
-				maxOutputTokens: 4096,
-				available: true,
-			},
-			usage: total,
+			model: this.#primaryModelDTO(),
+			usage: this.#frameUsage(),
 		});
 	}
 
@@ -4482,7 +7531,7 @@ export class DurableAdapter {
 							: settled.detail
 								? JSON.stringify(settled.detail)
 								: "Provider failed";
-					this.#notify({ type: "failed", reason: reasonStr });
+					this.#notify({ type: "generation_error", id, reason: reasonStr });
 				} else {
 					this.#notify({
 						type: "unknown",
@@ -4670,7 +7719,7 @@ export class DurableAdapter {
 		if (!targetEntry) throw new Error("Unknown branch target");
 		if (this.#managed) {
 			const managed = this.#managedReady();
-			if (managed.state.conversationCount >= managed.state.limits.maxConversations)
+			if (exceedsSessionLimit(managed.state.conversationCount, managed.state.limits.maxConversations))
 				throw new Error("Session Conversation limit exhausted");
 		}
 		const cutoffIndex = this.#allEntries.findIndex((e) => String(e.id) === id);
@@ -4701,7 +7750,7 @@ export class DurableAdapter {
 										const state = await tx.doc(RuntimeDoc);
 										if (state.resources[resource.key]?.conversationId !== source)
 											throw new Error("Managed fork source changed");
-										if (state.conversationCount >= state.limits.maxConversations)
+										if (exceedsSessionLimit(state.conversationCount, state.limits.maxConversations))
 											throw new MutationDenied("Session Conversation limit exhausted");
 										state.conversationCount++;
 										state.resources[resource.key] = {
@@ -4784,11 +7833,26 @@ export class DurableAdapter {
 	async dispose(): Promise<void> {
 		await Promise.all([...this.#pendingQueue]);
 		this.#disposed = true;
+		this.#statusEpoch++;
+		this.#statusUnsubscribe?.();
+		this.#statusUnsubscribe = undefined;
 		if (this.#stream) {
 			await this.#stream.stop().catch(() => {});
 			this.#stream = undefined;
 		}
 		await this.#conversation.abort(BACKGROUND_CONTEXT).catch(() => {});
+		await this.#closeExecution();
+		this.#previewEntries.clear();
+		this.#previewEntriesBytes = 0;
+		this.#previewPages.clear();
+		this.#previewPagesBytes = 0;
+		if (this.#lazyObservation) {
+			this.#activeEntries = [];
+			this.#allEntries = [];
+			this.#contextMessages = [];
+			this.#contributions = [];
+			this.#executionCacheLoaded = false;
+		}
 		this.#routes.delete(this.#conversation.id);
 		if (!this.#managed) {
 			await this.#harness.close(BACKGROUND_CONTEXT);

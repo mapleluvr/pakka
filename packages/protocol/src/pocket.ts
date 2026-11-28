@@ -1,14 +1,18 @@
-/** WebUI v2 is an explicit, browser-safe product protocol. Headless v1 stays in index.ts. */
+/** The WebUI workbench wire is an explicit, browser-safe product protocol. Headless v1 stays in index.ts. */
 import { identity } from "./index.ts";
 import type { AgentRef } from "./index.ts";
 export type { AgentRef } from "./index.ts";
-export const POCKET_VERSION = 2 as const;
+export const POCKET_VERSION = 3 as const;
 export const POCKET_MAX_BYTES = 2 * 1024 * 1024;
 export interface PocketManagedSession {
 	readonly id: string;
 	readonly name: string;
 	readonly cwd?: string;
 	readonly status: "ready" | "unknown" | "unavailable";
+	readonly problem?: {
+		readonly kind: "open-failed" | "runtime-unavailable" | "cleanup-unconfirmed";
+		readonly canReopen: boolean;
+	};
 }
 export interface PocketSessionCreation {
 	readonly requestId: string;
@@ -16,6 +20,8 @@ export interface PocketSessionCreation {
 	readonly cwd: string;
 }
 export interface PocketCreationDefaults {
+	/** Approved execution/instruction presets, separate from the model directory. */
+	readonly presets?: readonly string[];
 	readonly profile: string;
 	readonly model: string;
 	readonly cwd: string;
@@ -63,7 +69,28 @@ export interface PocketJsonObject {
 	readonly [key: string]: PocketJson;
 }
 export type PocketJson = null | string | number | boolean | readonly PocketJson[] | PocketJsonObject;
-export type PocketPart =
+/** Display locator only: current person/resource authority is checked separately for every range. */
+export type PocketContentReference = PocketJsonObject & {
+	readonly id: string;
+	readonly source: "entry" | "live";
+	readonly entryId?: string;
+	readonly sourceConversationId?: string;
+	readonly taskId?: string;
+	readonly callId?: string;
+	readonly revision: string;
+	readonly path: string;
+	readonly encoding: "text" | "json" | "base64";
+	readonly byteLength: number;
+	readonly previewComplete: boolean;
+};
+export interface PocketContentChunk {
+	readonly reference: PocketContentReference;
+	readonly text: string;
+	readonly offset: number;
+	readonly nextOffset: number;
+	readonly complete: boolean;
+}
+export type PocketPart = (
 	| { readonly type: "text"; readonly text: string }
 	| { readonly type: "thinking"; readonly thinking: string }
 	| { readonly type: "image"; readonly data: string; readonly mimeType: string }
@@ -72,7 +99,8 @@ export type PocketPart =
 			readonly id: string;
 			readonly name: string;
 			readonly arguments: PocketJsonObject;
-	  };
+	  }
+) & { readonly contentReference?: PocketContentReference };
 export interface PocketMessage {
 	readonly role: "user" | "assistant" | "toolResult";
 	readonly content: string | readonly PocketPart[];
@@ -82,6 +110,8 @@ export interface PocketMessage {
 	readonly stopReason?: string;
 	/** Original assistant error reason, bounded like transcript text; no native provider object. */
 	readonly errorMessage?: string;
+	readonly contentReference?: PocketContentReference;
+	readonly errorReference?: PocketContentReference;
 }
 export interface PocketDisplay {
 	readonly namespace: string;
@@ -89,6 +119,7 @@ export interface PocketDisplay {
 	readonly requestId: string;
 	readonly kind: "card" | "chat";
 	readonly text: string;
+	readonly contentReference?: PocketContentReference;
 }
 export interface PocketSnapshot {
 	readonly ref: AgentRef;
@@ -113,6 +144,9 @@ export interface PocketSnapshot {
 			readonly status: "pending" | "running" | "done";
 			readonly taskId?: string;
 			readonly output?: string;
+			readonly contentReference?: PocketContentReference;
+			readonly droppedBytes?: number;
+			readonly droppedLines?: number;
 		}[];
 	};
 	readonly usage: {
@@ -124,6 +158,17 @@ export interface PocketSnapshot {
 		readonly cost: number | null;
 	};
 }
+/** Changes to the last bounded hot snapshot, not deletions from the durable archive. */
+export interface PocketSnapshotPatch {
+	readonly ref: AgentRef;
+	readonly baseSequence: number;
+	readonly entries?: PocketSnapshot["entries"];
+	readonly entryIds?: readonly string[];
+	readonly entriesTruncated?: boolean;
+	readonly olderBeforeId?: string | null;
+	readonly live?: PocketSnapshot["live"];
+	readonly usage?: PocketSnapshot["usage"];
+}
 export interface PocketDirectoryView {
 	readonly path: string;
 	readonly parent: string | null;
@@ -132,9 +177,20 @@ export interface PocketDirectoryView {
 	readonly places: readonly string[];
 	readonly truncated: boolean;
 }
+/** Native Pi thinking selectors carried as data, never an independent provider schema. */
+export type PocketThinkingLevel = "off" | "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
+export interface PocketConfigurationChange {
+	readonly model?: string;
+	readonly cwd?: string;
+	readonly thinkingLevel?: PocketThinkingLevel;
+}
 export interface PocketConfiguration {
 	readonly ref: AgentRef;
-	readonly current?: { readonly model: string; readonly cwd: string };
+	readonly current?: {
+		readonly model: string;
+		readonly cwd: string;
+		readonly thinkingLevel?: PocketThinkingLevel;
+	};
 	readonly choices: readonly { readonly id: string; readonly model: string; readonly cwd?: string }[];
 	readonly canConfigure: boolean;
 	readonly usage: PocketSnapshot["usage"];
@@ -285,7 +341,7 @@ export type PocketOriginalCommand =
 	| {
 			readonly op: "create";
 			readonly sessionId?: string;
-			readonly configuration?: { readonly model?: string; readonly cwd?: string };
+			readonly configuration?: PocketConfigurationChange;
 			readonly requestId: string;
 			readonly name: string;
 			readonly profile: string;
@@ -314,6 +370,7 @@ export type PocketCommand =
 	| { readonly op: "navigation.update"; readonly input: PocketNavigationUpdate }
 	| { readonly op: "navigation.lookup"; readonly original: PocketNavigationUpdate }
 	| { readonly op: "session.list" }
+	| { readonly op: "session.reopen"; readonly sessionId: string }
 	| ({ readonly op: "session.create" } & PocketSessionCreation)
 	| {
 			readonly op: "session.lookup";
@@ -343,7 +400,7 @@ export type PocketCommand =
 	| {
 			readonly op: "configure.agent";
 			readonly target: AgentRef;
-			readonly change: { readonly model?: string; readonly cwd?: string };
+			readonly change: PocketConfigurationChange;
 	  }
 	| {
 			readonly op: "directory.list";
@@ -355,6 +412,21 @@ export type PocketCommand =
 			readonly op: "read";
 			readonly target: AgentRef;
 			readonly page?: { readonly limit?: number; readonly beforeEntryId?: string };
+	  }
+	| {
+			readonly op: "preview";
+			readonly target: AgentRef;
+			readonly page?: {
+				readonly limit?: number;
+				readonly beforeEntryId?: string;
+				readonly maxBytes?: number;
+			};
+	  }
+	| {
+			readonly op: "content.read";
+			readonly target: AgentRef;
+			readonly reference: PocketContentReference;
+			readonly range: { readonly offset: number; readonly length: number };
 	  }
 	| {
 			readonly op: "display";
@@ -390,7 +462,7 @@ export type PocketCommand =
 			readonly resources: PocketResources;
 	  };
 export interface PocketRequest {
-	readonly version: 2;
+	readonly version: typeof POCKET_VERSION;
 	readonly requestId: string;
 	readonly command: PocketCommand;
 }
@@ -404,6 +476,7 @@ export type PocketResult =
 			readonly canCreate: boolean;
 			readonly defaults?: PocketCreationDefaults;
 	  }
+	| { readonly kind: "session.state"; readonly session: PocketManagedSession }
 	| {
 			readonly kind: "managed.session";
 			readonly requestId: string;
@@ -411,9 +484,10 @@ export type PocketResult =
 	  }
 	| {
 			readonly kind: "hello";
-			readonly versions: readonly [2];
+			readonly versions: readonly [typeof POCKET_VERSION];
 			readonly person: PocketPerson;
 			readonly sessionId: string;
+			readonly nativeModels?: boolean;
 	  }
 	| {
 			readonly kind: "list";
@@ -443,6 +517,7 @@ export type PocketResult =
 	| { readonly kind: "credential"; readonly status: PocketCredentialStatus }
 	| { readonly kind: "collaboration"; readonly snapshot: PocketCollaborationView }
 	| { readonly kind: "conversation"; readonly snapshot: PocketSnapshot }
+	| { readonly kind: "content"; readonly target: AgentRef; readonly chunk: PocketContentChunk }
 	| {
 			readonly kind: "people";
 			readonly people: readonly PocketPerson[];
@@ -483,17 +558,18 @@ export interface PocketFailure {
 	readonly message: string;
 }
 export type PocketResponse = {
-	readonly version: 2;
+	readonly version: typeof POCKET_VERSION;
 	readonly requestId: string;
 	readonly serverId: string;
 } & ({ readonly result: PocketResult } | { readonly error: PocketFailure });
 export type PocketEvent = {
-	readonly version: 2;
+	readonly version: typeof POCKET_VERSION;
 	readonly serverId: string;
 	readonly streamId: string;
 	readonly sequence: number;
 } & (
 	| { readonly kind: "conversation"; readonly snapshot: PocketSnapshot }
+	| { readonly kind: "conversation.patch"; readonly patch: PocketSnapshotPatch }
 	| { readonly kind: "collaboration"; readonly snapshot: PocketCollaborationView }
 	| { readonly kind: "resnapshot" | "invalidated" }
 );
@@ -539,25 +615,55 @@ const invite = (v: unknown): v is PocketInvite =>
 	resources(v.resources) &&
 	integer(v.expiresAt, 1) &&
 	["pending", "redeemed", "revoked"].includes(v.status as string);
+export { invite as isPocketInvite };
 const entryId = (v: unknown): v is string =>
 	typeof v === "string" && v.length > 0 && v.length <= 256 && !/[\x00-\x1f\x7f]/.test(v);
+const contentReference = (v: unknown): v is PocketContentReference =>
+	shape(
+		v,
+		["id", "source", "revision", "path", "encoding", "byteLength", "previewComplete"],
+		["entryId", "sourceConversationId", "taskId", "callId"],
+	) &&
+	typeof v.id === "string" &&
+	/^[a-f0-9]{64}$/.test(v.id) &&
+	["entry", "live"].includes(String(v.source)) &&
+	(v.source === "entry" ? entryId(v.entryId) : v.entryId === undefined) &&
+	(v.sourceConversationId === undefined || identity(v.sourceConversationId)) &&
+	(v.taskId === undefined || entryId(v.taskId)) &&
+	(v.callId === undefined || entryId(v.callId)) &&
+	identity(v.revision) &&
+	string(v.path, 1024) &&
+	v.path.startsWith("/") &&
+	!/[\x00-\x1f\x7f]/.test(v.path) &&
+	["text", "json", "base64"].includes(String(v.encoding)) &&
+	integer(v.byteLength) &&
+	typeof v.previewComplete === "boolean";
+const contentChunk = (v: unknown): v is PocketContentChunk =>
+	shape(v, ["reference", "text", "offset", "nextOffset", "complete"]) &&
+	contentReference(v.reference) &&
+	string(v.text, 65536) &&
+	integer(v.offset, 0, v.reference.byteLength) &&
+	integer(v.nextOffset, v.offset, Math.min(v.reference.byteLength, v.offset + 65536)) &&
+	typeof v.complete === "boolean" &&
+	v.complete === (v.nextOffset === v.reference.byteLength) &&
+	(v.nextOffset > v.offset || v.complete);
 const part = (v: unknown): v is PocketPart => {
-	if (!record(v)) return false;
+	if (!record(v) || (v.contentReference !== undefined && !contentReference(v.contentReference))) return false;
 	switch (v.type) {
 		case "text":
-			return shape(v, ["type", "text"]) && string(v.text);
+			return shape(v, ["type", "text"], ["contentReference"]) && string(v.text);
 		case "thinking":
-			return shape(v, ["type", "thinking"]) && string(v.thinking);
+			return shape(v, ["type", "thinking"], ["contentReference"]) && string(v.thinking);
 		case "image":
 			return (
-				shape(v, ["type", "data", "mimeType"]) &&
+				shape(v, ["type", "data", "mimeType"], ["contentReference"]) &&
 				string(v.data, 1024 * 1024) &&
 				string(v.mimeType, 100) &&
 				/^image\/[a-zA-Z0-9.+-]+$/.test(v.mimeType)
 			);
 		case "toolCall":
 			return (
-				shape(v, ["type", "id", "name", "arguments"]) &&
+				shape(v, ["type", "id", "name", "arguments"], ["contentReference"]) &&
 				entryId(v.id) &&
 				entryId(v.name) &&
 				record(v.arguments)
@@ -567,93 +673,167 @@ const part = (v: unknown): v is PocketPart => {
 	}
 };
 const message = (v: unknown): v is PocketMessage => {
-	if (!record(v)) return false;
+	if (
+		!record(v) ||
+		(v.contentReference !== undefined && !contentReference(v.contentReference)) ||
+		(v.errorReference !== undefined && !contentReference(v.errorReference))
+	)
+		return false;
 	const content =
 		string(v.content) || (Array.isArray(v.content) && v.content.length <= 256 && v.content.every(part));
 	if (!content) return false;
-	if (v.role === "user") return shape(v, ["role", "content"]);
+	if (v.role === "user") return shape(v, ["role", "content"], ["contentReference"]);
 	if (v.role === "assistant")
 		return (
-			shape(v, ["role", "content"], ["stopReason", "errorMessage"]) &&
+			shape(v, ["role", "content"], ["stopReason", "errorMessage", "contentReference", "errorReference"]) &&
 			(v.errorMessage === undefined || string(v.errorMessage)) &&
 			(v.stopReason === undefined ||
 				["stop", "length", "toolUse", "error", "aborted"].includes(v.stopReason as string))
 		);
 	return (
 		v.role === "toolResult" &&
-		shape(v, ["role", "content", "toolCallId", "toolName", "isError"]) &&
+		shape(v, ["role", "content", "toolCallId", "toolName", "isError"], ["contentReference"]) &&
 		entryId(v.toolCallId) &&
 		entryId(v.toolName) &&
 		typeof v.isError === "boolean"
 	);
 };
 const display = (v: unknown): v is PocketDisplay =>
-	shape(v, ["namespace", "actorId", "requestId", "kind", "text"]) &&
+	shape(v, ["namespace", "actorId", "requestId", "kind", "text"], ["contentReference"]) &&
+	(v.contentReference === undefined || contentReference(v.contentReference)) &&
 	identity(v.namespace) &&
 	identity(v.actorId) &&
 	identity(v.requestId) &&
 	["chat", "card"].includes(v.kind as string) &&
 	string(v.text, 16384);
-function snapshot(v: unknown): v is PocketSnapshot {
+function snapshotPatch(v: unknown): v is PocketSnapshotPatch {
 	if (
-		!shape(v, ["ref", "entries", "entriesTruncated", "live", "usage"], ["olderBeforeId"]) ||
+		!shape(
+			v,
+			["ref", "baseSequence"],
+			["entries", "entryIds", "entriesTruncated", "olderBeforeId", "live", "usage"],
+		) ||
 		!ref(v.ref) ||
-		!Array.isArray(v.entries) ||
-		v.entries.length > 256 ||
-		typeof v.entriesTruncated !== "boolean" ||
-		(v.olderBeforeId !== undefined && (!v.entriesTruncated || !entryId(v.olderBeforeId))) ||
-		!shape(v.live, ["busy", "tools"], ["message"]) ||
-		typeof v.live.busy !== "boolean" ||
-		!Array.isArray(v.live.tools) ||
-		v.live.tools.length > 256 ||
-		(v.live.message !== undefined && !message(v.live.message)) ||
-		!shape(v.usage, ["input", "output", "cacheRead", "cacheWrite", "totalTokens", "cost"])
+		!integer(v.baseSequence, 1) ||
+		Object.keys(v).length < 3 ||
+		(v.entriesTruncated !== undefined && typeof v.entriesTruncated !== "boolean") ||
+		(v.olderBeforeId !== undefined && v.olderBeforeId !== null && !entryId(v.olderBeforeId)) ||
+		(v.entryIds !== undefined &&
+			(!Array.isArray(v.entryIds) ||
+				v.entryIds.length > 256 ||
+				!v.entryIds.every(entryId) ||
+				new Set(v.entryIds).size !== v.entryIds.length))
 	)
 		return false;
-	const id = v.ref.conversationId;
+	const candidate = {
+		ref: v.ref,
+		entries: v.entries ?? [],
+		entriesTruncated: v.entriesTruncated ?? typeof v.olderBeforeId === "string",
+		...(typeof v.olderBeforeId === "string" ? { olderBeforeId: v.olderBeforeId } : {}),
+		live: v.live ?? { busy: false, tools: [] },
+		usage: v.usage ?? { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, totalTokens: 0, cost: 0 },
+	};
 	if (
-		!v.entries.every(
-			(e) =>
-				shape(
-					e,
-					["id", "conversationId", "kind", "messages"],
-					["taskId", "display", "sourceConversationId"],
-				) &&
-				entryId(e.id) &&
-				e.conversationId === id &&
-				(e.sourceConversationId === undefined ||
-					(identity(e.sourceConversationId) && e.sourceConversationId !== id)) &&
-				entryId(e.kind) &&
-				(e.taskId === undefined || entryId(e.taskId)) &&
-				Array.isArray(e.messages) &&
-				e.messages.length <= 256 &&
-				e.messages.every(message) &&
-				(e.display === undefined || display(e.display)),
-		)
-	)
-		return false;
-	if (
-		!v.live.tools.every(
-			(t) =>
-				shape(t, ["callId", "name", "status"], ["taskId", "output"]) &&
-				entryId(t.callId) &&
-				entryId(t.name) &&
-				["pending", "running", "done"].includes(t.status as string) &&
-				(t.taskId === undefined || entryId(t.taskId)) &&
-				(t.output === undefined || string(t.output)),
-		)
+		!snapshot(candidate) ||
+		new Set(candidate.entries.map((entry) => entry.id)).size !== candidate.entries.length
 	)
 		return false;
 	return (
-		[v.usage.input, v.usage.output, v.usage.cacheRead, v.usage.cacheWrite, v.usage.totalTokens].every((n) =>
-			integer(n),
-		) &&
-		(v.usage.cost === null ||
-			(typeof v.usage.cost === "number" && Number.isFinite(v.usage.cost) && v.usage.cost >= 0))
+		v.entryIds === undefined ||
+		candidate.entries.every((entry) => (v.entryIds as readonly string[]).includes(entry.id))
 	);
 }
+/** Shared transcript payload guards: stored history has no executable AgentRef. */
+export function isPocketEntries(value: unknown, conversationId: string): value is PocketSnapshot["entries"] {
+	return (
+		Array.isArray(value) &&
+		value.length <= 256 &&
+		value.every(
+			(entry) =>
+				shape(
+					entry,
+					["id", "conversationId", "kind", "messages"],
+					["taskId", "display", "sourceConversationId"],
+				) &&
+				entryId(entry.id) &&
+				entry.conversationId === conversationId &&
+				(entry.sourceConversationId === undefined ||
+					(identity(entry.sourceConversationId) && entry.sourceConversationId !== conversationId)) &&
+				entryId(entry.kind) &&
+				(entry.taskId === undefined || entryId(entry.taskId)) &&
+				Array.isArray(entry.messages) &&
+				entry.messages.length <= 256 &&
+				entry.messages.every(message) &&
+				(entry.display === undefined || display(entry.display)),
+		)
+	);
+}
+export function isPocketActivity(value: unknown): value is PocketSnapshot["live"] {
+	return (
+		shape(value, ["busy", "tools"], ["message"]) &&
+		typeof value.busy === "boolean" &&
+		Array.isArray(value.tools) &&
+		value.tools.length <= 256 &&
+		(value.message === undefined || message(value.message)) &&
+		value.tools.every(
+			(tool) =>
+				shape(
+					tool,
+					["callId", "name", "status"],
+					["taskId", "output", "contentReference", "droppedBytes", "droppedLines"],
+				) &&
+				(tool.contentReference === undefined || contentReference(tool.contentReference)) &&
+				(tool.droppedBytes === undefined || integer(tool.droppedBytes)) &&
+				(tool.droppedLines === undefined || integer(tool.droppedLines)) &&
+				entryId(tool.callId) &&
+				entryId(tool.name) &&
+				["pending", "running", "done"].includes(tool.status as string) &&
+				(tool.taskId === undefined || entryId(tool.taskId)) &&
+				(tool.output === undefined || string(tool.output)),
+		)
+	);
+}
+export function isPocketUsage(value: unknown): value is PocketSnapshot["usage"] {
+	return (
+		shape(value, ["input", "output", "cacheRead", "cacheWrite", "totalTokens", "cost"]) &&
+		[value.input, value.output, value.cacheRead, value.cacheWrite, value.totalTokens].every((n) =>
+			integer(n),
+		) &&
+		(value.cost === null ||
+			(typeof value.cost === "number" && Number.isFinite(value.cost) && value.cost >= 0))
+	);
+}
+function snapshot(v: unknown): v is PocketSnapshot {
+	return (
+		shape(v, ["ref", "entries", "entriesTruncated", "live", "usage"], ["olderBeforeId"]) &&
+		ref(v.ref) &&
+		isPocketEntries(v.entries, v.ref.conversationId) &&
+		typeof v.entriesTruncated === "boolean" &&
+		(v.olderBeforeId === undefined || (v.entriesTruncated && entryId(v.olderBeforeId))) &&
+		isPocketActivity(v.live) &&
+		isPocketUsage(v.usage)
+	);
+}
+export {
+	snapshot as isPocketSnapshot,
+	contentReference as isPocketContentReference,
+	contentChunk as isPocketContentChunk,
+	receipt as isPocketInputReceipt,
+	configuration as isPocketConfiguration,
+};
 const configurationText = (v: unknown, max: number): v is string =>
 	string(v, max) && !!v && v.trim() === v && !/[\x00-\x1f\x7f]/.test(v);
+const thinkingLevel = (v: unknown): v is PocketThinkingLevel =>
+	typeof v === "string" && ["off", "minimal", "low", "medium", "high", "xhigh", "max"].includes(v);
+function configurationChange(v: unknown): v is PocketConfigurationChange {
+	return (
+		shape(v, [], ["model", "cwd", "thinkingLevel"]) &&
+		Object.keys(v).length > 0 &&
+		(v.model === undefined || configurationText(v.model, 256)) &&
+		(v.cwd === undefined || configurationText(v.cwd, 8192)) &&
+		(v.thinkingLevel === undefined || thinkingLevel(v.thinkingLevel))
+	);
+}
 const pathList = (v: unknown, max: number): v is string[] =>
 	Array.isArray(v) && v.length <= max && v.every((row) => configurationText(row, 8192));
 function directoryView(v: unknown): v is PocketDirectoryView {
@@ -671,8 +851,9 @@ function configuration(v: unknown): v is PocketConfiguration {
 	if (
 		!shape(v, ["ref", "choices", "canConfigure", "usage", "session"], ["current"]) ||
 		(v.current !== undefined &&
-			(!shape(v.current, ["model", "cwd"]) ||
-				!configurationText(v.current.model, 256) ||
+			(!shape(v.current, ["model", "cwd"], ["thinkingLevel"]) ||
+				(v.current.thinkingLevel !== undefined && !thinkingLevel(v.current.thinkingLevel)) ||
+				(v.current.model !== "" && !configurationText(v.current.model, 256)) ||
 				!configurationText(v.current.cwd, 8192))) ||
 		!ref(v.ref) ||
 		typeof v.canConfigure !== "boolean" ||
@@ -704,7 +885,7 @@ function configuration(v: unknown): v is PocketConfiguration {
 	return (
 		shape(v.session, ["limits", "budget"]) &&
 		shape(v.session.limits, ["maxConversations", "maxPrimaryAttempts", "maxAuxiliaryAttempts"]) &&
-		Object.values(v.session.limits).every((n) => integer(n, 1)) &&
+		Object.values(v.session.limits).every((n) => integer(n)) &&
 		shape(v.session.budget, ["primaryAttempts", "auxiliaryAttempts"]) &&
 		Object.values(v.session.budget).every((n) => integer(n))
 	);
@@ -787,6 +968,8 @@ function collaboration(v: unknown): v is PocketCollaborationView {
 		new Set(presence.map((p) => p.personId)).size === presence.length
 	);
 }
+export { collaboration as isPocketCollaborationView };
+
 function collaborationCommand(v: Record<string, unknown>): boolean {
 	if (v.op === "collaboration.read") return shape(v, ["op", "target"]) && ref(v.target);
 	if (!shape(v, ["op", "target", "input"]) || !ref(v.target)) return false;
@@ -829,6 +1012,13 @@ function collaborationCommand(v: Record<string, unknown>): boolean {
 		default:
 			return false;
 	}
+}
+export function isPocketAgentRef(value: unknown): value is AgentRef {
+	return ref(value);
+}
+export const isPocketNotificationStatus = notificationStatus;
+export function isPocketNotificationCommand(value: unknown): value is PocketNotificationCommand {
+	return record(value) && notificationCommand(value);
 }
 function notificationStatus(v: unknown): v is PocketNotificationStatus {
 	return (
@@ -984,6 +1174,8 @@ function command(v: unknown): v is PocketCommand {
 			return shape(v, ["op", "input"]) && navigationUpdate(v.input);
 		case "navigation.lookup":
 			return shape(v, ["op", "original"]) && navigationUpdate(v.original);
+		case "session.reopen":
+			return shape(v, ["op", "sessionId"]) && identity(v.sessionId);
 		case "session.create":
 			return (
 				shape(v, ["op", "requestId", "name", "cwd"]) &&
@@ -1011,11 +1203,7 @@ function command(v: unknown): v is PocketCommand {
 			return (
 				shape(v, ["op", "requestId", "name", "profile"], ["inherit", "sessionId", "configuration"]) &&
 				(v.sessionId === undefined || identity(v.sessionId)) &&
-				(v.configuration === undefined ||
-					(shape(v.configuration, [], ["model", "cwd"]) &&
-						Object.keys(v.configuration).length > 0 &&
-						(v.configuration.model === undefined || configurationText(v.configuration.model, 256)) &&
-						(v.configuration.cwd === undefined || configurationText(v.configuration.cwd, 8192)))) &&
+				(v.configuration === undefined || configurationChange(v.configuration)) &&
 				(v.inherit === undefined || ref(v.inherit)) &&
 				identity(v.requestId) &&
 				identity(v.profile) &&
@@ -1024,14 +1212,7 @@ function command(v: unknown): v is PocketCommand {
 				!/[\x00-\x1f\x7f]/.test(v.name)
 			);
 		case "configure.agent":
-			return (
-				shape(v, ["op", "target", "change"]) &&
-				ref(v.target) &&
-				shape(v.change, [], ["model", "cwd"]) &&
-				Object.keys(v.change).length > 0 &&
-				(v.change.model === undefined || configurationText(v.change.model, 256)) &&
-				(v.change.cwd === undefined || configurationText(v.change.cwd, 8192))
-			);
+			return shape(v, ["op", "target", "change"]) && ref(v.target) && configurationChange(v.change);
 		case "creation.directories":
 			return (
 				shape(v, ["op"], ["path", "places"]) &&
@@ -1106,6 +1287,25 @@ function command(v: unknown): v is PocketCommand {
 						(v.page.limit === undefined || integer(v.page.limit, 1, 256)) &&
 						(v.page.beforeEntryId === undefined || entryId(v.page.beforeEntryId))))
 			);
+		case "preview":
+			return (
+				shape(v, ["op", "target"], ["page"]) &&
+				ref(v.target) &&
+				(v.page === undefined ||
+					(shape(v.page, [], ["limit", "beforeEntryId", "maxBytes"]) &&
+						(v.page.limit === undefined || integer(v.page.limit, 1, 256)) &&
+						(v.page.beforeEntryId === undefined || entryId(v.page.beforeEntryId)) &&
+						(v.page.maxBytes === undefined || integer(v.page.maxBytes, 16384, 256 * 1024))))
+			);
+		case "content.read":
+			return (
+				shape(v, ["op", "target", "reference", "range"]) &&
+				ref(v.target) &&
+				contentReference(v.reference) &&
+				shape(v.range, ["offset", "length"]) &&
+				integer(v.range.offset, 0, v.reference.byteLength) &&
+				integer(v.range.length, 8, 65536)
+			);
 		case "display":
 			return (
 				shape(v, ["op", "target", "requestId", "kind", "text"]) &&
@@ -1122,7 +1322,6 @@ function command(v: unknown): v is PocketCommand {
 				identity(v.input.requestId) &&
 				string(v.input.text, 65536) &&
 				!!v.input.text.trim() &&
-				!v.input.text.startsWith("/") &&
 				["prompt", "steer", "followUp"].includes(v.input.mode as string)
 			);
 		case "receipt":
@@ -1184,29 +1383,39 @@ function navigation(v: unknown): v is PocketNavigation {
 }
 function managedSession(v: unknown): v is PocketManagedSession {
 	return (
-		shape(v, ["id", "name", "status"], ["cwd"]) &&
+		shape(v, ["id", "name", "status"], ["cwd", "problem"]) &&
 		identity(v.id) &&
 		string(v.name, 80) &&
 		!!v.name.trim() &&
 		!/[\x00-\x1f\x7f]/.test(v.name) &&
 		["ready", "unknown", "unavailable"].includes(String(v.status)) &&
-		(v.cwd === undefined || configurationText(v.cwd, 8192))
+		(v.cwd === undefined || configurationText(v.cwd, 8192)) &&
+		(v.problem === undefined ||
+			(v.status === "unavailable" &&
+				shape(v.problem, ["kind", "canReopen"]) &&
+				["open-failed", "runtime-unavailable", "cleanup-unconfirmed"].includes(String(v.problem.kind)) &&
+				v.problem.canReopen === (v.problem.kind === "open-failed")))
 	);
 }
 function creationDefaults(v: unknown): v is PocketCreationDefaults {
 	return (
-		shape(v, ["profile", "model", "cwd", "choices"]) &&
+		shape(v, ["profile", "model", "cwd", "choices"], ["presets"]) &&
 		identity(v.profile) &&
-		configurationText(v.model, 256) &&
+		(v.presets === undefined ||
+			(Array.isArray(v.presets) &&
+				v.presets.length > 0 &&
+				v.presets.length <= 64 &&
+				v.presets.every(identity) &&
+				new Set(v.presets).size === v.presets.length &&
+				v.presets.includes(v.profile))) &&
+		(v.model === "" || configurationText(v.model, 256)) &&
 		configurationText(v.cwd, 8192) &&
 		Array.isArray(v.choices) &&
-		v.choices.length > 0 &&
 		v.choices.length <= 65 &&
 		v.choices.every(
 			(row) => shape(row, ["id", "model"]) && identity(row.id) && configurationText(row.model, 256),
 		) &&
-		new Set(v.choices.map((row) => row.model)).size === v.choices.length &&
-		v.choices.some((row) => row.model === v.model)
+		new Set(v.choices.map((row) => row.model)).size === v.choices.length
 	);
 }
 function result(v: unknown): v is PocketResult {
@@ -1228,6 +1437,8 @@ function result(v: unknown): v is PocketResult {
 				typeof v.canCreate === "boolean" &&
 				(v.canCreate ? creationDefaults(v.defaults) : v.defaults === undefined)
 			);
+		case "session.state":
+			return shape(v, ["kind", "session"]) && managedSession(v.session);
 		case "managed.session":
 			return (
 				shape(v, ["kind", "requestId", "session"]) &&
@@ -1236,10 +1447,11 @@ function result(v: unknown): v is PocketResult {
 			);
 		case "hello":
 			return (
-				shape(v, ["kind", "versions", "person", "sessionId"]) &&
+				shape(v, ["kind", "versions", "person", "sessionId"], ["nativeModels"]) &&
+				(v.nativeModels === undefined || typeof v.nativeModels === "boolean") &&
 				Array.isArray(v.versions) &&
 				v.versions.length === 1 &&
-				v.versions[0] === 2 &&
+				v.versions[0] === POCKET_VERSION &&
 				person(v.person) &&
 				identity(v.sessionId)
 			);
@@ -1317,6 +1529,8 @@ function result(v: unknown): v is PocketResult {
 			return shape(v, ["kind", "configuration"]) && configuration(v.configuration);
 		case "conversation":
 			return shape(v, ["kind", "snapshot"]) && snapshot(v.snapshot);
+		case "content":
+			return shape(v, ["kind", "target", "chunk"]) && ref(v.target) && contentChunk(v.chunk);
 		case "collaboration":
 			return shape(v, ["kind", "snapshot"]) && collaboration(v.snapshot);
 		case "people":
@@ -1413,7 +1627,7 @@ export function decodePocketRequest(value: unknown): PocketRequest {
 		value,
 		(v): v is PocketRequest =>
 			shape(v, ["version", "requestId", "command"]) &&
-			v.version === 2 &&
+			v.version === POCKET_VERSION &&
 			identity(v.requestId) &&
 			command(v.command),
 	);
@@ -1423,13 +1637,13 @@ export function decodePocketResponse(value: unknown, expectedRequestId: string):
 		value,
 		(v): v is PocketResponse =>
 			(shape(v, ["version", "requestId", "serverId", "result"]) &&
-				v.version === 2 &&
+				v.version === POCKET_VERSION &&
 				v.requestId === expectedRequestId &&
 				identity(v.requestId) &&
 				identity(v.serverId) &&
 				result(v.result)) ||
 			(shape(v, ["version", "requestId", "serverId", "error"]) &&
-				v.version === 2 &&
+				v.version === POCKET_VERSION &&
 				v.requestId === expectedRequestId &&
 				identity(v.requestId) &&
 				identity(v.serverId) &&
@@ -1440,15 +1654,19 @@ export function decodePocketEvent(value: unknown): PocketEvent {
 	return decode(
 		value,
 		(v): v is PocketEvent =>
-			shape(v, ["version", "serverId", "streamId", "sequence", "kind"], ["snapshot"]) &&
-			v.version === 2 &&
+			shape(v, ["version", "serverId", "streamId", "sequence", "kind"], ["snapshot", "patch"]) &&
+			v.version === POCKET_VERSION &&
 			identity(v.serverId) &&
 			identity(v.streamId) &&
 			integer(v.sequence) &&
 			(v.kind === "conversation"
-				? snapshot(v.snapshot)
-				: v.kind === "collaboration"
-					? collaboration(v.snapshot)
-					: ["resnapshot", "invalidated"].includes(v.kind as string) && v.snapshot === undefined),
+				? v.patch === undefined && snapshot(v.snapshot)
+				: v.kind === "conversation.patch"
+					? v.snapshot === undefined && snapshotPatch(v.patch) && v.patch.baseSequence < v.sequence
+					: v.kind === "collaboration"
+						? v.patch === undefined && collaboration(v.snapshot)
+						: ["resnapshot", "invalidated"].includes(v.kind as string) &&
+							v.snapshot === undefined &&
+							v.patch === undefined),
 	);
 }

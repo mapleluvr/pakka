@@ -1,0 +1,9 @@
+{
+	"filename": "earendil-works-pi-durable-1.4.0-pakka.3.tgz",
+	"sha256": "fc1268481542417fd1ada943854c5972cd2b42c9456a6f60cc78a68ba70c2761",
+	"upstreamCommit": "4a080252f06caf63a525d7873c5d94d3c23887e0",
+	"upstreamVersion": "1.4.0",
+	"patchedVersion": "1.4.0-pakka.3",
+	"sourcePatchSha256": "792ca4e9834388d554191a7447b7375f5b3edd64daff9188ec03b2444c3fb0f1",
+	"buildLockSha256": "ca3268301b14f94ae04e5898968ddac98c9b7d26ba949416c39010adcf5f1d87"
+}

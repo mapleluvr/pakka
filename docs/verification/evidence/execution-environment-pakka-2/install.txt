@@ -1,0 +1,3 @@
+{"profile":"D:\\Projects\\kappa\\migration-worktrees\\pakka-execution-env-1.4.0\\docs\\.temp\\release-1.4.0-pakka.2\\profile","args":["install","--ignore-scripts","--no-audit","--no-fund"]}
+
+changed 4 packages in 2s

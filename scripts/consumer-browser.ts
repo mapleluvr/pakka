@@ -1,11 +1,21 @@
+import { readTicketResult, ticketCall } from "@pakka/rsi/client";
+import { Tickets } from "@pakka/rsi/webui";
+import { Button } from "@astryxdesign/core/Button";
+import type { UiViewProps } from "@pakka/webui-sdk";
+import { createExtensionClient, type ExtensionServiceBinding } from "@pakka/client/extensions";
+import { decodeManifest } from "@pakka/protocol/extensions";
+import { createElement } from "react";
+
+export function publicTicketsBrowser({ ui, bindings }: UiViewProps<ExtensionServiceBinding>) {
+	const value = readTicketResult("list", { status: "ok", value: { items: [], cursor: null } });
+	void ticketCall(bindings, "get", { id: "ticket" });
+	// @ts-expect-error Browser ticket results have no Runtime authority.
+	value.runtime.createConversation({ key: "forged" });
+	return createElement(Tickets, { ui, bindings });
+}
 import * as masBrowser from "@pakka/mas-devpack/client";
-import { Button, Stack, Field } from "@pakka/webui/components";
-import type { WebInterfaceProps } from "@pakka/webui/ui";
-import { createExtensionClient } from "@pakka/webui/client";
-import { decodeManifest } from "@pakka/webui/extension";
-import { h } from "preact";
 import { createPocketClient, type PocketCommand, type PocketSnapshot } from "@pakka/client/pocket";
-import { decodePocketRequest, decodePocketResponse } from "@pakka/protocol/pocket";
+import { POCKET_VERSION, decodePocketRequest, decodePocketResponse } from "@pakka/protocol/pocket";
 import { createClient, type ClientResult, type ClientOptions, RemoteError } from "@pakka/client";
 import { decodeRequest, decodeResponse, type AgentRef, type Command } from "@pakka/protocol";
 export function publicMasBrowser(value: unknown) {
@@ -17,33 +27,41 @@ export function publicMasBrowser(value: unknown) {
 	return view.members.map((member) => member.ref.conversationId);
 }
 
-export function PublicExtension({ context }: WebInterfaceProps) {
-	const client = createExtensionClient({ endpoint: "http://127.0.0.1:1/pocket/extensions/rpc" });
+export function PublicExtension({ ui, bindings }: UiViewProps<ExtensionServiceBinding>) {
+	const client = createExtensionClient({
+		endpoint: "http://127.0.0.1:1/pakka-webui/extensions/rpc",
+		personId: () => bindings.personId,
+		serverId: () => bindings.serverId,
+	});
 	const original = {
-		extension: context.extension,
+		extension: bindings.extensionId,
 		requestId: "original-browser-action",
-		...(context.target ? { target: context.target } : {}),
+		...(bindings.target ? { target: bindings.target } : {}),
 	};
 	void client.operationByRequest(original);
-	void context.operationByRequest(original.requestId);
+	void bindings.operationByRequest(original.requestId);
 	// @ts-expect-error The original-operation query binds its actor on the server, not from the browser.
 	client.operationByRequest({ ...original, actorId: "forged" });
-	// @ts-expect-error A browser interface receives no native runtime/storage/provider handles.
-	context.runtime.session.commit();
+	// @ts-expect-error A browser binding receives no native runtime/storage/provider handles.
+	bindings.runtime.session.commit();
+	// @ts-expect-error UI instance capabilities carry no service or actor authority.
+	ui.call("save", {});
+	const control = {
+		extension: "example",
+		facet: "backend" as const,
+		action: "enable" as const,
+		expectedGeneration: "current",
+		requestId: "control",
+	};
 	// @ts-expect-error A browser cannot forge actor/grants through the extension client.
-	client.control("example", "enable", { actorId: "forged" });
-	return h(
-		Stack,
-		null,
-		h(Field, { label: "Public label" }, context.person.name),
-		h(Button, { onClick: () => context.close() }, "Close"),
-	);
+	client.control({ ...control, actorId: "forged" });
+	return createElement(Button, { label: "Close", onClick: () => ui.close() });
 }
 export { decodeManifest };
 export function pocketBrowserOnly(endpoint: string, csrf: () => string | null, ref: AgentRef) {
 	const client = createPocketClient({ endpoint, csrf });
 	const command: PocketCommand = { op: "read", target: ref, page: { limit: 8 } };
-	const decoded = decodePocketRequest({ version: 2, requestId: "read", command });
+	const decoded = decodePocketRequest({ version: POCKET_VERSION, requestId: "read", command });
 	// @ts-expect-error A browser cannot choose another actor/principal for a command.
 	client.request({ ...command, actorId: "forged" });
 	// @ts-expect-error Model credentials are not browser client configuration.

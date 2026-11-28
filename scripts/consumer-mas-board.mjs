@@ -7,8 +7,7 @@ import { fileURLToPath } from "node:url";
 import { createRuntime } from "@pakka/agent";
 import { createMasProfilePacks } from "@pakka/mas-devpack/agent";
 import { createMas } from "@pakka/mas";
-import { ownedBrowser } from "./pocket-browser.ts";
-import { openConversations } from "./frontend-controls.ts";
+import { loginHttp, connectHttp } from "./consumer-webui-http.mjs";
 
 const root = dirname(fileURLToPath(import.meta.url)),
 	requests = [],
@@ -77,12 +76,14 @@ const provider = createServer((req, res) => {
 	});
 });
 await new Promise((resolve) => provider.listen(0, "127.0.0.1", resolve));
-const cwd = join(root, "mas-board-cwd"),
-	dataDir = join(root, "mas-board-data"),
-	configFile = join(root, "mas-board.json"),
-	moduleFile = join(root, "mas-board-composition.mjs"),
-	ownerFile = join(root, "mas-board-owner.txt"),
-	evidence = join(root, "mas-board-evidence");
+const run = join(root, "mas-run-" + crypto.randomUUID());
+await mkdir(run);
+const cwd = join(run, "mas-board-cwd"),
+	dataDir = join(run, "mas-board-data"),
+	configFile = join(run, "mas-board.json"),
+	moduleFile = join(run, "mas-board-composition.mjs"),
+	ownerFile = join(run, "mas-board-owner.txt"),
+	evidence = join(run, "mas-board-evidence");
 await Promise.all([mkdir(cwd), mkdir(dataDir), mkdir(evidence)]);
 let config = {
 	runtime: {
@@ -108,7 +109,7 @@ export default {runtime:{...config.runtime,profiles:[{id:'team',tools:pack.tools
 mas=await createMas({runtime:context.runtime,namespace:'installed.pocket.team',maxDeliveries:32,maxPending:8});let saved=(await mas.view()).members;const current=saved.find(row=>row.key==='coordinator');if(!config.agent&&current&&current.ref.profile!=='plain'){await mas.connect({principal:context.ownerId,source:null,grants:['configure']}).configure(current.ref,'plain');saved=(await mas.view()).members;}const roots=[{key:'coordinator',owner:context.ownerId,profile:config.agent?'team':'plain'}];if(saved.length)validateRetainedMasRoots(saved,roots);else await mas.bootstrap(roots);await mas.activate();return{mas:masWorkbenchService({...context,mas})};}};
 `,
 );
-let child, browser, runtime;
+let child, runtime;
 async function start() {
 	await writeFile(configFile, JSON.stringify(config));
 	child = spawn(
@@ -160,167 +161,106 @@ async function stop() {
 	assert.equal(await child.finished, 0);
 	child = undefined;
 }
-// Exercise the delivered same-origin client with the browser's own session, never a serialized native lease.
-async function call(page, action, input = {}, target, requestId = crypto.randomUUID(), generation) {
-	return page.evaluate(
-		`(async()=>{const {createExtensionClient}=await import('@pakka/webui/client');const client=createExtensionClient({endpoint:location.origin+'/pocket/extensions/rpc',csrf:()=>/pakka_csrf=([^;]+)/.exec(document.cookie)?.[1]??null});const target=${JSON.stringify(target ?? null)};const rows=await client.list(target??undefined),registration=rows.find(row=>row.manifest.id==='mas-devpack');if(!registration)throw new Error('Installed registration missing');try{return {registration,operation:await client.call({extension:'mas-devpack',generation:${JSON.stringify(generation ?? null)}??registration.generation,action:${JSON.stringify(action)},requestId:${JSON.stringify(requestId)},input:${JSON.stringify(input)},...(target?{target}:{})})};}catch(error){return {error:{code:error.code,outcome:error.outcome}};}})()`,
-	);
+const until = async (predicate) => {
+	const end = Date.now() + 12000;
+	while (!(await predicate())) {
+		assert.ok(Date.now() < end, "Installed MAS deadline");
+		await new Promise((resolve) => setTimeout(resolve, 25));
+	}
+};
+const call = (client, action, input = {}, target, requestId) =>
+	client.call("mas-devpack", action, input, target, requestId);
+async function completed(client, target, operation) {
+	assert.equal(operation.state, "done");
+	let receipt;
+	await until(async () => {
+		receipt = (await call(client, "receipt", { id: operation.value.id }, target)).value;
+		return receipt.status === "done";
+	});
+	return receipt;
 }
 try {
 	let info = await start();
-	const link = (await readFile(ownerFile, "utf8")).trim(),
-		token = new URLSearchParams(new URL(link).hash.slice(1)).get("signin");
+	const token = new URLSearchParams(new URL((await readFile(ownerFile, "utf8")).trim()).hash.slice(1)).get(
+		"session",
+	);
 	assert.ok(token);
 	assert.equal(child.captured().includes(token), false);
-	browser = await ownedBrowser(join(root, "mas-board-browser"));
-	const owner = await browser.page(link);
-	await owner.wait('document.querySelector("[data-action=signin]")');
-	await owner.click("[data-action=signin]");
-	await owner.wait('document.querySelector("[data-interface=mas-devpack-board]")');
-	await owner.click("[data-interface=mas-devpack-board]");
-	await owner.wait('document.querySelector("[data-member=coordinator]")');
-	await owner.wait('[...document.querySelectorAll("link[rel=stylesheet]")].every((link) => link.sheet)');
-	await owner.evaluate("document.fonts.ready.then(() => true)");
-	await owner.wait(
-		'document.getAnimations().filter((animation) => animation.effect?.getComputedTiming().iterations !== Infinity).every((animation) => animation.playState !== "running")',
+	let owner = await loginHttp(info.origin, token);
+	const ordinary = (await owner.rpc({ op: "list" })).conversations.find((row) => row.profile === "plain");
+	const firstView = (await call(owner, "view")).value;
+	const coordinator = firstView.members.find((row) => row.key === "coordinator");
+	const firstRegistration = (await owner.extensions({ op: "list" })).registrations.find(
+		(row) => row.manifest.id === "mas-devpack" && row.facet === "backend",
 	);
-	await owner.click("[data-member=coordinator]");
-	await owner.click("[data-agent-details]");
-	await owner.click('[data-agent-controls="coordinator"]');
-	await owner.wait('document.querySelector("textarea[name=masMessage]")');
-	assert.equal(
-		await owner.evaluate(
-			'document.querySelector("textarea[name=masMessage]").closest("[role=dialog]")?.getAttribute("aria-modal")',
-		),
-		"true",
+	const first = await call(
+		owner,
+		"send",
+		{ text: "CREATE-INSTALLED-CHILD" },
+		coordinator.ref,
+		"installed-spawn",
 	);
-	assert.equal(
-		await owner.evaluate(
-			'!!document.querySelector("[data-member=coordinator][aria-pressed=true]") && !document.querySelector(".conversation-view")',
-		),
-		true,
-		"Installed controls preserve the Board instead of embedding another composer",
-	);
-	await owner.type("textarea[name=masMessage]", "CREATE-INSTALLED-CHILD");
-	await owner.click("[data-mas-send]");
-	await owner.wait('/done/.test(document.querySelector("[data-mas-receipt]")?.textContent)');
+	const firstReceipt = await completed(owner, coordinator.ref, first);
+	const firstReceiptId = firstReceipt.id;
 	assert.equal(requests.length, 2);
-	const firstReceiptId = String(
-			await owner.evaluate('document.querySelector("[data-mas-receipt]").getAttribute("data-mas-receipt")'),
-		),
-		firstView = await call(owner, "view");
-	assert.equal(firstView.operation.state, "done");
-	const members = firstView.operation.value.members,
-		coordinator = members.find((row) => row.key === "coordinator"),
+	const members = (await call(owner, "view")).value.members,
 		member = members.find((row) => row.key === "installed-child");
 	assert.ok(member);
-	assert.equal(firstView.operation.value.sessionId, member.ref.sessionId);
 	assert.equal(member.parent, "coordinator");
 	assert.equal(member.creator, "coordinator");
 	assert.equal(member.creationKnown, true);
 	assert.equal(member.lifetime, "persistent");
 	peer = member.ref;
-	const firstReceipt = (await call(owner, "receipt", { id: firstReceiptId }, coordinator.ref)).operation
-		.value;
-	assert.equal(firstReceipt.status, "done");
-	const previous = await owner.evaluate('document.querySelector("[data-mas-receipt]").textContent');
-	await owner.type("textarea[name=masMessage]", "SEND-INSTALLED-PEER");
-	await owner.click("[data-mas-send]");
-	await owner.wait(
-		`document.querySelector("[data-mas-receipt]")?.textContent!==${JSON.stringify(previous)}&&/done/.test(document.querySelector("[data-mas-receipt]")?.textContent)`,
+	await completed(
+		owner,
+		coordinator.ref,
+		await call(owner, "send", { text: "SEND-INSTALLED-PEER" }, coordinator.ref, "installed-peer"),
 	);
-	await owner.click('[aria-label="Close Agent controls"]');
-	await owner.wait(
-		'!document.querySelector("textarea[name=masMessage]") && document.activeElement?.getAttribute("data-agent-controls") === "coordinator"',
-	);
-	await owner.wait('document.querySelector("[data-member=installed-child]")');
-	const invitation = await owner.evaluate(
-		`(async()=>{const {createPocketClient}=await import('@pakka/client/pocket');const client=createPocketClient({endpoint:location.origin+'/pocket/rpc',csrf:()=>/pakka_csrf=([^;]+)/.exec(document.cookie)?.[1]??null});return client.request({op:'invite',requestId:'installed-child-reader',role:'viewer',resources:[${JSON.stringify(member.ref.conversationId)}],ttlMs:60000});})()`,
-	);
-	assert.ok(invitation.token);
-	const viewer = await browser.page(info.origin + "/#invite=" + invitation.token, {
-		width: 390,
-		height: 844,
+	let incoming;
+	await until(async () => {
+		incoming = (await call(owner, "inbox", {}, member.ref)).value.find(
+			(row) => row.source?.conversationId === coordinator.ref.conversationId,
+		);
+		return !!incoming && requests.length === 5;
 	});
-	await viewer.wait('document.querySelector("[data-action=signin]")');
-	await viewer.type("input[name=person]", "Installed viewer");
-	await viewer.click("[data-action=signin]");
-	await viewer.wait('document.querySelector("[data-interface=mas-devpack-board]")');
-	await openConversations(viewer);
-	await viewer.click("[data-interface=mas-devpack-board]");
-	await viewer.wait('document.querySelector("[data-member=installed-child]")');
-	const filtered = await call(viewer, "view");
-	assert.equal(filtered.operation.value.members.length, 1);
-	assert.equal(filtered.operation.value.members[0].parent, null);
-	assert.equal(filtered.operation.value.members[0].owner, null);
-	assert.equal(JSON.stringify(filtered.operation.value).includes('"key":"coordinator"'), false);
-	const readerHistory = await call(viewer, "history");
-	assert.deepEqual(readerHistory.operation.value.items, []);
-	assert.deepEqual(filtered.operation.value.connections, []);
-	assert.equal(await viewer.evaluate("document.documentElement.scrollWidth > innerWidth"), false);
-	await owner.wait(
-		'document.getAnimations().filter(a=>a.effect?.getComputedTiming().iterations!==Infinity).every(a=>a.playState!=="running")',
+	await completed(owner, member.ref, { state: "done", value: { id: incoming.id } });
+	const invitation = await owner.rpc({
+		op: "invite",
+		requestId: "installed-child-reader",
+		role: "viewer",
+		resources: [member.ref.conversationId],
+		ttlMs: 60000,
+	});
+	const viewer = await loginHttp(info.origin, invitation.token, "invite", "Installed viewer");
+	const filtered = (await call(viewer, "view")).value;
+	assert.equal(filtered.members.length, 1);
+	assert.equal(filtered.members[0].parent, null);
+	assert.equal(filtered.members[0].owner, null);
+	assert.ok(!JSON.stringify(filtered).includes('"key":"coordinator"'));
+	assert.deepEqual(filtered.connections, []);
+	assert.deepEqual((await call(viewer, "history")).value.items, []);
+	await assert.rejects(call(viewer, "send", { text: "DENIED" }, member.ref), {
+		code: "FORBIDDEN",
+		outcome: "denied",
+	});
+	const reply = await call(
+		owner,
+		"reply",
+		{ id: incoming.id, text: "HUMAN-INSTALLED-REPLY" },
+		member.ref,
+		"installed-reply",
 	);
-	await owner.evaluate("document.fonts.ready.then(()=>true)");
-	await viewer.wait(
-		'document.getAnimations().filter(a=>a.effect?.getComputedTiming().iterations!==Infinity).every(a=>a.playState!=="running")',
-	);
-	await viewer.evaluate("document.fonts.ready.then(()=>true)");
-	await writeFile(join(evidence, "desktop.png"), await owner.screenshot());
-	await writeFile(join(evidence, "mobile.png"), await viewer.screenshot());
-	await owner.click("[data-member=installed-child]");
-	if (await owner.evaluate('!document.querySelector("[data-agent-details]").parentElement.open'))
-		await owner.click("[data-agent-details]");
-	await owner.click('[data-agent-controls="installed-child"]');
-	await owner.wait('document.querySelector("[data-mas-reply]")');
-	assert.equal(requests.length, 5);
-	await owner.type("textarea[name=masMessage]", "HUMAN-INSTALLED-REPLY");
-	await owner.click("[data-mas-reply]");
-	await owner.wait('/done/.test(document.querySelector("[data-mas-receipt]")?.textContent)');
+	await completed(owner, member.ref, reply);
 	assert.equal(requests.length, 6);
-	const deliveredHistory = (await call(owner, "history")).operation.value;
+	const history = (await call(owner, "history")).value;
 	assert.ok(
-		deliveredHistory.items.some(
-			(row) => row.text === "HUMAN-INSTALLED-REPLY" && row.initiator === "human" && row.replyTo,
+		history.items.some(
+			(row) =>
+				row.text === "HUMAN-INSTALLED-REPLY" && row.initiator === "human" && row.replyTo === incoming.id,
 		),
 	);
-	await writeFile(join(evidence, "exchanges.json"), JSON.stringify(deliveredHistory, null, 2));
-	await owner.click("[data-member-management]");
-	await owner.click("[data-mas-retire]");
-	await owner.wait('document.querySelector("[data-mas-confirm-retire]")');
-	await owner.click("[data-mas-confirm-retire]");
-	await owner.wait('document.querySelector("[data-member-phase]")?.textContent === "retired"');
-	await owner.click('[aria-label="Close Agent controls"]');
-	await owner.wait(
-		'!document.querySelector("textarea[name=masMessage]") && document.activeElement?.getAttribute("data-agent-controls") === "installed-child"',
-	);
-	await owner.wait('document.querySelector("[data-member=installed-child]")');
-	await owner.click("[data-member=installed-child]");
-	await owner.click('[data-open-conversation="installed-child"]');
-	await owner.wait(
-		`Array.from(document.querySelectorAll('[data-conversation]')).some(row=>row.dataset.conversation===${JSON.stringify(member.ref.conversationId)}&&row.getAttribute('aria-current')==='true')`,
-	);
-	await owner.click("[data-return-extension]");
-	await owner.wait('document.querySelector("[data-member=installed-child][aria-pressed=true]")');
-	assert.equal(requests.length, 6, "Installed Conversation navigation never replays work");
-	if (await owner.evaluate('!document.querySelector("[data-agent-details]").parentElement.open'))
-		await owner.click("[data-agent-details]");
-	await owner.click("[data-hide-agent=installed-child]");
-	await owner.wait('!document.querySelector("[data-member=installed-child]")');
-	await owner.click("[data-board-tab=history]");
-	await owner.wait(
-		'document.querySelector(".graph-history")?.textContent.includes("REAL-INSTALLED-INCOMING")',
-	);
-	await owner.click("[data-board-tab=relationships]");
-	await owner.click("[data-board-options]");
-	await owner.click("[data-show-hidden-agents]");
-	await owner.wait('document.querySelector("[data-member=installed-child]")');
-	const afterPresentation = (await call(owner, "view")).operation.value.members;
-	assert.equal(afterPresentation.find((row) => row.key === "installed-child").phase, "retired");
-	assert.equal(requests.length, 6, "Retiring, hiding and restoring do not replay model work");
-	await writeFile(join(evidence, "members-before.json"), JSON.stringify(afterPresentation, null, 2));
-	await writeFile(join(evidence, "viewer.json"), JSON.stringify(filtered.operation.value, null, 2));
-	const firstGeneration = firstView.registration.generation;
+	assert.equal((await call(owner, "retire", {}, member.ref)).value.phase, "retired");
+	assert.equal(requests.length, 6);
 	await stop();
 	config = {
 		...config,
@@ -329,45 +269,50 @@ try {
 		runtime: { ...config.runtime, reopenSessionFile: info.sessionFile },
 	};
 	info = await start();
-	await owner.navigate(info.origin);
-	await owner.wait('document.querySelector("[data-conversation]")');
-	assert.equal(
-		await owner.evaluate('Boolean(document.querySelector("[data-interface=mas-devpack-board]"))'),
-		false,
+	owner = await connectHttp(info.origin, owner.cookies);
+	assert.ok(
+		!(await owner.extensions({ op: "list" })).registrations.some(
+			(row) => row.manifest.id === "mas-devpack" && row.facet === "webui",
+		),
 	);
-	const restored = await call(owner, "view");
-	const retained = restored.operation.value.members;
-	const currentCoordinator = retained.find((row) => row.key === "coordinator").ref;
+	const retained = (await call(owner, "view")).value.members,
+		currentCoordinator = retained.find((row) => row.key === "coordinator").ref;
 	assert.equal(currentCoordinator.sessionId, coordinator.ref.sessionId);
 	assert.equal(currentCoordinator.conversationId, coordinator.ref.conversationId);
 	assert.equal(currentCoordinator.profile, "plain");
 	assert.notEqual(currentCoordinator.incarnation, coordinator.ref.incarnation);
 	assert.deepEqual(retained.find((row) => row.key === "installed-child").ref, member.ref);
 	assert.equal(retained.find((row) => row.key === "installed-child").phase, "retired");
-	assert.deepEqual((await call(owner, "view", {}, undefined, "stale", firstGeneration)).error, {
-		code: "FORBIDDEN",
-		outcome: "denied",
-	});
-	assert.equal(requests.length, 6);
-	const manual = await call(
-		owner,
-		"send",
-		{ text: "CHECK-PLAIN-APPROVED-TOOLS" },
-		currentCoordinator,
-		"manual-after-removal",
+	await assert.rejects(
+		owner.extensions({
+			op: "call",
+			call: {
+				extension: "mas-devpack",
+				generation: firstRegistration.generation,
+				action: "view",
+				requestId: "stale",
+				input: {},
+			},
+		}),
+		{ code: "FORBIDDEN", outcome: "denied" },
 	);
-	assert.equal(manual.operation.state, "done");
-	const nativeId = manual.operation.value.id;
-	await owner.wait(
-		`(async()=>{const {createExtensionClient}=await import('@pakka/webui/client');const c=createExtensionClient({endpoint:location.origin+'/pocket/extensions/rpc',csrf:()=>/pakka_csrf=([^;]+)/.exec(document.cookie)?.[1]??null}),r=(await c.list(${JSON.stringify(currentCoordinator)})).find(x=>x.manifest.id==='mas-devpack'),o=await c.call({extension:'mas-devpack',generation:r.generation,action:'receipt',requestId:'observe',target:${JSON.stringify(currentCoordinator)},input:{id:${JSON.stringify(nativeId)}}});return o.state==='done'&&o.value.status==='done';})()`,
+	assert.equal(
+		(await owner.operationByRequest("mas-devpack", "installed-spawn", coordinator.ref)).id,
+		first.id,
+	);
+	await completed(
+		owner,
+		currentCoordinator,
+		await call(owner, "send", { text: "CHECK-PLAIN-APPROVED-TOOLS" }, currentCoordinator, "after-removal"),
 	);
 	assert.equal(requests.length, 7);
-	assert.equal(JSON.stringify(requests.at(-1).tools ?? []).includes("mas_spawn"), false);
-	await owner.click("[data-conversation]");
-	await owner.wait('document.querySelector("[data-action=send]")?.disabled===false');
-	await owner.type("textarea[name=message]", "ORDINARY-AFTER-MAS-UI-REMOVAL");
-	await owner.click("[data-action=send]");
-	await owner.wait('document.querySelector("main").innerText.includes("INSTALLED-MAS-NATIVE-DONE")');
+	assert.ok(!JSON.stringify(requests.at(-1).tools ?? []).includes("mas_spawn"));
+	const ordinaryReceipt = await owner.rpc({
+		op: "submit",
+		target: ordinary,
+		input: { requestId: "ordinary", text: "ORDINARY-AFTER-MAS-UI-REMOVAL", mode: "prompt" },
+	});
+	assert.equal((await owner.rpc({ op: "wait", id: ordinaryReceipt.receipt.id })).receipt.status, "done");
 	assert.equal(requests.length, 8);
 	await stop();
 	const verifyPack = createMasProfilePacks(
@@ -397,27 +342,22 @@ try {
 		.receipt(firstReceiptId, () => {});
 	assert.equal(receipt.status, "done");
 	assert.equal(receipt.entryId, firstReceipt.entryId);
-	const history = await runtime.readConversation(currentCoordinator, () => {});
-	assert.match(JSON.stringify(history.entries), /HUMAN-INSTALLED-REPLY/);
-	assert.match(JSON.stringify(history.entries), /CREATE-INSTALLED-CHILD/);
-	await writeFile(
-		join(evidence, "native-after.json"),
-		JSON.stringify({ view: runtime.view(), receipt, history }, null, 2),
-	);
+	const savedHistory = await runtime.readConversation(currentCoordinator, () => {});
+	assert.match(JSON.stringify(savedHistory.entries), /HUMAN-INSTALLED-REPLY/);
+	assert.match(JSON.stringify(savedHistory.entries), /CREATE-INSTALLED-CHILD/);
 	await runtime.close();
 	runtime = undefined;
-	assert.equal(requests.length, 8);
 	assert.deepEqual(errors, []);
 	await writeFile(join(evidence, "requests.json"), JSON.stringify(requests, null, 2));
 	console.log(
-		"Installed MAS Board passed: actual executable, public Agent/Backend/Client/WebUI exports, native spawn/send/reply, filtered mobile viewer, facet removal/normal reopen, original native receipt/history and 8 retained primary attempts; 8 local HTTP.",
+		"Installed MAS HTTP passed: native spawn/send/reply, scoped viewer, retire and facet removal, stale Backend generation refused, original receipt/history and ordinary input after reopen; 8 model requests/attempts.",
 	);
 } finally {
 	await runtime?.close();
-	await browser?.close();
 	if (child) {
 		child.kill();
 		await child.finished;
 	}
+	provider.closeAllConnections();
 	await new Promise((resolve) => provider.close(resolve));
 }

@@ -8,7 +8,10 @@
 		"client": "client.js",
 		"webui": {
 			"entry": "index.js",
-			"publicDir": "web"
+			"publicDir": "dist/web",
+			"api": 1,
+			"runtime": "react19-astryx0.7.15",
+			"styles": ["files.css"]
 		}
 	},
 	"services": ["files"],

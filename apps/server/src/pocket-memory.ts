@@ -393,7 +393,6 @@ export function createPocketMemory(options: {
 				if (!execute) throw Error("Memory invocation is unavailable");
 				const catalog = runtime.catalog({
 					namespace: namespace + ".native",
-					maxDeliveries: 1,
 					maxPending: 1,
 				});
 				const target = runtime.view().conversations.find((ref) => {
@@ -814,7 +813,7 @@ async function openMemory(
 	};
 	nativeExecutions.set(service, async (target, scope, input, signal) => {
 		const ref = frozen(clone(target)),
-			catalog = runtime.catalog({ namespace: namespace + ".native", maxDeliveries: 1, maxPending: 1 });
+			catalog = runtime.catalog({ namespace: namespace + ".native", maxPending: 1 });
 		const person: PocketPerson = frozen({
 			id: "agent:" + ref.conversationId,
 			name: "Agent",

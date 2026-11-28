@@ -11,61 +11,51 @@
 			"types": "./dist/bootstrap.d.ts",
 			"import": "./dist/bootstrap.js"
 		},
+		"./launcher": {
+			"types": "./dist/launcher.d.ts",
+			"import": "./dist/launcher.js"
+		},
+		"./assets": {
+			"types": "./dist/assets.d.ts",
+			"import": "./dist/assets.js"
+		},
 		"./http": {
 			"types": "./dist/http.d.ts",
 			"import": "./dist/http.js"
-		},
-		"./extension": {
-			"types": "./dist/extension.d.ts",
-			"import": "./dist/extension.js"
 		},
 		"./backend": {
 			"types": "./dist/backend.d.ts",
 			"import": "./dist/backend.js"
 		},
-		"./client": {
-			"types": "./dist/extension-client.d.ts",
-			"import": "./dist/extension-client.js"
-		},
-		"./ui": {
-			"types": "./dist/ui.d.ts",
-			"import": "./dist/ui.js"
-		},
 		"./workflows": {
 			"types": "./dist/workflows.d.ts",
 			"import": "./dist/workflows.js"
-		},
-		"./components": {
-			"types": "./dist/components.d.ts",
-			"import": "./dist/components.js"
 		}
 	},
 	"files": [
 		"dist",
-		"web",
-		"licenses",
 		"LICENSE.pi-pocket",
 		"NOTICE.md",
 		"examples",
 		"contributions"
 	],
 	"scripts": {
-		"build": "tsc -p tsconfig.json"
+		"build": "node scripts/clean-build.mjs && tsc -p tsconfig.json && tsc -p tsconfig.contributions.json && node scripts/install-frontend.mjs && node scripts/build-contributions.mjs"
 	},
 	"dependencies": {
+		"@earendil-works/pi-ai": "1.4.0",
+		"@earendil-works/pi-coding-agent": "1.4.0",
 		"@pakka/agent": "0.7.0",
 		"@pakka/client": "0.1.0",
 		"@pakka/protocol": "0.1.0",
 		"@pakka/server": "0.5.0",
-		"dompurify": "3.4.16",
-		"htm": "3.1.1",
-		"marked": "18.1.0",
-		"preact": "11.0.1",
+		"jsonc-parser": "3.3.1",
 		"qrcode": "1.5.4"
 	},
 	"devDependencies": {
 		"@types/pngjs": "6.0.5",
 		"@types/qrcode": "1.5.6",
+		"esbuild": "0.28.2",
 		"jsqr": "1.4.0",
 		"pngjs": "7.0.0"
 	}

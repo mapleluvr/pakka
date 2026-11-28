@@ -1,3 +1,4 @@
+import { POCKET_VERSION } from "@pakka/protocol/pocket";
 import { test } from "node:test";
 import { strict as assert } from "node:assert";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
@@ -29,7 +30,7 @@ async function localServer(handler: (request: IncomingMessage, response: ServerR
 }
 
 // The browser-safe path must retain instance correlation and send only explicit finite WebUI commands.
-test("WebUI fetch client: actual HTTP uses v2/CSRF and reconnect checks the storage instance", async () => {
+test("WebUI fetch client: actual HTTP uses the Pocket wire version and CSRF and reconnect checks the storage instance", async () => {
 	const seen: Record<string, unknown>[] = [];
 	const server = await localServer((req, res) => {
 		const parts: Buffer[] = [];
@@ -45,10 +46,17 @@ test("WebUI fetch client: actual HTTP uses v2/CSRF and reconnect checks the stor
 			seen.push({ path: req.url, csrf: req.headers["x-pakka-csrf"], ...request });
 			const result =
 				request.command.op === "hello"
-					? { kind: "hello", versions: [2], person, sessionId: "storage-a" }
+					? { kind: "hello", versions: [POCKET_VERSION], person, sessionId: "storage-a" }
 					: { kind: "list", conversations: [ref] };
 			res.setHeader("Content-Type", "application/json");
-			res.end(JSON.stringify({ version: 2, requestId: request.requestId, serverId: "server-a", result }));
+			res.end(
+				JSON.stringify({
+					version: POCKET_VERSION,
+					requestId: request.requestId,
+					serverId: "server-a",
+					result,
+				}),
+			);
 		});
 	});
 	try {
@@ -58,7 +66,7 @@ test("WebUI fetch client: actual HTTP uses v2/CSRF and reconnect checks the stor
 		assert.equal(list.serverId, "server-a");
 		assert.equal(seen.length, 2);
 		assert.equal(seen[0]!.path, "/pocket/rpc");
-		assert.equal(seen[0]!.version, 2);
+		assert.equal(seen[0]!.version, POCKET_VERSION);
 		assert.equal(seen[0]!.csrf, "x".repeat(43));
 		assert.equal(Object.isFrozen(list), true);
 	} finally {
@@ -103,7 +111,7 @@ test("WebUI fetch client: unrelated errors, wrong target and malformed UTF-8 rem
 			res.statusCode = 403;
 			res.setHeader("Content-Type", "application/json");
 			const body = {
-				version: 2,
+				version: POCKET_VERSION,
 				requestId: mode === "unrelated" ? "other" : "rpc",
 				serverId: "server-a",
 				error: { code: "FORBIDDEN", outcome: "denied", message: "Refused" },
@@ -157,7 +165,7 @@ test("WebUI fetch client: create/configure/fork results bind the requested resou
 			res.setHeader("Content-Type", "application/json");
 			res.end(
 				JSON.stringify({
-					version: 2,
+					version: POCKET_VERSION,
 					requestId: request.requestId,
 					serverId: "server-a",
 					result: { kind: "reference", ref: next },

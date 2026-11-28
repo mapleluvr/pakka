@@ -35,8 +35,21 @@ export interface PocketNotificationReceipt {
 	readonly state: "accepted" | "unknown" | "filtered" | "no-devices";
 	readonly accepted: number;
 }
+export type PocketNotificationOriginal =
+	| { readonly kind: "subscribe"; readonly requestId: string; readonly subscription: PushSubscriptionData }
+	| { readonly kind: "unsubscribe"; readonly requestId: string; readonly deviceId: string }
+	| {
+			readonly kind: "preferences";
+			readonly requestId: string;
+			readonly preferences: Partial<PocketNotificationPreferences>;
+	  };
 export interface PocketNotificationClient {
 	status(target: ConversationRef): Promise<PocketNotificationStatus>;
+	/** Read the exact saved request only; current resource authority is independent of the old runtime binding. */
+	lookup(
+		target: ConversationRef,
+		original: PocketNotificationOriginal,
+	): Promise<PocketNotificationStatus | null>;
 	subscribe(
 		target: ConversationRef,
 		input: { readonly requestId: string; readonly subscription: PushSubscriptionData },
@@ -175,6 +188,29 @@ function subscription(value: unknown): PushSubscriptionData {
 	const keys = { p256dh: value.keys.p256dh, auth: value.keys.auth };
 	if (!validSubscriptionKeys(keys)) throw Error("Invalid push subscription keys");
 	return { endpoint: value.endpoint, keys };
+}
+function preferencePatch(value: unknown): value is Partial<PocketNotificationPreferences> {
+	return (
+		object(value) &&
+		Object.keys(value).length > 0 &&
+		Object.keys(value).every(
+			(field) => kinds.some((kind) => kind === field) && typeof value[field] === "boolean",
+		)
+	);
+}
+function originalFingerprint(value: unknown): string {
+	if (!object(value) || !id(value.requestId)) throw Error("Invalid notification original request");
+	if (value.kind === "subscribe" && shape(value, ["kind", "requestId", "subscription"]))
+		return hash(["subscribe", subscription(value.subscription)]);
+	if (value.kind === "unsubscribe" && shape(value, ["kind", "requestId", "deviceId"]) && id(value.deviceId))
+		return hash(["unsubscribe", value.deviceId]);
+	if (
+		value.kind === "preferences" &&
+		shape(value, ["kind", "requestId", "preferences"]) &&
+		preferencePatch(value.preferences)
+	)
+		return hash(["preferences", { ...value.preferences }]);
+	throw Error("Invalid notification original request");
 }
 function statusValue(value: unknown): PocketNotificationStatus {
 	if (
@@ -510,6 +546,7 @@ export async function createPocketNotifications(
 		eventKind: PocketNotificationKind,
 	): boolean {
 		if (
+			((eventKind === "chat" || eventKind === "mention") && people.mode().personal) ||
 			!device.active ||
 			blocked.has(device.id) ||
 			!device.resources.includes(people.resourceId(target)) ||
@@ -554,45 +591,47 @@ export async function createPocketNotifications(
 			target,
 			...(input.recipientIds ? { recipientIds: Object.freeze([...input.recipientIds].sort()) } : {}),
 		});
-		currentRef(target);
+		const checkMode = () => {
+			currentRef(target);
+			if ((input.kind === "chat" || input.kind === "mention") && people.mode().personal)
+				throw Error("Personal mode notification denied");
+		};
+		checkMode();
 		const identity = hash([target.sessionId, target.conversationId, input.requestId]);
 		const fingerprint = hash([target, input.kind, input.preview, input.recipientIds ?? null]);
-		const claim = await alter<{ event: Event; created: boolean }>(
-			(state) => {
-				const prior = state.events.find((row) => row.id === identity);
-				if (prior) {
-					if (prior.fingerprint !== fingerprint) throw Error("Notification event conflict");
-					return { save: false, value: { event: prior, created: false } };
-				}
-				if (state.events.length >= 256) throw Error("Notification event capacity exhausted");
-				const event: Event = {
-					id: identity,
-					requestId: input.requestId,
-					fingerprint,
-					target,
-					kind: input.kind,
-					preview: input.preview,
-					createdAt: Date.now(),
-					deliveries: state.devices
-						.filter(
-							(device) =>
-								(!input.recipientIds || input.recipientIds.includes(device.actorId)) &&
-								eligible(state, device, target, input.kind),
-						)
-						.map((device) => ({
-							deviceId: device.id,
-							fingerprint: hash(device.subscription),
-							state: "pending",
-						})),
-				};
-				state.events.push(event);
-				return { save: true, value: { event, created: true } };
-			},
-			() => currentRef(target),
-		);
+		const claim = await alter<{ event: Event; created: boolean }>((state) => {
+			const prior = state.events.find((row) => row.id === identity);
+			if (prior) {
+				if (prior.fingerprint !== fingerprint) throw Error("Notification event conflict");
+				return { save: false, value: { event: prior, created: false } };
+			}
+			if (state.events.length >= 256) throw Error("Notification event capacity exhausted");
+			const event: Event = {
+				id: identity,
+				requestId: input.requestId,
+				fingerprint,
+				target,
+				kind: input.kind,
+				preview: input.preview,
+				createdAt: Date.now(),
+				deliveries: state.devices
+					.filter(
+						(device) =>
+							(!input.recipientIds || input.recipientIds.includes(device.actorId)) &&
+							eligible(state, device, target, input.kind),
+					)
+					.map((device) => ({
+						deviceId: device.id,
+						fingerprint: hash(device.subscription),
+						state: "pending",
+					})),
+			};
+			state.events.push(event);
+			return { save: true, value: { event, created: true } };
+		}, checkMode);
 		if (!claim.created) return present(claim.event);
 		for (const delivery of claim.event.deliveries) {
-			const check = () => currentRef(target);
+			const check = checkMode;
 			const prepared = await alter((state) => {
 				const event = state.events.find((row) => row.id === identity)!;
 				const row = event.deliveries.find((item) => item.deviceId === delivery.deviceId)!;
@@ -649,10 +688,15 @@ export async function createPocketNotifications(
 		},
 		bind(actor: PocketAuthority, check: () => void = () => {}): PocketNotificationClient {
 			const actorId = people.current(actor).id;
-			const authorize = (target: ConversationRef) => {
-				currentRef(target);
+			const authorizeRecord = (target: ConversationRef) => {
+				ready();
+				if (!ref(target)) return denied();
 				people.check(actor, "read", people.resourceId(target));
 				check();
+			};
+			const authorize = (target: ConversationRef) => {
+				currentRef(target);
+				authorizeRecord(target);
 			};
 			const mutate = (
 				target: ConversationRef,
@@ -687,6 +731,20 @@ export async function createPocketNotifications(
 					authorize(target);
 					if (!state) return unavailable();
 					return publicStatus(state, actorId, target);
+				},
+				lookup: async (target: ConversationRef, original: PocketNotificationOriginal) => {
+					target = Object.freeze({ ...target });
+					authorizeRecord(target);
+					const fingerprint = originalFingerprint(original),
+						requestId = original.requestId;
+					const state = (await load()).value;
+					authorizeRecord(target);
+					if (!state) return unavailable();
+					const prior = state.writes.find((row) => row.actorId === actorId && row.requestId === requestId);
+					if (!prior) return null;
+					if (prior.fingerprint !== fingerprint || !same(prior.target, target))
+						throw Error("Notification request conflict");
+					return presentStatus(prior.result);
 				},
 				subscribe: async (
 					target: ConversationRef,
@@ -769,14 +827,7 @@ export async function createPocketNotifications(
 					if (!object(input) || !shape(input, ["requestId", "preferences"]))
 						throw Error("Invalid notification preferences");
 					const raw: unknown = input.preferences;
-					if (
-						!object(raw) ||
-						!Object.keys(raw).length ||
-						Object.keys(raw).some(
-							(field) => !kinds.some((kind) => kind === field) || typeof raw[field] !== "boolean",
-						)
-					)
-						throw Error("Invalid notification preferences");
+					if (!preferencePatch(raw)) throw Error("Invalid notification preferences");
 					const patch = { ...input.preferences };
 					return mutate(target, input.requestId, hash(["preferences", patch]), (state) => {
 						const existing = state.preferences.find((row) => row.actorId === actorId);
@@ -795,7 +846,13 @@ export async function createPocketNotifications(
 					const state = (await load()).value;
 					const event = state?.events.find((row) => row.id === eventId),
 						device = state?.devices.find((row) => row.id === deviceId && row.actorId === actorId);
-					if (!event || !device || !event.deliveries.some((row) => row.deviceId === device.id) || !state)
+					if (
+						!event ||
+						(people.mode().personal && (event.kind === "chat" || event.kind === "mention")) ||
+						!device ||
+						!event.deliveries.some((row) => row.deviceId === device.id) ||
+						!state
+					)
 						return denied();
 					const target = (options.runtimeFor?.(event.target) ?? runtime)
 						.view()

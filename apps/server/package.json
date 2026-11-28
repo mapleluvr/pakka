@@ -12,6 +12,10 @@
 			"types": "./dist/pocket.d.ts",
 			"import": "./dist/pocket.js"
 		},
+		"./http-listener": {
+			"types": "./dist/http-listener.d.ts",
+			"import": "./dist/http-listener.js"
+		},
 		"./http": {
 			"types": "./dist/http-server.d.ts",
 			"import": "./dist/http-server.js"

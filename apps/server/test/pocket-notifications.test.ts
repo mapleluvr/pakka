@@ -71,6 +71,7 @@ async function managedNotifications(
 			m,
 			people,
 			actor,
+			session,
 			workspace,
 			ref,
 			push,
@@ -103,6 +104,143 @@ async function reached(promise: Promise<void>): Promise<void> {
 		clearTimeout(timer);
 	}
 }
+
+test(
+	"WebUI notification receipts: read exact originals after lost return, later state, old binding and Session reopen",
+	{ timeout: 20000 },
+	async () => {
+		let lose = false,
+			commits = 0;
+		const f = await managedNotifications(async (stage) => {
+			if (stage === "commit") {
+				commits++;
+				if (lose) {
+					lose = false;
+					throw Error("LOST-NOTIFICATION-RETURN");
+				}
+			}
+		});
+		let reopened: Awaited<ReturnType<typeof createRuntime>> | undefined;
+		let restored: Awaited<ReturnType<typeof createPocketNotifications>> | undefined;
+		try {
+			assert.equal(
+				typeof f.bound.lookup,
+				"function",
+				"notification recovery must expose a read-only original lookup",
+			);
+			const original = {
+				requestId: "lost-preferences",
+				kind: "preferences" as const,
+				preferences: { done: false },
+			};
+			lose = true;
+			await assert.rejects(
+				f.bound.preferences(f.ref, { requestId: original.requestId, preferences: original.preferences }),
+				/LOST-NOTIFICATION-RETURN/,
+			);
+			const before = commits;
+			const receipt = await f.bound.lookup(f.ref, original);
+			assert.equal(receipt?.preferences.done, false);
+			assert.equal(
+				await f.bound.lookup(f.ref, {
+					requestId: "missing-subscription",
+					kind: "subscribe",
+					subscription: f.push.subscription,
+				}),
+				null,
+			);
+			assert.equal(commits, before, "lookup must not commit or enter subscription admission");
+			assert.equal(f.push.received.length, 0);
+			await f.bound.preferences(f.ref, { requestId: "later-preferences", preferences: { done: true } });
+			assert.equal((await f.bound.status(f.ref)).preferences.done, true);
+			const current = await f.workspace.configure(f.ref, "default");
+			assert.notEqual(current.incarnation, f.ref.incarnation);
+			assert.deepEqual(await f.bound.lookup(f.ref, original), receipt);
+			await assert.rejects(f.bound.lookup(f.ref, { ...original, preferences: { done: true } }), /conflict/i);
+			await assert.rejects(f.bound.lookup(current, original), /conflict/i);
+			const invitation = await f.people.invite(f.actor, {
+				requestId: "receipt-viewer",
+				role: "viewer",
+				resources: [f.ref.conversationId],
+				ttlMs: 60000,
+			});
+			assert.ok(invitation.token);
+			const viewer = await f.people.redeem(invitation.token, "Receipt viewer");
+			assert.equal(
+				await f.service.bind(await f.people.authenticate(viewer.token)).lookup(f.ref, original),
+				null,
+				"one Person cannot read another's original request",
+			);
+			const token = f.session;
+			const file = f.m.runtime.view().sessionFile;
+			await f.service.dispose();
+			await f.m.runtime.close();
+			reopened = await createRuntime({ ...f.m.config, reopenSessionFile: file });
+			const people = await createPocketPeople({
+				runtime: reopened,
+				namespace: "notification.boundary.people",
+			});
+			restored = await createPocketNotifications({
+				runtime: reopened,
+				people,
+				namespace: "notification.boundary.service",
+				endpointOrigins: [f.push.origin],
+				trustedCa: f.push.cert,
+			});
+			const reader = restored.bind(await people.authenticate(token.token));
+			assert.deepEqual(await reader.lookup(f.ref, original), receipt);
+			assert.equal((await reader.status(current)).preferences.done, true);
+			assert.equal(f.m.f.requests.length, 0);
+		} finally {
+			await restored?.dispose();
+			await reopened?.close();
+			await f.close();
+		}
+	},
+);
+
+test(
+	"WebUI notification receipts: current identity is checked again after the read snapshot",
+	{ timeout: 15000 },
+	async () => {
+		let invalidate: (() => Promise<void>) | undefined;
+		const f = await managedNotifications(async (stage) => {
+			if (stage === "snapshot" && invalidate) {
+				const action = invalidate;
+				invalidate = undefined;
+				await action();
+			}
+		});
+		try {
+			const invitation = await f.people.invite(f.actor, {
+				requestId: "private-receipt-viewer",
+				role: "viewer",
+				resources: [f.ref.conversationId],
+				ttlMs: 60000,
+			});
+			assert.ok(invitation.token);
+			const session = await f.people.redeem(invitation.token, "Read-only viewer");
+			const actor = await f.people.authenticate(session.token),
+				reader = f.service.bind(actor);
+			const original = {
+				requestId: "viewer-preferences",
+				kind: "preferences" as const,
+				preferences: { chat: false },
+			};
+			const receipt = await reader.preferences(f.ref, {
+				requestId: original.requestId,
+				preferences: original.preferences,
+			});
+			assert.deepEqual(await reader.lookup(f.ref, original), receipt);
+			invalidate = () => f.people.logout(actor);
+			await assert.rejects(reader.lookup(f.ref, original), /expired|invalid|denied|revoked/i);
+			assert.equal(f.push.received.length, 0);
+			assert.equal(f.m.f.requests.length, 0);
+		} finally {
+			await f.close();
+		}
+	},
+);
 
 test(
 	"WebUI notifications: an invalid unsubscribe identity cannot disable a real registered device",

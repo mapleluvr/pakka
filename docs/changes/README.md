@@ -2,6 +2,24 @@
 
 完整的形成条件、选择、设计、任务与场景由 [OpenSpec](../../openspec/changes/)维护；本目录只提供摘要和完整引用，不复制第二套变更正文。当前预期见 [state](../state/README.md)，实际差距见[工作入口与领域任务](../OVERVIEW.md)。
 
+- [Session 预算默认不限制](session-budget.md)：三个独立上限、持久政策与协议配对。
+- [独立 WebUI 与通用插件规划](independent-webui.md)：采用分仓、模型作用域、清理旧实现与通用插件/跨 Session 浏览边界；阶段 0 完成，阶段 1 已形成独立消费、模型与资产接缝；未加载原历史及分 facet 控制仍缺，完整应用与后续产品阶段未完成。
+- [WebUI 设计系统与开发原则](webui-design-principles.md)：同类开源系统调研、重构初期少测试政策、职责／目录／公共接口说明；不实施换栈。
+- [History 候选与独立插件重构参考](history-reference-branches.md)：保存工作分支、不创建 PR；通用宿主能力与 RSI 下游报告设计分别交接。
+- [History Book 与 opt-in Historian](history-book.md)：Dynamite 独立版本化史料服务、有限原生记史、原结果核对与 Patchouli 复用。
+- [Memo 知识服务](memo-knowledge.md)：独立 Wiki、来源、权限和有界检索读取；Issue #9 的第一消费切片。
+- [测试反馈成本](test-feedback.md)：显式集合、维护断言去重、隔离运行与有限轻型并发。
+- [RSI 长期工单持久化](rsi-persistence.md)：多记录事务、分页、原请求恢复及 UI 消费；承接[薄层形成](rsi-ticket-layer.md)。
+- [本地验证证据与提交检查](local-verification-evidence.md)：验证目录仅含关键信息和本地证据包整体 hash，原始证据不上 GitHub，提交及 PR 前检查完整产物。
+- [有界观察与 DOM 懒加载](bounded-lazy-observation.md)：333 ms 小预览、按需完整内容、虚拟窗口与预算化空闲补取。
+- [本机维护与交付](local-maintenance-and-delivery.md)：原 owner 私密恢复、无执行引擎维护、完整冷备份、停机恢复与固定归档升级；附近期 OOM 任务。
+- [长期投递记录](long-lived-deliveries.md)：原请求独立存储、按未完成工作接纳、累计历史持续保留及旧格式原子迁移。
+- [MAS Telegraph](mas-telegraph.md)：版本化显式 Skill、按 profile 独立选择的 reasoning/communication 提示与清晰的人类产物边界。
+- [MAS A2A 意图分离](mas-a2a-intent.md)：区分不唤醒的 inform、请求和单一 root 关联 response；公开 context source 不证明消费，inform 保持 pending/at-least-once。
+- [默认 Dynamite 上下文](default-dynamite-context.md)：普通产品默认策略的采用、与独立 SDK/headless 装配的边界，以及尚未完成的启动器与生命周期接入。
+- [Git 协作与项目元数据](git-workflow-and-project-metadata.md)：工作分支 → dev → main 的授权、PR 与验证条件，以及贡献入口和 state-evo 文档接续。
+- [可演进 Runtime 与默认入口](product-runtime-and-launcher.md)：Pi 原生模型/认证、配置与预算演进、Session 隔离、默认执行与 `pakka → WebUI`。
+- [ExecutionEnv 接入](execution-environment.md)：1.4.0 基线的公开执行环境接缝、原生工具、合作工具能力与真实本地消费。
 - [应用脚本与协作流程指南](scripted-mas-workflows.md)：面向人和 Agent 的 Mermaid、可运行协作、产物／状态保存和分级可行性验证。
 - [Compresser 会话修复与封存](compressor-repair-session.md)：两类累计错误容忍、轨迹保留和原生基础设施调查；实现路线在报告决策点。
 - [辅助推理 Tool Calling 输出](auxiliary-tool-output.md)：来源绑定的结构化候选生产与独立 Dynamite 产物。

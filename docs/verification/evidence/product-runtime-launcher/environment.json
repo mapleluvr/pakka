@@ -1,0 +1,19 @@
+{
+  "platform": "win32",
+  "architecture": "x64",
+  "osRelease": "10.0.26200",
+  "node": "v24.15.0",
+  "npm": "11.12.1",
+  "powershell": "7.6.9",
+  "chrome": {
+    "path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+    "version": "157.0.8103.38",
+    "observedAt": "2026-11-07T06:49:22.4664286Z"
+  },
+  "versions": {
+    "piAI": "1.4.0",
+    "piDurable": "1.4.0-pakka.2",
+    "piCodingAgent": "1.4.0"
+  },
+  "sourceSha256": "804c7ff7e3a03a72b9244d51246e2afe8b50a69597b9a64e1cba5f07c2026d95"
+}

@@ -3,6 +3,7 @@ import { strict as assert } from "node:assert";
 import { resolve, join } from "node:path";
 import { createMas, type Mas } from "@pakka/mas";
 import { masWorkbenchService } from "../../../packages/mas-devpack/src/backend.ts";
+import { masAgentPrincipal } from "../../../packages/mas-devpack/src/ownership.ts";
 import { runtimeFixture } from "../../../packages/agent/test/runtime-fixture.ts";
 import { startPocket } from "../src/bootstrap.ts";
 
@@ -36,7 +37,7 @@ test(
 					await mas.activate();
 					const parent = (await mas.view()).members[0]!;
 					await mas
-						.connect({ principal: context.ownerId, source: parent.ref, grants: ["spawn"] })
+						.connect({ principal: masAgentPrincipal(parent.ref), source: parent.ref, grants: ["spawn"] })
 						.spawn({ key: "child", profile: "plain", lifetime: "persistent" });
 					return { mas: masWorkbenchService({ ...context, mas }) };
 				},
@@ -64,20 +65,63 @@ test(
 			);
 			assert.equal(m.f.requests.length, 0);
 			assert.equal((await client.read(child)).ref.conversationId, child.conversationId);
-			const sent = await client.submit(child, {
-				requestId: "human-input",
-				text: "HUMAN-CONVERSATION",
-				mode: "prompt",
-			});
+			const original = { requestId: "human-input", text: "HUMAN-CONVERSATION", mode: "prompt" as const };
+			assert.equal(await client.inputReceipt(child, original), null);
+			assert.deepEqual((await client.inputHistory(child)).items, []);
+			const sent = await client.submit(child, original);
 			assert.equal((await client.wait(sent.id)).status, "done");
+			assert.equal((await client.inputReceipt(child, original))?.id, sent.id);
+			await assert.rejects(client.inputReceipt(child, { ...original, text: "DIFFERENT" }));
+			const inputs = await client.inputHistory(child);
+			assert.equal(inputs.items.length, 1);
+			assert.equal(inputs.items[0]!.receipt.id, sent.id);
+			assert.equal(inputs.items[0]!.preview, original.text);
 			assert.equal(m.f.requests.length, 1);
 			assert.ok((await client.read(child)).entries.length > 0);
-			const config = await client.configuration(child);
-			assert.equal(config.canConfigure, true);
-			const changed = await client
-				.configureAgent(child, { model: "other-model" })
-				.catch(async () => client.configureAgent(child, { model: config.current.model }));
-			assert.equal(changed.conversationId, child.conversationId);
+			const config = await client.configurationOptions(child);
+			assert.equal(config.configuration.canConfigure, true);
+			assert.equal(config.supportsRequests, true);
+			assert.ok(config.configuration.current);
+			const configuration = {
+				requestId: "member-model",
+				target: child,
+				selection: { kind: "agent" as const, change: { model: config.configuration.current.model } },
+			};
+			assert.equal(await client.configurationReceipt(configuration), null);
+			const configured = await client.changeConfiguration(configuration);
+			assert.equal(configured.actorId, actor.person.id);
+			assert.equal(configured.ref.conversationId, child.conversationId);
+			const later = await client.changeConfiguration({
+				requestId: "member-preset",
+				target: configured.ref,
+				selection: { kind: "profile", profile: "other" },
+			});
+			assert.notEqual(later.ref.incarnation, configured.ref.incarnation);
+			assert.deepEqual((await client.inputReceipt(child, original))?.target, sent.target);
+			await assert.rejects(client.inputReceipt(later.ref, original));
+			assert.deepEqual(await client.configurationReceipt(configuration), configured);
+			await assert.rejects(
+				client.configurationReceipt({ ...configuration, selection: { kind: "profile", profile: "other" } }),
+			);
+			const adminInvite = await app.people.invite(actor, {
+				requestId: "other-admin",
+				role: "admin",
+				resources: "*",
+				ttlMs: 60000,
+			});
+			assert.ok(adminInvite.token);
+			const otherAdmin = app.workspace.bind(
+				await app.people.authenticate((await app.people.redeem(adminInvite.token, "Other admin")).token),
+			);
+			assert.equal(
+				(await otherAdmin.configuration(later.ref)).canConfigure,
+				false,
+				"People admin does not grant MAS ownership",
+			);
+			await assert.rejects(otherAdmin.configurationReceipt(configuration));
+			await assert.rejects(
+				otherAdmin.changeConfiguration({ ...configuration, target: later.ref, requestId: "not-owner" }),
+			);
 			const invitation = await app.people.invite(actor, {
 				requestId: "viewer",
 				role: "viewer",
@@ -95,12 +139,17 @@ test(
 			const current = (await readOnly.navigation())[0]!.ref;
 			assert.equal((await readOnly.read(current)).ref.conversationId, child.conversationId);
 			assert.equal((await readOnly.configuration(current)).canConfigure, false);
+			await assert.rejects(readOnly.configurationReceipt(configuration));
+			assert.equal(await readOnly.inputReceipt(current, original), null);
+			assert.deepEqual((await readOnly.inputHistory(current)).items, []);
 			await assert.rejects(
 				readOnly.submit(current, { requestId: "viewer-send", text: "NO", mode: "prompt" }),
 			);
 			await assert.rejects(readOnly.abort(current));
 			await app.people.revokePerson(actor, viewer.person.id);
 			await assert.rejects(readOnly.navigation());
+			await assert.rejects(async () => readOnly.inputHistory(current));
+			await assert.rejects(async () => readOnly.inputReceipt(current, original));
 			assert.equal(m.f.requests.length, 1);
 			assert.deepEqual(m.f.errors, []);
 		} finally {

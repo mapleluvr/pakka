@@ -52,7 +52,7 @@ test(
 );
 
 test(
-	"host input transform and handled run before transfer, unsupported commands fail closed",
+	"host input transform and handled run before transfer, slash-prefixed text stays literal",
 	{ timeout: 15000 },
 	async () => {
 		const f = await fixture({
@@ -67,7 +67,10 @@ test(
 			await host.waitForIdle();
 			assert.equal(f.requests.length, 1);
 			assert.match(text(f.requests[0]), /PREPARED:HELLO/);
-			await assert.rejects(async () => client.submit({ key: "skill", text: "/skill:any" }), /unsupported/);
+			await client.submit({ key: "skill", text: "/skill:any" });
+			await host.waitForIdle();
+			assert.equal(f.requests.length, 2);
+			assert.match(text(f.requests[1]), /PREPARED:\/skill:any/);
 		} finally {
 			await f.close();
 		}
