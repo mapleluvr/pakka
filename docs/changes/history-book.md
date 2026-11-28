@@ -38,3 +38,11 @@
 六个原始发布反例先在正式回归中失败；Book 又以引用失权、目标不可用、索引替换、重开和后来装配来源端口作对照。新文件仍按真实 SQLite/native/HTTP 归 heavy，选用核心＋Memo/RSI/History及四个 HTTP 文件；没有混入 Board、执行层重构、UI/OOM 或付费模型试验。EI 独立文档工作树先逐项保全 23 个原文件，核验后移出 21 项原始材料并保留历史摘要；EI 产品、类型、测试、脚本和锁文件的 24 个选定文件与原审查候选字节一致。
 
 源码与选用测试已有绿色结果，固定安装组合和指定八阶段复审继续执行。旧 review、原始失败和两次 Windows native crash 保留各自时点，不因本轮局部整改改变结论。完整结果随 tasks 与最终验证摘要登记；原始材料只在受限本地包保全。
+
+## 2026-11-26：集成场景复审修正
+
+来源检索的展示标题由 Memo 按 UTF-8 字节适配，继续使用原 Book 版本和实体位置。组合夹具显式选择来源同权；这不改变 Agent、MAS 或 Memo 独立安装。Dynamite 的目标授权、首次与修正请求检查由上游实现；新旧归档范围见[消费指南](../guides/HISTORY-LIBRARY.md)。
+
+## 2026-11-28：dev 集成复审
+
+[Pakka #19](https://github.com/mapleluvr/pakka/pull/19) 与 [Dynamite #1](https://github.com/mapleluvr/pakka-dynamite/pull/1) 的独立复审核对了实际 `dev` 合并树。用含 #21 的 Agent 新归档验证了固定版本标题和整个 headless 图书馆链路；Dynamite 开发锁中的原 Agent 另验，不互相替代。候选、对照、范围与证据包身份见[本轮验证](../verification/HISTORY-BOOK-DEV-INTEGRATION.md)。

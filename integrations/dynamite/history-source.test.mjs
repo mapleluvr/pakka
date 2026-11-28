@@ -1,5 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { join } from "node:path";
+import { openMemo } from "@pakka/memo";
 import { createRuntime } from "@pakka/agent";
 import * as dynamite from "@pakka/dynamite";
 import { fixture } from "./history-source-fixture.mjs";
@@ -37,6 +39,7 @@ test("a History Book source provider publishes fixed-version navigation and Unic
 				},
 			}),
 			client = book.connect({ id: "reader", check() {} });
+		const longTitle = "史".repeat(169) + "𠮷文献";
 		for (let i = 0; i < 6; i++)
 			await client.edit({
 				requestId: "edit-" + i,
@@ -48,7 +51,7 @@ test("a History Book source provider publishes fixed-version navigation and Unic
 						value: {
 							id: "entity-" + i,
 							kind: "chapter",
-							title: "Chapter " + i,
+							title: i === 1 ? longTitle : "Chapter " + i,
 							text: "Shared observation 🔬 " + i,
 							sources: [],
 							links: [],
@@ -118,6 +121,39 @@ test("a History Book source provider publishes fixed-version navigation and Unic
 		}
 		assert.equal(found.length, 6);
 		assert.ok(found.every((item) => item.ref.version === "6"));
+		const memo = openMemo({ file: join(f.root, "search.sqlite"), providers: { book: provider } });
+		try {
+			memo.createLibrary({ id: "library", title: "Library", ownerId: "reader" });
+			const reader = memo.connect({ id: "reader", check() {} });
+			await reader.registerSource({
+				libraryId: ref.libraryId,
+				sourceId: ref.sourceId,
+				requestId: "register",
+				baseVersion: 0,
+				provider: "book",
+				address: book.bookId,
+				version: ref.version,
+				title: "History",
+				summary: "Book",
+			});
+			const matches = [];
+			let cursor;
+			do {
+				const page = await reader.search({ libraryId: ref.libraryId, query: "observation", cursor });
+				matches.push(...page.items);
+				cursor = page.cursor;
+			} while (cursor);
+			assert.equal(matches.length, 6);
+			const hit = matches.find((item) => item.title === "史".repeat(169) + "𠮷");
+			assert.ok(hit, "Preview preserves complete code points within 512 UTF-8 bytes");
+			assert.deepEqual(hit.ref, {
+				...ref,
+				locator: "entry:" + Buffer.from("entity-1").toString("base64url"),
+			});
+			assert.equal(JSON.parse((await reader.read(hit.ref)).text).title, longTitle);
+		} finally {
+			memo.close();
+		}
 		const target = found.find((item) => item.title === "Chapter 0").ref;
 		let page = await provider.read({
 				...input,

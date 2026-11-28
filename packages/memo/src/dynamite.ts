@@ -54,6 +54,13 @@ function sourceFailure(error: unknown): never {
 	throw new MemoError("unavailable", "Dynamite source request failed");
 }
 
+// Memo search titles are bounded in UTF-8 bytes, not Book's UTF-16 code units.
+function searchTitle(value: string): string {
+	const bytes = Buffer.from(value, "utf8");
+	let end = Math.min(512, bytes.length);
+	while (end < bytes.length && (bytes[end] & 0xc0) === 0x80) end--;
+	return bytes.toString("utf8", 0, end);
+}
 const locator = (kind: string, id: string) => kind + ":" + Buffer.from(id).toString("base64url");
 function entryLocation(raw: string): string {
 	if (!/^[A-Za-z0-9_-]+$/u.test(raw)) throw new MemoError("invalid", "Invalid Book entry locator");
@@ -284,7 +291,7 @@ export function createDynamiteSourceProvider(options: {
 					detached({
 						items: page.items.map((item) => ({
 							ref: { ...input.ref, locator: locator("entry", item.id) },
-							title: item.title,
+							title: searchTitle(item.title),
 							path: "history/" + book.bookId + "/" + item.id,
 							excerpt: item.excerpt,
 						})),

@@ -18,7 +18,7 @@ flowchart LR
 
 ## 安装与入口
 
-选择 [History Book state](../state/history-book.md) 对应的固定归档组合，安装 Agent 与 Dynamite 即可使用独立 Book。完整 API 和独立示例在 Dynamite 包的 `docs/HISTORY-BOOK.md` 与 `examples/history-book.mjs`。该示例只创建一次性存储、编辑、补注、读旧版本并重开，不需要 Memo 或模型服务。
+选择[本次 dev 集成验证的归档](../verification/HISTORY-BOOK-DEV-INTEGRATION.md)或[此前固定配对](../verification/HISTORY-BOOK-MEMO-PAIR.md)，安装 Agent 与 Dynamite 即可使用独立 Book。完整 API 和独立示例在 Dynamite 包的 `docs/HISTORY-BOOK.md` 与 `examples/history-book.mjs`。该示例只创建一次性存储、编辑、补注、读旧版本并重开，不需要 Memo 或模型服务。
 
 宿主提供两条不同的读取能力：
 
@@ -30,6 +30,8 @@ flowchart LR
 ## 记史工作与恢复
 
 `createHistorian` 绑定一个业务 Conversation 与固定产物 namespace。创建、读状态或使用已有 Book 不创建 Historian 执行资源。宿主提供延迟打开的 `createHistorianSession`，它使用独立存储；每个有限工作有自己的原生 Conversation。默认一次批量最多 8 个产物，从来源倒排索引与导航上下文选择至多 16 个既有实体。
+
+新 Dynamite 的 `checkEvidence` 可按固定产物和实际 archive entry/contentVersion 分开授权；省略不授予回源或模型材料读权。仅当绑定来源的所有材料与 Book 同权时显式选 `checkEvidence: "source-read"`（本地组合示例如此）。旧 uniform-only 归档不识别该回调；要部署分权须固定新 Dynamite，而非仅更新宿主配置。由同权切换分权后，旧短原文位置需从固定父产物重新导航；Book 内容不变。首次和有限修正请求均复查执行、Book 与实际给模型的产物读权。
 
 先调用 `enable({from:"future"})` 保存输入边界，再显式 `start()` 或 `pump()`。暂停保留输入位置；停用后重新启用需选择 `future`、`catch-up` 或固定 `backfill` 区间。重开恢复原身份与数据，新的执行仍需当前权限。
 
@@ -53,7 +55,7 @@ const providers = {
 
 登记需要 share 权；read 同时核验书库分享范围、Book 自身读权及实际回源对象。Book 的已保存引用和来源窗口的子引用是其所属对象的元数据，不自动继承被引用对象读权；真正读取子对象时才检查它。适配器不为目录或检索元数据复读全部实体，不增加跨来源连带授权。
 
-Memo 将固定 Book 版本的实体与来源窗口转换成不透明导航地址。每页最多 32 个引用、每个 locator 最多 1,024 字符，回源路径最多 32 层；长引用留在原对象中，续页重放原窗口并核对全部子引用的有序指纹。换序或身份改变明确拒绝。实际读取的路径在最终返回前同步复查；未选中兄弟或仅返回的子导航不进入额外目标正文授权。
+Memo 搜索的展示标题按完整 Unicode 码点截到 512 个 UTF-8 字节；同一条结果仍携带原固定 ref/version，打开后读取完整标题与正文。Memo 将固定 Book 版本的实体与来源窗口转换成不透明导航地址。每页最多 32 个引用、每个 locator 最多 1,024 字符，回源路径最多 32 层；长引用留在原对象中，续页重放原窗口并核对全部子引用的有序指纹。换序或身份改变明确拒绝。实际读取的路径在最终返回前同步复查；未选中兄弟或仅返回的子导航不进入额外目标正文授权。
 
 来源结果的 `publicationCheck` 由 Memo 在复制 DTO 前取得，再传过 Memo、Patchouli 和原生工具的最后异步边界；它只保存本次实际读集与授权，不是持久权利或知识污染规则。外部异步消费者按 [Memo API](../reference/MEMO-API.md) 保留原结果检查。Memo Wiki 仍使用独立书库权限。
 
