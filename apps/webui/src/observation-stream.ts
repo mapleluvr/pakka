@@ -121,11 +121,11 @@ export async function streamPocketObservation(options: PocketObservationStreamOp
 					// A commit during the read is not consumed: the next turn sees its newer marker.
 					state.revision = revision;
 				}
-				if (options.collaboration) {
+				if (options.collaboration && !people.mode().personal) {
 					const snapshot = await options.collaboration.bind(actor).snapshot(state.ref);
 					check();
 					const encoded = JSON.stringify(snapshot);
-					if (encoded !== state.human) {
+					if (!people.mode().personal && encoded !== state.human) {
 						await emit({ kind: "collaboration", snapshot });
 						state.human = encoded;
 					}

@@ -38,7 +38,7 @@ Snapshots, transcript/tool views, search/exports, approvals, receipt lookups, ex
 
 ### Requirement: Human collaboration does not become model input
 
-The shared human layer SHALL retain presence, side chat, mentions, notes, pins/reactions and driving/turn-taking workflows with explicit ownership/conflict behavior. These display/collaboration operations SHALL NOT become model input unless an action explicitly sends selected content. Presence is ephemeral; durable collaboration records SHALL have declared resource scope and consistent writes.
+In collaboration mode the human layer SHALL retain presence, side chat, mentions, human-message pins/reactions and driving/turn-taking workflows. In personal mode it SHALL neither admit participation nor publish human content; authorized exact historical receipt lookup remains available without replay. Conversation notes and content pins SHALL be separate from this human layer. These display/collaboration operations SHALL NOT become model input unless an action explicitly sends selected content. Presence is ephemeral; durable collaboration records SHALL have declared resource scope and consistent writes.
 
 #### Scenario: Concurrent edits and turn change
 
@@ -71,3 +71,10 @@ Cookie/session, CSRF/Origin and trusted-proxy rules SHALL apply to HTTP, SSE and
 
 - **WHEN** A request for RPC, SSE or an extension asset carries untrusted forwarding headers
 - **THEN** The same current session, CSRF, Origin and trusted-proxy boundary applies before any authorized content is returned.
+
+#### Scenario: Notebook references and independent note versions
+
+- **WHEN** an authorized user pins a saved conversation message or tool result, or saves a note with an excerpt
+- **THEN** the reference resolves through the addressed Conversation and its original fixed content identity, not through a separately authorized parent Conversation. Duplicate pins resolve to one relation; the excerpt in a saved note is independent of future source availability.
+- **WHEN** a note is deleted or an old singleton note is upgraded
+- **THEN** deleting the note and its pins commits with one receipt; upgrade deterministically imports nonblank legacy content once, retains its known author/time/version, preserves historical human receipts and rejects legacy singleton writes.

@@ -24,11 +24,11 @@
 
 ## 2. 同源服务与身份
 
-工作台使用 `/pakka-webui/rpc` 和 `/pakka-webui/events`，延用已声明的 v3 DTO；新服务使用 `/pakka-webui/services` 的 `api: 5`。extension 客户端可使用 `/pakka-webui/extensions/rpc`。人类身份交换、资产、下载、通知和 worker 沿各自已有安全处理接缝接入新 namespace；旧 `/pocket/models/rpc` 不映射成新模型接口。
+工作台使用 `/pakka-webui/rpc` 和 `/pakka-webui/events`，延用已声明的 v3 DTO；新服务使用 `/pakka-webui/services` 的 `api: 7`。extension 客户端可使用 `/pakka-webui/extensions/rpc`。人类身份交换、资产、下载、通知和 worker 沿各自已有安全处理接缝接入新 namespace；旧 `/pocket/models/rpc` 不映射成新模型接口。
 
 浏览器使用同源 Cookie 与 `X-Pakka-CSRF`，endpoint 不接受认证信息、query/hash 或跨 origin；前端开发用同源代理。服务 request 在发送前固定工作台 hello 得到的 `personId/serverId`；后端从 Cookie 获取真正 actor，核对预期身份后才执行命令。客户端在响应、身份切换和异步返回时再次核对 request、server、Person 与结果种类。
 
-服务的 `capabilities` 返回实际可用 features。当前开发组合是 services 5、workbench 3、extensions 3；其中 extension wire 不等于 `ExtensionManifest.api: 1`，UI SDK/runtime 又是另一项组合。capabilities 中的协议版本是有界声明值，由对应消费者判断是否支持；不能因为服务能力响应可解码就认定所有协议都兼容。服务 API、renderer 描述和文件 hash 各自检查，不通过给 closed hello 偷加字段协商。
+服务的 `capabilities` 返回实际可用 features。当前开发组合是 services 7、workbench 3、extensions 3；其中 extension wire 不等于 `ExtensionManifest.api: 1`，UI SDK/runtime 又是另一项组合。capabilities 中的协议版本是有界声明值，由对应消费者判断是否支持；不能因为服务能力响应可解码就认定所有协议都兼容。服务 API、renderer 描述和文件 hash 各自检查，不通过给 closed hello 偷加字段协商。
 
 阶段 2/3 的已验收固定应用声明 services 3；阶段 4 候选、协议/client 归档与 manifest 需求同步声明 services 4。旧候选不自动降级或复用新服务组合，固定消费仍核对其实际版本与内容身份。
 
@@ -52,7 +52,8 @@ Node 的 `publicOrigin`、trusted proxy 和 TLS 约束保持原实现：带 forw
 | `session-budget.history`            | 该 Session 的有限预算版本历史                                 |
 | `session-budget.write`              | 按原版本保存独立预算限制并保留已消耗值                        |
 | `session-budget.lookup`             | 同一 Session/Person/完整原请求的预算回执                      |
-| `people.write`                      | 人员权限变更/撤销与回执在同一 People CAS 中提交               |
+| `people.settings`                   | 当前模式、版本、管理能力及本人有效登录设备（不含秘密）        |
+| `people.write`                      | 模式、设备撤销和成员变更与回执在同一 People CAS 中提交        |
 | `people.lookup`                     | 当前发起人的完整原人员变更回执                                |
 | `people.invite.lookup`              | 只读查询原邀请记录，不再次创建或交付密钥                      |
 | `notification.lookup`               | 完整原工作台通知修改请求的只读结果，当前设置独立读取          |
@@ -70,7 +71,9 @@ Node 的 `publicOrigin`、trusted proxy 和 TLS 约束保持原实现：带 forw
 | `model-defaults.write`              | 当前 Person 的持久默认值及原请求回执                          |
 | `model-defaults.lookup`             | 该 Person 原请求的默认值回执                                  |
 
-Conversation 数量、主要推理尝试和辅助推理尝试是三个独立的 Session 上限。每项为非负安全整数；0 表示该项不限制，不是剩余量为 0。即便没有上限，创建和尝试仍照常计数。它不放宽策略、单个 job、模型、队列、资源容量或权限。预算提交及核对仍绑定版本、发起人和完整原请求。旧客户端不能解析 0，TUI 等外部 Pocket 消费者需升级到 v3；未配对的前端在加载前拒绝。
+Conversation 数量、主要推理尝试和辅助推理尝试是三个独立的 Session 上限。每项为非负安全整数；0 表示该项不限制，不是剩余量为 0。即便没有上限，创建和尝试仍照常计数。它不放宽策略、单个 job、模型、队列、资源容量或权限。预算提交及核对仍绑定版本、发起人和完整原请求；`reason` 允许空字符串，最大长度 512。services 6 的 decoder 和 Runtime 同时接受空备注；旧服务版本在写入前拒绝。旧客户端不能解析 0，TUI 等外部 Pocket 消费者需升级到 v3；未配对的前端在加载前拒绝。
+
+`mode.set` 接收 `mode: personal|collaboration` 与 `expectedVersion`，`device.revoke` 接收本人另一登录的 `id`，两者沿 `people.write/lookup` 提交及恢复。模式切换须为全局管理员，进入 personal 须仅剩本人活跃；新设备邀请指向原 Person。当前登录通过 logout 退出，撤销其他登录不改变本人其余登录。
 
 当前 Conversation 的模型/Thinking/目录/preset 经受权来源接到同一原生配置事务与回执；插件来源显式声明自己的读取、写入和恢复能力。配置效果与回执同时提交，查询保留完整旧绑定和原参数，再单独读取当前配置。slash、悬浮搜索与点击/触控属于前端人类入口，执行继续由 Pakka/Durable 承担。Session 预算、Person 默认与实例连接定义分别持久化；Provider `/login` 按既有 roadmap 延期。
 
@@ -114,7 +117,7 @@ extension 原请求链路仍是 `operationByRequest(browserRequestId)` → 外�
 
 `resource.content` 接收同一 reference、页面取得的 content 与 offset/length，单次最多 64 KiB。客户端核对原 Session/Conversation、完整内容定位及返回范围；按 nextOffset 继续，不用字符数推算字节位置。入口只读取既有公开投影中的正文，不能改 path 读取原生 data/configuration。分叉自身可见内容与来源身份的披露权限分开，不能凭继承内容取得源 Conversation 权限。
 
-完整原文下载使用 `/pakka-webui/resources/content/download`，传入绑定 API 5 身份的 `resource.content` 请求 envelope。服务按稳定已登记资源流式输出已存原文，每段核对原 Session/Conversation、引用版本和当前权限；存档 JSON 字节范围与下载的解码正文大小分别使用，浏览器不据字符数换算存档偏移。
+完整原文下载使用 `/pakka-webui/resources/content/download`，传入绑定 API 6 身份的 `resource.content` 请求 envelope。服务按稳定已登记资源流式输出已存原文，每段核对原 Session/Conversation、引用版本和当前权限；存档 JSON 字节范围与下载的解码正文大小分别使用，浏览器不据字符数换算存档偏移。
 
 未加载路径经 `@pakka/agent` 的受信任 `readStoredConversation` 接到 Durable .4 的公开 SQLite reader，不创建 Runtime、不取得 writer 或恢复任务。Pakka 先验证已确认登记、原 Session/Conversation、来源与 read grant，返回前再次核对；执行、发送及管理仍要求已加载绑定。Node 定位、原生对象与数据库路径不进入浏览器协议。具体 SDK 边界见[只读 SDK](../../patches/pi-durable/1.4.0-pakka.4/README.md)。
 
@@ -164,3 +167,11 @@ const app = await startPocket({
 加载后 HTTP 提供已核对的内存字节，生产者后来改磁盘文件不改变正在提供的版本。无下载、运行时构建、npm latest 或失败后替换成另一份 UI。manifest 只描述 renderer 兼容，不让 Node 了解 Button、theme provider 或插件组件树。
 
 当前功能完善仍在阶段 4，默认产品切换在阶段 5 独立处理。已验收固定组合、局部运行结果与尚未完成的范围以[任务](../../openspec/changes/plan-independent-webui/tasks.md)及其验证记录为准。
+
+## Conversation 笔记与置顶（services 7）
+
+公开命令/结果在 `@pakka/protocol/webui`；浏览器通过 `@pakka/client/webui` 在原 binding 上发送。`notebook.list` 分页读取笔记或置顶，每次最多 8 条；返回 `total`、`orderVersion` 及该资源当前 `canEdit`。`notebook.note` 按稳定 ID 读取已保存内容。读取需要当前 Conversation 的读权，创建、编辑、删除及置顶需要 send，服务在提交边界重新检查。
+
+`notebook.write` 支持 `save`、`delete`、`pin`、`unpin`、`move`。save 的 expectedVersion 0 表示创建；每个对象独立比较版本。移动检查 Pin 和顺序版本。Pin 的目标为本 Conversation 的 Note、固定模型文本或工具结果。来源署名可随读权省略；原内容由受权视图的 Session/Conversation、entryId、内容 ID、位置和版本标识，工具结果还包含 callId。持久关系不保存父 Conversation 署名或消息正文。`notebook.lookup` 只按发起人和完整原请求查回执，不重送；丢响应不能借刷新或取消等待推断效果。
+
+服务 discovery 仅在协作模式发布 collaboration；个人模式拒绝聊天读、写、在场和 driver，原人类操作仍可受权 `collaboration.lookup`。旧前端 services 6 与新后端不混用，不降级为 singleton 写入。

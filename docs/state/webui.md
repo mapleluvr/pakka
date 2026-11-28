@@ -28,11 +28,21 @@ pakka-webui 的人类身份与权限由服务端绑定，浏览器请求按该�
 
 当前模型/Thinking 归当前 Conversation，沿用其配置权限。人类显式保存的默认归 Person，在后端持久化以便跨设备，用于其新建 Conversation 的缺省选择；已有 Conversation 和 MAS/工作流显式选择保持自身配置。提供商、端点和模型定义归 Pakka 实例，由有配置权限者管理；模型使用与连接配置分别授权。
 
-输入框 `/model` 打开悬浮搜索选择器，完整 provider/model 命令准确直接选择；`/thinking` 与点击/触控共用可用级别和操作。命令属于人类界面操作，普通选择只改变当前 Conversation。设置提供提供商/模型参数可视化编辑及经校验的高级编辑，保留适用的原生继承与覆盖语义；秘密和可执行配置来源由可信后端管理。
+输入框 `/model` 打开悬浮搜索选择器，完整 provider/model 命令准确直接选择；`/thinking` 与点击/触控共用紧贴入口的级别菜单，只展示当前模型支持的级别并标记当前配置。保存与未知结果继续沿用原配置请求及核对路径。命令属于人类界面操作，普通选择只改变当前 Conversation。设置提供提供商/模型参数可视化编辑及经校验的高级编辑，保留适用的原生继承与覆盖语义；秘密和可执行配置来源由可信后端管理。
 
 发现、HTTP/RPC、SSE、assets、历史、查询、导出和操作核对在序列化前按当前授权过滤。撤权停止后续读写与事件发布；已发布字节处于接收端。模型密钥通过独立的受控凭据命令提交、保存和解析；输入提交后清空，状态读取返回版本与 configured。表单回填、通用 settings、URL、浏览器持久存储、模型历史和广播对已存模型密钥仅读取公开配置状态。
 
 人类协作按原 Session/Conversation 处理 side chat、notes、pins/reactions 和 driver 的 scope、授权及版本冲突。修改效果与原请求回执在协作协调存储的同一次 CAS 中提交；纯查询匹配原发起人、完整原请求和旧绑定，并核对当前所需授权。历史回执与当前共享状态分别读取。presence 为短期状态，所属观察结束时停止其心跳与事件读取；SSE 重连以当前身份和 snapshot 恢复。模型输入由明确发送动作提交，原生准入核对当前 driver 与期限。
+
+## 个人模式与设备
+
+宿主在 People 存储域保存 personal/collaboration 模式。已有实例按 collaboration 读取；当前唯一活跃 Person 为全局管理员时，可按版本和稳定请求号启用 personal。仍有其他活跃成员时拒绝切换，保留其原权限和历史作者。切换为 personal 时撤销未兑换的新成员邀请；后续设备连接必须指向本人，以独立登录凭据复用同一 Person。
+
+「设备与访问」显示当前使用模式与本人有效登录，支持单独撤销其他设备。当前设备通过退出登录结束凭据。设备清单只含公开登录标识、有效期和是否当前设备，不包含秘密。模式切换、撤销效果与回执在同一次 People CAS 中提交；版本冲突保留草稿，响应未知按完整原请求查询。
+
+个人模式的各设备拥有一致的人类操作权限，默认模型、Thinking、文件夹与排序沿同一 Person 共享。登录姓名可省略，已有身份沿用原姓名；通知、麦克风、输入草稿和布局仍有各自的设备作用域。Agent 的工具权限、审批与模型策略继续独立核验。
+
+个人模式跳过人类 driver 领取、续期与接管，并在模式切换后使旧 driver 租约失效；原生输入队列、Steering/Follow-up、并发版本检查与原请求恢复继续生效。个人模式不装配人类聊天、提及、reaction、在场或 driver 管理，不发布其能力和事件；仅可核对历史原请求。协作模式恢复独立聊天入口以及原服务保存的聊天记录和聊天置顶。
 
 ## Session 管理与个人导航
 
@@ -53,7 +63,7 @@ HTTP listener 自动分配端口时，仅发布 Fetch 与浏览器可访问的�
 前端宿主提供通用 UI 生命周期，Pakka 接入层连接明确的公开服务；服务端绑定身份、权限、资源与持久效果。可信扩展可分别提供 Agent、Backend、WebUI、Client facets，启停各自表达：
 
 - 声明与 browser 入口提供公开协议、组件和浏览器侧绑定，共用宿主 React/Astryx、主题及浮层环境；server、存储和推理由显式后端启动流程建立。纯 UI 插件无需工作 Session，Agent/headless import 不加载浏览器或产品启动。
-- 自定义页面、panel、sheet、settings 与导航通过公共 slots 及宿主绑定的接口接入，内容可以包含表格、关系图、报告、控制表单和管线。插件可直接使用上游公开 UI 能力，局部样式与宿主焦点/可访问性约定共同生效。
+- 自定义页面、panel、sheet、settings 与导航通过公共 slots 及宿主绑定的接口接入，内容可以包含表格、关系图、报告、控制表单和管线。插件可直接使用上游公开 UI 能力，局部样式与宿主焦点/可访问性约定共同生效。共享 SVG 图标通过独立 WebUI SDK 的 `@pakka/webui-sdk/icons` 公开入口消费，构建依赖与宿主 import map 须提供该入口；图标名称与使用说明由独立前端维护。
 - RSI、MAS、Memo 的可视化、业务控制和管线由各自插件维护；默认和普通业务插件使用相同公开能力。插件通过所属服务的有限分页、搜索、固定版本及按引用读取取得完整合法数据，重连核对身份/资源/版本。
 - slash、suggestion 和等价按钮使用同一 namespaced dispatcher；人类命令处理协作与显示，模型输入由明确的工作发送动作提交。
 - 外层 operation、内层 job/native receipt 和实际业务效果各自核对。界面关闭、wait 取消和卸载处理各自生命周期；已接纳工作及其结果继续由所属服务管理，效果终态依据该服务的原生记录与实际结果确认。
@@ -65,6 +75,8 @@ HTTP listener 自动分配端口时，仅发布 Fetch 与浏览器可访问的�
 
 Agent 贡献由可信启动明确批准 profiles，以 pi-durable 的公开 Registry 发布工具与指令；停用撤回后续接纳资格，已接纳工作保留所属生命周期。WebUI publication 拥有其实例集合，关闭清理所属实例并使旧回调失效；清理失败及未确认初始化保持可见的 unknown 状态。具体契约见[服务手册](../reference/WEBUI-SERVICES.md)与[分 facet 场景](../../openspec/changes/plan-independent-webui/specs/extension-facet-control/spec.md)。
 
+默认前端的搜索与输入记录采用独立浮窗；拖动、手机单窗切换和预览分层由独立 WebUI 管理，继续消费既有读取、停止、撤回与原请求核对服务。交付形成见[搜索与输入浮窗](../changes/conversation-panels.md)。
+
 页面结构、菜单位置和视觉交互见[前端声明](frontend.md)。服务 schema、请求身份、期限与权限由[WebUI 开发契约](../development/WEBUI-DEVELOPMENT.md)及公开 exports 维护；独立前端/插件契约见[独立 WebUI 场景](../../openspec/changes/plan-independent-webui/specs/independent-webui/spec.md)，采用来路与实施安排见[分仓规划](../changes/independent-webui.md)。
 
 ## 领域场景
@@ -75,3 +87,9 @@ Agent 贡献由可信启动明确批准 profiles，以 pi-durable 的公开 Regi
 | 人类角色、协作、stream 与远程部署                                                    | [协作场景](../../openspec/changes/pakka-webui/specs/pocket-collaboration/spec.md)                                                 |
 | facets、command、RPC、assets、生命周期及 unknown                                     | [扩展场景](../../openspec/changes/pakka-webui/specs/webui-extensions/spec.md)                                                     |
 | browser-safe 协议与独立的 WebUI 桥接                                                 | [应用 API](../guides/MAS-APPLICATION-API.md)、[桥接场景](../../openspec/changes/pakka-webui/specs/authenticated-mas-apps/spec.md) |
+
+## Conversation 笔记与置顶
+
+顶部「我的输入」「笔记与置顶」为独立 SVG 图标按钮，有名称、提示与至少 44×44px 命中区。笔记与置顶分两页：宽屏（≥1280px）与阅读区并排，小桌面可移动，手机与搜索、输入记录共享单活动面板。关闭保留该 Conversation 的本地草稿；保存是显式操作。
+
+Note 拥有独立 ID、版本、正文、来源及归属信息；Pin 是可排序、按规范目标去重的关系。保存笔记不向 Agent 发送输入。置顶不复制目标正文；打开原消息或结果时以所读 Session/Conversation 的权限重新解析固定 Entry 与内容位置。笔记摘录是独立正文，已保存来源不可读并不禁止编辑本笔记。并发修改同一笔记保留本机草稿、原版与服务版，删除笔记同时移除它的 Pin。未确认提交只核对该对象原请求。

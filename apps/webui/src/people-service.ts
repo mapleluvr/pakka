@@ -17,7 +17,8 @@ export async function executePeople(
 		options.signal?.throwIfAborted();
 		options.check();
 		try {
-			people.check(actor, "invite");
+			if (command.op === "people.settings") people.current(actor);
+			else people.check(actor, "invite");
 		} catch {
 			throw new WebUiServiceRefusal("FORBIDDEN");
 		}
@@ -27,6 +28,9 @@ export async function executePeople(
 	try {
 		let result: WebUiResult;
 		switch (command.op) {
+			case "people.settings":
+				result = { kind: "people-settings", settings: await people.settings(actor) };
+				break;
 			case "people.invite.lookup":
 				result = {
 					kind: "people-invitation",

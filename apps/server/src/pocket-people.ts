@@ -7,6 +7,7 @@ import {
 	type PeopleAction,
 	type PeopleChange,
 	type PeopleReceipt,
+	type PeopleSettings,
 } from "@pakka/protocol/webui";
 
 export class PocketPeopleChangeRefused extends Error {
@@ -100,7 +101,10 @@ export interface PocketPeople {
 		id: string,
 		input: { readonly role: PocketRole; readonly resources: PocketResources },
 	): Promise<void>;
-	redeem(token: string, name: string): Promise<PocketSession>;
+	settings(actor: PocketAuthority): Promise<PeopleSettings>;
+	/** Current human mode and transition generation for collaboration leases. */
+	mode(): { readonly personal: boolean; readonly generation: number };
+	redeem(token: string, name?: string): Promise<PocketSession>;
 	list(
 		actor: PocketAuthority,
 	): Promise<{ readonly people: readonly PocketPerson[]; readonly invites: readonly PocketInvite[] }>;
@@ -143,7 +147,9 @@ type Invite = {
 };
 type SavedPeopleReceipt = { [K in keyof PeopleReceipt]: PeopleReceipt[K] };
 type State = {
-	schema: 2;
+	schema: 3;
+	personalOwnerId: string | null;
+	modeGeneration: number;
 	sessionId: string;
 	people: Person[];
 	sessions: Session[];
@@ -242,7 +248,7 @@ function inviteView(i: Invite): PocketInvite {
 }
 function decode(data: JsonObject, version: number, sessionId: string): State {
 	if (version === 0 && Object.keys(data).length === 0)
-		return { schema: 2, sessionId, people: [], sessions: [], invites: [], changes: [] };
+		return { schema: 3, personalOwnerId: null, modeGeneration: 0, sessionId, people: [], sessions: [], invites: [], changes: [] };
 	const bad = () => {
 		throw new Error("Invalid persisted WebUI people state");
 	};
@@ -252,9 +258,11 @@ function decode(data: JsonObject, version: number, sessionId: string): State {
 			data,
 			data.schema === 1
 				? ["schema", "sessionId", "people", "sessions", "invites"]
-				: ["schema", "sessionId", "people", "sessions", "invites", "changes"],
+				: data.schema === 2
+					? ["schema", "sessionId", "people", "sessions", "invites", "changes"]
+					: ["schema", "sessionId", "people", "sessions", "invites", "changes", "personalOwnerId", "modeGeneration"],
 		) ||
-		(data.schema !== 1 && data.schema !== 2) ||
+		(data.schema !== 1 && data.schema !== 2 && data.schema !== 3) ||
 		data.sessionId !== sessionId ||
 		!Array.isArray(data.people) ||
 		!Array.isArray(data.sessions) ||
@@ -368,7 +376,7 @@ function decode(data: JsonObject, version: number, sessionId: string): State {
 	)
 		return bad();
 	const changes: SavedPeopleReceipt[] = [];
-	if (data.schema === 2) {
+	if (data.schema !== 1) {
 		if (!Array.isArray(data.changes) || data.changes.length > MAX_CHANGES) return bad();
 		let previous = 0;
 		for (const value of data.changes) {
@@ -386,7 +394,14 @@ function decode(data: JsonObject, version: number, sessionId: string): State {
 		if (new Set(changes.map((row) => row.actorId + ":" + row.requestId)).size !== changes.length)
 			return bad();
 	}
-	return { schema: 2, sessionId, people, sessions, invites, changes };
+	const personalOwnerId = data.schema === 3 ? data.personalOwnerId : null;
+	const modeGeneration = data.schema === 3 ? data.modeGeneration : 0;
+	if ((personalOwnerId !== null && (!isId(personalOwnerId) ||
+		people.filter(p => p.active).length !== 1 ||
+		!people.some(p => p.id === personalOwnerId && p.active && p.role === "admin" && p.resources === "*"))) ||
+		typeof modeGeneration !== "number" || !Number.isSafeInteger(modeGeneration) || modeGeneration < 0)
+		return bad();
+	return { schema: 3, personalOwnerId, modeGeneration, sessionId, people, sessions, invites, changes };
 }
 
 /** Trusted local maintenance; never exposed through an unauthenticated HTTP route. */
@@ -690,6 +705,30 @@ async function openPeople(
 		const refused = () => {
 			throw new PocketPeopleChangeRefused("FORBIDDEN");
 		};
+		if (action.op === "mode.set") {
+			if (action.expectedVersion !== version) throw new PocketPeopleChangeRefused("CONFLICT");
+			if (action.mode === "personal" && data.people.some(p => p.active && p.id !== issuer.p.id))
+				throw new PocketPeopleChangeRefused("CONFLICT");
+			data.personalOwnerId = action.mode === "personal" ? issuer.p.id : null;
+			data.modeGeneration++;
+			if (data.personalOwnerId) {
+				for (const invite of data.invites) {
+					if (invite.status === "pending" && invite.targetPersonId !== data.personalOwnerId) {
+						invite.status = "revoked";
+						if (block) blockedInvites.add(invite.id);
+					}
+				}
+			}
+			return;
+		}
+		if (action.op === "device.revoke") {
+			const device = data.sessions.find(row => row.id === action.id && row.personId === issuer.p.id);
+			if (!device || device.id === issuer.s.id) return refused();
+			device.active = false;
+			if (block) { blockedSessions.add(device.id); notifyAuthority(); }
+			return;
+		}
+		if (data.personalOwnerId && action.op === "person.set") return refused();
 		if (action.op === "invite.revoke") {
 			const invite = data.invites.find((row) => row.id === action.id);
 			if (!invite) return refused();
@@ -798,6 +837,17 @@ async function openPeople(
 			timer.unref();
 			return Object.freeze({ id: s.id, signal: controller.signal, check, close });
 		},
+		mode: () => { ready(); return Object.freeze({ personal: state.personalOwnerId !== null, generation: state.modeGeneration }); },
+		settings: async (actor: PocketAuthority): Promise<PeopleSettings> => {
+			await refresh();
+			const id = bindings.get(actor);
+			if (!id) return deny();
+			const { p } = sessionFor(id);
+			const canManage = p.role === "admin" && p.resources === "*";
+			return freeze({ version, mode: state.personalOwnerId ? "personal" : "collaboration", canManage,
+				devices: canManage ? state.sessions.filter(s => s.personId === p.id && s.active && s.expiresAt > time() && !blockedSessions.has(s.id))
+					.map(s => ({ id: s.id, current: s.id === id, expiresAt: s.expiresAt })) : [] });
+		},
 		current: (actor: PocketAuthority) => {
 			const id = bindings.get(actor);
 			if (!id) return deny();
@@ -876,6 +926,7 @@ async function openPeople(
 			return mutate(
 				(draft) => {
 					const { p } = bound(actor, "invite");
+					if (draft.personalOwnerId && (targetPersonId !== draft.personalOwnerId || role !== "admin" || resources !== "*")) return deny();
 					const prior = draft.invites.find((row) => row.issuerId === p.id && row.requestId === requestId);
 					if (prior) {
 						if (prior.fingerprint !== fingerprint) throw new Error("WebUI invitation request conflict");
@@ -915,13 +966,14 @@ async function openPeople(
 				},
 			);
 		},
-		redeem: async (token: string, name: string) => {
-			if (typeof token !== "string" || !/^[a-zA-Z0-9_-]{43}$/.test(token) || !isName(name)) return deny();
+		redeem: async (token: string, name?: string) => {
+			if (typeof token !== "string" || !/^[a-zA-Z0-9_-]{43}$/.test(token) || (name !== undefined && name !== "" && !isName(name))) return deny();
 			const hash = digest(token),
-				personName = name.trim();
+				personName = name?.trim() || "我";
 			return mutate(
 				(draft) => {
 					const invite = redeemable(draft, hash);
+					if (draft.personalOwnerId && invite.targetPersonId !== draft.personalOwnerId) return deny();
 					const existing =
 						invite.targetPersonId === null
 							? undefined

@@ -4245,7 +4245,6 @@ export class DurableAdapter {
 			raw.expectedVersion < 0 ||
 			!validBudgetLimits(raw.limits) ||
 			typeof raw.reason !== "string" ||
-			!raw.reason.trim() ||
 			raw.reason.length > 512 ||
 			/[\x00-\x1f\x7f]/.test(raw.reason)
 		)

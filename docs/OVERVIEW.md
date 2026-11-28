@@ -4,6 +4,18 @@ Pakka 将 Pi Durable 的 Conversation、权限、持久化与 MAS 协作能力�
 
 ## 当前工作
 
+[Conversation 笔记与置顶](changes/conversation-notebook.md)：顶部图标打开独立笔记和原文置顶；个人模式不装配人类聊天。当前固定应用要求 services 7 / workbench 3 / extensions 3。
+
+[Tool Calling 与共享图标](changes/tool-calling.md)：默认前端以轻量调用目录展示命令、路径与逐次展开的结果；公共 UI SDK 图标供其他 WebUI extension 复用。
+
+[Thinking 级别菜单](changes/thinking-picker.md)：默认前端采用紧贴输入区入口的级别选择器，保留现有配置服务与原请求核对。
+
+[搜索与输入浮窗](changes/conversation-panels.md)：默认前端采用桌面可拖动搜索与输入记录浮窗、手机单窗切换及分层回执；服务契约沿用既有版本。
+
+[品牌、配色与悬浮输入](changes/independent-webui.md#品牌配色与悬浮输入交付)：默认前端固定到包含首页、四组主题、运行时原位停止与独立阅读宽度的产物；服务协议保持 services 6 / workbench 3 / extensions 3。[验证](verification/FLOATING-COMPOSER.md)记录安装与原 Session 保全。
+
+[个人模式与设备](changes/personal-mode.md)：宿主持久模式、同身份设备登录与独立撤销、可选预算备注；客户端配对为 services 6 / workbench 3。
+
 [Session 预算](changes/session-budget.md)：默认不限制，升级重开保留既有政策；前后端与外部工作台客户端的配对要求见[服务契约](reference/WEBUI-SERVICES.md)。
 
 [独立 WebUI 与通用插件](changes/independent-webui.md)已完成阶段 0–5 的所选范围：独立 React/Astryx 前端与公开 SDK、原 Session 只读历史、独立 facets、完整工作台/所选业务插件，以及默认固定产物装配。Node 24 最终归档安装、headless 隔离、默认 CLI、PC/390px、TLS 代理及兼容前端 A → B → A 已通过；旧 UI/SDK/重复构建按[覆盖记录](verification/WEBUI-COVERAGE-TRANSITION.md)退出。release 274 文件全部完成，三文件经修正/短目录复验收口；平台跳过、Windows 深目录 ACL、真实录音授权跳过和旧 worker 迟到正文未覆盖分支见[阶段 5 验证](verification/INDEPENDENT-WEBUI-PHASE-5.md)。[任务](../openspec/changes/plan-independent-webui/tasks.md)与[阶段 5](../openspec/changes/plan-independent-webui/phase-5.md)维护交付；两仓工作分支 PR、集成、公共发布与 OpenSpec 归档分别记录。Provider `/login` 继续延期。

@@ -61,7 +61,7 @@ async function setup() {
 	}
 }
 
-test("WebUI collaboration: real shared attribution, concurrent note conflict, pins/reactions/quote and no human content in model payload", async () => {
+test("WebUI collaboration: real shared attribution, legacy note write fence, pins/reactions/quote and no human content in model payload", async () => {
 	const f = await setup();
 	try {
 		const owner = f.collaboration.bind(f.owner),
@@ -94,19 +94,15 @@ test("WebUI collaboration: real shared attribution, concurrent note conflict, pi
 			owner.editNote(f.ref, { expectedVersion: 0, text: "PRIVATE-NOTE-ONE" }),
 			guest.editNote(f.ref, { expectedVersion: 0, text: "PRIVATE-NOTE-TWO" }),
 		]);
-		assert.equal(edits.filter((result) => result.status === "fulfilled").length, 1);
-		assert.equal(edits.filter((result) => result.status === "rejected").length, 1);
+		assert.equal(edits.filter((result) => result.status === "fulfilled").length, 0);
+		assert.equal(edits.filter((result) => result.status === "rejected").length, 2);
 		const view = await guest.snapshot(f.ref);
 		assert.equal(view.messages.length, 2);
 		assert.equal(view.messages[0]!.authorId, f.owner.person.id);
 		assert.equal(view.messages[0]!.pinned, true);
 		assert.deepEqual(view.messages[0]!.reactions, [{ emoji: "👍", people: [f.guest.person.id] }]);
 		assert.equal(view.messages[1]!.quoteId, message.id);
-		assert.equal(view.note.version, 1);
-		assert.equal(
-			view.note.authorId,
-			edits[0]!.status === "fulfilled" ? f.owner.person.id : f.guest.person.id,
-		);
+		assert.equal(view.note.version, 0);
 		assert.equal(Object.isFrozen(view), true);
 		assert.equal(f.m.f.requests.length, 0);
 		assert.equal(
@@ -220,7 +216,7 @@ test("WebUI collaboration: durable records/driver reopen with the original write
 	try {
 		const bound = f.collaboration.bind(f.owner);
 		await bound.post(f.ref, { requestId: "kept", text: "KEEP-ATTRIBUTION" });
-		await bound.editNote(f.ref, { expectedVersion: 0, text: "KEEP-NOTE" });
+		await assert.rejects(bound.editNote(f.ref, { expectedVersion: 0, text: "KEEP-NOTE" }), /read-only/);
 		await bound.setDriver(f.ref, { expectedVersion: 0, action: "claim", ttlMs: 60000 });
 		await bound.presence(f.ref, { state: "here" });
 		const sessionFile = f.m.runtime.view().sessionFile;
@@ -236,7 +232,7 @@ test("WebUI collaboration: durable records/driver reopen with the original write
 			});
 		const view = await collaboration.bind(actor).snapshot(f.ref);
 		assert.equal(view.messages[0]!.authorId, actor.person.id);
-		assert.equal(view.note.text, "KEEP-NOTE");
+		assert.equal(view.note.text, "");
 		assert.equal(view.driver.personId, actor.person.id);
 		assert.deepEqual(view.presence, []);
 		assert.throws(() => f.collaboration.checkInput(f.owner, f.ref), /unavailable|closed|denied/i);
@@ -256,14 +252,14 @@ test("WebUI collaboration: exact own receipts survive later edits, configuration
 		const original = {
 			requestId: "original-note",
 			target: f.ref,
-			action: { kind: "note" as const, expectedVersion: 0, text: "ORIGINAL-SHARED-NOTE" },
+			action: { kind: "post" as const, text: "ORIGINAL-SHARED-NOTE" },
 		};
 		const first = await client.write(original);
-		assert.deepEqual(first.result, { kind: "note", version: 1 });
+		assert.equal(first.result.kind, "post");
 		await client.write({
 			requestId: "later-note",
 			target: f.ref,
-			action: { kind: "note", expectedVersion: 1, text: "LATER-SHARED-NOTE" },
+			action: { kind: "post", text: "LATER-SHARED-NOTE" },
 		});
 		assert.deepEqual(await client.lookup(original), first);
 		await assert.rejects(
@@ -276,7 +272,7 @@ test("WebUI collaboration: exact own receipts survive later edits, configuration
 		assert.notEqual(rotated.incarnation, f.ref.incarnation);
 		assert.deepEqual(await client.lookup(original), first);
 		await assert.rejects(client.write(original), /stale|denied/i);
-		assert.equal((await client.snapshot(rotated)).note.text, "LATER-SHARED-NOTE");
+		assert.equal((await client.snapshot(rotated)).messages.at(-1)!.text, "LATER-SHARED-NOTE");
 
 		const driver = {
 			requestId: "driver-original",
@@ -300,7 +296,10 @@ test("WebUI collaboration: exact own receipts survive later edits, configuration
 		});
 		assert.deepEqual(await collaboration.bind(actor).lookup(original), first);
 		assert.deepEqual(await collaboration.bind(actor).lookup(driver), claimed);
-		assert.equal((await collaboration.bind(actor).snapshot(rotated)).note.text, "LATER-SHARED-NOTE");
+		assert.equal(
+			(await collaboration.bind(actor).snapshot(rotated)).messages.at(-1)!.text,
+			"LATER-SHARED-NOTE",
+		);
 		assert.equal(f.m.f.requests.length, 0);
 		await people.revokePerson(actor, f.guest.person.id);
 		const denied = await people.authenticate(f.guestSession.token).catch(() => null);
@@ -346,17 +345,17 @@ test("WebUI collaboration: actual store CAS rolls back effect and receipt togeth
 		const original = {
 			requestId: "atomic-note",
 			target: f.ref,
-			action: { kind: "note" as const, expectedVersion: 0, text: "ATOMIC-NOTE" },
+			action: { kind: "post" as const, text: "ATOMIC-NOTE" },
 		};
 		await assert.rejects(subject.write(original), /before native CAS/);
 		assert.equal(await subject.lookup(original), null);
-		assert.equal((await subject.snapshot(f.ref)).note.version, 0);
+		assert.equal((await subject.snapshot(f.ref)).messages.length, 0);
 		mode = "after";
 		await assert.rejects(subject.write(original), /lost native CAS return/);
 		const receipt = await subject.lookup(original);
 		assert.ok(receipt);
-		assert.deepEqual(receipt.result, { kind: "note", version: 1 });
-		assert.equal((await subject.snapshot(f.ref)).note.text, "ATOMIC-NOTE");
+		assert.equal(receipt.result.kind, "post");
+		assert.equal((await subject.snapshot(f.ref)).messages[0]!.text, "ATOMIC-NOTE");
 		mode = "complete";
 		assert.deepEqual(await subject.write(original), receipt);
 		assert.equal(attempts, 2);

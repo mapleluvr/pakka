@@ -44,6 +44,8 @@ import {
 import { decodeJson, decodeTarget } from "./extension-rpc.ts";
 import { frozen, isRecord, type ExtensionJson } from "./extensions.ts";
 import {
+	decodePeopleSettings,
+	type PeopleSettings,
 	decodePeopleChange,
 	decodePeopleReceipt,
 	type PeopleChange,
@@ -55,7 +57,13 @@ export {
 	peopleIntent,
 	matchesPeopleReceipt,
 } from "./webui-people.ts";
-export type { PeopleChange, PeopleReceipt, PeopleAction } from "./webui-people.ts";
+export type {
+	PeopleChange,
+	PeopleReceipt,
+	PeopleAction,
+	PeopleSettings,
+	PeopleMode,
+} from "./webui-people.ts";
 
 import {
 	decodeSessionBudgetChange,
@@ -129,7 +137,7 @@ export type {
 } from "./webui-notifications.ts";
 
 /** Service API, not the UI SDK/renderer version or an artifact identity. */
-export const WEBUI_SERVICE_API = 5;
+export const WEBUI_SERVICE_API = 7;
 export const WEBUI_SERVICE_PATH = "/pakka-webui/services";
 /** GET with one request query: an API-bound resource.content envelope; the server streams the complete original. */
 export const WEBUI_CONTENT_DOWNLOAD_PATH = "/pakka-webui/resources/content/download";
@@ -258,7 +266,15 @@ export interface ConversationInputHistory {
 	}[];
 	readonly nextCursor?: string;
 }
+export * from "./webui-notebook.ts";
+import {
+	checkNotebookCommand,
+	checkNotebookResult,
+	type NotebookCommand,
+	type NotebookResults,
+} from "./webui-notebook.ts";
 export type WebUiCommand =
+	| NotebookCommand
 	| { readonly op: "notification.lookup"; readonly original: NotificationRequest }
 	| { readonly op: "collaboration.read"; readonly target: AgentRef }
 	| { readonly op: "collaboration.write"; readonly change: CollaborationRequest }
@@ -266,6 +282,7 @@ export type WebUiCommand =
 	| { readonly op: "conversation-configuration.read"; readonly target: AgentRef }
 	| { readonly op: "conversation-configuration.write"; readonly change: ConversationConfigurationRequest }
 	| { readonly op: "conversation-configuration.lookup"; readonly original: ConversationConfigurationRequest }
+	| { readonly op: "people.settings" }
 	| { readonly op: "people.write"; readonly change: PeopleChange }
 	| { readonly op: "people.lookup"; readonly original: PeopleChange }
 	| { readonly op: "people.invite.lookup"; readonly original: OriginalInvitation }
@@ -306,7 +323,7 @@ export type WebUiCommand =
 	| { readonly op: "model-defaults.read" }
 	| { readonly op: "model-defaults.write"; readonly change: ModelDefaultsChange }
 	| { readonly op: "model-defaults.lookup"; readonly original: ModelDefaultsChange };
-export interface WebUiResults {
+export interface WebUiResults extends NotebookResults {
 	"notification.lookup": NotificationOperation;
 	"collaboration.read": { readonly kind: "collaboration"; readonly view: CollaborationView };
 	"collaboration.write": { readonly kind: "collaboration-receipt"; readonly receipt: CollaborationReceipt };
@@ -330,6 +347,7 @@ export interface WebUiResults {
 		readonly original: ConversationConfigurationRequest;
 		readonly receipt: ConversationConfigurationReceipt | null;
 	};
+	"people.settings": { readonly kind: "people-settings"; readonly settings: PeopleSettings };
 	"people.write": { readonly kind: "people-receipt"; readonly receipt: PeopleReceipt };
 	"people.lookup": {
 		readonly kind: "people-operation";
@@ -579,6 +597,12 @@ export function decodeWebUiCommand(command: unknown): WebUiCommand {
 			shape(command, ["op", "original"]);
 			decodeNotificationRequest(command.original);
 			break;
+		case "notebook.list":
+		case "notebook.note":
+		case "notebook.write":
+		case "notebook.lookup":
+			checkNotebookCommand(command);
+			break;
 		case "collaboration.read":
 			shape(command, ["op", "target"]);
 			decodeTarget(command.target);
@@ -645,6 +669,7 @@ export function decodeWebUiCommand(command: unknown): WebUiCommand {
 			decodeOriginalConversationInput(command.original);
 			break;
 		case "capabilities":
+		case "people.settings":
 		case "model-connections.read":
 		case "model-connections.reload":
 		case "model-defaults.read":
@@ -778,6 +803,12 @@ export function decodeWebUiResult(value: unknown): WebUiResult {
 		case "notification-operation":
 			decodeNotificationOperation(value);
 			break;
+		case "notebook-page":
+		case "notebook-note":
+		case "notebook-receipt":
+		case "notebook-operation":
+			checkNotebookResult(value);
+			break;
 		case "collaboration":
 			shape(value, ["kind", "view"]);
 			decodeCollaborationView(value.view);
@@ -813,6 +844,10 @@ export function decodeWebUiResult(value: unknown): WebUiResult {
 			if (!identity(value.actorId)) throw new Error("Invalid configuration actor");
 			decodeConversationConfigurationRequest(value.original);
 			if (value.receipt !== null) decodeConversationConfigurationReceipt(value.receipt);
+			break;
+		case "people-settings":
+			shape(value, ["kind", "settings"]);
+			decodePeopleSettings(value.settings);
 			break;
 		case "people-receipt":
 			shape(value, ["kind", "receipt"]);

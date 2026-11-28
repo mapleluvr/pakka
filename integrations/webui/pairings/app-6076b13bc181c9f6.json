@@ -1,0 +1,46 @@
+{
+  "schema": 1,
+  "frontend": {
+    "schema": 1,
+    "application": {
+      "name": "@pakka/webui-app",
+      "version": "0.1.0"
+    },
+    "archive": {
+      "file": "../app/pakka-webui-app-0.1.0-6076b13bc181c9f6.tgz",
+      "sha256": "6076b13bc181c9f6dc8648a21a207f55e1ece1652ab86bc1321994e56d1bb69e",
+      "bytes": 1336285
+    },
+    "manifestSha256": "28242cb569f25b227ec40e3bb93e192cb70f00868c192d2e2067cdf62ec0b360",
+    "assetSchema": 2,
+    "requires": {
+      "services": 6,
+      "workbench": 3,
+      "extensions": 3
+    },
+    "runtime": {
+      "id": "react19-astryx0.7.15",
+      "sdk": "0.1.0",
+      "packages": {
+        "react": "19.3.1",
+        "react-dom": "19.3.1",
+        "@astryxdesign/core": "0.7.15",
+        "@astryxdesign/theme-neutral": "0.7.15",
+        "@stylexjs/stylex": "0.19.2",
+        "lucide-react": "1.73.0"
+      }
+    },
+    "entry": "/",
+    "files": 713,
+    "repository": "https://github.com/mapleluvr/pakka-webui",
+    "sourceBase": "c936312e19f3fa7769828b024b964edd8c3945ad",
+    "workingTreeInputsSha256": "8e03a8a3ac9efdb8d8d2a4fbc344e144c5bb56b18bfc7eff7903013c4f40c4df"
+  },
+  "backend": {
+    "sourceBase": "1a5b8ed5c780525faff22a9b706d708ea3dfd8c1",
+    "source": "same services; default frontend selection updated to this archive",
+    "nodeMajor": 24
+  },
+  "mode": "default-fixed-frontend",
+  "verification": "../../../docs/verification/REMOVE-COMPONENT-LAB.md"
+}

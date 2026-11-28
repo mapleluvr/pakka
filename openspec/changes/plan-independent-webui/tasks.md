@@ -74,8 +74,28 @@
 
 阶段 5 使用最终固定前端完成全套安装消费、默认 CLI、PC/390px、兼容前端 A → B → A、TLS 代理和清理验证。release 274 文件全部完成，三文件定点复验后两轮覆盖 878 项通过、3 项平台跳过；Windows 深目录 ACL 限制及通知/录音未验证分支保留。源码与旧消费者清理见 [phase-5](phase-5.md) 和[覆盖接续](../../../docs/verification/WEBUI-COVERAGE-TRANSITION.md)。本轮交付到两仓工作分支及其既有 PR；合并、公共 registry 发布和 OpenSpec 归档未执行。
 
+## 后续固定前端交付
+
+- [x] 2026-11-28：接入独立前端品牌首页、四组主题、悬浮输入及阅读宽度；保持原服务协议，以标准归档和源码输入摘要固定候选。
+- [x] 完成隔离安装、输入／停止／Steering／Follow-up／丢响应核对及桌面手机检查；8854 重开原 Session 后资产一致，历史与用量不变。范围见[验证](../../../docs/verification/FLOATING-COMPOSER.md)。
+
+本轮按影响域选用前端类型、构建、制品安装及浏览器实际流程；后端仅调整固定资产选择，不增加重复行为测试。后续交付范围与[形成记录](../../../docs/changes/independent-webui.md#品牌配色与悬浮输入交付)对应。
+
+## Tool Calling 与共享图标
+
+- [x] 采用用户确认的轻量调用目录与逐次展开详情，配对 SDK 新增公开 `@pakka/webui-sdk/icons` 入口。
+- [x] 标准构建和类型检查、原文/错误既有 9 项回归、独立 SDK 安装消费通过。后端保持原服务，按前端消费风险选用浏览器与固定资产验证，不增加镜像实现测试。
+- [x] 完成隔离手机、错误与原文搜索检查，上线 8854 并核验全部 716 项资源及浏览器共享模块。见[变更](../../../docs/changes/tool-calling.md)和[验证](../../../docs/verification/TOOL-CALLING.md)。
+
 ## 验证选择
 
 阶段 0 已选用静态消费调查、结构化枚举、JS/声明图投影和文档检查；投影使用 --noCheck，不是产品类型检查，其结果范围保持原记录。
 
 阶段 1 选择独立安装、真实公开 SDK/服务接缝、类型/构建与必要的既有安全/恢复回归。已运行隔离 ModelRuntime 配置校验及 SQLite readonly 初始化探针，结果见 phase-1 的能力边界；这不是新 UI 或未加载历史浏览通过。新增长期测试须说明未覆盖的独特兼容、安全或持久效果风险。按用户要求由主会话核对，不使用 subagent review/委派调查。
+
+## Conversation 笔记与置顶
+
+- [x] 采用独立 Note/Pin/ContentRef 和纯图标入口；services 7 与固定前端/SDK 配对；个人模式不装配人类聊天。
+- [x] 原服务保留旧聊天及历史回执，非空单笔记确定性迁移，拒绝旧写入。
+- [x] `conversation-notebook.test.ts` 归入 webui affected/release 重型队列，覆盖真实 fork 读权、原子删除回执与重开；前端不冻结 DOM/props。
+- [ ] 独立安装与浏览器验收由主会话记录；本次不操作 8854。

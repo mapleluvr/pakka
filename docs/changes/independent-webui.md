@@ -93,3 +93,9 @@ Pakka 将历史 read 授权与“执行资源已加载”分开，再核对确�
 核对中发现的 slash 分流/Backend action 与 Session 重开锁缺口经真实路径复现后修正，采用的 scope/effect、原请求与刷新关系同步到前端声明。两个读取根相互独立的材料复用和共享宿主接续另由[并发计划](../../openspec/changes/plan-independent-webui/shared-host.md)记录。
 
 [phase-5](../../openspec/changes/plan-independent-webui/phase-5.md)、[覆盖接续](../verification/WEBUI-COVERAGE-TRANSITION.md)与[阶段 5 验证](../verification/INDEPENDENT-WEBUI-PHASE-5.md)记录默认安装、完整 smoke、PC/390px、兼容 A → B → A、TLS 代理及 release 分轮结果。所选阶段 4/5 范围完成；Windows 深目录 ACL、平台跳过、真实录音跳过和旧 worker 仍收正文分支的限制保持。两仓工作分支 PR、集成、公共发行与 OpenSpec 归档分别处理。
+
+## 品牌、配色与悬浮输入交付
+
+2026-11-28：用户确认首页、四组主题预设和悬浮输入试作后，默认产品采用独立 WebUI 的新固定归档。界面由前端维护：原始明暗 Logo 与对话入口、浏览器配色偏好、运行时原位停止、顶部输入回执浮层及独立正文宽度。Pakka 本轮仅更新默认制品选择与配对，继续使用 services 6 / workbench 3 / extensions 3。
+
+[固定配对](../../integrations/webui/pairings/app-2460c6b80f2f1126.json)定位实际源码输入与归档；[验证](../verification/FLOATING-COMPOSER.md)记录类型、构建、隔离安装、真实控制和丢响应核对，以及原 Session 重开后的资产和历史保全。前序首页与配色的固定结果保留各自候选；临时归档与原始证据留在本地。两仓现有个人模式 PR 同步承接这批后续界面交付。
