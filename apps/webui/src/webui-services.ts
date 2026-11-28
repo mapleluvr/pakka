@@ -23,6 +23,7 @@ import { createResourceHistory } from "./resource-history.ts";
 import { executeSessionBudget } from "./session-budget.ts";
 import { executePeople } from "./people-service.ts";
 import { executeConversationConfiguration } from "./conversation-configuration.ts";
+import { createConversationNotebook } from "./conversation-notebook.ts";
 import { executeCollaboration } from "./collaboration-service.ts";
 import { EXTENSION_VERSION } from "@pakka/protocol/extension-rpc";
 
@@ -49,6 +50,14 @@ export async function createWebUiServices(options: {
 		? await createModelConnections({ runtime, people, source: options.models })
 		: undefined;
 	const history = createResourceHistory({ runtime, people, sessions });
+	const notebook =
+		options.collaboration &&
+		createConversationNotebook({
+			people,
+			history,
+			collaboration: options.collaboration,
+			runtimeFor: (ref) => (ref.sessionId === runtime.view().sessionId ? runtime : sessions!.runtimeFor(ref)),
+		});
 	let closed = false;
 	const current = (actor: PocketAuthority) => {
 		if (closed) throw new WebUiServiceRefusal("UNSUPPORTED");
@@ -102,6 +111,13 @@ export async function createWebUiServices(options: {
 					result = { kind: "notification-operation", actorId: people.current(actor).id, original, status };
 					break;
 				}
+				case "notebook.list":
+				case "notebook.note":
+				case "notebook.write":
+				case "notebook.lookup":
+					if (!notebook) throw new WebUiServiceRefusal("UNSUPPORTED");
+					result = await notebook(actor, command, signal);
+					break;
 				case "collaboration.read":
 				case "collaboration.write":
 				case "collaboration.lookup":
@@ -184,7 +200,8 @@ export async function createWebUiServices(options: {
 							workbench: POCKET_VERSION,
 							extensions: EXTENSION_VERSION,
 							features: [
-								...(options.collaboration ? ["collaboration"] : []),
+								...(options.collaboration && !people.mode().personal ? ["collaboration"] : []),
+								...(notebook ? ["notebook"] : []),
 								...(options.notifications ? ["notification.lookup"] : []),
 								"conversation-configuration",
 								"people.invite.lookup",
@@ -268,6 +285,7 @@ export async function createWebUiServices(options: {
 			} catch (error) {
 				if (
 					[
+						"notebook.write",
 						"collaboration.write",
 						"conversation-configuration.write",
 						"people.write",

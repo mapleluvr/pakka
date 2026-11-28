@@ -84,6 +84,7 @@ export interface PocketCollaborationClient {
 	write(original: CollaborationRequest): Promise<CollaborationReceipt>;
 	/** Current read authority and exact original request; never re-executes an effect. */
 	lookup(original: CollaborationRequest): Promise<CollaborationReceipt | null>;
+	legacyNote(ref: ConversationRef): Promise<PocketNote>;
 	snapshot(ref: ConversationRef): Promise<PocketCollaborationView>;
 	post(ref: ConversationRef, input: PocketChatInput): Promise<PocketChatMessage>;
 	editNote(
@@ -293,14 +294,22 @@ function decode(raw: unknown, sessionId: string, version: number): State {
 		raw.resources.every(resource) &&
 		new Set(raw.resources.map((row) => row.id)).size === raw.resources.length
 	)
-		return { schema: 3, sessionId, resources: raw.resources.map((row) => ({ ...row, requests: [], driverGeneration: 0 })) };
+		return {
+			schema: 3,
+			sessionId,
+			resources: raw.resources.map((row) => ({ ...row, requests: [], driverGeneration: 0 })),
+		};
 	if (
 		(raw.schema === 2 || raw.schema === 3) &&
 		raw.resources.every(storedResource) &&
-		(raw.schema !== 3 || raw.resources.every(row => count(row.driverGeneration))) &&
+		(raw.schema !== 3 || raw.resources.every((row) => count(row.driverGeneration))) &&
 		new Set(raw.resources.map((row) => row.id)).size === raw.resources.length
 	)
-		return { schema: 3, sessionId, resources: raw.resources.map(row => ({ ...row, driverGeneration: row.driverGeneration ?? 0 })) };
+		return {
+			schema: 3,
+			sessionId,
+			resources: raw.resources.map((row) => ({ ...row, driverGeneration: row.driverGeneration ?? 0 })),
+		};
 	throw new Error("WebUI collaboration storage unconfirmed");
 }
 /** Explicit finite JSON projection; public interface types are not asserted to be indexed metadata. */
@@ -377,6 +386,10 @@ async function open(
 	const ready = () => {
 		if (!available || runtime.view().phase !== "ready") throw new Error("WebUI collaboration unavailable");
 	};
+	const chat = () => {
+		if (people.mode().personal)
+			throw new PocketCollaborationRefusal("FORBIDDEN", "Personal mode has no human collaboration");
+	};
 	const time = () => {
 		const value = now();
 		if (!count(value)) throw new Error("Invalid finite collaboration clock");
@@ -441,8 +454,16 @@ async function open(
 	): Promise<T> {
 		const saved = structuredClone(ref);
 		read(actor, saved, permission);
+		chat();
+		const generation = people.mode().generation;
+		const checkChat = () => {
+			chat();
+			if (generation !== people.mode().generation)
+				throw new PocketCollaborationRefusal("FORBIDDEN", "Mode changed");
+		};
 		const operation = tail.then(async () => {
 			await refresh();
+			checkChat();
 			read(actor, saved, permission);
 			const draft = structuredClone(state),
 				resource = row(draft, saved),
@@ -456,6 +477,7 @@ async function open(
 				const data = metadata(draft);
 				try {
 					const committed = await store.compareAndSet(version, data, () => {
+						checkChat();
 						read(actor, saved, permission);
 					});
 					state = decode(committed.data, sessionId, committed.version);
@@ -548,14 +570,7 @@ async function open(
 				return { kind: "post", message: viewMessage(message) };
 			}
 			case "note":
-				if (row.note.version !== action.expectedVersion) throw new PocketCollaborationConflict();
-				row.note = {
-					version: row.note.version + 1,
-					text: action.text,
-					authorId: person.id,
-					updatedAt: time(),
-				};
-				return { kind: "note", note: row.note };
+				throw new PocketCollaborationRefusal("INVALID_REQUEST", "Singleton notes are read-only");
 			case "react": {
 				const message = row.messages.find((message) => message.id === action.messageId);
 				if (!message)
@@ -581,7 +596,8 @@ async function open(
 				return { kind: "pin" };
 			}
 			case "driver": {
-				if (people.mode().personal) throw new PocketCollaborationRefusal("FORBIDDEN", "Personal mode has no human driver lease");
+				if (people.mode().personal)
+					throw new PocketCollaborationRefusal("FORBIDDEN", "Personal mode has no human driver lease");
 				const current = currentDriver(row);
 				row.driver = current;
 				row.driverGeneration = people.mode().generation;
@@ -680,7 +696,8 @@ async function open(
 	function currentDriver(row: Resource): PocketDriver {
 		const mode = people.mode();
 		return mode.personal || (row.driverGeneration ?? 0) !== mode.generation
-			? { version: row.driver.version, personId: null, expiresAt: null } : row.driver;
+			? { version: row.driver.version, personId: null, expiresAt: null }
+			: row.driver;
 	}
 	const checkDriver = (actorId: string, ref: ConversationRef) => {
 		if (people.mode().personal) return;
@@ -714,7 +731,19 @@ async function open(
 		bind(actor: PocketAuthority): PocketCollaborationClient {
 			people.current(actor);
 			return Object.freeze({
+				legacyNote: async (ref: ConversationRef) => {
+					const saved = structuredClone(ref);
+					read(actor, saved);
+					await refresh();
+					read(actor, saved);
+					return frozen(
+						structuredClone(
+							existing(saved)?.note ?? { text: "", version: 0, authorId: null, updatedAt: null },
+						),
+					);
+				},
 				snapshot: async (ref: ConversationRef) => {
+					chat();
 					const saved = structuredClone(ref);
 					read(actor, saved);
 					await refresh();
@@ -730,6 +759,7 @@ async function open(
 						}
 					}
 					read(actor, saved);
+					chat();
 					return frozen({
 						conversationId: saved.conversationId,
 						...(saved.sessionId === sessionId ? {} : { sessionId: saved.sessionId }),
@@ -813,6 +843,8 @@ async function open(
 					ref: ConversationRef,
 					input: { readonly state: "here" | "typing" | "away" | "leave" },
 				) => {
+					chat();
+					const generation = people.mode().generation;
 					const person = read(actor, ref);
 					if (
 						!closed(input, ["state"]) ||
@@ -837,6 +869,8 @@ async function open(
 								expiresAt: time() + 30000,
 							},
 							check: () => {
+								chat();
+								if (generation !== people.mode().generation) throw Error("Mode changed");
 								read(actor, saved);
 							},
 						});

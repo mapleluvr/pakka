@@ -325,6 +325,8 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 		res.end(JSON.stringify(value));
 	}
 	function preflight(a: PocketAuthority, command: PocketCommand) {
+		if (command.op.startsWith("collaboration.") && people.mode().personal)
+			throw new Refusal(403, "FORBIDDEN", true);
 		if (command.op === "conversation.lookup") {
 			preflight(a, command.original);
 			return;
@@ -401,6 +403,7 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 			if (command.op === "fork") people.check(a, "manage", people.resourceId(command.target));
 			if (command.op === "submit") options.collaboration?.checkInput(a, command.target);
 		});
+		if (command.op === "collaboration.note") throw new Refusal(400, "INVALID_REQUEST", true);
 	}
 	async function execute(
 		a: PocketAuthority,
@@ -903,7 +906,27 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 					try {
 						dispatched = true;
 						const result = await options.webuiServices.execute(a, parsed.command, controller.signal);
+						if (
+							result.kind === "notebook-page" ||
+							result.kind === "notebook-note" ||
+							result.kind === "notebook-receipt" ||
+							result.kind === "notebook-operation"
+						) {
+							try {
+								const target = "original" in result ? result.original.target : result.target;
+								people.check(a, "read", people.resourceId(target));
+							} catch {
+								throw new WebUiServiceRefusal(result.kind === "notebook-receipt" ? "UNKNOWN" : "FORBIDDEN");
+							}
+						}
 						guard(() => people.current(a));
+						if (
+							(parsed.command.op === "collaboration.read" || parsed.command.op === "collaboration.write") &&
+							people.mode().personal
+						)
+							throw new WebUiServiceRefusal(
+								parsed.command.op === "collaboration.write" ? "UNKNOWN" : "FORBIDDEN",
+							);
 						if (
 							parsed.command.op === "collaboration.write" &&
 							parsed.command.change.action.kind === "post" &&
@@ -1224,6 +1247,8 @@ export async function createPocketHttp(options: PocketHttpOptions): Promise<Pock
 					preflight(a, parsed.command);
 					dispatched = true;
 					const result = await execute(a, parsed.command, res, controller.signal);
+					if (parsed.command.op.startsWith("collaboration.") && people.mode().personal)
+						throw new Refusal(403, "FORBIDDEN");
 					if (!["session.rotate", "session.logout"].includes(parsed.command.op))
 						guard(() => people.current(a));
 					const response = decodePocketResponse(

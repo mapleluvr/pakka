@@ -24,11 +24,11 @@
 
 ## 2. 同源服务与身份
 
-工作台使用 `/pakka-webui/rpc` 和 `/pakka-webui/events`，延用已声明的 v3 DTO；新服务使用 `/pakka-webui/services` 的 `api: 6`。extension 客户端可使用 `/pakka-webui/extensions/rpc`。人类身份交换、资产、下载、通知和 worker 沿各自已有安全处理接缝接入新 namespace；旧 `/pocket/models/rpc` 不映射成新模型接口。
+工作台使用 `/pakka-webui/rpc` 和 `/pakka-webui/events`，延用已声明的 v3 DTO；新服务使用 `/pakka-webui/services` 的 `api: 7`。extension 客户端可使用 `/pakka-webui/extensions/rpc`。人类身份交换、资产、下载、通知和 worker 沿各自已有安全处理接缝接入新 namespace；旧 `/pocket/models/rpc` 不映射成新模型接口。
 
 浏览器使用同源 Cookie 与 `X-Pakka-CSRF`，endpoint 不接受认证信息、query/hash 或跨 origin；前端开发用同源代理。服务 request 在发送前固定工作台 hello 得到的 `personId/serverId`；后端从 Cookie 获取真正 actor，核对预期身份后才执行命令。客户端在响应、身份切换和异步返回时再次核对 request、server、Person 与结果种类。
 
-服务的 `capabilities` 返回实际可用 features。当前开发组合是 services 6、workbench 3、extensions 3；其中 extension wire 不等于 `ExtensionManifest.api: 1`，UI SDK/runtime 又是另一项组合。capabilities 中的协议版本是有界声明值，由对应消费者判断是否支持；不能因为服务能力响应可解码就认定所有协议都兼容。服务 API、renderer 描述和文件 hash 各自检查，不通过给 closed hello 偷加字段协商。
+服务的 `capabilities` 返回实际可用 features。当前开发组合是 services 7、workbench 3、extensions 3；其中 extension wire 不等于 `ExtensionManifest.api: 1`，UI SDK/runtime 又是另一项组合。capabilities 中的协议版本是有界声明值，由对应消费者判断是否支持；不能因为服务能力响应可解码就认定所有协议都兼容。服务 API、renderer 描述和文件 hash 各自检查，不通过给 closed hello 偷加字段协商。
 
 阶段 2/3 的已验收固定应用声明 services 3；阶段 4 候选、协议/client 归档与 manifest 需求同步声明 services 4。旧候选不自动降级或复用新服务组合，固定消费仍核对其实际版本与内容身份。
 
@@ -167,3 +167,11 @@ const app = await startPocket({
 加载后 HTTP 提供已核对的内存字节，生产者后来改磁盘文件不改变正在提供的版本。无下载、运行时构建、npm latest 或失败后替换成另一份 UI。manifest 只描述 renderer 兼容，不让 Node 了解 Button、theme provider 或插件组件树。
 
 当前功能完善仍在阶段 4，默认产品切换在阶段 5 独立处理。已验收固定组合、局部运行结果与尚未完成的范围以[任务](../../openspec/changes/plan-independent-webui/tasks.md)及其验证记录为准。
+
+## Conversation 笔记与置顶（services 7）
+
+公开命令/结果在 `@pakka/protocol/webui`；浏览器通过 `@pakka/client/webui` 在原 binding 上发送。`notebook.list` 分页读取笔记或置顶，每次最多 8 条；返回 `total`、`orderVersion` 及该资源当前 `canEdit`。`notebook.note` 按稳定 ID 读取已保存内容。读取需要当前 Conversation 的读权，创建、编辑、删除及置顶需要 send，服务在提交边界重新检查。
+
+`notebook.write` 支持 `save`、`delete`、`pin`、`unpin`、`move`。save 的 expectedVersion 0 表示创建；每个对象独立比较版本。移动检查 Pin 和顺序版本。Pin 的目标为本 Conversation 的 Note、固定模型文本或工具结果。来源署名可随读权省略；原内容由受权视图的 Session/Conversation、entryId、内容 ID、位置和版本标识，工具结果还包含 callId。持久关系不保存父 Conversation 署名或消息正文。`notebook.lookup` 只按发起人和完整原请求查回执，不重送；丢响应不能借刷新或取消等待推断效果。
+
+服务 discovery 仅在协作模式发布 collaboration；个人模式拒绝聊天读、写、在场和 driver，原人类操作仍可受权 `collaboration.lookup`。旧前端 services 6 与新后端不混用，不降级为 singleton 写入。

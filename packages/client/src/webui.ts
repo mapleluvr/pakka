@@ -1,5 +1,6 @@
 import {
 	decodeWebUiRequest,
+	notebookIntent,
 	matchesSessionBudgetReceipt,
 	matchesPeopleReceipt,
 	matchesConversationConfigurationReceipt,
@@ -25,6 +26,10 @@ export interface WebUiServiceClient {
 	request<C extends WebUiCommand>(command: C, options?: PocketRequestOptions): Promise<WebUiResults[C["op"]]>;
 }
 const kinds: { readonly [K in keyof WebUiResults]: WebUiResults[K]["kind"] } = {
+	"notebook.list": "notebook-page",
+	"notebook.note": "notebook-note",
+	"notebook.write": "notebook-receipt",
+	"notebook.lookup": "notebook-operation",
 	"notification.lookup": "notification-operation",
 	"collaboration.read": "collaboration",
 	"collaboration.write": "collaboration-receipt",
@@ -59,6 +64,27 @@ const kinds: { readonly [K in keyof WebUiResults]: WebUiResults[K]["kind"] } = {
 };
 function correlate(command: WebUiCommand, result: WebUiResult, personId: string | null): boolean {
 	if (kinds[command.op] !== result.kind) return false;
+	if (command.op === "notebook.list")
+		return (
+			result.kind === "notebook-page" &&
+			notebookIntent(result.target) === notebookIntent(command.target) &&
+			result.collection === command.collection &&
+			result.offset === command.offset &&
+			result.query === command.query
+		);
+	if (command.op === "notebook.note")
+		return (
+			result.kind === "notebook-note" &&
+			notebookIntent(result.target) === notebookIntent(command.target) &&
+			result.id === command.id
+		);
+	if (command.op === "notebook.write" || command.op === "notebook.lookup")
+		return (
+			(result.kind === "notebook-operation" || result.kind === "notebook-receipt") &&
+			result.actorId === personId &&
+			notebookIntent(result.original) ===
+				notebookIntent(command.op === "notebook.write" ? command.change : command.original)
+		);
 	if (command.op === "notification.lookup")
 		return (
 			result.kind === "notification-operation" &&
@@ -222,7 +248,11 @@ function correlate(command: WebUiCommand, result: WebUiResult, personId: string 
 				"encoding",
 				"byteLength",
 				"previewComplete",
-			].every((key) => command.content[key] === result.chunk.reference[key]) &&
+			].every(
+				(key) =>
+					(key === "callId" && command.content.source === "entry" && command.content.callId === undefined) ||
+					command.content[key] === result.chunk.reference[key],
+			) &&
 			result.chunk.offset === command.range.offset &&
 			result.chunk.nextOffset <= command.range.offset + command.range.length
 		);

@@ -36,6 +36,8 @@ export async function executeCollaboration(
 	const authorize = (permission: PocketPermission = "read") => {
 		signal?.throwIfAborted();
 		options.check();
+		if (command.op !== "collaboration.lookup" && people.mode().personal)
+			throw new WebUiServiceRefusal("FORBIDDEN");
 		try {
 			people.check(actor, permission, resourceId);
 		} catch {
@@ -60,7 +62,7 @@ export async function executeCollaboration(
 			view: {
 				target,
 				snapshot,
-				canEditNote: can("send"),
+				canEditNote: false,
 				canPin: can("send"),
 				canControl: can("steer"),
 				canTake: can("manage"),

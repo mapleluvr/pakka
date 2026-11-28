@@ -546,6 +546,7 @@ export async function createPocketNotifications(
 		eventKind: PocketNotificationKind,
 	): boolean {
 		if (
+			((eventKind === "chat" || eventKind === "mention") && people.mode().personal) ||
 			!device.active ||
 			blocked.has(device.id) ||
 			!device.resources.includes(people.resourceId(target)) ||
@@ -590,45 +591,47 @@ export async function createPocketNotifications(
 			target,
 			...(input.recipientIds ? { recipientIds: Object.freeze([...input.recipientIds].sort()) } : {}),
 		});
-		currentRef(target);
+		const checkMode = () => {
+			currentRef(target);
+			if ((input.kind === "chat" || input.kind === "mention") && people.mode().personal)
+				throw Error("Personal mode notification denied");
+		};
+		checkMode();
 		const identity = hash([target.sessionId, target.conversationId, input.requestId]);
 		const fingerprint = hash([target, input.kind, input.preview, input.recipientIds ?? null]);
-		const claim = await alter<{ event: Event; created: boolean }>(
-			(state) => {
-				const prior = state.events.find((row) => row.id === identity);
-				if (prior) {
-					if (prior.fingerprint !== fingerprint) throw Error("Notification event conflict");
-					return { save: false, value: { event: prior, created: false } };
-				}
-				if (state.events.length >= 256) throw Error("Notification event capacity exhausted");
-				const event: Event = {
-					id: identity,
-					requestId: input.requestId,
-					fingerprint,
-					target,
-					kind: input.kind,
-					preview: input.preview,
-					createdAt: Date.now(),
-					deliveries: state.devices
-						.filter(
-							(device) =>
-								(!input.recipientIds || input.recipientIds.includes(device.actorId)) &&
-								eligible(state, device, target, input.kind),
-						)
-						.map((device) => ({
-							deviceId: device.id,
-							fingerprint: hash(device.subscription),
-							state: "pending",
-						})),
-				};
-				state.events.push(event);
-				return { save: true, value: { event, created: true } };
-			},
-			() => currentRef(target),
-		);
+		const claim = await alter<{ event: Event; created: boolean }>((state) => {
+			const prior = state.events.find((row) => row.id === identity);
+			if (prior) {
+				if (prior.fingerprint !== fingerprint) throw Error("Notification event conflict");
+				return { save: false, value: { event: prior, created: false } };
+			}
+			if (state.events.length >= 256) throw Error("Notification event capacity exhausted");
+			const event: Event = {
+				id: identity,
+				requestId: input.requestId,
+				fingerprint,
+				target,
+				kind: input.kind,
+				preview: input.preview,
+				createdAt: Date.now(),
+				deliveries: state.devices
+					.filter(
+						(device) =>
+							(!input.recipientIds || input.recipientIds.includes(device.actorId)) &&
+							eligible(state, device, target, input.kind),
+					)
+					.map((device) => ({
+						deviceId: device.id,
+						fingerprint: hash(device.subscription),
+						state: "pending",
+					})),
+			};
+			state.events.push(event);
+			return { save: true, value: { event, created: true } };
+		}, checkMode);
 		if (!claim.created) return present(claim.event);
 		for (const delivery of claim.event.deliveries) {
-			const check = () => currentRef(target);
+			const check = checkMode;
 			const prepared = await alter((state) => {
 				const event = state.events.find((row) => row.id === identity)!;
 				const row = event.deliveries.find((item) => item.deviceId === delivery.deviceId)!;
@@ -843,7 +846,13 @@ export async function createPocketNotifications(
 					const state = (await load()).value;
 					const event = state?.events.find((row) => row.id === eventId),
 						device = state?.devices.find((row) => row.id === deviceId && row.actorId === actorId);
-					if (!event || !device || !event.deliveries.some((row) => row.deviceId === device.id) || !state)
+					if (
+						!event ||
+						(people.mode().personal && (event.kind === "chat" || event.kind === "mention")) ||
+						!device ||
+						!event.deliveries.some((row) => row.deviceId === device.id) ||
+						!state
+					)
 						return denied();
 					const target = (options.runtimeFor?.(event.target) ?? runtime)
 						.view()

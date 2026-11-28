@@ -132,20 +132,7 @@ test(
 				target: ref,
 				input: { expectedVersion: 0, text: "WINNING-NOTE" },
 			});
-			assert.equal(saved.status, 200);
-			const stale = await rpc({
-				op: "collaboration.note",
-				target: ref,
-				input: { expectedVersion: 0, text: "LOST-EDIT" },
-			});
-			assert.equal(stale.status, 409);
-			assert.ok("error" in stale.value);
-			assert.equal(stale.value.error.code, "CONFLICT");
-			assert.equal(stale.value.error.outcome, "denied");
-			const final = await rpc({ op: "collaboration.read", target: ref });
-			assert.ok("result" in final.value && final.value.result.kind === "collaboration");
-			assert.equal(final.value.result.snapshot.note.text, "WINNING-NOTE");
-			assert.equal(final.value.result.snapshot.note.version, 1);
+			assert.equal(saved.status, 400);
 			const instance = app;
 			async function service(command: WebUiCommand, auth = admin) {
 				const actor = await instance.people.authenticate(/pakka_pocket=([^;]+)/.exec(auth.cookie)![1]!);
@@ -176,40 +163,54 @@ test(
 			const original = {
 				requestId: "public-note",
 				target: ref,
-				action: { kind: "note" as const, expectedVersion: 1, text: "PUBLIC-ORIGINAL-NOTE" },
+				action: {
+					kind: "save" as const,
+					id: "public-note",
+					expectedVersion: 0,
+					title: "",
+					sources: [],
+					body: "PUBLIC-ORIGINAL-NOTE",
+				},
 			};
-			const written = await service({ op: "collaboration.write", change: original });
+			const written = await service({ op: "notebook.write", change: original });
 			assert.equal(written.status, 200);
-			assert.ok("result" in written.value && written.value.result.kind === "collaboration-receipt");
-			assert.deepEqual(written.value.result.receipt.result, { kind: "note", version: 2 });
+			assert.ok("result" in written.value && written.value.result.kind === "notebook-receipt");
+			assert.equal(written.value.result.receipt.version, 1);
 			await service({
-				op: "collaboration.write",
+				op: "notebook.write",
 				change: {
 					requestId: "public-later-note",
 					target: ref,
-					action: { kind: "note", expectedVersion: 2, text: "PUBLIC-LATER-NOTE" },
+					action: {
+						kind: "save",
+						id: "public-note",
+						expectedVersion: 1,
+						title: "",
+						sources: [],
+						body: "PUBLIC-LATER-NOTE",
+					},
 				},
 			});
-			const recovered = await service({ op: "collaboration.lookup", original });
+			const recovered = await service({ op: "notebook.lookup", original });
 			assert.equal(recovered.status, 200);
-			assert.ok("result" in recovered.value && recovered.value.result.kind === "collaboration-operation");
+			assert.ok("result" in recovered.value && recovered.value.result.kind === "notebook-operation");
 			assert.deepEqual(recovered.value.result.receipt, written.value.result.receipt);
 			const wrong = await service({
-				op: "collaboration.lookup",
-				original: { ...original, action: { ...original.action, text: "ALTERED-ORIGINAL" } },
+				op: "notebook.lookup",
+				original: { ...original, action: { ...original.action, body: "ALTERED-ORIGINAL" } },
 			});
 			assert.equal(wrong.status, 409);
-			const other = await service({ op: "collaboration.lookup", original }, viewer);
-			assert.ok("result" in other.value && other.value.result.kind === "collaboration-operation");
+			const other = await service({ op: "notebook.lookup", original }, viewer);
+			assert.ok("result" in other.value && other.value.result.kind === "notebook-operation");
 			assert.equal(other.value.result.receipt, null);
 			const forbidden = await service(
-				{ op: "collaboration.write", change: { ...original, requestId: "viewer-note" } },
+				{ op: "notebook.write", change: { ...original, requestId: "viewer-note" } },
 				viewer,
 			);
 			assert.equal(forbidden.status, 403);
 			assert.ok("error" in forbidden.value && forbidden.value.error.outcome === "denied");
 			const conflict = await service({
-				op: "collaboration.write",
+				op: "notebook.write",
 				change: { ...original, requestId: "stale-public-note" },
 			});
 			assert.equal(conflict.status, 409);
@@ -219,7 +220,7 @@ test(
 			const afterCommit = {
 				requestId: "after-commit",
 				target: ref,
-				action: { kind: "note" as const, expectedVersion: 3, text: "NOTE-LANDED-BEFORE-REFUSAL" },
+				action: { kind: "post" as const, text: "NOTE-LANDED-BEFORE-REFUSAL" },
 			};
 			let landed = false;
 			const observed = {
@@ -252,7 +253,7 @@ test(
 					error instanceof WebUiServiceRefusal && error.code === "UNKNOWN" && !error.confirmedNoEffect,
 			);
 			assert.equal(
-				(await instance.collaboration.bind(ownerActor).snapshot(ref)).note.text,
+				(await instance.collaboration.bind(ownerActor).snapshot(ref)).messages.at(-1)!.text,
 				afterCommit.action.text,
 			);
 			assert.ok(await instance.collaboration.bind(ownerActor).lookup(afterCommit));

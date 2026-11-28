@@ -82,3 +82,7 @@ tmp/
 *.tmp
 # Local plans, drafts and experiments; durable decisions/evidence live outside.
 /docs/.temp/
+
+# Fixed app and public UI SDK required by the notebook-capable default build.
+!integrations/webui/app/pakka-webui-app-0.1.0-65f598476697a145.tgz
+!integrations/webui/sdk/pakka-webui-sdk-3f669b8af0d7af4c.tgz

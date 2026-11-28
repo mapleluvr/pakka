@@ -130,6 +130,7 @@ export function projectConversationEntry(
 	const reference = (
 		path: string,
 		encoding: ConversationContentReference["encoding"],
+		callId?: string,
 	): ConversationContentReference => {
 		const span = spans.get(path);
 		if (!span) throw new Error("Entry preview original content span is missing");
@@ -145,7 +146,12 @@ export function projectConversationEntry(
 				!index.truncated.some((value) => value === path || value.startsWith(path + "/")),
 		};
 		// Owner attribution may be redacted by the product without exposing it through a guessable hash.
-		const value = { id: hash(body), ...body, sourceConversationId: String(header.conversationId) };
+		const value = {
+			id: hash(body),
+			...body,
+			...(callId ? { callId } : {}),
+			sourceConversationId: String(header.conversationId),
+		};
 		contents.set(value.id, { reference: value, span });
 		return value;
 	};
@@ -156,8 +162,11 @@ export function projectConversationEntry(
 		let contentReference: ConversationContentReference | undefined;
 		if (text(value.content)) {
 			content = value.content;
-			if (index.truncated.includes(base + "/content") || value.role === "toolResult")
-				contentReference = reference(base + "/content", "text");
+			contentReference = reference(
+				base + "/content",
+				"text",
+				value.role === "toolResult" ? String(value.toolCallId) : undefined,
+			);
 		} else if (Array.isArray(value.content)) {
 			content = value.content.map((part, partAt) => {
 				if (!object(part)) throw new Error("Invalid native entry content part");
@@ -168,9 +177,11 @@ export function projectConversationEntry(
 						return {
 							type: "text",
 							text: part.text,
-							...(value.role === "toolResult" || index.truncated.includes(location + "/text")
-								? { contentReference: reference(location + "/text", "text") }
-								: {}),
+							contentReference: reference(
+								location + "/text",
+								"text",
+								value.role === "toolResult" ? String(value.toolCallId) : undefined,
+							),
 						};
 					case "thinking":
 						if (!text(part.thinking)) throw new Error("Invalid entry thinking part");
@@ -288,7 +299,12 @@ export async function readPreviewContent(
 			: reference;
 	if (
 		!original ||
-		!isDeepStrictEqual(original.reference, normalized) ||
+		!isDeepStrictEqual(
+			original.reference,
+			original.reference.callId && !normalized.callId
+				? { ...normalized, callId: original.reference.callId }
+				: normalized,
+		) ||
 		!range ||
 		Object.keys(range).some((key) => !["offset", "length"].includes(key)) ||
 		!Number.isSafeInteger(range.offset) ||
@@ -326,5 +342,11 @@ export async function readPreviewContent(
 			nextOffset = range.offset + end;
 		}
 	}
-	return { reference, text, offset: range.offset, nextOffset, complete: nextOffset === reference.byteLength };
+	return {
+		reference: original.reference.callId ? { ...reference, callId: original.reference.callId } : reference,
+		text,
+		offset: range.offset,
+		nextOffset,
+		complete: nextOffset === reference.byteLength,
+	};
 }
